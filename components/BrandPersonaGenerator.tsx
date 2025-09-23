@@ -57,21 +57,32 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
     }
   }, [formData]);
   
-  const handleSelectPersona = async (index: number) => {
-      setSelectedPersonaIndex(index);
-      setSelectedSlogan(null);
-      setSlogans([]);
-      setIsLoadingSlogan(true);
-      setError(null);
-      try {
-          const result = await generateSlogans(formData.businessName, personas[index], formData.competitors);
-          setSlogans(result);
-      } catch (err) {
-          setError(err instanceof Error ? err.message : 'Gagal generate slogan.');
-      } finally {
-          setIsLoadingSlogan(false);
+  const handleSelectPersona = (index: number) => {
+      if (selectedPersonaIndex !== index) {
+        setSelectedPersonaIndex(index);
+        // Reset slogan state when a new persona is chosen
+        setSlogans([]);
+        setSelectedSlogan(null);
       }
   };
+  
+  const handleGenerateSlogans = useCallback(async () => {
+    if (selectedPersonaIndex === null || !personas[selectedPersonaIndex]) return;
+
+    setIsLoadingSlogan(true);
+    setError(null);
+    setSlogans([]); // Clear previous slogans
+
+    try {
+        const result = await generateSlogans(formData.businessName, personas[selectedPersonaIndex], formData.competitors);
+        setSlogans(result);
+    } catch (err) {
+        setError(err instanceof Error ? err.message : 'Gagal generate slogan.');
+    } finally {
+        setIsLoadingSlogan(false);
+    }
+  }, [selectedPersonaIndex, personas, formData]);
+
 
   const handleContinue = () => {
     if (selectedPersonaIndex !== null && selectedSlogan && personas[selectedPersonaIndex]) {
@@ -106,6 +117,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
       {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
 
       {personas.length > 0 && (
+        <>
         <div className="flex flex-col gap-6">
           <div>
             <h3 className="text-xl font-bold mb-2">Pilih Persona Brand Lo:</h3>
@@ -120,7 +132,6 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
               >
                 <p className="text-gray-300 mb-4 h-20 overflow-auto">{persona.deskripsi_singkat}</p>
                 
-                {/* Tampilkan detail baru jika terpilih */}
                 {selectedPersonaIndex === index && (
                     <div className="flex flex-col gap-4 mt-4 pt-4 border-t border-gray-700">
                         <div>
@@ -150,31 +161,49 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
             ))}
           </div>
         </div>
+
+        {selectedPersonaIndex !== null && (
+          <div className="flex flex-col gap-6 mt-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700 transition-opacity duration-500 animate-fade-in">
+            <div>
+              <h3 className="text-xl font-bold text-indigo-400 mb-2">Langkah 1.5: Generate Slogan</h3>
+              <p className="text-gray-400">Persona "{personas[selectedPersonaIndex].nama_persona}" udah kepilih. Sekarang, ayo kita buat beberapa pilihan slogan yang pas.</p>
+            </div>
+
+            {slogans.length === 0 && !isLoadingSlogan && (
+              <div className="self-start">
+                  <Button onClick={handleGenerateSlogans} disabled={isLoadingSlogan}>
+                      Generate Slogan
+                  </Button>
+              </div>
+            )}
+            
+            {isLoadingSlogan && <div className="flex items-center justify-center gap-2 text-gray-400"><Spinner/> Membuat slogan...</div>}
+
+            {slogans.length > 0 && (
+              <div className="flex flex-col gap-4">
+                  <h4 className="text-lg font-semibold mb-2">Pilih Slogan Andalan Lo:</h4>
+                  <div className="flex flex-wrap gap-3">
+                      {slogans.map((slogan, index) => (
+                          <button
+                              key={index}
+                              onClick={() => setSelectedSlogan(slogan)}
+                              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
+                                  selectedSlogan === slogan
+                                  ? 'bg-indigo-600 text-white'
+                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              }`}
+                          >
+                              {slogan}
+                          </button>
+                      ))}
+                  </div>
+              </div>
+            )}
+          </div>
+        )}
+      </>
       )}
       
-      {isLoadingSlogan && <div className="flex items-center justify-center gap-2 text-gray-400"><Spinner/> Membuat slogan...</div>}
-
-      {slogans.length > 0 && (
-        <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold mb-2">Pilih Slogan Andalan Lo:</h3>
-            <div className="flex flex-wrap gap-3">
-                {slogans.map((slogan, index) => (
-                    <button
-                        key={index}
-                        onClick={() => setSelectedSlogan(slogan)}
-                        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
-                            selectedSlogan === slogan
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                    >
-                        {slogan}
-                    </button>
-                ))}
-            </div>
-        </div>
-      )}
-
       {(selectedPersonaIndex !== null && selectedSlogan) && (
         <div className="self-center mt-4">
             <Button onClick={handleContinue}>

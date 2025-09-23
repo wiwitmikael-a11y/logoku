@@ -38,20 +38,17 @@
         -webkit-touch-callout: none; /* iOS Safari */
         
         background-color: #111827; /* Tailwind gray-900 */
-        /* Layer 1: Animated circuit board SVG with UNIDIRECTIONAL lines and ALTERNATING nodes */
-        background-image: url("data:image/svg+xml,%3Csvg width='150' height='150' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cstyle%3E.node-a,.node-b%7Bfill:rgba(165,180,252,0.8);animation-name:pulse;animation-duration:4s;animation-iteration-count:infinite;animation-timing-function:ease-in-out;animation-direction:alternate;%7D.node-b%7Banimation-delay:2s;%7D@keyframes pulse%7Bfrom%7Bopacity:.3;r:1.5%7Dto%7Bopacity:1;r:3.5;stroke:rgba(224,231,255,0.7);stroke-width:4;%7D%7D%3C/style%3E%3C/defs%3E%3Cpath d='M150 0 L0 150 M120 0 L0 120 M90 0 L0 90 M60 0 L0 60 M30 0 L0 30 M150 30 L30 150 M150 60 L60 150 M150 90 L90 150 M150 120 L120 150' stroke='rgba(99, 102, 241, 0.15)' stroke-width='1' fill='none'/%3E%3Ccircle class='node-a' cx='75' cy='75' r='2'/%3E%3Ccircle class='node-b' cx='30' cy='30' r='1.5'/%3E%3Ccircle class='node-a' cx='105' cy='45' r='2'/%3E%3Ccircle class='node-b' cx='45' cy='105' r='1.5'/%3E%3Ccircle class='node-a' cx='120' cy='90' r='2'/%3E%3C/svg%3E");
         position: relative;
         z-index: 0;
-        animation: bg-pan 200s linear infinite;
+        /* The SVG circuit background has been removed. */
       }
 
-      /* Use a pseudo-element for the panning diagonal lines to keep animations separate */
+      /* Layer 1: Panning diagonal lines */
       body::before {
         content: '';
         position: absolute;
         inset: 0;
         z-index: -1;
-        /* Layer 2: Panning diagonal lines */
         background-image: repeating-linear-gradient(
           -45deg,
           transparent,
@@ -67,7 +64,23 @@
           rgba(99, 102, 241, 0.1) 38px,
           rgba(99, 102, 241, 0.1) 40px
         );
-        animation: bg-pan 150s linear infinite;
+        animation: bg-pan 30s linear infinite;
+      }
+
+      /* Layer 2: Opposing diagonal lines for parallax */
+      body::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 60px,
+          rgba(165, 180, 252, 0.05) 60px, /* very subtle */
+          rgba(165, 180, 252, 0.05) 61px
+        );
+        animation: bg-pan-fast 10s linear infinite;
       }
       
       @keyframes bg-pan {
@@ -76,6 +89,15 @@
         }
         100% {
           background-position: 200% 200%;
+        }
+      }
+
+      @keyframes bg-pan-fast {
+        0% {
+          background-position: 0% 0%;
+        }
+        100% {
+          background-position: 200% 200%; /* Move in the same direction */
         }
       }
 

@@ -195,7 +195,6 @@ const App: React.FC = () => {
                         <span>logo<span className="text-white">.ku</span></span>
                         <span className="ml-3 text-3xl text-gray-300 font-handwritten">by @rangga.p.h</span>
                     </h1>
-                     <p className="text-gray-400 hidden md:block">Your Personal AI Branding Studio</p>
                 </div>
             </header>
             <main className="py-10 px-4 md:px-8 pb-24">
