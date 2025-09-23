@@ -191,8 +191,9 @@ const App: React.FC = () => {
         <div className="text-white min-h-screen font-sans">
             <header className="py-6 px-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <h1 className="text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleStartNewFromSummary}>
-                        logo<span className="text-white">.ku</span>
+                    <h1 className="text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer flex items-baseline" onClick={handleStartNewFromSummary}>
+                        <span>logo<span className="text-white">.ku</span></span>
+                        <span className="ml-3 text-3xl text-gray-300 font-handwritten">by @rangga.p.h</span>
                     </h1>
                      <p className="text-gray-400 hidden md:block">Your Personal AI Branding Studio</p>
                 </div>
@@ -203,7 +204,7 @@ const App: React.FC = () => {
                 </div>
             </main>
              <footer className="text-center py-6 px-4 text-sm text-gray-500 border-t border-gray-800">
-                Powered by Google Gemini. Built for UMKM Indonesia.
+                Powered by Atharrazka Core. Built for UMKM Indonesia.
             </footer>
             <AdBanner />
         </div>
