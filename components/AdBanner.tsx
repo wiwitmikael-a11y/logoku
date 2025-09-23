@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 // Ganti nilai placeholder ini dengan Ad Slot ID asli dari akun AdSense kamu.
 const AD_SLOT_ID = "XXXXXXXXXX"; // <--- GANTI DI SINI
@@ -6,15 +6,26 @@ const AD_SLOT_ID = "XXXXXXXXXX"; // <--- GANTI DI SINI
 const AdBanner: React.FC = () => {
   // Cek apakah Ad Slot ID sudah diganti dari placeholder.
   const isAdSlotSet = AD_SLOT_ID !== "XXXXXXXXXX" && AD_SLOT_ID;
+  const adPushed = useRef(false);
 
   useEffect(() => {
-    // Hanya jalankan skrip AdSense jika Ad Slot ID sudah diganti.
-    if (isAdSlotSet) {
-      try {
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-      } catch (err) {
-        console.error("AdSense error:", err);
-      }
+    // Hanya jalankan skrip AdSense jika Ad Slot ID sudah diganti dan belum pernah di-push.
+    if (isAdSlotSet && !adPushed.current) {
+      // Tandai bahwa kita akan mencoba me-push iklan agar tidak terjadi dua kali.
+      adPushed.current = true;
+
+      // Beri jeda sesaat (100ms) untuk memastikan container iklan sudah dirender oleh browser.
+      // Ini mencegah error "No slot size for availableWidth=0".
+      const timeout = setTimeout(() => {
+        try {
+          ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+        } catch (err) {
+          console.error("AdSense error:", err);
+        }
+      }, 100);
+
+      // Fungsi cleanup untuk membersihkan timeout jika komponen di-unmount sebelum timeout berjalan.
+      return () => clearTimeout(timeout);
     }
   }, [isAdSlotSet]);
 
