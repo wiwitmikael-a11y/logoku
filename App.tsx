@@ -8,7 +8,7 @@ import ProjectDashboard from './components/ProjectDashboard';
 import BrandPersonaGenerator from './components/BrandPersonaGenerator';
 import LogoGenerator from './components/LogoGenerator';
 import LogoDetailGenerator from './components/LogoDetailGenerator';
-import ContentCalendarGenerator from './components/CaptionGenerator';
+import ContentCalendarGenerator from './components/ContentCalendarGenerator';
 import PrintMediaGenerator from './components/PrintMediaGenerator';
 import PackagingGenerator from './components/PackagingGenerator';
 import MerchandiseGenerator from './components/MerchandiseGenerator';
