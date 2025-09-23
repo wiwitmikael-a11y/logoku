@@ -2,11 +2,36 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandPersona, ContentCalendarEntry, LogoVariations, BrandInputs, Project } from '../types';
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable is not set");
+let ai: GoogleGenAI | null = null;
+// Pesan error yang lebih user-friendly dan informatif
+let apiKeyError: string | null = "Waduh, 'udud' Mang AI (API Key) belum disetel, bro! Doi jadi nggak bisa mikir. Coba setel `API_KEY` di bagian 'Environment Variables' pada pengaturan project Vercel lo, ya.";
+
+// Memeriksa API key dengan aman tanpa membuat browser crash.
+try {
+  // Di lingkungan browser, `process` tidak terdefinisi dan ini akan memicu error.
+  // Di lingkungan Node.js atau bundler (seperti Vercel build), `process` akan ada.
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    apiKeyError = null; // Key ditemukan, hapus pesan error.
+  }
+} catch (e) {
+  // Blok catch ini diharapkan berjalan di lingkungan browser murni.
+  // Pesan apiKeyError sudah disiapkan dengan instruksi yang membantu.
+  console.warn("Pengecekan API Key gagal karena 'process' tidak terdefinisi. Ini wajar di lingkungan browser. Pastikan API_KEY sudah dikonfigurasi di pengaturan deployment (misalnya, Vercel).");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+/**
+ * Fungsi penjaga untuk memastikan klien AI sudah siap sebelum melakukan panggilan.
+ * Melempar error yang user-friendly jika klien belum diinisialisasi.
+ * @returns Instance GoogleGenAI yang sudah diinisialisasi.
+ */
+const getAiClient = (): GoogleGenAI => {
+    if (!ai) {
+        throw new Error(apiKeyError || "Klien Gemini AI tidak terinisialisasi.");
+    }
+    return ai;
+};
+
 
 /**
  * A centralized error handler for Gemini API calls.
@@ -42,6 +67,7 @@ export const generateBrandPersona = async (
   targetAudience: string,
   valueProposition: string
 ): Promise<BrandPersona[]> => {
+  const ai = getAiClient();
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
@@ -113,6 +139,7 @@ export const generateSlogans = async (
     persona: BrandPersona,
     competitors: string
 ): Promise<string[]> => {
+    const ai = getAiClient();
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -136,6 +163,7 @@ export const generateSlogans = async (
 
 
 export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
+  const ai = getAiClient();
   try {
     const response = await ai.models.generateImages({
       model: 'imagen-4.0-generate-001',
@@ -154,6 +182,7 @@ export const generateLogoOptions = async (prompt: string): Promise<string[]> => 
 };
 
 export const generateLogoVariations = async (basePrompt: string): Promise<LogoVariations> => {
+    const ai = getAiClient();
     try {
         const generate = async (modifier: string, count: number = 1) => {
             const response = await ai.models.generateImages({
@@ -185,6 +214,7 @@ export const generateLogoVariations = async (basePrompt: string): Promise<LogoVa
 };
 
 export const editLogo = async (base64ImageData: string, mimeType: string, prompt: string): Promise<string> => {
+    const ai = getAiClient();
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image-preview',
@@ -215,6 +245,7 @@ export const generateContentCalendar = async (
   businessName: string,
   persona: BrandPersona
 ): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
+  const ai = getAiClient();
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
@@ -250,6 +281,7 @@ export const generatePrintMedia = async (
     type: 'business_card' | 'flyer' | 'banner' | 'roll_banner',
     project: Omit<Project, 'id' | 'createdAt'>
 ): Promise<string[]> => {
+    const ai = getAiClient();
     let prompt = '';
     const { brandInputs, selectedPersona, logoPrompt } = project;
     const style = selectedPersona.kata_kunci.join(', ');
@@ -324,6 +356,7 @@ export const generatePrintMedia = async (
 };
 
 export const generatePackagingDesign = async (prompt: string): Promise<string[]> => {
+  const ai = getAiClient();
   try {
     const response = await ai.models.generateImages({
       model: 'imagen-4.0-generate-001',
@@ -342,6 +375,7 @@ export const generatePackagingDesign = async (prompt: string): Promise<string[]>
 };
 
 export const generateMerchandiseMockup = async (prompt: string): Promise<string[]> => {
+  const ai = getAiClient();
   try {
     const response = await ai.models.generateImages({
       model: 'imagen-4.0-generate-001',
