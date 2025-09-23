@@ -1,11 +1,14 @@
+
 import React, { useState, useCallback } from 'react';
 import { generateBrandPersona, generateSlogans } from '../services/geminiService';
+import { playSound } from '../services/soundService';
 import type { BrandPersona, BrandInputs } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
 import Card from './common/Card';
+import LoadingMessage from './common/LoadingMessage';
 
 interface Props {
   initialData?: BrandInputs;
@@ -41,6 +44,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
     setSlogans([]);
     setSelectedPersonaIndex(null);
     setSelectedSlogan(null);
+    playSound('start');
 
     try {
       const result = await generateBrandPersona(
@@ -50,8 +54,11 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
         formData.valueProposition
       );
       setPersonas(result);
+      playSound('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
+      setError(errorMessage);
+      playSound('error');
     } finally {
       setIsLoadingPersona(false);
     }
@@ -72,12 +79,16 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
     setIsLoadingSlogan(true);
     setError(null);
     setSlogans([]); // Clear previous slogans
+    playSound('start');
 
     try {
         const result = await generateSlogans(formData.businessName, personas[selectedPersonaIndex], formData.competitors);
         setSlogans(result);
+        playSound('success');
     } catch (err) {
-        setError(err instanceof Error ? err.message : 'Gagal generate slogan.');
+        const errorMessage = err instanceof Error ? err.message : 'Gagal generate slogan.';
+        setError(errorMessage);
+        playSound('error');
     } finally {
         setIsLoadingSlogan(false);
     }
@@ -98,7 +109,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 1: Fondasi Brand Lo</h2>
-        <p className="text-gray-400">Ceritain bisnismu. AI akan meracik persona, target avatar, gaya bicara, sampai slogan yang paling pas.</p>
+        <p className="text-gray-400">Ceritain bisnismu. Mang AI akan meracik persona, target avatar, gaya bicara, sampai slogan yang paling pas.</p>
       </div>
 
       <form onSubmit={handleGeneratePersona} className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
@@ -109,7 +120,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
         <Textarea className="md:col-span-2" label="Sebutin 1-2 Kompetitor" name="competitors" value={formData.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
         <div className="md:col-span-2">
           <Button type="submit" disabled={isLoadingPersona}>
-            {isLoadingPersona ? <><Spinner /> Lagi Mikir Keras...</> : 'Generate Persona Brand'}
+            {isLoadingPersona ? <LoadingMessage /> : 'Racik Persona Sekarang!'}
           </Button>
         </div>
       </form>
@@ -172,12 +183,12 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
             {slogans.length === 0 && !isLoadingSlogan && (
               <div className="self-start">
                   <Button onClick={handleGenerateSlogans} disabled={isLoadingSlogan}>
-                      Generate Slogan
+                      Bikinin Slogan Dong!
                   </Button>
               </div>
             )}
             
-            {isLoadingSlogan && <div className="flex items-center justify-center gap-2 text-gray-400"><Spinner/> Membuat slogan...</div>}
+            {isLoadingSlogan && <div className="flex items-center justify-center text-gray-400"><LoadingMessage /></div>}
 
             {slogans.length > 0 && (
               <div className="flex flex-col gap-4">
@@ -186,7 +197,10 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
                       {slogans.map((slogan, index) => (
                           <button
                               key={index}
-                              onClick={() => setSelectedSlogan(slogan)}
+                              onClick={() => {
+                                playSound('select');
+                                setSelectedSlogan(slogan);
+                              }}
                               className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
                                   selectedSlogan === slogan
                                   ? 'bg-indigo-600 text-white'

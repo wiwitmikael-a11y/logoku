@@ -1,9 +1,12 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
+import { playSound } from '../services/soundService';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
+import LoadingMessage from './common/LoadingMessage';
 
 interface Props {
   persona: BrandPersona;
@@ -95,12 +98,16 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     setError(null);
     setLogos([]);
     setSelectedLogoUrl(null);
+    playSound('start');
 
     try {
       const results = await generateLogoOptions(prompt);
       setLogos(results);
+      playSound('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
+      setError(errorMessage);
+      playSound('error');
     } finally {
       setIsLoading(false);
     }
@@ -110,6 +117,11 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     if (selectedLogoUrl) {
       onComplete({ logoUrl: selectedLogoUrl, prompt });
     }
+  };
+  
+  const handleSelectLogo = (url: string) => {
+    playSound('select');
+    setSelectedLogoUrl(url);
   };
   
   const selectedStyleInfo = logoStyles.find(s => s.id === selectedStyleId);
@@ -127,7 +139,10 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
           {logoStyles.map(style => (
             <button
               key={style.id}
-              onClick={() => setSelectedStyleId(style.id)}
+              onClick={() => {
+                  playSound('select');
+                  setSelectedStyleId(style.id);
+              }}
               className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
                 selectedStyleId === style.id 
                   ? 'bg-indigo-600 text-white' 
@@ -158,7 +173,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
         />
         <div className="self-start">
           <Button type="submit" disabled={isLoading || !prompt.trim()}>
-            {isLoading ? <><Spinner /> Lagi Menggambar...</> : 'Generate 4 Opsi Logo'}
+            {isLoading ? <LoadingMessage /> : 'Spill 4 Logo-nya, Mang AI!'}
           </Button>
         </div>
       </form>
@@ -175,7 +190,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
               <div 
                 key={index} 
                 className={`bg-gray-700 rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${selectedLogoUrl === url ? 'ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'hover:scale-105'}`}
-                onClick={() => setSelectedLogoUrl(url)}
+                onClick={() => handleSelectLogo(url)}
               >
                 <img src={url} alt="Generated logo" className="object-contain rounded-md max-w-full max-h-full" />
               </div>

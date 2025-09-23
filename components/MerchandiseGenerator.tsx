@@ -1,8 +1,11 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
+import { playSound } from '../services/soundService';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
+import LoadingMessage from './common/LoadingMessage';
 
 interface Props {
   logoPrompt: string;
@@ -59,12 +62,16 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     setError(null);
     setDesigns([]);
     setSelectedDesignUrl(null);
+    playSound('start');
 
     try {
       const results = await generateMerchandiseMockup(prompt);
       setDesigns(results);
+      playSound('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+      setError(errorMessage);
+      playSound('error');
     } finally {
       setIsLoading(false);
     }
@@ -76,12 +83,22 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     }
   };
 
+  const handleTabClick = (tab: MerchType) => {
+      playSound('select');
+      setActiveTab(tab);
+  }
+  
+  const handleSelectDesign = (url: string) => {
+      playSound('select');
+      setSelectedDesignUrl(url);
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Mockup Merchandise AI</h2>
+        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Mockup Merchandise Mang AI</h2>
         <p className="text-gray-400">
-          Lihat gimana brand lo tampil di produk nyata. Pilih jenis merchandise, dan AI bakal bikinin mockup realistisnya buat lo.
+          Lihat gimana brand lo tampil di produk nyata. Pilih jenis merchandise, dan Mang AI bakal bikinin mockup realistisnya buat lo.
         </p>
       </div>
       
@@ -89,7 +106,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
           {merchandiseTypes.map(merch => (
              <button 
                 key={merch.id}
-                onClick={() => setActiveTab(merch.id)} 
+                onClick={() => handleTabClick(merch.id)} 
                 className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === merch.id ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>
                 {merch.name}
             </button>
@@ -106,7 +123,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
         />
         <div className="self-start">
             <Button type="submit" disabled={isLoading}>
-                {isLoading ? <><Spinner /> Lagi Bikin Mockup...</> : `Generate Desain ${merchandiseTypes.find(m=>m.id === activeTab)?.name}`}
+                {isLoading ? <LoadingMessage /> : `Bikinin Mockup ${merchandiseTypes.find(m=>m.id === activeTab)?.name}-nya!`}
             </Button>
         </div>
       </form>
@@ -121,7 +138,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
               <div 
                 key={index} 
                 className={`bg-gray-700 rounded-lg p-2 flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer aspect-square ${selectedDesignUrl === url ? 'ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'hover:scale-105'}`}
-                onClick={() => setSelectedDesignUrl(url)}
+                onClick={() => handleSelectDesign(url)}
               >
                 <img src={url} alt={`Generated mockup ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full" />
               </div>

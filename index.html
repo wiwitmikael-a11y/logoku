@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>logo.ku - Studio Logo & Branding AI</title>
+    <title>logo.ku - Studio Logo & Branding Mang AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
@@ -43,7 +44,7 @@
         /* The SVG circuit background has been removed. */
       }
 
-      /* Layer 1: Panning diagonal lines */
+      /* Layer 1: Static diagonal lines */
       body::before {
         content: '';
         position: absolute;
@@ -64,10 +65,10 @@
           rgba(99, 102, 241, 0.1) 38px,
           rgba(99, 102, 241, 0.1) 40px
         );
-        animation: bg-pan 30s linear infinite;
+        /* Animation removed to make this layer static */
       }
 
-      /* Layer 2: Opposing diagonal lines for parallax */
+      /* Layer 2: Fast-moving diagonal lines for parallax */
       body::after {
         content: '';
         position: absolute;
@@ -83,6 +84,7 @@
         animation: bg-pan-fast 10s linear infinite;
       }
       
+      /* Keyframe for the main panning lines (not currently used by ::before) */
       @keyframes bg-pan {
         0% {
           background-position: 0% 0%;
@@ -92,12 +94,13 @@
         }
       }
 
+      /* Keyframe for the fast-moving secondary lines */
       @keyframes bg-pan-fast {
         0% {
           background-position: 0% 0%;
         }
         100% {
-          background-position: 200% 200%; /* Move in the same direction */
+          background-position: 200% 200%;
         }
       }
 

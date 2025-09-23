@@ -1,10 +1,13 @@
+
 import React, { useState, useCallback } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
+import { playSound } from '../services/soundService';
 import type { Project, BrandInputs, PrintMediaAssets } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
+import LoadingMessage from './common/LoadingMessage';
 
 interface Props {
   projectData: Project;
@@ -61,6 +64,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    playSound('start');
     
     // Clear previous designs for the active tab
     const designSetters = {
@@ -84,8 +88,11 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         };
       const results = await generatePrintMedia(activeTab, projectPayload);
       designSetters[activeTab](results);
+      playSound('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+      setError(errorMessage);
+      playSound('error');
     } finally {
       setIsLoading(false);
     }
@@ -107,6 +114,16 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         }
     });
   };
+  
+  const handleTabClick = (tab: MediaTab) => {
+      playSound('select');
+      setActiveTab(tab);
+  }
+  
+  const handleSelectDesign = (url: string, setter: React.Dispatch<React.SetStateAction<string | null>>) => {
+      playSound('select');
+      setter(url);
+  }
 
   const renderContent = () => {
     switch(activeTab) {
@@ -159,22 +176,22 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Studio Media Cetak AI</h2>
-        <p className="text-gray-400">Bikin materi promosi cetak yang keren. Pilih jenis media, isi detailnya, dan biarkan AI mendesain untuk lo.</p>
+        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Studio Media Cetak Mang AI</h2>
+        <p className="text-gray-400">Bikin materi promosi cetak yang keren. Pilih jenis media, isi detailnya, dan biarkan Mang AI mendesain untuk lo.</p>
       </div>
       
       <div className="flex flex-wrap border-b border-gray-700">
-          <button onClick={() => setActiveTab('business_card')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'business_card' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Kartu Nama</button>
-          <button onClick={() => setActiveTab('flyer')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'flyer' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Flyer</button>
-          <button onClick={() => setActiveTab('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk</button>
-          <button onClick={() => setActiveTab('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Roll Banner</button>
+          <button onClick={() => handleTabClick('business_card')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'business_card' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Kartu Nama</button>
+          <button onClick={() => handleTabClick('flyer')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'flyer' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Flyer</button>
+          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk</button>
+          <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Roll Banner</button>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {renderContent()}
         <div className="self-start">
             <Button type="submit" disabled={isLoading}>
-                {isLoading ? <><Spinner /> Lagi Mendesain...</> : `Generate Desain`}
+                {isLoading ? <LoadingMessage /> : `Sulap Jadi Desain!`}
             </Button>
         </div>
       </form>
@@ -189,7 +206,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
               <div 
                 key={index} 
                 className={`bg-gray-700 rounded-lg p-2 flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${selected === url ? 'ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'hover:scale-105'}`}
-                onClick={() => setter(url)}
+                onClick={() => handleSelectDesign(url, setter)}
               >
                 <img src={url} alt={`Generated design ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full" />
               </div>

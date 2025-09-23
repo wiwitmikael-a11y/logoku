@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandPersona, ContentCalendarEntry, LogoVariations, BrandInputs, Project } from '../types';
 
@@ -6,6 +7,34 @@ if (!process.env.API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+/**
+ * A centralized error handler for Gemini API calls.
+ * It logs the technical error and returns a new Error with a user-friendly,
+ * casual message suitable for the app's tone.
+ * @param error The original error caught from the API call.
+ * @param defaultMessage A fallback message for unknown errors.
+ * @returns A new Error object with a user-friendly message.
+ */
+const handleApiError = (error: any, defaultMessage: string): Error => {
+    console.error("Gemini API Error:", error);
+
+    // Try to get a meaningful message from the error object
+    const errorString = (error instanceof Error ? error.message : JSON.stringify(error)).toLowerCase();
+
+    let friendlyMessage = defaultMessage;
+
+    if (errorString.includes('resource_exhausted') || errorString.includes('quota')) {
+        friendlyMessage = `Waduh, udud Mang AI habis euy. Beliin dulu udud sebatang mah bro, atau coba lagi besok.`;
+    } else if (errorString.includes('prompt was blocked') || errorString.includes('safety')) {
+        friendlyMessage = `Request lo diblokir karena isinya kurang aman menurut Mang AI. Coba ubah prompt atau input-nya ya.`;
+    } else if (errorString.includes('api key not valid')) {
+        friendlyMessage = `Waduh, API Key-nya nggak valid, bro. Pastiin API Key di environment udah bener.`;
+    }
+
+    return new Error(friendlyMessage);
+};
+
 
 export const generateBrandPersona = async (
   businessName: string,
@@ -74,8 +103,7 @@ Buatkan 3 alternatif persona brand yang komprehensif dalam format JSON. Setiap p
     return JSON.parse(jsonString);
 
   } catch (error) {
-    console.error("Error generating brand persona:", error);
-    throw new Error("Gagal generate persona brand. Coba cek console buat detailnya.");
+    throw handleApiError(error, "Gagal generate persona brand. Coba cek console buat detailnya.");
   }
 };
 
@@ -102,8 +130,7 @@ export const generateSlogans = async (
         const jsonString = response.text.trim();
         return JSON.parse(jsonString);
     } catch (error) {
-        console.error("Error generating slogans:", error);
-        throw new Error("Gagal generate slogan. Coba lagi nanti.");
+        throw handleApiError(error, "Gagal generate slogan. Coba lagi nanti.");
     }
 };
 
@@ -122,8 +149,7 @@ export const generateLogoOptions = async (prompt: string): Promise<string[]> => 
 
     return response.generatedImages.map(img => `data:image/jpeg;base64,${img.image.imageBytes}`);
   } catch (error) {
-    console.error("Error generating logos:", error);
-    throw new Error("Gagal generate logo. Mungkin prompt-nya bermasalah menurut model AI.");
+    throw handleApiError(error, "Gagal generate logo. Mungkin prompt-nya bermasalah menurut model AI.");
   }
 };
 
@@ -154,8 +180,7 @@ export const generateLogoVariations = async (basePrompt: string): Promise<LogoVa
         return { main, icon, monochrome };
 
     } catch (error) {
-        console.error("Error generating logo variations:", error);
-        throw new Error("Gagal generate variasi logo.");
+        throw handleApiError(error, "Gagal generate variasi logo.");
     }
 };
 
@@ -178,11 +203,10 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
         if (imagePart && imagePart.inlineData) {
             return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
         }
-        throw new Error("AI tidak menghasilkan gambar editan.");
+        throw new Error("Mang AI tidak menghasilkan gambar editan.");
 
     } catch (error) {
-        console.error("Error editing logo:", error);
-        throw new Error("Gagal mengedit logo.");
+        throw handleApiError(error, "Gagal mengedit logo.");
     }
 };
 
@@ -218,8 +242,7 @@ PENTING: Format output HARUS berupa JSON object yang valid, tanpa markdown forma
     return { calendar: parsedJson.calendar, sources };
 
   } catch (error) {
-    console.error("Error generating content calendar:", error);
-    throw new Error("Gagal generate kalender konten. Coba cek console buat detailnya.");
+    throw handleApiError(error, "Gagal generate kalender konten. Coba cek console buat detailnya.");
   }
 };
 
@@ -296,8 +319,7 @@ export const generatePrintMedia = async (
 
         return response.generatedImages.map(img => `data:image/jpeg;base64,${img.image.imageBytes}`);
     } catch (error) {
-        console.error("Error generating print media:", error);
-        throw new Error("Gagal generate desain media cetak.");
+        throw handleApiError(error, "Gagal generate desain media cetak.");
     }
 };
 
@@ -315,8 +337,7 @@ export const generatePackagingDesign = async (prompt: string): Promise<string[]>
 
     return response.generatedImages.map(img => `data:image/jpeg;base64,${img.image.imageBytes}`);
   } catch (error) {
-    console.error("Error generating packaging:", error);
-    throw new Error("Gagal generate desain kemasan. Mungkin prompt-nya bermasalah menurut model AI.");
+    throw handleApiError(error, "Gagal generate desain kemasan. Mungkin prompt-nya bermasalah menurut model AI.");
   }
 };
 
@@ -334,7 +355,6 @@ export const generateMerchandiseMockup = async (prompt: string): Promise<string[
 
     return response.generatedImages.map(img => `data:image/jpeg;base64,${img.image.imageBytes}`);
   } catch (error) {
-    console.error("Error generating merchandise mockup:", error);
-    throw new Error("Gagal generate mockup merchandise. Coba lagi.");
+    throw handleApiError(error, "Gagal generate mockup merchandise. Coba lagi.");
   }
 };

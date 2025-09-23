@@ -1,9 +1,12 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
+import { playSound } from '../services/soundService';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
+import LoadingMessage from './common/LoadingMessage';
 
 interface Props {
   persona: BrandPersona;
@@ -33,12 +36,16 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     setError(null);
     setDesigns([]);
     setSelectedDesignUrl(null);
+    playSound('start');
 
     try {
       const results = await generatePackagingDesign(prompt);
       setDesigns(results);
+      playSound('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
+      setError(errorMessage);
+      playSound('error');
     } finally {
       setIsLoading(false);
     }
@@ -48,6 +55,11 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     if (selectedDesignUrl) {
       onComplete(selectedDesignUrl);
     }
+  };
+
+  const handleSelectDesign = (url: string) => {
+    playSound('select');
+    setSelectedDesignUrl(url);
   };
 
   return (
@@ -68,7 +80,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
         />
         <div className="self-start">
           <Button type="submit" disabled={isLoading || !prompt.trim()}>
-            {isLoading ? <><Spinner /> Lagi Bikin...</> : 'Generate Desain'}
+            {isLoading ? <LoadingMessage /> : 'Bungkus Desainnya, Mang AI!'}
           </Button>
         </div>
       </form>
@@ -86,7 +98,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
               <div
                 key={index}
                 className={`bg-gray-700 rounded-lg p-2 aspect-[4/3] flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${selectedDesignUrl === url ? 'ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'hover:scale-105'}`}
-                onClick={() => setSelectedDesignUrl(url)}
+                onClick={() => handleSelectDesign(url)}
               >
                 <img src={url} alt="Generated packaging design" className="object-contain rounded-md max-w-full max-h-full" />
               </div>

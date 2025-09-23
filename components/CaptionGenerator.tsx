@@ -1,9 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { generateContentCalendar } from '../services/geminiService';
+import { playSound } from '../services/soundService';
 import type { ContentCalendarEntry, Project } from '../types';
 import Button from './common/Button';
 import Spinner from './common/Spinner';
 import Card from './common/Card';
+import LoadingMessage from './common/LoadingMessage';
 
 interface Props {
   projectData: Partial<Project>;
@@ -21,6 +23,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
     setIsLoading(true);
     setError(null);
     setCalendar([]);
+    playSound('start');
 
     try {
       const result = await generateContentCalendar(
@@ -29,8 +32,11 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
       );
       setCalendar(result.calendar);
       setSources(result.sources);
+      playSound('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
+      setError(errorMessage);
+      playSound('error');
     } finally {
       setIsLoading(false);
     }
@@ -41,6 +47,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
   };
 
   const copyToClipboard = (text: string) => {
+    playSound('click');
     navigator.clipboard.writeText(text);
   };
 
@@ -48,12 +55,12 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 4: Rencana Konten Sosmed</h2>
-        <p className="text-gray-400">Stop bingung mau posting apa. Biar AI yang bikinin draf kalender konten seminggu, lengkap sama ide, caption, hashtag, dan referensi tren terbaru dari Google.</p>
+        <p className="text-gray-400">Stop bingung mau posting apa. Biar Mang AI yang bikinin draf kalender konten seminggu, lengkap sama ide, caption, hashtag, dan referensi tren terbaru dari Google.</p>
       </div>
 
       <div className="self-center">
         <Button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? <><Spinner /> Lagi Riset Tren...</> : 'Generate Kalender Konten Mingguan'}
+          {isLoading ? <LoadingMessage /> : 'Kasih Ide Konten, Please!'}
         </Button>
       </div>
 
@@ -99,7 +106,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
 
           <div className="self-center mt-4">
             <Button onClick={handleContinue}>
-              Lanjut ke Desain Kemasan &rarr;
+              Lanjut ke Media Cetak &rarr;
             </Button>
           </div>
         </div>

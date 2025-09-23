@@ -1,9 +1,12 @@
+
 import React, { useState, useCallback } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
+import { playSound } from '../services/soundService';
 import type { LogoVariations } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
 import Spinner from './common/Spinner';
+import LoadingMessage from './common/LoadingMessage';
 
 interface Props {
   baseLogoUrl: string;
@@ -22,13 +25,17 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
   const handleGenerateVariations = useCallback(async () => {
     setIsGeneratingVariations(true);
     setError(null);
+    playSound('start');
     try {
       // Pass the original selected logo as the "main" variant to save an API call
       const generatedVariations = await generateLogoVariations(basePrompt);
       const completeVariations = { ...generatedVariations, main: baseLogoUrl };
       setVariations(completeVariations);
+      playSound('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal membuat variasi logo.');
+      const errorMessage = err instanceof Error ? err.message : 'Gagal membuat variasi logo.';
+      setError(errorMessage);
+      playSound('error');
     } finally {
       setIsGeneratingVariations(false);
     }
@@ -40,13 +47,17 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
 
     setIsEditing(true);
     setError(null);
+    playSound('start');
     try {
       const base64Data = finalLogoUrl.split(',')[1];
       const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/jpeg';
       const result = await editLogo(base64Data, mimeType, editPrompt);
       setFinalLogoUrl(result); // Update the main displayed logo with the edited one
+      playSound('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal mengedit logo.');
+      const errorMessage = err instanceof Error ? err.message : 'Gagal mengedit logo.';
+      setError(errorMessage);
+      playSound('error');
     } finally {
       setIsEditing(false);
     }
@@ -64,7 +75,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 3: Finalisasi & Paket Logo</h2>
-        <p className="text-gray-400">Logo pilihan lo udah siap. Sekarang lo bisa bikin paket logo lengkap (buat ikon, stempel, dll.) atau kasih revisi minor pakai AI.</p>
+        <p className="text-gray-400">Logo pilihan lo udah siap. Sekarang lo bisa bikin paket logo lengkap (buat ikon, stempel, dll.) atau kasih revisi minor pakai Mang AI.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -91,14 +102,14 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
                 </div>
             ) : (
                 <Button onClick={handleGenerateVariations} disabled={isGeneratingVariations}>
-                    {isGeneratingVariations ? <><Spinner/> Membuat Paket...</> : 'Buat Paket Logo Lengkap'}
+                    {isGeneratingVariations ? <LoadingMessage /> : 'Siapin Paket Komplitnya!'}
                 </Button>
             )}
         </div>
 
         {/* AI Edit Section */}
         <div className="flex flex-col gap-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-            <h3 className="text-xl font-bold">Revisi Cepat dengan AI</h3>
+            <h3 className="text-xl font-bold">Revisi Cepat dengan Mang AI</h3>
             <p className="text-sm text-gray-400">Kasih perintah simpel buat ubah logo lo. Misal: "ganti warnanya jadi biru dongker" atau "tambahin outline tipis".</p>
             <form onSubmit={handleEdit} className="flex flex-col gap-3">
                 <Input 
@@ -110,7 +121,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
                 />
                 <div className="self-start">
                     <Button type="submit" disabled={isEditing}>
-                        {isEditing ? <><Spinner/> Merevisi...</> : 'Jalankan Revisi'}
+                        {isEditing ? <LoadingMessage /> : 'Revisi, Gercep!'}
                     </Button>
                 </div>
             </form>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { playSound, unlockAudio } from '../../services/soundService';
 
 interface CardProps {
   title: string;
@@ -9,9 +10,19 @@ interface CardProps {
 }
 
 const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, className }) => {
+  
+  const handleClick = () => {
+    if (onClick) {
+      // Also unlock audio here for the first interaction if it's a card click.
+      unlockAudio();
+      playSound('select');
+      onClick();
+    }
+  };
+  
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className={`bg-gray-800 border rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${className} ${
         onClick ? 'cursor-pointer' : ''
       } ${

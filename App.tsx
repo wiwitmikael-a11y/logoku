@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Project, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets } from './types';
+import { playSound } from './services/soundService';
 
 // Import all components
+import WelcomeScreen from './components/WelcomeScreen';
 import ProjectDashboard from './components/ProjectDashboard';
 import BrandPersonaGenerator from './components/BrandPersonaGenerator';
 import LogoGenerator from './components/LogoGenerator';
 import LogoDetailGenerator from './components/LogoDetailGenerator';
-import ContentCalendarGenerator from './components/ContentCalendarGenerator';
+import ContentCalendarGenerator from './components/CaptionGenerator';
 import PrintMediaGenerator from './components/PrintMediaGenerator';
 import PackagingGenerator from './components/PackagingGenerator';
 import MerchandiseGenerator from './components/MerchandiseGenerator';
@@ -17,6 +19,7 @@ type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | '
 
 const App: React.FC = () => {
     // State management
+    const [showWelcome, setShowWelcome] = useState(true);
     const [appState, setAppState] = useState<AppState>('dashboard');
     const [projects, setProjects] = useState<Project[]>([]);
     const [currentProject, setCurrentProject] = useState<Partial<Project> | null>(null);
@@ -40,14 +43,21 @@ const App: React.FC = () => {
 
     // Save projects to localStorage whenever they change
     useEffect(() => {
+        // Don't save if we are still on the welcome screen
+        if (showWelcome) return;
         try {
             localStorage.setItem('brandingProjects', JSON.stringify(projects));
         } catch (error) {
             console.error("Failed to save projects to localStorage", error);
         }
-    }, [projects]);
+    }, [projects, showWelcome]);
 
     // Handlers for flow
+    const handleEnterApp = useCallback(() => {
+        playSound('success'); // Play a success sound on entering the app
+        setShowWelcome(false);
+    }, []);
+
     const handleNewProject = useCallback(() => {
         setCurrentProject({});
         setAppState('persona');
@@ -186,6 +196,10 @@ const App: React.FC = () => {
         handleStartNewFromSummary();
         return null;
     };
+
+    if (showWelcome) {
+        return <WelcomeScreen onEnter={handleEnterApp} />;
+    }
 
     return (
         <div className="text-white min-h-screen font-sans">
