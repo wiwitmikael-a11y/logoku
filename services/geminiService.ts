@@ -3,32 +3,37 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandPersona, ContentCalendarEntry, LogoVariations, BrandInputs, Project } from '../types';
 
 let ai: GoogleGenAI | null = null;
-// Pesan error yang lebih user-friendly dan informatif
-let apiKeyError: string | null = "Waduh, 'udud' Mang AI (API Key) belum disetel, bro! Doi jadi nggak bisa mikir. Coba setel `API_KEY` di bagian 'Environment Variables' pada pengaturan project Vercel lo, ya.";
-
-// Memeriksa API key dengan aman tanpa membuat browser crash.
-try {
-  // Di lingkungan browser, `process` tidak terdefinisi dan ini akan memicu error.
-  // Di lingkungan Node.js atau bundler (seperti Vercel build), `process` akan ada.
-  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    apiKeyError = null; // Key ditemukan, hapus pesan error.
-  }
-} catch (e) {
-  // Blok catch ini diharapkan berjalan di lingkungan browser murni.
-  // Pesan apiKeyError sudah disiapkan dengan instruksi yang membantu.
-  console.warn("Pengecekan API Key gagal karena 'process' tidak terdefinisi. Ini wajar di lingkungan browser. Pastikan API_KEY sudah dikonfigurasi di pengaturan deployment (misalnya, Vercel).");
-}
 
 /**
- * Fungsi penjaga untuk memastikan klien AI sudah siap sebelum melakukan panggilan.
- * Melempar error yang user-friendly jika klien belum diinisialisasi.
- * @returns Instance GoogleGenAI yang sudah diinisialisasi.
+ * Lazily initializes and returns the GoogleGenAI client.
+ * This prevents the app from crashing on startup if the API key is missing.
+ * @returns An initialized GoogleGenAI instance.
+ * @throws An error if the API key is not configured.
  */
 const getAiClient = (): GoogleGenAI => {
-    if (!ai) {
-        throw new Error(apiKeyError || "Klien Gemini AI tidak terinisialisasi.");
+    // If the client is already initialized, return it.
+    if (ai) {
+        return ai;
     }
+
+    let apiKey: string | undefined;
+    try {
+        // In a Vercel environment, browser-accessible environment variables
+        // MUST be prefixed with NEXT_PUBLIC_.
+        if (typeof process !== 'undefined' && process.env) {
+            apiKey = process.env.NEXT_PUBLIC_API_KEY;
+        }
+    } catch (e) {
+        console.warn("Could not access process.env. This is expected in some environments.");
+    }
+    
+    // If the API key is missing, throw a user-friendly error with clear instructions.
+    if (!apiKey) {
+        throw new Error("Waduh, API Key Mang AI nggak ketemu, bro! Pastiin lo udah set 'Environment Variable' di Vercel dengan nama 'NEXT_PUBLIC_API_KEY' (bukan cuma 'API_KEY'). Abis itu, deploy ulang project-nya ya.");
+    }
+    
+    // Initialize the client, cache it, and return it.
+    ai = new GoogleGenAI({ apiKey });
     return ai;
 };
 
@@ -55,6 +60,8 @@ const handleApiError = (error: any, defaultMessage: string): Error => {
         friendlyMessage = `Request lo diblokir karena isinya kurang aman menurut Mang AI. Coba ubah prompt atau input-nya ya.`;
     } else if (errorString.includes('api key not valid')) {
         friendlyMessage = `Waduh, API Key-nya nggak valid, bro. Pastiin API Key di environment udah bener.`;
+    } else if (errorString.includes("nggak ketemu, bro!")) { // Catches our custom API key error
+        return new Error(error.message);
     }
 
     return new Error(friendlyMessage);
