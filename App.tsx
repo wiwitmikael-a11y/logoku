@@ -17,6 +17,8 @@ import AdBanner from './components/AdBanner';
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'packaging' | 'merchandise' | 'summary';
 
+const GITHUB_ASSETS_URL = 'https://raw.githubusercontent.com/wiwitmikael-a11y/logoku-assets/main/';
+
 const App: React.FC = () => {
     // State management
     const [showWelcome, setShowWelcome] = useState(true);
@@ -209,6 +211,11 @@ const App: React.FC = () => {
                         <span>logo<span className="text-white">.ku</span></span>
                         <span className="ml-3 text-3xl text-gray-300 font-handwritten">by @rangga.p.h</span>
                     </h1>
+                    <img 
+                        src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
+                        alt="Animated Mang AI character"
+                        className="h-8 relative animate-header-ai mr-8"
+                    />
                 </div>
             </header>
             <main className="py-10 px-4 md:px-8 pb-24">

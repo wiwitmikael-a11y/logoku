@@ -103,18 +103,111 @@
         }
       }
 
-      /* Keyframes for the floating and breathing Mang AI characters on the welcome screen */
-      @keyframes float-and-breathe {
-        0% { transform: translateY(0px) translateX(0px) rotate(0deg) scale(1); opacity: 0; }
-        20% { opacity: 0.8; }
-        50% { transform: translateY(-20px) translateX(15px) rotate(10deg) scale(1.05); }
-        80% { opacity: 0.8; }
-        100% { transform: translateY(20px) translateX(-15px) rotate(-10deg) scale(1); opacity: 0; }
-      }
-      .animate-float {
-        animation: float-and-breathe infinite;
+      /* Keyframes for Mang AI with breathing and bouncing effects */
+      @keyframes mario-top-breathing-bounce {
+        /* --- Going Left to Right --- */
+        0%   { transform: translateX(-180px) scale(-1, 1); }
+        /* Jump up */
+        10%  { transform: translateX(-150px) scale(-1, 1) translateY(-25px); }
+        /* Land and bounce */
+        19.5% { transform: translateX(-120px) scale(-1, 1) translateY(-5px); }
+        20%  { transform: translateX(-120px) scale(-1.1, 0.9) translateY(0); } /* Squash on land */
+        22%  { transform: translateX(-120px) scale(-0.98, 1.02) translateY(-2px); } /* Bounce back */
+        24%  { transform: translateX(-120px) scale(-1, 1) translateY(0); } /* Settle */
+        /* Run and breathe */
+        36%  { transform: translateX(0px) scale(-1.02, 0.98) translateY(0); animation-timing-function: ease-in-out; }
+        48%  { transform: translateX(180px) scale(-1, 1) translateY(0); animation-timing-function: linear; }
+        /* Turn around */
+        50%  { transform: translateX(180px) scale(1, 1); }
+        /* --- Going Right to Left --- */
+        /* Jump up */
+        60%  { transform: translateX(150px) scale(1, 1) translateY(-25px); }
+        /* Land and bounce */
+        69.5% { transform: translateX(120px) scale(1, 1) translateY(-5px); }
+        70%  { transform: translateX(120px) scale(1.1, 0.9) translateY(0); }
+        72%  { transform: translateX(120px) scale(0.98, 1.02) translateY(-2px); }
+        74%  { transform: translateX(120px) scale(1, 1) translateY(0); }
+        /* Run and breathe */
+        86%  { transform: translateX(0px) scale(1.02, 0.98) translateY(0); animation-timing-function: ease-in-out; }
+        98%  { transform: translateX(-180px) scale(1, 1) translateY(0); animation-timing-function: linear; }
+        /* Turn around */
+        100% { transform: translateX(-180px) scale(-1, 1); }
       }
 
+      @keyframes mario-bottom-breathing-bounce {
+        /* --- Going Left to Right --- */
+        0%   { left: 5%; transform: scale(-1, 1) translateY(0); }
+        /* Jump up */
+        8%   { transform: scale(-1, 1) translateY(-120px); }
+        /* Land and bounce */
+        15.5% { transform: scale(-1, 1) translateY(-10px); }
+        16%  { transform: scale(-1.15, 0.85) translateY(0); } /* Squash */
+        18%  { transform: scale(-0.95, 1.05) translateY(-4px); } /* Stretch */
+        20%  { transform: scale(-1, 1) translateY(0); } /* Settle */
+        /* Run and breathe */
+        34%  { transform: scale(-1.02, 0.98) translateY(0); animation-timing-function: ease-in-out; }
+        48%  { left: calc(95% - 128px); transform: scale(-1, 1) translateY(0); animation-timing-function: linear; }
+        /* Turn around */
+        50%  { left: calc(95% - 128px); transform: scale(1, 1) translateY(0); }
+        /* --- Going Right to Left --- */
+        /* Jump up */
+        58%  { transform: scale(1, 1) translateY(-120px); }
+        /* Land and bounce */
+        65.5% { transform: scale(1, 1) translateY(-10px); }
+        66%  { transform: scale(1.15, 0.85) translateY(0); }
+        68%  { transform: scale(0.95, 1.05) translateY(-4px); }
+        70%  { transform: scale(1, 1) translateY(0); }
+        /* Run and breathe */
+        84%  { transform: scale(1.02, 0.98) translateY(0); animation-timing-function: ease-in-out; }
+        98%  { left: 5%; transform: scale(1, 1) translateY(0); animation-timing-function: linear; }
+        /* Turn around */
+        100% { left: 5%; transform: scale(-1, 1) translateY(0); }
+      }
+      
+      /* Keyframes for the small header Mang AI (Balanced Bouncy Walk) */
+      @keyframes header-ai-antics {
+        /* Walk right with bounce */
+        0%   { transform: translateX(0px) scale(-1, 1) translateY(0); }
+        10%  { transform: translateX(10px) scale(-1.05, 0.95) translateY(0); }
+        20%  { transform: translateX(20px) scale(-1, 1) translateY(0); }
+        
+        /* Turn and stand still with breathe */
+        22%  { transform: translateX(20px) scale(1, 1) translateY(0); }
+        30%  { transform: translateX(20px) scale(1.02, 0.98); }
+        38%  { transform: translateX(20px) scale(1, 1); }
+
+        /* Run left further */
+        45%  { transform: translateX(20px) scale(1, 1) translateY(0); animation-timing-function: ease-in; }
+        55%  { transform: translateX(0px) scale(1.05, 0.95) translateY(0); }
+        65%  { transform: translateX(-60px) scale(1, 1) translateY(0); animation-timing-function: linear; }
+        
+        /* Jump and bounce on the left side */
+        68%  { transform: translateX(-60px) scale(1, 1) translateY(-15px); } /* Jump up */
+        73%  { transform: translateX(-60px) scale(1.15, 0.85) translateY(0); } /* Land and squash */
+        76%  { transform: translateX(-60px) scale(0.95, 1.05) translateY(-3px); } /* Bounce back up */
+        79%  { transform: translateX(-60px) scale(1, 1) translateY(0); } /* Settle */
+        
+        /* Turn and walk right */
+        81%  { transform: translateX(-60px) scale(-1, 1) translateY(0); }
+        90%  { transform: translateX(-10px) scale(-1.05, 0.95) translateY(0); }
+        98%  { transform: translateX(0px) scale(-1, 1) translateY(0); }
+        100% { transform: translateX(0px) scale(-1, 1) translateY(0); }
+      }
+
+      .animate-mario-top-breathing {
+        animation: mario-top-breathing-bounce 8s linear infinite;
+      }
+      .animate-mario-bottom-breathing {
+        animation: mario-bottom-breathing-bounce 6s linear infinite;
+        position: fixed;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 20;
+      }
+      .animate-header-ai {
+        animation: header-ai-antics 15s linear infinite;
+        image-rendering: pixelated; /* Keeps the pixel art sharp */
+      }
 
       img {
         pointer-events: none; /* Disables mouse events on images, preventing drag-and-drop saving */
