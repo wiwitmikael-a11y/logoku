@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>logo.ku - Studio Logo & Branding AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Publisher ID AdSense kamu sudah terpasang -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6110736010099308"
+     crossorigin="anonymous"></script>
+    <style>
+      /* Custom scrollbar for a more polished look */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1a202c; /* A dark gray that matches the theme */
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #4a5568; /* A lighter gray */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #718096; /* Even lighter on hover */
+      }
+      .font-handwritten {
+        font-family: 'Caveat', cursive;
+      }
+      /* Disable selection and context menu on long press */
+      body {
+        -webkit-user-select: none; /* Safari */
+        -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* IE 10+ */
+        user-select: none; /* Standard syntax */
+        -webkit-touch-callout: none; /* iOS Safari */
+        
+        /* --- DIAGONAL GRADIENT LINES - seamless --- */
+        /* A thicker, more defined diagonal line */
+        background-color: #111827; /* Tailwind gray-900 */
+        background-image: repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 75px,
+          rgba(99, 102, 241, 0.15) 75px,
+          rgba(99, 102, 241, 0.15) 80px
+        );
+        animation: bg-pan 150s linear infinite;
+      }
+      
+      @keyframes bg-pan {
+        0% {
+          background-position: 0% 0%;
+        }
+        100% {
+          background-position: 200% 200%;
+        }
+      }
+
+      img {
+        pointer-events: none; /* Disables mouse events on images, preventing drag-and-drop saving */
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0"
+  }
+}
+</script>
+</head>
+  <body class="text-white font-sans">
+    <div id="root"></div>
+    <script>
+      // Disable right-click context menu globally
+      document.addEventListener('contextmenu', event => event.preventDefault());
+    </script>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

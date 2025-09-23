@@ -1,0 +1,210 @@
+import React, { useState, useCallback } from 'react';
+import { generatePrintMedia } from '../services/geminiService';
+import type { Project, BrandInputs, PrintMediaAssets } from '../types';
+import Button from './common/Button';
+import Input from './common/Input';
+import Textarea from './common/Textarea';
+import Spinner from './common/Spinner';
+
+interface Props {
+  projectData: Project;
+  onComplete: (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => void;
+}
+
+type MediaTab = 'business_card' | 'flyer' | 'banner' | 'roll_banner';
+
+const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+  const [activeTab, setActiveTab] = useState<MediaTab>('business_card');
+  const businessHandle = projectData.brandInputs.businessName.toLowerCase().replace(/\s/g, '');
+  
+  // States
+  const [cardInfo, setCardInfo] = useState({
+    name: 'Rangga',
+    title: 'Owner',
+    phone: '0812-3456-7890',
+    email: `halo@${businessHandle}.com`,
+    website: `www.${businessHandle}.com`,
+  });
+  const [flyerInfo, setFlyerInfo] = useState({
+    headline: 'Diskon Grand Opening 50%!',
+    body: 'Nikmati semua produk kopi kami dengan setengah harga selama minggu pertama. Tunjukkan flyer ini untuk mendapatkan penawaran.',
+    cta: 'Kunjungi Kami Sekarang!',
+  });
+  const [bannerInfo, setBannerInfo] = useState({
+    headline: 'SEGERA DIBUKA!',
+    subheadline: `Nantikan ${projectData.brandInputs.businessName} di kota Anda!`,
+  });
+  const [rollBannerInfo, setRollBannerInfo] = useState({
+    headline: `Selamat Datang di ${projectData.brandInputs.businessName}`,
+    body: '• Kopi Berkualitas\n• Tempat Nyaman\n• Harga Terjangkau',
+    contact: `@${businessHandle}`,
+  });
+
+  const [cardDesigns, setCardDesigns] = useState<string[]>([]);
+  const [flyerDesigns, setFlyerDesigns] = useState<string[]>([]);
+  const [bannerDesigns, setBannerDesigns] = useState<string[]>([]);
+  const [rollBannerDesigns, setRollBannerDesigns] = useState<string[]>([]);
+
+  const [selectedCardUrl, setSelectedCardUrl] = useState<string | null>(null);
+  const [selectedFlyerUrl, setSelectedFlyerUrl] = useState<string | null>(null);
+  const [selectedBannerUrl, setSelectedBannerUrl] = useState<string | null>(null);
+  const [selectedRollBannerUrl, setSelectedRollBannerUrl] = useState<string | null>(null);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, setter: React.Dispatch<React.SetStateAction<any>>) => {
+    setter(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+  
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    
+    // Clear previous designs for the active tab
+    const designSetters = {
+        business_card: setCardDesigns,
+        flyer: setFlyerDesigns,
+        banner: setBannerDesigns,
+        roll_banner: setRollBannerDesigns
+    };
+    designSetters[activeTab]([]);
+
+    try {
+        const projectPayload: Omit<Project, 'id' | 'createdAt'> = {
+            ...projectData,
+            brandInputs: {
+                ...projectData.brandInputs,
+                contactInfo: cardInfo,
+                flyerContent: flyerInfo,
+                bannerContent: bannerInfo,
+                rollBannerContent: rollBannerInfo
+            }
+        };
+      const results = await generatePrintMedia(activeTab, projectPayload);
+      designSetters[activeTab](results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo]);
+
+  const handleContinue = () => {
+    onComplete({
+        assets: {
+            cardUrl: selectedCardUrl || undefined,
+            flyerUrl: selectedFlyerUrl || undefined,
+            bannerUrl: selectedBannerUrl || undefined,
+            rollBannerUrl: selectedRollBannerUrl || undefined,
+        },
+        inputs: {
+            contactInfo: cardInfo,
+            flyerContent: flyerInfo,
+            bannerContent: bannerInfo,
+            rollBannerContent: rollBannerInfo,
+        }
+    });
+  };
+
+  const renderContent = () => {
+    switch(activeTab) {
+        case 'business_card':
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <Input label="Nama Lengkap" name="name" value={cardInfo.name} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                    <Input label="Jabatan/Title" name="title" value={cardInfo.title} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                    <Input label="Nomor Telepon" name="phone" value={cardInfo.phone} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                    <Input label="Alamat Email" name="email" value={cardInfo.email} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                    <Input className="md:col-span-2" label="Website / Social Media" name="website" value={cardInfo.website} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                </div>
+            );
+        case 'flyer':
+            return (
+                <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <Input label="Headline Utama" name="headline" value={flyerInfo.headline} onChange={(e) => handleInfoChange(e, setFlyerInfo)} placeholder="cth: Diskon Spesial!" />
+                    <Textarea label="Isi / Deskripsi Penawaran" name="body" value={flyerInfo.body} onChange={(e) => handleInfoChange(e, setFlyerInfo)} rows={4} />
+                    <Input label="Call to Action (CTA)" name="cta" value={flyerInfo.cta} onChange={(e) => handleInfoChange(e, setFlyerInfo)} placeholder="cth: Beli Sekarang!" />
+                </div>
+            );
+        case 'banner':
+            return (
+                 <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <Input label="Headline (Teks Paling Besar)" name="headline" value={bannerInfo.headline} onChange={(e) => handleInfoChange(e, setBannerInfo)} placeholder="cth: GRAND OPENING!" />
+                    <Input label="Sub-headline (Teks Pendukung)" name="subheadline" value={bannerInfo.subheadline} onChange={(e) => handleInfoChange(e, setBannerInfo)} placeholder="cth: Diskon 50% Semua Item" />
+                </div>
+            );
+        case 'roll_banner':
+             return (
+                 <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <Input label="Headline (di bagian atas)" name="headline" value={rollBannerInfo.headline} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} />
+                    <Textarea label="Isi Konten (bisa pakai bullet point)" name="body" value={rollBannerInfo.body} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} rows={4} />
+                    <Input label="Info Kontak (di bagian bawah)" name="contact" value={rollBannerInfo.contact} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} placeholder="cth: @namabisnislo" />
+                </div>
+            );
+        default: return null;
+    }
+  };
+  
+    const designData = {
+        business_card: { designs: cardDesigns, selected: selectedCardUrl, setter: setSelectedCardUrl },
+        flyer: { designs: flyerDesigns, selected: selectedFlyerUrl, setter: setSelectedFlyerUrl },
+        banner: { designs: bannerDesigns, selected: selectedBannerUrl, setter: setSelectedBannerUrl },
+        roll_banner: { designs: rollBannerDesigns, selected: selectedRollBannerUrl, setter: setSelectedRollBannerUrl },
+    };
+    
+    const { designs, selected, setter } = designData[activeTab];
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div>
+        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Studio Media Cetak AI</h2>
+        <p className="text-gray-400">Bikin materi promosi cetak yang keren. Pilih jenis media, isi detailnya, dan biarkan AI mendesain untuk lo.</p>
+      </div>
+      
+      <div className="flex flex-wrap border-b border-gray-700">
+          <button onClick={() => setActiveTab('business_card')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'business_card' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Kartu Nama</button>
+          <button onClick={() => setActiveTab('flyer')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'flyer' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Flyer</button>
+          <button onClick={() => setActiveTab('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk</button>
+          <button onClick={() => setActiveTab('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Roll Banner</button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {renderContent()}
+        <div className="self-start">
+            <Button type="submit" disabled={isLoading}>
+                {isLoading ? <><Spinner /> Lagi Mendesain...</> : `Generate Desain`}
+            </Button>
+        </div>
+      </form>
+      
+      {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
+
+      {designs.length > 0 && (
+        <div className="flex flex-col gap-6">
+            <h3 className="text-xl font-bold">Pilih Desain Favorit Lo:</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {designs.map((url, index) => (
+              <div 
+                key={index} 
+                className={`bg-gray-700 rounded-lg p-2 flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${selected === url ? 'ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'hover:scale-105'}`}
+                onClick={() => setter(url)}
+              >
+                <img src={url} alt={`Generated design ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="self-center mt-4">
+        <Button onClick={handleContinue}>
+          Lanjut ke Desain Kemasan &rarr;
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default PrintMediaGenerator;
