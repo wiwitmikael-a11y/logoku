@@ -8,6 +8,7 @@ import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
 import Card from './common/Card';
 import LoadingMessage from './common/LoadingMessage';
+import ErrorMessage from './common/ErrorMessage';
 
 interface Props {
   initialData?: BrandInputs;
@@ -35,8 +36,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleGeneratePersona = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGeneratePersona = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setIsLoadingPersona(true);
     setError(null);
     setPersonas([]);
@@ -117,14 +118,19 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
         <Textarea label="Target Pasar" name="targetAudience" value={formData.targetAudience} onChange={handleChange} placeholder="cth: Anak muda, keluarga" rows={3} />
         <Textarea label="Yang Bikin Beda (Value Proposition)" name="valueProposition" value={formData.valueProposition} onChange={handleChange} placeholder="cth: Organik, murah, mewah" rows={3} />
         <Textarea className="md:col-span-2" label="Sebutin 1-2 Kompetitor" name="competitors" value={formData.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 flex items-center gap-4">
           <Button type="submit" isLoading={isLoadingPersona}>
             Racik Persona Sekarang!
           </Button>
+           {personas.length > 0 && !isLoadingPersona && (
+            <Button variant="secondary" onClick={() => handleGeneratePersona()} isLoading={isLoadingPersona}>
+              Coba Racik Lagi
+            </Button>
+          )}
         </div>
       </form>
 
-      {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       {personas.length > 0 && (
         <>

@@ -6,6 +6,7 @@ import { playSound, playBGM, stopBGM, toggleMuteBGM } from './services/soundServ
 import WelcomeScreen from './components/WelcomeScreen';
 import AdBanner from './components/AdBanner';
 import LoadingMessage from './components/common/LoadingMessage';
+import ProgressStepper from './components/common/ProgressStepper';
 
 // Dynamically import main screen components for code-splitting
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
@@ -66,6 +67,10 @@ const App: React.FC = () => {
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
     const [isMuted, setIsMuted] = useState(false);
     const previousAppState = useRef<AppState>(appState);
+
+    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'print', 'packaging', 'merchandise'];
+    const currentStepIndex = workflowSteps.indexOf(appState);
+    const showStepper = currentStepIndex !== -1;
 
 
     // Cek API Key saat aplikasi pertama kali dimuat
@@ -303,12 +308,15 @@ const App: React.FC = () => {
             </header>
             <main className="py-10 px-4 md:px-8 pb-24">
                 <div className="max-w-7xl mx-auto">
+                     {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
                     <Suspense fallback={
                         <div className="flex justify-center items-center min-h-[50vh]">
                             <LoadingMessage />
                         </div>
                     }>
-                        {renderContent()}
+                        <div key={appState} className="animate-content-fade-in">
+                            {renderContent()}
+                        </div>
                     </Suspense>
                 </div>
             </main>

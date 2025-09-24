@@ -102,6 +102,21 @@
           background-position: 200% 200%;
         }
       }
+      
+      /* NEW: Keyframe for screen transitions */
+      @keyframes content-fade-in {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-content-fade-in {
+        animation: content-fade-in 0.5s ease-out forwards;
+      }
 
       /* Keyframes for Mang AI with breathing and bouncy hop effects */
       @keyframes mario-top-breathing-bounce {

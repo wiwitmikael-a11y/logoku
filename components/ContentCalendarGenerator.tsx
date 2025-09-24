@@ -8,6 +8,7 @@ import Button from './common/Button';
 import Spinner from './common/Spinner';
 import Card from './common/Card';
 import LoadingMessage from './common/LoadingMessage';
+import ErrorMessage from './common/ErrorMessage';
 
 interface Props {
   projectData: Partial<Project>;
@@ -66,7 +67,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
         </Button>
       </div>
 
-      {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       {calendar.length > 0 && (
         <div className="flex flex-col gap-6">

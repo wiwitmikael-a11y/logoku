@@ -9,6 +9,7 @@ import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
+import ErrorMessage from './common/ErrorMessage';
 
 interface Props {
   persona: BrandPersona;
@@ -96,8 +97,8 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     }
   }, [selectedStyleId, persona, businessName]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!prompt) return;
 
     setIsLoading(true);
@@ -113,7 +114,6 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
         setSelectedLogoUrl(results[0]); // Auto-select the first (and only) logo
       }
       playSound('success');
-    // FIX: Added a missing opening curly brace `{` to the catch block to fix a critical syntax error.
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
       setError(errorMessage);
@@ -184,7 +184,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
         </div>
       </form>
 
-      {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       {logos.length > 0 && (
         <div className="flex flex-col gap-6 items-center">
@@ -199,7 +199,10 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
                 <img src={logos[0]} alt="Generated logo" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
               </div>
           </div>
-           <div className="self-center">
+           <div className="self-center flex items-center gap-4">
+             <Button onClick={() => handleSubmit()} variant="secondary" isLoading={isLoading}>
+                Generate Ulang
+            </Button>
             <Button onClick={handleContinue} disabled={!selectedLogoUrl}>
               Pilih & Finalisasi Logo &rarr;
             </Button>

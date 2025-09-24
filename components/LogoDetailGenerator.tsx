@@ -9,6 +9,7 @@ import Input from './common/Input';
 import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
+import ErrorMessage from './common/ErrorMessage';
 
 interface Props {
   baseLogoUrl: string;
@@ -138,7 +139,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
         </div>
       </div>
 
-      {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg mt-4">{error}</div>}
+      {error && <div className="mt-4"><ErrorMessage message={error} /></div>}
 
       <div className="self-center mt-6">
         <Button onClick={handleContinue} disabled={!variations}>

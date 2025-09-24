@@ -10,6 +10,7 @@ import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
+import ErrorMessage from './common/ErrorMessage';
 
 interface Props {
   projectData: Project;
@@ -195,7 +196,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         </div>
       </form>
       
-      {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
+      {error && <ErrorMessage message={error} />}
 
       {designs.length > 0 && (
         <div className="flex flex-col gap-6 items-center">
