@@ -3,7 +3,6 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandPersona, ContentCalendarEntry, LogoVariations, BrandInputs, Project } from '../types';
 
 // --- Service URLs ---
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const HF_API_URL_SDXL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
 
 // --- Gemini Client Setup ---
@@ -19,14 +18,6 @@ const getAiClient = (): GoogleGenAI => {
 };
 
 // --- New API Key Getters ---
-const getOpenRouterKey = (): string => {
-    const apiKey = process.env.OPENROUTER_KEY;
-    if (!apiKey) {
-        throw new Error("Waduh, API Key buat OpenRouter nggak ketemu, bro! Set 'Environment Variable' di Vercel dengan nama 'OPENROUTER_KEY'.");
-    }
-    return apiKey;
-};
-
 const getHuggingFaceKey = (): string => {
     const apiKey = process.env.HF_API_KEY;
     if (!apiKey) {
@@ -76,14 +67,58 @@ const handleApiError = (error: any, serviceName: string): Error => {
     return new Error(`Gagal manggil ${serviceName}. Coba cek console buat detailnya.`);
 };
 
-// --- REWRITTEN with OpenRouter ---
+// --- REWRITTEN with Gemini API to fix environment key issues ---
 export const generateBrandPersona = async (
   businessName: string,
   industry: string,
   targetAudience: string,
   valueProposition: string
 ): Promise<BrandPersona[]> => {
-  const apiKey = getOpenRouterKey();
+  const ai = getAiClient();
+
+  // Define the complex JSON schema for the BrandPersona type
+  const brandVoiceSchema = {
+    type: Type.OBJECT,
+    properties: {
+        deskripsi: { type: Type.STRING },
+        kata_yang_digunakan: { type: Type.ARRAY, items: { type: Type.STRING } },
+        kata_yang_dihindari: { type: Type.ARRAY, items: { type: Type.STRING } },
+    }
+  };
+
+  const customerAvatarSchema = {
+      type: Type.OBJECT,
+      properties: {
+          nama_avatar: { type: Type.STRING },
+          deskripsi_demografis: { type: Type.STRING },
+          pain_points: { type: Type.ARRAY, items: { type: Type.STRING } },
+          media_sosial: { type: Type.ARRAY, items: { type: Type.STRING } },
+      }
+  };
+
+  const brandPersonaSchema = {
+      type: Type.OBJECT,
+      properties: {
+          nama_persona: { type: Type.STRING },
+          deskripsi_singkat: { type: Type.STRING },
+          kata_kunci: { type: Type.ARRAY, items: { type: Type.STRING } },
+          palet_warna_hex: { type: Type.ARRAY, items: { type: Type.STRING } },
+          customer_avatars: { type: Type.ARRAY, items: customerAvatarSchema },
+          brand_voice: brandVoiceSchema,
+      }
+  };
+  
+  const finalSchema = {
+      type: Type.OBJECT,
+      properties: {
+          personas: {
+              type: Type.ARRAY,
+              description: "Array dari 3 alternatif persona brand yang komprehensif.",
+              items: brandPersonaSchema
+          }
+      }
+  };
+
   try {
     const userPrompt = `Kamu adalah seorang brand strategist ahli untuk UMKM Indonesia. Berdasarkan info ini:
 - Nama Bisnis: "${businessName}"
@@ -91,36 +126,23 @@ export const generateBrandPersona = async (
 - Target Pelanggan: ${targetAudience}
 - Nilai Jual: ${valueProposition}
 
-Buatkan 3 alternatif persona brand yang komprehensif. Setiap persona harus mencakup:
-1. 'nama_persona': Nama yang catchy.
-2. 'deskripsi_singkat': Penjelasan singkat.
-3. 'kata_kunci': Array 3-5 kata kunci.
-4. 'palet_warna_hex': Array 3 hex codes.
-5. 'customer_avatars': Array berisi 2 objek 'Avatar Pelanggan' detail (nama_avatar, deskripsi_demografis, pain_points, media_sosial).
-6. 'brand_voice': Objek berisi 'deskripsi', 'kata_yang_digunakan', dan 'kata_yang_dihindari'.`;
+Buatkan 3 alternatif persona brand yang komprehensif. Setiap persona harus mencakup semua field yang ada di schema JSON yang diminta. Pastikan palet warna adalah kode hex yang valid.`;
     
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: "google/gemma-2-9b-it:free",
-        messages: [
-          { role: "system", content: "You are an expert brand strategist for Indonesian SMEs. Your response MUST be a valid JSON object with a single key 'personas' which contains an array of 3 brand persona objects. Do not include any other text or markdown." },
-          { role: "user", content: userPrompt }
-        ],
-        response_format: { type: "json_object" }
-      })
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: userPrompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: finalSchema,
+        }
     });
 
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status} ${await response.text()}`);
-    
-    const data = await response.json();
-    const jsonString = data.choices[0].message.content;
+    const jsonString = response.text.trim();
     const result = JSON.parse(jsonString);
     return result.personas;
 
   } catch (error) {
-    throw handleApiError(error, "OpenRouter (Gemma)");
+    throw handleApiError(error, "Google Gemini");
   }
 };
 

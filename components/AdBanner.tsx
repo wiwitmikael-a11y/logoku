@@ -1,21 +1,25 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
-// Ganti nilai placeholder ini dengan Ad Slot ID asli dari akun AdSense kamu.
-const AD_SLOT_ID = "XXXXXXXXXX"; // <--- GANTI DI SINI
-
+/**
+ * AdBanner component is now enabled with the user's Ad Slot ID and Publisher ID.
+ */
 const AdBanner: React.FC = () => {
-  // Cek apakah Ad Slot ID sudah diganti dari placeholder.
-  const isAdSlotSet = AD_SLOT_ID !== "XXXXXXXXXX" && AD_SLOT_ID;
-  const adPushed = useRef(false);
+  // User-provided AdSense IDs.
+  const AD_PUBLISHER_ID = "ca-pub-6110736010099308";
+  const AD_SLOT_ID = "5474214451"; 
 
-  useEffect(() => {
-    // Hanya jalankan skrip AdSense jika Ad Slot ID sudah diganti dan belum pernah di-push.
+  // Check if the Ad Slot ID is valid.
+  const isAdSlotSet = !!AD_SLOT_ID;
+  const adPushed = React.useRef(false);
+
+  React.useEffect(() => {
+    // Only run the AdSense script if the Ad Slot ID is set and the ad hasn't been pushed yet.
     if (isAdSlotSet && !adPushed.current) {
-      // Tandai bahwa kita akan mencoba me-push iklan agar tidak terjadi dua kali.
+      // Mark that we are attempting to push the ad to prevent duplicates.
       adPushed.current = true;
 
-      // Beri jeda sesaat (100ms) untuk memastikan container iklan sudah dirender oleh browser.
-      // Ini mencegah error "No slot size for availableWidth=0".
+      // A brief delay (100ms) helps ensure the ad container is rendered by the browser,
+      // preventing "No slot size for availableWidth=0" errors.
       const timeout = setTimeout(() => {
         try {
           ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
@@ -24,7 +28,7 @@ const AdBanner: React.FC = () => {
         }
       }, 100);
 
-      // Fungsi cleanup untuk membersihkan timeout jika komponen di-unmount sebelum timeout berjalan.
+      // Cleanup function to clear the timeout if the component unmounts before it runs.
       return () => clearTimeout(timeout);
     }
   }, [isAdSlotSet]);
@@ -34,18 +38,18 @@ const AdBanner: React.FC = () => {
       <div className="w-full max-w-4xl text-center relative min-h-[60px] flex items-center justify-center">
         {isAdSlotSet ? (
           <>
-            {/* Unit Iklan AdSense akan muncul di sini */}
             <ins className="adsbygoogle"
                  style={{ display: 'block', width: '100%' }}
+                 data-ad-client={AD_PUBLISHER_ID}
                  data-ad-slot={AD_SLOT_ID}
                  data-ad-format="auto"
                  data-full-width-responsive="true"></ins>
             <span className="text-[10px] text-gray-600 absolute top-0 left-2 bg-gray-900 px-1 rounded-b-sm">Advertisement</span>
           </>
         ) : (
-          // Pesan untuk developer jika Ad Slot ID belum di-set.
+          // This fallback should not be shown now that the ID is set.
           <div className="text-yellow-400 bg-yellow-900/50 p-3 rounded-lg text-sm">
-            <strong>Penting:</strong> Iklan belum aktif. Buka file <code>components/AdBanner.tsx</code> dan ganti placeholder <code>AD_SLOT_ID</code> dengan Ad Slot ID asli dari akun AdSense lo.
+            <strong>Penting:</strong> Konfigurasi Ad Slot ID di <code>components/AdBanner.tsx</code> belum lengkap.
           </div>
         )}
       </div>
