@@ -69,7 +69,7 @@ const App: React.FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [currentProjectData, setCurrentProjectData] = useState<Partial<ProjectData> | null>(null);
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-    const [isMuted, setIsMuted] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
     const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
@@ -105,22 +105,38 @@ const App: React.FC = () => {
     }, []);
 
     const fetchUserData = async (user: User) => {
-        // The new database trigger handles profile creation automatically.
-        // So, we just need to fetch the profile, which should already exist.
+        // 1. Try to fetch the profile.
         let { data: profile, error: profileError } = await supabaseClient
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
-
-        if (profileError && profileError.code !== 'PGRST116') { // Log real errors, ignore 'not found' for now
+    
+        // 2. If profile is not found, it means the user exists in auth but not in our profiles table.
+        // This can happen if the user signed up before the trigger was active, or if the trigger failed.
+        // We'll create it here to "heal" the user's state, making the app more robust.
+        if (profileError && profileError.code === 'PGRST116') {
+            console.warn('Profile not found for user, creating one as a fallback to heal state.');
+            const { data: newProfile, error: insertError } = await supabaseClient
+                .from('profiles')
+                .insert({ id: user.id }) // The DB will use default values for credits and date
+                .select()
+                .single();
+    
+            if (insertError) {
+                console.error("CRITICAL: Failed to create fallback profile:", insertError);
+                setUserProfile(null); // Can't proceed
+                return;
+            }
+            profile = newProfile; // Use the newly created profile
+        } else if (profileError) {
+            // Handle other, unexpected errors during fetch
             console.error("Error fetching profile:", profileError);
             setUserProfile(null);
-            // Optionally, handle this more gracefully, e.g., show an error message
-            return; // Stop execution if we can't get the profile
+            return;
         }
         
-        // Handle daily credit reset.
+        // 3. Handle daily credit reset.
         const today = new Date().toISOString().split('T')[0];
         if (profile && profile.last_credit_reset !== today) {
             const { data: updatedProfile, error: updateError } = await supabaseClient
@@ -136,9 +152,10 @@ const App: React.FC = () => {
             }
         }
         
+        // 4. Set the final profile state
         setUserProfile(profile);
-
-        // Fetch user's projects.
+    
+        // 5. Fetch user's projects.
         const { data: userProjects, error: projectsError } = await supabaseClient
             .from('projects')
             .select('*')
@@ -344,7 +361,7 @@ const App: React.FC = () => {
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                         </button>
                         <button onClick={handleToggleMute} title={isMuted ? "Suara Aktif" : "Bisukan Musik"} className="text-gray-400 hover:text-white transition-colors">
-                            {isMuted ? '🔇' : '🔊'}
+                            {isMuted ? '🔊' : '🔇'}
                         </button>
                         <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-8 h-8 rounded-full" />
                     </div>
