@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { generateBrandPersona, generateSlogans } from '../services/geminiService';
 import { playSound } from '../services/soundService';
+import { loadWorkflowState } from '../services/workflowPersistence';
 import type { BrandPersona, BrandInputs } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -11,12 +12,11 @@ import LoadingMessage from './common/LoadingMessage';
 import ErrorMessage from './common/ErrorMessage';
 
 interface Props {
-  initialData?: BrandInputs;
   onComplete: (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => void;
 }
 
-const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => {
-  const [formData, setFormData] = useState<BrandInputs>(initialData || {
+const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
+  const [formData, setFormData] = useState<BrandInputs>({
     businessName: 'Kopi Senja',
     industry: 'Minuman Kopi',
     targetAudience: 'Mahasiswa dan pekerja muda usia 18-28 tahun',
@@ -30,6 +30,14 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
   const [isLoadingPersona, setIsLoadingPersona] = useState(false);
   const [isLoadingSlogan, setIsLoadingSlogan] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load persisted state on component mount
+    const persistedState = loadWorkflowState();
+    if (persistedState?.brandInputs) {
+      setFormData(persistedState.brandInputs);
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

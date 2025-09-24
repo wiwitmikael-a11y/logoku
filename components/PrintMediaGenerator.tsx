@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { playSound } from '../services/soundService';
+import { useAuth } from '../contexts/AuthContext';
 import type { ProjectData, BrandInputs, PrintMediaAssets } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -13,14 +14,15 @@ import ErrorMessage from './common/ErrorMessage';
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => void;
-  credits: number;
-  onDeductCredits: (cost: number) => boolean;
 }
 
 type MediaTab = 'business_card' | 'flyer' | 'banner' | 'roll_banner';
 const GENERATION_COST = 1;
 
-const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, credits, onDeductCredits }) => {
+const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+  const { profile, deductCredits } = useAuth();
+  const credits = profile?.credits ?? 0;
+
   const [activeTab, setActiveTab] = useState<MediaTab>('business_card');
   const businessHandle = projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
   
@@ -77,7 +79,9 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, credits
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!onDeductCredits(GENERATION_COST)) return;
+    
+    const hasEnoughCredits = await deductCredits(GENERATION_COST);
+    if (!hasEnoughCredits) return;
 
     setIsLoading(true);
     setError(null);
@@ -120,7 +124,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, credits
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, onDeductCredits, designData]);
+  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, deductCredits, designData]);
 
   const handleContinue = () => {
     onComplete({

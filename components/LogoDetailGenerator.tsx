@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
+import { useAuth } from '../contexts/AuthContext';
 import type { LogoVariations } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -13,14 +14,15 @@ interface Props {
   baseLogoUrl: string;
   basePrompt: string;
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
-  credits: number;
-  onDeductCredits: (cost: number) => boolean;
 }
 
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
-const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete, credits, onDeductCredits }) => {
+const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete }) => {
+  const { profile, deductCredits } = useAuth();
+  const credits = profile?.credits ?? 0;
+
   const [finalLogoUrl, setFinalLogoUrl] = useState<string>(baseLogoUrl);
   const [variations, setVariations] = useState<LogoVariations | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
@@ -33,7 +35,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
   const closeModal = () => setModalImageUrl(null);
 
   const handleGenerateVariations = useCallback(async () => {
-    if (!onDeductCredits(VARIATION_COST)) return;
+    const hasEnoughCredits = await deductCredits(VARIATION_COST);
+    if (!hasEnoughCredits) return;
 
     setIsGeneratingVariations(true);
     setError(null);
@@ -51,11 +54,13 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, baseLogoUrl, onDeductCredits]);
+  }, [basePrompt, baseLogoUrl, deductCredits]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editPrompt.trim() || !onDeductCredits(EDIT_COST)) return;
+    
+    const hasEnoughCredits = await deductCredits(EDIT_COST);
+    if (!editPrompt.trim() || !hasEnoughCredits) return;
 
     setIsEditing(true);
     setError(null);

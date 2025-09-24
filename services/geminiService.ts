@@ -1,16 +1,18 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData } from '../types';
+import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption } from '../types';
 
 // --- Environment Variable Setup ---
-// The API key must be available as process.env.API_KEY.
-const API_KEY = process.env.API_KEY;
+// The API key must be available as import.meta.env.VITE_API_KEY.
+// Vercel requires a VITE_ prefix to expose environment variables to the browser.
+const API_KEY = import.meta.env.VITE_API_KEY;
+
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
 const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
     if (!API_KEY) {
-        throw new Error("Waduh, API Key Google Gemini (`API_KEY`) nggak ketemu, bro! Di project ini, variabel lain pakai awalan `VITE_`, tapi API key Gemini wajib bernama `API_KEY` (tanpa awalan). Cek lagi di settingan Vercel-mu ya.");
+        throw new Error("Waduh, API Key Google Gemini (`VITE_API_KEY`) nggak ketemu, bro! Di Vercel, semua environment variable untuk frontend harus diawali 'VITE_'. Cek lagi settingan-mu ya.");
     }
     ai = new GoogleGenAI({ apiKey: API_KEY });
     return ai;
@@ -100,6 +102,63 @@ export const generateSlogans = async (
         return JSON.parse(jsonString);
     } catch (error) {
         throw handleApiError(error, "Google Gemini");
+    }
+};
+
+export const generateCaptions = async (
+    businessName: string,
+    persona: BrandPersona,
+    topic: string,
+    tone: string,
+): Promise<GeneratedCaption[]> => {
+    const ai = getAiClient();
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            captions: {
+                type: Type.ARRAY,
+                description: "Array dari 3-5 alternatif caption sosial media.",
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        caption: {
+                            type: Type.STRING,
+                            description: "Teks caption yang menarik dan engaging."
+                        },
+                        hashtags: {
+                            type: Type.ARRAY,
+                            items: { type: Type.STRING },
+                            description: "Array berisi 5-7 hashtag yang relevan."
+                        }
+                    },
+                    required: ["caption", "hashtags"],
+                }
+            }
+        }
+    };
+    try {
+        const userPrompt = `Kamu adalah seorang social media manager profesional untuk UMKM Indonesia.
+Brand: "${businessName}"
+Persona Brand: "${persona.nama_persona} - ${persona.deskripsi_singkat}"
+Gaya Bicara: Gunakan kata-kata seperti "${persona.brand_voice.kata_yang_digunakan.join(', ')}", hindari kata-kata seperti "${persona.brand_voice.kata_yang_dihindari.join(', ')}".
+Tugas: Buatkan 3 alternatif caption sosial media (misal: untuk Instagram).
+Topik Postingan: "${topic}"
+Nada Bicara: "${tone}"
+Setiap alternatif harus berisi caption yang menarik dan daftar hashtag yang relevan. Ikuti JSON schema yang diberikan.`;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: userPrompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema
+            }
+        });
+        const jsonString = response.text.trim();
+        const result = JSON.parse(jsonString);
+        return result.captions;
+    } catch (error) {
+        throw handleApiError(error, "Google Gemini (Caption)");
     }
 };
 

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
+import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -15,8 +16,6 @@ interface Props {
   persona: BrandPersona;
   businessName: string;
   onComplete: (data: { logoUrl: string; prompt: string }) => void;
-  credits: number;
-  onDeductCredits: (cost: number) => boolean;
 }
 
 const GENERATION_COST = 1;
@@ -78,7 +77,10 @@ const logoStyles = [
     }
 ];
 
-const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, credits, onDeductCredits }) => {
+const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
+  const { profile, deductCredits } = useAuth();
+  const credits = profile?.credits ?? 0;
+
   const [prompt, setPrompt] = useState('');
   const [logos, setLogos] = useState<string[]>([]);
   const [selectedLogoUrl, setSelectedLogoUrl] = useState<string | null>(null);
@@ -104,7 +106,9 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, cre
 
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!prompt || !onDeductCredits(GENERATION_COST)) return;
+    
+    const hasEnoughCredits = await deductCredits(GENERATION_COST);
+    if (!prompt || !hasEnoughCredits) return;
 
     setIsLoading(true);
     setError(null);
@@ -126,7 +130,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, cre
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, onDeductCredits]);
+  }, [prompt, deductCredits]);
   
   const handleContinue = () => {
     if (selectedLogoUrl) {

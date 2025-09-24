@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
+import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
@@ -12,8 +13,6 @@ interface Props {
   logoPrompt: string;
   businessName: string;
   onComplete: (merchandiseUrl: string) => void;
-  credits: number;
-  onDeductCredits: (cost: number) => boolean;
 }
 
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
@@ -40,7 +39,10 @@ const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
   },
 ];
 
-const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onComplete, credits, onDeductCredits }) => {
+const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onComplete }) => {
+  const { profile, deductCredits } = useAuth();
+  const credits = profile?.credits ?? 0;
+
   const [activeTab, setActiveTab] = useState<MerchType>('t-shirt');
   const [prompt, setPrompt] = useState('');
   const [designs, setDesigns] = useState<string[]>([]);
@@ -64,7 +66,9 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt || !onDeductCredits(GENERATION_COST)) return;
+
+    const hasEnoughCredits = await deductCredits(GENERATION_COST);
+    if (!prompt || !hasEnoughCredits) return;
 
     setIsLoading(true);
     setError(null);
@@ -86,7 +90,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, onDeductCredits]);
+  }, [prompt, deductCredits]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {

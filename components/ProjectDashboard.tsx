@@ -1,17 +1,19 @@
 import React from 'react';
-import type { Project, User } from '../types';
+import type { Project } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Card from './common/Card';
 
 interface ProjectDashboardProps {
   projects: Project[];
-  user: User | undefined | null;
   onNewProject: () => void;
   onSelectProject: (projectId: number) => void;
+  onGoToCaptionGenerator: (projectId: number) => void;
 }
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, user, onNewProject, onSelectProject }) => {
-  const userName = user?.user_metadata?.full_name || 'Bro';
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onGoToCaptionGenerator }) => {
+  const { session } = useAuth();
+  const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
   return (
     <div className="flex flex-col gap-8 items-center text-center">
@@ -45,6 +47,18 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, user, onN
                    <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">
                     Dibuat pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
+                    <Button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onGoToCaptionGenerator(project.id);
+                        }}
+                        variant="secondary"
+                        size="small"
+                    >
+                        Buat Caption
+                    </Button>
                 </div>
               </Card>
             ))}

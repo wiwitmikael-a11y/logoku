@@ -81,6 +81,11 @@ export interface PrintMediaAssets {
     rollBannerUrl?: string;
 }
 
+export interface GeneratedCaption {
+  caption: string;
+  hashtags: string[];
+}
+
 // This represents the data structure stored in the 'project_data' JSONB column
 export interface ProjectData {
   brandInputs: BrandInputs;

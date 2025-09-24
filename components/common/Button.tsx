@@ -7,11 +7,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   isLoading?: boolean;
   variant?: 'primary' | 'secondary';
+  size?: 'normal' | 'small';
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant = 'primary', ...props }) => {
+const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant = 'primary', size = 'normal', ...props }) => {
   
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     // Make it async to wait for audio context to resume
@@ -28,11 +29,12 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
     playSound('hover');
   }
   
-  const baseClasses = "relative inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 disabled:cursor-not-allowed transition-all duration-300 ease-in-out";
+  const baseClasses = "relative inline-flex items-center justify-center gap-2 font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 disabled:cursor-not-allowed transition-all duration-300 ease-in-out";
   const primaryClasses = "text-white bg-indigo-600 shadow-lg hover:bg-indigo-700 disabled:bg-indigo-900/50";
   const secondaryClasses = "text-indigo-300 bg-transparent border border-indigo-500 hover:bg-indigo-500/20 disabled:border-indigo-800/50 disabled:text-gray-500";
   
   const variantClasses = variant === 'primary' ? primaryClasses : secondaryClasses;
+  const sizeClasses = size === 'normal' ? "px-6 py-3" : "px-4 py-2 text-sm";
 
 
   return (
@@ -41,7 +43,7 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       disabled={isLoading || props.disabled}
-      className={`${baseClasses} ${variantClasses}`}
+      className={`${baseClasses} ${variantClasses} ${sizeClasses}`}
     >
       {isLoading && variant === 'primary' && (
         <img
