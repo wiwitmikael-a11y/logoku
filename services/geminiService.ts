@@ -172,7 +172,8 @@ const generateImagesWithGemini = async (prompt: string, count: number): Promise<
             prompt: prompt,
             config: {
                 numberOfImages: count,
-                outputMimeType: 'image/png', // Use PNG for better quality and transparency support
+                outputMimeType: 'image/png',
+                aspectRatio: '1:1', // FIX: Explisit nambahin aspect ratio biar lebih stabil
             },
         });
         
