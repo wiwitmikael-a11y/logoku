@@ -31,8 +31,9 @@ class ErrorBoundary extends Component<Props, State> {
   // FIX: Removed explicit `public` access modifier.
   // FIX: Added an explicit 'ReactNode' return type to the render method. This can help resolve complex TypeScript inference issues.
   render(): ReactNode {
-    // FIX: Replaced combined destructuring of state and props with direct access
-    // to `this.state` and `this.props` to resolve TypeScript error where `props` was not found.
+    // FIX: The compiler struggled to find `this.props`. Destructuring `children`
+    // from `this.props` can resolve such TypeScript inference issues.
+    const { children } = this.props;
     if (this.state.hasError) {
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
@@ -66,7 +67,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return children;
   }
 }
 

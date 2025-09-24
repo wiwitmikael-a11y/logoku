@@ -45,6 +45,11 @@ export const unlockAudio = async (): Promise<void> => {
             await audioCtx.resume();
         }
         isAudioUnlocked = true;
+        
+        // After unlocking, try to play the current BGM if it's supposed to be on.
+        if (currentBGM && !isMuted) {
+            currentBGM.play().catch(() => {});
+        }
     } catch (e) {
         console.error("Audio context could not be resumed.", e);
     }

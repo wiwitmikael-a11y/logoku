@@ -63,6 +63,9 @@ const MainApp: React.FC = () => {
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
     
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+    
     const previousAppState = useRef<AppState>(appState);
     const previousSession = useRef<typeof session>(session);
 
@@ -85,6 +88,20 @@ const MainApp: React.FC = () => {
         }
         previousSession.current = session;
     }, [session, authLoading]);
+    
+    // Effect to close user menu dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const fetchProjects = async () => {
         if (!session?.user) return;
@@ -274,8 +291,20 @@ const MainApp: React.FC = () => {
     };
     
     if (authLoading) return <AuthLoadingScreen />;
-    if (!session) return <LoginScreen onShowToS={openToSModal} />;
-
+    
+    // Render Login screen and ToS modal if not logged in
+    if (!session) {
+        return (
+            <>
+                <LoginScreen onShowToS={openToSModal} />
+                <Suspense fallback={null}>
+                    <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
+                </Suspense>
+            </>
+        );
+    }
+    
+    // Render the main app for logged-in users
     return (
         <div className="text-white min-h-screen font-sans">
             <header className="py-4 px-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
@@ -285,25 +314,39 @@ const MainApp: React.FC = () => {
                         alt="Mang AI walking in the header"
                         className="animate-header-ai w-12 h-12"
                     />
-                    <h1 className="text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer flex items-baseline" onClick={handleReturnToDashboard}>
-                        <span>logo<span className="text-white">.ku</span></span>
-                    </h1>
-                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400" title="Kredit Generate Gambar Harian">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
-                            <span className="font-bold text-sm text-white">{profile?.credits ?? 0}</span>
+                    <div className="flex items-end gap-3">
+                        <h1 className="text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleReturnToDashboard}>
+                            <span>logo<span className="text-white">.ku</span></span>
+                        </h1>
+                        <div className="font-handwritten text-lg text-indigo-300 -mb-1 cursor-pointer hover:text-white transition-colors" onClick={openContactModal}>
+                            by @rangga.p.h
                         </div>
-                        <button onClick={handleLogout} title="Logout" className="text-gray-400 hover:text-white transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                        </button>
-                        <button onClick={handleToggleMute} title={isMuted ? "Suara Aktif" : "Bisukan Musik"} className="text-gray-400 hover:text-white transition-colors">
-                            {isMuted ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
-                            ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                    </div>
+                     <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400" title="Kredit Generate Gambar Harian">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                            <span className="font-bold text-sm text-white">Sisa Token: {profile?.credits ?? 0}</span>
+                        </div>
+                         <div className="relative" ref={userMenuRef}>
+                            <button onClick={() => setIsUserMenuOpen(prev => !prev)} title="User Menu" className="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 rounded-full">
+                                <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full" />
+                            </button>
+                            {isUserMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
+                                    <button onClick={() => { handleToggleMute(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
+                                        {isMuted ? (
+                                            <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg><span>Suara Aktif</span></>
+                                        ) : (
+                                            <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg><span>Bisukan</span></>
+                                        )}
+                                    </button>
+                                     <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                        <span>Logout</span>
+                                    </button>
+                                </div>
                             )}
-                        </button>
-                        <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-8 h-8 rounded-full" />
+                        </div>
                     </div>
                 </div>
             </header>
