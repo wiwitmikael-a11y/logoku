@@ -19,8 +19,8 @@ const Input: React.FC<InputProps> = ({ label, name, className, ...props }) => {
     }
   };
   
-  const handleFocus = () => {
-      unlockAudio();
+  const handleFocus = async () => {
+      await unlockAudio();
   };
 
 

@@ -21,7 +21,7 @@ const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'packaging' | 'merchandise' | 'summary';
 
-const GITHUB_ASSETS_URL = 'https://raw.githubusercontent.com/wiwitmikael-a11y/logoku-assets/main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // Component untuk menampilkan error jika API Key tidak ada
 const ApiKeyErrorScreen = () => (
@@ -89,13 +89,6 @@ const App: React.FC = () => {
         }
     }, []);
 
-    // Manage BGM and unlock audio on first mount
-    useEffect(() => {
-        if (showWelcome) {
-            playBGM('welcome');
-        }
-    }, [showWelcome]);
-    
     // Play transition sound when app state changes
     useEffect(() => {
         if (previousAppState.current !== appState && !showWelcome) {

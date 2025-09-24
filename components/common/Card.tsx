@@ -12,18 +12,17 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, className }) => {
   
-  const handleClick = () => {
+  const handleClick = async () => {
     if (onClick) {
-      // Also unlock audio here for the first interaction if it's a card click.
-      unlockAudio();
+      await unlockAudio();
       playSound('select');
       onClick();
     }
   };
   
-  const handleMouseEnter = () => {
+  const handleMouseEnter = async () => {
     if (onClick) { // Only play hover sound on clickable cards
-      unlockAudio();
+      await unlockAudio();
       playSound('hover');
     }
   };

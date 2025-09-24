@@ -7,6 +7,7 @@ import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
+import ImageModal from './common/ImageModal';
 
 interface Props {
   logoPrompt: string;
@@ -44,6 +45,10 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
   const [selectedDesignUrl, setSelectedDesignUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
+  const openModal = (url: string) => setModalImageUrl(url);
+  const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
     const currentMerch = merchandiseTypes.find(m => m.id === activeTab);
@@ -134,9 +139,10 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
             <h3 className="text-xl font-bold">Mockup Hasil Generate:</h3>
           <div className="flex justify-center w-full max-w-sm">
             <div 
-                className="bg-gray-700 rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-square ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500"
+                className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-square ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
+                onClick={() => openModal(designs[0])}
               >
-                <img src={designs[0]} alt={`Generated mockup 1`} className="object-contain rounded-md max-w-full max-h-full" />
+                <img src={designs[0]} alt={`Generated mockup for ${activeTab}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
               </div>
           </div>
         </div>
@@ -147,6 +153,14 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
           Selesai & Lihat Brand Kit Lengkap &rarr;
         </Button>
       </div>
+      
+      {modalImageUrl && (
+        <ImageModal 
+          imageUrl={modalImageUrl}
+          altText={`Mockup merchandise untuk ${businessName}`}
+          onClose={closeModal}
+        />
+      )}
     </div>
   );
 };

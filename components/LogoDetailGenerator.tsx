@@ -8,6 +8,7 @@ import Button from './common/Button';
 import Input from './common/Input';
 import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
+import ImageModal from './common/ImageModal';
 
 interface Props {
   baseLogoUrl: string;
@@ -22,6 +23,10 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
   const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
+  const openModal = (url: string) => setModalImageUrl(url);
+  const closeModal = () => setModalImageUrl(null);
 
   const handleGenerateVariations = useCallback(async () => {
     setIsGeneratingVariations(true);
@@ -83,8 +88,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
         {/* Logo Preview & Variations */}
         <div className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-xl font-bold">Logo Utama Lo</h3>
-            <div className="bg-white p-4 rounded-lg flex justify-center items-center aspect-square">
-                <img src={finalLogoUrl} alt="Logo Utama" className="max-w-full max-h-64 object-contain" />
+            <div className="bg-white p-4 rounded-lg flex justify-center items-center aspect-square cursor-pointer group" onClick={() => openModal(finalLogoUrl)}>
+                <img src={finalLogoUrl} alt="Logo Utama" className="max-w-full max-h-64 object-contain group-hover:scale-105 transition-transform" />
             </div>
 
             {variations ? (
@@ -92,11 +97,15 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
                     <h4 className="font-bold mb-4">Paket Logo Lengkap:</h4>
                     <div className="grid grid-cols-2 gap-4 text-center">
                         <div>
-                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center"><img src={variations.icon} alt="Ikon Logo" className="max-w-full max-h-24 object-contain"/></div>
+                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.icon)}>
+                                <img src={variations.icon} alt="Ikon Logo" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
+                            </div>
                             <p className="text-sm mt-2 text-gray-400">Versi Ikon</p>
                         </div>
                          <div>
-                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center"><img src={variations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain"/></div>
+                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.monochrome)}>
+                                <img src={variations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
+                            </div>
                             <p className="text-sm mt-2 text-gray-400">Versi Monokrom</p>
                         </div>
                     </div>
@@ -136,6 +145,14 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
             Logo Beres, Lanjut ke Konten &rarr;
         </Button>
       </div>
+
+      {modalImageUrl && (
+        <ImageModal
+          imageUrl={modalImageUrl}
+          altText="Detail Logo"
+          onClose={closeModal}
+        />
+      )}
     </div>
   );
 };

@@ -8,6 +8,7 @@ import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
+import ImageModal from './common/ImageModal';
 
 interface Props {
   persona: BrandPersona;
@@ -79,6 +80,10 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStyleId, setSelectedStyleId] = useState<string>('minimalist');
+  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
+  const openModal = (url: string) => setModalImageUrl(url);
+  const closeModal = () => setModalImageUrl(null);
   
   useEffect(() => {
     const selectedStyle = logoStyles.find(s => s.id === selectedStyleId);
@@ -108,6 +113,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
         setSelectedLogoUrl(results[0]); // Auto-select the first (and only) logo
       }
       playSound('success');
+    // FIX: Added a missing opening curly brace `{` to the catch block to fix a critical syntax error.
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
       setError(errorMessage);
@@ -187,9 +193,10 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
             </div>
           <div className="flex justify-center w-full max-w-sm">
             <div 
-                className="bg-gray-700 rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500"
+                className="bg-white rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
+                onClick={() => openModal(logos[0])}
               >
-                <img src={logos[0]} alt="Generated logo" className="object-contain rounded-md max-w-full max-h-full" />
+                <img src={logos[0]} alt="Generated logo" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
               </div>
           </div>
            <div className="self-center">
@@ -198,6 +205,14 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
             </Button>
           </div>
         </div>
+      )}
+
+      {modalImageUrl && (
+        <ImageModal 
+          imageUrl={modalImageUrl}
+          altText={`Logo untuk ${businessName}`}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

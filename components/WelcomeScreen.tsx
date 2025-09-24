@@ -1,13 +1,26 @@
-import React from 'react';
+
+import React, { useRef } from 'react';
 import Button from './common/Button';
+import { playBGM } from '../services/soundService';
 
 interface Props {
   onEnter: () => void;
 }
 
-const GITHUB_ASSETS_URL = 'https://raw.githubusercontent.com/wiwitmikael-a11y/logoku-assets/main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const WelcomeScreen: React.FC<Props> = ({ onEnter }) => {
+  const bgmStarted = useRef(false);
+
+  const handleInteraction = () => {
+    // The Button's onMouseEnter now awaits unlockAudio, so this is safe.
+    // We just need to play the music once.
+    if (!bgmStarted.current) {
+      playBGM('welcome');
+      bgmStarted.current = true;
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center p-4 overflow-hidden">
        <style>{`
@@ -45,7 +58,10 @@ const WelcomeScreen: React.FC<Props> = ({ onEnter }) => {
           </p>
         </div>
         
-        <Button onClick={onEnter} className="px-8 py-4 text-lg font-bold transform hover:scale-105">
+        <Button 
+          onClick={onEnter} 
+          onMouseEnter={handleInteraction}
+          className="px-8 py-4 text-lg font-bold transform hover:scale-105">
           Yaudah, Gaskeun Branding!
         </Button>
       </div>

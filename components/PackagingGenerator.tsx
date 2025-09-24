@@ -8,6 +8,7 @@ import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
+import ImageModal from './common/ImageModal';
 
 interface Props {
   persona: BrandPersona;
@@ -21,6 +22,10 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
   const [selectedDesignUrl, setSelectedDesignUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
+  const openModal = (url: string) => setModalImageUrl(url);
+  const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
     // Auto-generate a prompt based on the persona
@@ -93,9 +98,10 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
           </div>
           <div className="flex justify-center w-full max-w-lg">
             <div
-                className="bg-gray-700 rounded-lg p-2 aspect-[4/3] flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500"
+                className="bg-white rounded-lg p-2 aspect-[4/3] flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
+                onClick={() => openModal(designs[0])}
             >
-                <img src={designs[0]} alt="Generated packaging design" className="object-contain rounded-md max-w-full max-h-full" />
+                <img src={designs[0]} alt="Generated packaging design" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
             </div>
           </div>
           <div className="self-center">
@@ -104,6 +110,14 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
             </Button>
           </div>
         </div>
+      )}
+
+      {modalImageUrl && (
+        <ImageModal 
+          imageUrl={modalImageUrl}
+          altText={`Desain kemasan untuk ${businessName}`}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

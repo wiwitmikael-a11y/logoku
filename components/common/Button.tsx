@@ -8,14 +8,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
 }
 
-const GITHUB_ASSETS_URL = 'https://raw.githubusercontent.com/wiwitmikael-a11y/logoku-assets/main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, ...props }) => {
   
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Attempt to unlock the audio context on the first user interaction.
-    // This is safe to call multiple times as it only runs once.
-    unlockAudio();
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Make it async to wait for audio context to resume
+    await unlockAudio();
     
     playSound('click');
     if (onClick) {
@@ -23,8 +22,8 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, ...props 
     }
   };
 
-  const handleMouseEnter = () => {
-    unlockAudio(); // Also unlock on hover
+  const handleMouseEnter = async () => {
+    await unlockAudio(); // Also unlock on hover
     playSound('hover');
   }
 

@@ -1,6 +1,5 @@
-
 // A robust service to play UI sound effects and BGM using the Web Audio API.
-const GITHUB_ASSETS_URL = 'https://raw.githubusercontent.com/wiwitmikael-a11y/logoku-assets/main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // --- SFX Setup ---
 export type SfxName = 'click' | 'select' | 'start' | 'success' | 'error' | 'hover' | 'typing' | 'transition';
@@ -14,7 +13,7 @@ const sfxFiles: Record<SfxName, string> = {
   hover: `${GITHUB_ASSETS_URL}ui_hover.mp3`,
   typing: `${GITHUB_ASSETS_URL}ui_typing.mp3`,
   transition: `${GITHUB_ASSETS_URL}ui_transition.mp3`,
-  error: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjQ1LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATEFGVAAAAQoAAAAAAAEAAAIABkF1ZGlvIFRvb2xraXQgMy4wLjAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tAwBzaW5n/8EAAAACAAABAAmfn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn//tAwBAlD8A/8EAAAACAAABAAmfn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5',
+  error: `${GITHUB_ASSETS_URL}ui_error.mp3`,
 };
 
 // --- BGM Setup ---
@@ -86,17 +85,24 @@ const initializeAudio = async () => {
 };
 
 // --- Core Controls ---
-export const unlockAudio = () => {
-  if (isAudioUnlocked || !audioContext) return;
+export const unlockAudio = (): Promise<void> => {
+  if (isAudioUnlocked || !audioContext) {
+    return Promise.resolve();
+  }
+  
   if (audioContext.state === 'suspended') {
-    audioContext.resume().then(() => {
+    return audioContext.resume().then(() => {
       isAudioUnlocked = true;
-      console.log("Audio context resumed by user interaction.");
-    }).catch(err => console.error("Failed to resume audio context:", err));
+      console.log("Audio context resumed and unlocked.");
+    }).catch(err => {
+      console.error("Failed to resume audio context:", err);
+    });
   } else {
     isAudioUnlocked = true;
+    return Promise.resolve();
   }
 };
+
 
 // --- SFX Player ---
 export const playSound = (name: SfxName) => {
@@ -151,16 +157,14 @@ export const toggleMuteBGM = (): boolean => {
     if (!audioContext || !bgmGainNode) return false; // Not playing
     
     const currentVolume = bgmGainNode.gain.value;
-    const isCurrentlyMuted = currentVolume === 0;
-
-    if (isCurrentlyMuted) {
-        bgmGainNode.gain.setTargetAtTime(0.3, audioContext.currentTime, 0.01); // Restore to default volume
-        return true; // Now playing
-    } else {
-        bgmGainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.01); // Mute
+    if (currentVolume > 0) {
+        bgmGainNode.gain.setValueAtTime(0, audioContext.currentTime);
         return false; // Now muted
+    } else {
+        bgmGainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Restore volume
+        return true; // Now playing
     }
 };
 
-// Initialize on load
+// Auto-initialize the service as soon as the module is loaded.
 initializeAudio();

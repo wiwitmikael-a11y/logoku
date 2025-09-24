@@ -19,8 +19,8 @@ const Textarea: React.FC<TextareaProps> = ({ label, name, className, ...props })
     }
   };
   
-  const handleFocus = () => {
-      unlockAudio();
+  const handleFocus = async () => {
+      await unlockAudio();
   };
 
   return (
