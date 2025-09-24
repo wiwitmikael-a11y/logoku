@@ -13,7 +13,7 @@ const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
     if (!API_KEY) {
         // Updated error message to be more generic.
-        throw new Error("Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro! Cek lagi di Environment Variables, terus deploy ulang ya.");
+        throw new Error("Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro! Cek lagi di Environment Variables Vercel, terus deploy ulang ya.");
     }
     ai = new GoogleGenAI({ apiKey: API_KEY });
     return ai;
