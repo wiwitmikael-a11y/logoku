@@ -9,9 +9,10 @@ const HF_API_URL_SDXL = "https://api-inference.huggingface.co/models/stabilityai
 let ai: GoogleGenAI | null = null;
 const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
-    const apiKey = process.env.API_KEY; // Use API_KEY as per guidelines
+    // For client-side code on platforms like Vercel, env vars MUST be prefixed.
+    const apiKey = process.env.REACT_APP_API_KEY;
     if (!apiKey) {
-        throw new Error("Waduh, API Key buat Google Gemini nggak ketemu, bro! Pastiin lo udah set 'Environment Variable' di Vercel dengan nama 'API_KEY'. Abis itu, deploy ulang project-nya ya.");
+        throw new Error("Waduh, API Key Google Gemini (REACT_APP_API_KEY) nggak ketemu, bro! Pastiin lo udah set Environment Variable di Vercel dengan nama 'REACT_APP_API_KEY' (pake prefix!). Abis itu, deploy ulang ya.");
     }
     ai = new GoogleGenAI({ apiKey });
     return ai;
@@ -19,9 +20,10 @@ const getAiClient = (): GoogleGenAI => {
 
 // --- New API Key Getters ---
 const getHuggingFaceKey = (): string => {
-    const apiKey = process.env.HF_API_KEY;
+    // For client-side code on platforms like Vercel, env vars MUST be prefixed.
+    const apiKey = process.env.REACT_APP_HF_API_KEY;
     if (!apiKey) {
-        throw new Error("Waduh, API Key buat Hugging Face nggak ketemu, bro! Set 'Environment Variable' di Vercel dengan nama 'HF_API_KEY'.");
+        throw new Error("Waduh, API Key Hugging Face (REACT_APP_HF_API_KEY) nggak ketemu, bro! Set Environment Variable di Vercel dengan nama 'REACT_APP_HF_API_KEY' (pake prefix!).");
     }
     return apiKey;
 };
