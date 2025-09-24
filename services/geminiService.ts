@@ -7,7 +7,8 @@ const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-        throw new Error("Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro! Pastiin lo udah set Environment Variable dengan nama 'API_KEY'. Abis itu, deploy ulang ya.");
+        // Updated error message to be more specific for Vercel deployment
+        throw new Error("Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro! Pastiin lo udah set Environment Variable. Kalo di Vercel, masuk ke Settings -> Environment Variables, terus add 'API_KEY' dan masukin key lo. Abis itu, deploy ulang ya.");
     }
     ai = new GoogleGenAI({ apiKey });
     return ai;
@@ -32,6 +33,7 @@ const handleApiError = (error: any, serviceName: string): Error => {
     if (errorString.includes('api key') || errorString.includes('authorization') || errorString.includes('api key not valid')) {
         return new Error(`Waduh, API Key buat ${serviceName} kayaknya salah atau nggak valid, bro. Cek lagi gih.`);
     }
+    // Check for our custom API key missing error from getAiClient
     if (errorString.includes("nggak ketemu, bro!")) {
         return new Error((error as Error).message);
     }

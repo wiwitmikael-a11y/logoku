@@ -22,13 +22,65 @@ type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | '
 
 const GITHUB_ASSETS_URL = 'https://raw.githubusercontent.com/wiwitmikael-a11y/logoku-assets/main/';
 
+// Component untuk menampilkan error jika API Key tidak ada
+const ApiKeyErrorScreen = () => (
+    <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center p-4">
+        <div className="relative max-w-2xl w-full bg-red-900/50 backdrop-blur-md border border-red-700 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center">
+            <img 
+                src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
+                alt="Mang AI character looking confused"
+                className="w-24 absolute -top-16 filter grayscale"
+                style={{ imageRendering: 'pixelated' }}
+            />
+            <h1 className="text-3xl font-extrabold text-red-400 tracking-tighter mb-4">
+                Waduh, Kunci API Mang AI Gak Ketemu!
+            </h1>
+            <div className="text-red-200 space-y-4 max-w-lg mb-6 text-left">
+                <p>
+                    Sepertinya Environment Variable <strong>`API_KEY`</strong> belum di-set dengan benar di Vercel, bro.
+                    Aplikasi ini butuh kunci itu buat bisa manggil Gemini API.
+                </p>
+                <div className="bg-gray-800/50 p-4 rounded-lg text-sm">
+                    <h2 className="font-bold text-white mb-2">Cara Ngebenerinnya di Vercel:</h2>
+                    <ol className="list-decimal list-inside space-y-2">
+                        <li>Buka Vercel Dashboard &gt; Project <strong>logo.ku</strong> kamu.</li>
+                        <li>Masuk ke tab <strong>Settings</strong> &gt; <strong>Environment Variables</strong>.</li>
+                        <li>
+                           Buat variable baru:
+                           <ul className="list-disc list-inside ml-4 mt-1 bg-gray-900 p-2 rounded">
+                               <li>Name: <code className="bg-gray-700 px-1 rounded">API_KEY</code></li>
+                               <li>Value: <code className="bg-gray-700 px-1 rounded">[API Key Google AI Studio lo]</code></li>
+                           </ul>
+                        </li>
+                        <li><strong>PENTING:</strong> Pastikan semua environment (Production, Preview, Development) dicentang.</li>
+                        <li>Klik <strong>Save</strong>, lalu deploy ulang project lo dari menu <strong>Deployments</strong>.</li>
+                    </ol>
+                </div>
+            </div>
+             <p className="text-xs text-red-300">
+                Setelah di-set, refresh halaman ini.
+             </p>
+        </div>
+    </div>
+);
+
+
 const App: React.FC = () => {
     // State management
+    const [apiKeyMissing, setApiKeyMissing] = useState(false);
     const [showWelcome, setShowWelcome] = useState(true);
     const [appState, setAppState] = useState<AppState>('dashboard');
     const [projects, setProjects] = useState<Project[]>([]);
     const [currentProject, setCurrentProject] = useState<Partial<Project> | null>(null);
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+
+    // Cek API Key saat aplikasi pertama kali dimuat
+    useEffect(() => {
+        if (!process.env.API_KEY) {
+            console.error("FATAL: Environment Variable 'API_KEY' is not set.");
+            setApiKeyMissing(true);
+        }
+    }, []);
 
     // Load projects from localStorage on mount
     useEffect(() => {
@@ -201,6 +253,10 @@ const App: React.FC = () => {
         handleStartNewFromSummary();
         return null;
     };
+    
+    if (apiKeyMissing) {
+        return <ApiKeyErrorScreen />;
+    }
 
     if (showWelcome) {
         return <WelcomeScreen onEnter={handleEnterApp} />;
