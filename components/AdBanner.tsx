@@ -34,8 +34,8 @@ const AdBanner: React.FC = () => {
   }, [isAdSlotSet]);
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-gray-900/90 backdrop-blur-sm border-t border-gray-800 z-20 flex justify-center items-center p-2">
-      <div className="w-full max-w-4xl text-center relative min-h-[60px] flex items-center justify-center">
+    <div className="fixed bottom-0 left-0 w-full bg-gray-900/90 backdrop-blur-sm border-t border-gray-800 z-20 flex justify-center items-center p-1">
+      <div className="w-full max-w-4xl text-center relative min-h-[50px] flex items-center justify-center">
         {isAdSlotSet ? (
           <>
             <ins className="adsbygoogle"
