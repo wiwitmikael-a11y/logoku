@@ -12,8 +12,14 @@ const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-a
 const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
   const handleLogin = async (provider: 'google') => {
     playSound('click');
+    // We explicitly tell Supabase where to redirect the user back to.
+    // window.location.origin provides the base URL (e.g., 'http://localhost:3000' or 'https://your-app.vercel.app')
+    // which is exactly what we need for a reliable redirect.
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
+      options: {
+        redirectTo: window.location.origin,
+      },
     });
     if (error) {
       console.error('Error logging in:', error.message);

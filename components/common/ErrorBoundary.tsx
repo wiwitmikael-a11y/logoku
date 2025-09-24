@@ -33,6 +33,7 @@ class ErrorBoundary extends Component<Props, State> {
   render(): ReactNode {
     // FIX: Destructuring props and state from `this`. This can help resolve complex type
     // inference issues where inherited properties like `props` are not correctly recognized on `this`.
+    // FIX: Replaced the combined destructuring with separate ones for `state` and `props` to fix the TypeScript error.
     const { state, props } = this;
     if (state.hasError) {
       return (
