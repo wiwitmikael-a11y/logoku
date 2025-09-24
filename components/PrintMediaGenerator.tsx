@@ -11,7 +11,7 @@ import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 
 interface Props {
-  projectData: ProjectData;
+  projectData: Partial<ProjectData>;
   onComplete: (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => void;
   credits: number;
   onDeductCredits: (cost: number) => boolean;
@@ -22,7 +22,7 @@ const GENERATION_COST = 1;
 
 const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, credits, onDeductCredits }) => {
   const [activeTab, setActiveTab] = useState<MediaTab>('business_card');
-  const businessHandle = projectData.brandInputs.businessName.toLowerCase().replace(/\s/g, '');
+  const businessHandle = projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
   
   // States
   const [cardInfo, setCardInfo] = useState({
@@ -39,10 +39,10 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, credits
   });
   const [bannerInfo, setBannerInfo] = useState({
     headline: 'SEGERA DIBUKA!',
-    subheadline: `Nantikan ${projectData.brandInputs.businessName} di kota Anda!`,
+    subheadline: `Nantikan ${projectData.brandInputs?.businessName} di kota Anda!`,
   });
   const [rollBannerInfo, setRollBannerInfo] = useState({
-    headline: `Selamat Datang di ${projectData.brandInputs.businessName}`,
+    headline: `Selamat Datang di ${projectData.brandInputs?.businessName}`,
     body: '• Kopi Berkualitas\n• Tempat Nyaman\n• Harga Terjangkau',
     contact: `@${businessHandle}`,
   });
@@ -82,23 +82,32 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, credits
     setIsLoading(true);
     setError(null);
     playSound('start');
+
+    const { brandInputs, selectedPersona, logoPrompt } = projectData;
+    if (!brandInputs || !selectedPersona || !logoPrompt) {
+        setError("Waduh, data project-nya ada yang kurang buat generate media cetak.");
+        setIsLoading(false);
+        playSound('error');
+        return;
+    }
     
     const { setDesigns, setSelected } = designData[activeTab];
     setDesigns([]);
     setSelected(null);
 
     try {
-        const projectPayload: ProjectData = {
-            ...projectData,
+        const payload = {
             brandInputs: {
-                ...projectData.brandInputs,
+                ...brandInputs,
                 contactInfo: cardInfo,
                 flyerContent: flyerInfo,
                 bannerContent: bannerInfo,
                 rollBannerContent: rollBannerInfo
-            }
+            },
+            selectedPersona,
+            logoPrompt
         };
-      const results = await generatePrintMedia(activeTab, projectPayload);
+      const results = await generatePrintMedia(activeTab, payload);
       setDesigns(results);
       if (results.length > 0) {
         setSelected(results[0]); // Auto-select the generated design
@@ -223,7 +232,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, credits
       {modalImageUrl && (
         <ImageModal 
           imageUrl={modalImageUrl}
-          altText={`Desain media cetak untuk ${projectData.brandInputs.businessName}`}
+          altText={`Desain media cetak untuk ${projectData.brandInputs?.businessName}`}
           onClose={closeModal}
         />
       )}

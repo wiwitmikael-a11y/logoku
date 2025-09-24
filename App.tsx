@@ -289,7 +289,7 @@ const App: React.FC = () => {
                 break;
             case 'print':
                 if (currentProjectData?.brandInputs && currentProjectData.selectedPersona && currentProjectData.logoPrompt) {
-                    return <PrintMediaGenerator projectData={currentProjectData as ProjectData} onComplete={handlePrintMediaComplete} {...commonImageProps} />;
+                    return <PrintMediaGenerator projectData={currentProjectData} onComplete={handlePrintMediaComplete} {...commonImageProps} />;
                 }
                 break;
             case 'packaging':
