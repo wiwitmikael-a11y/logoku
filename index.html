@@ -103,94 +103,97 @@
         }
       }
 
-      /* Keyframes for Mang AI with breathing and bouncing effects */
+      /* Keyframes for Mang AI with breathing and bouncy hop effects */
       @keyframes mario-top-breathing-bounce {
         /* --- Going Left to Right --- */
         0%   { transform: translateX(-180px) scale(-1, 1); }
-        /* Jump up */
-        10%  { transform: translateX(-150px) scale(-1, 1) translateY(-25px); }
-        /* Land and bounce */
-        19.5% { transform: translateX(-120px) scale(-1, 1) translateY(-5px); }
-        20%  { transform: translateX(-120px) scale(-1.1, 0.9) translateY(0); } /* Squash on land */
-        22%  { transform: translateX(-120px) scale(-0.98, 1.02) translateY(-2px); } /* Bounce back */
-        24%  { transform: translateX(-120px) scale(-1, 1) translateY(0); } /* Settle */
-        /* Run and breathe */
-        36%  { transform: translateX(0px) scale(-1.02, 0.98) translateY(0); animation-timing-function: ease-in-out; }
-        48%  { transform: translateX(180px) scale(-1, 1) translateY(0); animation-timing-function: linear; }
-        /* Turn around */
+        /* Idle breathe */
+        5%   { transform: translateX(-180px) scale(-1.02, 0.98); }
+        10%  { transform: translateX(-180px) scale(-1, 1); }
+        
+        /* Hop 1 */
+        15%  { transform: translateX(-120px) scale(-1, 1) translateY(-20px); }
+        20%  { transform: translateX(-60px) scale(-1.1, 0.9) translateY(0); }
+        22%  { transform: translateX(-60px) scale(-1, 1) translateY(0); }
+        
+        /* Hop 2 */
+        27%  { transform: translateX(0px) scale(-1, 1) translateY(-20px); }
+        32%  { transform: translateX(60px) scale(-1.1, 0.9) translateY(0); }
+        34%  { transform: translateX(60px) scale(-1, 1) translateY(0); }
+
+        /* Hop 3 to edge */
+        39%  { transform: translateX(120px) scale(-1, 1) translateY(-20px); }
+        44%  { transform: translateX(180px) scale(-1.1, 0.9) translateY(0); }
+        
+        /* Turn around & breathe */
         50%  { transform: translateX(180px) scale(1, 1); }
-        /* --- Going Right to Left --- */
-        /* Jump up */
-        60%  { transform: translateX(150px) scale(1, 1) translateY(-25px); }
-        /* Land and bounce */
-        69.5% { transform: translateX(120px) scale(1, 1) translateY(-5px); }
-        70%  { transform: translateX(120px) scale(1.1, 0.9) translateY(0); }
-        72%  { transform: translateX(120px) scale(0.98, 1.02) translateY(-2px); }
-        74%  { transform: translateX(120px) scale(1, 1) translateY(0); }
-        /* Run and breathe */
-        86%  { transform: translateX(0px) scale(1.02, 0.98) translateY(0); animation-timing-function: ease-in-out; }
-        98%  { transform: translateX(-180px) scale(1, 1) translateY(0); animation-timing-function: linear; }
-        /* Turn around */
+        55%  { transform: translateX(180px) scale(1.02, 0.98); }
+        60%  { transform: translateX(180px) scale(1, 1); }
+        
+        /* --- Going Right to Left (faster return) --- */
+        /* Hop 1 */
+        68%  { transform: translateX(90px) scale(1, 1) translateY(-25px); }
+        76%  { transform: translateX(0px) scale(1.1, 0.9) translateY(0); }
+        78%  { transform: translateX(0px) scale(1, 1) translateY(0); }
+
+        /* Hop 2 to edge */
+        86%  { transform: translateX(-90px) scale(1, 1) translateY(-25px); }
+        94%  { transform: translateX(-180px) scale(1.1, 0.9) translateY(0); }
+
         100% { transform: translateX(-180px) scale(-1, 1); }
       }
 
       @keyframes mario-bottom-breathing-bounce {
         /* --- Going Left to Right --- */
         0%   { left: 5%; transform: scale(-1, 1) translateY(0); }
-        /* Jump up */
-        8%   { transform: scale(-1, 1) translateY(-120px); }
-        /* Land and bounce */
-        15.5% { transform: scale(-1, 1) translateY(-10px); }
-        16%  { transform: scale(-1.15, 0.85) translateY(0); } /* Squash */
-        18%  { transform: scale(-0.95, 1.05) translateY(-4px); } /* Stretch */
-        20%  { transform: scale(-1, 1) translateY(0); } /* Settle */
-        /* Run and breathe */
-        34%  { transform: scale(-1.02, 0.98) translateY(0); animation-timing-function: ease-in-out; }
-        48%  { left: calc(95% - 128px); transform: scale(-1, 1) translateY(0); animation-timing-function: linear; }
-        /* Turn around */
+        /* Idle breathe */
+        10%  { left: 5%; transform: scale(-1.03, 0.97) translateY(1px); }
+        20%  { left: 5%; transform: scale(-1, 1) translateY(0); }
+        
+        /* Big Jump Across */
+        30%  { left: 50%; transform: scale(-1, 1) translateY(-130px); }
+        40%  { left: calc(95% - 128px); transform: scale(-1.2, 0.8) translateY(0); } /* Land hard */
+        45%  { left: calc(95% - 128px); transform: scale(-1, 1) translateY(0); } /* Settle */
+
+        /* Turn around & breathe */
         50%  { left: calc(95% - 128px); transform: scale(1, 1) translateY(0); }
+        60%  { left: calc(95% - 128px); transform: scale(1.03, 0.97) translateY(1px); }
+        70%  { left: calc(95% - 128px); transform: scale(1, 1) translateY(0); }
+        
         /* --- Going Right to Left --- */
-        /* Jump up */
-        58%  { transform: scale(1, 1) translateY(-120px); }
-        /* Land and bounce */
-        65.5% { transform: scale(1, 1) translateY(-10px); }
-        66%  { transform: scale(1.15, 0.85) translateY(0); }
-        68%  { transform: scale(0.95, 1.05) translateY(-4px); }
-        70%  { transform: scale(1, 1) translateY(0); }
-        /* Run and breathe */
-        84%  { transform: scale(1.02, 0.98) translateY(0); animation-timing-function: ease-in-out; }
-        98%  { left: 5%; transform: scale(1, 1) translateY(0); animation-timing-function: linear; }
-        /* Turn around */
+        /* Big Jump Back */
+        80%  { left: 50%; transform: scale(1, 1) translateY(-130px); }
+        90%  { left: 5%; transform: scale(1.2, 0.8) translateY(0); } /* Land hard */
+        95%  { left: 5%; transform: scale(1, 1) translateY(0); } /* Settle */
+        
         100% { left: 5%; transform: scale(-1, 1) translateY(0); }
       }
       
       /* Keyframes for the small header Mang AI (Balanced Bouncy Walk) */
       @keyframes header-ai-antics {
-        /* Walk right with bounce */
+        /* Idle breathe, facing right */
         0%   { transform: translateX(0px) scale(-1, 1) translateY(0); }
-        10%  { transform: translateX(10px) scale(-1.05, 0.95) translateY(0); }
-        20%  { transform: translateX(20px) scale(-1, 1) translateY(0); }
-        
-        /* Turn and stand still with breathe */
-        22%  { transform: translateX(20px) scale(1, 1) translateY(0); }
-        30%  { transform: translateX(20px) scale(1.02, 0.98); }
-        38%  { transform: translateX(20px) scale(1, 1); }
+        7%   { transform: translateX(0px) scale(-1.03, 0.97) translateY(1px); }
+        14%  { transform: translateX(0px) scale(-1, 1) translateY(0); }
 
-        /* Run left further */
-        45%  { transform: translateX(20px) scale(1, 1) translateY(0); animation-timing-function: ease-in; }
-        55%  { transform: translateX(0px) scale(1.05, 0.95) translateY(0); }
-        65%  { transform: translateX(-60px) scale(1, 1) translateY(0); animation-timing-function: linear; }
+        /* Turn and hop left */
+        20%  { transform: translateX(0px) scale(1, 1) translateY(0); } /* Turn */
+        25%  { transform: translateX(-30px) scale(1, 1) translateY(-10px); } /* Hop */
+        30%  { transform: translateX(-60px) scale(1.1, 0.9) translateY(0); } /* Land */
+        35%  { transform: translateX(-60px) scale(1, 1) translateY(0); }   /* Settle */
         
-        /* Jump and bounce on the left side */
-        68%  { transform: translateX(-60px) scale(1, 1) translateY(-15px); } /* Jump up */
-        73%  { transform: translateX(-60px) scale(1.15, 0.85) translateY(0); } /* Land and squash */
-        76%  { transform: translateX(-60px) scale(0.95, 1.05) translateY(-3px); } /* Bounce back up */
-        79%  { transform: translateX(-60px) scale(1, 1) translateY(0); } /* Settle */
+        /* Idle breathe on left */
+        42%  { transform: translateX(-60px) scale(1.03, 0.97) translateY(1px); }
+        50%  { transform: translateX(-60px) scale(1, 1) translateY(0); }
+
+        /* Turn and hop back to start */
+        55%  { transform: translateX(-60px) scale(-1, 1) translateY(0); } /* Turn */
+        65%  { transform: translateX(-30px) scale(-1, 1) translateY(-10px); }
+        75%  { transform: translateX(0px) scale(-1.1, 0.9) translateY(0); }
+        80%  { transform: translateX(0px) scale(-1, 1) translateY(0); }
         
-        /* Turn and walk right */
-        81%  { transform: translateX(-60px) scale(-1, 1) translateY(0); }
-        90%  { transform: translateX(-10px) scale(-1.05, 0.95) translateY(0); }
-        98%  { transform: translateX(0px) scale(-1, 1) translateY(0); }
+        /* Idle breathe before loop */
+        87%  { transform: translateX(0px) scale(-1.03, 0.97) translateY(1px); }
         100% { transform: translateX(0px) scale(-1, 1) translateY(0); }
       }
 
@@ -224,23 +227,31 @@
       
       /* --- DUST EFFECT --- */
       @keyframes dust-for-top-mario {
-        0%, 19.5%, 25%, 69.5%, 75%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        0%, 20.1%, 32.1%, 44.1%, 76.1%, 94.1%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
         20% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        24.9% { transform: translateX(-50%) scale(2); opacity: 0; }
-        70% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        74.9% { transform: translateX(-50%) scale(2); opacity: 0; }
+        24% { transform: translateX(-50%) scale(2); opacity: 0; }
+        32% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        36% { transform: translateX(-50%) scale(2); opacity: 0; }
+        44% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        48% { transform: translateX(-50%) scale(2); opacity: 0; }
+        76% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        80% { transform: translateX(-50%) scale(2); opacity: 0; }
+        94% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        99% { transform: translateX(-50%) scale(2); opacity: 0; }
       }
       @keyframes dust-for-bottom-mario {
-        0%, 15.5%, 21%, 65.5%, 71%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
-        16% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        20.9% { transform: translateX(-50%) scale(2); opacity: 0; }
-        66% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        70.9% { transform: translateX(-50%) scale(2); opacity: 0; }
+        0%, 40.1%, 90.1%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        40% { transform: translateX(-50%) scale(1.2); opacity: 0.8; }
+        48% { transform: translateX(-50%) scale(2.5); opacity: 0; }
+        90% { transform: translateX(-50%) scale(1.2); opacity: 0.8; }
+        98% { transform: translateX(-50%) scale(2.5); opacity: 0; }
       }
       @keyframes dust-for-header-ai {
-        0%, 72.5%, 78%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
-        73% { transform: translateX(-50%) scale(0.6); opacity: 0.7; }
-        77.9% { transform: translateX(-50%) scale(1.5); opacity: 0; }
+        0%, 30.1%, 75.1%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        30% { transform: translateX(-50%) scale(0.6); opacity: 0.7; }
+        38% { transform: translateX(-50%) scale(1.5); opacity: 0; }
+        75% { transform: translateX(-50%) scale(0.6); opacity: 0.7; }
+        83% { transform: translateX(-50%) scale(1.5); opacity: 0; }
       }
       @keyframes dust-for-bouncing-ai {
         0%, 19%, 30%, 59%, 70%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }

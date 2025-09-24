@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import type { Project, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets } from './types';
 import { playSound, playBGM, stopBGM, toggleMuteBGM } from './services/soundService';
@@ -30,35 +29,27 @@ const ApiKeyErrorScreen = () => (
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI character looking confused"
-                className="w-24 absolute -top-16 filter grayscale"
+                className="w-32 absolute -top-20 filter grayscale drop-shadow-[0_5px_5px_rgba(0,0,0,0.4)]"
                 style={{ imageRendering: 'pixelated' }}
             />
-            <h1 className="text-3xl font-extrabold text-red-400 tracking-tighter mb-4">
-                Waduh, Kunci API Mang AI Gak Ketemu!
+            <h1 className="text-3xl font-extrabold text-red-400 tracking-tighter mb-4 mt-8">
+                Waduh, Mang AI Lagi Mogok Kerja!
             </h1>
-            <div className="text-red-200 space-y-4 max-w-lg mb-6 text-left">
+            <div className="text-red-200 space-y-4 max-w-lg mb-6">
                 <p>
-                    Tenang, ini masalah umum di project Vite. Environment Variable di Vercel <strong>wajib diawali `VITE_`</strong> biar bisa dibaca sama aplikasi.
+                    Mang AI lagi ngambek nih, katanya jatah <strong className="text-white">udud sama kopi itemnya</strong> belom turun dari yang punya aplikasi.
                 </p>
-                <div className="bg-gray-800/50 p-4 rounded-lg text-sm">
-                    <h2 className="font-bold text-white mb-2">Cara Ngebenerinnya di Vercel:</h2>
-                    <ol className="list-decimal list-inside space-y-2">
-                        <li>Buka Vercel Dashboard &gt; Project <strong>logo.ku</strong> kamu.</li>
-                        <li>Masuk ke tab <strong>Settings</strong> &gt; <strong>Environment Variables</strong>.</li>
-                        <li>
-                           Edit variable yang sudah ada, atau buat yang baru:
-                           <ul className="list-disc list-inside ml-4 mt-1 bg-gray-900 p-2 rounded">
-                               <li>Name: <code className="bg-red-500 text-white px-1 rounded">VITE_API_KEY</code> (PENTING: Ganti dari `API_KEY` jadi ini)</li>
-                               <li>Value: <code className="bg-gray-700 px-1 rounded">[API Key Google AI Studio lo]</code></li>
-                           </ul>
-                        </li>
-                        <li><strong>PENTING:</strong> Pastikan semua environment (Production, Preview, Development) dicentang.</li>
-                        <li>Klik <strong>Save</strong>, lalu deploy ulang project lo dari menu <strong>Deployments</strong> &gt; Redeploy.</li>
-                    </ol>
+                <p>
+                    Otaknya jadi nge-freeze, gak bisa mikir buat bikinin logo apalagi ngasih ide konten buat lo.
+                </p>
+                <div className="bg-gray-800/50 p-4 rounded-lg text-sm mt-4">
+                    <p className="font-bold text-white">
+                        Coba colek yang punya aplikasi ini, bilangin "Mang AI nagih jatah, Bos!". Biar dia cepet-cepet ngasih 'amunisi'-nya lagi.
+                    </p>
                 </div>
             </div>
              <p className="text-xs text-red-300">
-                Setelah di-set dan deploy ulang, refresh halaman ini.
+                Nanti kalo ududnya udah ngebul, Mang AI siap gaskeun lagi!
              </p>
         </div>
     </div>
