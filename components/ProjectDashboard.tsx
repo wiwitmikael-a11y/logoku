@@ -31,15 +31,15 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, user, onN
             {projects.map(project => (
               <Card 
                 key={project.id} 
-                title={project.brandInputs.businessName}
+                title={project.project_data.brandInputs.businessName}
                 onClick={() => onSelectProject(project.id)}
               >
                 <div className="space-y-3">
-                    <p className="text-sm text-indigo-300 italic">"{project.selectedSlogan}"</p>
+                    <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
                     <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
-                      <img src={project.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" />
+                      <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" />
                       <p className="text-sm text-gray-300">
-                        <span className="font-semibold text-gray-200">Persona:</span> {project.selectedPersona.nama_persona}
+                        <span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}
                       </p>
                     </div>
                    <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">

@@ -97,8 +97,9 @@ export interface ProjectData {
 }
 
 // This represents a project row fetched from the Supabase 'projects' table
-export interface Project extends ProjectData {
+export interface Project {
   id: number; // The database primary key
   user_id: string;
   created_at: string; // The database timestamp
+  project_data: ProjectData; // All the branding data is nested here
 }

@@ -10,7 +10,9 @@ interface Props {
 }
 
 const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
-  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, selectedPrintMedia, selectedPackagingUrl, selectedMerchandiseUrl } = project;
+  // Destructure the nested project_data object
+  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, selectedPrintMedia, selectedPackagingUrl, selectedMerchandiseUrl } = project.project_data;
+  
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);

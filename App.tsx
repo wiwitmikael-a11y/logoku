@@ -105,43 +105,51 @@ const App: React.FC = () => {
     }, []);
 
     const fetchUserData = async (user: User) => {
-        const today = new Date().toISOString().split('T')[0];
-
+        // The new database trigger handles profile creation automatically.
+        // So, we just need to fetch the profile, which should already exist.
         let { data: profile, error: profileError } = await supabaseClient
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
 
-        if (profileError && profileError.code === 'PGRST116') { // "PGRST116" means no rows found
-            const { data: newProfile, error: insertError } = await supabaseClient
-                .from('profiles')
-                .insert({ id: user.id, credits: INITIAL_CREDITS, last_credit_reset: today })
-                .select()
-                .single();
-            if (insertError) console.error("Error creating profile:", insertError);
-            else profile = newProfile;
-        } else if (profile && profile.last_credit_reset !== today) {
+        if (profileError && profileError.code !== 'PGRST116') { // Log real errors, ignore 'not found' for now
+            console.error("Error fetching profile:", profileError);
+            setUserProfile(null);
+            // Optionally, handle this more gracefully, e.g., show an error message
+            return; // Stop execution if we can't get the profile
+        }
+        
+        // Handle daily credit reset.
+        const today = new Date().toISOString().split('T')[0];
+        if (profile && profile.last_credit_reset !== today) {
             const { data: updatedProfile, error: updateError } = await supabaseClient
                 .from('profiles')
                 .update({ credits: INITIAL_CREDITS, last_credit_reset: today })
                 .eq('id', user.id)
                 .select()
                 .single();
-            if (updateError) console.error("Error resetting credits:", updateError);
-            else profile = updatedProfile;
+            if (updateError) {
+                console.error("Error resetting credits:", updateError);
+            } else {
+                profile = updatedProfile; // Use the updated profile data
+            }
         }
         
         setUserProfile(profile);
 
+        // Fetch user's projects.
         const { data: userProjects, error: projectsError } = await supabaseClient
             .from('projects')
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
             
-        if (projectsError) console.error("Error fetching projects:", projectsError);
-        else setProjects(userProjects as Project[]);
+        if (projectsError) {
+            console.error("Error fetching projects:", projectsError);
+        } else {
+            setProjects(userProjects as Project[]);
+        }
     };
 
     useEffect(() => {
@@ -172,7 +180,7 @@ const App: React.FC = () => {
             setUserProfile(prev => prev ? { ...prev, credits: newCredits } : null);
             return true;
         }
-    }, [userProfile]);
+    }, [userProfile, supabaseClient]);
 
     const handleNewProject = useCallback(() => {
         setCurrentProjectData({});
@@ -241,12 +249,12 @@ const App: React.FC = () => {
             console.error("Error saving project", error);
             // Optionally show an error message to the user
         } else {
-            const newProject: Project = { ...data.project_data, id: data.id, user_id: data.user_id, created_at: data.created_at };
+            const newProject: Project = data as any; // Simplified casting
             setProjects(prev => [newProject, ...prev]);
             setSelectedProjectId(newProject.id);
             setAppState('summary');
         }
-    }, [currentProjectData, session]);
+    }, [currentProjectData, session, supabaseClient]);
     
     const handleStartNewFromSummary = useCallback(() => {
         setCurrentProjectData(null);
@@ -294,7 +302,6 @@ const App: React.FC = () => {
                 break;
             case 'packaging':
                 if (currentProjectData?.selectedPersona && currentProjectData.brandInputs) {
-                    // FIX: Corrected typo from commonImageImageProps to commonImageProps
                     return <PackagingGenerator persona={currentProjectData.selectedPersona} businessName={currentProjectData.brandInputs.businessName} onComplete={handlePackagingComplete} {...commonImageProps} />;
                 }
                 break;
