@@ -45,7 +45,7 @@ const AdBanner: React.FC = () => {
                  data-ad-client={AD_PUBLISHER_ID}
                  data-ad-slot={AD_SLOT_ID}
                  data-ad-format="auto"
-                 data-full-width-responsive="true"></ins>
+                 data-full-width-responsive="false"></ins>
             <span className="text-[10px] text-gray-600 absolute top-0 left-2 bg-gray-900 px-1 rounded-b-sm">Advertisement</span>
           </>
         ) : (
