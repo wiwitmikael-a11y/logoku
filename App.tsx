@@ -41,8 +41,8 @@ const ApiKeyErrorScreen = () => (
             />
             <div>
                 <h2 className="text-2xl font-bold text-red-400 mb-2">Kesalahan Konfigurasi API Key</h2>
-                <p className="text-red-200">Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro!</p>
-                <p className="text-gray-400 mt-4 text-sm">Pastikan kamu sudah mengatur environment variable API_KEY di Vercel dan melakukan deploy ulang ya.</p>
+                <p className="text-red-200">Waduh, API Key Google Gemini (VITE_API_KEY) nggak ketemu, bro!</p>
+                <p className="text-gray-400 mt-4 text-sm">Pastikan kamu sudah mengatur environment variable VITE_API_KEY di Vercel dan melakukan deploy ulang ya.</p>
             </div>
         </div>
     </div>
@@ -95,7 +95,7 @@ const App: React.FC = () => {
 
     useEffect(() => {
         // Use process.env, as import.meta.env is not working in the deployment environment.
-        const apiKey = process.env.API_KEY;
+        const apiKey = process.env.VITE_API_KEY;
         if (!apiKey) setApiKeyMissing(true);
     }, []);
 
