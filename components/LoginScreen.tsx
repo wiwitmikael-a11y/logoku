@@ -70,7 +70,7 @@ const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
           logo<span className="text-white">.ku</span>
         </h1>
         <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-          Wih, ada juragan! Sini ngopi dulu, biar Mang AI sulap bisnismu jadi paling hore se-kecamatan.
+          Wih, ada juragan! Pusing mikirin logo atau bingung mau posting apa di sosmed? Tenang, serahin aja sama ahlinya... Mang AI! Di sini, kita bakal ngeracik logo anti-mainstream, nentuin persona brand, sampe bikinin jadwal konten lengkap sama caption-nya. Hemat waktu, hemat biaya, hasilnya dijamin hore!
         </p>
         
         <div className="flex flex-col items-center gap-4">

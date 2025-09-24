@@ -64,7 +64,7 @@
           rgba(99, 102, 241, 0.1) 38px,
           rgba(99, 102, 241, 0.1) 40px
         );
-        /* Animation removed to make this layer static */
+        animation: bg-pan 60s linear infinite; /* Slow, seamless animation */
       }
 
       /* Layer 2: Fast-moving diagonal lines for parallax */
@@ -80,7 +80,7 @@
           rgba(165, 180, 252, 0.05) 60px, /* very subtle */
           rgba(165, 180, 252, 0.05) 61px
         );
-        animation: bg-pan-fast 10s linear infinite;
+        animation: bg-pan-fast 45s linear infinite; /* Slowed down for subtlety */
       }
       
       /* Keyframe for the main panning lines (not currently used by ::before) */

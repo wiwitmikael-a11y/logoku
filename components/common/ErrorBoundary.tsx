@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
@@ -11,7 +11,7 @@ interface State {
   error?: Error;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundary extends React.Component<Props, State> {
   // FIX: Removed explicit `public` access modifier.
   state: State = {
     hasError: false,
@@ -64,7 +64,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // FIX: Corrected a TypeScript error where `this.props` was not being recognized on the class component.
+    // FIX: Corrected a TypeScript error where 'this.props' was not being recognized by explicitly extending React.Component.
     return this.props.children;
   }
 }

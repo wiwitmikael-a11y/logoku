@@ -175,10 +175,20 @@ const generateImagesWithGemini = async (prompt: string, count: number): Promise<
                 outputMimeType: 'image/png', // Use PNG for better quality and transparency support
             },
         });
+        
+        // FIX: Add a defensive check. If the response doesn't contain images (e.g., due to safety filters),
+        // throw a user-friendly error instead of crashing.
+        if (!response.generatedImages) {
+            throw new Error("Mang AI gak bisa generate gambar dari prompt itu. Coba ganti deskripsinya atau pastiin gak melanggar kebijakan ya.");
+        }
 
         return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
 
     } catch (error) {
+        // If the error is our custom one, we don't need to re-handle it.
+        if (error instanceof Error && error.message.startsWith("Mang AI gak bisa")) {
+            throw error;
+        }
         throw handleApiError(error, "Google Gemini (Image)");
     }
 };
