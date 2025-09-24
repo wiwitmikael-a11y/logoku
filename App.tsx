@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import type { Project, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets } from './types';
-import { playSound, playBGM, stopBGM, toggleMuteBGM } from './services/soundService';
+import { playSound, playBGM, stopBGM, toggleMuteBGM, unlockAudio } from './services/soundService';
 
 // Statically import initial/common components
 import WelcomeScreen from './components/WelcomeScreen';
@@ -18,6 +18,8 @@ const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGene
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
 const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
+const ContactModal = React.lazy(() => import('./components/ContactModal'));
+const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'packaging' | 'merchandise' | 'summary';
 
@@ -66,6 +68,8 @@ const App: React.FC = () => {
     const [currentProject, setCurrentProject] = useState<Partial<Project> | null>(null);
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
     const [isMuted, setIsMuted] = useState(false);
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [showToSModal, setShowToSModal] = useState(false);
     const previousAppState = useRef<AppState>(appState);
 
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'print', 'packaging', 'merchandise'];
@@ -217,6 +221,19 @@ const App: React.FC = () => {
         const isNowPlaying = toggleMuteBGM();
         setIsMuted(!isNowPlaying);
     }, []);
+    
+    const openContactModal = useCallback(async () => {
+        await unlockAudio();
+        playSound('click');
+        setShowContactModal(true);
+    }, []);
+    const closeContactModal = useCallback(() => setShowContactModal(false), []);
+
+    const openToSModal = useCallback(() => {
+        playSound('click');
+        setShowToSModal(true)
+    }, []);
+    const closeToSModal = useCallback(() => setShowToSModal(false), []);
 
 
     // Render logic
@@ -279,7 +296,14 @@ const App: React.FC = () => {
     }
 
     if (showWelcome) {
-        return <WelcomeScreen onEnter={handleEnterApp} />;
+        return (
+            <>
+                <WelcomeScreen onEnter={handleEnterApp} onShowToS={openToSModal} />
+                <Suspense fallback={null}>
+                    <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
+                </Suspense>
+            </>
+        );
     }
 
     return (
@@ -291,6 +315,11 @@ const App: React.FC = () => {
                         <span className="ml-3 text-lg text-gray-400 font-handwritten">by @rangga.p.h</span>
                     </h1>
                      <div className="flex items-center gap-4">
+                        <button onClick={openContactModal} title="Info Kontak" className="text-gray-400 hover:text-white transition-colors">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
                         <button onClick={handleToggleMute} title={isMuted ? "Suara Aktif" : "Bisukan Musik"} className="text-gray-400 hover:text-white transition-colors">
                             {isMuted ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
@@ -324,6 +353,9 @@ const App: React.FC = () => {
                 Powered by Atharrazka Core. Built for UMKM Indonesia.
             </footer>
             <AdBanner />
+            <Suspense fallback={null}>
+                <ContactModal show={showContactModal} onClose={closeContactModal} />
+            </Suspense>
         </div>
     );
 };

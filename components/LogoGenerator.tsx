@@ -1,6 +1,4 @@
-
-
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import type { BrandPersona } from '../types';
@@ -10,6 +8,8 @@ import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
+
+const LegalDisclaimerModal = React.lazy(() => import('./common/LegalDisclaimerModal'));
 
 interface Props {
   persona: BrandPersona;
@@ -82,6 +82,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
   const [error, setError] = useState<string | null>(null);
   const [selectedStyleId, setSelectedStyleId] = useState<string>('minimalist');
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
@@ -181,6 +182,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
           <Button type="submit" isLoading={isLoading} disabled={!prompt.trim()}>
             Spill Logo-nya, Mang AI!
           </Button>
+           <p className="text-xs text-gray-500 mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
         </div>
       </form>
 
@@ -203,7 +205,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
              <Button onClick={() => handleSubmit()} variant="secondary" isLoading={isLoading}>
                 Generate Ulang
             </Button>
-            <Button onClick={handleContinue} disabled={!selectedLogoUrl}>
+            <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoUrl}>
               Pilih & Finalisasi Logo &rarr;
             </Button>
           </div>
@@ -217,6 +219,15 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
           onClose={closeModal}
         />
       )}
+
+      <Suspense fallback={null}>
+        {showDisclaimer && (
+            <LegalDisclaimerModal 
+                onClose={() => setShowDisclaimer(false)}
+                onConfirm={handleContinue}
+            />
+        )}
+      </Suspense>
     </div>
   );
 };

@@ -1,16 +1,17 @@
-
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import Button from './common/Button';
 import { playBGM } from '../services/soundService';
 
 interface Props {
   onEnter: () => void;
+  onShowToS: () => void;
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const WelcomeScreen: React.FC<Props> = ({ onEnter }) => {
+const WelcomeScreen: React.FC<Props> = ({ onEnter, onShowToS }) => {
   const bgmStarted = useRef(false);
+  const [isToSAccepted, setIsToSAccepted] = useState(false);
 
   const handleInteraction = () => {
     // The Button's onMouseEnter now awaits unlockAudio, so this is safe.
@@ -46,21 +47,32 @@ const WelcomeScreen: React.FC<Props> = ({ onEnter }) => {
         <h1 className="text-3xl md:text-4xl font-extrabold text-indigo-400 tracking-tighter mb-4">
           SEBELUM GASKEUN, BACA DULU BRO!
         </h1>
-        <div className="text-gray-300 space-y-4 max-w-lg mb-8">
+        <div className="text-gray-300 space-y-4 max-w-lg mb-6">
           <p>
             Ini <strong className="text-white">logo.ku</strong>, studio branding lo bareng <strong className="text-white">Mang AI</strong>. Anggep aja ini temen brainstorming lo yang suka ngopi & ngasih ide-ide ajaib.
           </p>
           <p>
             Mang AI kadang suka ngelawak, jadi hasilnya jangan langsung dicetak di baliho segede gaban ya. <strong className="text-indigo-300">Diliat, dirasa, baru digas!</strong>
           </p>
-          <p className="text-xs text-gray-500">
-            (Biar seru, app ini ada SFX-nya. Kalo ada suara 'klik' 'ding', jangan kaget. Oke, sip?)
-          </p>
         </div>
         
+        <div className="flex items-center justify-center space-x-2 mb-6">
+            <input
+                type="checkbox"
+                id="tos"
+                checked={isToSAccepted}
+                onChange={() => setIsToSAccepted(!isToSAccepted)}
+                className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+            />
+            <label htmlFor="tos" className="text-sm text-gray-400">
+                Saya telah membaca & setuju dengan <button onClick={onShowToS} className="text-indigo-400 hover:underline focus:outline-none">Ketentuan Layanan</button>.
+            </label>
+        </div>
+
         <Button 
           onClick={onEnter} 
           onMouseEnter={handleInteraction}
+          disabled={!isToSAccepted}
           className="px-8 py-4 text-lg font-bold transform hover:scale-105">
           Yaudah, Gaskeun Branding!
         </Button>
