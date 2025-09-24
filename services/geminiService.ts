@@ -2,16 +2,15 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData } from '../types';
 
 // --- Environment Variable Setup ---
-// Use process.env, as import.meta.env is not working in the deployment environment.
-const API_KEY = process.env.VITE_API_KEY;
+// The API key must be available as process.env.API_KEY.
+const API_KEY = process.env.API_KEY;
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
 const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
     if (!API_KEY) {
-        // Updated error message to be more generic.
-        throw new Error("Waduh, API Key Google Gemini (VITE_API_KEY) nggak ketemu, bro! Cek lagi di Environment Variables Vercel, terus deploy ulang ya.");
+        throw new Error("Waduh, API Key Google Gemini (`API_KEY`) nggak ketemu, bro! Di project ini, variabel lain pakai awalan `VITE_`, tapi API key Gemini wajib bernama `API_KEY` (tanpa awalan). Cek lagi di settingan Vercel-mu ya.");
     }
     ai = new GoogleGenAI({ apiKey: API_KEY });
     return ai;
