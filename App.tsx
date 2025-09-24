@@ -175,7 +175,8 @@ const MainApp: React.FC = () => {
         // Determine the next step based on what data exists
         const data = project.project_data;
         let nextState: AppState = 'persona';
-        if (data.selectedPackagingUrl) nextState = 'merchandise';
+        if (data.selectedMerchandiseUrl) nextState = 'summary'; // Go to summary if it was completed
+        else if (data.selectedPackagingUrl) nextState = 'merchandise';
         else if (data.selectedPrintMedia) nextState = 'packaging';
         else if (data.contentCalendar) nextState = 'print';
         else if (data.logoVariations) nextState = 'content';
@@ -220,7 +221,9 @@ const MainApp: React.FC = () => {
 
     // --- Workflow Step Completion Handlers (Refactored) ---
     const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
+        const currentState = loadWorkflowState() || {};
         const updatedData: Partial<ProjectData> = {
+            ...currentState, // Merge with current state to avoid data loss on re-edits
             brandInputs: data.inputs,
             selectedPersona: data.selectedPersona,
             selectedSlogan: data.selectedSlogan,
@@ -263,7 +266,7 @@ const MainApp: React.FC = () => {
         const updatedData = {
             ...currentState,
             selectedPrintMedia: data.assets,
-            brandInputs: { ...currentState.brandInputs!, ...data.inputs },
+            brandInputs: { ...(currentState.brandInputs || {}), ...data.inputs }, // Safely merge brand inputs
         };
         try {
             await saveCheckpoint(updatedData);
@@ -283,7 +286,7 @@ const MainApp: React.FC = () => {
     const handleMerchandiseComplete = useCallback(async (merchandiseUrl: string) => {
         if (!session?.user || !selectedProjectId) return;
         
-        const currentState = loadWorkflowState();
+        const currentState = loadWorkflowState() || {}; // Use fallback to prevent crash
         const finalProjectData: ProjectData = {
             ...currentState,
             selectedMerchandiseUrl: merchandiseUrl,
