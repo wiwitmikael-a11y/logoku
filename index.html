@@ -216,6 +216,41 @@
 
         100% { transform: translateX(calc(-50vw - 60px)) scale(-1, 1); z-index: 9; }
       }
+      
+      /* NEW: Keyframes for Login Screen Mang AI */
+      @keyframes login-ai-antics {
+        /* --- Start on left, facing right --- */
+        0%   { transform: translateX(calc(-50% - 160px)) scaleX(-1); }
+        /* Hop 1 */
+        10%  { transform: translateX(calc(-50% - 100px)) scaleX(-1) translateY(-25px); }
+        15%  { transform: translateX(calc(-50% - 40px)) scale(-1.1, 0.9) translateY(0); }
+        17%  { transform: translateX(calc(-50% - 40px)) scaleX(-1) translateY(0); }
+        
+        /* Hop 2 */
+        27%  { transform: translateX(calc(-50% + 20px)) scaleX(-1) translateY(-25px); }
+        32%  { transform: translateX(calc(-50% + 80px)) scale(-1.1, 0.9) translateY(0); }
+        34%  { transform: translateX(calc(-50% + 80px)) scaleX(-1) translateY(0); }
+        
+        /* Hop to right edge */
+        44%  { transform: translateX(calc(-50% + 120px)) scaleX(-1) translateY(-20px); }
+        49%  { transform: translateX(calc(-50% + 160px)) scale(-1.1, 0.9) translateY(0); }
+        
+        /* --- Pause on right, turn around --- */
+        50%  { transform: translateX(calc(-50% + 160px)) scaleX(1); }
+        60%  { transform: translateX(calc(-50% + 160px)) scaleX(1); }
+
+        /* --- Go back left --- */
+        /* Hop 1 */
+        70%  { transform: translateX(calc(-50% + 100px)) scaleX(1) translateY(-25px); }
+        75%  { transform: translateX(calc(-50% + 40px)) scale(1.1, 0.9) translateY(0); }
+        77%  { transform: translateX(calc(-50% + 40px)) scaleX(1) translateY(0); }
+
+        /* Big Hop to left edge */
+        87%  { transform: translateX(calc(-50% - 60px)) scaleX(1) translateY(-30px); }
+        95%  { transform: translateX(calc(-50% - 160px)) scale(1.2, 0.8) translateY(0); }
+
+        100% { transform: translateX(calc(-50% - 160px)) scaleX(-1); }
+      }
 
 
       /* Keyframes for Mang AI bouncing on buttons */
@@ -281,6 +316,19 @@
         60% { transform: translateX(-50%) scale(0.7); opacity: 0.7; }
         69.9% { transform: translateX(-50%) scale(1.6); opacity: 0; }
       }
+      @keyframes dust-for-login-ai {
+        0%, 15.1%, 32.1%, 49.1%, 75.1%, 95.1%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        15% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        19% { transform: translateX(-50%) scale(1.8); opacity: 0; }
+        32% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        36% { transform: translateX(-50%) scale(1.8); opacity: 0; }
+        49% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        53% { transform: translateX(-50%) scale(1.8); opacity: 0; }
+        75% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        79% { transform: translateX(-50%) scale(1.8); opacity: 0; }
+        95% { transform: translateX(-50%) scale(1.2); opacity: 0.8; }
+        99% { transform: translateX(-50%) scale(2.5); opacity: 0; }
+      }
 
       /* --- NEW: SHADOW EFFECT KEYFRAMES --- */
       @keyframes shadow-for-top-mario {
@@ -325,12 +373,27 @@
         80%  { transform: translateX(-50%) scale(0.8); opacity: 0.2; }
         100% { transform: translateX(-50%) scale(1); opacity: 0.25; }
       }
+      @keyframes shadow-for-login-ai {
+        0%, 100% { transform: translateX(-50%) scale(1.1); opacity: 0.3; }
+        10% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
+        15% { transform: translateX(-50%) scale(1.2); opacity: 0.35; }
+        27% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
+        32% { transform: translateX(-50%) scale(1.2); opacity: 0.35; }
+        44% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
+        49% { transform: translateX(-50%) scale(1.2); opacity: 0.35; }
+        50%, 60% { transform: translateX(-50%) scale(1); opacity: 0.25; }
+        70% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
+        75% { transform: translateX(-50%) scale(1.2); opacity: 0.35; }
+        87% { transform: translateX(-50%) scale(0.6); opacity: 0.1; }
+        95% { transform: translateX(-50%) scale(1.4); opacity: 0.4; }
+      }
 
       /* Base style for the new shadow pseudo-element */
       .animate-mario-top-breathing::before,
       .animate-mario-bottom-breathing::before,
       .animate-header-ai::before,
-      .animate-bouncing-ai::before {
+      .animate-bouncing-ai::before,
+      .animate-login-ai::before {
         content: '';
         position: absolute;
         bottom: -5px;
@@ -346,7 +409,8 @@
       .animate-mario-top-breathing::after,
       .animate-mario-bottom-breathing::after,
       .animate-header-ai::after,
-      .animate-bouncing-ai::after {
+      .animate-bouncing-ai::after,
+      .animate-login-ai::after {
         content: '';
         position: absolute;
         bottom: -5px;
@@ -362,6 +426,17 @@
         pointer-events: none;
         image-rendering: pixelated;
         z-index: -1; /* Placed above the shadow */
+      }
+      
+      .animate-login-ai {
+        animation: login-ai-antics 7s linear infinite;
+        transform-origin: bottom center;
+      }
+      .animate-login-ai::before {
+        animation: shadow-for-login-ai 7s linear infinite;
+      }
+      .animate-login-ai::after {
+        animation: dust-for-login-ai 7s linear infinite;
       }
 
       .animate-bouncing-ai {

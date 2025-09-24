@@ -30,12 +30,15 @@ const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 text-center">
       <div className="max-w-md w-full">
-        <img
-          src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-          alt="Mang AI character"
-          className="w-40 mx-auto mb-4"
-          style={{ imageRendering: 'pixelated' }}
-        />
+        {/* Container for the animation. h-40 ensures space for jumping. */}
+        <div className="relative h-40 mb-4">
+            <img
+            src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
+            alt="Mang AI character"
+            className="w-40 h-40 absolute bottom-0 left-1/2 animate-login-ai"
+            style={{ imageRendering: 'pixelated' }}
+            />
+        </div>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-indigo-400 mb-2">
           logo<span className="text-white">.ku</span>
         </h1>
