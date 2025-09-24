@@ -221,15 +221,72 @@
           transform: translateY(0) scale(1); /* Settle */
         }
       }
+      
+      /* --- DUST EFFECT --- */
+      @keyframes dust-for-top-mario {
+        0%, 19.5%, 25%, 69.5%, 75%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        20% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        24.9% { transform: translateX(-50%) scale(2); opacity: 0; }
+        70% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        74.9% { transform: translateX(-50%) scale(2); opacity: 0; }
+      }
+      @keyframes dust-for-bottom-mario {
+        0%, 15.5%, 21%, 65.5%, 71%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        16% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        20.9% { transform: translateX(-50%) scale(2); opacity: 0; }
+        66% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        70.9% { transform: translateX(-50%) scale(2); opacity: 0; }
+      }
+      @keyframes dust-for-header-ai {
+        0%, 72.5%, 78%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        73% { transform: translateX(-50%) scale(0.6); opacity: 0.7; }
+        77.9% { transform: translateX(-50%) scale(1.5); opacity: 0; }
+      }
+      @keyframes dust-for-bouncing-ai {
+        0%, 19%, 30%, 59%, 70%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        20% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+        29.9% { transform: translateX(-50%) scale(1.8); opacity: 0; }
+        60% { transform: translateX(-50%) scale(0.7); opacity: 0.7; }
+        69.9% { transform: translateX(-50%) scale(1.6); opacity: 0; }
+      }
+
+      .animate-mario-top-breathing::after,
+      .animate-mario-bottom-breathing::after,
+      .animate-header-ai::after,
+      .animate-bouncing-ai::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform-origin: center bottom;
+        width: 80%;
+        height: 50%;
+        background-image: url('https://raw.githubusercontent.com/wiwitmikael-a11y/logoku-assets/main/bouncy.png');
+        background-size: contain;
+        background-position: center bottom;
+        background-repeat: no-repeat;
+        opacity: 0;
+        pointer-events: none;
+        image-rendering: pixelated;
+        z-index: -1;
+      }
+
       .animate-bouncing-ai {
         animation: mang-ai-bouncing 1.2s ease-in-out infinite;
         transform-origin: bottom center;
         image-rendering: pixelated;
       }
-
+      .animate-bouncing-ai::after {
+        animation: dust-for-bouncing-ai 1.2s ease-in-out infinite;
+      }
+      
       .animate-mario-top-breathing {
         animation: mario-top-breathing-bounce 8s linear infinite;
       }
+      .animate-mario-top-breathing::after {
+         animation: dust-for-top-mario 8s linear infinite;
+      }
+
       .animate-mario-bottom-breathing {
         animation: mario-bottom-breathing-bounce 6s linear infinite;
         position: fixed;
@@ -237,9 +294,18 @@
         pointer-events: none;
         z-index: 20;
       }
+      .animate-mario-bottom-breathing::after {
+        animation: dust-for-bottom-mario 6s linear infinite;
+      }
+
       .animate-header-ai {
+        position: relative; /* Required for dust pseudo-element */
         animation: header-ai-antics 15s linear infinite;
         image-rendering: pixelated; /* Keeps the pixel art sharp */
+      }
+      .animate-header-ai::after {
+        animation: dust-for-header-ai 15s linear infinite;
+        bottom: -5px; /* Adjust position for this smaller character */
       }
 
       img {
