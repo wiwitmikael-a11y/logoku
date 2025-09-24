@@ -9,6 +9,7 @@ import LoadingMessage from './components/common/LoadingMessage';
 import ProgressStepper from './components/common/ProgressStepper';
 import LoginScreen from './components/LoginScreen';
 import AuthLoadingScreen from './components/common/AuthLoadingScreen';
+import ErrorMessage from './components/common/ErrorMessage';
 
 // Dynamically import main screen components for code-splitting
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
@@ -73,6 +74,7 @@ const App: React.FC = () => {
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
     const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
+    const [generalError, setGeneralError] = useState<string | null>(null);
     const previousAppState = useRef<AppState>(appState);
 
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'print', 'packaging', 'merchandise'];
@@ -80,29 +82,43 @@ const App: React.FC = () => {
     const showStepper = currentStepIndex !== -1;
 
     useEffect(() => {
-        const apiKey = (import.meta as any)?.env?.VITE_API_KEY || process.env.VITE_API_KEY;
+        // Standardize API Key check to match geminiService
+        const apiKey = process.env.API_KEY;
         if (!apiKey) setApiKeyMissing(true);
     }, []);
 
     useEffect(() => {
         setAuthLoading(true);
 
-        // 1. Proactively get the initial session to handle redirects immediately.
         supabaseClient.auth.getSession().then(async ({ data: { session } }) => {
             setSession(session);
             if (session) {
-                await fetchUserData(session.user);
+                try {
+                    await fetchUserData(session.user);
+                } catch (e) {
+                    console.error("FATAL: Error during initial user data fetch:", e);
+                    setGeneralError((e as Error).message);
+                }
             }
+            setAuthLoading(false);
+        }).catch(err => {
+            console.error("FATAL: getSession promise rejected:", err);
+            setGeneralError((err as Error).message);
             setAuthLoading(false);
         });
 
-        // 2. Set up a listener for subsequent auth state changes (e.g., login, logout).
         const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+            setGeneralError(null); // Clear previous errors on auth change
             setSession(session);
             if (session) {
-                await fetchUserData(session.user);
-                stopBGM();
-                playBGM('main');
+                try {
+                    await fetchUserData(session.user);
+                    stopBGM();
+                    playBGM('main');
+                } catch (e) {
+                    console.error("FATAL: Error during auth state change user data fetch:", e);
+                    setGeneralError((e as Error).message);
+                }
             } else {
                 setUserProfile(null);
                 setProjects([]);
@@ -111,45 +127,45 @@ const App: React.FC = () => {
             }
         });
 
-        // 3. Clean up the listener on component unmount.
         return () => subscription.unsubscribe();
     }, []);
 
     const fetchUserData = async (user: User) => {
-        const today = new Date().toISOString().split('T')[0];
         // 1. Try to fetch the profile.
         let { data: profile, error: profileError } = await supabaseClient
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
-    
-        // 2. If profile is not found, create it to "heal" the user's state.
-        if (profileError && profileError.code === 'PGRST116') {
-            console.warn('Profile not found for user, creating one as a fallback to heal state.');
-            const { data: newProfile, error: insertError } = await supabaseClient
+
+        // 2. If profile is not found (PGRST116), create it.
+        if (!profile || (profileError && profileError.code === 'PGRST116')) {
+            console.warn('Profile not found for new user, creating one.');
+            const today = new Date().toISOString().split('T')[0];
+            const newUserProfile: Profile = { 
+                id: user.id,
+                credits: INITIAL_CREDITS,
+                last_credit_reset: today,
+            };
+
+            const { error: insertError } = await supabaseClient
                 .from('profiles')
-                .insert({ 
-                    id: user.id,
-                    credits: INITIAL_CREDITS,
-                    last_credit_reset: today,
-                })
-                .select()
-                .single();
-    
+                .insert(newUserProfile);
+            
             if (insertError) {
-                console.error("CRITICAL: Failed to create fallback profile:", insertError);
-                setUserProfile(null);
-                return;
+                console.error("CRITICAL: Failed to create user profile in database:", insertError);
+                throw new Error(`Gagal membuat profil pengguna: ${insertError.message}`);
             }
-            profile = newProfile;
+            // If insert succeeded, assign our locally created profile object.
+            profile = newUserProfile;
         } else if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            setUserProfile(null);
-            return;
+            // A different, unexpected error occurred fetching the profile.
+            console.error("Unexpected error fetching profile:", profileError);
+            throw new Error(`Gagal mengambil data profil: ${profileError?.message || 'Unknown error'}`);
         }
         
-        // 3. Handle daily credit reset.
+        // 3. Handle daily credit reset for existing users.
+        const today = new Date().toISOString().split('T')[0];
         if (profile && profile.last_credit_reset !== today) {
             const { data: updatedProfile, error: updateError } = await supabaseClient
                 .from('profiles')
@@ -159,13 +175,15 @@ const App: React.FC = () => {
                 .single();
             if (updateError) {
                 console.error("Error resetting credits:", updateError);
+                // Don't block flow, just log the error. The user will have old credits.
             } else {
                 profile = updatedProfile;
             }
         }
         
+        // At this point, `profile` must be valid.
         setUserProfile(profile);
-    
+
         // 4. Fetch user's projects.
         const { data: userProjects, error: projectsError } = await supabaseClient
             .from('projects')
@@ -175,6 +193,7 @@ const App: React.FC = () => {
             
         if (projectsError) {
             console.error("Error fetching projects:", projectsError);
+            setProjects([]);
         } else {
             setProjects(userProjects as Project[]);
         }
@@ -379,10 +398,16 @@ const App: React.FC = () => {
             </header>
             <main className="py-10 px-4 md:px-8 pb-24">
                 <div className="max-w-7xl mx-auto">
-                     {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
-                    <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
-                        <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
-                    </Suspense>
+                    {generalError ? (
+                        <ErrorMessage message={`Terjadi error kritis yang tak terduga: ${generalError}`} />
+                    ) : (
+                        <>
+                            {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
+                            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
+                                <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
+                            </Suspense>
+                        </>
+                    )}
                 </div>
             </main>
              <footer className="text-center py-6 px-4 text-sm text-gray-400 border-t border-gray-800">
