@@ -4,7 +4,7 @@ import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, P
 // --- Environment Variable Setup ---
 // The API key must be available as import.meta.env.VITE_API_KEY.
 // Vercel requires a VITE_ prefix to expose environment variables to the browser.
-const API_KEY = import.meta.env.VITE_API_KEY;
+const API_KEY = import.meta.env?.VITE_API_KEY;
 
 
 // --- Gemini Client Setup ---

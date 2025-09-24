@@ -38,7 +38,7 @@ type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | '
 const App: React.FC = () => {
     // Critical startup checks
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
-    if (!import.meta.env.VITE_API_KEY) return <ApiKeyErrorScreen />;
+    if (!import.meta.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
 
     return (
         <AuthProvider>

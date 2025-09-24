@@ -3,8 +3,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Access environment variables using import.meta.env, the standard way for Vite projects.
 // These variables must be prefixed with VITE_ to be exposed to the browser.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY;
 
 let supabase: SupabaseClient;
 let supabaseError: string | null = null;
