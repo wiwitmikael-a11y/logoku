@@ -1,7 +1,8 @@
 import React from 'react';
 
 /**
- * AdBanner component is now enabled with the user's Ad Slot ID and Publisher ID.
+ * AdBanner component configured for a fixed-size ad unit.
+ * The height is set to 50px to match the user's AdSense unit, resolving display issues.
  */
 const AdBanner: React.FC = () => {
   // User-provided AdSense IDs.
@@ -33,23 +34,22 @@ const AdBanner: React.FC = () => {
     }
   }, [isAdSlotSet]);
 
-  // The outer div has p-0 to remove padding, and the inner div has a forced height of h-9 (36px).
+  // The container's height is now dictated by the <ins> tag's 50px height.
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-gray-900/90 backdrop-blur-sm border-t border-gray-800 z-20 flex justify-center items-center p-0">
-      <div className="w-full max-w-4xl text-center relative h-9 flex items-center justify-center">
+    <div className="fixed bottom-0 left-0 w-full bg-gray-900/90 backdrop-blur-sm border-t border-gray-800 z-20 flex justify-center items-center">
+      <div className="w-full max-w-4xl text-center relative flex items-center justify-center">
         {isAdSlotSet ? (
           <>
             <ins className="adsbygoogle"
-                 // Forcing the height of the ad slot to match the container.
-                 style={{ display: 'block', width: '100%', height: '36px' }}
+                 // Using a fixed 50px height to match the user's likely AdSense unit configuration.
+                 // Removed responsive attributes like data-ad-format and data-full-width-responsive.
+                 style={{ display: 'block', width: '100%', height: '50px' }}
                  data-ad-client={AD_PUBLISHER_ID}
-                 data-ad-slot={AD_SLOT_ID}
-                 data-ad-format="auto"
-                 data-full-width-responsive="false"></ins>
+                 data-ad-slot={AD_SLOT_ID}></ins>
             <span className="text-[10px] text-gray-600 absolute top-0 left-2 bg-gray-900 px-1 rounded-b-sm">Advertisement</span>
           </>
         ) : (
-          // This fallback should not be shown now that the ID is set.
+          // This fallback is kept just in case.
           <div className="text-yellow-400 bg-yellow-900/50 p-3 rounded-lg text-sm">
             <strong>Penting:</strong> Konfigurasi Ad Slot ID di <code>components/AdBanner.tsx</code> belum lengkap.
           </div>
