@@ -20,9 +20,9 @@ const getAiClient = (): GoogleGenAI => {
 
 // --- New API Key Getters ---
 const getOpenRouterKey = (): string => {
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = process.env.OPENROUTER_KEY;
     if (!apiKey) {
-        throw new Error("Waduh, API Key buat OpenRouter nggak ketemu, bro! Set 'Environment Variable' di Vercel dengan nama 'OPENROUTER_API_KEY'.");
+        throw new Error("Waduh, API Key buat OpenRouter nggak ketemu, bro! Set 'Environment Variable' di Vercel dengan nama 'OPENROUTER_KEY'.");
     }
     return apiKey;
 };
