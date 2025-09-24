@@ -107,4 +107,5 @@ export interface Project {
   user_id: string;
   created_at: string; // The database timestamp
   project_data: ProjectData; // All the branding data is nested here
+  status: 'in-progress' | 'completed'; // New status field for checkpoint system
 }

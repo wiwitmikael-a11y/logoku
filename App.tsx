@@ -132,11 +132,27 @@ const MainApp: React.FC = () => {
         setAppState(state);
     };
 
-    const handleNewProject = useCallback(() => {
+    const handleNewProject = useCallback(async () => {
+        if (!session?.user) return;
+        setGeneralError(null);
+        
+        const { data, error } = await supabase
+            .from('projects')
+            .insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' })
+            .select()
+            .single();
+            
+        if (error) {
+            setGeneralError(`Gagal memulai project baru: ${error.message}`);
+            return;
+        }
+
+        const newProject: Project = data as any;
+        setProjects(prev => [newProject, ...prev]);
+        setSelectedProjectId(newProject.id);
         clearWorkflowState();
-        setSelectedProjectId(null);
         navigateTo('persona');
-    }, []);
+    }, [session]);
     
     const handleReturnToDashboard = useCallback(() => {
         clearWorkflowState();
@@ -148,6 +164,26 @@ const MainApp: React.FC = () => {
         setSelectedProjectId(projectId);
         navigateTo('summary');
     }, []);
+    
+    const handleContinueProject = useCallback((projectId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+        
+        setSelectedProjectId(project.id);
+        saveWorkflowState(project.project_data);
+        
+        // Determine the next step based on what data exists
+        const data = project.project_data;
+        let nextState: AppState = 'persona';
+        if (data.selectedPackagingUrl) nextState = 'merchandise';
+        else if (data.selectedPrintMedia) nextState = 'packaging';
+        else if (data.contentCalendar) nextState = 'print';
+        else if (data.logoVariations) nextState = 'content';
+        else if (data.selectedLogoUrl) nextState = 'logo_detail';
+        else if (data.selectedPersona) nextState = 'logo';
+        
+        navigateTo(nextState);
+    }, [projects]);
 
     const handleGoToCaptionGenerator = useCallback((projectId: number) => {
         const project = projects.find(p => p.id === projectId);
@@ -158,52 +194,94 @@ const MainApp: React.FC = () => {
         }
     }, [projects]);
     
-    // --- Workflow Step Completion Handlers ---
-    const handlePersonaComplete = useCallback((data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
-        saveWorkflowState({
+    // --- Centralized Checkpoint Saver ---
+    const saveCheckpoint = useCallback(async (updatedData: Partial<ProjectData>) => {
+        if (!selectedProjectId) {
+            setGeneralError("ID Project tidak ditemukan untuk menyimpan progress.");
+            throw new Error("ID Project tidak ditemukan.");
+        }
+        
+        const { error } = await supabase
+            .from('projects')
+            .update({ project_data: updatedData })
+            .eq('id', selectedProjectId);
+            
+        if (error) {
+            setGeneralError(`Gagal menyimpan progress: ${error.message}`);
+            throw new Error(error.message);
+        }
+        
+        setProjects(prev => prev.map(p => 
+            p.id === selectedProjectId ? { ...p, project_data: updatedData as ProjectData } : p
+        ));
+        
+        saveWorkflowState(updatedData);
+    }, [selectedProjectId]);
+
+    // --- Workflow Step Completion Handlers (Refactored) ---
+    const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
+        const updatedData: Partial<ProjectData> = {
             brandInputs: data.inputs,
             selectedPersona: data.selectedPersona,
             selectedSlogan: data.selectedSlogan,
-        });
-        navigateTo('logo');
-    }, []);
+        };
+        try {
+            await saveCheckpoint(updatedData);
+            navigateTo('logo');
+        } catch (e) { /* error is handled by saveCheckpoint */ }
+    }, [saveCheckpoint]);
     
-    const handleLogoComplete = useCallback((data: { logoUrl: string; prompt: string }) => {
-        const currentState = loadWorkflowState();
-        saveWorkflowState({ ...currentState, selectedLogoUrl: data.logoUrl, logoPrompt: data.prompt });
-        navigateTo('logo_detail');
-    }, []);
+    const handleLogoComplete = useCallback(async (data: { logoUrl: string; prompt: string }) => {
+        const currentState = loadWorkflowState() || {};
+        const updatedData = { ...currentState, selectedLogoUrl: data.logoUrl, logoPrompt: data.prompt };
+        try {
+            await saveCheckpoint(updatedData);
+            navigateTo('logo_detail');
+        } catch (e) { /* error is handled */ }
+    }, [saveCheckpoint]);
 
-    const handleLogoDetailComplete = useCallback((data: { finalLogoUrl: string; variations: LogoVariations }) => {
-        const currentState = loadWorkflowState();
-        saveWorkflowState({ ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations });
-        navigateTo('content');
-    }, []);
+    const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
+        const currentState = loadWorkflowState() || {};
+        const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
+        try {
+            await saveCheckpoint(updatedData);
+            navigateTo('content');
+        } catch (e) { /* error is handled */ }
+    }, [saveCheckpoint]);
 
-    const handleContentComplete = useCallback((data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
-        const currentState = loadWorkflowState();
-        saveWorkflowState({ ...currentState, contentCalendar: data.calendar, searchSources: data.sources });
-        navigateTo('print');
-    }, []);
+    const handleContentComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
+        const currentState = loadWorkflowState() || {};
+        const updatedData = { ...currentState, contentCalendar: data.calendar, searchSources: data.sources };
+        try {
+            await saveCheckpoint(updatedData);
+            navigateTo('print');
+        } catch (e) { /* error is handled */ }
+    }, [saveCheckpoint]);
 
-    const handlePrintMediaComplete = useCallback((data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => {
-        const currentState = loadWorkflowState();
-        saveWorkflowState({
+    const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => {
+        const currentState = loadWorkflowState() || {};
+        const updatedData = {
             ...currentState,
             selectedPrintMedia: data.assets,
             brandInputs: { ...currentState.brandInputs!, ...data.inputs },
-        });
-        navigateTo('packaging');
-    }, []);
+        };
+        try {
+            await saveCheckpoint(updatedData);
+            navigateTo('packaging');
+        } catch (e) { /* error is handled */ }
+    }, [saveCheckpoint]);
 
-    const handlePackagingComplete = useCallback((packagingUrl: string) => {
-       const currentState = loadWorkflowState();
-       saveWorkflowState({ ...currentState, selectedPackagingUrl: packagingUrl });
-       navigateTo('merchandise');
-    }, []);
+    const handlePackagingComplete = useCallback(async (packagingUrl: string) => {
+       const currentState = loadWorkflowState() || {};
+       const updatedData = { ...currentState, selectedPackagingUrl: packagingUrl };
+       try {
+            await saveCheckpoint(updatedData);
+            navigateTo('merchandise');
+       } catch(e) { /* error is handled */ }
+    }, [saveCheckpoint]);
 
     const handleMerchandiseComplete = useCallback(async (merchandiseUrl: string) => {
-        if (!session?.user) return;
+        if (!session?.user || !selectedProjectId) return;
         
         const currentState = loadWorkflowState();
         const finalProjectData: ProjectData = {
@@ -213,21 +291,22 @@ const MainApp: React.FC = () => {
 
         const { data, error } = await supabase
             .from('projects')
-            .insert({ user_id: session.user.id, project_data: finalProjectData })
+            .update({ project_data: finalProjectData, status: 'completed' })
+            .eq('id', selectedProjectId)
             .select()
             .single();
 
         if (error) {
-            console.error("Error saving project", error);
+            console.error("Error saving final project", error);
             setGeneralError(`Gagal menyimpan project: ${error.message}`);
         } else {
-            const newProject: Project = data as any;
-            setProjects(prev => [newProject, ...prev]);
-            setSelectedProjectId(newProject.id);
+            const updatedProject: Project = data as any;
+            setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+            setSelectedProjectId(updatedProject.id);
             clearWorkflowState();
             navigateTo('summary');
         }
-    }, [session]);
+    }, [session, selectedProjectId]);
 
     const openContactModal = useCallback(() => { playSound('click'); setShowContactModal(true); }, []);
     const closeContactModal = useCallback(() => setShowContactModal(false), []);
@@ -283,7 +362,7 @@ const MainApp: React.FC = () => {
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onGoToCaptionGenerator={handleGoToCaptionGenerator} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} />;
+                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} onGoToCaptionGenerator={handleGoToCaptionGenerator} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} />;
         }
         // Fallback: If required data is missing, go to dashboard
         handleReturnToDashboard();

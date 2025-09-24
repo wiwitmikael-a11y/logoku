@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import type { Project } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
@@ -8,6 +8,7 @@ interface ProjectDashboardProps {
   projects: Project[];
   onNewProject: () => void;
   onSelectProject: (projectId: number) => void;
+  onContinueProject: (projectId: number) => void;
   onGoToCaptionGenerator: (projectId: number) => void;
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
@@ -38,9 +39,15 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
 };
 
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onGoToCaptionGenerator, showWelcomeBanner, onWelcomeBannerClose }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onGoToCaptionGenerator, showWelcomeBanner, onWelcomeBannerClose }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
+
+  const { inProgressProjects, completedProjects } = useMemo(() => {
+    const inProgress = projects.filter(p => p.status !== 'completed');
+    const completed = projects.filter(p => p.status === 'completed');
+    return { inProgressProjects: inProgress, completedProjects: completed };
+  }, [projects]);
 
   return (
     <div className="flex flex-col gap-8 items-center text-center">
@@ -54,11 +61,45 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         + Bikin Project Branding Baru
       </Button>
 
-      {projects.length > 0 && (
+      {inProgressProjects.length > 0 && (
         <div className="w-full text-left mt-8">
-          <h3 className="text-xl font-bold mb-4">Project Lo:</h3>
+          <h3 className="text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map(project => (
+            {inProgressProjects.map(project => (
+              <Card 
+                key={project.id} 
+                title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
+                onClick={() => onContinueProject(project.id)}
+              >
+                 <p className="text-sm text-gray-400 min-h-[40px]">
+                   {project.project_data.selectedSlogan ? `"${project.project_data.selectedSlogan}"` : 'Lanjutkan untuk membuat slogan...'}
+                 </p>
+                <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
+                   <p className="text-xs text-gray-500">
+                    Progres tersimpan...
+                  </p>
+                    <Button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onContinueProject(project.id);
+                        }}
+                        variant="secondary"
+                        size="small"
+                    >
+                        Lanjutkan
+                    </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {completedProjects.length > 0 && (
+        <div className="w-full text-left mt-8">
+          <h3 className="text-xl font-bold mb-4">Project Selesai:</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {completedProjects.map(project => (
               <Card 
                 key={project.id} 
                 title={project.project_data.brandInputs.businessName}
@@ -73,7 +114,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                       </p>
                     </div>
                    <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">
-                    Dibuat pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">

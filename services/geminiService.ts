@@ -173,17 +173,18 @@ const generateImagesWithGemini = async (prompt: string, count: number): Promise<
             config: {
                 numberOfImages: count,
                 outputMimeType: 'image/png',
-                aspectRatio: '1:1', // FIX: Explisit nambahin aspect ratio biar lebih stabil
+                aspectRatio: '1:1',
             },
         });
         
-        // FIX: Add a defensive check. If the response doesn't contain images (e.g., due to safety filters),
-        // throw a user-friendly error instead of crashing.
         if (!response.generatedImages) {
             throw new Error("Mang AI gak bisa generate gambar dari prompt itu. Coba ganti deskripsinya atau pastiin gak melanggar kebijakan ya.");
         }
 
-        return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
+        // FIX: The API response structure for generated images has been simplified.
+        // Instead of a nested `img.image.imageBytes`, the data is now directly on `img.imageBytes`.
+        // Using `(img as any)` to bypass potentially outdated type definitions.
+        return response.generatedImages.map(img => `data:image/png;base64,${(img as any).imageBytes}`);
 
     } catch (error) {
         // If the error is our custom one, we don't need to re-handle it.
