@@ -1,178 +1,157 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
-import type { Session } from '@supabase/supabase-js';
-import type { Profile, User } from '../types';
-import { playSound, toggleMuteBGM as toggleMuteBgmUtil } from '../services/soundService';
-
-const INITIAL_CREDITS = 10;
+import { setMuted, playBGM, stopBGM, unlockAudio } from '../services/soundService';
+import type { Profile } from '../types';
 
 interface AuthContextType {
-    session: Session | null;
-    profile: Profile | null;
-    loading: boolean;
-    authError: string | null;
-    showOutOfCreditsModal: boolean;
-    setShowOutOfCreditsModal: (show: boolean) => void;
-    deductCredits: (cost: number) => Promise<boolean>;
-    handleLogout: () => Promise<void>;
-    handleToggleMute: () => void;
-    isMuted: boolean;
+  session: Session | null;
+  user: User | null;
+  profile: Profile | null;
+  loading: boolean;
+  authError: string | null;
+  isMuted: boolean;
+  showOutOfCreditsModal: boolean;
+  setShowOutOfCreditsModal: React.Dispatch<React.SetStateAction<boolean>>;
+  handleLogout: () => Promise<void>;
+  handleToggleMute: () => void;
+  deductCredits: (amount: number) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [session, setSession] = useState<Session | null>(null);
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [authError, setAuthError] = useState<string | null>(null);
-    const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
-    const [isMuted, setIsMuted] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isMuted, setIsMutedState] = useState(true); // Default to muted
+  const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
 
-    const handleLogout = useCallback(async () => {
-        const { error } = await supabase.auth.signOut();
-        setProfile(null);
-        setSession(null);
-        if (error) console.error('Error logging out:', error);
-    }, []);
-    
-    const fetchUserData = useCallback(async (user: User) => {
-        try {
-            let { data: userProfile, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single();
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-            if (profileError && profileError.code === 'PGRST116') { // Profile not found
-                console.warn('Profile not found for user, creating one.');
-                const today = new Date().toISOString().split('T')[0];
-                const newProfile: Profile = { 
-                    id: user.id,
-                    credits: INITIAL_CREDITS,
-                    last_credit_reset: today,
-                };
-                const { data: insertedProfile, error: insertError } = await supabase
-                    .from('profiles')
-                    .insert(newProfile)
-                    .select()
-                    .single();
+    if (error && error.code !== 'PGRST116') { // PGRST116: no rows found
+      console.error('Error fetching profile:', error);
+      setAuthError('Gagal mengambil data profil pengguna.');
+    } else if (data) {
+      setProfile(data as Profile);
+    }
+  }, []);
 
-                if (insertError) throw new Error(`Failed to create profile: ${insertError.message}`);
-                userProfile = insertedProfile;
-            } else if (profileError) {
-                throw profileError;
-            }
-
-            // Daily credit reset logic
-            const today = new Date().toISOString().split('T')[0];
-            if (userProfile && userProfile.last_credit_reset !== today) {
-                const { data: updatedProfile, error: updateError } = await supabase
-                    .from('profiles')
-                    .update({ credits: INITIAL_CREDITS, last_credit_reset: today })
-                    .eq('id', user.id)
-                    .select()
-                    .single();
-                
-                if (updateError) {
-                    console.error("Error resetting credits:", updateError);
-                } else {
-                    userProfile = updatedProfile;
-                }
-            }
-            
-            setProfile(userProfile);
-            setAuthError(null); // Clear any previous auth errors on success
-        } catch (error) {
-            console.error("Critical error in user data handling:", error);
-            setAuthError(`Gagal memuat profil Anda setelah login. Silakan coba lagi.`);
-            // Automatically log out the user to prevent inconsistent state
-            await handleLogout();
+  useEffect(() => {
+    const getSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        setAuthError('Gagal mengambil sesi login.');
+      } else {
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        if (data.session?.user) {
+          await fetchProfile(data.session.user.id);
         }
-    }, [handleLogout]);
-
-    useEffect(() => {
-        const fetchSessionAndProfile = async () => {
-            setLoading(true);
-            try {
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError) throw sessionError;
-                
-                setSession(session);
-                if (session) {
-                    await fetchUserData(session.user);
-                }
-            } catch (e) {
-                console.error("Error fetching initial session:", e);
-                setSession(null);
-                setProfile(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchSessionAndProfile();
-
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            setSession(session);
-            if (session) {
-                await fetchUserData(session.user);
-            } else {
-                setProfile(null);
-            }
-        });
-
-        return () => {
-            authListener.subscription.unsubscribe();
-        };
-    }, [fetchUserData]);
-    
-    const deductCredits = useCallback(async (cost: number): Promise<boolean> => {
-        if (!profile || profile.credits < cost) {
-            playSound('error');
-            setShowOutOfCreditsModal(true);
-            return false;
-        }
-
-        const newCredits = profile.credits - cost;
-        const { error } = await supabase
-            .from('profiles')
-            .update({ credits: newCredits })
-            .eq('id', profile.id);
-
-        if (error) {
-            console.error("Error deducting credits:", error);
-            playSound('error');
-            // TODO: show a generic error message to the user
-            return false;
-        } else {
-            setProfile(prev => prev ? { ...prev, credits: newCredits } : null);
-            return true;
-        }
-    }, [profile]);
-
-    const handleToggleMute = useCallback(() => setIsMuted(!toggleMuteBgmUtil()), []);
-
-    const value = {
-        session,
-        profile,
-        loading,
-        authError,
-        showOutOfCreditsModal,
-        setShowOutOfCreditsModal,
-        deductCredits,
-        handleLogout,
-        handleToggleMute,
-        isMuted
+      }
+      setLoading(false);
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setProfile(null);
+        if (session?.user) {
+          setLoading(true);
+          await fetchProfile(session.user.id);
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
+  
+  useEffect(() => {
+      setMuted(isMuted);
+      if (isMuted) {
+          stopBGM();
+      } else if (session) {
+          playBGM('main');
+      } else {
+          playBGM('welcome');
+      }
+  }, [isMuted, session]);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      setAuthError(`Gagal logout: ${error.message}`);
+    } else {
+      setProfile(null);
+    }
+  };
+
+  const handleToggleMute = () => {
+    unlockAudio(); // Ensure audio is unlocked when user interacts with mute button
+    setIsMutedState(prev => !prev);
+  };
+  
+  const deductCredits = async (amount: number): Promise<boolean> => {
+    if (!profile || !user) {
+        setAuthError("Pengguna tidak terautentikasi untuk mengurangi kredit.");
+        return false;
+    }
+
+    if (profile.credits < amount) {
+        setShowOutOfCreditsModal(true);
+        return false;
+    }
+
+    const newCredits = profile.credits - amount;
+    const { error } = await supabase
+        .from('profiles')
+        .update({ credits: newCredits })
+        .eq('id', user.id);
+
+    if (error) {
+        setAuthError(`Gagal mengurangi kredit: ${error.message}`);
+        return false;
+    }
+
+    setProfile(prev => prev ? { ...prev, credits: newCredits } : null);
+    return true;
+  };
+
+
+  const value = {
+    session,
+    user,
+    profile,
+    loading,
+    authError,
+    isMuted,
+    showOutOfCreditsModal,
+    setShowOutOfCreditsModal,
+    handleLogout,
+    handleToggleMute,
+    deductCredits,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

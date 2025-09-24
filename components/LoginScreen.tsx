@@ -40,7 +40,7 @@ const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
           logo<span className="text-white">.ku</span>
         </h1>
         <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-          Studio branding AI pribadi lo. Bikin persona, logo, sampai konten sosmed cuma dalam hitungan menit.
+          Wih, ada tamu! Sini masuk dulu bro, biar Mang AI buatin brand kit paling hore.
         </p>
         
         <div className="flex flex-col items-center gap-4">
