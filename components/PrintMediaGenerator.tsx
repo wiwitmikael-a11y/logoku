@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,7 +20,7 @@ type MediaTab = 'business_card' | 'flyer' | 'banner' | 'roll_banner';
 const GENERATION_COST = 1;
 
 const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
-  const { profile, deductCredits } = useAuth();
+  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [activeTab, setActiveTab] = useState<MediaTab>('business_card');
@@ -62,6 +62,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
@@ -76,12 +77,23 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     banner: { designs: bannerDesigns, setDesigns: setBannerDesigns, selected: selectedBannerUrl, setSelected: setSelectedBannerUrl },
     roll_banner: { designs: rollBannerDesigns, setDesigns: setRollBannerDesigns, selected: selectedRollBannerUrl, setSelected: setSelectedRollBannerUrl },
   };
+  
+  const { designs, setDesigns, setSelected } = designData[activeTab];
+
+  useEffect(() => {
+      if (designs.length > 0 && resultsRef.current) {
+          resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+  }, [designs]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const hasEnoughCredits = await deductCredits(GENERATION_COST);
-    if (!hasEnoughCredits) return;
+    if (credits < GENERATION_COST) {
+        setShowOutOfCreditsModal(true);
+        playSound('error');
+        return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -95,7 +107,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         return;
     }
     
-    const { setDesigns, setSelected } = designData[activeTab];
     setDesigns([]);
     setSelected(null);
 
@@ -112,6 +123,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
             logoPrompt
         };
       const results = await generatePrintMedia(activeTab, payload);
+      await deductCredits(GENERATION_COST); // Deduct only on success
       setDesigns(results);
       if (results.length > 0) {
         setSelected(results[0]); // Auto-select the generated design
@@ -124,7 +136,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, deductCredits, designData]);
+  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected]);
 
   const handleContinue = () => {
     onComplete({
@@ -186,8 +198,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         default: return null;
     }
   };
-  
-    const { designs } = designData[activeTab];
 
   return (
     <div className="flex flex-col gap-8">
@@ -215,7 +225,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
       {error && <ErrorMessage message={error} />}
 
       {designs.length > 0 && (
-        <div className="flex flex-col gap-6 items-center">
+        <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
             <h3 className="text-xl font-bold">Desain Hasil Generate:</h3>
           <div className="flex justify-center w-full max-w-lg">
               <div 

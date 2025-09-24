@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import type { ProjectData, GeneratedCaption } from '../types';
@@ -20,6 +20,13 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack }) => {
   const [captions, setCaptions] = useState<GeneratedCaption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (captions.length > 0 && resultsRef.current) {
+        resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [captions]);
 
   const handleSubmit = useCallback(async () => {
     if (!topic || !projectData.brandInputs || !projectData.selectedPersona) return;
@@ -99,7 +106,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack }) => {
       {error && <ErrorMessage message={error} />}
 
       {captions.length > 0 && (
-        <div className="flex flex-col gap-6 mt-4">
+        <div ref={resultsRef} className="flex flex-col gap-6 mt-4 scroll-mt-24">
           <h3 className="text-xl font-bold">Pilihan Caption Buat Lo:</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {captions.map((item, index) => (

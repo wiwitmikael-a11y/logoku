@@ -64,9 +64,8 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // FIX: Corrected a TypeScript error where `this.props` was not being recognized on the class component by destructuring the `children` prop before returning.
-    const { children } = this.props;
-    return children;
+    // FIX: Corrected a TypeScript error where `this.props` was not being recognized on the class component.
+    return this.props.children;
   }
 }
 

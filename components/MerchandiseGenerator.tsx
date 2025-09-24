@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
@@ -40,7 +40,7 @@ const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
 ];
 
 const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onComplete }) => {
-  const { profile, deductCredits } = useAuth();
+  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [activeTab, setActiveTab] = useState<MerchType>('t-shirt');
@@ -50,6 +50,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
@@ -63,12 +64,22 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
       setPrompt(newPrompt);
     }
   }, [activeTab, businessName, logoPrompt]);
+  
+  useEffect(() => {
+    if (designs.length > 0 && resultsRef.current) {
+        resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [designs]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const hasEnoughCredits = await deductCredits(GENERATION_COST);
-    if (!prompt || !hasEnoughCredits) return;
+    if (credits < GENERATION_COST) {
+        setShowOutOfCreditsModal(true);
+        playSound('error');
+        return;
+    }
+    if (!prompt) return;
 
     setIsLoading(true);
     setError(null);
@@ -78,6 +89,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
 
     try {
       const results = await generateMerchandiseMockup(prompt);
+      await deductCredits(GENERATION_COST);
       setDesigns(results);
       if (results.length > 0) {
         setSelectedDesignUrl(results[0]); // Auto-select the first (and only) design
@@ -90,7 +102,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, deductCredits]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {
@@ -141,7 +153,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
       {error && <ErrorMessage message={error} />}
 
       {designs.length > 0 && (
-        <div className="flex flex-col gap-6 items-center">
+        <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
             <h3 className="text-xl font-bold">Mockup Hasil Generate:</h3>
           <div className="flex justify-center w-full max-w-sm">
             <div 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,7 +20,7 @@ const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
 const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete }) => {
-  const { profile, deductCredits } = useAuth();
+  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [finalLogoUrl, setFinalLogoUrl] = useState<string>(baseLogoUrl);
@@ -30,20 +30,30 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+  const variationsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
 
+  useEffect(() => {
+    if (variations && variationsRef.current) {
+      variationsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [variations]);
+
   const handleGenerateVariations = useCallback(async () => {
-    const hasEnoughCredits = await deductCredits(VARIATION_COST);
-    if (!hasEnoughCredits) return;
+    if (credits < VARIATION_COST) {
+        setShowOutOfCreditsModal(true);
+        playSound('error');
+        return;
+    }
 
     setIsGeneratingVariations(true);
     setError(null);
     playSound('start');
     try {
-      // Pass the original selected logo as the "main" variant to save an API call
       const generatedVariations = await generateLogoVariations(basePrompt);
+      await deductCredits(VARIATION_COST); // Deduct on success
       const completeVariations = { ...generatedVariations, main: baseLogoUrl };
       setVariations(completeVariations);
       playSound('success');
@@ -54,13 +64,17 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, baseLogoUrl, deductCredits]);
+  }, [basePrompt, baseLogoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const hasEnoughCredits = await deductCredits(EDIT_COST);
-    if (!editPrompt.trim() || !hasEnoughCredits) return;
+    if (credits < EDIT_COST) {
+        setShowOutOfCreditsModal(true);
+        playSound('error');
+        return;
+    }
+    if (!editPrompt.trim()) return;
 
     setIsEditing(true);
     setError(null);
@@ -69,6 +83,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
       const base64Data = finalLogoUrl.split(',')[1];
       const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/jpeg';
       const result = await editLogo(base64Data, mimeType, editPrompt);
+      await deductCredits(EDIT_COST); // Deduct on success
       setFinalLogoUrl(result); // Update the main displayed logo with the edited one
       playSound('success');
     } catch (err) {
@@ -104,7 +119,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
             </div>
 
             {variations ? (
-                <div>
+                <div ref={variationsRef}>
                     <h4 className="font-bold mb-4">Paket Logo Lengkap:</h4>
                     <div className="grid grid-cols-2 gap-4 text-center">
                         <div>

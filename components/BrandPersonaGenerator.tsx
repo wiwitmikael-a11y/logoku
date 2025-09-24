@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateBrandPersona, generateSlogans } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { loadWorkflowState } from '../services/workflowPersistence';
@@ -31,6 +31,9 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
   const [isLoadingSlogan, setIsLoadingSlogan] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const personasRef = useRef<HTMLDivElement>(null);
+  const slogansRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     // Load persisted state on component mount
     const persistedState = loadWorkflowState();
@@ -38,6 +41,19 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
       setFormData(persistedState.brandInputs);
     }
   }, []);
+
+  // Auto-scroll to results when they appear
+  useEffect(() => {
+    if (personas.length > 0 && personasRef.current) {
+      personasRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [personas]);
+
+  useEffect(() => {
+    if (slogans.length > 0 && slogansRef.current) {
+      slogansRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [slogans]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -142,7 +158,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
 
       {personas.length > 0 && (
         <>
-        <div className="flex flex-col gap-6">
+        <div ref={personasRef} className="flex flex-col gap-6 scroll-mt-24">
           <div>
             <h3 className="text-xl font-bold mb-2">Pilih Persona Brand Lo:</h3>
           </div>
@@ -187,7 +203,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
         </div>
 
         {selectedPersonaIndex !== null && (
-          <div className="flex flex-col gap-6 mt-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700 transition-opacity duration-500 animate-fade-in">
+          <div ref={slogansRef} className="flex flex-col gap-6 mt-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700 transition-opacity duration-500 animate-fade-in scroll-mt-24">
             <div>
               <h3 className="text-xl font-bold text-indigo-400 mb-2">Langkah 1.5: Generate Slogan</h3>
               <p className="text-gray-400">Persona "{personas[selectedPersonaIndex].nama_persona}" udah kepilih. Sekarang, ayo kita buat beberapa pilihan slogan yang pas.</p>

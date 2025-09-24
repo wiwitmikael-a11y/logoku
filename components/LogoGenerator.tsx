@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
@@ -78,7 +78,7 @@ const logoStyles = [
 ];
 
 const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
-  const { profile, deductCredits } = useAuth();
+  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState('');
@@ -89,6 +89,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
   const [selectedStyleId, setSelectedStyleId] = useState<string>('minimalist');
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
@@ -104,11 +105,22 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     }
   }, [selectedStyleId, persona, businessName]);
 
+  // Auto-scroll to results
+  useEffect(() => {
+    if (logos.length > 0 && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [logos]);
+
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
     
-    const hasEnoughCredits = await deductCredits(GENERATION_COST);
-    if (!prompt || !hasEnoughCredits) return;
+    if (credits < GENERATION_COST) {
+        setShowOutOfCreditsModal(true);
+        playSound('error');
+        return;
+    }
+    if (!prompt.trim()) return;
 
     setIsLoading(true);
     setError(null);
@@ -118,6 +130,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
 
     try {
       const results = await generateLogoOptions(prompt);
+      await deductCredits(GENERATION_COST); // Deduct credits only on success
       setLogos(results);
       if (results.length > 0) {
         setSelectedLogoUrl(results[0]); // Auto-select the first (and only) logo
@@ -130,7 +143,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, deductCredits]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
   
   const handleContinue = () => {
     if (selectedLogoUrl) {
@@ -197,7 +210,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
       {error && <ErrorMessage message={error} />}
 
       {logos.length > 0 && (
-        <div className="flex flex-col gap-6 items-center">
+        <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
             <div>
               <h3 className="text-xl font-bold mb-2">Logo Hasil Generate:</h3>
             </div>

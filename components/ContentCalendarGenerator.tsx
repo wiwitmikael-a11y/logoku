@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateContentCalendar } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import type { ContentCalendarEntry, ProjectData } from '../types';
@@ -19,6 +18,13 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
   const [sources, setSources] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (calendar.length > 0 && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [calendar]);
 
   const handleSubmit = useCallback(async () => {
     if (!projectData.brandInputs || !projectData.selectedPersona) return;
@@ -69,7 +75,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
       {error && <ErrorMessage message={error} />}
 
       {calendar.length > 0 && (
-        <div className="flex flex-col gap-6">
+        <div ref={resultsRef} className="flex flex-col gap-6 scroll-mt-24">
           <h3 className="text-xl font-bold">Draf Kalender Konten Lo:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {calendar.map((item, index) => (

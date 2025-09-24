@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [isMuted, setIsMutedState] = useState(true); // Default to muted
+  const [isMuted, setIsMutedState] = useState(false); // Default to un-muted
   const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
 
   const fetchProfile = useCallback(async (userId: string) => {
