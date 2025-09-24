@@ -21,7 +21,7 @@ const getAiClient = (): GoogleGenAI => {
         // In a Vercel environment, browser-accessible environment variables
         // MUST be prefixed with NEXT_PUBLIC_.
         if (typeof process !== 'undefined' && process.env) {
-            apiKey = process.env.NEXT_PUBLIC_API_KEY;
+            apiKey = process.env.GEMINI_API_KEY;
         }
     } catch (e) {
         console.warn("Could not access process.env. This is expected in some environments.");
