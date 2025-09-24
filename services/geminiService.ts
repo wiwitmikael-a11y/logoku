@@ -18,7 +18,7 @@ const getAiClient = (): GoogleGenAI => {
 
     // Fix: Per coding guidelines, the API key must be obtained from process.env.API_KEY.
     // This also resolves the TypeScript error "Property 'env' does not exist on type 'ImportMeta'".
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.VITE_API_KEY;
     
     // If the API key is missing, throw a user-friendly error with clear instructions.
     if (!apiKey) {
