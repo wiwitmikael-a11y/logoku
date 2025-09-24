@@ -116,6 +116,7 @@ const App: React.FC = () => {
     }, []);
 
     const fetchUserData = async (user: User) => {
+        const today = new Date().toISOString().split('T')[0];
         // 1. Try to fetch the profile.
         let { data: profile, error: profileError } = await supabaseClient
             .from('profiles')
@@ -128,7 +129,11 @@ const App: React.FC = () => {
             console.warn('Profile not found for user, creating one as a fallback to heal state.');
             const { data: newProfile, error: insertError } = await supabaseClient
                 .from('profiles')
-                .insert({ id: user.id })
+                .insert({ 
+                    id: user.id,
+                    credits: INITIAL_CREDITS,
+                    last_credit_reset: today,
+                })
                 .select()
                 .single();
     
@@ -145,7 +150,6 @@ const App: React.FC = () => {
         }
         
         // 3. Handle daily credit reset.
-        const today = new Date().toISOString().split('T')[0];
         if (profile && profile.last_credit_reset !== today) {
             const { data: updatedProfile, error: updateError } = await supabaseClient
                 .from('profiles')

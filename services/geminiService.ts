@@ -4,20 +4,18 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData } from '../types';
 
 // --- Environment Variable Setup ---
-// Check for variables in both Vite's `import.meta.env` and standard `process.env`
-// for robustness across different build/deployment environments.
-const VITE_API_KEY = (import.meta as any)?.env?.VITE_API_KEY || (typeof process !== 'undefined' && process.env.VITE_API_KEY);
-const DEV_MODE = ((import.meta as any)?.env?.VITE_DEV_MODE === 'true') || (typeof process !== 'undefined' && process.env.VITE_DEV_MODE === 'true');
+const API_KEY = process.env.API_KEY;
+const DEV_MODE = process.env.DEV_MODE === 'true';
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
 const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
-    if (!VITE_API_KEY) {
-        // Updated error message to be more specific for Vercel deployment
-        throw new Error("Waduh, API Key Google Gemini (VITE_API_KEY) nggak ketemu, bro! Karena ini project Vite, nama environment variable-nya harus 'VITE_API_KEY'. Cek lagi di Vercel Settings -> Environment Variables, terus deploy ulang ya.");
+    if (!API_KEY) {
+        // Updated error message to be more generic.
+        throw new Error("Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro! Cek lagi di Environment Variables, terus deploy ulang ya.");
     }
-    ai = new GoogleGenAI({ apiKey: VITE_API_KEY });
+    ai = new GoogleGenAI({ apiKey: API_KEY });
     return ai;
 };
 
