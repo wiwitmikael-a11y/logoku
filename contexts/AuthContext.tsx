@@ -65,11 +65,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        setProfile(null);
+        
+        // When auth state changes (e.g., token refresh on tab focus), 
+        // fetch the profile in the background without triggering the main loading screen.
+        // The initial load is handled by the getSession call above.
         if (session?.user) {
-          setLoading(true);
           await fetchProfile(session.user.id);
-          setLoading(false);
+        } else {
+          // If the user logs out (session becomes null), clear the profile.
+          setProfile(null);
         }
       }
     );

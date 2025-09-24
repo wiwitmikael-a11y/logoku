@@ -17,19 +17,20 @@ const getAudio = (src: string, isLoop = false): HTMLAudioElement => {
 };
 
 const soundUrls = {
-    click: `${GITHUB_ASSETS_URL}sounds/click.mp3`,
-    hover: `${GITHUB_ASSETS_URL}sounds/hover.mp3`,
+    click: `${GITHUB_ASSETS_URL}ui_click.mp3`,
+    hover: `${GITHUB_ASSETS_URL}ui_hover.mp3`,
     select: `${GITHUB_ASSETS_URL}sounds/select.mp3`,
     typing: `${GITHUB_ASSETS_URL}sounds/typing.mp3`,
-    transition: `${GITHUB_ASSETS_URL}sounds/transition.mp3`,
+    transition: `${GITHUB_ASSETS_URL}ui_transition.mp3`,
     start: `${GITHUB_ASSETS_URL}sounds/start.mp3`,
-    success: `${GITHUB_ASSETS_URL}sounds/success.mp3`,
-    error: `${GITHUB_ASSETS_URL}sounds/error.mp3`,
+    success: `${GITHUB_ASSETS_URL}generate_complete.wav`,
+    error: `${GITHUB_ASSETS_URL}ui_error.mp3`,
+    bounce: `${GITHUB_ASSETS_URL}bouncy_loading.wav`,
 };
 
 const bgmUrls = {
-  welcome: `${GITHUB_ASSETS_URL}sounds/bgm_welcome.mp3`,
-  main: `${GITHUB_ASSETS_URL}sounds/bgm_main.mp3`,
+  welcome: `${GITHUB_ASSETS_URL}bgm_welcome.mp3`,
+  main: `${GITHUB_ASSETS_URL}bgm_utama.mp3`,
 };
 
 /**

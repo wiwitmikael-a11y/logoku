@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
 import LoadingMessage from './LoadingMessage';
 
@@ -14,6 +14,29 @@ const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-a
 
 const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant = 'primary', size = 'normal', ...props }) => {
   
+  useEffect(() => {
+    if (!isLoading) return;
+
+    // The 'mang-ai-bouncing' animation is 1.2s long.
+    // It has two distinct "landings" at 20% (240ms) and 60% (720ms).
+    // We'll play a sound at these specific times in the animation loop.
+    let timeoutIds: number[] = [];
+    
+    const playBounceSounds = () => {
+      timeoutIds.push(window.setTimeout(() => playSound('bounce'), 240));
+      timeoutIds.push(window.setTimeout(() => playSound('bounce'), 720));
+    };
+
+    playBounceSounds(); // Play for the first cycle immediately
+    const intervalId = setInterval(playBounceSounds, 1200); // Schedule for subsequent cycles
+
+    // Cleanup function: runs when isLoading becomes false or the component unmounts.
+    return () => {
+      clearInterval(intervalId);
+      timeoutIds.forEach(clearTimeout);
+    };
+  }, [isLoading]);
+
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     // Make it async to wait for audio context to resume
     await unlockAudio();
