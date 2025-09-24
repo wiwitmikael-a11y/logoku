@@ -33,13 +33,15 @@ const AdBanner: React.FC = () => {
     }
   }, [isAdSlotSet]);
 
+  // The outer div has p-0 to remove padding, and the inner div has a forced height of h-9 (36px).
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-gray-900/90 backdrop-blur-sm border-t border-gray-800 z-20 flex justify-center items-center p-1">
-      <div className="w-full max-w-4xl text-center relative min-h-[50px] flex items-center justify-center">
+    <div className="fixed bottom-0 left-0 w-full bg-gray-900/90 backdrop-blur-sm border-t border-gray-800 z-20 flex justify-center items-center p-0">
+      <div className="w-full max-w-4xl text-center relative h-9 flex items-center justify-center">
         {isAdSlotSet ? (
           <>
             <ins className="adsbygoogle"
-                 style={{ display: 'block', width: '100%' }}
+                 // Forcing the height of the ad slot to match the container.
+                 style={{ display: 'block', width: '100%', height: '36px' }}
                  data-ad-client={AD_PUBLISHER_ID}
                  data-ad-slot={AD_SLOT_ID}
                  data-ad-format="auto"
