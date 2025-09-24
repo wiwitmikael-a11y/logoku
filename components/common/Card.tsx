@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
 
@@ -20,9 +21,17 @@ const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, class
     }
   };
   
+  const handleMouseEnter = () => {
+    if (onClick) { // Only play hover sound on clickable cards
+      unlockAudio();
+      playSound('hover');
+    }
+  };
+
   return (
     <div
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
       className={`bg-gray-800 border rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${className} ${
         onClick ? 'cursor-pointer' : ''
       } ${

@@ -142,6 +142,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
                   playSound('select');
                   setSelectedStyleId(style.id);
               }}
+              onMouseEnter={() => playSound('hover')}
               className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
                 selectedStyleId === style.id 
                   ? 'bg-indigo-600 text-white' 

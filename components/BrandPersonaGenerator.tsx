@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { generateBrandPersona, generateSlogans } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -198,6 +199,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
                                 playSound('select');
                                 setSelectedSlogan(slogan);
                               }}
+                              onMouseEnter={() => playSound('hover')}
                               className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
                                   selectedSlogan === slogan
                                   ? 'bg-indigo-600 text-white'

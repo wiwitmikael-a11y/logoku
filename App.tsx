@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import type { Project, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets } from './types';
-import { playSound } from './services/soundService';
+import { playSound, playBGM, stopBGM, toggleMuteBGM } from './services/soundService';
 
 // Statically import initial/common components
 import WelcomeScreen from './components/WelcomeScreen';
@@ -73,6 +73,9 @@ const App: React.FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [currentProject, setCurrentProject] = useState<Partial<Project> | null>(null);
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+    const [isMuted, setIsMuted] = useState(false);
+    const previousAppState = useRef<AppState>(appState);
+
 
     // Cek API Key saat aplikasi pertama kali dimuat
     useEffect(() => {
@@ -85,6 +88,22 @@ const App: React.FC = () => {
             setApiKeyMissing(true);
         }
     }, []);
+
+    // Manage BGM and unlock audio on first mount
+    useEffect(() => {
+        if (showWelcome) {
+            playBGM('welcome');
+        }
+    }, [showWelcome]);
+    
+    // Play transition sound when app state changes
+    useEffect(() => {
+        if (previousAppState.current !== appState && !showWelcome) {
+            playSound('transition');
+        }
+        previousAppState.current = appState;
+    }, [appState, showWelcome]);
+
 
     // Load projects from localStorage on mount
     useEffect(() => {
@@ -117,6 +136,8 @@ const App: React.FC = () => {
     const handleEnterApp = useCallback(() => {
         playSound('success'); // Play a success sound on entering the app
         setShowWelcome(false);
+        stopBGM();
+        playBGM('main');
     }, []);
 
     const handleNewProject = useCallback(() => {
@@ -203,6 +224,12 @@ const App: React.FC = () => {
         setAppState('dashboard');
     }, []);
 
+    const handleToggleMute = useCallback(() => {
+        const isNowPlaying = toggleMuteBGM();
+        setIsMuted(!isNowPlaying);
+    }, []);
+
+
     // Render logic
     const renderContent = () => {
         switch (appState) {
@@ -274,11 +301,20 @@ const App: React.FC = () => {
                         <span>logo<span className="text-white">.ku</span></span>
                         <span className="ml-3 text-lg text-gray-400 font-handwritten">by @rangga.p.h</span>
                     </h1>
-                    <img 
-                        src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-                        alt="Animated Mang AI character"
-                        className="h-8 relative animate-header-ai mr-8"
-                    />
+                     <div className="flex items-center gap-4">
+                        <button onClick={handleToggleMute} title={isMuted ? "Suara Aktif" : "Bisukan Musik"} className="text-gray-400 hover:text-white transition-colors">
+                            {isMuted ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                            )}
+                        </button>
+                        <img 
+                            src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
+                            alt="Animated Mang AI character"
+                            className="h-8 relative animate-header-ai"
+                        />
+                    </div>
                 </div>
             </header>
             <main className="py-10 px-4 md:px-8 pb-24">
