@@ -86,6 +86,17 @@ const App: React.FC = () => {
 
     useEffect(() => {
         setAuthLoading(true);
+
+        // 1. Proactively get the initial session to handle redirects immediately.
+        supabaseClient.auth.getSession().then(async ({ data: { session } }) => {
+            setSession(session);
+            if (session) {
+                await fetchUserData(session.user);
+            }
+            setAuthLoading(false);
+        });
+
+        // 2. Set up a listener for subsequent auth state changes (e.g., login, logout).
         const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (_event, session) => {
             setSession(session);
             if (session) {
@@ -98,9 +109,9 @@ const App: React.FC = () => {
                 stopBGM();
                 playBGM('welcome');
             }
-            setAuthLoading(false);
         });
 
+        // 3. Clean up the listener on component unmount.
         return () => subscription.unsubscribe();
     }, []);
 
@@ -112,25 +123,22 @@ const App: React.FC = () => {
             .eq('id', user.id)
             .single();
     
-        // 2. If profile is not found, it means the user exists in auth but not in our profiles table.
-        // This can happen if the user signed up before the trigger was active, or if the trigger failed.
-        // We'll create it here to "heal" the user's state, making the app more robust.
+        // 2. If profile is not found, create it to "heal" the user's state.
         if (profileError && profileError.code === 'PGRST116') {
             console.warn('Profile not found for user, creating one as a fallback to heal state.');
             const { data: newProfile, error: insertError } = await supabaseClient
                 .from('profiles')
-                .insert({ id: user.id }) // The DB will use default values for credits and date
+                .insert({ id: user.id })
                 .select()
                 .single();
     
             if (insertError) {
                 console.error("CRITICAL: Failed to create fallback profile:", insertError);
-                setUserProfile(null); // Can't proceed
+                setUserProfile(null);
                 return;
             }
-            profile = newProfile; // Use the newly created profile
+            profile = newProfile;
         } else if (profileError) {
-            // Handle other, unexpected errors during fetch
             console.error("Error fetching profile:", profileError);
             setUserProfile(null);
             return;
@@ -148,14 +156,13 @@ const App: React.FC = () => {
             if (updateError) {
                 console.error("Error resetting credits:", updateError);
             } else {
-                profile = updatedProfile; // Use the updated profile data
+                profile = updatedProfile;
             }
         }
         
-        // 4. Set the final profile state
         setUserProfile(profile);
     
-        // 5. Fetch user's projects.
+        // 4. Fetch user's projects.
         const { data: userProjects, error: projectsError } = await supabaseClient
             .from('projects')
             .select('*')
@@ -264,9 +271,8 @@ const App: React.FC = () => {
 
         if (error) {
             console.error("Error saving project", error);
-            // Optionally show an error message to the user
         } else {
-            const newProject: Project = data as any; // Simplified casting
+            const newProject: Project = data as any;
             setProjects(prev => [newProject, ...prev]);
             setSelectedProjectId(newProject.id);
             setAppState('summary');
@@ -337,7 +343,7 @@ const App: React.FC = () => {
             default:
                 return <ProjectDashboard projects={projects} user={session?.user} onNewProject={handleNewProject} onSelectProject={handleSelectProject} />;
         }
-        handleStartNewFromSummary(); // Fallback if data is missing
+        handleStartNewFromSummary();
         return null;
     };
     
