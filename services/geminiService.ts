@@ -103,7 +103,7 @@ Buatkan 3 alternatif persona brand yang komprehensif. Setiap persona harus menca
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat-v3-0324:free",
+        model: "google/gemma-2-9b-it:free",
         messages: [
           { role: "system", content: "You are an expert brand strategist for Indonesian SMEs. Your response MUST be a valid JSON object with a single key 'personas' which contains an array of 3 brand persona objects. Do not include any other text or markdown." },
           { role: "user", content: userPrompt }
@@ -120,7 +120,7 @@ Buatkan 3 alternatif persona brand yang komprehensif. Setiap persona harus menca
     return result.personas;
 
   } catch (error) {
-    throw handleApiError(error, "OpenRouter (DeepSeek)");
+    throw handleApiError(error, "OpenRouter (Gemma)");
   }
 };
 
