@@ -16,20 +16,13 @@ const getAiClient = (): GoogleGenAI => {
         return ai;
     }
 
-    let apiKey: string | undefined;
-    try {
-        // In a Vercel environment, browser-accessible environment variables
-        // MUST be prefixed with NEXT_PUBLIC_.
-        if (typeof process !== 'undefined' && process.env) {
-            apiKey = process.env.GEMINI_API_KEY;
-        }
-    } catch (e) {
-        console.warn("Could not access process.env. This is expected in some environments.");
-    }
+    // Fix: Per coding guidelines, the API key must be obtained from process.env.API_KEY.
+    // This also resolves the TypeScript error "Property 'env' does not exist on type 'ImportMeta'".
+    const apiKey = process.env.API_KEY;
     
     // If the API key is missing, throw a user-friendly error with clear instructions.
     if (!apiKey) {
-        throw new Error("Waduh, API Key Mang AI nggak ketemu, bro! Pastiin lo udah set 'Environment Variable' di Vercel dengan nama 'NEXT_PUBLIC_API_KEY' (bukan cuma 'API_KEY'). Abis itu, deploy ulang project-nya ya.");
+        throw new Error("Waduh, API Key Mang AI nggak ketemu, bro! Pastiin lo udah set 'Environment Variable' di Vercel dengan nama 'API_KEY'. Abis itu, deploy ulang project-nya ya.");
     }
     
     // Initialize the client, cache it, and return it.
