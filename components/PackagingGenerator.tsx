@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -15,9 +13,13 @@ interface Props {
   persona: BrandPersona;
   businessName: string;
   onComplete: (packagingUrl: string) => void;
+  credits: number;
+  onDeductCredits: (cost: number) => boolean;
 }
 
-const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
+const GENERATION_COST = 1;
+
+const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete, credits, onDeductCredits }) => {
   const [prompt, setPrompt] = useState('');
   const [designs, setDesigns] = useState<string[]>([]);
   const [selectedDesignUrl, setSelectedDesignUrl] = useState<string | null>(null);
@@ -37,7 +39,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt) return;
+    if (!prompt || !onDeductCredits(GENERATION_COST)) return;
 
     setIsLoading(true);
     setError(null);
@@ -59,7 +61,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     } finally {
       setIsLoading(false);
     }
-  }, [prompt]);
+  }, [prompt, onDeductCredits]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {
@@ -84,8 +86,8 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
           rows={4}
         />
         <div className="self-start">
-          <Button type="submit" isLoading={isLoading} disabled={!prompt.trim()}>
-            Bungkus Desainnya, Mang AI!
+          <Button type="submit" isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>
+            Bungkus Desainnya, Mang AI! ({GENERATION_COST} Kredit)
           </Button>
         </div>
       </form>

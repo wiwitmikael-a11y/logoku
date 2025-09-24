@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -15,9 +13,14 @@ interface Props {
   baseLogoUrl: string;
   basePrompt: string;
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
+  credits: number;
+  onDeductCredits: (cost: number) => boolean;
 }
 
-const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete }) => {
+const VARIATION_COST = 2;
+const EDIT_COST = 1;
+
+const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete, credits, onDeductCredits }) => {
   const [finalLogoUrl, setFinalLogoUrl] = useState<string>(baseLogoUrl);
   const [variations, setVariations] = useState<LogoVariations | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
@@ -30,6 +33,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
   const closeModal = () => setModalImageUrl(null);
 
   const handleGenerateVariations = useCallback(async () => {
+    if (!onDeductCredits(VARIATION_COST)) return;
+
     setIsGeneratingVariations(true);
     setError(null);
     playSound('start');
@@ -46,11 +51,11 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, baseLogoUrl]);
+  }, [basePrompt, baseLogoUrl, onDeductCredits]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editPrompt.trim()) return;
+    if (!editPrompt.trim() || !onDeductCredits(EDIT_COST)) return;
 
     setIsEditing(true);
     setError(null);
@@ -112,8 +117,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
                     </div>
                 </div>
             ) : (
-                <Button onClick={handleGenerateVariations} isLoading={isGeneratingVariations}>
-                    Siapin Paket Komplitnya!
+                <Button onClick={handleGenerateVariations} isLoading={isGeneratingVariations} disabled={credits < VARIATION_COST}>
+                    Siapin Paket Komplitnya! ({VARIATION_COST} Kredit)
                 </Button>
             )}
         </div>
@@ -131,8 +136,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
                     placeholder="cth: Ganti warna merahnya jadi hijau"
                 />
                 <div className="self-start">
-                    <Button type="submit" isLoading={isEditing}>
-                        Revisi, Gercep!
+                    <Button type="submit" isLoading={isEditing} disabled={credits < EDIT_COST}>
+                        Revisi, Gercep! ({EDIT_COST} Kredit)
                     </Button>
                 </div>
             </form>

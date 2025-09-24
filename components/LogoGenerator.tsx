@@ -15,7 +15,11 @@ interface Props {
   persona: BrandPersona;
   businessName: string;
   onComplete: (data: { logoUrl: string; prompt: string }) => void;
+  credits: number;
+  onDeductCredits: (cost: number) => boolean;
 }
+
+const GENERATION_COST = 1;
 
 const logoStyles = [
     {
@@ -74,7 +78,7 @@ const logoStyles = [
     }
 ];
 
-const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
+const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, credits, onDeductCredits }) => {
   const [prompt, setPrompt] = useState('');
   const [logos, setLogos] = useState<string[]>([]);
   const [selectedLogoUrl, setSelectedLogoUrl] = useState<string | null>(null);
@@ -100,7 +104,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
 
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!prompt) return;
+    if (!prompt || !onDeductCredits(GENERATION_COST)) return;
 
     setIsLoading(true);
     setError(null);
@@ -122,7 +126,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     } finally {
       setIsLoading(false);
     }
-  }, [prompt]);
+  }, [prompt, onDeductCredits]);
   
   const handleContinue = () => {
     if (selectedLogoUrl) {
@@ -179,8 +183,8 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
           rows={5}
         />
         <div className="self-start">
-          <Button type="submit" isLoading={isLoading} disabled={!prompt.trim()}>
-            Spill Logo-nya, Mang AI!
+          <Button type="submit" isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>
+            Spill Logo-nya, Mang AI! ({GENERATION_COST} Kredit)
           </Button>
            <p className="text-xs text-gray-500 mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
         </div>
@@ -202,8 +206,8 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
               </div>
           </div>
            <div className="self-center flex items-center gap-4">
-             <Button onClick={() => handleSubmit()} variant="secondary" isLoading={isLoading}>
-                Generate Ulang
+             <Button onClick={() => handleSubmit()} variant="secondary" isLoading={isLoading} disabled={credits < GENERATION_COST}>
+                Generate Ulang ({GENERATION_COST} Kredit)
             </Button>
             <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoUrl}>
               Pilih & Finalisasi Logo &rarr;

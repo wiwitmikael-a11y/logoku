@@ -1,9 +1,7 @@
-
-
 import React, { useState, useCallback } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { playSound } from '../services/soundService';
-import type { Project, BrandInputs, PrintMediaAssets } from '../types';
+import type { ProjectData, BrandInputs, PrintMediaAssets } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
@@ -13,13 +11,16 @@ import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 
 interface Props {
-  projectData: Project;
+  projectData: ProjectData;
   onComplete: (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => void;
+  credits: number;
+  onDeductCredits: (cost: number) => boolean;
 }
 
 type MediaTab = 'business_card' | 'flyer' | 'banner' | 'roll_banner';
+const GENERATION_COST = 1;
 
-const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, credits, onDeductCredits }) => {
   const [activeTab, setActiveTab] = useState<MediaTab>('business_card');
   const businessHandle = projectData.brandInputs.businessName.toLowerCase().replace(/\s/g, '');
   
@@ -76,6 +77,8 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!onDeductCredits(GENERATION_COST)) return;
+
     setIsLoading(true);
     setError(null);
     playSound('start');
@@ -85,7 +88,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     setSelected(null);
 
     try {
-        const projectPayload: Omit<Project, 'id' | 'createdAt'> = {
+        const projectPayload: ProjectData = {
             ...projectData,
             brandInputs: {
                 ...projectData.brandInputs,
@@ -108,7 +111,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, designData]);
+  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, onDeductCredits, designData]);
 
   const handleContinue = () => {
     onComplete({
@@ -190,8 +193,8 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {renderContent()}
         <div className="self-start">
-            <Button type="submit" isLoading={isLoading}>
-                {`Sulap Jadi Desain!`}
+            <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>
+                {`Sulap Jadi Desain! (${GENERATION_COST} Kredit)`}
             </Button>
         </div>
       </form>

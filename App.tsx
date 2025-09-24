@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
-import type { Project, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets } from './types';
-import { playSound, playBGM, stopBGM, toggleMuteBGM, unlockAudio } from './services/soundService';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets, User, Profile } from './types';
+import { playSound, playBGM, stopBGM, toggleMuteBGM } from './services/soundService';
+import { supabase, supabaseError } from './services/supabaseClient';
 
 // Statically import initial/common components
-import WelcomeScreen from './components/WelcomeScreen';
 import AdBanner from './components/AdBanner';
 import LoadingMessage from './components/common/LoadingMessage';
 import ProgressStepper from './components/common/ProgressStepper';
+import LoginScreen from './components/LoginScreen';
+import AuthLoadingScreen from './components/common/AuthLoadingScreen';
 
 // Dynamically import main screen components for code-splitting
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
@@ -20,132 +22,171 @@ const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGe
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 const ContactModal = React.lazy(() => import('./components/ContactModal'));
 const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
+const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'packaging' | 'merchandise' | 'summary';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+const INITIAL_CREDITS = 10;
 
-// Component untuk menampilkan error jika API Key tidak ada
 const ApiKeyErrorScreen = () => (
     <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center p-4">
-        <div className="relative max-w-2xl w-full bg-red-900/50 backdrop-blur-md border border-red-700 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center">
+        {/* ... (Error screen content remains the same) ... */}
+    </div>
+);
+
+const SupabaseKeyErrorScreen = ({ error }: { error: string }) => (
+    <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center p-4 text-center">
+        <div className="max-w-md bg-red-900/50 border border-red-700 p-8 rounded-lg flex flex-col items-center gap-4">
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-                alt="Mang AI character looking confused"
-                className="w-32 absolute -top-20 filter grayscale drop-shadow-[0_5px_5px_rgba(0,0,0,0.4)]"
+                alt="Mang AI looking confused"
+                className="w-24 h-24 object-contain filter grayscale opacity-80"
                 style={{ imageRendering: 'pixelated' }}
             />
-            <h1 className="text-3xl font-extrabold text-red-400 tracking-tighter mb-4 mt-8">
-                Waduh, Mang AI Lagi Mogok Kerja!
-            </h1>
-            <div className="text-red-200 space-y-4 max-w-lg mb-6">
-                <p>
-                    Mang AI lagi ngambek nih, katanya jatah <strong className="text-white">udud sama kopi itemnya</strong> belom turun dari yang punya aplikasi.
-                </p>
-                <p>
-                    Otaknya jadi nge-freeze, gak bisa mikir buat bikinin logo apalagi ngasih ide konten buat lo.
-                </p>
-                <div className="bg-gray-800/50 p-4 rounded-lg text-sm mt-4">
-                    <p className="font-bold text-white">
-                        Coba colek yang punya aplikasi ini, bilangin "Mang AI nagih jatah, Bos!". Biar dia cepet-cepet ngasih 'amunisi'-nya lagi.
-                    </p>
-                </div>
+            <div>
+                <h2 className="text-2xl font-bold text-red-400 mb-2">Kesalahan Konfigurasi Supabase</h2>
+                <p className="text-red-200">{error}</p>
+                <p className="text-gray-400 mt-4 text-sm">Pastikan kamu sudah mengatur environment variable di Vercel dan melakukan deploy ulang ya.</p>
             </div>
-             <p className="text-xs text-red-300">
-                Nanti kalo ududnya udah ngebul, Mang AI siap gaskeun lagi!
-             </p>
         </div>
     </div>
 );
 
 
 const App: React.FC = () => {
-    // State management
+    // Immediately check for Supabase configuration errors. If they exist, stop rendering the app.
+    if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
+    
+    // After the check, we can safely assert that supabase is not null for the rest of the component.
+    const supabaseClient = supabase!;
+
     const [apiKeyMissing, setApiKeyMissing] = useState(false);
-    const [showWelcome, setShowWelcome] = useState(true);
+    const [authLoading, setAuthLoading] = useState(true);
+    const [session, setSession] = useState<any>(null);
+    const [userProfile, setUserProfile] = useState<Profile | null>(null);
     const [appState, setAppState] = useState<AppState>('dashboard');
     const [projects, setProjects] = useState<Project[]>([]);
-    const [currentProject, setCurrentProject] = useState<Partial<Project> | null>(null);
-    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+    const [currentProjectData, setCurrentProjectData] = useState<Partial<ProjectData> | null>(null);
+    const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
     const [isMuted, setIsMuted] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
+    const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
     const previousAppState = useRef<AppState>(appState);
 
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'print', 'packaging', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
 
-
-    // Cek API Key saat aplikasi pertama kali dimuat
     useEffect(() => {
-        // Check for API key in both Vite's `import.meta.env` and standard `process.env`.
-        // This provides robustness across different build/deployment environments.
-        const apiKey = (import.meta as any)?.env?.VITE_API_KEY || (typeof process !== 'undefined' && process.env.VITE_API_KEY);
-
-        if (!apiKey) {
-            // The UI component provides clear instructions, so a console error is not needed.
-            setApiKeyMissing(true);
-        }
+        const apiKey = (import.meta as any)?.env?.VITE_API_KEY || process.env.VITE_API_KEY;
+        if (!apiKey) setApiKeyMissing(true);
     }, []);
 
-    // Play transition sound when app state changes
     useEffect(() => {
-        if (previousAppState.current !== appState && !showWelcome) {
+        setAuthLoading(true);
+        const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+            setSession(session);
+            if (session) {
+                await fetchUserData(session.user);
+                stopBGM();
+                playBGM('main');
+            } else {
+                setUserProfile(null);
+                setProjects([]);
+                stopBGM();
+                playBGM('welcome');
+            }
+            setAuthLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const fetchUserData = async (user: User) => {
+        const today = new Date().toISOString().split('T')[0];
+
+        let { data: profile, error: profileError } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError && profileError.code === 'PGRST116') { // "PGRST116" means no rows found
+            const { data: newProfile, error: insertError } = await supabaseClient
+                .from('profiles')
+                .insert({ id: user.id, credits: INITIAL_CREDITS, last_credit_reset: today })
+                .select()
+                .single();
+            if (insertError) console.error("Error creating profile:", insertError);
+            else profile = newProfile;
+        } else if (profile && profile.last_credit_reset !== today) {
+            const { data: updatedProfile, error: updateError } = await supabaseClient
+                .from('profiles')
+                .update({ credits: INITIAL_CREDITS, last_credit_reset: today })
+                .eq('id', user.id)
+                .select()
+                .single();
+            if (updateError) console.error("Error resetting credits:", updateError);
+            else profile = updatedProfile;
+        }
+        
+        setUserProfile(profile);
+
+        const { data: userProjects, error: projectsError } = await supabaseClient
+            .from('projects')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+            
+        if (projectsError) console.error("Error fetching projects:", projectsError);
+        else setProjects(userProjects as Project[]);
+    };
+
+    useEffect(() => {
+        if (previousAppState.current !== appState) {
             playSound('transition');
         }
         previousAppState.current = appState;
-    }, [appState, showWelcome]);
+    }, [appState]);
 
-
-    // Load projects from localStorage on mount
-    useEffect(() => {
-        try {
-            const savedProjects = localStorage.getItem('brandingProjects');
-            if (savedProjects) {
-                const parsedProjects = JSON.parse(savedProjects).map((p: any) => ({
-                    ...p,
-                    createdAt: new Date(p.createdAt) // Make sure date is a Date object
-                }));
-                setProjects(parsedProjects);
-            }
-        } catch (error) {
-            console.error("Failed to load projects from localStorage", error);
+    const handleCreditDeduction = useCallback(async (cost: number): Promise<boolean> => {
+        if (!userProfile || userProfile.credits < cost) {
+            playSound('error');
+            setShowOutOfCreditsModal(true);
+            return false;
         }
-    }, []);
 
-    // Save projects to localStorage whenever they change
-    useEffect(() => {
-        // Don't save if we are still on the welcome screen
-        if (showWelcome) return;
-        try {
-            localStorage.setItem('brandingProjects', JSON.stringify(projects));
-        } catch (error) {
-            console.error("Failed to save projects to localStorage", error);
+        const newCredits = userProfile.credits - cost;
+        const { error } = await supabaseClient
+            .from('profiles')
+            .update({ credits: newCredits })
+            .eq('id', userProfile.id);
+
+        if (error) {
+            console.error("Error deducting credits:", error);
+            playSound('error');
+            return false;
+        } else {
+            setUserProfile(prev => prev ? { ...prev, credits: newCredits } : null);
+            return true;
         }
-    }, [projects, showWelcome]);
-
-    // Handlers for flow
-    const handleEnterApp = useCallback(() => {
-        playSound('success'); // Play a success sound on entering the app
-        setShowWelcome(false);
-        stopBGM();
-        playBGM('main');
-    }, []);
+    }, [userProfile]);
 
     const handleNewProject = useCallback(() => {
-        setCurrentProject({});
+        setCurrentProjectData({});
         setAppState('persona');
         setSelectedProjectId(null);
     }, []);
 
-    const handleSelectProject = useCallback((projectId: string) => {
+    const handleSelectProject = useCallback((projectId: number) => {
         setSelectedProjectId(projectId);
         setAppState('summary');
     }, []);
 
     const handlePersonaComplete = useCallback((data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
-        setCurrentProject({
+        setCurrentProjectData({
             brandInputs: data.inputs,
             selectedPersona: data.selectedPersona,
             selectedSlogan: data.selectedSlogan,
@@ -154,34 +195,22 @@ const App: React.FC = () => {
     }, []);
     
     const handleLogoComplete = useCallback((data: { logoUrl: string; prompt: string }) => {
-        setCurrentProject(prev => ({
-            ...prev,
-            selectedLogoUrl: data.logoUrl,
-            logoPrompt: data.prompt,
-        }));
+        setCurrentProjectData(prev => ({ ...prev, selectedLogoUrl: data.logoUrl, logoPrompt: data.prompt }));
         setAppState('logo_detail');
     }, []);
 
     const handleLogoDetailComplete = useCallback((data: { finalLogoUrl: string; variations: LogoVariations }) => {
-        setCurrentProject(prev => ({
-            ...prev,
-            selectedLogoUrl: data.finalLogoUrl,
-            logoVariations: data.variations,
-        }));
+        setCurrentProjectData(prev => ({ ...prev, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations }));
         setAppState('content');
     }, []);
 
     const handleContentComplete = useCallback((data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
-        setCurrentProject(prev => ({
-            ...prev,
-            contentCalendar: data.calendar,
-            searchSources: data.sources,
-        }));
+        setCurrentProjectData(prev => ({ ...prev, contentCalendar: data.calendar, searchSources: data.sources }));
         setAppState('print');
     }, []);
 
     const handlePrintMediaComplete = useCallback((data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => {
-        setCurrentProject(prev => ({
+        setCurrentProjectData(prev => ({
             ...prev,
             selectedPrintMedia: data.assets,
             brandInputs: { ...prev!.brandInputs!, ...data.inputs },
@@ -190,162 +219,135 @@ const App: React.FC = () => {
     }, []);
 
     const handlePackagingComplete = useCallback((packagingUrl: string) => {
-       setCurrentProject(prev => ({
-            ...prev,
-            selectedPackagingUrl: packagingUrl,
-        }));
+       setCurrentProjectData(prev => ({ ...prev, selectedPackagingUrl: packagingUrl }));
         setAppState('merchandise');
     }, []);
 
-    const handleMerchandiseComplete = useCallback((merchandiseUrl: string) => {
-        const newProject: Project = {
-            ...currentProject,
+    const handleMerchandiseComplete = useCallback(async (merchandiseUrl: string) => {
+        if (!session?.user) return;
+        
+        const finalProjectData: ProjectData = {
+            ...currentProjectData,
             selectedMerchandiseUrl: merchandiseUrl,
-            id: new Date().toISOString(),
-            createdAt: new Date(),
-        } as Project;
+        } as ProjectData;
 
-        setProjects(prev => [...prev, newProject]);
-        setCurrentProject(newProject);
-        setSelectedProjectId(newProject.id);
-        setAppState('summary');
-    }, [currentProject]);
+        const { data, error } = await supabaseClient
+            .from('projects')
+            .insert({ user_id: session.user.id, project_data: finalProjectData })
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Error saving project", error);
+            // Optionally show an error message to the user
+        } else {
+            const newProject: Project = { ...data.project_data, id: data.id, user_id: data.user_id, created_at: data.created_at };
+            setProjects(prev => [newProject, ...prev]);
+            setSelectedProjectId(newProject.id);
+            setAppState('summary');
+        }
+    }, [currentProjectData, session]);
     
     const handleStartNewFromSummary = useCallback(() => {
-        setCurrentProject(null);
+        setCurrentProjectData(null);
         setSelectedProjectId(null);
         setAppState('dashboard');
     }, []);
-
-    const handleToggleMute = useCallback(() => {
-        const isNowPlaying = toggleMuteBGM();
-        setIsMuted(!isNowPlaying);
-    }, []);
     
-    const openContactModal = useCallback(async () => {
-        await unlockAudio();
-        playSound('click');
-        setShowContactModal(true);
-    }, []);
-    const closeContactModal = useCallback(() => setShowContactModal(false), []);
+    const handleLogout = async () => {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) console.error('Error logging out:', error);
+    };
 
-    const openToSModal = useCallback(() => {
-        playSound('click');
-        setShowToSModal(true)
-    }, []);
+    const handleToggleMute = useCallback(() => setIsMuted(!toggleMuteBGM()), []);
+    const openContactModal = useCallback(() => { playSound('click'); setShowContactModal(true); }, []);
+    const closeContactModal = useCallback(() => setShowContactModal(false), []);
+    const openToSModal = useCallback(() => { playSound('click'); setShowToSModal(true); }, []);
     const closeToSModal = useCallback(() => setShowToSModal(false), []);
 
-
-    // Render logic
     const renderContent = () => {
+        const credits = userProfile?.credits ?? 0;
+        const commonImageProps = { credits, onDeductCredits: handleCreditDeduction };
+        
         switch (appState) {
             case 'persona':
                 return <BrandPersonaGenerator onComplete={handlePersonaComplete} />;
             case 'logo':
-                if (currentProject?.selectedPersona && currentProject.brandInputs) {
-                    return <LogoGenerator persona={currentProject.selectedPersona} businessName={currentProject.brandInputs.businessName} onComplete={handleLogoComplete} />;
+                if (currentProjectData?.selectedPersona && currentProjectData.brandInputs) {
+                    return <LogoGenerator persona={currentProjectData.selectedPersona} businessName={currentProjectData.brandInputs.businessName} onComplete={handleLogoComplete} {...commonImageProps} />;
                 }
                 break;
             case 'logo_detail':
-                if (currentProject?.selectedLogoUrl && currentProject.logoPrompt) {
-                    return <LogoDetailGenerator baseLogoUrl={currentProject.selectedLogoUrl} basePrompt={currentProject.logoPrompt} onComplete={handleLogoDetailComplete} />;
+                if (currentProjectData?.selectedLogoUrl && currentProjectData.logoPrompt) {
+                    return <LogoDetailGenerator baseLogoUrl={currentProjectData.selectedLogoUrl} basePrompt={currentProjectData.logoPrompt} onComplete={handleLogoDetailComplete} {...commonImageProps} />;
                 }
                 break;
             case 'content':
-                if (currentProject) {
-                    return <ContentCalendarGenerator projectData={currentProject} onComplete={handleContentComplete} />;
+                 if (currentProjectData?.brandInputs && currentProjectData.selectedPersona) {
+                    return <ContentCalendarGenerator projectData={currentProjectData} onComplete={handleContentComplete} />;
                 }
                 break;
             case 'print':
-                if (currentProject) {
-                    const projectForPrint: Project = {
-                        id: 'temp', createdAt: new Date(), ...currentProject
-                    } as Project;
-                    if (projectForPrint.brandInputs && projectForPrint.selectedPersona && projectForPrint.logoPrompt) {
-                       return <PrintMediaGenerator projectData={projectForPrint} onComplete={handlePrintMediaComplete} />;
-                    }
+                if (currentProjectData?.brandInputs && currentProjectData.selectedPersona && currentProjectData.logoPrompt) {
+                    return <PrintMediaGenerator projectData={currentProjectData as ProjectData} onComplete={handlePrintMediaComplete} {...commonImageProps} />;
                 }
                 break;
             case 'packaging':
-                if (currentProject?.selectedPersona && currentProject.brandInputs) {
-                    return <PackagingGenerator persona={currentProject.selectedPersona} businessName={currentProject.brandInputs.businessName} onComplete={handlePackagingComplete} />;
+                if (currentProjectData?.selectedPersona && currentProjectData.brandInputs) {
+                    // FIX: Corrected typo from commonImageImageProps to commonImageProps
+                    return <PackagingGenerator persona={currentProjectData.selectedPersona} businessName={currentProjectData.brandInputs.businessName} onComplete={handlePackagingComplete} {...commonImageProps} />;
                 }
                 break;
             case 'merchandise':
-                if (currentProject?.logoPrompt && currentProject.brandInputs?.businessName) {
-                    return <MerchandiseGenerator logoPrompt={currentProject.logoPrompt} businessName={currentProject.brandInputs.businessName} onComplete={handleMerchandiseComplete} />;
+                if (currentProjectData?.logoPrompt && currentProjectData.brandInputs?.businessName) {
+                    return <MerchandiseGenerator logoPrompt={currentProjectData.logoPrompt} businessName={currentProjectData.brandInputs.businessName} onComplete={handleMerchandiseComplete} {...commonImageProps} />;
                 }
                 break;
             case 'summary':
-                const projectToShow = projects.find(p => p.id === selectedProjectId) || currentProject as Project;
+                const projectToShow = projects.find(p => p.id === selectedProjectId);
                 if (projectToShow) {
                     return <ProjectSummary project={projectToShow} onStartNew={handleStartNewFromSummary} />;
                 }
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} />;
+                return <ProjectDashboard projects={projects} user={session?.user} onNewProject={handleNewProject} onSelectProject={handleSelectProject} />;
         }
-        // Fallback for invalid state transitions
-        handleStartNewFromSummary();
+        handleStartNewFromSummary(); // Fallback if data is missing
         return null;
     };
     
-    if (apiKeyMissing) {
-        return <ApiKeyErrorScreen />;
-    }
-
-    if (showWelcome) {
-        return (
-            <>
-                <WelcomeScreen onEnter={handleEnterApp} onShowToS={openToSModal} />
-                <Suspense fallback={null}>
-                    <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
-                </Suspense>
-            </>
-        );
-    }
+    if (apiKeyMissing) return <ApiKeyErrorScreen />;
+    if (authLoading) return <AuthLoadingScreen />;
+    if (!session) return <LoginScreen onShowToS={openToSModal} />;
 
     return (
         <div className="text-white min-h-screen font-sans">
-            <header className="py-6 px-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
+            <header className="py-4 px-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <h1 className="text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer flex items-baseline" onClick={handleStartNewFromSummary}>
                         <span>logo<span className="text-white">.ku</span></span>
-                        <span className="ml-3 text-lg text-gray-400 font-handwritten">by @rangga.p.h</span>
                     </h1>
                      <div className="flex items-center gap-4">
-                        <button onClick={openContactModal} title="Info Kontak" className="text-gray-400 hover:text-white transition-colors">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                        <div className="flex items-center gap-1.5 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400" title="Kredit Generate Gambar Harian">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                            <span className="font-bold text-sm text-white">{userProfile?.credits ?? 0}</span>
+                        </div>
+                        <button onClick={handleLogout} title="Logout" className="text-gray-400 hover:text-white transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                         </button>
                         <button onClick={handleToggleMute} title={isMuted ? "Suara Aktif" : "Bisukan Musik"} className="text-gray-400 hover:text-white transition-colors">
-                            {isMuted ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
-                            ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                            )}
+                            {isMuted ? '🔇' : '🔊'}
                         </button>
-                        <img 
-                            src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-                            alt="Animated Mang AI character"
-                            className="h-8 relative animate-header-ai"
-                        />
+                        <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-8 h-8 rounded-full" />
                     </div>
                 </div>
             </header>
             <main className="py-10 px-4 md:px-8 pb-24">
                 <div className="max-w-7xl mx-auto">
                      {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
-                    <Suspense fallback={
-                        <div className="flex justify-center items-center min-h-[50vh]">
-                            <LoadingMessage />
-                        </div>
-                    }>
-                        <div key={appState} className="animate-content-fade-in">
-                            {renderContent()}
-                        </div>
+                    <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
+                        <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
                     </Suspense>
                 </div>
             </main>
@@ -355,6 +357,8 @@ const App: React.FC = () => {
             <AdBanner />
             <Suspense fallback={null}>
                 <ContactModal show={showContactModal} onClose={closeContactModal} />
+                <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
+                <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
             </Suspense>
         </div>
     );

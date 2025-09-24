@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { generateContentCalendar } from '../services/geminiService';
 import { playSound } from '../services/soundService';
-import type { ContentCalendarEntry, Project } from '../types';
+import type { ContentCalendarEntry, ProjectData } from '../types';
 import Button from './common/Button';
 import Spinner from './common/Spinner';
 import Card from './common/Card';
@@ -11,7 +11,7 @@ import LoadingMessage from './common/LoadingMessage';
 import ErrorMessage from './common/ErrorMessage';
 
 interface Props {
-  projectData: Partial<Project>;
+  projectData: Partial<ProjectData>;
   onComplete: (data: { calendar: ContentCalendarEntry[], sources: any[] }) => void;
 }
 

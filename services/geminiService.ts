@@ -1,6 +1,7 @@
 
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { BrandPersona, ContentCalendarEntry, LogoVariations, Project } from '../types';
+import type { BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData } from '../types';
 
 // --- Environment Variable Setup ---
 // Check for variables in both Vite's `import.meta.env` and standard `process.env`
@@ -227,7 +228,7 @@ PENTING: Format output HARUS berupa JSON object yang valid, tanpa markdown forma
 // --- REWRITTEN with Gemini ---
 export const generatePrintMedia = async (
     type: 'business_card' | 'flyer' | 'banner' | 'roll_banner',
-    project: Omit<Project, 'id' | 'createdAt'>
+    project: ProjectData
 ): Promise<string[]> => {
     let prompt = '';
     const { brandInputs, selectedPersona, logoPrompt } = project;

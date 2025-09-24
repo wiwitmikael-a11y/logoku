@@ -1,3 +1,13 @@
+import type { User } from '@supabase/supabase-js';
+
+export type { User };
+
+export interface Profile {
+  id: string; // Corresponds to Supabase user ID
+  credits: number;
+  last_credit_reset: string; // Date string in 'YYYY-MM-DD' format
+}
+
 export interface BrandInputs {
   businessName: string;
   industry: string;
@@ -71,9 +81,8 @@ export interface PrintMediaAssets {
     rollBannerUrl?: string;
 }
 
-export interface Project {
-  id: string;
-  createdAt: Date;
+// This represents the data structure stored in the 'project_data' JSONB column
+export interface ProjectData {
   brandInputs: BrandInputs;
   selectedPersona: BrandPersona;
   selectedSlogan: string; 
@@ -87,7 +96,9 @@ export interface Project {
   selectedMerchandiseUrl?: string;
 }
 
-export interface GeneratedCaption {
-  caption: string;
-  hashtags: string[];
+// This represents a project row fetched from the Supabase 'projects' table
+export interface Project extends ProjectData {
+  id: number; // The database primary key
+  user_id: string;
+  created_at: string; // The database timestamp
 }

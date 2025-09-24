@@ -1,19 +1,22 @@
 import React from 'react';
-import type { Project } from '../types';
+import type { Project, User } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
 
 interface ProjectDashboardProps {
   projects: Project[];
+  user: User | undefined | null;
   onNewProject: () => void;
-  onSelectProject: (projectId: string) => void;
+  onSelectProject: (projectId: number) => void;
 }
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, user, onNewProject, onSelectProject }) => {
+  const userName = user?.user_metadata?.full_name || 'Bro';
+
   return (
     <div className="flex flex-col gap-8 items-center text-center">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Selamat Datang di logo.ku</h2>
+        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Selamat Datang, {userName}!</h2>
         <p className="text-gray-400 max-w-2xl">Studio branding AI pribadi lo. Mulai project baru untuk membangun identitas brand dari nol, atau lihat dan kelola brand kit yang sudah pernah lo buat.</p>
       </div>
       
@@ -25,9 +28,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <div className="w-full text-left mt-8">
           <h3 className="text-xl font-bold mb-4">Project Lo:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects
-              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-              .map(project => (
+            {projects.map(project => (
               <Card 
                 key={project.id} 
                 title={project.brandInputs.businessName}
@@ -42,7 +43,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                       </p>
                     </div>
                    <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">
-                    Dibuat pada: {project.createdAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    Dibuat pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                 </div>
               </Card>
