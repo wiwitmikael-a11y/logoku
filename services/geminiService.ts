@@ -1,16 +1,22 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandPersona, ContentCalendarEntry, LogoVariations, Project } from '../types';
+
+// --- Environment Variable Setup ---
+// Check for variables in both Vite's `import.meta.env` and standard `process.env`
+// for robustness across different build/deployment environments.
+const VITE_API_KEY = (import.meta as any)?.env?.VITE_API_KEY || (typeof process !== 'undefined' && process.env.VITE_API_KEY);
+const DEV_MODE = ((import.meta as any)?.env?.VITE_DEV_MODE === 'true') || (typeof process !== 'undefined' && process.env.VITE_DEV_MODE === 'true');
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
 const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
+    if (!VITE_API_KEY) {
         // Updated error message to be more specific for Vercel deployment
-        throw new Error("Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro! Pastiin lo udah set Environment Variable. Kalo di Vercel, masuk ke Settings -> Environment Variables, terus add 'API_KEY' dan masukin key lo. Abis itu, deploy ulang ya.");
+        throw new Error("Waduh, API Key Google Gemini (VITE_API_KEY) nggak ketemu, bro! Karena ini project Vite, nama environment variable-nya harus 'VITE_API_KEY'. Cek lagi di Vercel Settings -> Environment Variables, terus deploy ulang ya.");
     }
-    ai = new GoogleGenAI({ apiKey });
+    ai = new GoogleGenAI({ apiKey: VITE_API_KEY });
     return ai;
 };
 
@@ -105,7 +111,7 @@ export const generateSlogans = async (
 // --- NEW: Centralized Gemini Image Generation function ---
 const generateImagesWithGemini = async (prompt: string, count: number): Promise<string[]> => {
     // DEV MODE: Return placeholder images to save API quota during testing
-    if (process.env.DEV_MODE === 'true') {
+    if (DEV_MODE) {
         console.warn(`--- MODE HEMAT KUOTA AKTIF ---
 Mengganti panggilan API Gemini Image dengan gambar placeholder.
 Prompt Asli: "${prompt}"`);
@@ -161,7 +167,7 @@ export const generateLogoVariations = async (basePrompt: string): Promise<Omit<L
 // --- Image Editing (Gemini Vision) ---
 export const editLogo = async (base64ImageData: string, mimeType: string, prompt: string): Promise<string> => {
     // DEV MODE: Return a placeholder image to save API quota during testing
-    if (process.env.DEV_MODE === 'true') {
+    if (DEV_MODE) {
         console.warn(`--- MODE HEMAT KUOTA AKTIF ---
 Mengganti panggilan API Gemini Image Edit dengan gambar placeholder.
 Prompt Revisi: "${prompt}"`);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import type { Project, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets } from './types';
 import { playSound } from './services/soundService';
@@ -37,8 +38,7 @@ const ApiKeyErrorScreen = () => (
             </h1>
             <div className="text-red-200 space-y-4 max-w-lg mb-6 text-left">
                 <p>
-                    Sepertinya Environment Variable <strong>`API_KEY`</strong> belum di-set dengan benar di Vercel, bro.
-                    Aplikasi ini butuh kunci itu buat bisa manggil Gemini API.
+                    Tenang, ini masalah umum di project Vite. Environment Variable di Vercel <strong>wajib diawali `VITE_`</strong> biar bisa dibaca sama aplikasi.
                 </p>
                 <div className="bg-gray-800/50 p-4 rounded-lg text-sm">
                     <h2 className="font-bold text-white mb-2">Cara Ngebenerinnya di Vercel:</h2>
@@ -46,19 +46,19 @@ const ApiKeyErrorScreen = () => (
                         <li>Buka Vercel Dashboard &gt; Project <strong>logo.ku</strong> kamu.</li>
                         <li>Masuk ke tab <strong>Settings</strong> &gt; <strong>Environment Variables</strong>.</li>
                         <li>
-                           Buat variable baru:
+                           Edit variable yang sudah ada, atau buat yang baru:
                            <ul className="list-disc list-inside ml-4 mt-1 bg-gray-900 p-2 rounded">
-                               <li>Name: <code className="bg-gray-700 px-1 rounded">API_KEY</code></li>
+                               <li>Name: <code className="bg-red-500 text-white px-1 rounded">VITE_API_KEY</code> (PENTING: Ganti dari `API_KEY` jadi ini)</li>
                                <li>Value: <code className="bg-gray-700 px-1 rounded">[API Key Google AI Studio lo]</code></li>
                            </ul>
                         </li>
                         <li><strong>PENTING:</strong> Pastikan semua environment (Production, Preview, Development) dicentang.</li>
-                        <li>Klik <strong>Save</strong>, lalu deploy ulang project lo dari menu <strong>Deployments</strong>.</li>
+                        <li>Klik <strong>Save</strong>, lalu deploy ulang project lo dari menu <strong>Deployments</strong> &gt; Redeploy.</li>
                     </ol>
                 </div>
             </div>
              <p className="text-xs text-red-300">
-                Setelah di-set, refresh halaman ini.
+                Setelah di-set dan deploy ulang, refresh halaman ini.
              </p>
         </div>
     </div>
@@ -76,8 +76,12 @@ const App: React.FC = () => {
 
     // Cek API Key saat aplikasi pertama kali dimuat
     useEffect(() => {
-        if (!process.env.API_KEY) {
-            console.error("FATAL: Environment Variable 'API_KEY' is not set.");
+        // Check for API key in both Vite's `import.meta.env` and standard `process.env`.
+        // This provides robustness across different build/deployment environments.
+        const apiKey = (import.meta as any)?.env?.VITE_API_KEY || (typeof process !== 'undefined' && process.env.VITE_API_KEY);
+
+        if (!apiKey) {
+            // The UI component provides clear instructions, so a console error is not needed.
             setApiKeyMissing(true);
         }
     }, []);
