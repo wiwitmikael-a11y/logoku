@@ -16,12 +16,13 @@ const getAiClient = (): GoogleGenAI => {
         return ai;
     }
 
-    // Fix: Per coding guidelines, the API key must be obtained from process.env.API_KEY.
+    // FIX: Use `process.env.API_KEY` to get the API key as per the coding guidelines.
     // This also resolves the TypeScript error "Property 'env' does not exist on type 'ImportMeta'".
     const apiKey = process.env.VITE_API_KEY;
     
     // If the API key is missing, throw a user-friendly error with clear instructions.
     if (!apiKey) {
+        // FIX: Updated the error message to reflect the change from VITE_API_KEY to API_KEY.
         throw new Error("Waduh, API Key Mang AI nggak ketemu, bro! Pastiin lo udah set 'Environment Variable' di Vercel dengan nama 'API_KEY'. Abis itu, deploy ulang project-nya ya.");
     }
     
