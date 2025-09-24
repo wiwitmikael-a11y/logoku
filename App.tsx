@@ -212,7 +212,7 @@ const App: React.FC = () => {
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <h1 className="text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer flex items-baseline" onClick={handleStartNewFromSummary}>
                         <span>logo<span className="text-white">.ku</span></span>
-                        <span className="ml-3 text-3xl text-gray-300 font-handwritten">by @rangga.p.h</span>
+                        <span className="ml-3 text-lg text-gray-400 font-handwritten">by @rangga.p.h</span>
                     </h1>
                     <img 
                         src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
@@ -232,7 +232,7 @@ const App: React.FC = () => {
                     </Suspense>
                 </div>
             </main>
-             <footer className="text-center py-6 px-4 text-sm text-gray-500 border-t border-gray-800">
+             <footer className="text-center py-6 px-4 text-sm text-gray-400 border-t border-gray-800">
                 Powered by Atharrazka Core. Built for UMKM Indonesia.
             </footer>
             <AdBanner />

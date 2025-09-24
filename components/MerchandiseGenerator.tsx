@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -67,6 +68,9 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     try {
       const results = await generateMerchandiseMockup(prompt);
       setDesigns(results);
+      if (results.length > 0) {
+        setSelectedDesignUrl(results[0]); // Auto-select the first (and only) design
+      }
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
@@ -86,11 +90,6 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
   const handleTabClick = (tab: MerchType) => {
       playSound('select');
       setActiveTab(tab);
-  }
-  
-  const handleSelectDesign = (url: string) => {
-      playSound('select');
-      setSelectedDesignUrl(url);
   }
 
   return (
@@ -131,18 +130,14 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
       {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
 
       {designs.length > 0 && (
-        <div className="flex flex-col gap-6">
-            <h3 className="text-xl font-bold">Pilih Mockup Favorit Lo:</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {designs.map((url, index) => (
-              <div 
-                key={index} 
-                className={`bg-gray-700 rounded-lg p-2 flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer aspect-square ${selectedDesignUrl === url ? 'ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'hover:scale-105'}`}
-                onClick={() => handleSelectDesign(url)}
+        <div className="flex flex-col gap-6 items-center">
+            <h3 className="text-xl font-bold">Mockup Hasil Generate:</h3>
+          <div className="flex justify-center w-full max-w-sm">
+            <div 
+                className="bg-gray-700 rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-square ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500"
               >
-                <img src={url} alt={`Generated mockup ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full" />
+                <img src={designs[0]} alt={`Generated mockup 1`} className="object-contain rounded-md max-w-full max-h-full" />
               </div>
-            ))}
           </div>
         </div>
       )}

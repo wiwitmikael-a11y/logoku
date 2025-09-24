@@ -1,15 +1,10 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { BrandPersona, ContentCalendarEntry, LogoVariations, BrandInputs, Project } from '../types';
-
-// --- Service URLs ---
-const HF_API_URL_SDXL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
+import type { BrandPersona, ContentCalendarEntry, LogoVariations, Project } from '../types';
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
 const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
-    // FIX: Switched from import.meta.env.VITE_API_KEY to process.env.API_KEY to resolve TS error and align with guidelines.
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
         throw new Error("Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro! Pastiin lo udah set Environment Variable dengan nama 'API_KEY'. Abis itu, deploy ulang ya.");
@@ -18,50 +13,25 @@ const getAiClient = (): GoogleGenAI => {
     return ai;
 };
 
-// --- New API Key Getters ---
-const getHuggingFaceKey = (): string => {
-    // FIX: Switched from import.meta.env.VITE_HF_API_KEY to process.env.HF_API_KEY to resolve TS error.
-    const apiKey = process.env.HF_API_KEY;
-    if (!apiKey) {
-        throw new Error("Waduh, API Key Hugging Face (HF_API_KEY) nggak ketemu, bro! Set Environment Variable dengan nama 'HF_API_KEY'.");
-    }
-    return apiKey;
-};
-
 /**
  * A centralized error handler for all AI API calls.
- * It logs the technical error and returns a new Error with a user-friendly message.
  * @param error The original error caught from the API call.
- * @param serviceName The name of the service that failed (e.g., "Google Gemini").
+ * @param serviceName The name of the service that failed.
  * @returns A new Error object with a user-friendly message.
  */
 const handleApiError = (error: any, serviceName: string): Error => {
     console.error(`${serviceName} API Error:`, error);
     const errorString = (error instanceof Error ? error.message : JSON.stringify(error)).toLowerCase();
 
-    // Hugging Face model loading error
-    if (serviceName === "Hugging Face" && errorString.includes('model') && (errorString.includes('is currently loading') || errorString.includes('currently loading'))) {
-        const timeMatch = errorString.match(/estimated_time":\s*([\d.]+)/);
-        const waitTime = timeMatch ? ` sekitar ${Math.ceil(parseFloat(timeMatch[1]))} detik` : '';
-        return new Error(`Sabar bro, mesin gambar Mang AI (${serviceName}) lagi dipanasin. Coba lagi${waitTime}.`);
+    if (errorString.includes('resource_exhausted') || errorString.includes('quota')) {
+        return new Error(`Waduh, udud Mang AI habis euy. Jatah API ${serviceName} udah abis, coba lagi besok. Ini biasanya karena jatah gratisan udah mentok.`);
     }
-
-    // Gemini-specific errors
-    if (serviceName === "Google Gemini") {
-        if (errorString.includes('resource_exhausted') || errorString.includes('quota')) {
-            return new Error(`Waduh, udud Mang AI habis euy. Jatah API ${serviceName} udah abis, coba lagi besok.`);
-        }
-        if (errorString.includes('prompt was blocked') || errorString.includes('safety')) {
-            return new Error(`Request lo ke ${serviceName} diblokir karena isinya kurang aman. Coba ubah prompt atau input-nya ya.`);
-        }
+    if (errorString.includes('prompt was blocked') || errorString.includes('safety')) {
+        return new Error(`Request lo ke ${serviceName} diblokir karena isinya kurang aman. Coba ubah prompt atau input-nya ya.`);
     }
-
-    // Generic key/auth errors
     if (errorString.includes('api key') || errorString.includes('authorization') || errorString.includes('api key not valid')) {
         return new Error(`Waduh, API Key buat ${serviceName} kayaknya salah atau nggak valid, bro. Cek lagi gih.`);
     }
-
-    // Catch our custom API key missing errors
     if (errorString.includes("nggak ketemu, bro!")) {
         return new Error((error as Error).message);
     }
@@ -69,7 +39,8 @@ const handleApiError = (error: any, serviceName: string): Error => {
     return new Error(`Gagal manggil ${serviceName}. Coba cek console buat detailnya.`);
 };
 
-// --- REWRITTEN with Gemini API to fix environment key issues ---
+
+// --- Persona & Slogan Generation (Gemini Text) ---
 export const generateBrandPersona = async (
   businessName: string,
   industry: string,
@@ -77,49 +48,10 @@ export const generateBrandPersona = async (
   valueProposition: string
 ): Promise<BrandPersona[]> => {
   const ai = getAiClient();
-
-  // Define the complex JSON schema for the BrandPersona type
-  const brandVoiceSchema = {
-    type: Type.OBJECT,
-    properties: {
-        deskripsi: { type: Type.STRING },
-        kata_yang_digunakan: { type: Type.ARRAY, items: { type: Type.STRING } },
-        kata_yang_dihindari: { type: Type.ARRAY, items: { type: Type.STRING } },
-    }
-  };
-
-  const customerAvatarSchema = {
-      type: Type.OBJECT,
-      properties: {
-          nama_avatar: { type: Type.STRING },
-          deskripsi_demografis: { type: Type.STRING },
-          pain_points: { type: Type.ARRAY, items: { type: Type.STRING } },
-          media_sosial: { type: Type.ARRAY, items: { type: Type.STRING } },
-      }
-  };
-
-  const brandPersonaSchema = {
-      type: Type.OBJECT,
-      properties: {
-          nama_persona: { type: Type.STRING },
-          deskripsi_singkat: { type: Type.STRING },
-          kata_kunci: { type: Type.ARRAY, items: { type: Type.STRING } },
-          palet_warna_hex: { type: Type.ARRAY, items: { type: Type.STRING } },
-          customer_avatars: { type: Type.ARRAY, items: customerAvatarSchema },
-          brand_voice: brandVoiceSchema,
-      }
-  };
-  
-  const finalSchema = {
-      type: Type.OBJECT,
-      properties: {
-          personas: {
-              type: Type.ARRAY,
-              description: "Array dari 3 alternatif persona brand yang komprehensif.",
-              items: brandPersonaSchema
-          }
-      }
-  };
+  const brandVoiceSchema = { type: Type.OBJECT, properties: { deskripsi: { type: Type.STRING }, kata_yang_digunakan: { type: Type.ARRAY, items: { type: Type.STRING } }, kata_yang_dihindari: { type: Type.ARRAY, items: { type: Type.STRING } } } };
+  const customerAvatarSchema = { type: Type.OBJECT, properties: { nama_avatar: { type: Type.STRING }, deskripsi_demografis: { type: Type.STRING }, pain_points: { type: Type.ARRAY, items: { type: Type.STRING } }, media_sosial: { type: Type.ARRAY, items: { type: Type.STRING } } } };
+  const brandPersonaSchema = { type: Type.OBJECT, properties: { nama_persona: { type: Type.STRING }, deskripsi_singkat: { type: Type.STRING }, kata_kunci: { type: Type.ARRAY, items: { type: Type.STRING } }, palet_warna_hex: { type: Type.ARRAY, items: { type: Type.STRING } }, customer_avatars: { type: Type.ARRAY, items: customerAvatarSchema }, brand_voice: brandVoiceSchema } };
+  const finalSchema = { type: Type.OBJECT, properties: { personas: { type: Type.ARRAY, description: "Array dari 3 alternatif persona brand yang komprehensif.", items: brandPersonaSchema } } };
 
   try {
     const userPrompt = `Kamu adalah seorang brand strategist ahli untuk UMKM Indonesia. Berdasarkan info ini:
@@ -127,28 +59,22 @@ export const generateBrandPersona = async (
 - Industri: ${industry}
 - Target Pelanggan: ${targetAudience}
 - Nilai Jual: ${valueProposition}
-
 Buatkan 3 alternatif persona brand yang komprehensif. Setiap persona harus mencakup semua field yang ada di schema JSON yang diminta. Pastikan palet warna adalah kode hex yang valid.`;
     
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: userPrompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: finalSchema,
-        }
+        config: { responseMimeType: "application/json", responseSchema: finalSchema }
     });
 
     const jsonString = response.text.trim();
     const result = JSON.parse(jsonString);
     return result.personas;
-
   } catch (error) {
     throw handleApiError(error, "Google Gemini");
   }
 };
 
-// --- UNCHANGED (using Gemini) ---
 export const generateSlogans = async (
     businessName: string,
     persona: BrandPersona,
@@ -173,71 +99,74 @@ export const generateSlogans = async (
     }
 };
 
-// --- NEW: Generic Hugging Face Image Generation function ---
-const generateImagesWithHuggingFace = async (prompt: string, count: number): Promise<string[]> => {
-    const apiKey = getHuggingFaceKey();
-    
-    const generateSingleImage = async (): Promise<string> => {
-        const response = await fetch(HF_API_URL_SDXL, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ inputs: prompt, options: { wait_for_model: true } })
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! status: ${response.status} ${errorText}`);
-        }
-        
-        const blob = await response.blob();
-        if (blob.type.includes('json')) {
-             const errorJson = JSON.parse(await blob.text());
-             throw new Error(JSON.stringify(errorJson));
-        }
 
-        return new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    };
-
-    const results: string[] = [];
-    for (let i = 0; i < count; i++) {
-        try {
-            const result = await generateSingleImage();
-            results.push(result);
-        } catch (error) {
-            throw handleApiError(error, "Hugging Face");
-        }
+// --- NEW: Centralized Gemini Image Generation function ---
+const generateImagesWithGemini = async (prompt: string, count: number): Promise<string[]> => {
+    // DEV MODE: Return placeholder images to save API quota during testing
+    if (process.env.DEV_MODE === 'true') {
+        console.warn(`--- MODE HEMAT KUOTA AKTIF ---
+Mengganti panggilan API Gemini Image dengan gambar placeholder.
+Prompt Asli: "${prompt}"`);
+        // Simulate a network delay to feel more realistic
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const mockImages = Array.from({ length: count }, (_, i) => 
+            `https://picsum.photos/512/512?random=${Date.now() + i}`
+        );
+        return mockImages;
     }
-    return results;
+
+    const ai = getAiClient();
+    try {
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: prompt,
+            config: {
+                numberOfImages: count,
+                outputMimeType: 'image/png', // Use PNG for better quality and transparency support
+            },
+        });
+
+        return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
+
+    } catch (error) {
+        throw handleApiError(error, "Google Gemini (Image)");
+    }
 };
 
-// --- REWRITTEN with Hugging Face ---
+
+// --- REWRITTEN with Gemini ---
 export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
-  return generateImagesWithHuggingFace(prompt, 4);
+  return generateImagesWithGemini(prompt, 1);
 };
 
-// --- REWRITTEN with Hugging Face (and more efficient) ---
+// --- REWRITTEN with Gemini ---
 export const generateLogoVariations = async (basePrompt: string): Promise<Omit<LogoVariations, 'main'>> => {
     try {
         const [iconResult, monochromeResult] = await Promise.all([
-            generateImagesWithHuggingFace(`${basePrompt}, simplified icon only, clean, centered`, 1),
-            generateImagesWithHuggingFace(`${basePrompt}, monochrome, black and white version`, 1)
+            generateImagesWithGemini(`${basePrompt}, simplified icon only, clean, centered`, 1),
+            generateImagesWithGemini(`${basePrompt}, monochrome, black and white version`, 1)
         ]);
         if (!iconResult[0] || !monochromeResult[0]) {
             throw new Error("Gagal generate salah satu variasi logo.");
         }
         return { icon: iconResult[0], monochrome: monochromeResult[0] };
     } catch(error) {
-        throw error; // The inner function already handles the error with a user-friendly message.
+        // The inner function already handles the API error, just re-throw it
+        throw error;
     }
 };
 
-// --- UNCHANGED (using Gemini for image editing) ---
+// --- Image Editing (Gemini Vision) ---
 export const editLogo = async (base64ImageData: string, mimeType: string, prompt: string): Promise<string> => {
+    // DEV MODE: Return a placeholder image to save API quota during testing
+    if (process.env.DEV_MODE === 'true') {
+        console.warn(`--- MODE HEMAT KUOTA AKTIF ---
+Mengganti panggilan API Gemini Image Edit dengan gambar placeholder.
+Prompt Revisi: "${prompt}"`);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return `https://picsum.photos/512/512?random=${Date.now()}`;
+    }
+
     const ai = getAiClient();
     try {
         const response = await ai.models.generateContent({
@@ -252,11 +181,11 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
         }
         throw new Error("Mang AI tidak menghasilkan gambar editan.");
     } catch (error) {
-        throw handleApiError(error, "Google Gemini");
+        throw handleApiError(error, "Google Gemini (Image Edit)");
     }
 };
 
-// --- UNCHANGED (using Gemini with Google Search) ---
+// --- Content Calendar (Gemini with Google Search) ---
 export const generateContentCalendar = async (
   businessName: string,
   persona: BrandPersona
@@ -283,11 +212,11 @@ PENTING: Format output HARUS berupa JSON object yang valid, tanpa markdown forma
     const parsedJson = JSON.parse(jsonString);
     return { calendar: parsedJson.calendar, sources };
   } catch (error) {
-    throw handleApiError(error, "Google Gemini");
+    throw handleApiError(error, "Google Gemini (Search)");
   }
 };
 
-// --- REWRITTEN with Hugging Face ---
+// --- REWRITTEN with Gemini ---
 export const generatePrintMedia = async (
     type: 'business_card' | 'flyer' | 'banner' | 'roll_banner',
     project: Omit<Project, 'id' | 'createdAt'>
@@ -312,16 +241,16 @@ export const generatePrintMedia = async (
     } else {
         throw new Error("Informasi yang dibutuhkan untuk generate media cetak tidak lengkap.");
     }
-    return generateImagesWithHuggingFace(prompt, 4);
+    return generateImagesWithGemini(prompt, 1);
 };
 
-// --- REWRITTEN with Hugging Face ---
+// --- REWRITTEN with Gemini ---
 export const generatePackagingDesign = async (prompt: string): Promise<string[]> => {
   const fullPrompt = `2D packaging design mockup, printable concept for a product. ${prompt}, flat lay, product photography style, clean background, commercial look.`;
-  return generateImagesWithHuggingFace(fullPrompt, 4);
+  return generateImagesWithGemini(fullPrompt, 1);
 };
 
-// --- REWRITTEN with Hugging Face ---
+// --- REWRITTEN with Gemini ---
 export const generateMerchandiseMockup = async (prompt: string): Promise<string[]> => {
-  return generateImagesWithHuggingFace(prompt, 4);
+  return generateImagesWithGemini(prompt, 1);
 };

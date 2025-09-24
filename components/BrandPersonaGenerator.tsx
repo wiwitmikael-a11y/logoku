@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { generateBrandPersona, generateSlogans } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -188,7 +187,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
               </div>
             )}
             
-            {isLoadingSlogan && <div className="flex items-center justify-center text-gray-400"><LoadingMessage /></div>}
+            {isLoadingSlogan && <div className="flex items-center justify-center text-indigo-300"><LoadingMessage /></div>}
 
             {slogans.length > 0 && (
               <div className="flex flex-col gap-4">

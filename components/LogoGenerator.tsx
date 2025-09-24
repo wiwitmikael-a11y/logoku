@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -103,6 +104,9 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     try {
       const results = await generateLogoOptions(prompt);
       setLogos(results);
+      if (results.length > 0) {
+        setSelectedLogoUrl(results[0]); // Auto-select the first (and only) logo
+      }
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
@@ -117,11 +121,6 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     if (selectedLogoUrl) {
       onComplete({ logoUrl: selectedLogoUrl, prompt });
     }
-  };
-  
-  const handleSelectLogo = (url: string) => {
-    playSound('select');
-    setSelectedLogoUrl(url);
   };
   
   const selectedStyleInfo = logoStyles.find(s => s.id === selectedStyleId);
@@ -173,7 +172,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
         />
         <div className="self-start">
           <Button type="submit" disabled={isLoading || !prompt.trim()}>
-            {isLoading ? <LoadingMessage /> : 'Spill 4 Logo-nya, Mang AI!'}
+            {isLoading ? <LoadingMessage /> : 'Spill Logo-nya, Mang AI!'}
           </Button>
         </div>
       </form>
@@ -181,20 +180,16 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
       {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
 
       {logos.length > 0 && (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 items-center">
             <div>
-              <h3 className="text-xl font-bold mb-2">Pilih Salah Satu Logo:</h3>
+              <h3 className="text-xl font-bold mb-2">Logo Hasil Generate:</h3>
             </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {logos.map((url, index) => (
-              <div 
-                key={index} 
-                className={`bg-gray-700 rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${selectedLogoUrl === url ? 'ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'hover:scale-105'}`}
-                onClick={() => handleSelectLogo(url)}
+          <div className="flex justify-center w-full max-w-sm">
+            <div 
+                className="bg-gray-700 rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500"
               >
-                <img src={url} alt="Generated logo" className="object-contain rounded-md max-w-full max-h-full" />
+                <img src={logos[0]} alt="Generated logo" className="object-contain rounded-md max-w-full max-h-full" />
               </div>
-            ))}
           </div>
            <div className="self-center">
             <Button onClick={handleContinue} disabled={!selectedLogoUrl}>

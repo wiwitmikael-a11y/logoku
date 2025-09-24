@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -41,6 +42,9 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     try {
       const results = await generatePackagingDesign(prompt);
       setDesigns(results);
+      if (results.length > 0) {
+        setSelectedDesignUrl(results[0]); // Auto-select the first (and only) design
+      }
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
@@ -55,11 +59,6 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     if (selectedDesignUrl) {
       onComplete(selectedDesignUrl);
     }
-  };
-
-  const handleSelectDesign = (url: string) => {
-    playSound('select');
-    setSelectedDesignUrl(url);
   };
 
   return (
@@ -88,21 +87,16 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
       {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
 
       {designs.length > 0 && (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 items-center">
           <div>
             <h3 className="text-xl font-bold mb-2">Desain Hasil Generate:</h3>
-            <p className="text-gray-400">Klik gambar buat milih desain kemasan lo.</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {designs.map((url, index) => (
-              <div
-                key={index}
-                className={`bg-gray-700 rounded-lg p-2 aspect-[4/3] flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${selectedDesignUrl === url ? 'ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'hover:scale-105'}`}
-                onClick={() => handleSelectDesign(url)}
-              >
-                <img src={url} alt="Generated packaging design" className="object-contain rounded-md max-w-full max-h-full" />
-              </div>
-            ))}
+          <div className="flex justify-center w-full max-w-lg">
+            <div
+                className="bg-gray-700 rounded-lg p-2 aspect-[4/3] flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500"
+            >
+                <img src={designs[0]} alt="Generated packaging design" className="object-contain rounded-md max-w-full max-h-full" />
+            </div>
           </div>
           <div className="self-center">
             <Button onClick={handleContinue} disabled={!selectedDesignUrl}>

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -60,20 +61,22 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     setter(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
   
+  const designData = {
+    business_card: { designs: cardDesigns, setDesigns: setCardDesigns, selected: selectedCardUrl, setSelected: setSelectedCardUrl },
+    flyer: { designs: flyerDesigns, setDesigns: setFlyerDesigns, selected: selectedFlyerUrl, setSelected: setSelectedFlyerUrl },
+    banner: { designs: bannerDesigns, setDesigns: setBannerDesigns, selected: selectedBannerUrl, setSelected: setSelectedBannerUrl },
+    roll_banner: { designs: rollBannerDesigns, setDesigns: setRollBannerDesigns, selected: selectedRollBannerUrl, setSelected: setSelectedRollBannerUrl },
+  };
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     playSound('start');
     
-    // Clear previous designs for the active tab
-    const designSetters = {
-        business_card: setCardDesigns,
-        flyer: setFlyerDesigns,
-        banner: setBannerDesigns,
-        roll_banner: setRollBannerDesigns
-    };
-    designSetters[activeTab]([]);
+    const { setDesigns, setSelected } = designData[activeTab];
+    setDesigns([]);
+    setSelected(null);
 
     try {
         const projectPayload: Omit<Project, 'id' | 'createdAt'> = {
@@ -87,7 +90,10 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
             }
         };
       const results = await generatePrintMedia(activeTab, projectPayload);
-      designSetters[activeTab](results);
+      setDesigns(results);
+      if (results.length > 0) {
+        setSelected(results[0]); // Auto-select the generated design
+      }
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
@@ -96,7 +102,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo]);
+  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, designData]);
 
   const handleContinue = () => {
     onComplete({
@@ -118,11 +124,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   const handleTabClick = (tab: MediaTab) => {
       playSound('select');
       setActiveTab(tab);
-  }
-  
-  const handleSelectDesign = (url: string, setter: React.Dispatch<React.SetStateAction<string | null>>) => {
-      playSound('select');
-      setter(url);
   }
 
   const renderContent = () => {
@@ -164,14 +165,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     }
   };
   
-    const designData = {
-        business_card: { designs: cardDesigns, selected: selectedCardUrl, setter: setSelectedCardUrl },
-        flyer: { designs: flyerDesigns, selected: selectedFlyerUrl, setter: setSelectedFlyerUrl },
-        banner: { designs: bannerDesigns, selected: selectedBannerUrl, setter: setSelectedBannerUrl },
-        roll_banner: { designs: rollBannerDesigns, selected: selectedRollBannerUrl, setter: setSelectedRollBannerUrl },
-    };
-    
-    const { designs, selected, setter } = designData[activeTab];
+    const { designs } = designData[activeTab];
 
   return (
     <div className="flex flex-col gap-8">
@@ -199,18 +193,14 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
       {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
 
       {designs.length > 0 && (
-        <div className="flex flex-col gap-6">
-            <h3 className="text-xl font-bold">Pilih Desain Favorit Lo:</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {designs.map((url, index) => (
+        <div className="flex flex-col gap-6 items-center">
+            <h3 className="text-xl font-bold">Desain Hasil Generate:</h3>
+          <div className="flex justify-center w-full max-w-lg">
               <div 
-                key={index} 
-                className={`bg-gray-700 rounded-lg p-2 flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${selected === url ? 'ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'hover:scale-105'}`}
-                onClick={() => handleSelectDesign(url, setter)}
+                className="bg-gray-700 rounded-lg p-2 flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500"
               >
-                <img src={url} alt={`Generated design ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full" />
+                <img src={designs[0]} alt={`Generated design 1`} className="object-contain rounded-md max-w-full max-h-full" />
               </div>
-            ))}
           </div>
         </div>
       )}
