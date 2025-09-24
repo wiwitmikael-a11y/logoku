@@ -41,8 +41,8 @@ const ApiKeyErrorScreen = () => (
             />
             <div>
                 <h2 className="text-2xl font-bold text-red-400 mb-2">Kesalahan Konfigurasi API Key</h2>
-                <p className="text-red-200">Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro!</p>
-                <p className="text-gray-400 mt-4 text-sm">Pastikan kamu sudah mengatur environment variable di Vercel dan melakukan deploy ulang ya.</p>
+                <p className="text-red-200">Waduh, API Key Google Gemini (VITE_API_KEY) nggak ketemu, bro!</p>
+                <p className="text-gray-400 mt-4 text-sm">Pastikan kamu sudah mengatur environment variable di Vercel dengan awalan 'VITE_' dan melakukan deploy ulang ya.</p>
             </div>
         </div>
     </div>
@@ -60,7 +60,7 @@ const SupabaseKeyErrorScreen = ({ error }: { error: string }) => (
             <div>
                 <h2 className="text-2xl font-bold text-red-400 mb-2">Kesalahan Konfigurasi Supabase</h2>
                 <p className="text-red-200">{error}</p>
-                <p className="text-gray-400 mt-4 text-sm">Pastikan kamu sudah mengatur environment variable di Vercel dan melakukan deploy ulang ya.</p>
+                <p className="text-gray-400 mt-4 text-sm">Pastikan kamu sudah mengatur environment variable di Vercel dengan awalan 'VITE_' dan melakukan deploy ulang ya.</p>
             </div>
         </div>
     </div>
@@ -94,8 +94,8 @@ const App: React.FC = () => {
     const showStepper = currentStepIndex !== -1;
 
     useEffect(() => {
-        // Standardize API Key check to match geminiService
-        const apiKey = process.env.API_KEY;
+        // Correctly access Vite environment variables
+        const apiKey = (import.meta as any).env.VITE_API_KEY;
         if (!apiKey) setApiKeyMissing(true);
     }, []);
 
