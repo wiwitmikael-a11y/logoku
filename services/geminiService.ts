@@ -3,7 +3,6 @@ import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, P
 
 // --- Environment Variable Setup ---
 const API_KEY = (import.meta as any).env.VITE_API_KEY;
-const DEV_MODE = (import.meta as any).env.VITE_DEV_MODE === 'true';
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
@@ -107,19 +106,6 @@ export const generateSlogans = async (
 
 // --- NEW: Centralized Gemini Image Generation function ---
 const generateImagesWithGemini = async (prompt: string, count: number): Promise<string[]> => {
-    // DEV MODE: Return placeholder images to save API quota during testing
-    if (DEV_MODE) {
-        console.warn(`--- MODE HEMAT KUOTA AKTIF ---
-Mengganti panggilan API Gemini Image dengan gambar placeholder.
-Prompt Asli: "${prompt}"`);
-        // Simulate a network delay to feel more realistic
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const mockImages = Array.from({ length: count }, (_, i) => 
-            `https://picsum.photos/512/512?random=${Date.now() + i}`
-        );
-        return mockImages;
-    }
-
     const ai = getAiClient();
     try {
         const response = await ai.models.generateImages({
@@ -163,15 +149,6 @@ export const generateLogoVariations = async (basePrompt: string): Promise<Omit<L
 
 // --- Image Editing (Gemini Vision) ---
 export const editLogo = async (base64ImageData: string, mimeType: string, prompt: string): Promise<string> => {
-    // DEV MODE: Return a placeholder image to save API quota during testing
-    if (DEV_MODE) {
-        console.warn(`--- MODE HEMAT KUOTA AKTIF ---
-Mengganti panggilan API Gemini Image Edit dengan gambar placeholder.
-Prompt Revisi: "${prompt}"`);
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        return `https://picsum.photos/512/512?random=${Date.now()}`;
-    }
-
     const ai = getAiClient();
     try {
         const response = await ai.models.generateContent({
