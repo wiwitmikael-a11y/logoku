@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { generateBrandPersona, generateSlogans } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -64,14 +63,14 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
     }
   }, [formData]);
   
-  const handleSelectPersona = (index: number) => {
+  const handleSelectPersona = useCallback((index: number) => {
       if (selectedPersonaIndex !== index) {
         setSelectedPersonaIndex(index);
         // Reset slogan state when a new persona is chosen
         setSlogans([]);
         setSelectedSlogan(null);
       }
-  };
+  }, [selectedPersonaIndex]);
   
   const handleGenerateSlogans = useCallback(async () => {
     if (selectedPersonaIndex === null || !personas[selectedPersonaIndex]) return;

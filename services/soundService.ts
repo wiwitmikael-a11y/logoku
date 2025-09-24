@@ -48,7 +48,7 @@ const initializeAudio = async () => {
     sfxGainNode.connect(audioContext.destination);
 
     bgmGainNode = audioContext.createGain();
-    bgmGainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // BGM at 30%
+    bgmGainNode.gain.setValueAtTime(0.15, audioContext.currentTime); // BGM lowered to 15%
     bgmGainNode.connect(audioContext.destination);
 
     const allFilesToLoad = { ...sfxFiles, ...bgmFiles };
@@ -161,7 +161,7 @@ export const toggleMuteBGM = (): boolean => {
         bgmGainNode.gain.setValueAtTime(0, audioContext.currentTime);
         return false; // Now muted
     } else {
-        bgmGainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Restore volume
+        bgmGainNode.gain.setValueAtTime(0.15, audioContext.currentTime); // Restore volume
         return true; // Now playing
     }
 };
