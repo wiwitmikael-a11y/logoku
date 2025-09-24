@@ -48,25 +48,33 @@ const App: React.FC = () => {
 };
 
 const MainApp: React.FC = () => {
-    const { session, loading: authLoading, profile, showOutOfCreditsModal, setShowOutOfCreditsModal, handleLogout, handleToggleMute, isMuted } = useAuth();
+    const { session, loading: authLoading, profile, showOutOfCreditsModal, setShowOutOfCreditsModal, handleLogout, handleToggleMute, isMuted, authError } = useAuth();
     
     const [appState, setAppState] = useState<AppState>('dashboard');
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
     const [generalError, setGeneralError] = useState<string | null>(null);
     
+    // State for the welcome banner
+    const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+    
     // Modals visibility state
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
     
     const previousAppState = useRef<AppState>(appState);
-    
+    const previousSession = useRef<typeof session>(session);
+
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'print', 'packaging', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
 
     useEffect(() => {
         if (!authLoading && session) {
+            // If user just logged in (previous session was null)
+            if (!previousSession.current && session) {
+                setShowWelcomeBanner(true);
+            }
             fetchProjects();
             stopBGM();
             playBGM('main');
@@ -74,6 +82,7 @@ const MainApp: React.FC = () => {
             stopBGM();
             playBGM('welcome');
         }
+        previousSession.current = session;
     }, [session, authLoading]);
 
     const fetchProjects = async () => {
@@ -200,7 +209,7 @@ const MainApp: React.FC = () => {
             clearWorkflowState();
             navigateTo('summary');
         }
-    }, [session, supabase]);
+    }, [session]);
 
     const openContactModal = useCallback(() => { playSound('click'); setShowContactModal(true); }, []);
     const closeContactModal = useCallback(() => setShowContactModal(false), []);
@@ -256,7 +265,7 @@ const MainApp: React.FC = () => {
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onGoToCaptionGenerator={handleGoToCaptionGenerator} />;
+                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onGoToCaptionGenerator={handleGoToCaptionGenerator} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} />;
         }
         // Fallback: If required data is missing, go to dashboard
         handleReturnToDashboard();
@@ -290,6 +299,7 @@ const MainApp: React.FC = () => {
             </header>
             <main className="py-10 px-4 md:px-8 pb-24">
                 <div className="max-w-7xl mx-auto">
+                    {authError && <ErrorMessage message={authError} />}
                     {generalError ? (
                         <ErrorMessage message={`Terjadi error kritis yang tak terduga: ${generalError}`} />
                     ) : (

@@ -10,6 +10,7 @@ interface AuthContextType {
     session: Session | null;
     profile: Profile | null;
     loading: boolean;
+    authError: string | null;
     showOutOfCreditsModal: boolean;
     setShowOutOfCreditsModal: (show: boolean) => void;
     deductCredits: (cost: number) => Promise<boolean>;
@@ -24,46 +25,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [authError, setAuthError] = useState<string | null>(null);
     const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
 
-    useEffect(() => {
-        const fetchSessionAndProfile = async () => {
-            setLoading(true);
-            try {
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError) throw sessionError;
-                
-                setSession(session);
-                if (session) {
-                    await fetchUserData(session.user);
-                }
-            } catch (e) {
-                console.error("Error fetching initial session:", e);
-                setSession(null);
-                setProfile(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchSessionAndProfile();
-
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            setSession(session);
-            if (session) {
-                await fetchUserData(session.user);
-            } else {
-                setProfile(null);
-            }
-        });
-
-        return () => {
-            authListener.subscription.unsubscribe();
-        };
+    const handleLogout = useCallback(async () => {
+        const { error } = await supabase.auth.signOut();
+        setProfile(null);
+        setSession(null);
+        if (error) console.error('Error logging out:', error);
     }, []);
-
-    const fetchUserData = async (user: User) => {
+    
+    const fetchUserData = useCallback(async (user: User) => {
         try {
             let { data: userProfile, error: profileError } = await supabase
                 .from('profiles')
@@ -109,11 +82,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             
             setProfile(userProfile);
+            setAuthError(null); // Clear any previous auth errors on success
         } catch (error) {
-            console.error("Error in user data handling:", error);
-            // Optionally set an error state to show in the UI
+            console.error("Critical error in user data handling:", error);
+            setAuthError(`Gagal memuat profil Anda setelah login. Silakan coba lagi.`);
+            // Automatically log out the user to prevent inconsistent state
+            await handleLogout();
         }
-    };
+    }, [handleLogout]);
+
+    useEffect(() => {
+        const fetchSessionAndProfile = async () => {
+            setLoading(true);
+            try {
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError) throw sessionError;
+                
+                setSession(session);
+                if (session) {
+                    await fetchUserData(session.user);
+                }
+            } catch (e) {
+                console.error("Error fetching initial session:", e);
+                setSession(null);
+                setProfile(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSessionAndProfile();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            setSession(session);
+            if (session) {
+                await fetchUserData(session.user);
+            } else {
+                setProfile(null);
+            }
+        });
+
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
+    }, [fetchUserData]);
     
     const deductCredits = useCallback(async (cost: number): Promise<boolean> => {
         if (!profile || profile.credits < cost) {
@@ -138,11 +150,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return true;
         }
     }, [profile]);
-    
-    const handleLogout = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) console.error('Error logging out:', error);
-    };
 
     const handleToggleMute = useCallback(() => setIsMuted(!toggleMuteBgmUtil()), []);
 
@@ -150,6 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         profile,
         loading,
+        authError,
         showOutOfCreditsModal,
         setShowOutOfCreditsModal,
         deductCredits,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Project } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
@@ -9,14 +9,42 @@ interface ProjectDashboardProps {
   onNewProject: () => void;
   onSelectProject: (projectId: number) => void;
   onGoToCaptionGenerator: (projectId: number) => void;
+  showWelcomeBanner: boolean;
+  onWelcomeBannerClose: () => void;
 }
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onGoToCaptionGenerator }) => {
+const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
+    const [isVisible, setIsVisible] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(false);
+            // After animation ends, call the parent close function
+            setTimeout(onClose, 500); 
+        }, 4000); // Banner visible for 4 seconds
+
+        return () => clearTimeout(timer);
+    }, [onClose]);
+
+    return (
+        <div className={`
+            bg-indigo-900/50 border border-indigo-700 rounded-lg p-4 mb-8 text-center
+            transition-all duration-500 ease-in-out
+            ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-5'}
+        `}>
+            <p className="text-indigo-200">Login berhasil! Selamat datang kembali, {userName}.</p>
+        </div>
+    );
+};
+
+
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onGoToCaptionGenerator, showWelcomeBanner, onWelcomeBannerClose }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
   return (
     <div className="flex flex-col gap-8 items-center text-center">
+      {showWelcomeBanner && <WelcomeBanner userName={userName} onClose={onWelcomeBannerClose} />}
       <div>
         <h2 className="text-2xl font-bold text-indigo-400 mb-2">Selamat Datang, {userName}!</h2>
         <p className="text-gray-400 max-w-2xl">Studio branding AI pribadi lo. Mulai project baru untuk membangun identitas brand dari nol, atau lihat dan kelola brand kit yang sudah pernah lo buat.</p>
