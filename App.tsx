@@ -1,19 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import type { Project, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets } from './types';
 import { playSound } from './services/soundService';
 
-// Import all components
+// Statically import initial/common components
 import WelcomeScreen from './components/WelcomeScreen';
-import ProjectDashboard from './components/ProjectDashboard';
-import BrandPersonaGenerator from './components/BrandPersonaGenerator';
-import LogoGenerator from './components/LogoGenerator';
-import LogoDetailGenerator from './components/LogoDetailGenerator';
-import ContentCalendarGenerator from './components/ContentCalendarGenerator';
-import PrintMediaGenerator from './components/PrintMediaGenerator';
-import PackagingGenerator from './components/PackagingGenerator';
-import MerchandiseGenerator from './components/MerchandiseGenerator';
-import ProjectSummary from './components/ProjectSummary';
 import AdBanner from './components/AdBanner';
+import LoadingMessage from './components/common/LoadingMessage';
+
+// Dynamically import main screen components for code-splitting
+const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
+const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersonaGenerator'));
+const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
+const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
+const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
+const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
+const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
+const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGenerator'));
+const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'packaging' | 'merchandise' | 'summary';
 
@@ -220,7 +223,13 @@ const App: React.FC = () => {
             </header>
             <main className="py-10 px-4 md:px-8 pb-24">
                 <div className="max-w-7xl mx-auto">
-                    {renderContent()}
+                    <Suspense fallback={
+                        <div className="flex justify-center items-center min-h-[50vh]">
+                            <LoadingMessage />
+                        </div>
+                    }>
+                        {renderContent()}
+                    </Suspense>
                 </div>
             </main>
              <footer className="text-center py-6 px-4 text-sm text-gray-500 border-t border-gray-800">

@@ -9,10 +9,10 @@ const HF_API_URL_SDXL = "https://api-inference.huggingface.co/models/stabilityai
 let ai: GoogleGenAI | null = null;
 const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
-    // For client-side code on platforms like Vercel, env vars MUST be prefixed.
-    const apiKey = process.env.REACT_APP_API_KEY;
+    // FIX: Switched from import.meta.env.VITE_API_KEY to process.env.API_KEY to resolve TS error and align with guidelines.
+    const apiKey = process.env.API_KEY;
     if (!apiKey) {
-        throw new Error("Waduh, API Key Google Gemini (REACT_APP_API_KEY) nggak ketemu, bro! Pastiin lo udah set Environment Variable di Vercel dengan nama 'REACT_APP_API_KEY' (pake prefix!). Abis itu, deploy ulang ya.");
+        throw new Error("Waduh, API Key Google Gemini (API_KEY) nggak ketemu, bro! Pastiin lo udah set Environment Variable dengan nama 'API_KEY'. Abis itu, deploy ulang ya.");
     }
     ai = new GoogleGenAI({ apiKey });
     return ai;
@@ -20,10 +20,10 @@ const getAiClient = (): GoogleGenAI => {
 
 // --- New API Key Getters ---
 const getHuggingFaceKey = (): string => {
-    // For client-side code on platforms like Vercel, env vars MUST be prefixed.
-    const apiKey = process.env.REACT_APP_HF_API_KEY;
+    // FIX: Switched from import.meta.env.VITE_HF_API_KEY to process.env.HF_API_KEY to resolve TS error.
+    const apiKey = process.env.HF_API_KEY;
     if (!apiKey) {
-        throw new Error("Waduh, API Key Hugging Face (REACT_APP_HF_API_KEY) nggak ketemu, bro! Set Environment Variable di Vercel dengan nama 'REACT_APP_HF_API_KEY' (pake prefix!).");
+        throw new Error("Waduh, API Key Hugging Face (HF_API_KEY) nggak ketemu, bro! Set Environment Variable dengan nama 'HF_API_KEY'.");
     }
     return apiKey;
 };
