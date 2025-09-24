@@ -177,7 +177,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <Textarea
           label="Prompt Deskripsi Logo (Bisa Diedit)"
           name="logoPrompt"
@@ -187,12 +187,12 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
           rows={5}
         />
         <div className="self-start">
-          <Button type="submit" isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>
+          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>
             Spill Logo-nya, Mang AI! ({GENERATION_COST} Kredit)
           </Button>
            <p className="text-xs text-gray-500 mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
         </div>
-      </form>
+      </div>
 
       {error && <ErrorMessage message={error} />}
 

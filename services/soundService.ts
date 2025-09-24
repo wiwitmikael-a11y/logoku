@@ -72,7 +72,7 @@ export const playBGM = (bgmName: BgmName): void => {
         currentBGM.pause();
     }
     currentBGM = getAudio(bgmUrls[bgmName], true);
-    currentBGM.volume = 0.3;
+    currentBGM.volume = 0.15;
     if (!isMuted) {
         currentBGM.play().catch(() => {});
     }
