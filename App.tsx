@@ -94,8 +94,8 @@ const App: React.FC = () => {
     const showStepper = currentStepIndex !== -1;
 
     useEffect(() => {
-        // Correctly access Vite environment variables
-        const apiKey = (import.meta as any).env.VITE_API_KEY;
+        // Use process.env, as import.meta.env is not working in the deployment environment.
+        const apiKey = process.env.VITE_API_KEY;
         if (!apiKey) setApiKeyMissing(true);
     }, []);
 

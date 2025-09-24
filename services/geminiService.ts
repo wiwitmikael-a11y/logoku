@@ -2,7 +2,8 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData } from '../types';
 
 // --- Environment Variable Setup ---
-const API_KEY = (import.meta as any).env.VITE_API_KEY;
+// Use process.env, as import.meta.env is not working in the deployment environment.
+const API_KEY = process.env.VITE_API_KEY;
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
