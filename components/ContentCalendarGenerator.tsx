@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback } from 'react';
 import { generateContentCalendar } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -60,8 +61,8 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
       </div>
 
       <div className="self-center">
-        <Button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? <LoadingMessage /> : 'Kasih Ide Konten, Please!'}
+        <Button onClick={handleSubmit} isLoading={isLoading}>
+          Kasih Ide Konten, Please!
         </Button>
       </div>
 

@@ -194,6 +194,39 @@
         100% { transform: translateX(0px) scale(-1, 1) translateY(0); }
       }
 
+      /* Keyframes for Mang AI bouncing on buttons */
+      @keyframes mang-ai-bouncing {
+        0% {
+          transform: translateY(20%) scale(0.8);
+          opacity: 0;
+        }
+        20% {
+          transform: translateY(0) scale(1.1, 0.9); /* Land */
+          opacity: 1;
+          animation-timing-function: cubic-bezier(0.280, 0.840, 0.420, 1);
+        }
+        40% {
+          transform: translateY(-30%) scale(0.95, 1.05); /* Jump up */
+          animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+        }
+        60% {
+          transform: translateY(0) scale(1.05, 0.95); /* Land again */
+          animation-timing-function: cubic-bezier(0.280, 0.840, 0.420, 1);
+        }
+        80% {
+          transform: translateY(-15%) scale(1); /* Smaller jump */
+           animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+        }
+        100% {
+          transform: translateY(0) scale(1); /* Settle */
+        }
+      }
+      .animate-bouncing-ai {
+        animation: mang-ai-bouncing 1.2s ease-in-out infinite;
+        transform-origin: bottom center;
+        image-rendering: pixelated;
+      }
+
       .animate-mario-top-breathing {
         animation: mario-top-breathing-bounce 8s linear infinite;
       }

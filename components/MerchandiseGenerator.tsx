@@ -121,8 +121,8 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
           rows={5}
         />
         <div className="self-start">
-            <Button type="submit" disabled={isLoading}>
-                {isLoading ? <LoadingMessage /> : `Bikinin Mockup ${merchandiseTypes.find(m=>m.id === activeTab)?.name}-nya!`}
+            <Button type="submit" isLoading={isLoading}>
+                {`Bikinin Mockup ${merchandiseTypes.find(m=>m.id === activeTab)?.name}-nya!`}
             </Button>
         </div>
       </form>

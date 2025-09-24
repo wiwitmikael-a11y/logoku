@@ -171,8 +171,8 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
           rows={5}
         />
         <div className="self-start">
-          <Button type="submit" disabled={isLoading || !prompt.trim()}>
-            {isLoading ? <LoadingMessage /> : 'Spill Logo-nya, Mang AI!'}
+          <Button type="submit" isLoading={isLoading} disabled={!prompt.trim()}>
+            Spill Logo-nya, Mang AI!
           </Button>
         </div>
       </form>

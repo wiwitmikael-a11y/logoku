@@ -59,8 +59,8 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
       </div>
 
       <div className="self-center">
-        <Button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? <LoadingMessage /> : 'Kasih Ide Konten, Please!'}
+        <Button onClick={handleSubmit} isLoading={isLoading}>
+          Kasih Ide Konten, Please!
         </Button>
       </div>
 

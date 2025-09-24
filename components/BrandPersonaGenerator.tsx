@@ -118,8 +118,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
         <Textarea label="Yang Bikin Beda (Value Proposition)" name="valueProposition" value={formData.valueProposition} onChange={handleChange} placeholder="cth: Organik, murah, mewah" rows={3} />
         <Textarea className="md:col-span-2" label="Sebutin 1-2 Kompetitor" name="competitors" value={formData.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
         <div className="md:col-span-2">
-          <Button type="submit" disabled={isLoadingPersona}>
-            {isLoadingPersona ? <LoadingMessage /> : 'Racik Persona Sekarang!'}
+          <Button type="submit" isLoading={isLoadingPersona}>
+            Racik Persona Sekarang!
           </Button>
         </div>
       </form>
@@ -179,15 +179,13 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, initialData }) => 
               <p className="text-gray-400">Persona "{personas[selectedPersonaIndex].nama_persona}" udah kepilih. Sekarang, ayo kita buat beberapa pilihan slogan yang pas.</p>
             </div>
 
-            {slogans.length === 0 && !isLoadingSlogan && (
+            {slogans.length === 0 && (
               <div className="self-start">
-                  <Button onClick={handleGenerateSlogans} disabled={isLoadingSlogan}>
+                  <Button onClick={handleGenerateSlogans} isLoading={isLoadingSlogan}>
                       Bikinin Slogan Dong!
                   </Button>
               </div>
             )}
-            
-            {isLoadingSlogan && <div className="flex items-center justify-center text-indigo-300"><LoadingMessage /></div>}
 
             {slogans.length > 0 && (
               <div className="flex flex-col gap-4">

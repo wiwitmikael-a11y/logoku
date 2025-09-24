@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -101,8 +102,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
                     </div>
                 </div>
             ) : (
-                <Button onClick={handleGenerateVariations} disabled={isGeneratingVariations}>
-                    {isGeneratingVariations ? <LoadingMessage /> : 'Siapin Paket Komplitnya!'}
+                <Button onClick={handleGenerateVariations} isLoading={isGeneratingVariations}>
+                    Siapin Paket Komplitnya!
                 </Button>
             )}
         </div>
@@ -120,8 +121,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
                     placeholder="cth: Ganti warna merahnya jadi hijau"
                 />
                 <div className="self-start">
-                    <Button type="submit" disabled={isEditing}>
-                        {isEditing ? <LoadingMessage /> : 'Revisi, Gercep!'}
+                    <Button type="submit" isLoading={isEditing}>
+                        Revisi, Gercep!
                     </Button>
                 </div>
             </form>

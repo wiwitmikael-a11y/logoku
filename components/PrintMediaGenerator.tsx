@@ -184,8 +184,8 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {renderContent()}
         <div className="self-start">
-            <Button type="submit" disabled={isLoading}>
-                {isLoading ? <LoadingMessage /> : `Sulap Jadi Desain!`}
+            <Button type="submit" isLoading={isLoading}>
+                {`Sulap Jadi Desain!`}
             </Button>
         </div>
       </form>

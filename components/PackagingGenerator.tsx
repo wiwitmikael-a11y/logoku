@@ -78,8 +78,8 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
           rows={4}
         />
         <div className="self-start">
-          <Button type="submit" disabled={isLoading || !prompt.trim()}>
-            {isLoading ? <LoadingMessage /> : 'Bungkus Desainnya, Mang AI!'}
+          <Button type="submit" isLoading={isLoading} disabled={!prompt.trim()}>
+            Bungkus Desainnya, Mang AI!
           </Button>
         </div>
       </form>
