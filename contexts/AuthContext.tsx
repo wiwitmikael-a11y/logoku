@@ -12,14 +12,15 @@ interface AuthContextType {
   authError: string | null;
   isMuted: boolean;
   showOutOfCreditsModal: boolean;
-  showLogoutConfirm: boolean; // New state for confirmation
+  showLogoutConfirm: boolean;
   setShowOutOfCreditsModal: React.Dispatch<React.SetStateAction<boolean>>;
-  setShowLogoutConfirm: React.Dispatch<React.SetStateAction<boolean>>; // New setter
-  handleLogout: () => void; // No longer async, just triggers modal
-  executeLogout: () => Promise<void>; // New function for actual logout
+  setShowLogoutConfirm: React.Dispatch<React.SetStateAction<boolean>>;
+  handleLogout: () => void;
+  executeLogout: () => Promise<void>;
   handleToggleMute: () => void;
   handleDeleteAccount: () => void;
   deductCredits: (amount: number) => Promise<boolean>;
+  refreshProfile: () => Promise<void>; // Exposed function to refresh profile
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -184,6 +185,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
+  const refreshProfile = useCallback(async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  }, [user, fetchProfile]);
+
 
   const value = {
     session,
@@ -201,6 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleToggleMute,
     handleDeleteAccount,
     deductCredits,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

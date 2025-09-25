@@ -25,9 +25,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Changed `render` to an arrow function property to ensure `this` is correctly bound to the component instance.
-  // This resolves a TypeScript error where `this.props` was reported as non-existent, which can occur due to `this` context issues in some environments.
-  render = () => {
+  // FIX: Changed `render` from an arrow function property to a standard class method.
+  // This aligns with standard React practice and resolves a TypeScript error where `this.props` was not found.
+  render() {
     if (this.state.hasError) {
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">

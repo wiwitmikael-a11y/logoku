@@ -10,11 +10,12 @@ interface Props {
   children: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
+  isConfirmLoading?: boolean;
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const ConfirmationModal: React.FC<Props> = ({ show, onClose, onConfirm, title, children, confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+const ConfirmationModal: React.FC<Props> = ({ show, onClose, onConfirm, title, children, confirmText = 'Confirm', cancelText = 'Cancel', isConfirmLoading = false }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,10 +78,10 @@ const ConfirmationModal: React.FC<Props> = ({ show, onClose, onConfirm, title, c
           {children}
         </p>
         <div className="flex gap-4">
-            <Button onClick={handleClose} variant="secondary">
+            <Button onClick={handleClose} variant="secondary" disabled={isConfirmLoading}>
                 {cancelText}
             </Button>
-            <Button onClick={handleConfirm}>
+            <Button onClick={handleConfirm} isLoading={isConfirmLoading}>
                 {confirmText}
             </Button>
         </div>

@@ -33,7 +33,7 @@ const ContactModal = React.lazy(() => import('./components/ContactModal'));
 const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
 const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
-const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal')); // New Modal for confirmation
+const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'packaging' | 'merchandise' | 'summary' | 'caption';
@@ -66,7 +66,8 @@ const MainApp: React.FC = () => {
         handleDeleteAccount, 
         handleToggleMute, 
         isMuted, 
-        authError 
+        authError,
+        refreshProfile,
     } = useAuth();
     
     const [appState, setAppState] = useState<AppState>('dashboard');
@@ -81,6 +82,9 @@ const MainApp: React.FC = () => {
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     
     // Dropdowns visibility state
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -221,6 +225,70 @@ const MainApp: React.FC = () => {
             navigateTo('caption');
         }
     }, [projects]);
+
+    // --- Project Deletion Handlers ---
+    const handleRequestDeleteProject = useCallback((projectId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+            setProjectToDelete(project);
+            setShowDeleteConfirm(true);
+        }
+    }, [projects]);
+
+    const handleCancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setProjectToDelete(null);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!projectToDelete || !user) return;
+
+        setIsDeleting(true);
+        setGeneralError(null);
+
+        try {
+            // 1. Delete associated files from Supabase Storage
+            const folderPath = `${user.id}/${projectToDelete.id}`;
+            const { data: files, error: listError } = await supabase.storage
+                .from('project-assets')
+                .list(folderPath);
+
+            if (listError) throw new Error(`Gagal membaca file project: ${listError.message}`);
+
+            if (files && files.length > 0) {
+                const filePaths = files.map(file => `${folderPath}/${file.name}`);
+                const { error: removeError } = await supabase.storage
+                    .from('project-assets')
+                    .remove(filePaths);
+                if (removeError) throw new Error(`Gagal menghapus aset project: ${removeError.message}`);
+            }
+
+            // 2. Delete the project record from the database
+            const { error: deleteError } = await supabase
+                .from('projects')
+                .delete()
+                .eq('id', projectToDelete.id);
+            
+            if (deleteError) throw new Error(`Gagal menghapus data project: ${deleteError.message}`);
+
+            // 3. Update UI state
+            setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
+
+            // 4. Refresh user profile to get updated storage usage
+            await refreshProfile();
+            
+            playSound('success'); // Or a dedicated delete sound
+
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus project.';
+            setGeneralError(errorMessage);
+            playSound('error');
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
+            setProjectToDelete(null);
+        }
+    };
     
     // --- Centralized Checkpoint Saver ---
     const saveCheckpoint = useCallback(async (updatedData: Partial<ProjectData>) => {
@@ -429,7 +497,7 @@ const MainApp: React.FC = () => {
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} onGoToCaptionGenerator={handleGoToCaptionGenerator} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} />;
+                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} onGoToCaptionGenerator={handleGoToCaptionGenerator} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
         }
         // Fallback: If required data is missing, go to dashboard
         handleReturnToDashboard();
@@ -554,6 +622,17 @@ const MainApp: React.FC = () => {
                     cancelText="Gak Jadi, Balik Lagi"
                 >
                     Kalo lo logout sekarang, progres yang belom ke-save otomatis (checkpoint) bisa ilang lho. Sayang kan kalo ide brilian lo ngawang gitu aja. Tetep mau lanjut?
+                </ConfirmationModal>
+                <ConfirmationModal
+                    show={showDeleteConfirm}
+                    onClose={handleCancelDelete}
+                    onConfirm={handleConfirmDelete}
+                    isConfirmLoading={isDeleting}
+                    title="Yakin Mau Hapus Project?"
+                    confirmText={isDeleting ? 'Menghapus...' : 'Ya, Hapus Saja'}
+                    cancelText="Gak Jadi"
+                >
+                    Project "{projectToDelete?.project_data.brandInputs?.businessName || 'ini'}" dan semua asetnya bakal dihapus permanen lho. Gak bisa balik lagi. Tetap mau lanjut?
                 </ConfirmationModal>
             </Suspense>
         </div>
