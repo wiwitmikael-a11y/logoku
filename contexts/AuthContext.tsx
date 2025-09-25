@@ -24,6 +24,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to get today's date in 'YYYY-MM-DD' format for WIB (Asia/Jakarta) timezone.
+const getTodaysDateWIB = (): string => {
+  // 'en-CA' locale reliably gives the YYYY-MM-DD format.
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+};
+
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -44,8 +51,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error && error.code !== 'PGRST116') { // PGRST116: no rows found
       console.error('Error fetching profile:', error);
       setAuthError('Gagal mengambil data profil pengguna.');
-    } else if (data) {
-      setProfile(data as Profile);
+      return; // Stop execution if fetching fails
+    }
+
+    if (data) {
+        const todayWIB = getTodaysDateWIB();
+        const profileData = data as Profile;
+
+        // Check if the last reset was not today
+        if (profileData.last_credit_reset !== todayWIB) {
+            const updatedProfile = { ...profileData, credits: 10, last_credit_reset: todayWIB };
+            
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ credits: 10, last_credit_reset: todayWIB })
+                .eq('id', userId);
+            
+            if (updateError) {
+                console.error("Gagal me-reset token harian:", updateError);
+                setAuthError("Gagal me-reset token harian, tapi jangan khawatir, data lama masih aman.");
+                // Fallback to old data to prevent app from breaking
+                setProfile(profileData);
+            } else {
+                // Update local state with the reset data
+                setProfile(updatedProfile);
+            }
+        } else {
+            // No reset needed, just set the fetched profile
+            setProfile(profileData);
+        }
     }
   }, []);
 

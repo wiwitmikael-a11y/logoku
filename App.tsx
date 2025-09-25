@@ -542,6 +542,8 @@ const MainApp: React.FC = () => {
                     profile={profile}
                     onLogout={handleLogout}
                     onDeleteAccount={handleDeleteAccount}
+                    onShowToS={openToSModal}
+                    onShowContact={openContactModal}
                 />
                 <ConfirmationModal
                     show={showLogoutConfirm}

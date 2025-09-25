@@ -73,6 +73,10 @@ const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
           Wih, ada juragan! Pusing mikirin logo atau bingung mau posting apa di sosmed? Tenang, serahin aja sama ahlinya... Mang AI! Di sini, kita bakal ngeracik logo anti-mainstream, nentuin persona brand, sampe bikinin jadwal konten lengkap sama caption-nya. Hemat waktu, hemat biaya, hasilnya dijamin hore!
         </p>
         
+        <div className="bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-3 mb-8 max-w-sm mx-auto text-sm text-yellow-200">
+          <p><strong className="font-bold">Info Penting:</strong> Aplikasi ini masih dalam tahap <em>gacor</em>-in, jadi kalo ada yang aneh-aneh dikit, maklum ya! Mang AI lagi semangat-semangatnya belajar, nih. Sokin, kita mulai petualangannya!</p>
+        </div>
+
         <div className="flex flex-col items-center gap-4">
           <Button onClick={() => handleLogin('google')}>
             {/* Google Icon SVG */}

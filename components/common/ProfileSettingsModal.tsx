@@ -10,9 +10,11 @@ interface Props {
   profile: Profile | null;
   onLogout: () => void;
   onDeleteAccount: () => void;
+  onShowToS: () => void;
+  onShowContact: () => void;
 }
 
-const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, onLogout, onDeleteAccount }) => {
+const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, onLogout, onDeleteAccount, onShowToS, onShowContact }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,11 +52,16 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
     onLogout();
     onClose();
   }
-  
-  const handleDeleteClick = () => {
-    onDeleteAccount();
+
+  const handleTosClick = () => {
+    onShowToS();
     onClose();
-  }
+  };
+
+  const handleContactClick = () => {
+    onShowContact();
+    onClose();
+  };
 
   return (
     <div
@@ -89,8 +96,9 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
              <div className="bg-gray-900/50 p-4 rounded-lg">
                 <h3 className="text-sm font-semibold text-indigo-400 mb-2">Tindakan</h3>
                 <div className="flex flex-col sm:flex-row gap-3">
-                    <Button onClick={handleLogoutClick} size="small" variant="secondary">Logout dari Aplikasi</Button>
-                    <Button onClick={onClose} size="small" variant="secondary">Ketentuan Layanan</Button>
+                    <Button onClick={handleLogoutClick} size="small" variant="secondary">Logout</Button>
+                    <Button onClick={handleTosClick} size="small" variant="secondary">Ketentuan Layanan</Button>
+                    <Button onClick={handleContactClick} size="small" variant="secondary">Dev Info</Button>
                 </div>
             </div>
         </div>
@@ -98,7 +106,16 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
         <div className="border-t border-red-700/50 pt-4">
              <h3 className="text-base font-semibold text-red-400 mb-2">Zona Berbahaya</h3>
               <p className="text-xs text-gray-400 mb-3">Tindakan ini tidak bisa dibatalkan. Semua data project dan akun lo akan dihapus permanen.</p>
-             <Button onClick={handleDeleteClick} size="small" variant="secondary" className="!border-red-500/50 !text-red-400 hover:!bg-red-500/20 disabled:!border-red-800/50 disabled:!text-gray-500">Hapus Akun Saya</Button>
+             <Button 
+                onClick={onDeleteAccount} 
+                size="small" 
+                variant="secondary" 
+                className="!border-red-500/50 !text-red-400 hover:!bg-red-500/20 disabled:!border-gray-700 disabled:!text-gray-500 disabled:cursor-not-allowed"
+                disabled={true}
+                title="Fitur ini hanya tersedia untuk user Pro (Segera Hadir)."
+             >
+                Hapus Akun Saya (Fitur Pro)
+             </Button>
         </div>
       </div>
     </div>
