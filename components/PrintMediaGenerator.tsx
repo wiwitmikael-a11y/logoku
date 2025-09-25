@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { ProjectData, BrandInputs, PrintMediaAssets } from '../types';
@@ -14,12 +15,14 @@ import ErrorMessage from './common/ErrorMessage';
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => void;
+  userId: string;
+  projectId: number;
 }
 
 type MediaTab = 'business_card' | 'flyer' | 'banner' | 'roll_banner';
 const GENERATION_COST = 1;
 
-const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -123,11 +126,11 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
             logoPrompt
         };
       const results = await generatePrintMedia(activeTab, payload);
+      const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, activeTab);
+
       await deductCredits(GENERATION_COST); // Deduct only on success
-      setDesigns(results);
-      if (results.length > 0) {
-        setSelected(results[0]); // Auto-select the generated design
-      }
+      setDesigns([uploadedUrl]);
+      setSelected(uploadedUrl); // Auto-select the generated design
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
@@ -136,7 +139,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected]);
+  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected, userId, projectId]);
 
   const handleContinue = () => {
     onComplete({

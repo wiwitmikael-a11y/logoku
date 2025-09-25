@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
@@ -16,6 +17,8 @@ interface Props {
   persona: BrandPersona;
   businessName: string;
   onComplete: (data: { logoUrl: string; prompt: string }) => void;
+  userId: string;
+  projectId: number;
 }
 
 const GENERATION_COST = 1;
@@ -77,7 +80,7 @@ const logoStyles = [
     }
 ];
 
-const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
+const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -130,11 +133,11 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
 
     try {
       const results = await generateLogoOptions(prompt);
+      const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, 'logo');
+      
       await deductCredits(GENERATION_COST); // Deduct credits only on success
-      setLogos(results);
-      if (results.length > 0) {
-        setSelectedLogoUrl(results[0]); // Auto-select the first (and only) logo
-      }
+      setLogos([uploadedUrl]);
+      setSelectedLogoUrl(uploadedUrl);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
@@ -143,7 +146,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
   
   const handleContinue = () => {
     if (selectedLogoUrl) {

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
@@ -14,11 +15,13 @@ interface Props {
   persona: BrandPersona;
   businessName: string;
   onComplete: (packagingUrl: string) => void;
+  userId: string;
+  projectId: number;
 }
 
 const GENERATION_COST = 1;
 
-const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
+const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -64,11 +67,11 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
 
     try {
       const results = await generatePackagingDesign(prompt);
+      const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, 'packaging');
+      
       await deductCredits(GENERATION_COST);
-      setDesigns(results);
-      if (results.length > 0) {
-        setSelectedDesignUrl(results[0]); // Auto-select the first (and only) design
-      }
+      setDesigns([uploadedUrl]);
+      setSelectedDesignUrl(uploadedUrl);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
@@ -77,7 +80,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {

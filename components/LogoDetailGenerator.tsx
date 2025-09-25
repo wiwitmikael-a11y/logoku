@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
+import { fetchImageAsBase64 } from '../utils/imageUtils';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { LogoVariations } from '../types';
@@ -14,12 +16,14 @@ interface Props {
   baseLogoUrl: string;
   basePrompt: string;
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
+  userId: string;
+  projectId: number;
 }
 
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
-const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete }) => {
+const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -53,8 +57,13 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     playSound('start');
     try {
       const generatedVariations = await generateLogoVariations(basePrompt);
+      const [iconUrl, monochromeUrl] = await Promise.all([
+          uploadImageFromBase64(generatedVariations.icon, userId, projectId, 'logo-icon'),
+          uploadImageFromBase64(generatedVariations.monochrome, userId, projectId, 'logo-monochrome')
+      ]);
+
       await deductCredits(VARIATION_COST); // Deduct on success
-      const completeVariations = { ...generatedVariations, main: baseLogoUrl };
+      const completeVariations = { main: finalLogoUrl, icon: iconUrl, monochrome: monochromeUrl };
       setVariations(completeVariations);
       playSound('success');
     } catch (err) {
@@ -64,7 +73,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, baseLogoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,11 +89,19 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setError(null);
     playSound('start');
     try {
-      const base64Data = finalLogoUrl.split(',')[1];
-      const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/jpeg';
-      const result = await editLogo(base64Data, mimeType, editPrompt);
+      // Fetch current image from Supabase URL and convert back to Base64 for the API
+      const currentImageBase64 = await fetchImageAsBase64(finalLogoUrl);
+      const base64Data = currentImageBase64.split(',')[1];
+      const mimeType = currentImageBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+      
+      // Call the edit API with the Base64 data
+      const editedBase64Result = await editLogo(base64Data, mimeType, editPrompt);
+      
+      // Upload the new edited image to Supabase Storage
+      const newPublicUrl = await uploadImageFromBase64(editedBase64Result, userId, projectId, 'logo-edited');
+
       await deductCredits(EDIT_COST); // Deduct on success
-      setFinalLogoUrl(result); // Update the main displayed logo with the edited one
+      setFinalLogoUrl(newPublicUrl); // Update the main displayed logo with the new public URL
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Gagal mengedit logo.';

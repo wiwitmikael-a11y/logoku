@@ -323,13 +323,25 @@ const MainApp: React.FC = () => {
             case 'persona':
                 return <BrandPersonaGenerator onComplete={handlePersonaComplete} />;
             case 'logo':
-                if (workflowData?.selectedPersona && workflowData.brandInputs) {
-                    return <LogoGenerator persona={workflowData.selectedPersona} businessName={workflowData.brandInputs.businessName} onComplete={handleLogoComplete} />;
+                if (workflowData?.selectedPersona && workflowData.brandInputs && selectedProjectId && session?.user?.id) {
+                    return <LogoGenerator 
+                        persona={workflowData.selectedPersona} 
+                        businessName={workflowData.brandInputs.businessName} 
+                        onComplete={handleLogoComplete} 
+                        userId={session.user.id}
+                        projectId={selectedProjectId}
+                    />;
                 }
                 break;
             case 'logo_detail':
-                if (workflowData?.selectedLogoUrl && workflowData.logoPrompt) {
-                    return <LogoDetailGenerator baseLogoUrl={workflowData.selectedLogoUrl} basePrompt={workflowData.logoPrompt} onComplete={handleLogoDetailComplete} />;
+                if (workflowData?.selectedLogoUrl && workflowData.logoPrompt && selectedProjectId && session?.user?.id) {
+                    return <LogoDetailGenerator 
+                        baseLogoUrl={workflowData.selectedLogoUrl} 
+                        basePrompt={workflowData.logoPrompt} 
+                        onComplete={handleLogoDetailComplete}
+                        userId={session.user.id}
+                        projectId={selectedProjectId}
+                    />;
                 }
                 break;
             case 'content':
@@ -338,18 +350,35 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'print':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.logoPrompt) {
-                    return <PrintMediaGenerator projectData={workflowData} onComplete={handlePrintMediaComplete} />;
+                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.logoPrompt && selectedProjectId && session?.user?.id) {
+                    return <PrintMediaGenerator 
+                        projectData={workflowData} 
+                        onComplete={handlePrintMediaComplete} 
+                        userId={session.user.id}
+                        projectId={selectedProjectId}
+                    />;
                 }
                 break;
             case 'packaging':
-                if (workflowData?.selectedPersona && workflowData.brandInputs) {
-                    return <PackagingGenerator persona={workflowData.selectedPersona} businessName={workflowData.brandInputs.businessName} onComplete={handlePackagingComplete} />;
+                if (workflowData?.selectedPersona && workflowData.brandInputs && selectedProjectId && session?.user?.id) {
+                    return <PackagingGenerator 
+                        persona={workflowData.selectedPersona} 
+                        businessName={workflowData.brandInputs.businessName} 
+                        onComplete={handlePackagingComplete} 
+                        userId={session.user.id}
+                        projectId={selectedProjectId}
+                    />;
                 }
                 break;
             case 'merchandise':
-                if (workflowData?.logoPrompt && workflowData.brandInputs?.businessName) {
-                    return <MerchandiseGenerator logoPrompt={workflowData.logoPrompt} businessName={workflowData.brandInputs.businessName} onComplete={handleMerchandiseComplete} />;
+                if (workflowData?.logoPrompt && workflowData.brandInputs?.businessName && selectedProjectId && session?.user?.id) {
+                    return <MerchandiseGenerator 
+                        logoPrompt={workflowData.logoPrompt} 
+                        businessName={workflowData.brandInputs.businessName} 
+                        onComplete={handleMerchandiseComplete} 
+                        userId={session.user.id}
+                        projectId={selectedProjectId}
+                    />;
                 }
                 break;
             case 'summary':

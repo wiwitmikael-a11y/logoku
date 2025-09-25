@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
@@ -13,6 +14,8 @@ interface Props {
   logoPrompt: string;
   businessName: string;
   onComplete: (merchandiseUrl: string) => void;
+  userId: string;
+  projectId: number;
 }
 
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
@@ -39,7 +42,7 @@ const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
   },
 ];
 
-const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onComplete }) => {
+const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -89,11 +92,11 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
 
     try {
       const results = await generateMerchandiseMockup(prompt);
+      const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, activeTab);
+      
       await deductCredits(GENERATION_COST);
-      setDesigns(results);
-      if (results.length > 0) {
-        setSelectedDesignUrl(results[0]); // Auto-select the first (and only) design
-      }
+      setDesigns([uploadedUrl]);
+      setSelectedDesignUrl(uploadedUrl); // Auto-select the first (and only) design
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
@@ -102,7 +105,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, activeTab]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {
