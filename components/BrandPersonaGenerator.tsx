@@ -174,7 +174,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
         <>
         <div ref={personasRef} className="flex flex-col gap-6 scroll-mt-24">
           <div>
-            <h3 className="text-xl font-bold mb-2">Pilih Persona Brand Lo:</h3>
+            <h3 className="text-lg md:text-xl font-bold mb-2">Pilih Persona Brand Lo:</h3>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {personas.map((persona, index) => (
@@ -219,7 +219,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
         {selectedPersonaIndex !== null && (
           <div ref={slogansRef} className="flex flex-col gap-6 mt-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700 transition-opacity duration-500 animate-fade-in scroll-mt-24">
             <div>
-              <h3 className="text-xl font-bold text-indigo-400 mb-2">Langkah 1.5: Generate Slogan</h3>
+              <h3 className="text-lg md:text-xl font-bold text-indigo-400 mb-2">Langkah 1.5: Generate Slogan</h3>
               <p className="text-gray-400">Persona "{personas[selectedPersonaIndex].nama_persona}" udah kepilih. Sekarang, ayo kita buat beberapa pilihan slogan yang pas.</p>
             </div>
 

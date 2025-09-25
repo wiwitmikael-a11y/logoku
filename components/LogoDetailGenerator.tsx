@@ -144,7 +144,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* Logo Preview & Variations */}
         <div className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-            <h3 className="text-xl font-bold">Logo Utama Lo</h3>
+            <h3 className="text-lg md:text-xl font-bold">Logo Utama Lo</h3>
             <div className="bg-white p-4 rounded-lg flex justify-center items-center aspect-square cursor-pointer group" onClick={() => openModal(finalLogoUrl)}>
                 <img src={finalLogoUrl} alt="Logo Utama" className="max-w-full max-h-64 object-contain group-hover:scale-105 transition-transform" />
             </div>
@@ -176,7 +176,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
 
         {/* AI Edit Section */}
         <div className="flex flex-col gap-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-            <h3 className="text-xl font-bold">Revisi Cepat dengan Mang AI</h3>
+            <h3 className="text-lg md:text-xl font-bold">Revisi Cepat dengan Mang AI</h3>
             <p className="text-sm text-gray-400">Kasih perintah simpel buat ubah logo lo. Misal: "ganti warnanya jadi biru dongker" atau "tambahin outline tipis".</p>
             <form onSubmit={handleEdit} className="flex flex-col gap-3">
                 <Input 

@@ -64,11 +64,9 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: A toolchain-specific issue was causing a misleading TypeScript error on line 70,
-    // making it seem like `this.props` does not exist. The previous implementation
-    // with destructuring was also failing. Reverting to the standard direct return of children.
-    const { children } = this.props;
-    return children;
+    // FIX: A toolchain-specific issue was causing a misleading TypeScript error on `this.props`.
+    // Directly returning `this.props.children` instead of destructuring resolves the issue.
+    return this.props.children;
   }
 }
 

@@ -550,7 +550,7 @@ const MainApp: React.FC = () => {
     // Render the main app for logged-in users
     return (
         <div className="text-white min-h-screen font-sans">
-            <header className="py-4 px-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
+            <header className="py-3 px-4 md:py-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
                 <div className="max-w-7xl mx-auto flex justify-between items-center relative">
                     <img
                         src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
@@ -630,7 +630,7 @@ const MainApp: React.FC = () => {
                     </div>
                 </div>
             </header>
-            <main className="py-10 px-4 md:px-8 pb-24">
+            <main className="py-6 md:py-10 px-4 md:px-8 pb-24">
                 <div className="max-w-7xl mx-auto">
                     {authError && <ErrorMessage message={authError} />}
                     {generalError ? (

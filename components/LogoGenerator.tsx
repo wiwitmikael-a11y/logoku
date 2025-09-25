@@ -225,7 +225,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, use
       {logos.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
             <div>
-              <h3 className="text-xl font-bold mb-2">Logo Hasil Generate:</h3>
+              <h3 className="text-lg md:text-xl font-bold mb-2">Logo Hasil Generate:</h3>
             </div>
           <div className="flex justify-center w-full max-w-sm">
             <div 

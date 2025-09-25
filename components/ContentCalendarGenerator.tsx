@@ -140,7 +140,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, us
 
       {calendar.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 scroll-mt-24">
-          <h3 className="text-xl font-bold">Draf Kalender Konten Lo:</h3>
+          <h3 className="text-lg md:text-xl font-bold">Draf Kalender Konten Lo:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {calendar.map((item, index) => (
               <Card key={index} title={`${item.hari} - ${item.tipe_konten}`}>

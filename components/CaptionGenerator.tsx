@@ -107,7 +107,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack }) => {
 
       {captions.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 mt-4 scroll-mt-24">
-          <h3 className="text-xl font-bold">Pilihan Caption Buat Lo:</h3>
+          <h3 className="text-lg md:text-xl font-bold">Pilihan Caption Buat Lo:</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {captions.map((item, index) => (
               <Card key={index} title={`Opsi ${index + 1}`}>

@@ -64,7 +64,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
 
       {inProgressProjects.length > 0 && (
         <div className="w-full text-left mt-8">
-          <h3 className="text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
+          <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {inProgressProjects.map(project => (
               <div key={project.id} className="relative">
@@ -108,7 +108,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
 
       {completedProjects.length > 0 && (
         <div className="w-full text-left mt-8">
-          <h3 className="text-xl font-bold mb-4">Project Selesai:</h3>
+          <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {completedProjects.map(project => (
               <div key={project.id} className="relative">
