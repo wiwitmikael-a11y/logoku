@@ -665,7 +665,7 @@ const MainApp: React.FC = () => {
                     </div>
                 </div>
             </header>
-            <main className="py-6 md:py-10 px-4 md:px-8 pb-24">
+            <main id="main-content" className="py-6 md:py-10 px-4 md:px-8">
                 <div className="max-w-7xl mx-auto">
                     {authError && <ErrorMessage message={authError} />}
                     {generalError ? (
