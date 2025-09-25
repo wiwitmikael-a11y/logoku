@@ -98,34 +98,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     setLoading(true);
 
-    // Immediately check for a session on component mount. This is more reliable
-    // for the initial load than relying solely on the onAuthStateChange listener.
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Check for an existing session on initial load.
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // If a session exists, fetch the user's profile before we finish loading.
-        await fetchProfile(session.user.id);
+        // Fetch profile in the background without blocking the UI.
+        fetchProfile(session.user.id);
       }
-      setLoading(false); // Mark loading as complete.
+      // Set loading to false to allow the app to render.
+      setLoading(false);
     }).catch(error => {
-        console.error("Error during initial session fetch:", error);
-        setAuthError("Gagal mengambil sesi awal. Coba refresh halaman.");
-        setLoading(false);
+      console.error("Error during initial session fetch:", error);
+      setAuthError("Gagal mengambil sesi awal. Coba refresh halaman.");
+      setLoading(false);
     });
 
-    // Set up a listener for any subsequent authentication events (login, logout, etc.)
+    // Set up a listener for subsequent authentication events (login, logout, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        if (session?.user) {
-            // Re-fetch profile on sign-in or if user data is updated to ensure freshness.
-            if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-                 await fetchProfile(session.user.id);
-            }
-        } else {
-            // Clear profile data on logout.
+        if (event === 'SIGNED_IN' && session?.user) {
+             fetchProfile(session.user.id);
+        } else if (event === 'SIGNED_OUT') {
             setProfile(null);
         }
       }
