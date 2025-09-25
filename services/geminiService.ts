@@ -181,10 +181,9 @@ const generateImagesWithGemini = async (prompt: string, count: number): Promise<
             throw new Error("Mang AI gak bisa generate gambar dari prompt itu. Coba ganti deskripsinya atau pastiin gak melanggar kebijakan ya.");
         }
 
-        // FIX: The API response structure for generated images has been simplified.
-        // Instead of a nested `img.image.imageBytes`, the data is now directly on `img.imageBytes`.
-        // Using `(img as any)` to bypass potentially outdated type definitions.
-        return response.generatedImages.map(img => `data:image/png;base64,${(img as any).imageBytes}`);
+        // The response contains an array of generated images. We access the Base64-encoded
+        // image data via the `img.image.imageBytes` path and format it as a data URL.
+        return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
 
     } catch (error) {
         // If the error is our custom one, we don't need to re-handle it.

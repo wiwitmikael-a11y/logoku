@@ -12,9 +12,13 @@ interface AuthContextType {
   authError: string | null;
   isMuted: boolean;
   showOutOfCreditsModal: boolean;
+  showLogoutConfirm: boolean; // New state for confirmation
   setShowOutOfCreditsModal: React.Dispatch<React.SetStateAction<boolean>>;
-  handleLogout: () => Promise<void>;
+  setShowLogoutConfirm: React.Dispatch<React.SetStateAction<boolean>>; // New setter
+  handleLogout: () => void; // No longer async, just triggers modal
+  executeLogout: () => Promise<void>; // New function for actual logout
   handleToggleMute: () => void;
+  handleDeleteAccount: () => void;
   deductCredits: (amount: number) => Promise<boolean>;
 }
 
@@ -26,8 +30,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [isMuted, setIsMutedState] = useState(false); // Default to un-muted
+  const [isMuted, setIsMutedState] = useState(false);
   const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // State for logout modal
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
@@ -66,13 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // When auth state changes (e.g., token refresh on tab focus), 
-        // fetch the profile in the background without triggering the main loading screen.
-        // The initial load is handled by the getSession call above.
         if (session?.user) {
           await fetchProfile(session.user.id);
         } else {
-          // If the user logs out (session becomes null), clear the profile.
           setProfile(null);
         }
       }
@@ -94,20 +95,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
   }, [isMuted, session]);
 
-  const handleLogout = async () => {
+  // This function now simply triggers the confirmation modal
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  // This function performs the actual sign out
+  const executeLogout = async () => {
+    setShowLogoutConfirm(false); // Close modal first
     const { error } = await supabase.auth.signOut();
     if (error) {
       setAuthError(`Gagal logout: ${error.message}`);
     } else {
-      setProfile(null);
+      setProfile(null); // Clear profile on successful logout
     }
   };
 
   const handleToggleMute = () => {
-    unlockAudio(); // Ensure audio is unlocked when user interacts with mute button
+    unlockAudio();
     setIsMutedState(prev => !prev);
   };
   
+  const handleDeleteAccount = () => {
+    const confirmation = window.prompt("Ini akan menghapus akun dan semua data project lo secara permanen. Ini tidak bisa dibatalkan. Ketik 'HAPUS' untuk konfirmasi.");
+    if (confirmation === 'HAPUS') {
+        alert("Fitur hapus akun akan segera tersedia. Untuk saat ini, silakan hubungi developer jika Anda ingin menghapus akun Anda.");
+    }
+  };
+
   const deductCredits = async (amount: number): Promise<boolean> => {
     if (!profile || !user) {
         setAuthError("Pengguna tidak terautentikasi untuk mengurangi kredit.");
@@ -143,9 +158,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     authError,
     isMuted,
     showOutOfCreditsModal,
+    showLogoutConfirm,
     setShowOutOfCreditsModal,
+    setShowLogoutConfirm,
     handleLogout,
+    executeLogout,
     handleToggleMute,
+    handleDeleteAccount,
     deductCredits,
   };
 

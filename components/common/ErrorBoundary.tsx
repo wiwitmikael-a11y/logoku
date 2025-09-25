@@ -12,25 +12,21 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Removed explicit `public` access modifier.
   state: State = {
     hasError: false,
   };
 
-  // FIX: Removed explicit `public` access modifier.
   static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
     return { hasError: true, error };
   }
 
-  // FIX: Removed explicit `public` access modifier.
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Reverted `render` to a standard class method. Using an arrow function
-  // for `render` is unconventional and was causing a TypeScript error where `this.props`
-  // was not recognized. Standard class methods are correctly bound by React for lifecycle events.
+  // FIX: The `render` method was implemented as an arrow function, which is not a standard React lifecycle method.
+  // Converting it to a standard class method ensures it's on the component's prototype, allowing TypeScript to correctly infer the type of `this` and access `this.props`.
   render(): ReactNode {
     if (this.state.hasError) {
       return (

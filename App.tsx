@@ -32,6 +32,9 @@ const CaptionGenerator = React.lazy(() => import('./components/CaptionGenerator'
 const ContactModal = React.lazy(() => import('./components/ContactModal'));
 const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
+const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
+const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal')); // New Modal for confirmation
+
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'packaging' | 'merchandise' | 'summary' | 'caption';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -49,7 +52,22 @@ const App: React.FC = () => {
 };
 
 const MainApp: React.FC = () => {
-    const { session, loading: authLoading, profile, showOutOfCreditsModal, setShowOutOfCreditsModal, handleLogout, handleToggleMute, isMuted, authError } = useAuth();
+    const { 
+        session, 
+        user, 
+        profile, 
+        loading: authLoading, 
+        showOutOfCreditsModal, 
+        setShowOutOfCreditsModal,
+        showLogoutConfirm,
+        setShowLogoutConfirm,
+        handleLogout,
+        executeLogout,
+        handleDeleteAccount, 
+        handleToggleMute, 
+        isMuted, 
+        authError 
+    } = useAuth();
     
     const [appState, setAppState] = useState<AppState>('dashboard');
     const [projects, setProjects] = useState<Project[]>([]);
@@ -62,9 +80,15 @@ const MainApp: React.FC = () => {
     // Modals visibility state
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
+    const [showProfileModal, setShowProfileModal] = useState(false);
     
+    // Dropdowns visibility state
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);
+
+    // Refs for closing popovers on outside click
     const userMenuRef = useRef<HTMLDivElement>(null);
+    const tokenInfoRef = useRef<HTMLDivElement>(null);
     
     const previousAppState = useRef<AppState>(appState);
     const previousSession = useRef<typeof session>(session);
@@ -89,11 +113,14 @@ const MainApp: React.FC = () => {
         previousSession.current = session;
     }, [session, authLoading]);
     
-    // Effect to close user menu dropdown on outside click
+    // Effect to close popovers/dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
                 setIsUserMenuOpen(false);
+            }
+             if (tokenInfoRef.current && !tokenInfoRef.current.contains(event.target as Node)) {
+                setIsTokenInfoOpen(false);
             }
         };
 
@@ -315,6 +342,9 @@ const MainApp: React.FC = () => {
     const closeContactModal = useCallback(() => setShowContactModal(false), []);
     const openToSModal = useCallback(() => { playSound('click'); setShowToSModal(true); }, []);
     const closeToSModal = useCallback(() => setShowToSModal(false), []);
+    const openProfileModal = useCallback(() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }, []);
+    const closeProfileModal = useCallback(() => setShowProfileModal(false), []);
+
 
     const renderContent = () => {
         const workflowData = loadWorkflowState();
@@ -439,16 +469,32 @@ const MainApp: React.FC = () => {
                         </div>
                     </div>
                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400" title="Kredit Generate Gambar Harian">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
-                            <span className="font-bold text-sm text-white">Sisa Token: {profile?.credits ?? 0}</span>
+                        <div className="relative" ref={tokenInfoRef}>
+                            <div
+                                onClick={() => setIsTokenInfoOpen(prev => !prev)}
+                                className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/70 transition-colors"
+                                title="Klik untuk info token"
+                            >
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                                <span className="font-bold text-sm text-white">Sisa Token: {profile?.credits ?? 0}</span>
+                            </div>
+                             {isTokenInfoOpen && (
+                                <div className="absolute top-full right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
+                                    <p className="font-bold text-white mb-1">Info Token Harian</p>
+                                    <p className="text-gray-300">Ini adalah "amunisi" Mang AI buat generate gambar. Jatah lo bakal di-reset jadi 10 token setiap hari. Selamat berkarya!</p>
+                                </div>
+                            )}
                         </div>
                          <div className="relative" ref={userMenuRef}>
                             <button onClick={() => setIsUserMenuOpen(prev => !prev)} title="User Menu" className="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 rounded-full">
                                 <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full" />
                             </button>
                             {isUserMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
+                                <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
+                                    <button onClick={openProfileModal} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" /></svg>
+                                        <span>Pengaturan Akun</span>
+                                    </button>
                                     <button onClick={() => { handleToggleMute(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
                                         {isMuted ? (
                                             <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg><span>Suara Aktif</span></>
@@ -489,6 +535,24 @@ const MainApp: React.FC = () => {
                 <ContactModal show={showContactModal} onClose={closeContactModal} />
                 <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
                 <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
+                <ProfileSettingsModal 
+                    show={showProfileModal} 
+                    onClose={closeProfileModal}
+                    user={user}
+                    profile={profile}
+                    onLogout={handleLogout}
+                    onDeleteAccount={handleDeleteAccount}
+                />
+                <ConfirmationModal
+                    show={showLogoutConfirm}
+                    onClose={() => setShowLogoutConfirm(false)}
+                    onConfirm={executeLogout}
+                    title="Eh, Bentar Dulu, Juragan!"
+                    confirmText="Ya, Cabut Aja"
+                    cancelText="Gak Jadi, Balik Lagi"
+                >
+                    Kalo lo logout sekarang, progres yang belom ke-save otomatis (checkpoint) bisa ilang lho. Sayang kan kalo ide brilian lo ngawang gitu aja. Tetep mau lanjut?
+                </ConfirmationModal>
             </Suspense>
         </div>
     );
