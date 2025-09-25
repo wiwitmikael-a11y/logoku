@@ -33,11 +33,10 @@ class ErrorBoundary extends React.Component<Props, State> {
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking very concerned"
                 className="w-24 h-24 object-contain filter grayscale opacity-80"
-                // FIX: The 'imageRendering' property is not recognized by default in React's CSSProperties type.
-                // This can cause a misleading TypeScript error on `this.props` later in the component.
-                // We use @ts-ignore to suppress this specific error, which resolves the indirect error.
-                // @ts-ignore
-                style={{ imageRendering: 'pixelated' }}
+                // FIX: The 'imageRendering' property is not standard and may not be in React's CSSProperties type.
+                // This can cause a misleading TypeScript error on `this.props`.
+                // Casting to React.CSSProperties provides a type-safe way to handle this without disabling type checking.
+                style={{ imageRendering: 'pixelated' } as React.CSSProperties}
             />
             <div className="flex-1">
                 <h1 className="font-bold text-red-400 text-2xl mb-2">Waduh, Aplikasinya Error!</h1>

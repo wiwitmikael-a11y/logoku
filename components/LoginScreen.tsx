@@ -40,9 +40,16 @@ const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
             style={{ imageRendering: 'pixelated' }}
             />
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-indigo-400 mb-2">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-indigo-400 mb-3">
           logo<span className="text-white">.ku</span>
         </h1>
+        
+        <div className="bg-gray-700/50 py-2 px-4 rounded-lg inline-block mx-auto mb-8">
+            <p className="text-white text-xs font-semibold tracking-wide">
+                Powered by Atharrazka Core. Built for UMKM Indonesia.
+            </p>
+        </div>
+
         <p className="text-gray-400 mb-8 max-w-sm mx-auto">
           Wih, ada juragan! Pusing mikirin logo atau bingung mau posting apa di sosmed? Tenang, serahin aja sama ahlinya... Mang AI! Di sini, kita bakal ngeracik logo anti-mainstream, nentuin persona brand, sampe bikinin jadwal konten lengkap sama caption-nya. Hemat waktu, hemat biaya, hasilnya dijamin hore!
         </p>

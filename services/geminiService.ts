@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption } from '../types';
 
@@ -177,19 +178,30 @@ const generateImagesWithGemini = async (prompt: string, count: number): Promise<
             },
         });
         
-        if (!response.generatedImages || response.generatedImages.length === 0 || !response.generatedImages[0].image?.imageBytes) {
-            throw new Error("Mang AI gak bisa generate gambar dari prompt itu. Coba ganti deskripsinya atau pastiin gak melanggar kebijakan ya.");
+        // More robust check: Ensure the response and the generatedImages array are valid.
+        if (!response || !Array.isArray(response.generatedImages) || response.generatedImages.length === 0) {
+             console.error("Invalid or empty response from Gemini Image API:", response);
+            throw new Error("Waduh, respons dari Gemini Image kosong atau formatnya aneh. Ini bisa jadi karena prompt-nya terlalu rumit atau ada gangguan sementara. Coba lagi dengan prompt yang lebih simpel.");
         }
 
-        // The response contains an array of generated images. We access the Base64-encoded
-        // image data via the `img.image.imageBytes` path and format it as a data URL.
-        return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
+        // Filter for valid images and extract their data.
+        const imageData = response.generatedImages
+            .map(img => img.image?.imageBytes)
+            .filter((bytes): bytes is string => !!bytes);
+
+        if (imageData.length === 0) {
+            console.error("No valid image data found in Gemini Image API response:", response);
+            throw new Error("Mang AI berhasil manggil Gemini, tapi nggak ada data gambar yang valid di responsnya. Coba lagi dengan prompt yang beda ya.");
+        }
+
+        return imageData.map(bytes => `data:image/png;base64,${bytes}`);
 
     } catch (error) {
-        // If the error is our custom one, we don't need to re-handle it.
-        if (error instanceof Error && error.message.startsWith("Mang AI gak bisa")) {
+        // Re-throw our custom, more descriptive errors directly.
+        if (error instanceof Error && (error.message.startsWith("Waduh, respons dari Gemini") || error.message.startsWith("Mang AI berhasil manggil Gemini"))) {
             throw error;
         }
+        // Use the generic handler for all other errors.
         throw handleApiError(error, "Google Gemini (Image)");
     }
 };
