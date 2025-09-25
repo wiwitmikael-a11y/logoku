@@ -3,6 +3,7 @@ import type { Project } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Card from './common/Card';
+import InFeedAd from './common/InFeedAd'; // Import komponen iklan baru
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -10,7 +11,7 @@ interface ProjectDashboardProps {
   onSelectProject: (projectId: number) => void;
   onContinueProject: (projectId: number) => void;
   onGoToCaptionGenerator: (projectId: number) => void;
-  onDeleteProject: (projectId: number) => void; // New prop for deleting
+  onDeleteProject: (projectId: number) => void;
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
 }
@@ -21,9 +22,8 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsVisible(false);
-            // After animation ends, call the parent close function
             setTimeout(onClose, 500); 
-        }, 4000); // Banner visible for 4 seconds
+        }, 4000);
 
         return () => clearTimeout(timer);
     }, [onClose]);
@@ -50,6 +50,60 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
     return { inProgressProjects: inProgress, completedProjects: completed };
   }, [projects]);
 
+  // Helper function untuk merender project dan menyisipkan iklan
+  const renderProjectsWithAds = (projectList: Project[], type: 'in-progress' | 'completed') => {
+    return projectList.flatMap((project, index) => {
+      const projectCard = (
+        <div key={project.id} className="relative">
+          {type === 'in-progress' ? (
+            <Card 
+              title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
+              onClick={() => onContinueProject(project.id)}
+            >
+              <p className="text-sm text-gray-400 min-h-[40px]">
+                {project.project_data.selectedSlogan ? `"${project.project_data.selectedSlogan}"` : 'Lanjutkan untuk membuat slogan...'}
+              </p>
+              <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
+                <p className="text-xs text-gray-500">Progres tersimpan...</p>
+                <Button onClick={(e) => { e.stopPropagation(); onContinueProject(project.id); }} variant="secondary" size="small">Lanjutkan</Button>
+              </div>
+            </Card>
+          ) : (
+            <Card 
+              title={project.project_data.brandInputs.businessName}
+              onClick={() => onSelectProject(project.id)}
+            >
+              <div className="space-y-3">
+                <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
+                <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
+                  <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" />
+                  <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
+                </div>
+                <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
+                <Button onClick={(e) => { e.stopPropagation(); onGoToCaptionGenerator(project.id); }} variant="secondary" size="small">Buat Caption</Button>
+              </div>
+            </Card>
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
+            className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
+            title="Hapus Project"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+          </button>
+        </div>
+      );
+      
+      // Sisipkan iklan setelah setiap 2 project (index 1, 3, 5, dst.)
+      if (index > 0 && index % 2 !== 0) {
+        return [projectCard, <InFeedAd key={`ad-${type}-${project.id}`} />];
+      }
+      return [projectCard];
+    });
+  };
+
   return (
     <div className="flex flex-col gap-8 items-center text-center">
       {showWelcomeBanner && <WelcomeBanner userName={userName} onClose={onWelcomeBannerClose} />}
@@ -60,9 +114,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       
       <div className="w-full max-w-2xl bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-center gap-4 text-left animate-content-fade-in">
         <div className="flex-shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
         </div>
         <div>
           <h4 className="font-bold text-white">Info Fase Pengenalan</h4>
@@ -78,42 +130,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <div className="w-full text-left mt-8">
           <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {inProgressProjects.map(project => (
-              <div key={project.id} className="relative">
-                <Card 
-                  title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
-                  onClick={() => onContinueProject(project.id)}
-                >
-                  <p className="text-sm text-gray-400 min-h-[40px]">
-                    {project.project_data.selectedSlogan ? `"${project.project_data.selectedSlogan}"` : 'Lanjutkan untuk membuat slogan...'}
-                  </p>
-                  <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
-                    <p className="text-xs text-gray-500">
-                        Progres tersimpan...
-                    </p>
-                      <Button
-                          onClick={(e) => {
-                              e.stopPropagation();
-                              onContinueProject(project.id);
-                          }}
-                          variant="secondary"
-                          size="small"
-                      >
-                          Lanjutkan
-                      </Button>
-                  </div>
-                </Card>
-                <button
-                    onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                    className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
-                    title="Hapus Project"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                </button>
-              </div>
-            ))}
+            {renderProjectsWithAds(inProgressProjects, 'in-progress')}
           </div>
         </div>
       )}
@@ -122,48 +139,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <div className="w-full text-left mt-8">
           <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {completedProjects.map(project => (
-              <div key={project.id} className="relative">
-                <Card 
-                  title={project.project_data.brandInputs.businessName}
-                  onClick={() => onSelectProject(project.id)}
-                >
-                  <div className="space-y-3">
-                      <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
-                      <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
-                        <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" />
-                        <p className="text-sm text-gray-300">
-                          <span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}
-                        </p>
-                      </div>
-                    <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">
-                      Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
-                      <Button
-                          onClick={(e) => {
-                              e.stopPropagation();
-                              onGoToCaptionGenerator(project.id);
-                          }}
-                          variant="secondary"
-                          size="small"
-                      >
-                          Buat Caption
-                      </Button>
-                  </div>
-                </Card>
-                 <button
-                    onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                    className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
-                    title="Hapus Project"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                </button>
-              </div>
-            ))}
+            {renderProjectsWithAds(completedProjects, 'completed')}
           </div>
         </div>
       )}

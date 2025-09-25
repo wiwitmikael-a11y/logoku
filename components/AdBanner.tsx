@@ -1,9 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-
-// --- Konfigurasi AdSense ---
-// ID ini harus sesuai dengan yang ada di akun AdSense lo.
-const AD_PUBLISHER_ID = "ca-pub-6110736010099308";
-const AD_SLOT_ID = "5474214451";
+import { AD_PUBLISHER_ID, AD_SLOT_ID_BANNER } from '../../services/adsenseConfig';
 
 /**
  * AdBanner "Pintar" yang seimbang antara UX dan Monetisasi.
@@ -18,7 +14,7 @@ const AdBanner: React.FC = () => {
 
   // Effect untuk mendorong iklan dan menyiapkan observer
   useEffect(() => {
-    if (!AD_SLOT_ID || adPushed.current || !adInsRef.current) {
+    if (!AD_SLOT_ID_BANNER || adPushed.current || !adInsRef.current) {
       return;
     }
 
@@ -85,7 +81,7 @@ const AdBanner: React.FC = () => {
   }, [isAdVisible]);
 
   // Jangan render apapun jika slot ID tidak ada
-  if (!AD_SLOT_ID) {
+  if (!AD_SLOT_ID_BANNER) {
     return null;
   }
   
@@ -105,7 +101,7 @@ const AdBanner: React.FC = () => {
             className="adsbygoogle"
             style={{ display: 'block', width: '100%', height: '50px' }}
             data-ad-client={AD_PUBLISHER_ID}
-            data-ad-slot={AD_SLOT_ID}>
+            data-ad-slot={AD_SLOT_ID_BANNER}>
         </ins>
         {isAdVisible && (
             <span className="text-[10px] text-gray-600 absolute top-0 left-2 bg-gray-900 px-1 rounded-b-sm">Advertisement</span>
