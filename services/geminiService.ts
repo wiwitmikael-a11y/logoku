@@ -269,6 +269,16 @@ PENTING: Format output HARUS berupa JSON object yang valid, tanpa markdown forma
   }
 };
 
+// --- NEW Social Media Post Image Generation ---
+export const generateSocialMediaPostImage = async (
+    contentIdea: string,
+    brandKeywords: string[]
+): Promise<string[]> => {
+    // A prompt designed to create visually appealing images without text, focusing on the theme.
+    const prompt = `Create a visually stunning, high-quality social media post graphic suitable for an Instagram feed, aspect ratio 1:1. The image should visually represent the following theme or idea: "${contentIdea}". The overall artistic style should be: ${brandKeywords.join(', ')}. IMPORTANT: The image must not contain any text, words, or letters. It should be a pure visual representation. Style: professional, commercial photography, vibrant, engaging, clean aesthetic.`;
+    return generateImagesWithGemini(prompt, 1);
+};
+
 // --- REWRITTEN with Gemini & Refactored for Type Safety ---
 export const generatePrintMedia = async (
     type: 'business_card' | 'flyer' | 'banner' | 'roll_banner',

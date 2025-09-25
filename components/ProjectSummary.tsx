@@ -202,6 +202,11 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
                           <div key={index} className="border-b border-gray-700 pb-3 last:border-b-0 last:pb-0 text-sm">
                               <h5 className="font-bold text-gray-200 print-text-color">{item.hari} - <span className="text-indigo-300 print-text-brand">{item.tipe_konten}</span></h5>
                               <p className="text-xs text-gray-400 mt-1 print-text-color">{item.ide_konten}</p>
+                              {item.imageUrl && (
+                                <div className="mt-3 bg-white p-2 rounded-lg flex justify-center items-center cursor-pointer group" onClick={() => openModal(item.imageUrl)}>
+                                    <img src={item.imageUrl} alt={`Visual untuk ${item.ide_konten}`} className="max-w-full max-h-32 object-contain group-hover:scale-105 transition-transform"/>
+                                </div>
+                              )}
                               <p className="text-gray-300 whitespace-pre-wrap mt-2 text-xs print-text-color">{item.draf_caption}</p>
                               <p className="text-indigo-400 text-xs break-words mt-2 print-text-brand">{item.rekomendasi_hashtag.join(' ')}</p>
                           </div>

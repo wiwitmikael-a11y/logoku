@@ -345,8 +345,13 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'content':
-                 if (workflowData?.brandInputs && workflowData.selectedPersona) {
-                    return <ContentCalendarGenerator projectData={workflowData} onComplete={handleContentComplete} />;
+                if (workflowData?.brandInputs && workflowData.selectedPersona && selectedProjectId && session?.user?.id) {
+                    return <ContentCalendarGenerator
+                        projectData={workflowData}
+                        onComplete={handleContentComplete}
+                        userId={session.user.id}
+                        projectId={selectedProjectId}
+                    />;
                 }
                 break;
             case 'print':

@@ -66,6 +66,7 @@ export interface ContentCalendarEntry {
   ide_konten: string;
   draf_caption: string;
   rekomendasi_hashtag: string[];
+  imageUrl?: string;
 }
 
 export interface LogoVariations {

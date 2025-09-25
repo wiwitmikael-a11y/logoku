@@ -1,24 +1,41 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { generateContentCalendar } from '../services/geminiService';
+import { generateContentCalendar, generateSocialMediaPostImage } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
+import { useAuth } from '../contexts/AuthContext';
 import type { ContentCalendarEntry, ProjectData } from '../types';
 import Button from './common/Button';
-import Spinner from './common/Spinner';
 import Card from './common/Card';
 import LoadingMessage from './common/LoadingMessage';
 import ErrorMessage from './common/ErrorMessage';
+import ImageModal from './common/ImageModal';
 
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (data: { calendar: ContentCalendarEntry[], sources: any[] }) => void;
+  userId: string;
+  projectId: number;
 }
 
-const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
-  const [calendar, setCalendar] = useState<ContentCalendarEntry[]>([]);
-  const [sources, setSources] = useState<any[]>([]);
+const GENERATION_COST = 1;
+
+const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
+  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const credits = profile?.credits ?? 0;
+
+  const [calendar, setCalendar] = useState<ContentCalendarEntry[]>(projectData.contentCalendar || []);
+  const [sources, setSources] = useState<any[]>(projectData.searchSources || []);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [generatingImageForIndex, setGeneratingImageForIndex] = useState<number | null>(null);
+  const [imageGenError, setImageGenError] = useState<{ index: number; message: string } | null>(null);
+  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  const openModal = (url: string) => setModalImageUrl(url);
+  const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
     if (calendar.length > 0 && resultsRef.current) {
@@ -50,6 +67,44 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
     }
   }, [projectData]);
   
+  const handleGenerateImage = useCallback(async (index: number) => {
+    if (credits < GENERATION_COST) {
+        setShowOutOfCreditsModal(true);
+        playSound('error');
+        return;
+    }
+    if (!projectData.selectedPersona?.kata_kunci || !calendar[index]?.ide_konten) {
+        setError("Data persona atau ide konten tidak lengkap untuk membuat gambar.");
+        return;
+    }
+
+    setGeneratingImageForIndex(index);
+    setImageGenError(null);
+    playSound('start');
+
+    try {
+        const { ide_konten } = calendar[index];
+        const { kata_kunci } = projectData.selectedPersona;
+
+        const imageResults = await generateSocialMediaPostImage(ide_konten, kata_kunci);
+        const uploadedUrl = await uploadImageFromBase64(imageResults[0], userId, projectId, `social-post-${index}`);
+        
+        await deductCredits(GENERATION_COST);
+
+        const newCalendar = [...calendar];
+        newCalendar[index] = { ...newCalendar[index], imageUrl: uploadedUrl };
+        setCalendar(newCalendar);
+
+        playSound('success');
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Gagal membuat gambar.';
+        setImageGenError({ index, message: errorMessage });
+        playSound('error');
+    } finally {
+        setGeneratingImageForIndex(null);
+    }
+  }, [calendar, credits, projectData, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+
   const handleContinue = () => {
     onComplete({ calendar, sources });
   };
@@ -63,7 +118,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 4: Rencana Konten Sosmed</h2>
-        <p className="text-gray-400">Stop bingung mau posting apa. Biar Mang AI yang bikinin draf kalender konten seminggu, lengkap sama ide, caption, hashtag, dan referensi tren terbaru dari Google.</p>
+        <p className="text-gray-400">Stop bingung mau posting apa. Biar Mang AI yang bikinin draf kalender konten seminggu, lengkap sama ide, caption, hashtag, dan referensi tren terbaru dari Google. Sekarang, lo juga bisa langsung bikin visualnya!</p>
       </div>
 
       <div className="self-center">
@@ -96,6 +151,31 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
                         <h4 className="font-semibold text-gray-200 text-sm mb-1">Hashtag:</h4>
                         <p className="text-indigo-300 text-xs break-words">{item.rekomendasi_hashtag.join(' ')}</p>
                     </div>
+                    <div className="border-t border-gray-700 pt-3">
+                        <h4 className="font-semibold text-gray-200 text-sm mb-2">Aset Visual Postingan</h4>
+                        {item.imageUrl ? (
+                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(item.imageUrl!)}>
+                                <img src={item.imageUrl} alt={`Visual untuk ${item.ide_konten}`} className="max-w-full max-h-48 object-contain group-hover:scale-105 transition-transform"/>
+                            </div>
+                        ) : generatingImageForIndex === index ? (
+                            <div className="flex justify-center items-center h-24">
+                                <LoadingMessage />
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-start">
+                                <Button 
+                                    size="small" 
+                                    onClick={() => handleGenerateImage(index)}
+                                    disabled={credits < GENERATION_COST || generatingImageForIndex !== null}
+                                >
+                                    Buat Gambar ({GENERATION_COST} Kredit)
+                                </Button>
+                                {imageGenError?.index === index && (
+                                    <p className="text-xs text-red-400 mt-2">{imageGenError.message}</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                  </div>
               </Card>
             ))}
@@ -119,6 +199,14 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
           </div>
         </div>
       )}
+
+        {modalImageUrl && (
+            <ImageModal 
+            imageUrl={modalImageUrl}
+            altText="Preview Gambar Postingan"
+            onClose={closeModal}
+            />
+        )}
     </div>
   );
 };
