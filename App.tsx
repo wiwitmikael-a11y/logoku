@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -35,6 +34,7 @@ const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOf
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
 const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
+const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'packaging' | 'merchandise' | 'summary' | 'caption';
@@ -84,6 +84,7 @@ const MainApp: React.FC = () => {
     // Modals visibility state
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
+    const [showCaptcha, setShowCaptcha] = useState(false); // New state for CAPTCHA
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -115,10 +116,10 @@ const MainApp: React.FC = () => {
         previousSession.current = session;
     }, [session, authLoading]);
     
-    // Automatically show ToS modal on the login screen
+    // Automatically show CAPTCHA modal on the login screen, which then triggers the ToS modal.
     useEffect(() => {
         if (!session && !authLoading) {
-            setShowToSModal(true);
+            setShowCaptcha(true);
         }
     }, [session, authLoading]);
     
@@ -416,14 +417,26 @@ const MainApp: React.FC = () => {
     const openToSModal = useCallback(() => { playSound('click'); setShowToSModal(true); }, []);
     const closeToSModal = useCallback(() => {
         setShowToSModal(false);
-        // If the user is on the login screen (no session), play the welcome BGM.
-        // This is triggered by a user interaction, so it's safe.
         if (!session) {
             playBGM('welcome');
         }
     }, [session]);
     const openProfileModal = useCallback(() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }, []);
     const closeProfileModal = useCallback(() => setShowProfileModal(false), []);
+    
+    const handleGoogleLogin = async () => {
+        playSound('click');
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin,
+          },
+        });
+        if (error) {
+          setGeneralError(`Gagal login: ${error.message}`);
+          playSound('error');
+        }
+    };
 
 
     const renderContent = () => {
@@ -518,12 +531,19 @@ const MainApp: React.FC = () => {
     
     if (authLoading) return <AuthLoadingScreen />;
     
-    // Render Login screen and ToS modal if not logged in
+    // Render Login screen, Captcha, and ToS modal if not logged in
     if (!session) {
         return (
             <>
-                <LoginScreen onShowToS={openToSModal} />
+                <LoginScreen onGoogleLogin={handleGoogleLogin} isCaptchaSolved={!showCaptcha} />
                 <Suspense fallback={null}>
+                    <PuzzleCaptchaModal
+                        show={showCaptcha}
+                        onSuccess={() => {
+                            setShowCaptcha(false);
+                            openToSModal(); // Show ToS after captcha is solved
+                        }}
+                    />
                     <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
                 </Suspense>
             </>

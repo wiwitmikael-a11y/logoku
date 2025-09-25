@@ -26,6 +26,8 @@ const soundUrls = {
     success: `${GITHUB_ASSETS_URL}generate_complete.mp3`,
     error: `${GITHUB_ASSETS_URL}ui_error.mp3`,
     bounce: `${GITHUB_ASSETS_URL}bouncy_loading.wav`,
+    puzzle_drop: `${GITHUB_ASSETS_URL}sounds/puzzle_drop.mp3`,
+    puzzle_fail: `${GITHUB_ASSETS_URL}sounds/puzzle_fail.mp3`,
 };
 
 const bgmUrls = {

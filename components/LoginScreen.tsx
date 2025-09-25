@@ -1,33 +1,14 @@
-
-import React, { useEffect } from 'react';
-import { supabase } from '../services/supabaseClient';
-import { playSound } from '../services/soundService';
+import React from 'react';
 import Button from './common/Button';
 
 interface Props {
-  onShowToS: () => void;
+  onGoogleLogin: () => void;
+  isCaptchaSolved: boolean;
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
-  const handleLogin = async (provider: 'google') => {
-    playSound('click');
-    // We explicitly tell Supabase where to redirect the user back to.
-    // window.location.origin provides the base URL (e.g., 'http://localhost:3000' or 'https://your-app.vercel.app')
-    // which is exactly what we need for a reliable redirect.
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-    if (error) {
-      console.error('Error logging in:', error.message);
-      // TODO: show an error message to the user
-    }
-  };
-
+const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved }) => {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 text-center">
       <div className="max-w-md w-full">
@@ -40,14 +21,18 @@ const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
             style={{ imageRendering: 'pixelated' }}
             />
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-indigo-400 mb-3">
-          logo<span className="text-white">.ku</span>
-        </h1>
-        
-        <div className="bg-gray-700/50 py-2 px-4 rounded-lg inline-block mx-auto mb-8">
-            <p className="text-white text-xs font-semibold tracking-wide">
-                Powered by Atharrazka Core. Built for UMKM Indonesia.
-            </p>
+
+        {/* Wrapper to align logo and text box */}
+        <div className="inline-flex flex-col items-stretch mb-8">
+          <h1 className="text-5xl font-bold tracking-tighter text-indigo-400 mb-3">
+            logo<span className="text-white">.ku</span>
+          </h1>
+          
+          <div className="bg-gray-700/50 py-2 px-4 rounded-lg">
+              <p className="text-white text-xs font-semibold tracking-wide text-center">
+                  Powered by Atharrazka Core. Built for UMKM Indonesia.
+              </p>
+          </div>
         </div>
 
         <p className="text-gray-400 mb-8 max-w-sm mx-auto">
@@ -59,7 +44,11 @@ const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
         </div>
 
         <div className="flex flex-col items-center gap-4">
-          <Button onClick={() => handleLogin('google')}>
+          <Button 
+            onClick={onGoogleLogin} 
+            disabled={!isCaptchaSolved}
+            title={!isCaptchaSolved ? "Selesaikan puzzle captcha dulu!" : "Masuk dengan akun Google"}
+          >
             {/* Google Icon SVG */}
             <svg className="w-5 h-5" aria-hidden="true" focusable="false" viewBox="0 0 48 48">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
@@ -74,10 +63,11 @@ const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
         
         <p className="text-xs text-gray-500 mt-8">
           Dengan masuk, lo setuju sama{' '}
-          <button onClick={onShowToS} className="text-indigo-400 hover:underline">
+          <span className={`text-indigo-400 ${!isCaptchaSolved ? 'opacity-50 cursor-not-allowed' : ''}`}>
             Ketentuan Layanan
-          </button>{' '}
+          </span>{' '}
           kami.
+           {!isCaptchaSolved && <span className="block text-yellow-400 text-[11px] mt-1">Selesaikan puzzle di atas dulu, Juragan!</span>}
         </p>
       </div>
     </div>

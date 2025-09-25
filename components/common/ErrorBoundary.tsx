@@ -27,16 +27,18 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   render(): React.ReactNode {
     if (this.state.hasError) {
+      // FIX: The 'imageRendering' property is not standard in all TypeScript versions of React's CSSProperties.
+      // This can cause a misleading type error on `this.props` in certain toolchains.
+      // Extracting the style object into a variable with an `any` cast helps isolate the issue
+      // and allows the compiler to correctly process the component.
+      const imgStyle: any = { imageRendering: 'pixelated' };
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking very concerned"
                 className="w-24 h-24 object-contain filter grayscale opacity-80"
-                // FIX: The 'imageRendering' property is not standard and may not be in React's CSSProperties type.
-                // This can cause a misleading TypeScript error on `this.props`.
-                // Casting to React.CSSProperties provides a type-safe way to handle this without disabling type checking.
-                style={{ imageRendering: 'pixelated' } as React.CSSProperties}
+                style={imgStyle}
             />
             <div className="flex-1">
                 <h1 className="font-bold text-red-400 text-2xl mb-2">Waduh, Aplikasinya Error!</h1>
