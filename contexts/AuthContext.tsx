@@ -42,9 +42,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // State for logout modal
 
   const fetchProfile = useCallback(async (userId: string) => {
+    // Select all columns including the new storage_used_kb
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, storage_used_kb')
       .eq('id', userId)
       .single();
 

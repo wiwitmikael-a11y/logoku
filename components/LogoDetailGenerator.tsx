@@ -23,6 +23,7 @@ interface Props {
 
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
+const STORAGE_QUOTA_KB = 5 * 1024; // 5MB
 
 const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
@@ -48,6 +49,11 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
   }, [variations]);
 
   const handleGenerateVariations = useCallback(async () => {
+    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
+        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
+        playSound('error');
+        return;
+    }
     if (credits < VARIATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -77,11 +83,16 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, profile]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
+        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
+        playSound('error');
+        return;
+    }
     if (credits < EDIT_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');

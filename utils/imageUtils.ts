@@ -34,3 +34,33 @@ export const fetchImageAsBase64 = async (imageUrl: string): Promise<string> => {
         throw new Error(`Tidak dapat memuat gambar dari ${imageUrl} untuk diedit. Pastikan CORS policy di bucket Supabase sudah benar.`);
     }
 };
+
+/**
+ * Compresses an image from a Base64 string and converts it to the WebP format.
+ * This function is the core of the storage optimization strategy for the free tier.
+ * @param base64String The original Base64 data URL (e.g., from Gemini API).
+ * @param quality The desired quality for the output WebP image (0.0 to 1.0).
+ * @returns A promise that resolves with the compressed Base64 data URL in WebP format.
+ */
+export const compressAndConvertToWebP = (base64String: string, quality = 0.85): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = base64String;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                return reject(new Error('Gagal mendapatkan konteks canvas 2D.'));
+            }
+            ctx.drawImage(img, 0, 0);
+            const webpDataUrl = canvas.toDataURL('image/webp', quality);
+            resolve(webpDataUrl);
+        };
+        img.onerror = (error) => {
+            console.error("Gagal memuat gambar dari Base64 ke elemen Image:", error);
+            reject(new Error('Data Base64 sepertinya tidak valid.'));
+        };
+    });
+};

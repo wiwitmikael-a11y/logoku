@@ -22,6 +22,7 @@ interface Props {
 
 type MediaTab = 'business_card' | 'flyer' | 'banner' | 'roll_banner';
 const GENERATION_COST = 1;
+const STORAGE_QUOTA_KB = 5 * 1024; // 5MB
 
 const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
@@ -93,6 +94,12 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
+        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
+        playSound('error');
+        return;
+    }
     
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
@@ -143,7 +150,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected, userId, projectId]);
+  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected, userId, projectId, profile]);
 
   const handleContinue = () => {
     onComplete({

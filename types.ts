@@ -6,6 +6,7 @@ export interface Profile {
   id: string; // Corresponds to Supabase user ID
   credits: number;
   last_credit_reset: string; // Date string in 'YYYY-MM-DD' format
+  storage_used_kb: number; // New field for storage tracking
 }
 
 export interface BrandInputs {

@@ -21,6 +21,7 @@ interface Props {
 }
 
 const GENERATION_COST = 1;
+const STORAGE_QUOTA_KB = 5 * 1024; // 5MB
 
 const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
@@ -54,6 +55,12 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
+        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
+        playSound('error');
+        return;
+    }
+    
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -84,7 +91,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, profile]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {

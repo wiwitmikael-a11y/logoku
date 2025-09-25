@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { compressAndConvertToWebP } from '../utils/imageUtils';
 
 // Helper to convert a Base64 data URL to a File object
 const base64ToFile = (base64: string, filename: string): File | null => {
@@ -17,7 +18,6 @@ const base64ToFile = (base64: string, filename: string): File | null => {
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: mime });
         
-        // The extension is part of the file name already from the mime type
         return new File([blob], filename, { type: mime });
 
     } catch (e) {
@@ -28,7 +28,8 @@ const base64ToFile = (base64: string, filename: string): File | null => {
 
 
 /**
- * Uploads an image from a Base64 string to a specified Supabase Storage bucket.
+ * Compresses, converts, and uploads an image from a Base64 string to Supabase Storage.
+ * Now includes a client-side compression step to save storage space.
  * @param base64String The full data URL of the image (e.g., "data:image/png;base64,...").
  * @param userId The ID of the user uploading the file.
  * @param projectId The ID of the project this asset belongs to.
@@ -42,12 +43,14 @@ export const uploadImageFromBase64 = async (
     assetType: string
 ): Promise<string> => {
     const BUCKET_NAME = 'project-assets';
+
+    // --- NEW: Smart Compression Step ---
+    // Compress the original image and convert it to WebP before uploading.
+    const compressedBase64 = await compressAndConvertToWebP(base64String);
+    // ------------------------------------
     
-    const match = base64String.match(/data:image\/(.+);base64,/);
-    const extension = match ? match[1] : 'png';
-    
-    const fileName = `${assetType}-${Date.now()}.${extension}`;
-    const file = base64ToFile(base64String, fileName);
+    const fileName = `${assetType}-${Date.now()}.webp`; // Always use .webp extension now
+    const file = base64ToFile(compressedBase64, fileName);
 
     if (!file) {
         throw new Error('Gagal mengubah data Base64 menjadi file. Data mungkin korup atau formatnya salah.');

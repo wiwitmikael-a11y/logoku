@@ -21,6 +21,7 @@ interface Props {
 
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
 const GENERATION_COST = 1;
+const STORAGE_QUOTA_KB = 5 * 1024; // 5MB
 
 const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
   {
@@ -79,6 +80,12 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
+        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
+        playSound('error');
+        return;
+    }
+
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -109,7 +116,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, activeTab]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, activeTab, profile]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {

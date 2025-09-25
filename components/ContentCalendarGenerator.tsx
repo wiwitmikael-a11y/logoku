@@ -19,6 +19,7 @@ interface Props {
 }
 
 const GENERATION_COST = 1;
+const STORAGE_QUOTA_KB = 5 * 1024; // 5MB
 
 const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
@@ -72,6 +73,11 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, us
   }, [projectData]);
   
   const handleGenerateImage = useCallback(async (index: number) => {
+    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
+        setImageGenError({ index, message: `Penyimpanan lo penuh (lebih dari 5MB). Hapus project lama dulu ya.` });
+        playSound('error');
+        return;
+    }
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -107,7 +113,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, us
     } finally {
         setGeneratingImageForIndex(null);
     }
-  }, [calendar, credits, projectData, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [calendar, credits, projectData, deductCredits, setShowOutOfCreditsModal, userId, projectId, profile]);
 
   const handleContinue = () => {
     onComplete({ calendar, sources });
