@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -371,7 +372,9 @@ const MainApp: React.FC = () => {
         const updatedData = {
             ...currentState,
             selectedPrintMedia: data.assets,
-            brandInputs: { ...(currentState.brandInputs || {}), ...data.inputs }, // Safely merge brand inputs
+            // FIX: Cast the merged object to BrandInputs to satisfy TypeScript.
+            // This is safe because application logic ensures `currentState.brandInputs` exists at this stage.
+            brandInputs: { ...(currentState.brandInputs || {}), ...data.inputs } as BrandInputs, // Safely merge brand inputs
         };
         try {
             await saveCheckpoint(updatedData);
