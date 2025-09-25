@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption } from '../types';
 
@@ -164,55 +165,64 @@ Setiap alternatif harus berisi caption yang menarik dan daftar hashtag yang rele
 };
 
 
-// --- NEW: Centralized Gemini Image Generation function ---
+// --- Centralized Image Generation (using gemini-2.5-flash-image-preview) ---
+
+// A base64 representation of a 512x512 white PNG. This acts as a blank canvas
+// for the image editing model to "generate" new images from scratch, bypassing
+// the need for the Imagen/Vertex AI API.
+const BLANK_CANVAS_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAgAAAAIAAQMAAADOtKa5AAAAA1BMVEX///+_aUEpAAABMklEQVR42u3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAODZAbgxAAH8gSsoAAAAAElFTkSuQmCC';
+
 const generateImagesWithGemini = async (prompt: string, count: number): Promise<string[]> => {
     const ai = getAiClient();
-    try {
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: prompt,
-            config: {
-                numberOfImages: count,
-                outputMimeType: 'image/jpeg', // FIX: Changed from 'image/png' to 'image/jpeg' as required by the API.
-                aspectRatio: '1:1',
+    // The image editing model only generates one image per call, so we must loop if count > 1.
+    // In this app, `count` is always 1, but this approach is more robust.
+    const imagePromises = Array.from({ length: count }, () => 
+        ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: {
+                parts: [
+                    { inlineData: { data: BLANK_CANVAS_B64, mimeType: 'image/png' } },
+                    // We instruct the model to treat the blank image as a canvas.
+                    { text: `On this blank white canvas, create the following image: ${prompt}` }
+                ]
             },
-        });
+            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+        })
+    );
+    
+    try {
+        const responses = await Promise.all(imagePromises);
         
-        // More robust check: Ensure the response and the generatedImages array are valid.
-        if (!response || !Array.isArray(response.generatedImages) || response.generatedImages.length === 0) {
-             console.error("Invalid or empty response from Gemini Image API:", response);
-            throw new Error("Waduh, respons dari Gemini Image kosong atau formatnya aneh. Ini bisa jadi karena prompt-nya terlalu rumit atau ada gangguan sementara. Coba lagi dengan prompt yang lebih simpel.");
+        const imageData = responses.map(response => {
+            const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+            if (!imagePart?.inlineData) {
+                console.error("Invalid or empty response from Gemini Image API:", response);
+                return null;
+            }
+            return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+        }).filter((d): d is string => !!d);
+
+        if (imageData.length < count) {
+             throw new Error("Waduh, Mang AI tidak menghasilkan gambar. Ini bisa jadi karena prompt-nya terlalu rumit atau ada gangguan sementara. Coba lagi dengan prompt yang lebih simpel.");
         }
 
-        // Filter for valid images and extract their data.
-        const imageData = response.generatedImages
-            .map(img => img.image?.imageBytes)
-            .filter((bytes): bytes is string => !!bytes);
-
-        if (imageData.length === 0) {
-            console.error("No valid image data found in Gemini Image API response:", response);
-            throw new Error("Mang AI berhasil manggil Gemini, tapi nggak ada data gambar yang valid di responsnya. Coba lagi dengan prompt yang beda ya.");
-        }
-
-        return imageData.map(bytes => `data:image/jpeg;base64,${bytes}`); // Return as jpeg data URL
+        return imageData;
 
     } catch (error) {
         // Re-throw our custom, more descriptive errors directly.
-        if (error instanceof Error && (error.message.startsWith("Waduh, respons dari Gemini") || error.message.startsWith("Mang AI berhasil manggil Gemini"))) {
+        if (error instanceof Error && error.message.startsWith("Waduh, Mang AI tidak menghasilkan gambar")) {
             throw error;
         }
         // Use the generic handler for all other errors.
-        throw handleApiError(error, "Google Gemini (Image)");
+        throw handleApiError(error, "Google Gemini (Image Generation)");
     }
 };
 
 
-// --- REWRITTEN with Gemini ---
 export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
   return generateImagesWithGemini(prompt, 1);
 };
 
-// --- REWRITTEN with Gemini ---
 export const generateLogoVariations = async (basePrompt: string): Promise<Omit<LogoVariations, 'main'>> => {
     try {
         const [iconResult, monochromeResult] = await Promise.all([
@@ -280,7 +290,7 @@ PENTING: Format output HARUS berupa JSON object yang valid, tanpa markdown forma
   }
 };
 
-// --- NEW Social Media Post Image Generation ---
+// --- Social Media Post Image Generation ---
 export const generateSocialMediaPostImage = async (
     contentIdea: string,
     brandKeywords: string[]
@@ -290,7 +300,7 @@ export const generateSocialMediaPostImage = async (
     return generateImagesWithGemini(prompt, 1);
 };
 
-// --- REWRITTEN with Gemini & Refactored for Type Safety ---
+// --- Print Media Generation ---
 export const generatePrintMedia = async (
     type: 'business_card' | 'flyer' | 'banner' | 'roll_banner',
     data: {
@@ -322,13 +332,12 @@ export const generatePrintMedia = async (
     return generateImagesWithGemini(prompt, 1);
 };
 
-// --- REWRITTEN with Gemini ---
+// --- Packaging & Merchandise Generation ---
 export const generatePackagingDesign = async (prompt: string): Promise<string[]> => {
   const fullPrompt = `2D packaging design mockup, printable concept for a product. ${prompt}, flat lay, product photography style, clean background, commercial look.`;
   return generateImagesWithGemini(fullPrompt, 1);
 };
 
-// --- REWRITTEN with Gemini ---
 export const generateMerchandiseMockup = async (prompt: string): Promise<string[]> => {
   return generateImagesWithGemini(prompt, 1);
 };
