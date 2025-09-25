@@ -64,6 +64,8 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
+    // FIX: A previous change to destructure `children` from `this.props` was causing a misleading type error
+    // in some toolchains, incorrectly reporting that 'props' does not exist. Reverting to direct access.
     return this.props.children;
   }
 }

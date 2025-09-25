@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { playSound } from '../../services/soundService';
 
 interface Props {
@@ -7,57 +7,108 @@ interface Props {
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
-const PUZZLE_BG_URL = `${GITHUB_ASSETS_URL}mang_ai_puzzle_bg.png`;
-const PUZZLE_PIECE_URL = `${GITHUB_ASSETS_URL}mang_ai_puzzle_piece.png`;
 
-const PuzzleCaptchaModal: React.FC<Props> = ({ show, onSuccess }) => {
+const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [sliderLeft, setSliderLeft] = useState(0);
   const [isSolved, setIsSolved] = useState(false);
-  const [isIncorrect, setIsIncorrect] = useState(false);
+  
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const preventDefault = (e: DragEvent) => e.preventDefault();
-    if (show) {
-      window.addEventListener('dragover', preventDefault);
-      window.addEventListener('drop', preventDefault);
-      modalRef.current?.focus();
+  const getTrackBounds = useCallback(() => {
+    if (!trackRef.current || !sliderRef.current) return { trackWidth: 0, maxSliderLeft: 0 };
+    const trackWidth = trackRef.current.clientWidth;
+    const sliderWidth = sliderRef.current.clientWidth;
+    return { trackWidth, maxSliderLeft: trackWidth - sliderWidth };
+  }, []);
+
+  const resetSlider = useCallback(() => {
+    if (sliderRef.current) {
+      sliderRef.current.style.transition = 'left 0.3s ease-out';
+      setSliderLeft(0);
     }
-    return () => {
-      window.removeEventListener('dragover', preventDefault);
-      window.removeEventListener('drop', preventDefault);
-    };
-  }, [show]);
+  }, []);
+
+  const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    if (isSolved) return;
+    
+    // Remove transition for smooth dragging
+    if (sliderRef.current) sliderRef.current.style.transition = 'none';
+
+    setIsDragging(true);
+  }, [isSolved]);
+
+  const handleDragMove = useCallback((clientX: number) => {
+    if (!isDragging || !trackRef.current || !sliderRef.current) return;
+    
+    const trackRect = trackRef.current.getBoundingClientRect();
+    const newLeft = clientX - trackRect.left - (sliderRef.current.clientWidth / 2);
+    const { maxSliderLeft } = getTrackBounds();
+
+    // Clamp the value between 0 and the max allowed left position
+    const clampedLeft = Math.max(0, Math.min(newLeft, maxSliderLeft));
+    setSliderLeft(clampedLeft);
+  }, [isDragging, getTrackBounds]);
+
+  const handleMouseDragMove = useCallback((e: MouseEvent) => {
+    handleDragMove(e.clientX);
+  }, [handleDragMove]);
   
+  const handleTouchDragMove = useCallback((e: TouchEvent) => {
+    if (e.touches[0]) {
+      handleDragMove(e.touches[0].clientX);
+    }
+  }, [handleDragMove]);
 
-  const handleDragStart = (e: React.DragEvent<HTMLImageElement>) => {
-    e.dataTransfer.setData('text/plain', 'puzzle-piece');
-    e.currentTarget.style.opacity = '0.5';
-  };
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
 
-  const handleDragEnd = (e: React.DragEvent<HTMLImageElement>) => {
-    e.currentTarget.style.opacity = '1';
-  };
+    const { maxSliderLeft } = getTrackBounds();
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (e.dataTransfer.getData('text/plain') === 'puzzle-piece') {
+    // Check if slider is near the end (within 5px tolerance)
+    if (sliderLeft >= maxSliderLeft - 5) {
       playSound('puzzle_drop');
+      setSliderLeft(maxSliderLeft); // Snap to the end
       setIsSolved(true);
       setTimeout(() => {
         onSuccess();
-      }, 1000); 
+      }, 800);
+    } else {
+      playSound('puzzle_fail');
+      resetSlider();
     }
-  };
+  }, [isDragging, sliderLeft, getTrackBounds, onSuccess, resetSlider]);
   
-  const handleIncorrectDrop = () => {
-    playSound('puzzle_fail');
-    setIsIncorrect(true);
-    setTimeout(() => setIsIncorrect(false), 500);
-  };
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseDragMove);
+      window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchmove', handleTouchDragMove);
+      window.addEventListener('touchend', handleDragEnd);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleTouchDragMove);
+      window.removeEventListener('touchend', handleDragEnd);
+    };
+  }, [isDragging, handleMouseDragMove, handleTouchDragMove, handleDragEnd]);
+
+  useEffect(() => {
+    if (show) {
+      modalRef.current?.focus();
+    } else {
+      // Reset state when modal is hidden/closed
+      setTimeout(() => {
+          setIsSolved(false);
+          resetSlider();
+      }, 300);
+    }
+  }, [show, resetSlider]);
 
   if (!show) {
     return null;
@@ -71,58 +122,53 @@ const PuzzleCaptchaModal: React.FC<Props> = ({ show, onSuccess }) => {
       aria-modal="true"
       aria-labelledby="captcha-title"
       tabIndex={-1}
-      onDrop={handleIncorrectDrop}
-      onDragOver={handleDragOver}
     >
-      <div className={`relative max-w-sm w-full bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-500 ring-4 ring-green-500/30' : ''} ${isIncorrect ? 'border-red-500 animate-shake' : ''}`}>
-        <h2 id="captcha-title" className="text-xl font-bold text-indigo-400 mb-2">Bentar, Juragan!</h2>
-        <p className="text-gray-300 mb-6 text-center text-sm">Biar Mang AI yakin lo bukan robot sisa-sisa Skynet, pasangin dulu puzzle ini ke tempatnya ya!</p>
+      <div className={`relative max-w-sm w-full bg-gray-800 border rounded-2xl shadow-2xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-500 ring-4 ring-green-500/30' : 'border-gray-700'}`}>
+        <img
+            src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
+            alt="Mang AI character"
+            className="w-24 mb-4 animate-breathing-ai"
+            style={{ imageRendering: 'pixelated' }}
+        />
+        <h2 id="captcha-title" className="text-xl font-bold text-indigo-400 mb-2">Eits, Tahan Dulu, Juragan!</h2>
+        <p className="text-gray-300 mb-8 text-center text-sm">Mang AI curiga nih, jangan-jangan lo robot kiriman kompetitor. Coba buktiin dulu kalo lo manusia dengan geser slider ini sampe mentok.</p>
 
-        <div className="relative w-64 h-64 mb-6" style={{ imageRendering: 'pixelated' }}>
-          <img src={PUZZLE_BG_URL} alt="Mang AI with a missing piece" className="w-full h-full pointer-events-none" />
+        <div 
+          ref={trackRef}
+          className="w-full h-14 bg-gray-900 rounded-full flex items-center p-2 relative"
+        >
+          <div 
+            className="absolute left-0 top-0 h-full bg-indigo-600/50 rounded-full"
+            style={{ width: `${sliderLeft + 40}px` }}
+          />
+
           <div
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            className={`absolute top-[120px] left-[72px] w-[58px] h-[58px] bg-black/30 border-2 border-dashed transition-colors ${isSolved ? 'border-green-500 bg-green-500/20' : 'border-gray-500 group-hover:border-indigo-400'}`}
-            aria-label="Drop zone for puzzle piece"
+            ref={sliderRef}
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
+            className={`w-10 h-10 bg-indigo-600 rounded-full absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none ${isSolved ? '!bg-green-500' : ''}`}
+            style={{ left: `${sliderLeft}px` }}
+            aria-label="Geser untuk verifikasi"
+            role="slider"
           >
-           {isSolved && (
-              <img src={PUZZLE_PIECE_URL} alt="Solved puzzle piece" className="w-full h-full animate-content-fade-in" style={{ imageRendering: 'pixelated' }} />
-           )}
+            {isSolved ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            )}
           </div>
+
+          <span className={`text-center w-full font-semibold transition-opacity duration-300 ${isDragging || isSolved ? 'opacity-0' : 'opacity-100 text-gray-400'}`}>
+            Ayo, geser ke kanan, juragan!
+          </span>
         </div>
-
-        {!isSolved && (
-            <div className="flex flex-col items-center">
-                 <p className="text-xs text-gray-400 mb-2">Seret potongan ini ke gambar di atas</p>
-                <img
-                    src={PUZZLE_PIECE_URL}
-                    alt="Draggable puzzle piece of Mang AI"
-                    draggable
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    className="w-16 h-16 cursor-grab active:cursor-grabbing"
-                    style={{ imageRendering: 'pixelated' }}
-                />
-            </div>
-        )}
-
+        
         {isSolved && (
-            <p className="text-green-400 font-bold animate-pulse">Sip, Berhasil! Lo emang manusia sejati.</p>
+            <p className="text-green-400 font-bold animate-pulse mt-6">Mantap! Ternyata beneran juragan, bukan kaleng-kaleng. Sokin lanjut!</p>
         )}
       </div>
-       <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-          20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        .animate-shake {
-          animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-      `}</style>
     </div>
   );
 };
 
-export default PuzzleCaptchaModal;
+export default SliderCaptcha;
