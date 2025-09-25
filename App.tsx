@@ -417,10 +417,7 @@ const MainApp: React.FC = () => {
     const openToSModal = useCallback(() => { playSound('click'); setShowToSModal(true); }, []);
     const closeToSModal = useCallback(() => {
         setShowToSModal(false);
-        if (!session) {
-            playBGM('welcome');
-        }
-    }, [session]);
+    }, []);
     const openProfileModal = useCallback(() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }, []);
     const closeProfileModal = useCallback(() => setShowProfileModal(false), []);
     

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { playSound } from '../../services/soundService';
+import { playSound, playBGM } from '../../services/soundService';
 
 interface Props {
   show: boolean;
@@ -16,6 +16,7 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const jinglePlayedRef = useRef(false);
 
   const getTrackBounds = useCallback(() => {
     if (!trackRef.current || !sliderRef.current) return { trackWidth: 0, maxSliderLeft: 0 };
@@ -33,6 +34,12 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
 
   const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (isSolved) return;
+    
+    // Play BGM on the first interaction with the slider
+    if (!jinglePlayedRef.current) {
+        playBGM('welcome');
+        jinglePlayedRef.current = true;
+    }
     
     // Remove transition for smooth dragging
     if (sliderRef.current) sliderRef.current.style.transition = 'none';
@@ -106,6 +113,7 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
       setTimeout(() => {
           setIsSolved(false);
           resetSlider();
+          jinglePlayedRef.current = false;
       }, 300);
     }
   }, [show, resetSlider]);
