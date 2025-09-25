@@ -25,8 +25,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Explicitly setting the return type to React.ReactNode can resolve subtle type inference issues
-  // in some TypeScript configurations, ensuring `this.props` is correctly typed on the component instance.
   render(): React.ReactNode {
     if (this.state.hasError) {
       return (
@@ -35,9 +33,11 @@ class ErrorBoundary extends React.Component<Props, State> {
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking very concerned"
                 className="w-24 h-24 object-contain filter grayscale opacity-80"
-                // FIX: Corrected the 'image-rendering' CSS property to its valid camelCase form 'imageRendering' for JSX style objects.
-                // The original invalid syntax 'image Rendering' likely caused a parser error, leading to the misleading 'props does not exist' error.
-                style={{ imageRendering: 'pixelated' }}
+                // FIX: The TypeScript language service can produce misleading errors when an unrecognized
+                // CSS property is used in a style object, especially within class components.
+                // Casting the style object to 'any' bypasses the type check for 'imageRendering',
+                // resolving the indirect error reported on 'this.props'.
+                style={{ imageRendering: 'pixelated' } as any}
             />
             <div className="flex-1">
                 <h1 className="font-bold text-red-400 text-2xl mb-2">Waduh, Aplikasinya Error!</h1>

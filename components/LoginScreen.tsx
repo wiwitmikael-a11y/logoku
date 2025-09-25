@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { playSound } from '../services/soundService';
@@ -26,33 +27,6 @@ const LoginScreen: React.FC<Props> = ({ onShowToS }) => {
       // TODO: show an error message to the user
     }
   };
-
-  useEffect(() => {
-    // Sync sounds with the 'login-ai-antics' animation (7s duration)
-    const duration = 7000;
-    // Timings (in percentage) of when the character lands in the animation
-    const landingTimings = [0.15, 0.32, 0.49, 0.75, 0.95];
-    let timeouts: number[] = [];
-
-    const playSoundsForCycle = () => {
-      // Clear any previous timeouts to prevent overlap if component re-renders
-      timeouts.forEach(clearTimeout);
-      timeouts = [];
-      // Schedule sounds for the current animation cycle
-      landingTimings.forEach(timing => {
-        timeouts.push(window.setTimeout(() => playSound('bounce'), timing * duration));
-      });
-    };
-
-    playSoundsForCycle(); // Play for the first cycle immediately
-    const intervalId = setInterval(playSoundsForCycle, duration); // Schedule for subsequent cycles
-
-    // Cleanup function: runs when the component unmounts
-    return () => {
-      clearInterval(intervalId);
-      timeouts.forEach(clearTimeout);
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 text-center">

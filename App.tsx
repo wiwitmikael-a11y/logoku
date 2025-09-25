@@ -115,6 +115,13 @@ const MainApp: React.FC = () => {
         previousSession.current = session;
     }, [session, authLoading]);
     
+    // Automatically show ToS modal on the login screen
+    useEffect(() => {
+        if (!session && !authLoading) {
+            setShowToSModal(true);
+        }
+    }, [session, authLoading]);
+    
     // Effect to close popovers/dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

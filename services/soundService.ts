@@ -1,4 +1,3 @@
-
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // We'll keep track of audio elements to manage them.
@@ -102,7 +101,12 @@ export const playBGM = (bgmName: BgmName): void => {
         currentBGM.onended = null;
     }
     currentBGM = getAudio(bgmUrls[bgmName], true);
-    currentBGM.volume = 0.15;
+    // Special volume for the welcome/logo jingle
+    if (bgmName === 'welcome' || bgmName === 'Jingle') {
+        currentBGM.volume = 0.4; // Louder volume for the jingle
+    } else {
+        currentBGM.volume = 0.15; // Standard volume for other background music
+    }
     currentBGM.play().catch(() => {});
 };
 
