@@ -52,14 +52,32 @@ export const unlockAudio = async (): Promise<void> => {
         }
         isAudioUnlocked = true;
         
-        // After unlocking, try to play the current BGM if it's supposed to be on.
-        if (currentBGM && !isMuted) {
+        // After unlocking, try to play the current BGM if it's supposed to be on and is currently paused.
+        if (currentBGM && !isMuted && currentBGM.paused) {
             currentBGM.play().catch(() => {});
         }
     } catch (e) {
         console.error("Audio context could not be resumed.", e);
     }
 };
+
+/**
+ * Sets up global, one-time event listeners to call unlockAudio() on the first
+ * user interaction with the page. This is crucial for complying with browser
+ * autoplay policies.
+ */
+const setupAudioUnlock = () => {
+    if (typeof window === 'undefined') return;
+    const unlockHandler = () => {
+        unlockAudio();
+    };
+    // The { once: true } option automatically removes the listener after it runs.
+    window.addEventListener('click', unlockHandler, { once: true });
+    window.addEventListener('keydown', unlockHandler, { once: true });
+    window.addEventListener('touchstart', unlockHandler, { once: true });
+};
+setupAudioUnlock(); // Set up the listeners when the module is loaded.
+
 
 type SoundName = keyof typeof soundUrls;
 type BgmName = keyof typeof bgmUrls;

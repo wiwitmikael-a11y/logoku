@@ -25,9 +25,10 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: The error "Property 'props' does not exist" indicates a `this` context issue.
-  // Switching to an arrow function for the render method ensures `this` is correctly bound to the component instance.
-  render = () => {
+  // FIX: The error "Property 'props' does not exist on type 'ErrorBoundary'" was occurring when using an arrow function
+  // for the render method. Switching to a standard class method `render()` resolves this TypeScript issue.
+  // This is the conventional approach for React lifecycle methods, as React correctly handles the `this` context.
+  render() {
     if (this.state.hasError) {
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
