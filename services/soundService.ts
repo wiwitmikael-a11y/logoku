@@ -23,14 +23,19 @@ const soundUrls = {
     typing: `${GITHUB_ASSETS_URL}sounds/typing.mp3`,
     transition: `${GITHUB_ASSETS_URL}ui_transition.mp3`,
     start: `${GITHUB_ASSETS_URL}sounds/start.mp3`,
-    success: `${GITHUB_ASSETS_URL}generate_complete.wav`,
+    success: `${GITHUB_ASSETS_URL}generate_complete.mp3`,
     error: `${GITHUB_ASSETS_URL}ui_error.mp3`,
     bounce: `${GITHUB_ASSETS_URL}bouncy_loading.wav`,
 };
 
 const bgmUrls = {
   welcome: `${GITHUB_ASSETS_URL}bgm_welcome.mp3`,
-  main: `${GITHUB_ASSETS_URL}bgm_utama.mp3`,
+  Acoustic: `${GITHUB_ASSETS_URL}bgm_Acoustic.mp3`,
+  Uplifting: `${GITHUB_ASSETS_URL}bgm_Uplifting.mp3`,
+  LoFi: `${GITHUB_ASSETS_URL}bgm_LoFi.mp3`,
+  Bamboo: `${GITHUB_ASSETS_URL}bgm_Bamboo.mp3`,
+  Ethnic: `${GITHUB_ASSETS_URL}bgm_Ethnic.mp3`,
+  Cozy: `${GITHUB_ASSETS_URL}bgm_Cozy.mp3`,
 };
 
 /**
@@ -68,31 +73,65 @@ export const playSound = (soundName: SoundName): void => {
 };
 
 export const playBGM = (bgmName: BgmName): void => {
+    if (isMuted) {
+        stopBGM();
+        return;
+    }
     if (currentBGM) {
         currentBGM.pause();
+        currentBGM.onended = null;
     }
     currentBGM = getAudio(bgmUrls[bgmName], true);
     currentBGM.volume = 0.15;
-    if (!isMuted) {
-        currentBGM.play().catch(() => {});
-    }
+    currentBGM.play().catch(() => {});
 };
+
+let randomBgmPlaylist: BgmName[] = [];
+const getMainBgmKeys = () => Object.keys(bgmUrls).filter(k => k !== 'welcome') as BgmName[];
+
+const playNextRandomTrack = () => {
+    if (isMuted) {
+        stopBGM();
+        return;
+    }
+    if(randomBgmPlaylist.length === 0) {
+        // Shuffle and create a new playlist
+        randomBgmPlaylist = getMainBgmKeys().sort(() => 0.5 - Math.random());
+    }
+    const nextTrack = randomBgmPlaylist.shift()!;
+    if (currentBGM) {
+        currentBGM.pause();
+        currentBGM.onended = null;
+    }
+    currentBGM = getAudio(bgmUrls[nextTrack], false); // Don't loop, we use onended
+    currentBGM.volume = 0.15;
+    currentBGM.play().catch(() => {});
+    currentBGM.onended = playNextRandomTrack;
+}
+
+export const playRandomBGM = () => {
+    if (isMuted) {
+        stopBGM();
+        return;
+    }
+    randomBgmPlaylist = []; // Reset playlist
+    playNextRandomTrack();
+}
+
 
 export const stopBGM = (): void => {
     if (currentBGM) {
         currentBGM.pause();
+        currentBGM.onended = null;
         currentBGM = null;
     }
+    randomBgmPlaylist = []; // Stop random playback loop
 };
 
 // This will be managed by AuthContext
 export const setMuted = (shouldMute: boolean) => {
     isMuted = shouldMute;
-    if (currentBGM) {
-        if(isMuted) {
-            currentBGM.pause();
-        } else {
-            currentBGM.play().catch(() => {});
-        }
+    if (isMuted && currentBGM) {
+        currentBGM.pause();
     }
 }

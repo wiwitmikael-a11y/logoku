@@ -3,7 +3,7 @@ import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets } from './types';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
 // --- Error Handling & Loading ---
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -68,6 +68,8 @@ const MainApp: React.FC = () => {
         isMuted, 
         authError,
         refreshProfile,
+        bgmSelection,
+        handleBgmChange,
     } = useAuth();
     
     const [appState, setAppState] = useState<AppState>('dashboard');
@@ -108,11 +110,6 @@ const MainApp: React.FC = () => {
                 setShowWelcomeBanner(true);
             }
             fetchProjects();
-            stopBGM();
-            playBGM('main');
-        } else if (!authLoading && !session) {
-            stopBGM();
-            playBGM('welcome');
         }
         previousSession.current = session;
     }, [session, authLoading]);
@@ -570,6 +567,26 @@ const MainApp: React.FC = () => {
                                             <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg><span>Bisukan</span></>
                                         )}
                                     </button>
+                                     <div className="border-t border-gray-700 my-1"></div>
+                                        <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilihan BGM</div>
+                                        <div className="px-2 pb-2">
+                                            <select
+                                                aria-label="Pilih musik latar"
+                                                value={bgmSelection}
+                                                onChange={(e) => handleBgmChange(e.target.value as BgmSelection)}
+                                                className="w-full text-left px-2 py-1.5 text-sm text-gray-200 bg-gray-700/50 border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            >
+                                                <option value="Mute">Bisukan BGM</option>
+                                                <option value="Random">Acak</option>
+                                                <option value="Acoustic">Akustik</option>
+                                                <option value="Uplifting">Semangat</option>
+                                                <option value="LoFi">Lo-Fi</option>
+                                                <option value="Bamboo">Bambu</option>
+                                                <option value="Ethnic">Etnik</option>
+                                                <option value="Cozy">Santai</option>
+                                            </select>
+                                        </div>
+                                    <div className="border-t border-gray-700 my-1"></div>
                                      <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                                         <span>Logout</span>

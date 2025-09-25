@@ -1,8 +1,10 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
-import { setMuted, playBGM, stopBGM, unlockAudio } from '../services/soundService';
+import { setMuted, playBGM, stopBGM, unlockAudio, playRandomBGM } from '../services/soundService';
 import type { Profile } from '../types';
+
+export type BgmSelection = 'Mute' | 'Random' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
 
 interface AuthContextType {
   session: Session | null;
@@ -21,6 +23,8 @@ interface AuthContextType {
   handleDeleteAccount: () => void;
   deductCredits: (amount: number) => Promise<boolean>;
   refreshProfile: () => Promise<void>; // Exposed function to refresh profile
+  bgmSelection: BgmSelection;
+  handleBgmChange: (selection: BgmSelection) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,6 +45,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isMuted, setIsMutedState] = useState(false);
   const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // State for logout modal
+  const [bgmSelection, setBgmSelection] = useState<BgmSelection>(
+    () => (localStorage.getItem('logoku_bgm_selection') as BgmSelection) || 'Acoustic'
+  );
 
   const fetchProfile = useCallback(async (userId: string) => {
     // Select all columns including the new storage_used_kb
@@ -121,15 +128,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [fetchProfile]);
   
   useEffect(() => {
-      setMuted(isMuted);
-      if (isMuted) {
-          stopBGM();
-      } else if (session) {
-          playBGM('main');
+    localStorage.setItem('logoku_bgm_selection', bgmSelection);
+  }, [bgmSelection]);
+
+  useEffect(() => {
+    setMuted(isMuted); // Tell sound service about global mute status
+
+    if (isMuted) {
+      stopBGM();
+      return;
+    }
+
+    if (bgmSelection === 'Mute') {
+      stopBGM();
+      return;
+    }
+    
+    if (!session) {
+      playBGM('welcome');
+    } else {
+      if (bgmSelection === 'Random') {
+        playRandomBGM();
       } else {
-          playBGM('welcome');
+        playBGM(bgmSelection as any);
       }
-  }, [isMuted, session]);
+    }
+  }, [isMuted, bgmSelection, session]);
+
 
   // This function now simply triggers the confirmation modal
   const handleLogout = () => {
@@ -152,6 +177,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsMutedState(prev => !prev);
   };
   
+  const handleBgmChange = (selection: BgmSelection) => {
+    unlockAudio();
+    setBgmSelection(selection);
+  };
+
   const handleDeleteAccount = () => {
     const confirmation = window.prompt("Ini akan menghapus akun dan semua data project lo secara permanen. Ini tidak bisa dibatalkan. Ketik 'HAPUS' untuk konfirmasi.");
     if (confirmation === 'HAPUS') {
@@ -209,6 +239,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleDeleteAccount,
     deductCredits,
     refreshProfile,
+    bgmSelection,
+    handleBgmChange,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
