@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
@@ -218,7 +217,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Studio Media Cetak Mang AI</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Studio Media Cetak Mang AI</h2>
         <p className="text-gray-400">Bikin materi promosi cetak yang keren. Pilih jenis media, isi detailnya, dan biarkan Mang AI mendesain untuk lo.</p>
       </div>
       

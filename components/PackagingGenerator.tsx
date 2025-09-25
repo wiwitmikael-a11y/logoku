@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
@@ -103,7 +102,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 6: Desain Kemasan Lo</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 6: Desain Kemasan Lo</h2>
         <p className="text-gray-400">Sentuhan terakhir! Berdasarkan persona brand lo, kita udah siapin prompt buat desain kemasan produk lo. Edit kalo perlu, terus generate konsepnya.</p>
       </div>
 

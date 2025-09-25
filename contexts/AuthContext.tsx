@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
@@ -94,31 +93,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        setAuthError('Gagal mengambil sesi login.');
-      } else {
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
-        if (data.session?.user) {
-          await fetchProfile(data.session.user.id);
-        }
-      }
-      setLoading(false);
-    };
-
-    getSession();
-
+    let initialCheckDone = false;
+    // This listener handles both the initial session load and subsequent auth changes.
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Fetch profile for the logged-in user.
           await fetchProfile(session.user.id);
         } else {
+          // If there's no session, clear the profile.
           setProfile(null);
+        }
+
+        // The first event we get establishes the initial state. After that, we're loaded.
+        // This prevents the app from getting stuck on the loading screen on tab refocus.
+        if (!initialCheckDone) {
+            setLoading(false);
+            initialCheckDone = true;
         }
       }
     );

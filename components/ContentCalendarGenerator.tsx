@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateContentCalendar, generateSocialMediaPostImage } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
@@ -128,7 +127,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, us
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 4: Rencana Konten Sosmed</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 4: Rencana Konten Sosmed</h2>
         <p className="text-gray-400">Stop bingung mau posting apa. Biar Mang AI yang bikinin draf kalender konten seminggu, lengkap sama ide, caption, hashtag, dan referensi tren terbaru dari Google. Sekarang, lo juga bisa langsung bikin visualnya!</p>
       </div>
 

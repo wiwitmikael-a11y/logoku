@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
@@ -171,7 +170,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, use
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 2: Desain Logo Lo</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 2: Desain Logo Lo</h2>
         <p className="text-gray-400">Pilih gaya yang pas sama brand lo. Kita udah siapin prompt awal, bisa lo edit lagi sebelum generate logo.</p>
       </div>
 

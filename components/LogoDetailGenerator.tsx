@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
@@ -139,7 +138,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 3: Finalisasi & Paket Logo</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 3: Finalisasi & Paket Logo</h2>
         <p className="text-gray-400">Logo pilihan lo udah siap. Sekarang lo bisa bikin paket logo lengkap (buat ikon, stempel, dll.) atau kasih revisi minor pakai Mang AI.</p>
       </div>
 

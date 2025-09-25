@@ -56,7 +56,7 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
       `}</style>
       <div id="brand-kit-summary" className="flex flex-col gap-10 items-center text-center print-container">
         <div className="no-print">
-          <h2 className="text-3xl font-extrabold text-indigo-400 mb-2">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-indigo-400 mb-2">
             Brand Kit untuk "{brandInputs.businessName}" Udah Jadi!
           </h2>
           <p className="text-gray-400 max-w-3xl">

@@ -63,7 +63,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack }) => {
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Generator Caption Sosmed</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Generator Caption Sosmed</h2>
         <p className="text-gray-400">
           Bikin caption keren buat Instagram, TikTok, atau platform lain pake persona brand "{projectData.selectedPersona?.nama_persona}". Cukup kasih topiknya!
         </p>

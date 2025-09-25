@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
@@ -134,7 +133,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Mockup Merchandise Mang AI</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Mockup Merchandise Mang AI</h2>
         <p className="text-gray-400">
           Lihat gimana brand lo tampil di produk nyata. Pilih jenis merchandise, dan Mang AI bakal bikinin mockup realistisnya buat lo.
         </p>

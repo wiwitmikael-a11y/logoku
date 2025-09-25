@@ -558,10 +558,10 @@ const MainApp: React.FC = () => {
                         className="animate-header-ai w-12 h-12"
                     />
                     <div className="flex items-baseline gap-3">
-                        <h1 className="text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleReturnToDashboard}>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleReturnToDashboard}>
                             <span>logo<span className="text-white">.ku</span></span>
                         </h1>
-                        <div className="font-handwritten text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={openContactModal}>
+                        <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={openContactModal}>
                             by @rangga.p.h
                         </div>
                     </div>

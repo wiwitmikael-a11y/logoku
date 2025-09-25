@@ -146,7 +146,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Langkah 1: Fondasi Brand Lo</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 1: Fondasi Brand Lo</h2>
         <p className="text-gray-400">Ceritain bisnismu. Mang AI akan meracik persona, target avatar, gaya bicara, sampai slogan yang paling pas.</p>
       </div>
 

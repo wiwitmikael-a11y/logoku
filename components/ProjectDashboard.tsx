@@ -54,7 +54,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
     <div className="flex flex-col gap-8 items-center text-center">
       {showWelcomeBanner && <WelcomeBanner userName={userName} onClose={onWelcomeBannerClose} />}
       <div>
-        <h2 className="text-2xl font-bold text-indigo-400 mb-2">Selamat Datang, {userName}!</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Selamat Datang, {userName}!</h2>
         <p className="text-gray-400 max-w-2xl">Studio branding AI pribadi lo. Mulai project baru untuk membangun identitas brand dari nol, atau lihat dan kelola brand kit yang sudah pernah lo buat.</p>
       </div>
       
