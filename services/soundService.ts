@@ -29,8 +29,8 @@ const soundUrls = {
 };
 
 const bgmUrls = {
-  welcome: `${GITHUB_ASSETS_URL}jingle_logoku.mp3`,
-  Jingle: `${GITHUB_ASSETS_URL}jingle_logoku.mp3`,
+  welcome: `${GITHUB_ASSETS_URL}jingle_logoku.mp3?v=2`,
+  Jingle: `${GITHUB_ASSETS_URL}jingle_logoku.mp3?v=2`,
   Acoustic: `${GITHUB_ASSETS_URL}bgm_Acoustic.mp3`,
   Uplifting: `${GITHUB_ASSETS_URL}bgm_Uplifting.mp3`,
   LoFi: `${GITHUB_ASSETS_URL}bgm_LoFi.mp3`,

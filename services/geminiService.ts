@@ -177,7 +177,7 @@ const generateImagesWithGemini = async (prompt: string, count: number): Promise<
             },
         });
         
-        if (!response.generatedImages) {
+        if (!response.generatedImages || response.generatedImages.length === 0 || !response.generatedImages[0].image?.imageBytes) {
             throw new Error("Mang AI gak bisa generate gambar dari prompt itu. Coba ganti deskripsinya atau pastiin gak melanggar kebijakan ya.");
         }
 
