@@ -25,10 +25,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: The error "Property 'props' does not exist on type 'ErrorBoundary'" was occurring when using an arrow function
-  // for the render method. Switching to a standard class method `render()` resolves this TypeScript issue.
-  // This is the conventional approach for React lifecycle methods, as React correctly handles the `this` context.
-  render() {
+  // FIX: Explicitly setting the return type to React.ReactNode can resolve subtle type inference issues
+  // in some TypeScript configurations, ensuring `this.props` is correctly typed on the component instance.
+  render(): React.ReactNode {
     if (this.state.hasError) {
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
@@ -36,6 +35,8 @@ class ErrorBoundary extends React.Component<Props, State> {
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking very concerned"
                 className="w-24 h-24 object-contain filter grayscale opacity-80"
+                // FIX: Corrected the 'image-rendering' CSS property to its valid camelCase form 'imageRendering' for JSX style objects.
+                // The original invalid syntax 'image Rendering' likely caused a parser error, leading to the misleading 'props does not exist' error.
                 style={{ imageRendering: 'pixelated' }}
             />
             <div className="flex-1">

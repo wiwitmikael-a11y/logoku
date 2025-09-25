@@ -1,10 +1,11 @@
+
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
 import { setMuted, playBGM, stopBGM, unlockAudio, playRandomBGM } from '../services/soundService';
 import type { Profile } from '../types';
 
-export type BgmSelection = 'Mute' | 'Random' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
+export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
 
 interface AuthContextType {
   session: Session | null;
@@ -134,24 +135,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     setMuted(isMuted); // Tell sound service about global mute status
 
-    if (isMuted) {
+    if (isMuted || bgmSelection === 'Mute') {
       stopBGM();
       return;
     }
 
-    if (bgmSelection === 'Mute') {
-      stopBGM();
-      return;
-    }
-    
-    if (!session) {
-      playBGM('welcome');
-    } else {
+    if (session) {
       if (bgmSelection === 'Random') {
         playRandomBGM();
       } else {
         playBGM(bgmSelection as any);
       }
+    } else {
+        // If not logged in (on login screen), stop any BGM.
+        // It will be triggered manually by user interaction.
+        stopBGM();
     }
   }, [isMuted, bgmSelection, session]);
 

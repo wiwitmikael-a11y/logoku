@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -406,7 +407,14 @@ const MainApp: React.FC = () => {
     const openContactModal = useCallback(() => { playSound('click'); setShowContactModal(true); }, []);
     const closeContactModal = useCallback(() => setShowContactModal(false), []);
     const openToSModal = useCallback(() => { playSound('click'); setShowToSModal(true); }, []);
-    const closeToSModal = useCallback(() => setShowToSModal(false), []);
+    const closeToSModal = useCallback(() => {
+        setShowToSModal(false);
+        // If the user is on the login screen (no session), play the welcome BGM.
+        // This is triggered by a user interaction, so it's safe.
+        if (!session) {
+            playBGM('welcome');
+        }
+    }, [session]);
     const openProfileModal = useCallback(() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }, []);
     const closeProfileModal = useCallback(() => setShowProfileModal(false), []);
 
@@ -568,7 +576,7 @@ const MainApp: React.FC = () => {
                                         )}
                                     </button>
                                      <div className="border-t border-gray-700 my-1"></div>
-                                        <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilihan BGM</div>
+                                        <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilih Musik</div>
                                         <div className="px-2 pb-2">
                                             <select
                                                 aria-label="Pilih musik latar"
@@ -578,6 +586,7 @@ const MainApp: React.FC = () => {
                                             >
                                                 <option value="Mute">Bisukan BGM</option>
                                                 <option value="Random">Acak</option>
+                                                <option value="Jingle">Jingle</option>
                                                 <option value="Acoustic">Akustik</option>
                                                 <option value="Uplifting">Semangat</option>
                                                 <option value="LoFi">Lo-Fi</option>

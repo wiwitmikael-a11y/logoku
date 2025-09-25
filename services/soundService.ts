@@ -1,3 +1,4 @@
+
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // We'll keep track of audio elements to manage them.
@@ -29,7 +30,8 @@ const soundUrls = {
 };
 
 const bgmUrls = {
-  welcome: `${GITHUB_ASSETS_URL}bgm_welcome.mp3`,
+  welcome: `${GITHUB_ASSETS_URL}jingle_logoku.mp3`,
+  Jingle: `${GITHUB_ASSETS_URL}jingle_logoku.mp3`,
   Acoustic: `${GITHUB_ASSETS_URL}bgm_Acoustic.mp3`,
   Uplifting: `${GITHUB_ASSETS_URL}bgm_Uplifting.mp3`,
   LoFi: `${GITHUB_ASSETS_URL}bgm_LoFi.mp3`,
@@ -105,7 +107,7 @@ export const playBGM = (bgmName: BgmName): void => {
 };
 
 let randomBgmPlaylist: BgmName[] = [];
-const getMainBgmKeys = () => Object.keys(bgmUrls).filter(k => k !== 'welcome') as BgmName[];
+const getMainBgmKeys = () => Object.keys(bgmUrls).filter(k => k !== 'welcome' && k !== 'Jingle') as BgmName[];
 
 const playNextRandomTrack = () => {
     if (isMuted) {
