@@ -11,7 +11,7 @@ interface Props {
 
 const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
   // Destructure the nested project_data object
-  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, selectedPrintMedia, selectedPackagingUrl, selectedMerchandiseUrl } = project.project_data;
+  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, selectedPrintMedia, seoData, adsData, selectedPackagingUrl, selectedMerchandiseUrl } = project.project_data;
   
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
 
@@ -21,6 +21,8 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
   const handleDownload = () => {
       window.print();
   }
+  
+  const businessUrl = `www.${brandInputs.businessName.toLowerCase().replace(/\s/g, '')}.com`;
 
   return (
     <>
@@ -52,6 +54,7 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
           .print-text-brand { color: #4338ca !important; }
           .print-bg-brand { background-color: #4338ca !important; }
           .print-bg-gray { background-color: #e5e7eb !important; }
+          .print-text-blue { color: #2563eb !important; }
         }
       `}</style>
       <div id="brand-kit-summary" className="flex flex-col gap-10 items-center text-center print-container">
@@ -109,6 +112,25 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
                  ))}
                  </div>
              </Card>
+
+              {seoData && (
+                <Card title="Optimasi Google (SEO)" className="print-card">
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <h5 className="font-semibold text-gray-200 print-text-color">Meta Title:</h5>
+                      <p className="text-gray-300 print-text-color">{seoData.metaTitle}</p>
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-gray-200 print-text-color">Meta Description:</h5>
+                      <p className="text-gray-300 print-text-color">{seoData.metaDescription}</p>
+                    </div>
+                     <div>
+                      <h5 className="font-semibold text-gray-200 print-text-color">Keywords:</h5>
+                      <p className="text-gray-400 text-xs print-text-color">{seoData.keywords.join(', ')}</p>
+                    </div>
+                  </div>
+                </Card>
+              )}
           </div>
 
           {/* Column 2: Visual Assets */}
@@ -223,6 +245,26 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
                       )}
                   </div>
               </Card>
+               {adsData && adsData.length > 0 && (
+                <Card title="Teks Iklan Google" className="print-card">
+                  <div className="space-y-4">
+                    {adsData.slice(0, 2).map((ad, index) => ( // Show first 2 ads
+                      <div key={index} className="border-b border-gray-700 pb-3 last:border-b-0 last:pb-0">
+                        <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Opsi Iklan {index + 1}</h5>
+                        <div className="bg-gray-900/50 p-3 rounded-lg print-bg-gray">
+                           <p className="text-xs text-gray-400 print-text-color">{businessUrl}</p>
+                           <h3 className="text-base text-blue-400 print-text-blue">
+                                {ad.headlines.join(' | ')}
+                           </h3>
+                           <p className="text-sm text-gray-300 mt-1 print-text-color">
+                                {ad.descriptions.join(' ')}
+                           </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
           </div>
         </div>
         

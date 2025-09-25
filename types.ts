@@ -88,6 +88,21 @@ export interface GeneratedCaption {
   hashtags: string[];
 }
 
+export interface SeoData {
+  keywords: string[];
+  metaTitle: string;
+  metaDescription: string;
+  gmbDescription: string;
+}
+
+export interface GoogleAd {
+  headlines: string[];
+  descriptions: string[];
+  keywords: string[];
+}
+
+export type AdsData = GoogleAd[];
+
 // This represents the data structure stored in the 'project_data' JSONB column
 export interface ProjectData {
   brandInputs: BrandInputs;
@@ -99,6 +114,8 @@ export interface ProjectData {
   contentCalendar?: ContentCalendarEntry[]; 
   searchSources?: any[]; 
   selectedPrintMedia?: PrintMediaAssets;
+  seoData?: SeoData;
+  adsData?: AdsData;
   selectedPackagingUrl?: string;
   selectedMerchandiseUrl?: string;
 }

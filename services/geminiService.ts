@@ -1,6 +1,5 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption } from '../types';
+import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SeoData, AdsData } from '../types';
 
 // --- Environment Variable Setup ---
 // The API key must be available as import.meta.env.VITE_API_KEY.
@@ -278,6 +277,137 @@ PENTING: Format output HARUS berupa JSON object yang valid, tanpa markdown forma
     throw handleApiError(error, "Google Gemini (Search)");
   }
 };
+
+// --- SEO Content Generation ---
+export const generateSeoContent = async (
+  brandInputs: BrandInputs
+): Promise<SeoData> => {
+  const ai = getAiClient();
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      keywords: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "5-10 kata kunci relevan (short & long-tail) dalam Bahasa Indonesia."
+      },
+      metaTitle: {
+        type: Type.STRING,
+        description: "Judul meta SEO yang menarik, di bawah 60 karakter."
+      },
+      metaDescription: {
+        type: Type.STRING,
+        description: "Deskripsi meta SEO yang informatif, di bawah 160 karakter."
+      },
+      gmbDescription: {
+        type: Type.STRING,
+        description: "Deskripsi Google Business Profile yang engaging, maksimal 750 karakter."
+      }
+    },
+    required: ["keywords", "metaTitle", "metaDescription", "gmbDescription"]
+  };
+  
+  try {
+    const prompt = `Kamu adalah seorang spesialis SEO untuk UMKM di Indonesia. Berdasarkan informasi bisnis ini:
+- Nama Bisnis: "${brandInputs.businessName}"
+- Industri: "${brandInputs.industry}"
+- Target Pelanggan: "${brandInputs.targetAudience}"
+- Nilai Jual Unik: "${brandInputs.valueProposition}"
+Tugas: Buatkan paket optimasi Google (SEO) dasar.
+1.  **Keywords**: Berikan 5-10 kata kunci yang paling relevan, campur antara short-tail dan long-tail.
+2.  **Meta Title**: Buat judul SEO untuk halaman utama website, harus menarik dan di bawah 60 karakter.
+3.  **Meta Description**: Buat deskripsi SEO yang persuasif, di bawah 160 karakter.
+4.  **Google Business Profile Description**: Buat deskripsi profil bisnis untuk Google Maps yang informatif dan menarik, maksimal 750 karakter.
+Pastikan semua output dalam Bahasa Indonesia dan sesuai dengan JSON schema yang diberikan.`;
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: schema,
+            thinkingConfig: { thinkingBudget: 0 }
+        }
+    });
+    
+    const jsonString = response.text.trim();
+    return JSON.parse(jsonString);
+  } catch(error) {
+    throw handleApiError(error, "Google Gemini (SEO)");
+  }
+};
+
+// --- Google Ads Content Generation ---
+export const generateGoogleAdsContent = async (
+  brandInputs: BrandInputs,
+  slogan: string
+): Promise<AdsData> => {
+  const ai = getAiClient();
+  const adSchema = {
+    type: Type.OBJECT,
+    properties: {
+      headlines: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "Array berisi 3-5 headline. Setiap headline HARUS di bawah 30 karakter."
+      },
+      descriptions: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "Array berisi 2 deskripsi. Setiap deskripsi HARUS di bawah 90 karakter."
+      },
+      keywords: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "Array berisi 5-7 kata kunci yang sangat relevan untuk ad group ini."
+      }
+    },
+    required: ["headlines", "descriptions", "keywords"]
+  };
+
+  const finalSchema = {
+    type: Type.OBJECT,
+    properties: {
+      ads: {
+        type: Type.ARRAY,
+        description: "Array berisi 3 alternatif teks iklan Google Ads yang lengkap.",
+        items: adSchema
+      }
+    }
+  };
+  
+  try {
+    const prompt = `Kamu adalah seorang spesialis Google Ads untuk UMKM di Indonesia. Berdasarkan informasi bisnis ini:
+- Nama Bisnis: "${brandInputs.businessName}"
+- Industri: "${brandInputs.industry}"
+- Target Pelanggan: "${brandInputs.targetAudience}"
+- Nilai Jual Unik: "${brandInputs.valueProposition}"
+- Slogan: "${slogan}"
+Tugas: Buatkan 3 alternatif teks iklan (ad copy) untuk kampanye Google Search.
+Untuk setiap alternatif, berikan:
+1.  **Headlines**: 3-5 judul yang menarik dan relevan. Patuhi batas maksimal 30 karakter per judul.
+2.  **Descriptions**: 2 deskripsi yang persuasif dan informatif. Patuhi batas maksimal 90 karakter per deskripsi.
+3.  **Keywords**: 5-7 kata kunci yang paling cocok untuk grup iklan ini.
+Pastikan semua output dalam Bahasa Indonesia dan sesuai dengan JSON schema yang diberikan.`;
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: finalSchema,
+            thinkingConfig: { thinkingBudget: 0 }
+        }
+    });
+    
+    const jsonString = response.text.trim();
+    const result = JSON.parse(jsonString);
+    return result.ads;
+  } catch(error) {
+    throw handleApiError(error, "Google Gemini (Ads)");
+  }
+};
+
 
 // --- Social Media Post Image Generation ---
 export const generateSocialMediaPostImage = async (

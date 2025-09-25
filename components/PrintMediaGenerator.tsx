@@ -259,7 +259,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
             </CalloutPopup>
         )}
         <Button onClick={handleContinue}>
-          Lanjut ke Desain Kemasan &rarr;
+          Lanjut ke Optimasi Google (SEO) &rarr;
         </Button>
       </div>
       {modalImageUrl && (

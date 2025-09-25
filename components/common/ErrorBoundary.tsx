@@ -67,6 +67,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     // FIX: A toolchain-specific issue was causing a misleading TypeScript error on `this.props`.
     // Destructuring `children` from `this.props` resolves this by assigning it to a local variable.
     // FIX: Corrected a syntax error in destructuring assignment. The 'of' keyword is invalid here and has been replaced with '='.
+    // FIX: Replaced 'of' with '=' to correct the destructuring syntax.
     const { children } = this.props;
     return children;
   }

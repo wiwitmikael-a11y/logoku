@@ -58,6 +58,18 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <p className="text-gray-400 max-w-2xl">Studio branding AI pribadi lo. Mulai project baru untuk membangun identitas brand dari nol, atau lihat dan kelola brand kit yang sudah pernah lo buat.</p>
       </div>
       
+      <div className="w-full max-w-2xl bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-center gap-4 text-left animate-content-fade-in">
+        <div className="flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <div>
+          <h4 className="font-bold text-white">Info Fase Pengenalan</h4>
+          <p className="text-sm text-gray-300">Selama masa ini, semua fitur `logo.ku` 100% gratis, hanya dibatasi jatah token harian. Manfaatin buat eksplorasi sepuasnya ya, Juragan!</p>
+        </div>
+      </div>
+      
       <Button onClick={onNewProject}>
         + Bikin Project Branding Baru
       </Button>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets } from './types';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets, SeoData, AdsData } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
 // --- Error Handling & Loading ---
@@ -25,6 +25,8 @@ const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
 const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
 const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
 const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
+const SeoGenerator = React.lazy(() => import('./components/SeoGenerator'));
+const GoogleAdsGenerator = React.lazy(() => import('./components/GoogleAdsGenerator'));
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
 const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
@@ -37,7 +39,7 @@ const ConfirmationModal = React.lazy(() => import('./components/common/Confirmat
 const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'packaging' | 'merchandise' | 'summary' | 'caption';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'seo' | 'ads' | 'packaging' | 'merchandise' | 'summary' | 'caption';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const App: React.FC = () => {
@@ -101,7 +103,7 @@ const MainApp: React.FC = () => {
     const previousAppState = useRef<AppState>(appState);
     const previousSession = useRef<typeof session>(session);
 
-    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'print', 'packaging', 'merchandise'];
+    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'print', 'seo', 'ads', 'packaging', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
 
@@ -214,7 +216,9 @@ const MainApp: React.FC = () => {
         let nextState: AppState = 'persona';
         if (data.selectedMerchandiseUrl) nextState = 'summary'; // Go to summary if it was completed
         else if (data.selectedPackagingUrl) nextState = 'merchandise';
-        else if (data.selectedPrintMedia) nextState = 'packaging';
+        else if (data.adsData) nextState = 'packaging';
+        else if (data.seoData) nextState = 'ads';
+        else if (data.selectedPrintMedia) nextState = 'seo';
         else if (data.contentCalendar) nextState = 'print';
         else if (data.logoVariations) nextState = 'content';
         else if (data.selectedLogoUrl) nextState = 'logo_detail';
@@ -371,6 +375,24 @@ const MainApp: React.FC = () => {
         };
         try {
             await saveCheckpoint(updatedData);
+            navigateTo('seo');
+        } catch (e) { /* error is handled */ }
+    }, [saveCheckpoint]);
+
+    const handleSeoComplete = useCallback(async (data: { seoData: SeoData }) => {
+        const currentState = loadWorkflowState() || {};
+        const updatedData = { ...currentState, seoData: data.seoData };
+        try {
+            await saveCheckpoint(updatedData);
+            navigateTo('ads');
+        } catch (e) { /* error is handled */ }
+    }, [saveCheckpoint]);
+
+    const handleAdsComplete = useCallback(async (data: { adsData: AdsData }) => {
+        const currentState = loadWorkflowState() || {};
+        const updatedData = { ...currentState, adsData: data.adsData };
+        try {
+            await saveCheckpoint(updatedData);
             navigateTo('packaging');
         } catch (e) { /* error is handled */ }
     }, [saveCheckpoint]);
@@ -482,6 +504,16 @@ const MainApp: React.FC = () => {
                         userId={session.user.id}
                         projectId={selectedProjectId}
                     />;
+                }
+                break;
+            case 'seo':
+                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl) {
+                    return <SeoGenerator projectData={workflowData} onComplete={handleSeoComplete} />;
+                }
+                break;
+            case 'ads':
+                if (workflowData?.brandInputs && workflowData.selectedSlogan) {
+                    return <GoogleAdsGenerator projectData={workflowData} onComplete={handleAdsComplete} />;
                 }
                 break;
             case 'packaging':
