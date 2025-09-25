@@ -173,7 +173,7 @@ const generateImagesWithGemini = async (prompt: string, count: number): Promise<
             prompt: prompt,
             config: {
                 numberOfImages: count,
-                outputMimeType: 'image/png',
+                outputMimeType: 'image/jpeg', // FIX: Changed from 'image/png' to 'image/jpeg' as required by the API.
                 aspectRatio: '1:1',
             },
         });
@@ -194,7 +194,7 @@ const generateImagesWithGemini = async (prompt: string, count: number): Promise<
             throw new Error("Mang AI berhasil manggil Gemini, tapi nggak ada data gambar yang valid di responsnya. Coba lagi dengan prompt yang beda ya.");
         }
 
-        return imageData.map(bytes => `data:image/png;base64,${bytes}`);
+        return imageData.map(bytes => `data:image/jpeg;base64,${bytes}`); // Return as jpeg data URL
 
     } catch (error) {
         // Re-throw our custom, more descriptive errors directly.

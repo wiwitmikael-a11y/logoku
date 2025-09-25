@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, STORAGE_QUOTA_KB } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
@@ -21,7 +21,6 @@ interface Props {
 
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
 const GENERATION_COST = 1;
-const STORAGE_QUOTA_KB = 5 * 1024; // 5MB
 
 const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
   {

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, STORAGE_QUOTA_KB } from '../contexts/AuthContext';
 import type { ProjectData, BrandInputs, PrintMediaAssets } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -22,7 +22,6 @@ interface Props {
 
 type MediaTab = 'business_card' | 'flyer' | 'banner' | 'roll_banner';
 const GENERATION_COST = 1;
-const STORAGE_QUOTA_KB = 5 * 1024; // 5MB
 
 const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();

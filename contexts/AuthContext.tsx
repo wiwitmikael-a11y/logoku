@@ -6,6 +6,9 @@ import type { Profile } from '../types';
 
 export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
 
+// Centralized storage quota constant (5MB in KB)
+export const STORAGE_QUOTA_KB = 5 * 1024;
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -93,32 +96,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    let initialCheckDone = false;
-    // This listener handles both the initial session load and subsequent auth changes.
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    setLoading(true);
+
+    // Immediately check for a session on component mount. This is more reliable
+    // for the initial load than relying solely on the onAuthStateChange listener.
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        // If a session exists, fetch the user's profile before we finish loading.
+        await fetchProfile(session.user.id);
+      }
+      setLoading(false); // Mark loading as complete.
+    }).catch(error => {
+        console.error("Error during initial session fetch:", error);
+        setAuthError("Gagal mengambil sesi awal. Coba refresh halaman.");
+        setLoading(false);
+    });
+
+    // Set up a listener for any subsequent authentication events (login, logout, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
         if (session?.user) {
-          // Fetch profile for the logged-in user.
-          await fetchProfile(session.user.id);
+            // Re-fetch profile on sign-in or if user data is updated to ensure freshness.
+            if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+                 await fetchProfile(session.user.id);
+            }
         } else {
-          // If there's no session, clear the profile.
-          setProfile(null);
-        }
-
-        // The first event we get establishes the initial state. After that, we're loaded.
-        // This prevents the app from getting stuck on the loading screen on tab refocus.
-        if (!initialCheckDone) {
-            setLoading(false);
-            initialCheckDone = true;
+            // Clear profile data on logout.
+            setProfile(null);
         }
       }
     );
 
+    // Clean up the subscription when the component unmounts.
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, [fetchProfile]);
   

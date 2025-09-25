@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, STORAGE_QUOTA_KB } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -21,7 +21,6 @@ interface Props {
 }
 
 const GENERATION_COST = 1;
-const STORAGE_QUOTA_KB = 5 * 1024; // 5MB
 
 const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();

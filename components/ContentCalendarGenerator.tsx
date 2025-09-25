@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateContentCalendar, generateSocialMediaPostImage } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, STORAGE_QUOTA_KB } from '../contexts/AuthContext';
 import type { ContentCalendarEntry, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -19,7 +19,6 @@ interface Props {
 }
 
 const GENERATION_COST = 1;
-const STORAGE_QUOTA_KB = 5 * 1024; // 5MB
 
 const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
