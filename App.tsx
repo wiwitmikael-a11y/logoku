@@ -66,7 +66,7 @@ const MainApp: React.FC = () => {
         showLogoutConfirm,
         setShowLogoutConfirm,
         handleLogout,
-        executeLogout,
+        executeLogout: authExecuteLogout, // Renamed to avoid conflict
         handleDeleteAccount, 
         handleToggleMute, 
         isMuted, 
@@ -76,9 +76,16 @@ const MainApp: React.FC = () => {
         handleBgmChange,
     } = useAuth();
     
-    const [appState, setAppState] = useState<AppState>('dashboard');
+    // --- State Persistence on Refresh ---
+    const [appState, setAppState] = useState<AppState>(
+        () => (sessionStorage.getItem('logoku_app_state') as AppState) || 'dashboard'
+    );
+    const [selectedProjectId, setSelectedProjectId] = useState<number | null>(() => {
+        const id = sessionStorage.getItem('logoku_project_id');
+        return id ? parseInt(id, 10) : null;
+    });
+
     const [projects, setProjects] = useState<Project[]>([]);
-    const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
     const [generalError, setGeneralError] = useState<string | null>(null);
     const [isFinalizing, setIsFinalizing] = useState(false); // New state for final upload process
     
@@ -110,6 +117,23 @@ const MainApp: React.FC = () => {
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
 
+    // --- Effect for Persisting Navigation State ---
+    useEffect(() => {
+        if (session) { // Only persist state if user is logged in
+            if (appState === 'dashboard') {
+                sessionStorage.removeItem('logoku_app_state');
+                sessionStorage.removeItem('logoku_project_id');
+            } else {
+                sessionStorage.setItem('logoku_app_state', appState);
+                if (selectedProjectId !== null) {
+                    sessionStorage.setItem('logoku_project_id', selectedProjectId.toString());
+                } else {
+                     sessionStorage.removeItem('logoku_project_id');
+                }
+            }
+        }
+    }, [appState, selectedProjectId, session]);
+    
     useEffect(() => {
         if (!authLoading && session) {
             // If user just logged in (previous session was null)
@@ -514,7 +538,16 @@ const MainApp: React.FC = () => {
           playSound('error');
         }
     };
-
+    
+    // Custom logout handler to clear session storage
+    const executeLogout = async () => {
+        clearWorkflowState();
+        sessionStorage.removeItem('logoku_app_state');
+        sessionStorage.removeItem('logoku_project_id');
+        await authExecuteLogout();
+        setAppState('dashboard');
+        setSelectedProjectId(null);
+    };
 
     const renderContent = () => {
         const workflowData = loadWorkflowState();
