@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -368,9 +369,9 @@ const MainApp: React.FC = () => {
         navigateTo('logo_detail');
     }, []);
 
-    const handleLogoDetailComplete = useCallback(async (data: { finalLogoBase64: string; variations: LogoVariations }) => {
+    const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
         const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoBase64, logoVariations: data.variations };
+        const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
         saveWorkflowState(updatedData);
         navigateTo('content');
     }, []);
@@ -570,6 +571,8 @@ const MainApp: React.FC = () => {
                         baseLogoUrl={workflowData.selectedLogoUrl} 
                         basePrompt={workflowData.logoPrompt} 
                         onComplete={handleLogoDetailComplete}
+                        userId={session.user.id}
+                        projectId={selectedProjectId}
                     />;
                 }
                 break;

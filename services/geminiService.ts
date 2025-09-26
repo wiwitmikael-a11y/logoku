@@ -490,22 +490,6 @@ export const generateLogoOptions = async (prompt: string): Promise<string[]> => 
     }
 };
 
-export const generateLogoVariations = async (basePrompt: string): Promise<LogoVariations> => {
-    try {
-        const iconPrompt = `An icon-only version of this logo: "${basePrompt}". A simple, clean, vector symbol on a white background. No text.`;
-        const monochromePrompt = `A monochrome, black and white version of this logo: "${basePrompt}". Vector, clean, on a white background.`;
-
-        // We don't need to enhance these specific, technical prompts.
-        const [iconBase64, monochromeBase64] = await Promise.all([
-            generateImageFromWhiteCanvas(iconPrompt, '1:1'),
-            generateImageFromWhiteCanvas(monochromePrompt, '1:1')
-        ]);
-        return { main: '', icon: iconBase64, monochrome: monochromeBase64 };
-    } catch (error) {
-        throw handleApiError(error, "Flash Preview (Variasi Logo)");
-    }
-};
-
 export const editLogo = async (base64ImageData: string, mimeType: string, prompt: string): Promise<string> => {
     const ai = getAiClient();
     try {
@@ -538,6 +522,29 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
         throw handleApiError(error, "Flash Preview (Edit Logo)");
     }
 };
+
+export const generateLogoVariations = async (baseLogoBase64: string, basePrompt: string): Promise<LogoVariations> => {
+    try {
+        // Prepare the base image data for the API calls
+        const base64Data = baseLogoBase64.split(',')[1];
+        const mimeType = baseLogoBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+
+        // Create specific, direct instructions for image editing
+        const iconPrompt = `From the provided logo image, extract a simplified icon-only version. Remove all text and lettering. Keep the core symbol or shape. The final output should be a clean vector icon on a solid white background.`;
+        const monochromePrompt = `Convert the provided logo image into a high-contrast, monochrome (black and white) version. Do not change the shape or design elements, only remove all color. The final output must be a clean vector logo on a solid white background.`;
+
+        // Use the 'editLogo' function to perform the variations on the actual image
+        const [iconResultBase64, monochromeResultBase64] = await Promise.all([
+            editLogo(base64Data, mimeType, iconPrompt),
+            editLogo(base64Data, mimeType, monochromePrompt)
+        ]);
+
+        return { main: '', icon: iconResultBase64, monochrome: monochromeResultBase64 };
+    } catch (error) {
+        throw handleApiError(error, "Flash Preview (Variasi Logo)");
+    }
+};
+
 
 export const generateSocialMediaPostImage = async (idea: string, keywords: string[]): Promise<string[]> => {
     try {
