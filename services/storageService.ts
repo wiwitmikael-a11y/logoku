@@ -55,9 +55,9 @@ export const uploadImageFromBase64 = async (
 
     if (uploadError) {
         console.error('Supabase Storage Error:', uploadError);
-        // NEW: Add specific check for the "ceil(text)" error.
+        // NEW: More direct and actionable error message for the specific RLS issue.
         if (uploadError.message.includes('ceil(text)')) {
-             throw new Error("Waduh, ada error di database Supabase lo, Juragan. Ini biasanya karena ada Row Level Security (RLS) policy atau Trigger yang salah konfigurasi di tabel `storage.objects`. Coba periksa RLS policy-nya, kemungkinan ada yang mencoba menghitung ukuran file (size) tapi salah tipe data. Kalau lo bikin policy buat ngitung size, pastikan pakai `(metadata->>'size')::numeric`, bukan cuma `metadata->>'size'`.");
+             throw new Error("Waduh, RLS Policy di Supabase lo error, Juragan! Error 'ceil(text)' ini 100% karena ada policy yang salah di tabel 'storage.objects'. Lo harus buka Supabase Dashboard > Authentication > Policies, pilih tabel 'objects' di schema 'storage', HAPUS SEMUA policy yang ada, lalu buat 3 policy baru yang benar sesuai instruksi terakhir. Jangan pakai skrip SQL, lakukan manual di UI dashboard.");
         }
         throw new Error(`Gagal mengunggah gambar ke Supabase Storage: ${uploadError.message}. Pastikan bucket 'project-assets' sudah ada dan bersifat publik.`);
     }

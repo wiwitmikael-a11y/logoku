@@ -208,50 +208,48 @@ Setiap alternatif harus berisi caption yang menarik dan daftar hashtag yang rele
 };
 
 
-// --- Centralized Image Generation (using gemini-2.5-flash-image-preview) ---
-const generateImagesWithFlash = async (prompt: string, count: number = 1): Promise<string[]> => {
+// --- Centralized Image Generation (using imagen-4.0-generate-001) ---
+const generateImages = async (
+    prompt: string, 
+    numberOfImages: number = 1, 
+    aspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9' = '1:1'
+): Promise<string[]> => {
     const ai = getAiClient();
     try {
-        // Since the model doesn't support generating multiple images in one call,
-        // we have to loop and call it multiple times if count > 1.
-        const promises = Array(count).fill(0).map(async () => {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image-preview',
-                contents: { parts: [{ text: prompt }] },
-                config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
-            });
-
-            const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-            if (imagePart?.inlineData) {
-                return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-            }
-            // If no image is returned, throw an error for this specific promise.
-            throw new Error("Waduh, Mang AI tidak menghasilkan gambar. Ini bisa jadi karena prompt-nya terlalu rumit atau ada gangguan sementara. Coba lagi dengan prompt yang lebih simpel.");
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: prompt,
+            config: {
+              numberOfImages: numberOfImages,
+              outputMimeType: 'image/webp', // Use webp for efficiency
+              aspectRatio: aspectRatio,
+            },
         });
 
-        const imageData = await Promise.all(promises);
-        return imageData;
+        if (!response.generatedImages || response.generatedImages.length === 0) {
+             throw new Error("Waduh, Mang AI tidak menghasilkan gambar. Ini bisa jadi karena prompt-nya terlalu rumit atau ada gangguan sementara. Coba lagi dengan prompt yang lebih simpel.");
+        }
 
+        // The API returns raw base64 strings, we need to format them into data URLs.
+        return response.generatedImages.map(img => `data:image/webp;base64,${img.image.imageBytes}`);
     } catch (error) {
-        // Re-throw our custom, more descriptive errors directly.
         if (error instanceof Error && error.message.startsWith("Waduh, Mang AI tidak menghasilkan gambar")) {
             throw error;
         }
-        // Use the generic handler for all other errors.
-        throw handleApiError(error, "Google Gemini Vision");
+        throw handleApiError(error, "Google Imagen 4.0");
     }
 };
 
 
 export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
-  return generateImagesWithFlash(prompt, 1);
+  return generateImages(prompt, 1, '1:1');
 };
 
 export const generateLogoVariations = async (basePrompt: string): Promise<Omit<LogoVariations, 'main'>> => {
     try {
         const [iconResult, monochromeResult] = await Promise.all([
-            generateImagesWithFlash(`${basePrompt}, simplified icon only, clean, centered`, 1),
-            generateImagesWithFlash(`${basePrompt}, monochrome, black and white version`, 1)
+            generateImages(`${basePrompt}, simplified icon only, clean, centered`, 1, '1:1'),
+            generateImages(`${basePrompt}, monochrome, black and white version`, 1, '1:1')
         ]);
         if (!iconResult[0] || !monochromeResult[0]) {
             throw new Error("Gagal generate salah satu variasi logo.");
@@ -474,7 +472,7 @@ export const generateSocialMediaPostImage = async (
 ): Promise<string[]> => {
     // A prompt designed to create visually appealing images without text, focusing on the theme.
     const prompt = `Create a visually stunning, high-quality social media post graphic suitable for an Instagram feed, in a 1:1 aspect ratio. The image should visually represent the following theme or idea: "${contentIdea}". The overall artistic style should be: ${brandKeywords.join(', ')}. IMPORTANT: The image must not contain any text, words, or letters. It should be a pure visual representation. Style: professional, commercial photography, vibrant, engaging, clean aesthetic.`;
-    return generateImagesWithFlash(prompt, 1);
+    return generateImages(prompt, 1, '1:1');
 };
 
 // --- Print Media Generation ---
@@ -487,34 +485,43 @@ export const generatePrintMedia = async (
     }
 ): Promise<string[]> => {
     let prompt = '';
+    let aspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9' = '4:3';
     const { brandInputs, selectedPersona, logoPrompt } = data;
     const style = selectedPersona.kata_kunci.join(', ');
     const colors = selectedPersona.palet_warna_hex.join(', ');
 
     if (type === 'business_card' && brandInputs.contactInfo) {
         const { name, title, phone, email, website } = brandInputs.contactInfo;
-        prompt = `A professional business card design for "${brandInputs.businessName}", in a 4:3 aspect ratio. Style: ${style}, clean, modern, print-ready. Colors: ${colors}. Logo described as: "${logoPrompt}". The card must legibly display: Name: ${name}, Title: ${title}, Phone: ${phone}, Email: ${email}, Website: ${website}. Realistic mockup.`;
+        prompt = `A professional business card design for "${brandInputs.businessName}". Style: ${style}, clean, modern, print-ready. Colors: ${colors}. Logo described as: "${logoPrompt}". The card must legibly display: Name: ${name}, Title: ${title}, Phone: ${phone}, Email: ${email}, Website: ${website}. Realistic mockup.`;
+        aspectRatio = '4:3';
     } else if (type === 'flyer' && brandInputs.flyerContent) {
         const { headline, body, cta } = brandInputs.flyerContent;
-        prompt = `A professional A5 flyer design for "${brandInputs.businessName}", in a 3:4 aspect ratio. Style: ${style}, eye-catching, easy to read. Colors: ${colors}. Logo described as: "${logoPrompt}". Text: Headline: "${headline}" (large), Body: "${body}", CTA: "${cta}" (stands out). Realistic mockup.`;
+        prompt = `A professional A5 flyer design for "${brandInputs.businessName}". Style: ${style}, eye-catching, easy to read. Colors: ${colors}. Logo described as: "${logoPrompt}". Text: Headline: "${headline}" (large), Body: "${body}", CTA: "${cta}" (stands out). Realistic mockup.`;
+        aspectRatio = '3:4';
     } else if (type === 'banner' && brandInputs.bannerContent) {
         const { headline, subheadline } = brandInputs.bannerContent;
-        prompt = `A professional horizontal banner (spanduk) design for "${brandInputs.businessName}", in a 16:9 aspect ratio (like a 3x1 meter banner). Style: ${style}, highly visible from a distance. Colors: ${colors}. Logo described as: "${logoPrompt}" (large and clear). Text: Headline: "${headline}" (very large), Sub-headline: "${subheadline}". Realistic outdoor mockup.`;
+        prompt = `A professional horizontal banner (spanduk) design for "${brandInputs.businessName}". Style: ${style}, highly visible from a distance. Colors: ${colors}. Logo described as: "${logoPrompt}" (large and clear). Text: Headline: "${headline}" (very large), Sub-headline: "${subheadline}". Realistic outdoor mockup.`;
+        aspectRatio = '16:9';
     } else if (type === 'roll_banner' && brandInputs.rollBannerContent) {
         const { headline, body, contact } = brandInputs.rollBannerContent;
-        prompt = `A professional vertical roll-up banner design for "${brandInputs.businessName}", in a 9:16 aspect ratio (like an 85x200 cm banner). Style: ${style}, elegant, informative. Colors: ${colors}. Logo described as: "${logoPrompt}" (at the top). Content: Headline: "${headline}" (top), Body: "${body}" (bullet points), Contact: "${contact}" (bottom). Realistic standing mockup.`;
+        prompt = `A professional vertical roll-up banner design for "${brandInputs.businessName}". Style: ${style}, elegant, informative. Colors: ${colors}. Logo described as: "${logoPrompt}" (at the top). Content: Headline: "${headline}" (top), Body: "${body}" (bullet points), Contact: "${contact}" (bottom). Realistic standing mockup.`;
+        aspectRatio = '9:16';
     } else {
         throw new Error("Informasi yang dibutuhkan untuk generate media cetak tidak lengkap.");
     }
-    return generateImagesWithFlash(prompt, 1);
+
+    // Add a disclaimer about text rendering quality.
+    prompt += " IMPORTANT: Any text in the image is for layout and style demonstration only, it may not be accurate. Focus on the overall design.";
+    
+    return generateImages(prompt, 1, aspectRatio);
 };
 
 // --- Packaging & Merchandise Generation ---
 export const generatePackagingDesign = async (prompt: string): Promise<string[]> => {
-  const fullPrompt = `2D packaging design mockup with a 4:3 aspect ratio, printable concept for a product. ${prompt}, flat lay, product photography style, clean background, commercial look.`;
-  return generateImagesWithFlash(fullPrompt, 1);
+  const fullPrompt = `2D packaging design mockup, printable concept for a product. ${prompt}, flat lay, product photography style, clean background, commercial look.`;
+  return generateImages(fullPrompt, 1, '4:3');
 };
 
 export const generateMerchandiseMockup = async (prompt: string): Promise<string[]> => {
-  return generateImagesWithFlash(prompt, 1);
+  return generateImages(prompt, 1, '1:1');
 };
