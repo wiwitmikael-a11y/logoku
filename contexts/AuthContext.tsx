@@ -6,9 +6,6 @@ import type { Profile } from '../types';
 
 export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
 
-// Centralized storage quota constant (5MB in KB) - a reference, not strictly enforced by client now
-export const STORAGE_QUOTA_KB = 5 * 1024;
-
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -55,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, credits, last_credit_reset') // Only fetch what's needed now
         .eq('id', userId)
         .single();
 
