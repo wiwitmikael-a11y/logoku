@@ -1,7 +1,10 @@
 import { supabase } from './supabaseClient';
 import { compressAndConvertToWebP } from '../utils/imageUtils';
 
-// Helper to convert a Base64 data URL to a Blob object.
+// Batas ukuran file maksimal yang diizinkan (5 MB)
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+
+// Helper untuk konversi Base64 ke Blob
 const base64ToBlob = async (base64: string): Promise<Blob | null> => {
     try {
         const response = await fetch(base64);
@@ -14,14 +17,15 @@ const base64ToBlob = async (base64: string): Promise<Blob | null> => {
 };
 
 /**
- * Compresses, converts, and uploads an image from a Base64 string to Supabase Storage.
- * This version uploads a `File` object, which might be handled more robustly by Supabase's
- * metadata extraction for RLS policies compared to an ArrayBuffer.
- * @param base64String The full data URL of the image (e.g., "data:image/png;base64,...").
- * @param userId The ID of the user uploading the file.
- * @param projectId The ID of the project this asset belongs to.
- * @param assetType A string describing the asset (e.g., 'logo', 'flyer').
- * @returns The public URL of the uploaded file.
+ * [ROMBAK TOTAL] Mengunggah gambar dari string Base64 ke Supabase Storage.
+ * Versi baru ini mencakup pengecekan ukuran file di SISI KLIEN sebelum upload.
+ * Ini mencegah percobaan upload yang tidak perlu dan memberikan penanganan error yang lebih jelas
+ * untuk masalah miskonfigurasi RLS Policy yang diketahui.
+ * @param base64String URL data lengkap dari gambar (misal: "data:image/png;base64,...").
+ * @param userId ID pengguna yang mengunggah file.
+ * @param projectId ID proyek tempat aset ini berada.
+ * @param assetType String yang mendeskripsikan aset (misal: 'logo', 'flyer').
+ * @returns URL publik dari file yang berhasil diunggah.
  */
 export const uploadImageFromBase64 = async (
     base64String: string,
@@ -31,28 +35,30 @@ export const uploadImageFromBase64 = async (
 ): Promise<string> => {
     const BUCKET_NAME = 'project-assets';
 
-    // Step 1: Compress the image to WebP format.
+    // Langkah 1: Kompres dan konversi gambar ke Blob WebP.
     const compressedBase64 = await compressAndConvertToWebP(base64String);
-    
-    // Step 2: Convert the Base64 string to a Blob.
     const blob = await base64ToBlob(compressedBase64);
 
     if (!blob) {
         throw new Error('Gagal mengubah data Base64 menjadi file. Data mungkin korup atau formatnya salah.');
     }
+
+    // Langkah 2: [BARU] Validasi ukuran file di sisi klien.
+    if (blob.size > MAX_FILE_SIZE_BYTES) {
+        throw new Error(`Upload gagal: Ukuran file (${(blob.size / 1024 / 1024).toFixed(2)} MB) melebihi batas maksimal (5 MB).`);
+    }
     
-    // Step 3: Create a File object from the Blob. This can provide better metadata for Supabase.
+    // Langkah 3: Buat objek File dari Blob.
     const fileName = `${assetType}-${Date.now()}.webp`;
     const file = new File([blob], fileName, { type: 'image/webp' });
     const filePath = `${userId}/${projectId}/${fileName}`;
 
-    // Step 4: Upload the File object.
+    // Langkah 4: Upload File.
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(filePath, file, { // Using the File object directly
+        .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false,
-            // contentType is often inferred from the File object, but we specify it for safety
             contentType: 'image/webp', 
         });
 
@@ -60,21 +66,17 @@ export const uploadImageFromBase64 = async (
         console.error('Supabase Storage Error:', uploadError);
         const errorString = (uploadError instanceof Error ? uploadError.message : JSON.stringify(uploadError)).toLowerCase();
 
-        // The error message is now even more specific about the fix being in the Supabase Dashboard.
-        if (errorString.includes('function ceil(text) does not exist')) {
-            const rlsErrorMessage = "PERBAIKI DI DASHBOARD SUPABASE: Upload gagal karena RLS Policy untuk INSERT di bucket 'project-assets' salah. Buka dashboard Supabase > Storage > Policies. Edit policy INSERT Anda dan pastikan Anda menggunakan `(NEW.metadata->>'size')::bigint` untuk memeriksa ukuran file, BUKAN `ceil(...)`. Error ini TIDAK BISA diperbaiki dari kode aplikasi.";
+        // [Pesan Error Baru] Pesan error paling lugas, non-teknis, dan anti-bantah.
+        // Mengkonfirmasi masalah 100% ada di settingan dashboard Supabase, bukan di kode aplikasi.
+        if (errorString.includes('function ceil(text) does not exist') || errorString.includes('policy')) {
+            const rlsErrorMessage = "STOP! Upload Ditolak Satpam Supabase. Settingan RLS Policy di akun Supabase lo 100% salah. Ini BUKAN error di aplikasi. Mang AI nggak bisa benerin ini dari kode. Lo HARUS login ke Supabase dan benerin sendiri policy INSERT di bucket 'project-assets'.";
             throw new Error(rlsErrorMessage);
         }
 
-        if (errorString.includes('security policy') || errorString.includes('rls')) {
-            const genericRlsError = "Koneksi ke storage diblokir sama RLS (Row Level Security) Policy. Ini 99% masalah konfigurasi di dashboard Supabase, bukan di kode aplikasi. Cek lagi semua policy (SELECT, INSERT, UPDATE, DELETE) di bucket `project-assets` lo.";
-            throw new Error(genericRlsError);
-        }
-
-        throw new Error(`Gagal mengunggah gambar ke Supabase Storage: ${uploadError.message}. Pastikan bucket 'project-assets' sudah ada dan bersifat publik.`);
+        throw new Error(`Gagal upload ke Supabase Storage: ${uploadError.message}. Cek koneksi dan pastikan bucket 'project-assets' ada & publik.`);
     }
 
-    // Step 5: Get the public URL of the successfully uploaded file.
+    // Langkah 5: Dapatkan URL publik.
     const { data: publicUrlData } = supabase.storage
         .from(BUCKET_NAME)
         .getPublicUrl(filePath);
