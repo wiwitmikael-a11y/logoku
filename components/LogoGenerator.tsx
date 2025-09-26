@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react
 import { generateLogoOptions } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
-import { useAuth, STORAGE_QUOTA_KB } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -119,12 +119,6 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, use
 
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
-    
-    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
-        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
-        playSound('error');
-        return;
-    }
 
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
@@ -156,7 +150,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, use
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, profile]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
   
   const handleContinue = () => {
     if (selectedLogoUrl) {

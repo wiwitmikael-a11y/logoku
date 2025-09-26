@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateContentCalendar, generateSocialMediaPostImage } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
-import { useAuth, STORAGE_QUOTA_KB } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import type { ContentCalendarEntry, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -72,11 +72,6 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, us
   }, [projectData]);
   
   const handleGenerateImage = useCallback(async (index: number) => {
-    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
-        setImageGenError({ index, message: `Penyimpanan lo penuh (lebih dari 5MB). Hapus project lama dulu ya.` });
-        playSound('error');
-        return;
-    }
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -112,7 +107,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, us
     } finally {
         setGeneratingImageForIndex(null);
     }
-  }, [calendar, credits, projectData, deductCredits, setShowOutOfCreditsModal, userId, projectId, profile]);
+  }, [calendar, credits, projectData, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
 
   const handleContinue = () => {
     onComplete({ calendar, sources });

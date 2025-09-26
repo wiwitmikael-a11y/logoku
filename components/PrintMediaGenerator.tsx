@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
-import { useAuth, STORAGE_QUOTA_KB } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import type { ProjectData, BrandInputs, PrintMediaAssets } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -94,12 +94,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
-        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
-        playSound('error');
-        return;
-    }
-    
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -149,7 +143,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected, userId, projectId, profile]);
+  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected, userId, projectId]);
 
   const handleContinue = () => {
     onComplete({

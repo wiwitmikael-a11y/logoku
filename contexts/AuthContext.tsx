@@ -6,7 +6,7 @@ import type { Profile } from '../types';
 
 export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
 
-// Centralized storage quota constant (5MB in KB)
+// Centralized storage quota constant (5MB in KB) - a reference, not strictly enforced by client now
 export const STORAGE_QUOTA_KB = 5 * 1024;
 
 interface AuthContextType {
@@ -53,10 +53,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 
   const fetchProfile = useCallback(async (userId: string) => {
-    // We fetch the profile to get credits and last_credit_reset data.
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, credits, last_credit_reset')
+        .select('*')
         .eq('id', userId)
         .single();
 
@@ -66,61 +65,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
     }
 
-    // Even if there's no profile row yet (new user), we proceed to calculate storage.
     const profileData = (data as Profile) || { id: userId, credits: 10, last_credit_reset: '1970-01-01', storage_used_kb: 0 };
-
-    // --- Fetch storage usage from the database function ---
-    let calculatedStorageKb = 0;
-    try {
-        // Call the 'get_user_storage_used' function created in Supabase SQL Editor
-        const { data: storageKb, error: rpcError } = await supabase.rpc('get_user_storage_used', { p_user_id: userId });
-        if (rpcError) throw rpcError;
-        calculatedStorageKb = storageKb;
-    } catch (storageError) {
-        console.error("Gagal mengambil data storage via RPC:", storageError);
-        setAuthError('Gagal mengambil data penggunaan storage.');
-    }
-    const correctedProfile = { ...profileData, storage_used_kb: calculatedStorageKb };
-    // --- END: Fetch storage usage ---
-
-    if (data) { // This block only runs if a profile record existed in the DB
-        const todayWIB = getTodaysDateWIB();
+    
+    const todayWIB = getTodaysDateWIB();
+    
+    if (profileData.last_credit_reset !== todayWIB) {
+        const updatedProfileWithCredits = { ...profileData, credits: 10, last_credit_reset: todayWIB };
         
-        if (correctedProfile.last_credit_reset !== todayWIB) {
-            const updatedProfileWithCredits = { ...correctedProfile, credits: 10, last_credit_reset: todayWIB };
-            
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ credits: 10, last_credit_reset: todayWIB })
-                .eq('id', userId);
-            
-            if (updateError) {
-                console.error("Gagal me-reset token harian:", updateError);
-                setAuthError("Gagal me-reset token harian, tapi jangan khawatir, data lama masih aman.");
-                setProfile(correctedProfile);
-            } else {
-                setProfile(updatedProfileWithCredits);
-            }
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ credits: 10, last_credit_reset: todayWIB })
+            .eq('id', userId);
+        
+        if (updateError) {
+            console.error("Gagal me-reset token harian:", updateError);
+            setAuthError("Gagal me-reset token harian, tapi jangan khawatir, data lama masih aman.");
+            setProfile(profileData);
         } else {
-            setProfile(correctedProfile);
+            setProfile(updatedProfileWithCredits);
         }
     } else {
-        setProfile(correctedProfile);
+        setProfile(profileData);
     }
   }, []);
 
   useEffect(() => {
     setLoading(true);
 
-    // Check for an existing session on initial load.
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Fetch profile in the background without blocking the UI.
         fetchProfile(session.user.id);
       }
-      // Set loading to false to allow the app to render.
       setLoading(false);
     }).catch(error => {
       console.error("Error during initial session fetch:", error);
@@ -128,7 +105,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    // Set up a listener for subsequent authentication events (login, logout, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -141,7 +117,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Clean up the subscription when the component unmounts.
     return () => {
       subscription?.unsubscribe();
     };
@@ -152,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [bgmSelection]);
 
   useEffect(() => {
-    setMuted(isMuted); // Tell sound service about global mute status
+    setMuted(isMuted);
 
     if (isMuted || bgmSelection === 'Mute') {
       stopBGM();
@@ -166,26 +141,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         playBGM(bgmSelection as any);
       }
     } else {
-        // If not logged in (on login screen), stop any BGM.
-        // It will be triggered manually by user interaction.
         stopBGM();
     }
   }, [isMuted, bgmSelection, session]);
 
-
-  // This function now simply triggers the confirmation modal
   const handleLogout = () => {
     setShowLogoutConfirm(true);
   };
 
-  // This function performs the actual sign out
   const executeLogout = async () => {
-    setShowLogoutConfirm(false); // Close modal first
+    setShowLogoutConfirm(false);
     const { error } = await supabase.auth.signOut();
     if (error) {
       setAuthError(`Gagal logout: ${error.message}`);
     } else {
-      setProfile(null); // Clear profile on successful logout
+      setProfile(null);
     }
   };
 

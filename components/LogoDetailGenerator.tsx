@@ -3,7 +3,7 @@ import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 import { playSound } from '../services/soundService';
-import { useAuth, STORAGE_QUOTA_KB } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import type { LogoVariations } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -48,11 +48,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
   }, [variations]);
 
   const handleGenerateVariations = useCallback(async () => {
-    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
-        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
-        playSound('error');
-        return;
-    }
     if (credits < VARIATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -82,16 +77,11 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, profile]);
+  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
-        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
-        playSound('error');
-        return;
-    }
     if (credits < EDIT_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -103,19 +93,15 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setError(null);
     playSound('start');
     try {
-      // Fetch current image from Supabase URL and convert back to Base64 for the API
       const currentImageBase64 = await fetchImageAsBase64(finalLogoUrl);
       const base64Data = currentImageBase64.split(',')[1];
       const mimeType = currentImageBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
       
-      // Call the edit API with the Base64 data
       const editedBase64Result = await editLogo(base64Data, mimeType, editPrompt);
-      
-      // Upload the new edited image to Supabase Storage
       const newPublicUrl = await uploadImageFromBase64(editedBase64Result, userId, projectId, 'logo-edited');
 
       await deductCredits(EDIT_COST); // Deduct on success
-      setFinalLogoUrl(newPublicUrl); // Update the main displayed logo with the new public URL
+      setFinalLogoUrl(newPublicUrl);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Gagal mengedit logo.';
@@ -128,7 +114,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
 
   const handleContinue = () => {
     if (variations) {
-        // Ensure the final selected logo (potentially edited) is set as the 'main' in variations
         const finalVariations = { ...variations, main: finalLogoUrl };
         onComplete({ finalLogoUrl, variations: finalVariations });
     }
@@ -142,7 +127,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Logo Preview & Variations */}
         <div className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-lg md:text-xl font-bold">Logo Utama Lo</h3>
             <div className="bg-white p-4 rounded-lg flex justify-center items-center aspect-square cursor-pointer group" onClick={() => openModal(finalLogoUrl)}>
@@ -174,7 +158,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
             )}
         </div>
 
-        {/* AI Edit Section */}
         <div className="flex flex-col gap-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-lg md:text-xl font-bold">Revisi Cepat dengan Mang AI</h3>
             <p className="text-sm text-gray-400">Kasih perintah simpel buat ubah logo lo. Misal: "ganti warnanya jadi biru dongker" atau "tambahin outline tipis".</p>

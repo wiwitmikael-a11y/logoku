@@ -12,26 +12,27 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: Corrected the class to extend React.Component, providing access to lifecycle methods, state, and props like `this.props` and `this.setState`.
+// FIX: To function as a React Error Boundary, this class must extend React.Component.
+// This gives it access to component lifecycle methods like getDerivedStateFromError
+// and componentDidCatch, as well as state management ('this.state', 'this.setState')
+// and props ('this.props'), which resolves the errors.
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to modern class field syntax for state initialization.
-  // This is cleaner and ensures all state properties are correctly initialized.
-  public state: State = {
+  state: State = {
     hasError: false,
     error: undefined,
     isCopied: false,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
     return { hasError: true, error, isCopied: false };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
   
-  private handleCopy = () => {
+  handleCopy = () => {
       if(this.state.error) {
           navigator.clipboard.writeText(this.state.error.toString());
           this.setState({ isCopied: true });
@@ -39,7 +40,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       }
   }
 
-  public render(): React.ReactNode {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       // The 'imageRendering' property is not standard in all TypeScript versions of React's CSSProperties.
       // This can cause a misleading type error in certain toolchains.

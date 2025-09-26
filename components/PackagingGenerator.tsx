@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
-import { useAuth, STORAGE_QUOTA_KB } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -54,12 +54,6 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (profile && profile.storage_used_kb >= STORAGE_QUOTA_KB) {
-        setError(`Waduh, gudang penyimpanan lo udah penuh (lebih dari 5MB). Hapus project lama buat ngosongin ruang ya.`);
-        playSound('error');
-        return;
-    }
-    
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -90,7 +84,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, profile]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {

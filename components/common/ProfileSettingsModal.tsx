@@ -14,9 +14,6 @@ interface Props {
   onShowContact: () => void;
 }
 
-// User's free tier storage quota in KB (5MB)
-const STORAGE_QUOTA_KB = 5 * 1024;
-
 const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, onLogout, onDeleteAccount, onShowToS, onShowContact }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -38,11 +35,6 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
   if (!show || !user) {
     return null;
   }
-  
-  const storageUsedKb = profile?.storage_used_kb ?? 0;
-  const storageUsedMb = (storageUsedKb / 1024).toFixed(2);
-  const storageQuotaMb = (STORAGE_QUOTA_KB / 1024);
-  const storagePercentage = Math.min((storageUsedKb / STORAGE_QUOTA_KB) * 100, 100);
 
   const handleClose = async () => {
       await unlockAudio();
@@ -101,18 +93,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
                 <p className="text-2xl font-bold text-white">{profile?.credits ?? '0'} <span className="text-base font-normal text-gray-300">Token Tersisa</span></p>
                 <p className="text-xs text-gray-400 mt-1">Token akan di-reset menjadi 10 setiap hari. Selamat berkarya!</p>
             </div>
-            {/* New Storage Quota Section */}
-            <div className="bg-gray-900/50 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-1">
-                    <h3 className="text-sm font-semibold text-indigo-400">Kuota Penyimpanan Aset</h3>
-                    <p className="text-xs font-mono text-gray-300">{storageUsedMb} / {storageQuotaMb} MB</p>
-                </div>
-                <div className="w-full bg-gray-700 rounded-full h-2.5">
-                    <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${storagePercentage}%` }}></div>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">Kuota untuk menyimpan semua aset visual (logo, mockup, dll) yang lo buat.</p>
-            </div>
-
+            
              <div className="bg-gray-900/50 p-4 rounded-lg">
                 <h3 className="text-sm font-semibold text-indigo-400 mb-2">Tindakan</h3>
                 <div className="flex flex-col sm:flex-row gap-3">
