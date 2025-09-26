@@ -64,10 +64,9 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: A toolchain-specific issue was causing a misleading TypeScript error on `this.props`.
-    // Destructuring `children` from `this.props` resolves this by assigning it to a local variable.
-    // FIX: Corrected a syntax error in destructuring assignment. The 'of' keyword is invalid here and has been replaced with '='.
-    // FIX: Replaced 'of' with '=' to correct the destructuring syntax.
+    // FIX: The error "Property 'props' does not exist on type 'ErrorBoundary'" is likely a misleading
+    // toolchain/TypeScript error. The direct property access `this.props.children` was also failing.
+    // Destructuring `this.props` is a standard pattern and might resolve the issue.
     const { children } = this.props;
     return children;
   }

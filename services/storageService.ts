@@ -1,27 +1,15 @@
 import { supabase } from './supabaseClient';
 import { compressAndConvertToWebP } from '../utils/imageUtils';
 
-// Helper to convert a Base64 data URL to a File object
-const base64ToFile = (base64: string, filename: string): File | null => {
-    const match = base64.match(/data:(image\/(.+));base64,(.+)/);
-    if (!match) return null;
-    
-    const mime = match[1];
-    const b64 = match[3];
-
+// Helper to convert a Base64 data URL to a File object using the fetch API for robustness.
+const base64ToFile = async (base64: string, filename: string): Promise<File | null> => {
     try {
-        const byteCharacters = atob(b64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: mime });
-        
-        return new File([blob], filename, { type: mime });
-
+        const response = await fetch(base64);
+        const blob = await response.blob();
+        // The blob.type will be correctly inferred from the data URL, e.g., 'image/webp'
+        return new File([blob], filename, { type: blob.type });
     } catch (e) {
-        console.error("Failed to decode Base64 string:", e);
+        console.error("Gagal mengonversi data URL Base64 ke File:", e);
         return null;
     }
 };
@@ -50,7 +38,7 @@ export const uploadImageFromBase64 = async (
     // ------------------------------------
     
     const fileName = `${assetType}-${Date.now()}.webp`; // Always use .webp extension now
-    const file = base64ToFile(compressedBase64, fileName);
+    const file = await base64ToFile(compressedBase64, fileName);
 
     if (!file) {
         throw new Error('Gagal mengubah data Base64 menjadi file. Data mungkin korup atau formatnya salah.');

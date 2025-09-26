@@ -45,6 +45,26 @@ const handleApiError = (error: any, serviceName: string): Error => {
     return new Error(`Gagal manggil ${serviceName}. Coba cek console buat detailnya.`);
 };
 
+// --- NEW: Robust JSON Parsing Helper ---
+/**
+ * Safely parses a JSON string, providing a more specific error message on failure.
+ * @param jsonString The raw string from the AI model.
+ * @param serviceName The name of the function/service for error logging.
+ * @returns The parsed object of type T.
+ * @throws An error if parsing fails.
+ */
+const safeJsonParse = <T>(jsonString: string, serviceName: string): T => {
+  try {
+    // Attempt to parse the JSON string.
+    return JSON.parse(jsonString);
+  } catch (parseError) {
+    // Log the detailed error and the problematic string for debugging.
+    console.error(`JSON Parse Error in ${serviceName}:`, parseError, "Raw string received:", jsonString);
+    // Throw a user-friendly error.
+    throw new Error(`Waduh, Mang AI lagi ngelindur. Respon dari ${serviceName} formatnya aneh dan nggak bisa dibaca. Coba generate ulang, ya.`);
+  }
+};
+
 
 // --- Persona & Slogan Generation (Gemini Text) ---
 export const generateBrandPersona = async (
@@ -78,9 +98,15 @@ Buatkan 3 alternatif persona brand yang komprehensif. Setiap persona harus menca
     });
 
     const jsonString = response.text.trim();
-    const result = JSON.parse(jsonString);
+    const result = safeJsonParse<{ personas: BrandPersona[] }>(jsonString, "Brand Persona");
+    if (!result || !Array.isArray(result.personas)) {
+        throw new Error("Struktur data Persona yang diterima dari AI tidak sesuai harapan.");
+    }
     return result.personas;
   } catch (error) {
+    if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
+        throw error;
+    }
     throw handleApiError(error, "Google Gemini");
   }
 };
@@ -104,8 +130,15 @@ export const generateSlogans = async (
             }
         });
         const jsonString = response.text.trim();
-        return JSON.parse(jsonString);
+        const result = safeJsonParse<string[]>(jsonString, "Slogan");
+        if (!Array.isArray(result)) {
+            throw new Error("Struktur data Slogan yang diterima dari AI tidak sesuai harapan (seharusnya array of strings).");
+        }
+        return result;
     } catch (error) {
+        if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
+            throw error;
+        }
         throw handleApiError(error, "Google Gemini");
     }
 };
@@ -161,9 +194,15 @@ Setiap alternatif harus berisi caption yang menarik dan daftar hashtag yang rele
             }
         });
         const jsonString = response.text.trim();
-        const result = JSON.parse(jsonString);
+        const result = safeJsonParse<{ captions: GeneratedCaption[] }>(jsonString, "Caption");
+        if (!result || !Array.isArray(result.captions)) {
+            throw new Error("Struktur data Caption yang diterima dari AI tidak sesuai harapan.");
+        }
         return result.captions;
     } catch (error) {
+        if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
+            throw error;
+        }
         throw handleApiError(error, "Google Gemini (Caption)");
     }
 };
@@ -271,9 +310,15 @@ PENTING: Format output HARUS berupa JSON object yang valid, tanpa markdown forma
     }
 
     const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const parsedJson = JSON.parse(jsonString);
+    const parsedJson = safeJsonParse<{ calendar: ContentCalendarEntry[] }>(jsonString, "Content Calendar");
+    if (!parsedJson || !Array.isArray(parsedJson.calendar)) {
+        throw new Error("Struktur data Kalender Konten yang diterima dari AI tidak sesuai harapan.");
+    }
     return { calendar: parsedJson.calendar, sources };
   } catch (error) {
+    if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
+        throw error;
+    }
     throw handleApiError(error, "Google Gemini (Search)");
   }
 };
@@ -331,8 +376,15 @@ Pastikan semua output dalam Bahasa Indonesia dan sesuai dengan JSON schema yang 
     });
     
     const jsonString = response.text.trim();
-    return JSON.parse(jsonString);
+    const result = safeJsonParse<SeoData>(jsonString, "SEO Content");
+    if (!result || typeof result.keywords === 'undefined' || typeof result.metaTitle === 'undefined') {
+        throw new Error("Struktur data SEO yang diterima dari AI tidak sesuai harapan.");
+    }
+    return result;
   } catch(error) {
+    if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
+        throw error;
+    }
     throw handleApiError(error, "Google Gemini (SEO)");
   }
 };
@@ -401,9 +453,15 @@ Pastikan semua output dalam Bahasa Indonesia dan sesuai dengan JSON schema yang 
     });
     
     const jsonString = response.text.trim();
-    const result = JSON.parse(jsonString);
+    const result = safeJsonParse<{ ads: AdsData }>(jsonString, "Google Ads Content");
+    if (!result || !Array.isArray(result.ads)) {
+        throw new Error("Struktur data Iklan Google yang diterima dari AI tidak sesuai harapan.");
+    }
     return result.ads;
   } catch(error) {
+    if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
+        throw error;
+    }
     throw handleApiError(error, "Google Gemini (Ads)");
   }
 };
