@@ -1,8 +1,5 @@
-
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
-import { fetchImageAsBase64 } from '../utils/imageUtils';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { LogoVariations } from '../types';
@@ -54,20 +51,15 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
 
     setIsGeneratingVariations(true);
     setError(null);
-    setShowNextStepNudge(false); // Reset nudge
+    setShowNextStepNudge(false);
     playSound('start');
     try {
-      // FIX: The function was called with the wrong arguments. Now correctly passing the basePrompt.
-      const generatedVariations = await generateLogoVariations(basePrompt);
+      // CRITICAL FIX: Now calls the corrected service function which edits the existing logo.
+      const generatedVariations = await generateLogoVariations(finalLogoUrl);
       
       await deductCredits(VARIATION_COST);
       
-      const completeVariations = { 
-          main: finalLogoUrl,
-          icon: generatedVariations.icon, 
-          monochrome: generatedVariations.monochrome 
-      };
-      setVariations(completeVariations);
+      setVariations(generatedVariations);
       setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
@@ -77,7 +69,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +85,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setError(null);
     playSound('start');
     try {
-      // `finalLogoUrl` is already a Base64 string, no need to fetch
       const base64Data = finalLogoUrl.split(',')[1];
       const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/png';
       
@@ -114,7 +105,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
 
   const handleContinue = () => {
     if (variations) {
-        // Ensure the final selected logo (potentially edited) is set as the 'main' in variations
         const finalVariations = { ...variations, main: finalLogoUrl };
         onComplete({ finalLogoUrl, variations: finalVariations });
     }

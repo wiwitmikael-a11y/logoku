@@ -1,29 +1,29 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { generateGoogleAdsContent } from '../services/geminiService';
+import { generateSocialAds } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-import type { AdsData, ProjectData } from '../types';
+import type { SocialAdsData, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
+import CopyButton from './common/CopyButton';
 
 interface Props {
   projectData: Partial<ProjectData>;
-  onComplete: (data: { adsData: AdsData }) => void;
+  onComplete: (data: { adsData: SocialAdsData }) => void;
 }
 
 const GENERATION_COST = 1;
 
-const GoogleAdsGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   const { deductCredits, setShowOutOfCreditsModal, profile } = useAuth();
   const credits = profile?.credits ?? 0;
 
-  const [adsData, setAdsData] = useState<AdsData | null>(null);
+  const [adsData, setAdsData] = useState<SocialAdsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
-  const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,7 +33,8 @@ const GoogleAdsGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   }, [adsData]);
 
   const handleSubmit = useCallback(async () => {
-    if (!projectData.brandInputs || !projectData.selectedSlogan) return;
+    const { brandInputs, selectedPersona, selectedSlogan } = projectData;
+    if (!brandInputs || !selectedPersona || !selectedSlogan) return;
 
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
@@ -48,7 +49,7 @@ const GoogleAdsGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
-      const result = await generateGoogleAdsContent(projectData.brandInputs, projectData.selectedSlogan);
+      const result = await generateSocialAds(brandInputs, selectedPersona, selectedSlogan);
       await deductCredits(GENERATION_COST);
       setAdsData(result);
       setShowNextStepNudge(true);
@@ -62,27 +63,20 @@ const GoogleAdsGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     }
   }, [projectData, credits, deductCredits, setShowOutOfCreditsModal]);
   
-  const handleCopyToClipboard = (text: string, type: string) => {
-    navigator.clipboard.writeText(text);
-    playSound('click');
-    setCopyStatus(type);
-    setTimeout(() => setCopyStatus(null), 2000);
-  };
-
   const handleContinue = () => {
     if (adsData) {
       onComplete({ adsData });
     }
   };
   
-  const businessUrl = `www.${projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '')}.com`;
+  const businessHandle = projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
 
   return (
     <div className="flex flex-col gap-8 items-center">
       <div className="text-center">
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Optimasi Iklan Google</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Teks Iklan Sosmed</h2>
         <p className="text-gray-400 max-w-3xl">
-          Saatnya ngiklan! Biar Mang AI racik beberapa pilihan teks iklan Google yang ciamik, lengkap dengan headline, deskripsi, dan kata kunci yang relevan.
+          Saatnya ngiklan di tempat yang pas! Biar Mang AI racik beberapa pilihan teks iklan untuk Instagram dan TikTok yang ciamik, lengkap dengan hashtag yang relevan.
         </p>
       </div>
 
@@ -94,42 +88,29 @@ const GoogleAdsGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
 
       {adsData && (
         <div ref={resultsRef} className="w-full max-w-6xl flex flex-col items-center gap-8 mt-4 scroll-mt-24">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             {adsData.map((ad, index) => (
-                <Card key={index} title={`Opsi Iklan ${index + 1}`}>
+                <Card key={index} title={`Opsi Iklan untuk ${ad.platform}`}>
                     <div className="space-y-4">
                         {/* Ad Preview */}
                         <div className="bg-gray-900/50 p-4 rounded-lg">
-                             <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs font-bold border border-gray-500 text-gray-300 px-1.5 py-0.5 rounded-sm">Ad</span>
-                                <p className="text-xs text-gray-400">{businessUrl}</p>
+                             <div className="flex items-center gap-3 mb-3">
+                                <img src={projectData.socialMediaKit?.profilePictureUrl} alt="logo" className="w-10 h-10 rounded-full bg-white p-0.5" />
+                                <div>
+                                    <p className="font-bold text-white text-sm">{businessHandle}</p>
+                                    <p className="text-xs text-gray-400">Sponsored</p>
+                                </div>
                             </div>
-                            <h3 className="text-lg text-blue-400 hover:underline cursor-pointer">
-                                {ad.headlines.join(' | ')}
-                            </h3>
-                            <p className="text-sm text-gray-300 mt-1">
-                                {ad.descriptions.join(' ')}
-                            </p>
+                            <div className="relative">
+                                <p className="text-sm text-gray-300 whitespace-pre-wrap">{ad.adCopy}</p>
+                                <CopyButton textToCopy={ad.adCopy} className="absolute top-0 right-0" />
+                            </div>
                         </div>
                         
                         {/* Keywords */}
-                        <div>
-                            <h4 className="font-semibold text-gray-200 text-sm mb-2">Rekomendasi Keywords:</h4>
-                             <div className="flex flex-wrap gap-2">
-                                {ad.keywords.map((keyword, kwIndex) => (
-                                    <span key={kwIndex} className="bg-gray-700 text-gray-200 text-xs font-medium px-2 py-1 rounded-full">{keyword}</span>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Copy Buttons */}
-                        <div className="pt-3 border-t border-gray-700 flex flex-col gap-2">
-                             <Button onClick={() => handleCopyToClipboard(ad.headlines.join('\n'), `headlines-${index}`)} size="small" variant="secondary">
-                                {copyStatus === `headlines-${index}` ? 'Headlines Tersalin!' : 'Salin Headlines'}
-                            </Button>
-                            <Button onClick={() => handleCopyToClipboard(ad.descriptions.join('\n\n'), `desc-${index}`)} size="small" variant="secondary">
-                                {copyStatus === `desc-${index}` ? 'Deskripsi Tersalin!' : 'Salin Deskripsi'}
-                            </Button>
+                         <div className="relative">
+                            <p className="text-indigo-300 text-xs break-words">{ad.hashtags.join(' ')}</p>
+                            <CopyButton textToCopy={ad.hashtags.join(' ')} className="absolute top-0 right-0" />
                         </div>
                     </div>
                 </Card>
@@ -152,4 +133,4 @@ const GoogleAdsGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   );
 };
 
-export default GoogleAdsGenerator;
+export default SocialAdsGenerator;

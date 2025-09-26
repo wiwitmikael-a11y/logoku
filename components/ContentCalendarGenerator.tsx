@@ -9,6 +9,7 @@ import LoadingMessage from './common/LoadingMessage';
 import ErrorMessage from './common/ErrorMessage';
 import ImageModal from './common/ImageModal';
 import CalloutPopup from './common/CalloutPopup';
+import CopyButton from './common/CopyButton';
 
 interface Props {
   projectData: Partial<ProjectData>;
@@ -110,11 +111,6 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
     onComplete({ calendar, sources });
   };
 
-  const copyToClipboard = (text: string) => {
-    playSound('click');
-    navigator.clipboard.writeText(text);
-  };
-
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -144,13 +140,12 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
                     <div className="relative border-t border-gray-700 pt-3">
                          <h4 className="font-semibold text-gray-200 text-sm mb-1">Draf Caption:</h4>
                          <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10">{item.draf_caption}</p>
-                         <button onClick={() => copyToClipboard(item.draf_caption)} title="Salin caption" className="absolute top-2 right-0 p-1 text-gray-400 hover:text-indigo-400 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" /><path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h6a2 2 0 00-2-2H5z" /></svg>
-                        </button>
+                         <CopyButton textToCopy={item.draf_caption} className="absolute top-2 right-0"/>
                     </div>
-                    <div className="border-t border-gray-700 pt-3">
+                    <div className="relative border-t border-gray-700 pt-3">
                         <h4 className="font-semibold text-gray-200 text-sm mb-1">Hashtag:</h4>
-                        <p className="text-indigo-300 text-xs break-words">{item.rekomendasi_hashtag.join(' ')}</p>
+                        <p className="text-indigo-300 text-xs break-words pr-10">{item.rekomendasi_hashtag.join(' ')}</p>
+                        <CopyButton textToCopy={item.rekomendasi_hashtag.join(' ')} className="absolute top-2 right-0"/>
                     </div>
                     <div className="border-t border-gray-700 pt-3">
                         <h4 className="font-semibold text-gray-200 text-sm mb-2">Aset Visual Postingan</h4>
@@ -200,7 +195,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
               </CalloutPopup>
             )}
             <Button onClick={handleContinue}>
-              Lanjut ke Media Cetak &rarr;
+              Lanjut ke Social Media Kit &rarr;
             </Button>
           </div>
         </div>

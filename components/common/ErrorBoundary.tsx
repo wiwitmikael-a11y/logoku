@@ -12,7 +12,6 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: Changed class to extend React.Component to fix errors related to missing 'setState' and 'props'.
 class ErrorBoundary extends React.Component<Props, State> {
   state: State = {
     hasError: false,
@@ -39,7 +38,8 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   render(): React.ReactNode {
     if (this.state.hasError) {
-      const imgStyle: any = { imageRendering: 'pixelated' };
+      // FIX: Improved type safety for inline styles.
+      const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
             <img 

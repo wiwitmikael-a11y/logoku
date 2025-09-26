@@ -1,64 +1,25 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { generatePrintMedia } from '../services/geminiService';
+import { generateSocialMediaKitAssets } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-import type { ProjectData, BrandInputs, PrintMediaAssets } from '../types';
+import type { ProjectData, SocialMediaKitAssets } from '../types';
 import Button from './common/Button';
-import Input from './common/Input';
-import Textarea from './common/Textarea';
-import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
   projectData: Partial<ProjectData>;
-  onComplete: (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => void;
+  onComplete: (data: { assets: SocialMediaKitAssets }) => void;
 }
 
-type MediaTab = 'business_card' | 'flyer' | 'banner' | 'roll_banner';
-const GENERATION_COST = 1;
+const GENERATION_COST = 2; // Cost for generating two assets at once
 
-const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
-  const [activeTab, setActiveTab] = useState<MediaTab>('business_card');
-  const businessHandle = projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
-  
-  // States
-  const [cardInfo, setCardInfo] = useState({
-    name: 'Rangga',
-    title: 'Owner',
-    phone: '0812-3456-7890',
-    email: `halo@${businessHandle}.com`,
-    website: `www.${businessHandle}.com`,
-  });
-  const [flyerInfo, setFlyerInfo] = useState({
-    headline: 'Diskon Grand Opening 50%!',
-    body: 'Nikmati semua produk kopi kami dengan setengah harga selama minggu pertama. Tunjukkan flyer ini untuk mendapatkan penawaran.',
-    cta: 'Kunjungi Kami Sekarang!',
-  });
-  const [bannerInfo, setBannerInfo] = useState({
-    headline: 'SEGERA DIBUKA!',
-    subheadline: `Nantikan ${projectData.brandInputs?.businessName} di kota Anda!`,
-  });
-  const [rollBannerInfo, setRollBannerInfo] = useState({
-    headline: `Selamat Datang di ${projectData.brandInputs?.businessName}`,
-    body: '• Kopi Berkualitas\n• Tempat Nyaman\n• Harga Terjangkau',
-    contact: `@${businessHandle}`,
-  });
-
-  const [cardDesigns, setCardDesigns] = useState<string[]>([]);
-  const [flyerDesigns, setFlyerDesigns] = useState<string[]>([]);
-  const [bannerDesigns, setBannerDesigns] = useState<string[]>([]);
-  const [rollBannerDesigns, setRollBannerDesigns] = useState<string[]>([]);
-
-  const [selectedCardBase64, setSelectedCardBase64] = useState<string | null>(null);
-  const [selectedFlyerBase64, setSelectedFlyerBase64] = useState<string | null>(null);
-  const [selectedBannerBase64, setSelectedBannerBase64] = useState<string | null>(null);
-  const [selectedRollBannerBase64, setSelectedRollBannerBase64] = useState<string | null>(null);
-
+  const [assets, setAssets] = useState<SocialMediaKitAssets | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
@@ -67,29 +28,14 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
-  
-  const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, setter: React.Dispatch<React.SetStateAction<any>>) => {
-    setter(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-  
-  const designData = {
-    business_card: { designs: cardDesigns, setDesigns: setCardDesigns, selected: selectedCardBase64, setSelected: setSelectedCardBase64 },
-    flyer: { designs: flyerDesigns, setDesigns: setFlyerDesigns, selected: selectedFlyerBase64, setSelected: setSelectedFlyerBase64 },
-    banner: { designs: bannerDesigns, setDesigns: setBannerDesigns, selected: selectedBannerBase64, setSelected: setSelectedBannerBase64 },
-    roll_banner: { designs: rollBannerDesigns, setDesigns: setRollBannerDesigns, selected: selectedRollBannerBase64, setSelected: setSelectedRollBannerBase64 },
-  };
-  
-  const { designs, setDesigns, setSelected } = designData[activeTab];
 
   useEffect(() => {
-      if (designs.length > 0 && resultsRef.current) {
+      if (assets && resultsRef.current) {
           resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-  }, [designs]);
+  }, [assets]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = useCallback(async () => {
     if (credits < GENERATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
@@ -98,41 +44,26 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
 
     setIsLoading(true);
     setError(null);
+    setAssets(null);
     setShowNextStepNudge(false);
     playSound('start');
 
-    // FIX: Destructured selectedLogoUrl instead of logoPrompt and updated the check.
-    const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
-    if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
-        setError("Waduh, data project (terutama logo) ada yang kurang buat generate media cetak.");
+    const { brandInputs, selectedPersona, selectedLogoUrl, selectedSlogan } = projectData;
+    if (!brandInputs || !selectedPersona || !selectedLogoUrl || !selectedSlogan) {
+        setError("Waduh, data project (logo/persona/slogan) ada yang kurang buat generate social media kit.");
         setIsLoading(false);
         playSound('error');
         return;
     }
-    
-    setDesigns([]);
-    setSelected(null);
 
     try {
-        const payload = {
-            brandInputs: {
-                ...brandInputs,
-                contactInfo: cardInfo,
-                flyerContent: flyerInfo,
-                bannerContent: bannerInfo,
-                rollBannerContent: rollBannerInfo
-            },
-            selectedPersona,
-            selectedLogoUrl
-        };
-      const results = await generatePrintMedia(activeTab, payload);
-      const imageBase64 = results[0];
-
-      await deductCredits(GENERATION_COST);
-      setDesigns([imageBase64]);
-      setSelected(imageBase64);
-      setShowNextStepNudge(true);
-      playSound('success');
+        const payload = { brandInputs, selectedPersona, selectedLogoUrl, selectedSlogan };
+        const resultAssets = await generateSocialMediaKitAssets(payload);
+      
+        await deductCredits(GENERATION_COST);
+        setAssets(resultAssets);
+        setShowNextStepNudge(true);
+        playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
       setError(errorMessage);
@@ -140,124 +71,75 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected]);
+  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleContinue = () => {
-    onComplete({
-        assets: {
-            cardUrl: selectedCardBase64 || undefined,
-            flyerUrl: selectedFlyerBase64 || undefined,
-            bannerUrl: selectedBannerBase64 || undefined,
-            rollBannerUrl: selectedRollBannerBase64 || undefined,
-        },
-        inputs: {
-            contactInfo: cardInfo,
-            flyerContent: flyerInfo,
-            bannerContent: bannerInfo,
-            rollBannerContent: rollBannerInfo,
-        }
-    });
-  };
-  
-  const handleTabClick = (tab: MediaTab) => {
-      playSound('select');
-      setActiveTab(tab);
-      setShowNextStepNudge(false);
-  }
-
-  const renderContent = () => {
-    switch(activeTab) {
-        case 'business_card':
-            return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                    <Input label="Nama Lengkap" name="name" value={cardInfo.name} onChange={(e) => handleInfoChange(e, setCardInfo)} />
-                    <Input label="Jabatan/Title" name="title" value={cardInfo.title} onChange={(e) => handleInfoChange(e, setCardInfo)} />
-                    <Input label="Nomor Telepon" name="phone" value={cardInfo.phone} onChange={(e) => handleInfoChange(e, setCardInfo)} />
-                    <Input label="Alamat Email" name="email" value={cardInfo.email} onChange={(e) => handleInfoChange(e, setCardInfo)} />
-                    <Input className="md:col-span-2" label="Website / Social Media" name="website" value={cardInfo.website} onChange={(e) => handleInfoChange(e, setCardInfo)} />
-                </div>
-            );
-        case 'flyer':
-            return (
-                <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                    <Input label="Headline Utama" name="headline" value={flyerInfo.headline} onChange={(e) => handleInfoChange(e, setFlyerInfo)} placeholder="cth: Diskon Spesial!" />
-                    <Textarea label="Isi / Deskripsi Penawaran" name="body" value={flyerInfo.body} onChange={(e) => handleInfoChange(e, setFlyerInfo)} rows={4} />
-                    <Input label="Call to Action (CTA)" name="cta" value={flyerInfo.cta} onChange={(e) => handleInfoChange(e, setFlyerInfo)} placeholder="cth: Beli Sekarang!" />
-                </div>
-            );
-        case 'banner':
-            return (
-                 <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                    <Input label="Headline (Teks Paling Besar)" name="headline" value={bannerInfo.headline} onChange={(e) => handleInfoChange(e, setBannerInfo)} placeholder="cth: GRAND OPENING!" />
-                    <Input label="Sub-headline (Teks Pendukung)" name="subheadline" value={bannerInfo.subheadline} onChange={(e) => handleInfoChange(e, setBannerInfo)} placeholder="cth: Diskon 50% Semua Item" />
-                </div>
-            );
-        case 'roll_banner':
-             return (
-                 <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                    <Input label="Headline (di bagian atas)" name="headline" value={rollBannerInfo.headline} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} />
-                    <Textarea label="Isi Konten (bisa pakai bullet point)" name="body" value={rollBannerInfo.body} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} rows={4} />
-                    <Input label="Info Kontak (di bagian bawah)" name="contact" value={rollBannerInfo.contact} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} placeholder="cth: @namabisnislo" />
-                </div>
-            );
-        default: return null;
+    if (assets) {
+        onComplete({ assets });
     }
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Studio Media Cetak Mang AI</h2>
-        <p className="text-gray-400">Bikin materi promosi cetak yang keren. Pilih jenis media, isi detailnya, dan biarkan Mang AI mendesain untuk lo.</p>
-        <p className="text-xs text-gray-500 mt-1">Catatan: Hasil generate adalah mockup visual beresolusi tinggi, bukan file vector/desain mentah untuk dicetak. Ini bisa jadi referensi visual yang kuat untuk desainer atau percetakan.</p>
+    <div className="flex flex-col gap-8 items-center">
+      <div className="text-center">
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Social Media Kit Muka Depan</h2>
+        <p className="text-gray-400 max-w-3xl">
+          Tampilan profil itu penting! Biar Mang AI bikinin foto profil dan banner/header yang serasi buat halaman Facebook, X, atau YouTube lo, lengkap dengan logo, warna brand, dan slogan.
+        </p>
       </div>
       
-      <div className="flex flex-wrap border-b border-gray-700">
-          <button onClick={() => handleTabClick('business_card')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'business_card' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Kartu Nama</button>
-          <button onClick={() => handleTabClick('flyer')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'flyer' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Flyer</button>
-          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk</button>
-          <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Roll Banner</button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {renderContent()}
-        <div className="self-start">
-            <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>
-                {`Sulap Jadi Desain! (${GENERATION_COST} Kredit)`}
-            </Button>
-        </div>
-      </form>
+      <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST}>
+        Buatin Kit Sosmednya! ({GENERATION_COST} Kredit)
+      </Button>
       
       {error && <ErrorMessage message={error} />}
 
-      {designs.length > 0 && (
-        <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
-            <h3 className="text-xl font-bold">Desain Hasil Generate:</h3>
-          <div className="flex justify-center w-full max-w-lg">
-              <div 
-                className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
-                onClick={() => openModal(designs[0])}
-              >
-                <img src={designs[0]} alt={`Generated design for ${activeTab}`} className="object-contain rounded-md max-w-full max-h-[400px] group-hover:scale-105 transition-transform" />
+      {assets && (
+        <div ref={resultsRef} className="flex flex-col gap-8 items-center scroll-mt-24 w-full max-w-4xl">
+            <h3 className="text-xl font-bold">Aset Visual Sosmed Lo:</h3>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 w-full">
+              {/* Profile Picture */}
+              <div className="md:col-span-2 flex flex-col items-center gap-3">
+                  <h4 className="font-semibold text-lg">Foto Profil</h4>
+                  <div 
+                    className="bg-white rounded-full p-2 flex items-center justify-center shadow-lg w-48 h-48 cursor-pointer group"
+                    onClick={() => openModal(assets.profilePictureUrl)}
+                  >
+                    <img src={assets.profilePictureUrl} alt="Generated Profile Picture" className="object-contain rounded-full max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                  </div>
+                   <p className="text-xs text-center text-gray-400">Cocok untuk Instagram, TikTok, Facebook, WhatsApp, dll.</p>
               </div>
+
+              {/* Banner */}
+              <div className="md:col-span-3 flex flex-col items-center gap-3">
+                  <h4 className="font-semibold text-lg">Banner / Header</h4>
+                    <div 
+                        className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-video cursor-pointer group"
+                        onClick={() => openModal(assets.bannerUrl)}
+                    >
+                        <img src={assets.bannerUrl} alt="Generated Banner" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                    </div>
+                     <p className="text-xs text-center text-gray-400">Cocok untuk header Facebook, X, YouTube, dll.</p>
+              </div>
+          </div>
+
+          <div className="self-center mt-4 relative">
+            {showNextStepNudge && (
+                <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
+                    Cakep! Klik buat lanjut.
+                </CalloutPopup>
+            )}
+            <Button onClick={handleContinue}>
+              Lanjut ke Optimasi Profil &rarr;
+            </Button>
           </div>
         </div>
       )}
-
-      <div className="self-center mt-4 relative">
-        {showNextStepNudge && (
-            <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
-                Cakep! Klik buat lanjut.
-            </CalloutPopup>
-        )}
-        <Button onClick={handleContinue}>
-          Lanjut ke Optimasi Google (SEO) &rarr;
-        </Button>
-      </div>
+      
       {modalImageUrl && (
         <ImageModal 
           imageUrl={modalImageUrl}
-          altText={`Desain media cetak untuk ${projectData.brandInputs?.businessName}`}
+          altText={`Aset media sosial untuk ${projectData.brandInputs?.businessName}`}
           onClose={closeModal}
         />
       )}
@@ -265,4 +147,4 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   );
 };
 
-export default PrintMediaGenerator;
+export default SocialMediaKitGenerator;

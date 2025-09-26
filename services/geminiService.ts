@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { createWhiteCanvasBase64, fetchImageAsBase64 } from '../utils/imageUtils';
-import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SeoData, AdsData } from '../types';
+import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets } from '../types';
 
 // --- Environment Variable Setup ---
 const API_KEY = import.meta.env?.VITE_API_KEY;
@@ -128,9 +128,9 @@ Follow these steps meticulously:
 
 2.  **Brainstorm Visual Concepts**: Based on your analysis, brainstorm 3 distinct visual concepts. Think metaphorically. For a coffee shop, instead of a simple coffee cup, you might suggest "a stylized sun rising from a coffee cup," "interlocking geometric shapes forming a coffee bean," or "a warm, hand-drawn illustration of a steam wisp forming an elegant letter."
 
-3.  **Develop a Rich Descriptive Vocabulary**: For the best concept, create a list of evocative adjectives and nouns. Focus on artistic styles (e.g., art deco, geometric minimalism, neo-vintage), line quality (e.g., sharp vector lines, soft gradients, clean edges), and color theory (e.g., duotone color scheme, vibrant analogous colors, high contrast).
+3.  **Develop a Rich Descriptive Vocabulary**: For the best concept, create a list of evocative adjectives and nouns. Focus on artistic styles (e.g., art deco, geometric minimalism, neo-vintage), line quality (e.g., sharp vector lines, soft gradients, clean edges), and color theory (e.g., duotone color scheme, vibrant analogous colors, high contrast). Think about 'logomark', 'symbol', 'negative space', and 'golden ratio'.
 
-4.  **Synthesize the Final Prompt**: Combine the best ideas into a single, cohesive, and highly descriptive final prompt. The final prompt MUST be a masterpiece of visual direction. It MUST start with "masterpiece vector logo of...". It MUST specify "clean vector, minimalist, on a solid pure white background, #ffffff background". It must be EXTREMELY specific about shapes, lines, and colors. CRITICAL: ABSOLUTELY NO TEXT, WORDS, or LETTERS should be requested. Describe a symbolic, abstract icon only. The composition must be balanced, using negative space effectively, and centered.
+4.  **Synthesize the Final Prompt**: Combine the best ideas into a single, cohesive, and highly descriptive final prompt. This final prompt is for an award-winning design. It MUST start with "masterpiece vector logo of...". It MUST specify "clean vector, minimalist, on a solid pure white background, #ffffff background". It must be EXTREMELY specific about shapes, lines, and colors. CRITICAL: ABSOLUTELY NO TEXT, WORDS, or LETTERS should be requested. Describe a symbolic, abstract icon only. The composition must be balanced, centered, and visually stunning.
 
 **Final, Polished Prompt for Image Generation:**`;
 
@@ -385,89 +385,6 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
         throw handleApiError(error, "Content Calendar");
     }
 };
-export const generateSeoContent = async (brandInputs: BrandInputs): Promise<SeoData> => {
-    const ai = getAiClient();
-    const prompt = `Generate SEO content for a business with the following details:
-    - Business Name: ${brandInputs.businessName}
-    - Industry: ${brandInputs.industry}
-    - Target Audience: ${brandInputs.targetAudience}
-    - Value Proposition: ${brandInputs.valueProposition}
-
-    Provide the following as a single JSON object:
-    1. "keywords": An array of 10-15 relevant SEO keywords.
-    2. "metaTitle": A compelling meta title for the website homepage (under 60 characters).
-    3. "metaDescription": A concise meta description (under 160 characters).
-    4. "gmbDescription": A friendly and informative description for a Google My Business profile (under 750 characters).`;
-    
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        metaTitle: { type: Type.STRING },
-                        metaDescription: { type: Type.STRING },
-                        gmbDescription: { type: Type.STRING },
-                    },
-                    required: ['keywords', 'metaTitle', 'metaDescription', 'gmbDescription']
-                }
-            },
-        });
-        const cleanedJson = cleanJsonString(response.text, 'object');
-        return safeJsonParse<SeoData>(cleanedJson, 'generateSeoContent');
-    } catch (error) {
-        throw handleApiError(error, "SEO Content");
-    }
-};
-export const generateGoogleAdsContent = async (brandInputs: BrandInputs, slogan: string): Promise<AdsData> => {
-    const ai = getAiClient();
-    const prompt = `Generate 3 distinct Google Ads variations for a business.
-
-    Business Details:
-    - Name: ${brandInputs.businessName}
-    - Slogan: ${slogan}
-    - Value Proposition: ${brandInputs.valueProposition}
-    - Target Audience: ${brandInputs.targetAudience}
-
-    For each of the 3 ad variations, provide a JSON object with:
-    - "headlines": An array of 3 short, punchy headlines (max 30 characters each).
-    - "descriptions": An array of 2 compelling descriptions (max 90 characters each).
-    - "keywords": An array of 5-7 relevant ad keywords.
-    
-    Return the result as a JSON array of these 3 ad objects.`;
-    
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT,
-                        properties: {
-                            headlines: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            descriptions: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        },
-                        required: ['headlines', 'descriptions', 'keywords']
-                    }
-                }
-            },
-        });
-        const cleanedJson = cleanJsonString(response.text, 'array');
-        return safeJsonParse<AdsData>(cleanedJson, 'generateGoogleAdsContent');
-    } catch (error) {
-        throw handleApiError(error, "Google Ads");
-    }
-};
-
-
 // --- REWRITTEN Image Generation Functions (Flash Preview ONLY) ---
 
 export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
@@ -515,24 +432,26 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
     }
 };
 
-// FIX: Changed signature to take basePrompt first and generate variations from it, rather than editing an existing image.
-export const generateLogoVariations = async (basePrompt: string): Promise<LogoVariations> => {
+// CRITICAL FIX: This function now EDITS the provided logo, ensuring consistency.
+export const generateLogoVariations = async (baseLogoBase64: string): Promise<LogoVariations> => {
     try {
-        // Create specific, direct instructions for image generation based on the original prompt
-        const iconPrompt = `From the following logo concept, create a simplified icon-only version. Remove all text and lettering. Keep the core symbol or shape. The final output should be a clean vector icon on a solid white background. Concept: "${basePrompt}"`;
-        const monochromePrompt = `Based on the following logo concept, create a high-contrast, monochrome (black and white) version. Do not change the shape or design elements, only remove all color. The final output must be a clean vector logo on a solid white background. Concept: "${basePrompt}"`;
+        const base64Data = baseLogoBase64.split(',')[1];
+        const mimeType = baseLogoBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+        
+        const iconPrompt = `From the provided logo image, extract a simplified icon-only version. Remove all text and lettering. Keep the core symbol or shape. The final output must be a clean vector icon on a solid white background.`;
+        const monochromePrompt = `Convert the provided logo image into a high-contrast, monochrome (black and white) version. Do not change the shape or design elements, only remove all color. The final output must be a clean vector logo on a solid white background.`;
 
-        // Use the 'generateImageFromWhiteCanvas' function to perform the variations.
         const [iconResultBase64, monochromeResultBase64] = await Promise.all([
-            generateImageFromWhiteCanvas(iconPrompt, '1:1'),
-            generateImageFromWhiteCanvas(monochromePrompt, '1:1')
+            editLogo(base64Data, mimeType, iconPrompt),
+            editLogo(base64Data, mimeType, monochromePrompt)
         ]);
 
-        return { main: '', icon: iconResultBase64, monochrome: monochromeResultBase64 };
+        return { main: baseLogoBase64, icon: iconResultBase64, monochrome: monochromeResultBase64 };
     } catch (error) {
         throw handleApiError(error, "Flash Preview (Variasi Logo)");
     }
 };
+
 
 /**
  * A specialized function to generate a new image by applying a provided logo onto a new scene.
@@ -586,43 +505,8 @@ export const generateSocialMediaPostImage = async (idea: string, keywords: strin
     }
 };
 
-export const generatePrintMedia = async (
-    mediaType: 'business_card' | 'flyer' | 'banner' | 'roll_banner',
-    projectData: { brandInputs: BrandInputs; selectedPersona: BrandPersona; selectedLogoUrl: string }
-): Promise<string[]> => {
-    const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
-    let instructionPrompt = '';
-
-    try {
-        // The logo URL is now a Base64 string, so no need to fetch it.
-        const logoBase64 = selectedLogoUrl;
-
-        switch (mediaType) {
-            case 'business_card':
-                instructionPrompt = `Take the provided logo image. Create a realistic mockup of a professional business card for "${brandInputs.businessName}". Place the logo appropriately. Add the following text information clearly: Name: ${brandInputs.contactInfo?.name}, Title: ${brandInputs.contactInfo?.title}, Phone: ${brandInputs.contactInfo?.phone}, Email: ${brandInputs.contactInfo?.email}, Website: ${brandInputs.contactInfo?.website}. The overall design should match the brand style: ${selectedPersona.nama_persona}.`;
-                break;
-            case 'flyer':
-                instructionPrompt = `Take the provided logo image. Create a realistic mockup of a promotional A5 flyer for "${brandInputs.businessName}". Place the logo at the top. The headline is "${brandInputs.flyerContent?.headline}". The body text is "${brandInputs.flyerContent?.body}". The call to action is "${brandInputs.flyerContent?.cta}". The design style should be: ${selectedPersona.kata_kunci.join(', ')}.`;
-                break;
-            case 'banner':
-                instructionPrompt = `Take the provided logo image. Create a realistic mockup of a large horizontal banner (spanduk) for "${brandInputs.businessName}". Place the logo on either the left or right side. The main headline is "${brandInputs.bannerContent?.headline}". The sub-headline is "${brandInputs.bannerContent?.subheadline}". The design style should be ${selectedPersona.nama_persona}.`;
-                break;
-            case 'roll_banner':
-                instructionPrompt = `Take the provided logo image. Create a realistic mockup of a tall roll-up banner for "${brandInputs.businessName}". Place the logo near the top. The headline is "${brandInputs.rollBannerContent?.headline}". The body text is "${brandInputs.rollBannerContent?.body}". The contact info is "${brandInputs.rollBannerContent?.contact}".`;
-                break;
-        }
-
-        const generatedBase64 = await generateImageWithLogo(logoBase64, instructionPrompt);
-        return [generatedBase64];
-
-    } catch (error) {
-        throw handleApiError(error, `Flash Preview (${mediaType})`);
-    }
-};
-
 export const generatePackagingDesign = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
-        // The logo URL is now a Base64 string, so no need to fetch it.
         const logoBase64 = logoUrl;
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
@@ -633,11 +517,120 @@ export const generatePackagingDesign = async (prompt: string, logoUrl: string): 
 
 export const generateMerchandiseMockup = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
-        // The logo URL is now a Base64 string, so no need to fetch it.
         const logoBase64 = logoUrl;
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
         throw handleApiError(error, "Flash Preview (Merchandise)");
+    }
+};
+
+
+// --- NEW Social Media Centric Functions ---
+export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: BrandPersona): Promise<SocialProfileData> => {
+    const ai = getAiClient();
+    const prompt = `Generate social media and marketplace profiles for a business.
+
+    Business Details:
+    - Name: ${brandInputs.businessName}
+    - Persona: ${persona.nama_persona} (${persona.deskripsi_singkat})
+    - Value Proposition: ${brandInputs.valueProposition}
+
+    Provide the following as a single JSON object:
+    1. "instagramBio": A compelling Instagram bio (under 150 characters), including a call-to-action.
+    2. "tiktokBio": A short and punchy TikTok bio (under 80 characters).
+    3. "marketplaceDescription": A persuasive and detailed store description for platforms like Shopee or Tokopedia.
+    
+    Ensure the tone matches the brand persona.`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        instagramBio: { type: Type.STRING },
+                        tiktokBio: { type: Type.STRING },
+                        marketplaceDescription: { type: Type.STRING },
+                    },
+                    required: ['instagramBio', 'tiktokBio', 'marketplaceDescription']
+                }
+            },
+        });
+        const cleanedJson = cleanJsonString(response.text, 'object');
+        return safeJsonParse<SocialProfileData>(cleanedJson, 'generateSocialProfiles');
+    } catch (error) {
+        throw handleApiError(error, "Social Profiles");
+    }
+};
+export const generateSocialAds = async (brandInputs: BrandInputs, persona: BrandPersona, slogan: string): Promise<SocialAdsData> => {
+    const ai = getAiClient();
+    const prompt = `Generate 2 distinct social media ad variations for a business.
+
+    Business Details:
+    - Name: ${brandInputs.businessName}
+    - Slogan: ${slogan}
+    - Value Proposition: ${brandInputs.valueProposition}
+    - Brand Persona: ${persona.nama_persona} (${persona.deskripsi_singkat})
+
+    For each ad, create a version for Instagram and one for TikTok. Provide a JSON object for each with:
+    - "platform": "Instagram" or "TikTok".
+    - "adCopy": Compelling ad copy suitable for the platform's format and audience.
+    - "hashtags": An array of 5-7 relevant hashtags.
+    
+    Return the result as a JSON array of these 2 ad objects.`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            platform: { type: Type.STRING },
+                            adCopy: { type: Type.STRING },
+                            hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        },
+                        required: ['platform', 'adCopy', 'hashtags']
+                    }
+                }
+            },
+        });
+        const cleanedJson = cleanJsonString(response.text, 'array');
+        return safeJsonParse<SocialAdsData>(cleanedJson, 'generateSocialAds');
+    } catch (error) {
+        throw handleApiError(error, "Social Ads");
+    }
+};
+
+export const generateSocialMediaKitAssets = async (
+    projectData: { selectedLogoUrl: string; selectedPersona: BrandPersona; brandInputs: BrandInputs; selectedSlogan: string }
+): Promise<SocialMediaKitAssets> => {
+    const { selectedLogoUrl, selectedPersona, brandInputs, selectedSlogan } = projectData;
+    const logoBase64 = selectedLogoUrl;
+    
+    try {
+        const primaryColor = selectedPersona.palet_warna_hex[0] || '#6366f1';
+
+        const profilePicPrompt = `Take the provided logo image. Place this logo perfectly centered on a solid color background. The background color should be exactly this hex code: ${primaryColor}. The final output should be a clean, square profile picture.`;
+
+        const bannerPrompt = `Take the provided logo image. Create a simple and clean Facebook banner (16:9 aspect ratio). The background should be a solid color, using this hex code: ${primaryColor}. Place the logo on the left or right side. Then, add the business name "${brandInputs.businessName}" and the slogan "${selectedSlogan}" in a clean, legible font. Ensure all text is spelled correctly.`;
+
+        const [profilePictureUrl, bannerUrl] = await Promise.all([
+            generateImageWithLogo(logoBase64, profilePicPrompt),
+            generateImageWithLogo(logoBase64, bannerPrompt)
+        ]);
+        
+        return { profilePictureUrl, bannerUrl };
+
+    } catch (error) {
+        throw handleApiError(error, `Flash Preview (Social Media Kit)`);
     }
 };

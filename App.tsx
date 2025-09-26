@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets, SeoData, AdsData } from './types';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
 // --- Error Handling & Loading ---
@@ -24,9 +24,11 @@ const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersona
 const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
 const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
 const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
-const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
-const SeoGenerator = React.lazy(() => import('./components/SeoGenerator'));
-const GoogleAdsGenerator = React.lazy(() => import('./components/GoogleAdsGenerator'));
+// --- NEW Social-Centric Components ---
+const SocialMediaKitGenerator = React.lazy(() => import('./components/PrintMediaGenerator')); // Re-purposed
+const ProfileOptimizer = React.lazy(() => import('./components/SeoGenerator')); // Re-purposed
+const SocialAdsGenerator = React.lazy(() => import('./components/GoogleAdsGenerator')); // Re-purposed
+// --- End of New Components ---
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
 const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
@@ -39,7 +41,7 @@ const ConfirmationModal = React.lazy(() => import('./components/common/Confirmat
 const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'print' | 'seo' | 'ads' | 'packaging' | 'merchandise' | 'summary' | 'caption';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'social_kit' | 'profile_optimizer' | 'social_ads' | 'packaging' | 'merchandise' | 'summary' | 'caption';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const App: React.FC = () => {
@@ -111,8 +113,8 @@ const MainApp: React.FC = () => {
     const previousAppState = useRef<AppState>(appState);
     const previousSession = useRef<typeof session>(session);
 
-    // New, more logical workflow order
-    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'print', 'seo', 'ads', 'packaging', 'merchandise'];
+    // NEW, more logical workflow order
+    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'social_kit', 'profile_optimizer', 'social_ads', 'packaging', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
 
@@ -240,12 +242,12 @@ const MainApp: React.FC = () => {
         // Determine the next step based on what data exists, following the new workflow
         const data = project.project_data;
         let nextState: AppState = 'persona';
-        if (data.selectedMerchandiseUrl) nextState = 'summary'; // Go to summary if it was completed
+        if (data.selectedMerchandiseUrl) nextState = 'summary';
         else if (data.selectedPackagingUrl) nextState = 'merchandise';
-        else if (data.adsData) nextState = 'packaging';
-        else if (data.seoData) nextState = 'ads';
-        else if (data.selectedPrintMedia) nextState = 'seo';
-        else if (data.contentCalendar) nextState = 'print';
+        else if (data.socialAds) nextState = 'packaging';
+        else if (data.socialProfiles) nextState = 'social_ads';
+        else if (data.socialMediaKit) nextState = 'profile_optimizer';
+        else if (data.contentCalendar) nextState = 'social_kit';
         else if (data.logoVariations) nextState = 'content';
         else if (data.selectedLogoUrl) nextState = 'logo_detail';
         else if (data.selectedPersona) nextState = 'logo';
@@ -362,30 +364,26 @@ const MainApp: React.FC = () => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, contentCalendar: data.calendar, searchSources: data.sources };
         saveWorkflowState(updatedData);
-        navigateTo('print');
+        navigateTo('social_kit'); // Next step is now Social Media Kit
     }, []);
 
-    const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => {
+    const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => {
         const currentState = loadWorkflowState() || {};
-        const updatedData = {
-            ...currentState,
-            selectedPrintMedia: data.assets,
-            brandInputs: { ...(currentState.brandInputs || {}), ...data.inputs } as BrandInputs,
-        };
+        const updatedData = { ...currentState, socialMediaKit: data.assets };
         saveWorkflowState(updatedData);
-        navigateTo('seo');
+        navigateTo('profile_optimizer');
     }, []);
 
-    const handleSeoComplete = useCallback(async (data: { seoData: SeoData }) => {
+    const handleProfileOptimizerComplete = useCallback(async (data: { profiles: SocialProfileData }) => {
         const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, seoData: data.seoData };
+        const updatedData = { ...currentState, socialProfiles: data.profiles };
         saveWorkflowState(updatedData);
-        navigateTo('ads');
+        navigateTo('social_ads');
     }, []);
 
-    const handleAdsComplete = useCallback(async (data: { adsData: AdsData }) => {
+    const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => {
         const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, adsData: data.adsData };
+        const updatedData = { ...currentState, socialAds: data.adsData };
         saveWorkflowState(updatedData);
         navigateTo('packaging');
     }, []);
@@ -404,11 +402,9 @@ const MainApp: React.FC = () => {
         setGeneralError(null);
         
         try {
-            // REWORKED LOGIC: No more mass uploads. Just save the final Base64 data.
             const currentState = loadWorkflowState() || {};
             const finalProjectData = { ...currentState, selectedMerchandiseUrl: merchandiseBase64 };
 
-            // Save the complete project data with all Base64 strings to the database
             const { data, error } = await supabase
                 .from('projects')
                 .update({ project_data: finalProjectData, status: 'completed' })
@@ -418,7 +414,6 @@ const MainApp: React.FC = () => {
 
             if (error) throw error;
 
-            // Update UI state
             const updatedProject: Project = data as any;
             setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
             setSelectedProjectId(updatedProject.id);
@@ -458,7 +453,6 @@ const MainApp: React.FC = () => {
         }
     };
     
-    // Custom logout handler to clear session storage
     const executeLogout = async () => {
         clearWorkflowState();
         sessionStorage.removeItem('logoku_app_state');
@@ -500,22 +494,22 @@ const MainApp: React.FC = () => {
                     />;
                 }
                 break;
-            case 'print':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl) {
-                    return <PrintMediaGenerator 
-                        projectData={workflowData} 
-                        onComplete={handlePrintMediaComplete} 
+            case 'social_kit':
+                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl && workflowData.selectedSlogan) {
+                    return <SocialMediaKitGenerator 
+                        projectData={workflowData as any} 
+                        onComplete={handleSocialKitComplete} 
                     />;
                 }
                 break;
-            case 'seo':
+            case 'profile_optimizer':
                 if (workflowData?.brandInputs && workflowData.selectedPersona) {
-                    return <SeoGenerator projectData={workflowData} onComplete={handleSeoComplete} />;
+                    return <ProfileOptimizer projectData={workflowData} onComplete={handleProfileOptimizerComplete} />;
                 }
                 break;
-            case 'ads':
-                if (workflowData?.brandInputs && workflowData.selectedSlogan) {
-                    return <GoogleAdsGenerator projectData={workflowData} onComplete={handleAdsComplete} />;
+            case 'social_ads':
+                 if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedSlogan) {
+                    return <SocialAdsGenerator projectData={workflowData} onComplete={handleSocialAdsComplete} />;
                 }
                 break;
             case 'packaging':
@@ -560,7 +554,6 @@ const MainApp: React.FC = () => {
     
     if (authLoading) return <AuthLoadingScreen />;
     
-    // Render Login screen, Captcha, and ToS modal if not logged in
     if (!session) {
         return (
             <>
@@ -579,7 +572,6 @@ const MainApp: React.FC = () => {
         );
     }
     
-    // Render the main app for logged-in users
     return (
         <div className="text-white min-h-screen font-sans">
             <header className="py-3 px-4 md:py-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">

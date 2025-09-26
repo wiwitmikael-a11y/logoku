@@ -6,7 +6,7 @@ export interface Profile {
   id: string; // Corresponds to Supabase user ID
   credits: number;
   last_credit_reset: string; // Date string in 'YYYY-MM-DD' format
-  storage_used_kb: number; // New field for storage tracking
+  storage_used_kb: number;
 }
 
 export interface BrandInputs {
@@ -15,7 +15,6 @@ export interface BrandInputs {
   targetAudience: string;
   valueProposition: string;
   competitors: string; 
-  // Input untuk media cetak
   contactInfo?: {
     name: string;
     title: string;
@@ -76,32 +75,29 @@ export interface LogoVariations {
   monochrome: string;
 }
 
-export interface PrintMediaAssets {
-    cardUrl?: string;
-    flyerUrl?: string;
-    bannerUrl?: string;
-    rollBannerUrl?: string;
+// NEW: Social Media focused types
+export interface SocialProfileData {
+  instagramBio: string;
+  tiktokBio: string;
+  marketplaceDescription: string;
+}
+
+export interface SocialAd {
+  platform: 'Instagram' | 'TikTok';
+  adCopy: string;
+  hashtags: string[];
+}
+export type SocialAdsData = SocialAd[];
+
+export interface SocialMediaKitAssets {
+  profilePictureUrl: string;
+  bannerUrl: string;
 }
 
 export interface GeneratedCaption {
   caption: string;
   hashtags: string[];
 }
-
-export interface SeoData {
-  keywords: string[];
-  metaTitle: string;
-  metaDescription: string;
-  gmbDescription: string;
-}
-
-export interface GoogleAd {
-  headlines: string[];
-  descriptions: string[];
-  keywords: string[];
-}
-
-export type AdsData = GoogleAd[];
 
 // This represents the data structure stored in the 'project_data' JSONB column
 export interface ProjectData {
@@ -113,9 +109,12 @@ export interface ProjectData {
   logoVariations?: LogoVariations; 
   contentCalendar?: ContentCalendarEntry[]; 
   searchSources?: any[]; 
-  selectedPrintMedia?: PrintMediaAssets;
-  seoData?: SeoData;
-  adsData?: AdsData;
+  
+  // NEW: Replaced old web-focused fields
+  socialProfiles?: SocialProfileData;
+  socialAds?: SocialAdsData;
+  socialMediaKit?: SocialMediaKitAssets;
+
   selectedPackagingUrl?: string;
   selectedMerchandiseUrl?: string;
 }
