@@ -432,6 +432,7 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
 };
 
 // CRITICAL FIX: This function now EDITS the provided logo, ensuring consistency.
+// FIX: Added baseLogoBase64 as an argument to provide the necessary input for editing operations.
 export const generateLogoVariations = async (baseLogoBase64: string): Promise<LogoVariations> => {
     try {
         const base64Data = baseLogoBase64.split(',')[1];
@@ -506,7 +507,7 @@ export const generateSocialMediaPostImage = async (idea: string, keywords: strin
 
 export const generatePackagingDesign = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
-        const logoBase64 = logoUrl;
+        const logoBase64 = await fetchImageAsBase64(logoUrl);
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
@@ -516,7 +517,7 @@ export const generatePackagingDesign = async (prompt: string, logoUrl: string): 
 
 export const generateMerchandiseMockup = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
-        const logoBase64 = logoUrl;
+        const logoBase64 = await fetchImageAsBase64(logoUrl);
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
@@ -611,7 +612,7 @@ export const generateSocialMediaKitAssets = async (
     projectData: { selectedLogoUrl: string; selectedPersona: BrandPersona; brandInputs: BrandInputs; selectedSlogan: string }
 ): Promise<SocialMediaKitAssets> => {
     const { selectedLogoUrl, selectedPersona, brandInputs, selectedSlogan } = projectData;
-    const logoBase64 = selectedLogoUrl;
+    const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
     
     try {
         const primaryColor = selectedPersona.palet_warna_hex[0] || '#6366f1';

@@ -8,9 +8,12 @@ import CopyButton from './common/CopyButton';
 interface Props {
   project: Project;
   onStartNew: () => void;
+  onNavigateToTool: (tool: 'caption') => void;
+  onSyncProject: (projectId: number) => void;
+  syncMessage: { type: 'success' | 'error', text: string } | null;
 }
 
-const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
+const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onNavigateToTool, onSyncProject, syncMessage }) => {
   const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, selectedMerchandiseUrl } = project.project_data;
   
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
@@ -66,6 +69,30 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
             Selamat! Ini adalah rangkuman lengkap identitas brand lo. Semua aset siap pakai, dari strategi sampai konten.
           </p>
         </div>
+        
+        {syncMessage && (
+            <div className={`no-print p-3 rounded-md text-sm font-semibold w-full max-w-2xl text-center ${syncMessage.type === 'success' ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
+                {syncMessage.text}
+            </div>
+        )}
+
+        {/* --- NEW: Advanced Tools Section --- */}
+        <div className="w-full max-w-6xl text-left no-print">
+            <Card title="Branding Lanjutan & Tools" className="print-card">
+                <div className="flex flex-wrap items-center gap-4">
+                    <p className="text-sm text-gray-400 flex-grow">Gunakan aset brand yang udah jadi ini buat keperluan marketing lainnya.</p>
+                    <div className="flex flex-wrap gap-3">
+                        <Button size="small" variant="secondary" onClick={() => onNavigateToTool('caption')}>
+                            Buat Caption Sosmed
+                        </Button>
+                        <Button size="small" variant="secondary" onClick={() => onSyncProject(project.id)}>
+                            Sinkronkan Project
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+        </div>
+
 
         <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
           

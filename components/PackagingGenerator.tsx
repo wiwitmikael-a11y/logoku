@@ -67,7 +67,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
     playSound('start');
 
     try {
-// FIX: `generatePackagingDesign` returns a string array. Access the first element for upload.
+      // FIX: Added the 'logoUrl' argument to the generatePackagingDesign call to match its signature.
       const designBase64Array = await generatePackagingDesign(prompt, logoUrl);
       if (!designBase64Array || designBase64Array.length === 0) {
         throw new Error("AI tidak mengembalikan gambar kemasan.");

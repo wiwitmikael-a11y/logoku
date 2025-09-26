@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound } from './services/soundService';
@@ -117,7 +116,6 @@ const MainApp: React.FC = () => {
         authError,
         bgmSelection,
         handleBgmChange,
-// FIX: Destructure `handleLogout` from useAuth to make it available in the component.
         handleLogout,
     } = useAuth();
     
@@ -135,6 +133,7 @@ const MainApp: React.FC = () => {
     const [generalError, setGeneralError] = useState<string | null>(null);
     const [isFinalizing, setIsFinalizing] = useState(false);
     const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+    const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     
     // Modals visibility state
     const [showContactModal, setShowContactModal] = useState(false);
@@ -207,7 +206,10 @@ const MainApp: React.FC = () => {
         if(projectsError) setGeneralError(projectsError);
     }, [projectsError]);
 
-    const navigateTo = (state: AppState) => setAppState(state);
+    const navigateTo = (state: AppState) => {
+        setSyncMessage(null); // Clear sync message on navigation
+        setAppState(state);
+    };
 
     const handleNewProject = useCallback(async () => {
         if (!user) return;
@@ -262,15 +264,39 @@ const MainApp: React.FC = () => {
         
         navigateTo(nextState);
     }, [projects]);
-
-    const handleGoToCaptionGenerator = useCallback((projectId: number) => {
-        const project = projects.find(p => p.id === projectId);
+    
+    const handleNavigateFromSummary = (tool: AppState) => {
+        const project = projects.find(p => p.id === selectedProjectId);
         if (project) {
-            saveWorkflowState(project.project_data);
-            setSelectedProjectId(project.id);
-            navigateTo('caption');
+            saveWorkflowState(project.project_data); // Ensure workflow state is current
+            navigateTo(tool);
         }
-    }, [projects]);
+    };
+
+    const handleSyncProject = async (projectId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) {
+             setSyncMessage({ type: 'error', text: 'Project tidak ditemukan untuk disinkronkan.' });
+             return;
+        }
+        try {
+            const { error: updateError } = await supabase
+                .from('projects')
+                .update({ project_data: project.project_data })
+                .eq('id', projectId);
+            
+            if (updateError) throw updateError;
+            
+            setSyncMessage({ type: 'success', text: 'Project berhasil disinkronkan ke database!' });
+            playSound('success');
+
+        } catch (error) {
+            const err = error as Error;
+            setSyncMessage({ type: 'error', text: `Gagal sinkronisasi: ${err.message}` });
+            playSound('error');
+        }
+        setTimeout(() => setSyncMessage(null), 4000); // Hide message after 4 seconds
+    };
 
     const handleRequestDeleteProject = useCallback((projectId: number) => {
         const project = projects.find(p => p.id === projectId);
@@ -330,7 +356,12 @@ const MainApp: React.FC = () => {
     // --- Workflow Handlers with new Hybrid Storage Strategy ---
     const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, ...data };
+        const updatedData = { 
+            ...currentState, 
+            brandInputs: data.inputs,
+            selectedPersona: data.selectedPersona,
+            selectedSlogan: data.selectedSlogan
+        };
         saveWorkflowState(updatedData);
         navigateTo('logo');
     }, []);
@@ -497,17 +528,17 @@ const MainApp: React.FC = () => {
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);
                 if (projectToShow) {
-                    return <ProjectSummary project={projectToShow} onStartNew={handleReturnToDashboard} />;
+                    return <ProjectSummary project={projectToShow} onStartNew={handleReturnToDashboard} onNavigateToTool={handleNavigateFromSummary} onSyncProject={handleSyncProject} syncMessage={syncMessage} />;
                 }
                 break;
             case 'caption':
-                if (workflowData) {
-                    return <CaptionGenerator projectData={workflowData} onBack={handleReturnToDashboard} />;
+                if (workflowData && selectedProjectId !== null) {
+                    return <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} />;
                 }
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} onGoToCaptionGenerator={handleGoToCaptionGenerator} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
+                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
         }
         handleReturnToDashboard();
         return <AuthLoadingScreen />;

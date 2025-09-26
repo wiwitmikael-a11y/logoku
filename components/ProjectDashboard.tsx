@@ -10,7 +10,6 @@ interface ProjectDashboardProps {
   onNewProject: () => void;
   onSelectProject: (projectId: number) => void;
   onContinueProject: (projectId: number) => void;
-  onGoToCaptionGenerator: (projectId: number) => void;
   onDeleteProject: (projectId: number) => void;
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
@@ -40,7 +39,7 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
 };
 
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onGoToCaptionGenerator, onDeleteProject, showWelcomeBanner, onWelcomeBannerClose }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onDeleteProject, showWelcomeBanner, onWelcomeBannerClose }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
@@ -49,16 +48,6 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
     const completed = projects.filter(p => p.status === 'completed');
     return { inProgressProjects: inProgress, completedProjects: completed };
   }, [projects]);
-  
-  const handleQuickToolClick = () => {
-      if (completedProjects.length > 0) {
-          // If there are completed projects, use the most recent one for context
-          onGoToCaptionGenerator(completedProjects[0].id);
-      } else {
-          // A more advanced implementation could pop a modal asking for basic brand info
-          alert("Untuk menggunakan tool cepat, selesaikan minimal satu project dulu ya, biar Mang AI ada konteksnya.");
-      }
-  }
 
   const renderProjectsWithAds = (projectList: Project[], type: 'in-progress' | 'completed') => {
     return projectList.flatMap((project, index) => {
@@ -90,9 +79,6 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                 </div>
                 <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               </div>
-              <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
-                <Button onClick={(e) => { e.stopPropagation(); onGoToCaptionGenerator(project.id); }} variant="secondary" size="small">Buat Caption</Button>
-              </div>
             </Card>
           )}
           <button
@@ -117,28 +103,12 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       {showWelcomeBanner && <WelcomeBanner userName={userName} onClose={onWelcomeBannerClose} />}
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Selamat Datang, {userName}!</h2>
-        <p className="text-gray-400 max-w-3xl">Ini adalah "Stasiun Pusat" branding AI lo. Mau bangun brand dari nol atau butuh bantuan cepat buat marketing? Semua bisa dimulai dari sini.</p>
+        <p className="text-gray-400 max-w-3xl">Ini adalah studio branding AI lo. Mulai petualangan branding lo dari A sampai Z, atau lanjutin project yang udah ada.</p>
       </div>
       
       <Button onClick={onNewProject}>
-        + Mulai Project Branding Lengkap (A-Z)
+        + Bikin Project Branding Baru (A-Z)
       </Button>
-      
-      {/* --- NEW: MODULAR TOOLS SECTION --- */}
-      <div className="w-full text-center mt-4">
-          <h3 className="text-lg md:text-xl font-bold mb-4">Butuh Bantuan Cepat? (Tools Satuan)</h3>
-           <div className="flex justify-center flex-wrap gap-4">
-              <Card title="Generator Caption" onClick={handleQuickToolClick} className="!max-w-xs text-left">
-                  <p className="text-sm text-gray-400">Bingung mau nulis apa? Cukup kasih topik, Mang AI bikinin caption sosmed yang ciamik pake persona brand terakhir lo.</p>
-              </Card>
-              <Card title="Generator Ide Iklan (Segera Hadir)" className="!max-w-xs text-left opacity-50 cursor-not-allowed">
-                  <p className="text-sm text-gray-400">Perlu ide buat IG Ads atau TikTok Ads? Mang AI siap bantu racik teks iklan yang menjual.</p>
-              </Card>
-               <Card title="Generator Mockup (Segera Hadir)" className="!max-w-xs text-left opacity-50 cursor-not-allowed">
-                  <p className="text-sm text-gray-400">Udah punya logo? Coba lihat gimana tampilannya di kaos, mug, atau tote bag dalam sekejap.</p>
-              </Card>
-           </div>
-      </div>
       
        <div className="border-t border-gray-700/50 w-full max-w-4xl my-4"></div>
 

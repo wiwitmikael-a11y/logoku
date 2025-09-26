@@ -92,7 +92,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
     playSound('start');
 
     try {
-// FIX: `generateMerchandiseMockup` returns a string array. Access the first element for upload.
+      // FIX: Added the 'logoUrl' argument to the generateMerchandiseMockup call to match its signature.
       const designBase64Array = await generateMerchandiseMockup(prompt, logoUrl);
       if (!designBase64Array || designBase64Array.length === 0) {
         throw new Error("AI tidak mengembalikan gambar merchandise.");

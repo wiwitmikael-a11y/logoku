@@ -14,9 +14,6 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Converted to constructor-based state initialization and method binding
-  // to ensure 'this' context is correctly bound, resolving potential runtime errors
-  // where 'this.setState' or 'this.props' might not be found.
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -46,7 +43,6 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   render(): React.ReactNode {
     if (this.state.hasError) {
-      // FIX: Improved type safety for inline styles.
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
