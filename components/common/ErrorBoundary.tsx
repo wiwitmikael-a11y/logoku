@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component<Props, State> {
   render(): React.ReactNode {
     if (this.state.hasError) {
       // The 'imageRendering' property is not standard in all TypeScript versions of React's CSSProperties.
-      // This can cause a misleading type error on `this.props` in certain toolchains.
+      // This can cause a misleading type error in certain toolchains.
       // Extracting the style object into a variable with an `any` cast helps isolate the issue
       // and allows the compiler to correctly process the component.
       const imgStyle: any = { imageRendering: 'pixelated' };
@@ -64,11 +64,11 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: The error "Property 'props' does not exist on type 'ErrorBoundary'" can be a symptom of a
-    // toolchain or type inference issue. The previous implementation using direct access `this.props.children`
-    // was failing. Switching to destructuring `children` from `this.props` to resolve this.
-    const { children } = this.props;
-    return children;
+    // FIX: Reverted to the standard React pattern for returning children.
+    // The previous destructuring `const { children } = this.props;` was causing a
+    // TypeScript error, likely due to a fragile toolchain configuration.
+    // Directly returning `this.props.children` is the most correct and robust approach.
+    return this.props.children;
   }
 }
 
