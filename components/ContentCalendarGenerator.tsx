@@ -8,7 +8,7 @@ import Card from './common/Card';
 import LoadingMessage from './common/LoadingMessage';
 import ErrorMessage from './common/ErrorMessage';
 import ImageModal from './common/ImageModal';
-import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
   projectData: Partial<ProjectData>;
@@ -25,7 +25,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
   const [sources, setSources] = useState<any[]>(projectData.searchSources || []);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showNextStepNudge, setShowNextStepNudge] = useState(false); // State for the nudge
+  const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   
   const [generatingImageForIndex, setGeneratingImageForIndex] = useState<number | null>(null);
   const [imageGenError, setImageGenError] = useState<{ index: number; message: string } | null>(null);
@@ -47,7 +47,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
     setIsLoading(true);
     setError(null);
     setCalendar([]);
-    setShowNextStepNudge(false); // Reset nudge
+    setShowNextStepNudge(false);
     playSound('start');
 
     try {
@@ -57,7 +57,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
       );
       setCalendar(result.calendar);
       setSources(result.sources);
-      setShowNextStepNudge(true); // Show nudge on success
+      setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
@@ -88,7 +88,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
         const { kata_kunci } = projectData.selectedPersona;
 
         const imageResults = await generateSocialMediaPostImage(ide_konten, kata_kunci);
-        const imageBase64 = imageResults[0]; // No upload, just get Base64
+        const imageBase64 = imageResults[0];
         
         await deductCredits(GENERATION_COST);
 

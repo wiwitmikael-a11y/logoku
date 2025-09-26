@@ -5,11 +5,10 @@ import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
-import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
-import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import CalloutPopup from './common/CalloutPopup';
 
 const LegalDisclaimerModal = React.lazy(() => import('./common/LegalDisclaimerModal'));
 
@@ -19,7 +18,7 @@ interface Props {
   onComplete: (data: { logoBase64: string; prompt: string }) => void;
 }
 
-const GENERATION_COST = 1;
+const LOGO_GENERATION_COST = 2; // Increased cost for 4 images
 
 const logoStyles = [
     {
@@ -112,11 +111,20 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
       resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [logos]);
+  
+   useEffect(() => {
+    if (selectedLogoBase64) {
+      const timer = setTimeout(() => setShowNextStepNudge(true), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setShowNextStepNudge(false);
+    }
+  }, [selectedLogoBase64]);
 
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    if (credits < GENERATION_COST) {
+    if (credits < LOGO_GENERATION_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
         return;
@@ -131,12 +139,9 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     playSound('start');
 
     try {
-      const results = await generateLogoOptions(prompt); // Returns Base64
-      // NO UPLOAD HERE. Just set the Base64 state.
-      await deductCredits(GENERATION_COST);
+      const results = await generateLogoOptions(prompt); // Returns array of Base64
+      await deductCredits(LOGO_GENERATION_COST);
       setLogos(results);
-      setSelectedLogoBase64(results[0]);
-      setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
@@ -159,7 +164,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 2: Desain Logo Lo</h2>
-        <p className="text-gray-400">Pilih gaya yang pas sama brand lo. Kita udah siapin prompt awal, bisa lo edit lagi sebelum generate logo.</p>
+        <p className="text-gray-400">Pilih gaya yang pas sama brand lo. Mang AI bakal kasih 4 pilihan sekaligus. Lo juga bisa edit prompt-nya kalo mau.</p>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -202,8 +207,8 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
           rows={5}
         />
         <div className="self-start">
-          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>
-            Spill Logo-nya, Mang AI! ({GENERATION_COST} Kredit)
+          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!prompt.trim() || credits < LOGO_GENERATION_COST}>
+            Spill 4 Logo-nya, Mang AI! ({LOGO_GENERATION_COST} Kredit)
           </Button>
            <p className="text-xs text-gray-500 mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
         </div>
@@ -214,15 +219,21 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
       {logos.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
             <div>
-              <h3 className="text-lg md:text-xl font-bold mb-2">Logo Hasil Generate:</h3>
+              <h3 className="text-lg md:text-2xl font-bold mb-2">Pilih Logo Jagoan Lo:</h3>
             </div>
-          <div className="flex justify-center w-full max-w-sm">
-            <div 
-                className="bg-white rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
-                onClick={() => openModal(logos[0])}
-              >
-                <img src={logos[0]} alt="Generated logo" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
-              </div>
+          <div className="grid grid-cols-2 gap-4 w-full max-w-xl">
+              {logos.map((logo, index) => (
+                <div 
+                    key={index}
+                    className={`bg-white rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg cursor-pointer group transition-all duration-200 ${selectedLogoBase64 === logo ? 'ring-4 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'opacity-80 hover:opacity-100'}`}
+                    onClick={() => {
+                        playSound('select');
+                        setSelectedLogoBase64(logo);
+                    }}
+                >
+                    <img src={logo} alt={`Generated logo option ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                </div>
+              ))}
           </div>
            <div className="self-center flex items-center gap-4 relative">
              {showNextStepNudge && (
@@ -230,8 +241,8 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
                 Mantap! Klik di sini buat lanjut.
               </CalloutPopup>
             )}
-             <Button onClick={() => handleSubmit()} variant="secondary" isLoading={isLoading} disabled={credits < GENERATION_COST}>
-                Generate Ulang ({GENERATION_COST} Kredit)
+             <Button onClick={() => handleSubmit()} variant="secondary" isLoading={isLoading} disabled={credits < LOGO_GENERATION_COST}>
+                Generate Ulang ({LOGO_GENERATION_COST} Kredit)
             </Button>
             <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64}>
               Pilih & Finalisasi Logo &rarr;

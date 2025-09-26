@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,7 +10,7 @@ import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
-  logoUrl: string;
+  logoUrl: string; // This will now be a Base64 string
   businessName: string;
   onComplete: (merchandiseBase64: string) => void;
   isFinalizing: boolean;
@@ -19,6 +19,7 @@ interface Props {
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
 const GENERATION_COST = 1;
 
+// FIX: Updated prompt templates to instruct the AI to use the provided logo image, not a text prompt.
 const merchandiseTypes: { id: MerchType; name: string; promptTemplate: string }[] = [
   {
     id: 't-shirt',
@@ -90,7 +91,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
     playSound('start');
 
     try {
-      // FIX: The function call was missing the `logoUrl` argument.
+      // FIX: Added the missing logoUrl argument to the function call.
       const results = await generateMerchandiseMockup(prompt, logoUrl);
       
       await deductCredits(GENERATION_COST);
@@ -118,6 +119,11 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
       setActiveTab(tab);
       setShowNextStepNudge(false);
   }
+  
+  const buttonText = useMemo(() => {
+    const merchName = merchandiseTypes.find(m => m.id === activeTab)?.name || 'Merchandise';
+    return `Bikinin Mockup ${merchName}-nya! (${GENERATION_COST} Kredit)`;
+  }, [activeTab]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -149,7 +155,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
         />
         <div className="self-start">
             <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>
-                {`Bikinin Mockup ${merchandiseTypes.find(m=>m.id === activeTab)?.name}-nya! (${GENERATION_COST} Kredit)`}
+                {buttonText}
             </Button>
         </div>
       </form>
@@ -177,7 +183,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
             </CalloutPopup>
         )}
         <Button onClick={handleFinalize} disabled={!selectedDesignBase64 || isFinalizing} isLoading={isFinalizing}>
-          {isFinalizing ? 'Finalisasi Project...' : 'Selesai & Lihat Brand Kit Lengkap &rarr;'}
+          {isFinalizing ? 'Finalisasi & Simpan Project...' : 'Selesai & Lihat Brand Kit Lengkap &rarr;'}
         </Button>
       </div>
       

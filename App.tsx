@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import { uploadImageFromBase64 } from './services/storageService';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets, SeoData, AdsData } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
@@ -284,29 +283,7 @@ const MainApp: React.FC = () => {
         setGeneralError(null);
 
         try {
-            // 1. Delete associated files from Supabase Storage (new logic)
-            const userFolderPath = `${user.id}`;
-            const { data: allUserFiles, error: listError } = await supabase.storage
-                .from('project-assets')
-                .list(userFolderPath);
-
-            if (listError) throw new Error(`Gagal membaca file project: ${listError.message}`);
-
-            if (allUserFiles && allUserFiles.length > 0) {
-                const projectFilePrefix = `${projectToDelete.id}_`;
-                const filesToDelete = allUserFiles.filter(file => file.name.startsWith(projectFilePrefix));
-                
-                if (filesToDelete.length > 0) {
-                    const filePathsToDelete = filesToDelete.map(file => `${userFolderPath}/${file.name}`);
-                    const { error: removeError } = await supabase.storage
-                        .from('project-assets')
-                        .remove(filePathsToDelete);
-                    if (removeError) throw new Error(`Gagal menghapus aset project: ${removeError.message}`);
-                }
-            }
-
-
-            // 2. Delete the project record from the database
+            // Since we are not using Supabase Storage anymore for this flow, we only need to delete the project record.
             const { error: deleteError } = await supabase
                 .from('projects')
                 .delete()
@@ -314,7 +291,7 @@ const MainApp: React.FC = () => {
             
             if (deleteError) throw new Error(`Gagal menghapus data project: ${deleteError.message}`);
 
-            // 3. Update UI state
+            // Update UI state
             setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
             
             playSound('success');
@@ -427,76 +404,11 @@ const MainApp: React.FC = () => {
         setGeneralError(null);
         
         try {
+            // REWORKED LOGIC: No more mass uploads. Just save the final Base64 data.
             const currentState = loadWorkflowState() || {};
-            const tempProjectData = { ...currentState, selectedMerchandiseUrl: merchandiseBase64 };
+            const finalProjectData = { ...currentState, selectedMerchandiseUrl: merchandiseBase64 };
 
-            const finalProjectData: Partial<ProjectData> = { ...tempProjectData };
-            const userId = session.user.id;
-            
-            // --- MASS UPLOAD PROCESS ---
-            const uploadPromises: Promise<void>[] = [];
-            const uploadAndAssign = async (key: keyof ProjectData, base64: string, assetType: string) => {
-                const url = await uploadImageFromBase64(base64, userId, selectedProjectId, assetType);
-                (finalProjectData as any)[key] = url;
-            };
-
-            // Logo
-            if (tempProjectData.selectedLogoUrl) {
-                uploadPromises.push(uploadAndAssign('selectedLogoUrl', tempProjectData.selectedLogoUrl, 'logo-main'));
-            }
-            if (tempProjectData.logoVariations?.icon) {
-                uploadPromises.push(uploadAndAssign('logoVariations.icon' as any, tempProjectData.logoVariations.icon, 'logo-icon'));
-            }
-            if (tempProjectData.logoVariations?.monochrome) {
-                uploadPromises.push(uploadAndAssign('logoVariations.monochrome' as any, tempProjectData.logoVariations.monochrome, 'logo-monochrome'));
-            }
-
-            // Print Media
-            if (tempProjectData.selectedPrintMedia?.cardUrl) {
-                 uploadPromises.push(uploadAndAssign('selectedPrintMedia.cardUrl' as any, tempProjectData.selectedPrintMedia.cardUrl, 'print-card'));
-            }
-            if (tempProjectData.selectedPrintMedia?.flyerUrl) {
-                 uploadPromises.push(uploadAndAssign('selectedPrintMedia.flyerUrl' as any, tempProjectData.selectedPrintMedia.flyerUrl, 'print-flyer'));
-            }
-            if (tempProjectData.selectedPrintMedia?.bannerUrl) {
-                 uploadPromises.push(uploadAndAssign('selectedPrintMedia.bannerUrl' as any, tempProjectData.selectedPrintMedia.bannerUrl, 'print-banner'));
-            }
-             if (tempProjectData.selectedPrintMedia?.rollBannerUrl) {
-                 uploadPromises.push(uploadAndAssign('selectedPrintMedia.rollBannerUrl' as any, tempProjectData.selectedPrintMedia.rollBannerUrl, 'print-rollbanner'));
-            }
-
-            // Packaging & Merchandise
-            if (tempProjectData.selectedPackagingUrl) {
-                 uploadPromises.push(uploadAndAssign('selectedPackagingUrl', tempProjectData.selectedPackagingUrl, 'packaging'));
-            }
-            if (tempProjectData.selectedMerchandiseUrl) {
-                 uploadPromises.push(uploadAndAssign('selectedMerchandiseUrl', tempProjectData.selectedMerchandiseUrl, 'merchandise'));
-            }
-
-            // Content Calendar Images
-            if (tempProjectData.contentCalendar) {
-                const calendarUploads = tempProjectData.contentCalendar
-                    .map((entry, index) => ({ entry, index }))
-                    .filter(({ entry }) => entry.imageUrl && entry.imageUrl.startsWith('data:image'))
-                    .map(async ({ entry, index }) => {
-                        const url = await uploadImageFromBase64(entry.imageUrl!, userId, selectedProjectId, `content-${index}`);
-                        // This modification is tricky, so we'll do it after the promises resolve.
-                        return { index, url };
-                    });
-                
-                const calendarResults = await Promise.all(calendarUploads);
-                 // Create a deep copy to modify
-                const newCalendar = JSON.parse(JSON.stringify(finalProjectData.contentCalendar));
-                calendarResults.forEach(({ index, url }) => {
-                    newCalendar[index].imageUrl = url;
-                });
-                finalProjectData.contentCalendar = newCalendar;
-            }
-
-            // Execute all non-calendar uploads
-            await Promise.all(uploadPromises);
-            
-            // --- SAVE FINAL DATA TO DATABASE ---
+            // Save the complete project data with all Base64 strings to the database
             const { data, error } = await supabase
                 .from('projects')
                 .update({ project_data: finalProjectData, status: 'completed' })
@@ -506,6 +418,7 @@ const MainApp: React.FC = () => {
 
             if (error) throw error;
 
+            // Update UI state
             const updatedProject: Project = data as any;
             setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
             setSelectedProjectId(updatedProject.id);
@@ -562,7 +475,7 @@ const MainApp: React.FC = () => {
             case 'persona':
                 return <BrandPersonaGenerator onComplete={handlePersonaComplete} />;
             case 'logo':
-                if (workflowData?.selectedPersona && workflowData.brandInputs && selectedProjectId && session?.user?.id) {
+                if (workflowData?.selectedPersona && workflowData.brandInputs) {
                     return <LogoGenerator 
                         persona={workflowData.selectedPersona} 
                         businessName={workflowData.brandInputs.businessName} 
@@ -571,18 +484,16 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'logo_detail':
-                if (workflowData?.selectedLogoUrl && workflowData.logoPrompt && selectedProjectId && session?.user?.id) {
+                if (workflowData?.selectedLogoUrl && workflowData.logoPrompt) {
                     return <LogoDetailGenerator 
                         baseLogoUrl={workflowData.selectedLogoUrl} 
                         basePrompt={workflowData.logoPrompt} 
                         onComplete={handleLogoDetailComplete}
-                        userId={session.user.id}
-                        projectId={selectedProjectId}
                     />;
                 }
                 break;
             case 'content':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && selectedProjectId && session?.user?.id) {
+                if (workflowData?.brandInputs && workflowData.selectedPersona) {
                     return <ContentCalendarGenerator
                         projectData={workflowData}
                         onComplete={handleContentComplete}
@@ -590,7 +501,7 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'print':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl && selectedProjectId && session?.user?.id) {
+                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl) {
                     return <PrintMediaGenerator 
                         projectData={workflowData} 
                         onComplete={handlePrintMediaComplete} 
@@ -598,7 +509,7 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'seo':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl) {
+                if (workflowData?.brandInputs && workflowData.selectedPersona) {
                     return <SeoGenerator projectData={workflowData} onComplete={handleSeoComplete} />;
                 }
                 break;
@@ -608,7 +519,7 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'packaging':
-                if (workflowData?.selectedPersona && workflowData.brandInputs && workflowData.selectedLogoUrl && selectedProjectId && session?.user?.id) {
+                if (workflowData?.selectedPersona && workflowData.brandInputs && workflowData.selectedLogoUrl) {
                     return <PackagingGenerator 
                         persona={workflowData.selectedPersona} 
                         businessName={workflowData.brandInputs.businessName} 
@@ -618,7 +529,7 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'merchandise':
-                if (workflowData?.selectedLogoUrl && workflowData.brandInputs?.businessName && selectedProjectId && session?.user?.id) {
+                if (workflowData?.selectedLogoUrl && workflowData.brandInputs?.businessName) {
                     return <MerchandiseGenerator 
                         logoUrl={workflowData.selectedLogoUrl} 
                         businessName={workflowData.brandInputs.businessName} 
@@ -644,7 +555,7 @@ const MainApp: React.FC = () => {
         }
         // Fallback: If required data is missing, go to dashboard
         handleReturnToDashboard();
-        return null;
+        return <AuthLoadingScreen />;
     };
     
     if (authLoading) return <AuthLoadingScreen />;

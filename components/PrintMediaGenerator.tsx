@@ -101,8 +101,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     setShowNextStepNudge(false);
     playSound('start');
 
-    // FIX: The function expects `selectedLogoUrl`, but `logoPrompt` was being passed.
-    // Destructure `selectedLogoUrl` from `projectData` and use it in the payload.
+    // FIX: Destructured selectedLogoUrl instead of logoPrompt and updated the check.
     const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
     if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
         setError("Waduh, data project (terutama logo) ada yang kurang buat generate media cetak.");
@@ -210,6 +209,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Studio Media Cetak Mang AI</h2>
         <p className="text-gray-400">Bikin materi promosi cetak yang keren. Pilih jenis media, isi detailnya, dan biarkan Mang AI mendesain untuk lo.</p>
+        <p className="text-xs text-gray-500 mt-1">Catatan: Hasil generate adalah mockup visual beresolusi tinggi, bukan file vector/desain mentah untuk dicetak. Ini bisa jadi referensi visual yang kuat untuk desainer atau percetakan.</p>
       </div>
       
       <div className="flex flex-wrap border-b border-gray-700">

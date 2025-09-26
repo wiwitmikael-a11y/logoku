@@ -2,31 +2,27 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
-import { uploadImageFromBase64 } from '../services/storageService';
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { LogoVariations } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
-import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
-import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
-  baseLogoUrl: string;
+  baseLogoUrl: string; // This will now be a Base64 string
   basePrompt: string;
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
-  userId: string;
-  projectId: number;
 }
 
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
-const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete, userId, projectId }) => {
+const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -61,20 +57,18 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setShowNextStepNudge(false); // Reset nudge
     playSound('start');
     try {
-      // FIX: The generateLogoVariations function expects two arguments, the base logo image and a prompt. The original call was only passing the prompt. Now, we fetch the current logo's image data as a Base64 string and pass it along with the prompt to satisfy the function signature.
-      const currentImageBase64 = await fetchImageAsBase64(finalLogoUrl);
-      const generatedVariations = await generateLogoVariations(currentImageBase64, basePrompt);
+      // FIX: The function was called with the wrong arguments. Now correctly passing the basePrompt.
+      const generatedVariations = await generateLogoVariations(basePrompt);
       
-      // The variations are returned as Base64, we will pass them directly to the onComplete handler
-      // without uploading them here. Uploads will happen in the finalization step.
-      await deductCredits(VARIATION_COST); // Deduct on success
+      await deductCredits(VARIATION_COST);
+      
       const completeVariations = { 
-          main: finalLogoUrl, // Keep the URL for main, pass base64 for others
+          main: finalLogoUrl,
           icon: generatedVariations.icon, 
           monochrome: generatedVariations.monochrome 
       };
       setVariations(completeVariations);
-      setShowNextStepNudge(true); // Show nudge on success
+      setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Gagal membuat variasi logo.';
@@ -83,7 +77,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,16 +93,14 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setError(null);
     playSound('start');
     try {
-      // Fetch current image from its URL and convert back to Base64 for the API
-      const currentImageBase64 = await fetchImageAsBase64(finalLogoUrl);
-      const base64Data = currentImageBase64.split(',')[1];
-      const mimeType = currentImageBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+      // `finalLogoUrl` is already a Base64 string, no need to fetch
+      const base64Data = finalLogoUrl.split(',')[1];
+      const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/png';
       
-      // Call the edit API with the Base64 data
       const editedBase64Result = await editLogo(base64Data, mimeType, editPrompt);
       
-      await deductCredits(EDIT_COST); // Deduct on success
-      setFinalLogoUrl(editedBase64Result); // Update the main displayed logo with the new Base64 result
+      await deductCredits(EDIT_COST);
+      setFinalLogoUrl(editedBase64Result);
       playSound('success');
     } catch (err)
      {

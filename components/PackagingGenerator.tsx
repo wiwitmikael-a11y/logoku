@@ -13,7 +13,7 @@ import CalloutPopup from './common/CalloutPopup';
 interface Props {
   persona: BrandPersona;
   businessName: string;
-  logoUrl: string;
+  logoUrl: string; // This will now be a Base64 string
   onComplete: (packagingBase64: string) => void;
 }
 
@@ -66,8 +66,8 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
     playSound('start');
 
     try {
-      // FIX: The function call was missing the `logoUrl` argument.
-      const results = await generatePackagingDesign(prompt, logoUrl); // Returns Base64
+      // FIX: Added the missing logoUrl argument to the function call.
+      const results = await generatePackagingDesign(prompt, logoUrl);
       
       await deductCredits(GENERATION_COST);
       setDesigns(results);

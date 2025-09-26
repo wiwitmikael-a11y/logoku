@@ -130,7 +130,7 @@ Follow these steps meticulously:
 
 3.  **Develop a Rich Descriptive Vocabulary**: For the best concept, create a list of evocative adjectives and nouns. Focus on artistic styles (e.g., art deco, geometric minimalism, neo-vintage), line quality (e.g., sharp vector lines, soft gradients, clean edges), and color theory (e.g., duotone color scheme, vibrant analogous colors, high contrast).
 
-4.  **Synthesize the Final Prompt**: Combine the best ideas into a single, cohesive, and highly descriptive final prompt. The prompt **must** describe a **"Minimalist vector logo"** or **"Clean vector graphic logo"**. It must specify **"on a solid white background"**. It is critical to **avoid asking for text or letters**, as the image model cannot render them well. Instead, describe a composition that leaves clear, balanced space for text to be added later. The final prompt should be a masterpiece of clarity and artistic direction.
+4.  **Synthesize the Final Prompt**: Combine the best ideas into a single, cohesive, and highly descriptive final prompt. The final prompt MUST be a masterpiece of visual direction. It MUST start with "masterpiece vector logo of...". It MUST specify "clean vector, minimalist, on a solid pure white background, #ffffff background". It must be EXTREMELY specific about shapes, lines, and colors. CRITICAL: ABSOLUTELY NO TEXT, WORDS, or LETTERS should be requested. Describe a symbolic, abstract icon only. The composition must be balanced, using negative space effectively, and centered.
 
 **Final, Polished Prompt for Image Generation:**`;
 
@@ -472,11 +472,11 @@ export const generateGoogleAdsContent = async (brandInputs: BrandInputs, slogan:
 
 export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
     try {
-        // Use the new, advanced prompt engineering logic for higher quality logos
         const advancedPrompt = await generateAdvancedLogoPrompt(prompt);
-        // Directly call the image generator with the superior prompt
-        const generatedBase64 = await generateImageFromWhiteCanvas(advancedPrompt, '1:1');
-        return [generatedBase64];
+        // Generate 4 logo options in parallel for better user choice
+        const promises = Array(4).fill(0).map(() => generateImageFromWhiteCanvas(advancedPrompt, '1:1'));
+        const results = await Promise.all(promises);
+        return results;
     } catch (error) {
         throw handleApiError(error, "Flash Preview (Logo)");
     }
@@ -515,20 +515,17 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
     }
 };
 
-export const generateLogoVariations = async (baseLogoBase64: string, basePrompt: string): Promise<LogoVariations> => {
+// FIX: Changed signature to take basePrompt first and generate variations from it, rather than editing an existing image.
+export const generateLogoVariations = async (basePrompt: string): Promise<LogoVariations> => {
     try {
-        // Prepare the base image data for the API calls
-        const base64Data = baseLogoBase64.split(',')[1];
-        const mimeType = baseLogoBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+        // Create specific, direct instructions for image generation based on the original prompt
+        const iconPrompt = `From the following logo concept, create a simplified icon-only version. Remove all text and lettering. Keep the core symbol or shape. The final output should be a clean vector icon on a solid white background. Concept: "${basePrompt}"`;
+        const monochromePrompt = `Based on the following logo concept, create a high-contrast, monochrome (black and white) version. Do not change the shape or design elements, only remove all color. The final output must be a clean vector logo on a solid white background. Concept: "${basePrompt}"`;
 
-        // Create specific, direct instructions for image editing
-        const iconPrompt = `From the provided logo image, extract a simplified icon-only version. Remove all text and lettering. Keep the core symbol or shape. The final output should be a clean vector icon on a solid white background.`;
-        const monochromePrompt = `Convert the provided logo image into a high-contrast, monochrome (black and white) version. Do not change the shape or design elements, only remove all color. The final output must be a clean vector logo on a solid white background.`;
-
-        // Use the 'editLogo' function to perform the variations on the actual image
+        // Use the 'generateImageFromWhiteCanvas' function to perform the variations.
         const [iconResultBase64, monochromeResultBase64] = await Promise.all([
-            editLogo(base64Data, mimeType, iconPrompt),
-            editLogo(base64Data, mimeType, monochromePrompt)
+            generateImageFromWhiteCanvas(iconPrompt, '1:1'),
+            generateImageFromWhiteCanvas(monochromePrompt, '1:1')
         ]);
 
         return { main: '', icon: iconResultBase64, monochrome: monochromeResultBase64 };
@@ -597,8 +594,8 @@ export const generatePrintMedia = async (
     let instructionPrompt = '';
 
     try {
-        // Fetch the master logo image to be used in the prompt
-        const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
+        // The logo URL is now a Base64 string, so no need to fetch it.
+        const logoBase64 = selectedLogoUrl;
 
         switch (mediaType) {
             case 'business_card':
@@ -625,7 +622,8 @@ export const generatePrintMedia = async (
 
 export const generatePackagingDesign = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
-        const logoBase64 = await fetchImageAsBase64(logoUrl);
+        // The logo URL is now a Base64 string, so no need to fetch it.
+        const logoBase64 = logoUrl;
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
@@ -635,7 +633,8 @@ export const generatePackagingDesign = async (prompt: string, logoUrl: string): 
 
 export const generateMerchandiseMockup = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
-        const logoBase64 = await fetchImageAsBase64(logoUrl);
+        // The logo URL is now a Base64 string, so no need to fetch it.
+        const logoBase64 = logoUrl;
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
