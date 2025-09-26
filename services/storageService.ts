@@ -62,9 +62,11 @@ export const uploadImageFromBase64 = async (
             let userFriendlyMessage = "Waduh, RLS Policy di Supabase lo error, Juragan! Masalah ini 100% karena policy di bucket 'project-assets' salah. Buka Supabase Dashboard > Storage > Pilih bucket 'project-assets' > Klik tab 'Policies'. Hapus semua policy lama, lalu buat 3 policy baru yang benar sesuai instruksi terakhir.";
 
             if (errorMessage.includes('ceil(text)')) {
-                userFriendlyMessage += " Error spesifiknya 'ceil(text)', artinya ada perhitungan 'size' yang salah di policy INSERT lo.";
+                userFriendlyMessage = "RLS Error: Ada perhitungan 'size' yang salah di policy INSERT lo. Pastikan lo pake `(metadata->>'size')::bigint`.";
             } else if (errorMessage.includes('text') && errorMessage.includes('uuid')) {
-                userFriendlyMessage += " Error spesifiknya 'operator text = uuid', artinya lo salah pake kolom 'owner_id' (text). Ganti semua jadi 'owner' (uuid) di policy SELECT dan DELETE.";
+                userFriendlyMessage = "RLS Error: Lo salah pake kolom 'owner_id' (text). Ganti semua jadi 'owner' (uuid) di policy SELECT dan DELETE.";
+            } else if (errorMessage.includes('missing from clause') || errorMessage.includes('new table')) {
+                userFriendlyMessage = "RLS Error: Di policy INSERT lo, ada kolom yang harus pake awalan `NEW.`. Cek lagi, kemungkinan besar `name` harus diganti jadi `NEW.name`.";
             }
              throw new Error(userFriendlyMessage);
         }

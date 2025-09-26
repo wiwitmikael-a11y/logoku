@@ -12,13 +12,10 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: The ErrorBoundary class must extend React.Component to have access to
-// lifecycle methods, state, and props.
-// FIX: Corrected the class to extend React.Component, which provides access to `this.props` and `this.setState`.
+// FIX: Corrected the class to extend React.Component, providing access to lifecycle methods, state, and props like `this.props` and `this.setState`.
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to modern class field syntax for state and method binding.
-  // This resolves errors where inherited properties like `this.props` and `this.setState`
-  // were not being found on the component instance.
+  // FIX: Switched to modern class field syntax for state initialization.
+  // This is cleaner and ensures all state properties are correctly initialized.
   public state: State = {
     hasError: false,
     error: undefined,
