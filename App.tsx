@@ -103,6 +103,7 @@ const MainApp: React.FC = () => {
     const previousAppState = useRef<AppState>(appState);
     const previousSession = useRef<typeof session>(session);
 
+    // New, more logical workflow order
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'print', 'seo', 'ads', 'packaging', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
@@ -211,7 +212,7 @@ const MainApp: React.FC = () => {
         setSelectedProjectId(project.id);
         saveWorkflowState(project.project_data);
         
-        // Determine the next step based on what data exists
+        // Determine the next step based on what data exists, following the new workflow
         const data = project.project_data;
         let nextState: AppState = 'persona';
         if (data.selectedMerchandiseUrl) nextState = 'summary'; // Go to summary if it was completed

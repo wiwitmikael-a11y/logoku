@@ -12,10 +12,9 @@ interface State {
   isCopied?: boolean;
 }
 
-// Fix: The ErrorBoundary class must extend React.Component to function as a React Error Boundary.
+// FIX: The ErrorBoundary class must extend React.Component to function as a React Error Boundary.
 // This gives it access to component lifecycle methods, state (`this.state`), and props (`this.props`),
 // which resolves the errors related to `this.setState` and `this.props` being undefined.
-// FIX: Extended React.Component<Props, State> to resolve errors with 'this.props' and 'this.setState'.
 class ErrorBoundary extends React.Component<Props, State> {
   state: State = {
     hasError: false,
@@ -42,10 +41,6 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   render(): React.ReactNode {
     if (this.state.hasError) {
-      // The 'imageRendering' property is not standard in all TypeScript versions of React's CSSProperties.
-      // This can cause a misleading type error in certain toolchains.
-      // Extracting the style object into a variable with an `any` cast helps isolate the issue
-      // and allows the compiler to correctly process the component.
       const imgStyle: any = { imageRendering: 'pixelated' };
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">

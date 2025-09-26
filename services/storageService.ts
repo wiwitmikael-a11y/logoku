@@ -13,11 +13,10 @@ const base64ToBlob = async (base64: string): Promise<Blob | null> => {
     }
 };
 
-
 /**
  * Compresses, converts, and uploads an image from a Base64 string to Supabase Storage.
- * Now includes a client-side compression step to save storage space.
- * It now uploads an ArrayBuffer directly to potentially avoid RLS issues with metadata types.
+ * This version uploads a `File` object, which might be handled more robustly by Supabase's
+ * metadata extraction for RLS policies compared to an ArrayBuffer.
  * @param base64String The full data URL of the image (e.g., "data:image/png;base64,...").
  * @param userId The ID of the user uploading the file.
  * @param projectId The ID of the project this asset belongs to.
@@ -35,36 +34,35 @@ export const uploadImageFromBase64 = async (
     // Step 1: Compress the image to WebP format.
     const compressedBase64 = await compressAndConvertToWebP(base64String);
     
-    // Step 2: Convert the Base64 string to a Blob, then to an ArrayBuffer.
-    const fileName = `${assetType}-${Date.now()}.webp`;
+    // Step 2: Convert the Base64 string to a Blob.
     const blob = await base64ToBlob(compressedBase64);
 
     if (!blob) {
         throw new Error('Gagal mengubah data Base64 menjadi file. Data mungkin korup atau formatnya salah.');
     }
     
-    const arrayBuffer = await blob.arrayBuffer();
+    // Step 3: Create a File object from the Blob. This can provide better metadata for Supabase.
+    const fileName = `${assetType}-${Date.now()}.webp`;
+    const file = new File([blob], fileName, { type: 'image/webp' });
     const filePath = `${userId}/${projectId}/${fileName}`;
 
-    // Step 3: Upload the ArrayBuffer.
-    // We pass the ArrayBuffer directly. This might influence how the backend processes metadata,
-    // potentially resolving type-related issues in RLS policies.
-    // The 'contentType' must be specified when uploading an ArrayBuffer.
+    // Step 4: Upload the File object.
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(filePath, arrayBuffer, {
+        .upload(filePath, file, { // Using the File object directly
             cacheControl: '3600',
             upsert: false,
-            contentType: 'image/webp',
+            // contentType is often inferred from the File object, but we specify it for safety
+            contentType: 'image/webp', 
         });
 
     if (uploadError) {
         console.error('Supabase Storage Error:', uploadError);
         const errorString = (uploadError instanceof Error ? uploadError.message : JSON.stringify(uploadError)).toLowerCase();
 
-        // Check for the specific RLS policy error. The message is now more direct.
+        // The error message is now even more specific about the fix being in the Supabase Dashboard.
         if (errorString.includes('function ceil(text) does not exist')) {
-            const rlsErrorMessage = "FIX DI DASHBOARD SUPABASE: Upload gagal karena RLS Policy di bucket 'project-assets' salah. Buka Storage > Policies, edit policy untuk INSERT, dan ganti `ceil(NEW.metadata->>'size')` menjadi `(NEW.metadata->>'size')::bigint`. Error ini BUKAN dari kode aplikasi.";
+            const rlsErrorMessage = "PERBAIKI DI DASHBOARD SUPABASE: Upload gagal karena RLS Policy untuk INSERT di bucket 'project-assets' salah. Buka dashboard Supabase > Storage > Policies. Edit policy INSERT Anda dan pastikan Anda menggunakan `(NEW.metadata->>'size')::bigint` untuk memeriksa ukuran file, BUKAN `ceil(...)`. Error ini TIDAK BISA diperbaiki dari kode aplikasi.";
             throw new Error(rlsErrorMessage);
         }
 
@@ -76,7 +74,7 @@ export const uploadImageFromBase64 = async (
         throw new Error(`Gagal mengunggah gambar ke Supabase Storage: ${uploadError.message}. Pastikan bucket 'project-assets' sudah ada dan bersifat publik.`);
     }
 
-    // Step 4: Get the public URL of the successfully uploaded file.
+    // Step 5: Get the public URL of the successfully uploaded file.
     const { data: publicUrlData } = supabase.storage
         .from(BUCKET_NAME)
         .getPublicUrl(filePath);
