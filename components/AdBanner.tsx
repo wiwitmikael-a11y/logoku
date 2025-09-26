@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AD_PUBLISHER_ID, AD_SLOT_ID_BANNER } from '../../services/adsenseConfig';
+import { AD_PUBLISHER_ID, AD_SLOT_ID_BANNER } from '../services/adsenseConfig';
 
 /**
  * AdBanner "Pintar" yang seimbang antara UX dan Monetisasi.

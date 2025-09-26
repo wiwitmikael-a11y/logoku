@@ -20,8 +20,10 @@ const InFeedAd: React.FC = () => {
     }
   }, []);
   
-  // Jika slot ID belum diganti, tampilkan pesan placeholder.
-  if (AD_SLOT_ID_IN_CONTENT === "YOUR_DISPLAY_AD_SLOT_ID_HERE") {
+  // FIX: Removed the check for a placeholder ID, as the actual ID is now in use,
+  // which caused a TypeScript error about non-overlapping types.
+  // The placeholder logic is now removed as it's considered dead code.
+  if (!AD_SLOT_ID_IN_CONTENT) {
     return (
         <div className="bg-gray-800 border border-dashed border-gray-600 rounded-xl p-4 text-center text-sm text-gray-400 min-h-[250px] flex flex-col justify-center items-center">
             <p className="font-semibold text-yellow-400">Slot Iklan Display</p>
