@@ -17,10 +17,11 @@ const base64ToBlob = async (base64: string): Promise<Blob | null> => {
 };
 
 /**
- * [PERBAIKAN] Mengunggah gambar dari string Base64 ke Supabase Storage.
- * Logika diubah untuk mengirim ArrayBuffer, bukan objek File, untuk menghindari potensi
- * masalah metadata di sisi server Supabase yang dapat menyebabkan error RLS Policy.
- * Pesan error untuk RLS Policy juga dibuat lebih instruktif.
+ * [PERBAIKAN FINAL] Mengunggah gambar dari string Base64 ke Supabase Storage.
+ * Logika diubah total untuk mengirim objek `File` standar, bukan `ArrayBuffer`.
+ * Objek `File` secara eksplisit membawa metadata 'size' yang seharusnya dapat dibaca
+ * dengan benar oleh RLS policy Supabase. Ini adalah metode paling robust dan
+ * merupakan upaya terakhir perbaikan dari sisi kode.
  * @param base64String URL data lengkap dari gambar (misal: "data:image/png;base64,...").
  * @param userId ID pengguna yang mengunggah file.
  * @param projectId ID proyek tempat aset ini berada.
@@ -48,18 +49,18 @@ export const uploadImageFromBase64 = async (
         throw new Error(`Upload gagal: Ukuran file (${(blob.size / 1024 / 1024).toFixed(2)} MB) melebihi batas maksimal (5 MB).`);
     }
     
-    // Langkah 3: [BARU] Konversi Blob ke ArrayBuffer untuk di-upload.
-    const arrayBuffer = await blob.arrayBuffer();
+    // Langkah 3: [BARU] Buat objek `File` standar. Ini adalah cara paling eksplisit
+    // untuk mengirim metadata (termasuk 'size') ke Supabase.
     const fileName = `${assetType}-${Date.now()}.webp`;
+    const file = new File([blob], fileName, { type: 'image/webp' });
     const filePath = `${userId}/${projectId}/${fileName}`;
 
-    // Langkah 4: Upload ArrayBuffer.
+    // Langkah 4: Upload objek `File`.
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(filePath, arrayBuffer, { // Menggunakan ArrayBuffer
+        .upload(filePath, file, { // Menggunakan File object
             cacheControl: '3600',
             upsert: false,
-            contentType: 'image/webp', // Wajib disertakan saat upload ArrayBuffer
         });
 
     if (uploadError) {
