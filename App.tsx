@@ -18,19 +18,17 @@ import LoginScreen from './components/LoginScreen';
 import ProgressStepper from './components/common/ProgressStepper';
 import AdBanner from './components/AdBanner';
 
-// --- Lazily Loaded Components ---
+// --- Lazily Loaded Components (with new, clear naming) ---
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
 const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersonaGenerator'));
 const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
 const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
 const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
-// --- NEW Social-Centric Components ---
-const SocialMediaKitGenerator = React.lazy(() => import('./components/PrintMediaGenerator')); // Re-purposed
-const ProfileOptimizer = React.lazy(() => import('./components/SeoGenerator')); // Re-purposed
-const SocialAdsGenerator = React.lazy(() => import('./components/GoogleAdsGenerator')); // Re-purposed
-// --- End of New Components ---
+const SocialMediaKitGenerator = React.lazy(() => import('./components/SocialMediaKitGenerator'));
+const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'));
+const SocialAdsGenerator = React.lazy(() => import('./components/SocialAdsGenerator'));
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
-const PrintMediaGenerator = React.lazy(() => import('./components/MerchandiseGenerator')); // Re-purposed into the new Print Media Generator
+const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 const CaptionGenerator = React.lazy(() => import('./components/CaptionGenerator'));
 const ContactModal = React.lazy(() => import('./components/ContactModal'));

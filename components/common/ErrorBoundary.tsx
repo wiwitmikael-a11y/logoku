@@ -13,9 +13,8 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Refactored to use class property for state and an arrow function for the method.
-  // This is a more modern approach that avoids constructor boilerplate and potential 'this'
-  // context issues, resolving all errors related to state and props being undefined.
+  // FIX: Initialized state as a class field to ensure TypeScript recognizes `this.state`.
+  // The constructor has been removed as it's no longer necessary for initialization or binding.
   state: State = {
     hasError: false,
     error: undefined,
@@ -31,6 +30,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
   
+  // FIX: Converted `handleCopy` to an arrow function property to automatically bind `this`.
+  // This resolves errors where `this.state` and `this.setState` were not found.
   handleCopy = () => {
       if(this.state.error) {
           navigator.clipboard.writeText(this.state.error.toString());
@@ -41,7 +42,6 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   render(): React.ReactNode {
     if (this.state.hasError) {
-      // FIX: Improved type safety for inline styles.
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">

@@ -11,9 +11,11 @@ export interface Profile {
 
 export interface BrandInputs {
   businessName: string;
-  industry: string;
+  businessCategory: string; // NEW: Structured input
+  businessDetail: string;   // NEW: Structured input
+  industry: string;         // Kept for the combined result for downstream components
   targetAudience: string;
-  valueProposition: string;
+  valueProposition: string; 
   competitors: string; 
   contactInfo?: {
     name: string;

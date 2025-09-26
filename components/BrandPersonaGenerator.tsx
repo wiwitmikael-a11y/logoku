@@ -16,10 +16,13 @@ interface Props {
   onComplete: (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => void;
 }
 
+const businessCategories = ["Makanan", "Minuman", "Fashion", "Jasa", "Kecantikan", "Kerajinan Tangan", "Lainnya"];
+
 const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
-  const [formData, setFormData] = useState<BrandInputs>({
+  const [formData, setFormData] = useState<Omit<BrandInputs, 'industry'>>({
     businessName: 'Kopi Senja',
-    industry: 'Minuman Kopi',
+    businessCategory: 'Minuman',
+    businessDetail: 'Kopi Susu Gula Aren',
     targetAudience: 'Mahasiswa dan pekerja muda usia 18-28 tahun',
     valueProposition: 'Tempat yang nyaman untuk bekerja dan bersantai dengan harga terjangkau.',
     competitors: 'Starbucks, Kopi Kenangan',
@@ -67,7 +70,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
     }
   }, [selectedSlogan]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -83,10 +86,12 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
     setShowNextStepNudge(false); // Reset nudge
     playSound('start');
 
+    const combinedIndustry = `${formData.businessCategory} ${formData.businessDetail}`.trim();
+
     try {
       const result = await generateBrandPersona(
         formData.businessName,
-        formData.industry,
+        combinedIndustry,
         formData.targetAudience,
         formData.valueProposition
       );
@@ -135,8 +140,10 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
 
   const handleContinue = () => {
     if (selectedPersonaIndex !== null && selectedSlogan && personas[selectedPersonaIndex]) {
+      const combinedIndustry = `${formData.businessCategory} ${formData.businessDetail}`.trim();
+      const inputs: BrandInputs = { ...formData, industry: combinedIndustry };
       onComplete({
-        inputs: formData,
+        inputs,
         selectedPersona: personas[selectedPersonaIndex],
         selectedSlogan: selectedSlogan,
       });
@@ -152,10 +159,28 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
 
       <form onSubmit={handleGeneratePersona} className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
         <Input label="Nama Bisnis" name="businessName" value={formData.businessName} onChange={handleChange} placeholder="cth: Kopi Senja" />
-        <Input label="Industri / Bidang Usaha" name="industry" value={formData.industry} onChange={handleChange} placeholder="cth: F&B, Fashion" />
+        
+        {/* --- NEW STRUCTURED BUSINESS INPUT --- */}
+        <div className="grid grid-cols-2 gap-4">
+            <div>
+                 <label htmlFor="businessCategory" className="block mb-2 text-sm font-medium text-gray-300">Kategori Bisnis</label>
+                 <select
+                    id="businessCategory"
+                    name="businessCategory"
+                    value={formData.businessCategory}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 text-gray-200 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                 >
+                    {businessCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                 </select>
+            </div>
+             <Input label="Detail Bisnis" name="businessDetail" value={formData.businessDetail} onChange={handleChange} placeholder="cth: Sate Padang" />
+        </div>
+
         <Textarea label="Target Pasar" name="targetAudience" value={formData.targetAudience} onChange={handleChange} placeholder="cth: Anak muda, keluarga" rows={3} />
         <Textarea label="Yang Bikin Beda (Value Proposition)" name="valueProposition" value={formData.valueProposition} onChange={handleChange} placeholder="cth: Organik, murah, mewah" rows={3} />
         <Textarea className="md:col-span-2" label="Sebutin 1-2 Kompetitor" name="competitors" value={formData.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
+        
         <div className="md:col-span-2 flex items-center gap-4">
           <Button type="submit" isLoading={isLoadingPersona}>
             Racik Persona Sekarang!

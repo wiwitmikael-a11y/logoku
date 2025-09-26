@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-import type { BrandPersona } from '../types';
+import type { ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import LoadingMessage from './common/LoadingMessage';
@@ -11,15 +11,38 @@ import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
-  persona: BrandPersona;
-  businessName: string;
-  logoUrl: string; // This will now be a Base64 string
+  projectData: Partial<ProjectData>;
   onComplete: (packagingBase64: string) => void;
 }
 
 const GENERATION_COST = 1;
 
-const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, onComplete }) => {
+// --- NEW: Smart Packaging Configuration ---
+const packagingConfigs: { [key: string]: { prompt: string } } = {
+  'Makanan': {
+    prompt: 'Take the provided logo image. Create a realistic mockup of modern food packaging for "{{businessDetail}}", like a paper meal box, a food pouch, or a bowl presentation. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, clean, and appetizing. This is a commercial product photo, not a flat vector.',
+  },
+  'Minuman': {
+    prompt: 'Take the provided logo image. Create a realistic mockup of a beverage packaging for "{{businessDetail}}", such as a coffee cup, a bottle, or a can. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, modern, and refreshing. This is a professional product photo.',
+  },
+  'Fashion': {
+    prompt: 'Take the provided logo image. Create a realistic mockup of fashion packaging, like a branded paper bag, a clothing tag, or a box for accessories for a brand called "{{businessName}}". Place the logo prominently. The product is {{businessDetail}}. The style is {{personaStyle}}, chic, and stylish.',
+  },
+  'Kecantikan': {
+    prompt: 'Take the provided logo image. Create a realistic mockup of a cosmetic product packaging for "{{businessDetail}}", such as a tube, a jar, or a bottle with a box. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, elegant, and clean.',
+  },
+  'Jasa': {
+      prompt: 'Take the provided logo image. Create a conceptual mockup that represents a service for "{{businessDetail}}". This could be a branded folder, a clipboard, or a digital tablet screen. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, professional, and trustworthy.',
+  },
+  'Lainnya': {
+    prompt: 'Take the provided logo image. Create a realistic mockup of a generic but high-quality product packaging (like a box or a pouch) for "{{businessDetail}}". Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, modern, and clean. This is a commercial product photo.',
+  },
+};
+// Default is the same as 'Lainnya'
+packagingConfigs['Kerajinan Tangan'] = packagingConfigs['Lainnya'];
+
+
+const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -36,11 +59,21 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
   const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
-    // Auto-generate a prompt based on the persona to PLACE the logo
-    const personaStyle = persona.kata_kunci.join(', ');
-    const initialPrompt = `Take the provided logo image. Create a realistic mockup of a packaging design for a product from "${businessName}". Place the logo prominently. The brand personality is ${persona.deskripsi_singkat.toLowerCase()}. The style should be ${personaStyle}, modern, and clean. The final output should not be a flat vector illustration, but a commercial product mockup.`;
+    if (!projectData.brandInputs || !projectData.selectedPersona) return;
+
+    const { brandInputs, selectedPersona } = projectData;
+    const category = brandInputs.businessCategory || 'Lainnya';
+    const config = packagingConfigs[category] || packagingConfigs['Lainnya'];
+    
+    const personaStyle = selectedPersona.kata_kunci.join(', ');
+
+    const initialPrompt = config.prompt
+        .replace(/\{\{businessName\}\}/g, brandInputs.businessName)
+        .replace(/\{\{businessDetail\}\}/g, brandInputs.businessDetail)
+        .replace(/\{\{personaStyle\}\}/g, personaStyle);
+
     setPrompt(initialPrompt);
-  }, [persona, businessName]);
+  }, [projectData]);
 
   useEffect(() => {
     if (designs.length > 0 && resultsRef.current) {
@@ -56,7 +89,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
         playSound('error');
         return;
     }
-    if (!prompt) return;
+    if (!prompt || !projectData.selectedLogoUrl) return;
 
     setIsLoading(true);
     setError(null);
@@ -66,8 +99,8 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
     playSound('start');
 
     try {
-      // FIX: Added the missing logoUrl argument to the function call to resolve "Expected 2 arguments, but got 1" error.
-      const results = await generatePackagingDesign(prompt, logoUrl);
+      // FIX: The function call was missing the second argument `projectData.selectedLogoUrl`.
+      const results = await generatePackagingDesign(prompt, projectData.selectedLogoUrl);
       
       await deductCredits(GENERATION_COST);
       setDesigns(results);
@@ -81,7 +114,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, logoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, projectData.selectedLogoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleContinue = () => {
     if (selectedDesignBase64) {
@@ -93,7 +126,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 8: Desain Kemasan Lo</h2>
-        <p className="text-gray-400">Sentuhan terakhir! Berdasarkan persona brand lo, kita udah siapin prompt buat desain kemasan produk lo. Edit kalo perlu, terus generate konsepnya.</p>
+        <p className="text-gray-400">Sentuhan terakhir! Berdasarkan kategori dan persona brand lo, Mang AI udah siapin prompt cerdas buat desain kemasan. Edit kalo perlu, terus generate konsepnya.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -103,7 +136,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="cth: Kotak minimalis untuk biji kopi, warna earth tone..."
-          rows={4}
+          rows={5}
         />
         <div className="self-start">
           <Button type="submit" isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>
@@ -134,7 +167,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
               </CalloutPopup>
             )}
             <Button onClick={handleContinue} disabled={!selectedDesignBase64}>
-              Lanjut ke Merchandise &rarr;
+              Lanjut ke Media Cetak &rarr;
             </Button>
           </div>
         </div>
@@ -143,7 +176,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
       {modalImageUrl && (
         <ImageModal 
           imageUrl={modalImageUrl}
-          altText={`Desain kemasan untuk ${businessName}`}
+          altText={`Desain kemasan untuk ${projectData.brandInputs?.businessName}`}
           onClose={closeModal}
         />
       )}

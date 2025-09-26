@@ -4,7 +4,7 @@ interface ProgressStepperProps {
   currentStep: number;
 }
 
-const steps = ["Persona", "Logo", "Detail", "Konten", "Sosmed Kit", "Profil", "Iklan", "Kemasan", "Merchandise"];
+const steps = ["Persona", "Logo", "Detail", "Konten", "Sosmed Kit", "Profil", "Iklan", "Kemasan", "Media Cetak"];
 
 const CheckIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

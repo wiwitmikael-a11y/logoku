@@ -504,6 +504,7 @@ export const generateSocialMediaPostImage = async (idea: string, keywords: strin
     }
 };
 
+// FIX: Added logoUrl parameter to match function definition and usage.
 export const generatePackagingDesign = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
         const logoBase64 = logoUrl;
@@ -514,6 +515,7 @@ export const generatePackagingDesign = async (prompt: string, logoUrl: string): 
     }
 };
 
+// FIX: Added logoUrl parameter to match function definition and usage.
 export const generatePrintMedia = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
         const logoBase64 = logoUrl;
@@ -524,7 +526,7 @@ export const generatePrintMedia = async (prompt: string, logoUrl: string): Promi
     }
 };
 
-// FIX: Added missing generateMerchandiseMockup function to resolve import error in MerchandiseGenerator.tsx.
+// FIX: Added missing function for MerchandiseGenerator component
 export const generateMerchandiseMockup = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
         const logoBase64 = logoUrl;
@@ -534,7 +536,6 @@ export const generateMerchandiseMockup = async (prompt: string, logoUrl: string)
         throw handleApiError(error, "Flash Preview (Merchandise)");
     }
 };
-
 
 // --- NEW Social Media Centric Functions ---
 export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: BrandPersona): Promise<SocialProfileData> => {
