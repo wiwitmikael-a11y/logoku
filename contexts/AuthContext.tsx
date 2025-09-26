@@ -54,10 +54,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = useCallback(async (userId: string) => {
     // We fetch the profile to get credits and last_credit_reset data.
-    // The storage_used_kb will be overridden by our client-side calculation.
     const { data, error } = await supabase
         .from('profiles')
-        .select('*') // No need to select the broken computed column
+        .select('id, credits, last_credit_reset')
         .eq('id', userId)
         .single();
 
@@ -70,45 +69,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Even if there's no profile row yet (new user), we proceed to calculate storage.
     const profileData = (data as Profile) || { id: userId, credits: 10, last_credit_reset: '1970-01-01', storage_used_kb: 0 };
 
-    // --- Client-side storage calculation to fix backend bug ---
-    let totalSizeBytes = 0;
+    // --- Fetch storage usage from the database function ---
+    let calculatedStorageKb = 0;
     try {
-        const { data: projectFolders, error: listError } = await supabase.storage
-            .from('project-assets')
-            .list(userId, { limit: 1000 });
-
-        if (listError) throw listError;
-
-        if (projectFolders) {
-            for (const projectFolder of projectFolders) {
-                // Supabase list() returns folders with an `id`. We only expect project folders here.
-                if (projectFolder.id) {
-                    const projectPath = `${userId}/${projectFolder.name}`;
-                    const { data: files, error: fileListError } = await supabase.storage
-                        .from('project-assets')
-                        .list(projectPath, { limit: 1000 });
-
-                    if (fileListError) {
-                        console.warn(`Could not list files for project ${projectFolder.name}:`, fileListError);
-                        continue;
-                    }
-                    
-                    if (files) {
-                        for (const file of files) {
-                            if (file.id === null) { // This is a file
-                                totalSizeBytes += file.metadata.size;
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // Call the 'get_user_storage_used' function created in Supabase SQL Editor
+        const { data: storageKb, error: rpcError } = await supabase.rpc('get_user_storage_used', { p_user_id: userId });
+        if (rpcError) throw rpcError;
+        calculatedStorageKb = storageKb;
     } catch (storageError) {
-        console.error("Gagal menghitung penggunaan storage dari client:", storageError);
+        console.error("Gagal mengambil data storage via RPC:", storageError);
+        setAuthError('Gagal mengambil data penggunaan storage.');
     }
-    const calculatedStorageKb = totalSizeBytes / 1024;
     const correctedProfile = { ...profileData, storage_used_kb: calculatedStorageKb };
-    // --- END: Client-side calculation ---
+    // --- END: Fetch storage usage ---
 
     if (data) { // This block only runs if a profile record existed in the DB
         const todayWIB = getTodaysDateWIB();
