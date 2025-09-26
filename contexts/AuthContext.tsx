@@ -53,26 +53,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 
   const fetchProfile = useCallback(async (userId: string) => {
-    // Select all columns including the new storage_used_kb
+    // We fetch the profile to get credits and last_credit_reset data.
+    // The storage_used_kb will be overridden by our client-side calculation.
     const { data, error } = await supabase
-      .from('profiles')
-      .select('*, storage_used_kb')
-      .eq('id', userId)
-      .single();
+        .from('profiles')
+        .select('*') // No need to select the broken computed column
+        .eq('id', userId)
+        .single();
 
     if (error && error.code !== 'PGRST116') { // PGRST116: no rows found
-      console.error('Error fetching profile:', error);
-      setAuthError('Gagal mengambil data profil pengguna.');
-      return; // Stop execution if fetching fails
+        console.error('Error fetching profile:', error);
+        setAuthError('Gagal mengambil data profil pengguna.');
+        return;
     }
 
-    if (data) {
-        const todayWIB = getTodaysDateWIB();
-        const profileData = data as Profile;
+    // Even if there's no profile row yet (new user), we proceed to calculate storage.
+    const profileData = (data as Profile) || { id: userId, credits: 10, last_credit_reset: '1970-01-01', storage_used_kb: 0 };
 
-        // Check if the last reset was not today
-        if (profileData.last_credit_reset !== todayWIB) {
-            const updatedProfile = { ...profileData, credits: 10, last_credit_reset: todayWIB };
+    // --- Client-side storage calculation to fix backend bug ---
+    let totalSizeBytes = 0;
+    try {
+        const { data: projectFolders, error: listError } = await supabase.storage
+            .from('project-assets')
+            .list(userId, { limit: 1000 });
+
+        if (listError) throw listError;
+
+        if (projectFolders) {
+            for (const projectFolder of projectFolders) {
+                // Supabase list() returns folders with an `id`. We only expect project folders here.
+                if (projectFolder.id) {
+                    const projectPath = `${userId}/${projectFolder.name}`;
+                    const { data: files, error: fileListError } = await supabase.storage
+                        .from('project-assets')
+                        .list(projectPath, { limit: 1000 });
+
+                    if (fileListError) {
+                        console.warn(`Could not list files for project ${projectFolder.name}:`, fileListError);
+                        continue;
+                    }
+                    
+                    if (files) {
+                        for (const file of files) {
+                            if (file.id === null) { // This is a file
+                                totalSizeBytes += file.metadata.size;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (storageError) {
+        console.error("Gagal menghitung penggunaan storage dari client:", storageError);
+    }
+    const calculatedStorageKb = totalSizeBytes / 1024;
+    const correctedProfile = { ...profileData, storage_used_kb: calculatedStorageKb };
+    // --- END: Client-side calculation ---
+
+    if (data) { // This block only runs if a profile record existed in the DB
+        const todayWIB = getTodaysDateWIB();
+        
+        if (correctedProfile.last_credit_reset !== todayWIB) {
+            const updatedProfileWithCredits = { ...correctedProfile, credits: 10, last_credit_reset: todayWIB };
             
             const { error: updateError } = await supabase
                 .from('profiles')
@@ -82,16 +124,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (updateError) {
                 console.error("Gagal me-reset token harian:", updateError);
                 setAuthError("Gagal me-reset token harian, tapi jangan khawatir, data lama masih aman.");
-                // Fallback to old data to prevent app from breaking
-                setProfile(profileData);
+                setProfile(correctedProfile);
             } else {
-                // Update local state with the reset data
-                setProfile(updatedProfile);
+                setProfile(updatedProfileWithCredits);
             }
         } else {
-            // No reset needed, just set the fetched profile
-            setProfile(profileData);
+            setProfile(correctedProfile);
         }
+    } else {
+        setProfile(correctedProfile);
     }
   }, []);
 

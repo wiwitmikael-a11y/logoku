@@ -13,29 +13,24 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Moved state initialization to the constructor and converted `handleCopy`
-  // to a standard class method bound in the constructor. This is a more traditional
-  // class component pattern that can be more robust in fragile toolchain configurations
-  // that may not fully support class field syntax, resolving errors on `this.setState`.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  // FIX: Using modern class field syntax for state initialization and arrow functions for methods.
+  // This is a more robust pattern that avoids issues with `this` context binding and class
+  // property initialization that can occur with some TypeScript/toolchain configurations.
+  public state: State = {
+    hasError: false,
+    isCopied: false,
+  };
 
-  static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
     return { hasError: true, error, isCopied: false };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
   
-  handleCopy() {
+  private handleCopy = () => {
       if(this.state.error) {
           navigator.clipboard.writeText(this.state.error.toString());
           this.setState({ isCopied: true });
@@ -43,7 +38,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       }
   }
 
-  render(): React.ReactNode {
+  public render(): React.ReactNode {
     if (this.state.hasError) {
       // The 'imageRendering' property is not standard in all TypeScript versions of React's CSSProperties.
       // This can cause a misleading type error in certain toolchains.
@@ -85,11 +80,9 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: The TypeScript toolchain appears to have issues resolving `this.props` on the
-    // component instance. Destructuring `children` from `this.props` resolves the
-    // `Property 'props' does not exist` error in this specific environment.
-    const { children } = this.props;
-    return children;
+    // FIX: Directly return `this.props.children` to avoid potential destructuring issues
+    // with `this.props` that can occur in fragile toolchain configurations.
+    return this.props.children;
   }
 }
 
