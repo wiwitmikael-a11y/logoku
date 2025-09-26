@@ -62,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
     }
 
+    // Since storage check is removed, we don't need storage_used_kb here.
     const profileData = (data as Profile) || { id: userId, credits: 10, last_credit_reset: '1970-01-01', storage_used_kb: 0 };
     
     const todayWIB = getTodaysDateWIB();
