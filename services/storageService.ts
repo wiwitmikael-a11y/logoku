@@ -55,21 +55,22 @@ export const uploadImageFromBase64 = async (
 
     if (uploadError) {
         console.error('Supabase Storage Error:', uploadError);
-        const errorMessage = uploadError.message.toLowerCase();
+        // Convert the entire error object to a string to ensure we can find the specific message.
+        const errorString = (uploadError instanceof Error ? uploadError.message : JSON.stringify(uploadError)).toLowerCase();
 
-        // Check for specific RLS policy errors
-        if (errorMessage.includes('security policy') || errorMessage.includes('rls')) {
-            let userFriendlyMessage = "Waduh, RLS Policy di Supabase lo error, Juragan! Masalah ini 100% karena policy di bucket 'project-assets' salah. Buka Supabase Dashboard > Storage > Pilih bucket 'project-assets' > Klik tab 'Policies'. Hapus semua policy lama, lalu buat 3 policy baru yang benar sesuai instruksi terakhir.";
-
-            if (errorMessage.includes('ceil(text)')) {
-                userFriendlyMessage = "RLS Error: Ada perhitungan 'size' yang salah di policy INSERT lo. Pastikan lo pake `(metadata->>'size')::bigint`.";
-            } else if (errorMessage.includes('text') && errorMessage.includes('uuid')) {
-                userFriendlyMessage = "RLS Error: Lo salah pake kolom 'owner_id' (text). Ganti semua jadi 'owner' (uuid) di policy SELECT dan DELETE.";
-            } else if (errorMessage.includes('missing from clause') || errorMessage.includes('new table')) {
-                userFriendlyMessage = "RLS Error: Di policy INSERT lo, ada kolom yang harus pake awalan `NEW.`. Cek lagi, kemungkinan besar `name` harus diganti jadi `NEW.name`.";
-            }
-             throw new Error(userFriendlyMessage);
+        // Check for the specific RLS policy error first. This is a common misconfiguration.
+        if (errorString.includes('function ceil(text) does not exist')) {
+            const rlsErrorMessage = "Error RLS Policy: Terdeteksi error 'function ceil(text) does not exist'. Ini biasanya karena RLS policy untuk INSERT di bucket 'project-assets' salah mengkalkulasi ukuran file. Solusi: Buka dashboard Supabase > Storage > Policies > 'project-assets', edit policy INSERT-mu, dan pastikan kamu menggunakan `(NEW.metadata->>'size')::bigint <= MAX_FILE_SIZE_BYTES` untuk memeriksa ukuran file, bukan `ceil(NEW.metadata->'size')`.";
+            throw new Error(rlsErrorMessage);
         }
+
+        // Check for other generic RLS or security errors.
+        if (errorString.includes('security policy') || errorString.includes('rls')) {
+            const genericRlsError = "Koneksi ke storage diblokir sama RLS (Row Level Security) Policy. Ini 99% masalah konfigurasi di dashboard Supabase, bukan di kode aplikasi. Cek lagi semua policy (SELECT, INSERT, UPDATE, DELETE) di bucket `project-assets` lo.";
+            throw new Error(genericRlsError);
+        }
+
+        // Fallback for other upload errors.
         throw new Error(`Gagal mengunggah gambar ke Supabase Storage: ${uploadError.message}. Pastikan bucket 'project-assets' sudah ada dan bersifat publik.`);
     }
 
