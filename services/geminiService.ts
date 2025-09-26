@@ -304,7 +304,27 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
             },
         });
         
-        const calendar = safeJsonParse<ContentCalendarEntry[]>(response.text.trim(), 'generateContentCalendar');
+        let jsonString = response.text.trim();
+
+        // Handle cases where the response is wrapped in markdown ```json ... ```
+        if (jsonString.startsWith('```') && jsonString.endsWith('```')) {
+            jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+            if (jsonString.startsWith('json')) {
+                jsonString = jsonString.substring(4).trim();
+            }
+        }
+        
+        // Find the start and end of the main JSON array to ensure we only parse that
+        const startIndex = jsonString.indexOf('[');
+        const endIndex = jsonString.lastIndexOf(']');
+        if (startIndex === -1 || endIndex === -1) {
+            console.error("Could not find a valid JSON array in the response from Content Calendar.", "Raw response:", response.text);
+            throw new Error("Respon dari Mang AI tidak mengandung format kalender yang valid.");
+        }
+        jsonString = jsonString.substring(startIndex, endIndex + 1);
+
+
+        const calendar = safeJsonParse<ContentCalendarEntry[]>(jsonString, 'generateContentCalendar');
         const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
         return { calendar, sources };
     } catch (error) {
