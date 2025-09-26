@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData } from './types';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
 // --- Error Handling & Loading ---
@@ -30,7 +30,7 @@ const ProfileOptimizer = React.lazy(() => import('./components/SeoGenerator')); 
 const SocialAdsGenerator = React.lazy(() => import('./components/GoogleAdsGenerator')); // Re-purposed
 // --- End of New Components ---
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
-const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGenerator'));
+const PrintMediaGenerator = React.lazy(() => import('./components/MerchandiseGenerator')); // Re-purposed into the new Print Media Generator
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 const CaptionGenerator = React.lazy(() => import('./components/CaptionGenerator'));
 const ContactModal = React.lazy(() => import('./components/ContactModal'));
@@ -41,7 +41,7 @@ const ConfirmationModal = React.lazy(() => import('./components/common/Confirmat
 const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'social_kit' | 'profile_optimizer' | 'social_ads' | 'packaging' | 'merchandise' | 'summary' | 'caption';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'social_kit' | 'profile_optimizer' | 'social_ads' | 'packaging' | 'print_media' | 'summary' | 'caption';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const App: React.FC = () => {
@@ -114,7 +114,7 @@ const MainApp: React.FC = () => {
     const previousSession = useRef<typeof session>(session);
 
     // NEW, more logical workflow order
-    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'social_kit', 'profile_optimizer', 'social_ads', 'packaging', 'merchandise'];
+    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'social_kit', 'profile_optimizer', 'social_ads', 'packaging', 'print_media'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
 
@@ -242,8 +242,8 @@ const MainApp: React.FC = () => {
         // Determine the next step based on what data exists, following the new workflow
         const data = project.project_data;
         let nextState: AppState = 'persona';
-        if (data.selectedMerchandiseUrl) nextState = 'summary';
-        else if (data.selectedPackagingUrl) nextState = 'merchandise';
+        if (data.printMediaAssets) nextState = 'summary';
+        else if (data.selectedPackagingUrl) nextState = 'print_media';
         else if (data.socialAds) nextState = 'packaging';
         else if (data.socialProfiles) nextState = 'social_ads';
         else if (data.socialMediaKit) nextState = 'profile_optimizer';
@@ -263,6 +263,15 @@ const MainApp: React.FC = () => {
             navigateTo('caption');
         }
     }, [projects]);
+    
+    const handleReturnToSummary = useCallback(() => {
+        // Does not clear workflow state
+        if (selectedProjectId) {
+             navigateTo('summary');
+        } else {
+            handleReturnToDashboard();
+        }
+    }, [selectedProjectId, handleReturnToDashboard]);
 
     // --- Project Deletion Handlers ---
     const handleRequestDeleteProject = useCallback((projectId: number) => {
@@ -392,10 +401,10 @@ const MainApp: React.FC = () => {
        const currentState = loadWorkflowState() || {};
        const updatedData = { ...currentState, selectedPackagingUrl: packagingBase64 };
        saveWorkflowState(updatedData);
-       navigateTo('merchandise');
+       navigateTo('print_media');
     }, []);
 
-    const handleFinalizeProject = useCallback(async (merchandiseBase64: string) => {
+    const handlePrintMediaComplete = useCallback(async (printMediaAssets: PrintMediaAssets) => {
         if (!session?.user || !selectedProjectId) return;
         
         setIsFinalizing(true);
@@ -403,7 +412,7 @@ const MainApp: React.FC = () => {
         
         try {
             const currentState = loadWorkflowState() || {};
-            const finalProjectData = { ...currentState, selectedMerchandiseUrl: merchandiseBase64 };
+            const finalProjectData = { ...currentState, printMediaAssets };
 
             const { data, error } = await supabase
                 .from('projects')
@@ -522,12 +531,11 @@ const MainApp: React.FC = () => {
                     />;
                 }
                 break;
-            case 'merchandise':
-                if (workflowData?.selectedLogoUrl && workflowData.brandInputs?.businessName) {
-                    return <MerchandiseGenerator 
-                        logoUrl={workflowData.selectedLogoUrl} 
-                        businessName={workflowData.brandInputs.businessName} 
-                        onComplete={handleFinalizeProject} 
+            case 'print_media':
+                if (workflowData?.selectedLogoUrl && workflowData.brandInputs && workflowData.selectedPersona) {
+                    return <PrintMediaGenerator
+                        projectData={workflowData}
+                        onComplete={handlePrintMediaComplete} 
                         isFinalizing={isFinalizing}
                     />;
                 }
@@ -535,17 +543,17 @@ const MainApp: React.FC = () => {
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);
                 if (projectToShow) {
-                    return <ProjectSummary project={projectToShow} onStartNew={handleReturnToDashboard} />;
+                    return <ProjectSummary project={projectToShow} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} />;
                 }
                 break;
             case 'caption':
-                if (workflowData) {
-                    return <CaptionGenerator projectData={workflowData} onBack={handleReturnToDashboard} />;
+                if (workflowData && selectedProjectId) {
+                    return <CaptionGenerator projectData={workflowData} onBack={handleReturnToSummary} />;
                 }
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} onGoToCaptionGenerator={handleGoToCaptionGenerator} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
+                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
         }
         // Fallback: If required data is missing, go to dashboard
         handleReturnToDashboard();

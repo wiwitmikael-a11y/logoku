@@ -46,12 +46,11 @@ const handleApiError = (error: any, serviceName: string): Error => {
 
 /**
  * Safely parses a JSON string. Throws a user-friendly error on failure.
+ * Simplified to remove cleanJsonString as responseSchema guarantees valid JSON.
  */
 const safeJsonParse = <T>(jsonString: string, serviceName: string): T => {
   try {
-    // FIX: Clean JSON string before parsing to handle markdown fences and other noise.
-    const cleanedString = cleanJsonString(jsonString);
-    return JSON.parse(cleanedString);
+    return JSON.parse(jsonString);
   } catch (parseError) {
     console.error(`JSON Parse Error in ${serviceName}:`, parseError, "Raw string received:", jsonString);
     throw new Error(`Waduh, Mang AI lagi ngelindur. Respon dari ${serviceName} formatnya aneh dan nggak bisa dibaca. Coba generate ulang, ya.`);
@@ -61,6 +60,7 @@ const safeJsonParse = <T>(jsonString: string, serviceName: string): T => {
 /**
  * Cleans a string to extract a valid JSON object or array.
  * It removes markdown code fences and trims surrounding text.
+ * Used for API calls that don't support responseSchema, like Google Search grounding.
  * @param rawText The raw text response from the AI.
  * @param expectedType The expected root JSON type, either 'object' or 'array'.
  * @returns A clean JSON string.
@@ -514,6 +514,17 @@ export const generatePackagingDesign = async (prompt: string, logoUrl: string): 
     }
 };
 
+export const generatePrintMedia = async (prompt: string, logoUrl: string): Promise<string[]> => {
+    try {
+        const logoBase64 = logoUrl;
+        const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
+        return [generatedBase64];
+    } catch (error) {
+        throw handleApiError(error, "Flash Preview (Media Cetak)");
+    }
+};
+
+// FIX: Added missing generateMerchandiseMockup function to resolve import error in MerchandiseGenerator.tsx.
 export const generateMerchandiseMockup = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
         const logoBase64 = logoUrl;

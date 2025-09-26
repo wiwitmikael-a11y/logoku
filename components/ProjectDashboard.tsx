@@ -10,7 +10,6 @@ interface ProjectDashboardProps {
   onNewProject: () => void;
   onSelectProject: (projectId: number) => void;
   onContinueProject: (projectId: number) => void;
-  onGoToCaptionGenerator: (projectId: number) => void;
   onDeleteProject: (projectId: number) => void;
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
@@ -40,7 +39,7 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
 };
 
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onGoToCaptionGenerator, onDeleteProject, showWelcomeBanner, onWelcomeBannerClose }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onDeleteProject, showWelcomeBanner, onWelcomeBannerClose }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
@@ -81,8 +80,8 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                 </div>
                 <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               </div>
-              <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
-                <Button onClick={(e) => { e.stopPropagation(); onGoToCaptionGenerator(project.id); }} variant="secondary" size="small">Buat Caption</Button>
+               <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
+                <Button onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} variant="secondary" size="small">Lihat Brand Kit</Button>
               </div>
             </Card>
           )}

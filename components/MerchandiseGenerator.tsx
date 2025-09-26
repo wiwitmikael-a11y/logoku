@@ -1,72 +1,60 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+// FIX: Changed import to 'generateMerchandiseMockup' to match the function this component is designed to call, resolving the "no exported member" error.
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+import type { ProjectData, PrintMediaAssets } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
+import Input from './common/Input';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
-  logoUrl: string; // This will now be a Base64 string
-  businessName: string;
-  onComplete: (merchandiseBase64: string) => void;
+  projectData: Partial<ProjectData>;
+  onComplete: (printMediaAssets: PrintMediaAssets) => void;
   isFinalizing: boolean;
 }
 
-type MerchType = 't-shirt' | 'mug' | 'tote-bag';
+type MediaTab = 'business_card' | 'banner';
 const GENERATION_COST = 1;
 
-// FIX: Updated prompt templates to instruct the AI to use the provided logo image, not a text prompt.
-const merchandiseTypes: { id: MerchType; name: string; promptTemplate: string }[] = [
-  {
-    id: 't-shirt',
-    name: 'T-Shirt',
-    promptTemplate:
-      'Take the provided logo image. Create a realistic mockup of a t-shirt with the logo placed naturally on the chest. The t-shirt should be on a clean, plain background, suitable for a product catalog for a brand named "{{businessName}}".',
-  },
-  {
-    id: 'mug',
-    name: 'Mug',
-    promptTemplate:
-      'Take the provided logo image. Create a realistic mockup of a ceramic coffee mug with the logo printed on its side. The mug should be on a simple, clean background, like a product photo for a brand named "{{businessName}}".',
-  },
-  {
-    id: 'tote-bag',
-    name: 'Tote Bag',
-    promptTemplate:
-      'Take the provided logo image. Create a realistic mockup of a canvas tote bag with the logo printed in the center. The mockup should look like a professional product photo, on a clean background, for a brand named "{{businessName}}".',
-  },
-];
-
-
-const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComplete, isFinalizing }) => {
+const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinalizing }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
+  const businessHandle = projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
 
-  const [activeTab, setActiveTab] = useState<MerchType>('t-shirt');
-  const [prompt, setPrompt] = useState('');
-  const [designs, setDesigns] = useState<string[]>([]); // Will hold Base64
+  const [activeTab, setActiveTab] = useState<MediaTab>('business_card');
+  const [designs, setDesigns] = useState<string[]>([]);
   const [selectedDesignBase64, setSelectedDesignBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+  
+  // State for inputs
+  const [cardInfo, setCardInfo] = useState({
+    name: 'Rangga P. H.',
+    title: 'Owner',
+    phone: '0812-3456-7890',
+    email: `halo@${businessHandle}.com`,
+    website: `www.${businessHandle}.com`,
+  });
+  const [bannerInfo, setBannerInfo] = useState({
+    headline: 'SEGERA DIBUKA!',
+    subheadline: `Nantikan ${projectData.brandInputs?.businessName} di kota Anda!`,
+  });
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
-
-  useEffect(() => {
-    const currentMerch = merchandiseTypes.find(m => m.id === activeTab);
-    if (currentMerch) {
-      const newPrompt = currentMerch.promptTemplate.replace('{{businessName}}', businessName);
-      setPrompt(newPrompt);
-    }
-  }, [activeTab, businessName]);
   
+  const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, setter: React.Dispatch<React.SetStateAction<any>>) => {
+    setter(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
   useEffect(() => {
     if (designs.length > 0 && resultsRef.current) {
         resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -81,7 +69,6 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
         playSound('error');
         return;
     }
-    if (!prompt) return;
 
     setIsLoading(true);
     setError(null);
@@ -90,9 +77,36 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
     setShowNextStepNudge(false);
     playSound('start');
 
+    const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
+    if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
+        setError("Data project (logo/persona) tidak lengkap.");
+        setIsLoading(false);
+        return;
+    }
+
     try {
-      // FIX: Added the missing logoUrl argument to the function call to resolve "Expected 2 arguments, but got 1" error.
-      const results = await generateMerchandiseMockup(prompt, logoUrl);
+      let prompt = '';
+      const colors = selectedPersona.palet_warna_hex.join(', ');
+      const style = selectedPersona.kata_kunci.join(', ');
+
+      if (activeTab === 'business_card') {
+          prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a business card. Do NOT create a mockup, create the final print-ready design (aspect ratio 3.5:2).
+          - Brand Name: ${brandInputs.businessName}
+          - Style: ${style}, minimalist, professional.
+          - Colors: Use this palette: ${colors}.
+          - Content to include: Name: ${cardInfo.name}, Title: ${cardInfo.title}, Phone: ${cardInfo.phone}, Email: ${cardInfo.email}, Website: ${cardInfo.website}.
+          The design must be clean, legible, and follow the brand's persona. Place the logo appropriately. Ensure all text is clear.`;
+      } else if (activeTab === 'banner') {
+          prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a horizontal outdoor banner (spanduk, aspect ratio 16:9). Do NOT create a mockup, create the final print-ready design.
+          - Brand Name: ${brandInputs.businessName}
+          - Style: ${style}, bold, eye-catching.
+          - Colors: Use this palette: ${colors}.
+          - Content to include: Headline (very large): "${bannerInfo.headline}", Sub-headline (smaller): "${bannerInfo.subheadline}".
+          The design must be highly legible from a distance. Place the logo prominently. Ensure all text is clear.`;
+      }
+
+      // FIX: Changed function call to 'generateMerchandiseMockup' to resolve the import error.
+      const results = await generateMerchandiseMockup(prompt, selectedLogoUrl);
       
       await deductCredits(GENERATION_COST);
       setDesigns(results);
@@ -106,56 +120,66 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, logoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, activeTab, cardInfo, bannerInfo]);
 
   const handleFinalize = () => {
     if (selectedDesignBase64) {
-      onComplete(selectedDesignBase64);
+      const assets: PrintMediaAssets = {};
+      if(activeTab === 'business_card') assets.businessCardUrl = selectedDesignBase64;
+      if(activeTab === 'banner') assets.bannerUrl = selectedDesignBase64;
+      onComplete(assets);
     }
   };
 
-  const handleTabClick = (tab: MerchType) => {
+  const handleTabClick = (tab: MediaTab) => {
       playSound('select');
       setActiveTab(tab);
       setShowNextStepNudge(false);
+      setDesigns([]);
+      setSelectedDesignBase64(null);
   }
   
-  const buttonText = useMemo(() => {
-    const merchName = merchandiseTypes.find(m => m.id === activeTab)?.name || 'Merchandise';
-    return `Bikinin Mockup ${merchName}-nya! (${GENERATION_COST} Kredit)`;
-  }, [activeTab]);
+  const renderForm = () => {
+      switch(activeTab) {
+          case 'business_card':
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <Input label="Nama Lengkap" name="name" value={cardInfo.name} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                    <Input label="Jabatan/Title" name="title" value={cardInfo.title} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                    <Input label="Nomor Telepon" name="phone" value={cardInfo.phone} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                    <Input label="Alamat Email" name="email" value={cardInfo.email} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                    <Input className="md:col-span-2" label="Website / Social Media" name="website" value={cardInfo.website} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+                </div>
+            );
+          case 'banner':
+            return (
+                 <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <Input label="Headline (Teks Paling Besar)" name="headline" value={bannerInfo.headline} onChange={(e) => handleInfoChange(e, setBannerInfo)} placeholder="cth: GRAND OPENING!" />
+                    <Input label="Sub-headline (Teks Pendukung)" name="subheadline" value={bannerInfo.subheadline} onChange={(e) => handleInfoChange(e, setBannerInfo)} placeholder="cth: Diskon 50% Semua Item" />
+                </div>
+            );
+      }
+  }
 
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Mockup Merchandise Mang AI</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Studio Media Cetak Mang AI</h2>
         <p className="text-gray-400">
-          Lihat gimana brand lo tampil di produk nyata. Pilih jenis merchandise, dan Mang AI bakal bikinin ilustrasi mockup-nya buat lo.
+          Saatnya bikin amunisi promosi! Pilih jenis media, isi infonya, dan Mang AI bakal bikinin desain siap cetak buat lo.
         </p>
       </div>
       
       <div className="flex flex-wrap border-b border-gray-700">
-          {merchandiseTypes.map(merch => (
-             <button 
-                key={merch.id}
-                onClick={() => handleTabClick(merch.id)} 
-                className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === merch.id ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>
-                {merch.name}
-            </button>
-          ))}
+          <button onClick={() => handleTabClick('business_card')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'business_card' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Kartu Nama</button>
+          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk</button>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <Textarea
-          label="Prompt untuk Mockup"
-          name="merchPrompt"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          rows={5}
-        />
+        {renderForm()}
         <div className="self-start">
             <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>
-                {buttonText}
+                {`Bikinin Desain ${activeTab === 'business_card' ? 'Kartu Nama' : 'Spanduk'}! (${GENERATION_COST} Kredit)`}
             </Button>
         </div>
       </form>
@@ -164,10 +188,10 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
 
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
-            <h3 className="text-lg md:text-xl font-bold">Mockup Hasil Generate:</h3>
-          <div className="flex justify-center w-full max-w-sm">
+            <h3 className="text-lg md:text-xl font-bold">Desain Hasil Generate:</h3>
+          <div className="flex justify-center w-full max-w-lg">
             <div 
-                className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-square ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
+                className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-video ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
                 onClick={() => openModal(designs[0])}
               >
                 <img src={designs[0]} alt={`Generated mockup for ${activeTab}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
@@ -190,7 +214,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
       {modalImageUrl && (
         <ImageModal 
           imageUrl={modalImageUrl}
-          altText={`Mockup merchandise untuk ${businessName}`}
+          altText={`Desain Media Cetak untuk ${projectData.brandInputs?.businessName}`}
           onClose={closeModal}
         />
       )}
@@ -198,4 +222,4 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
   );
 };
 
-export default MerchandiseGenerator;
+export default PrintMediaGenerator;

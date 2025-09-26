@@ -8,10 +8,11 @@ import CopyButton from './common/CopyButton';
 interface Props {
   project: Project;
   onStartNew: () => void;
+  onGoToCaptionGenerator: (projectId: number) => void;
 }
 
-const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
-  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, selectedMerchandiseUrl } = project.project_data;
+const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGenerator }) => {
+  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, printMediaAssets } = project.project_data;
   
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
 
@@ -197,10 +198,25 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
                       </div>
                   </Card>
               )}
-               {selectedMerchandiseUrl && (
-                  <Card title="Mockup Merchandise" className="print-card">
-                      <div className="bg-white rounded-lg p-2 flex items-center justify-center aspect-square cursor-pointer group no-print" onClick={() => openModal(selectedMerchandiseUrl)}>
-                        <img src={selectedMerchandiseUrl} alt="Selected Merchandise" className="max-h-48 object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy"/>
+               {printMediaAssets && (
+                  <Card title="Aset Media Cetak" className="print-card">
+                      <div className="space-y-4">
+                        {printMediaAssets.businessCardUrl && (
+                            <div>
+                                <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Kartu Nama</h5>
+                                <div className="bg-white p-2 rounded-lg cursor-pointer group no-print" onClick={() => openModal(printMediaAssets.businessCardUrl!)}>
+                                    <img src={printMediaAssets.businessCardUrl} alt="Desain Kartu Nama" className="w-full object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
+                                </div>
+                            </div>
+                        )}
+                         {printMediaAssets.bannerUrl && (
+                            <div>
+                                <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Spanduk</h5>
+                                <div className="bg-white p-2 rounded-lg cursor-pointer group no-print" onClick={() => openModal(printMediaAssets.bannerUrl!)}>
+                                    <img src={printMediaAssets.bannerUrl} alt="Desain Spanduk" className="w-full object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
+                                </div>
+                            </div>
+                        )}
                       </div>
                   </Card>
               )}
@@ -241,6 +257,20 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
                       )}
                   </div>
               </Card>
+               {/* --- NEW: Advanced Tools Hub --- */}
+                <div className="flex flex-col gap-6 no-print">
+                    <Card title="Branding Lanjutan & Tools" className="print-card">
+                        <div className="space-y-4">
+                            <div>
+                                <h5 className="font-semibold text-gray-200 mb-2">Generator Caption Sosmed</h5>
+                                <p className="text-sm text-gray-400 mb-3">Butuh ide caption cepat untuk postingan di luar rencana? Gunakan tool ini dengan konteks brand yang sudah ada.</p>
+                                <Button size="small" variant="secondary" onClick={() => onGoToCaptionGenerator(project.id)}>
+                                    Buat Caption Cepat
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
           </div>
         </div>
         

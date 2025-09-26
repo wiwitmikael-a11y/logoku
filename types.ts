@@ -94,6 +94,14 @@ export interface SocialMediaKitAssets {
   bannerUrl: string;
 }
 
+// NEW: Print Media Assets
+export interface PrintMediaAssets {
+  businessCardUrl?: string;
+  bannerUrl?: string; // a horizontal banner
+  rollBannerUrl?: string; // a vertical banner
+}
+
+
 export interface GeneratedCaption {
   caption: string;
   hashtags: string[];
@@ -116,7 +124,7 @@ export interface ProjectData {
   socialMediaKit?: SocialMediaKitAssets;
 
   selectedPackagingUrl?: string;
-  selectedMerchandiseUrl?: string;
+  printMediaAssets?: PrintMediaAssets;
 }
 
 // This represents a project row fetched from the Supabase 'projects' table
