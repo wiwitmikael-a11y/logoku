@@ -17,10 +17,10 @@ const base64ToBlob = async (base64: string): Promise<Blob | null> => {
 };
 
 /**
- * [ROMBAK TOTAL] Mengunggah gambar dari string Base64 ke Supabase Storage.
- * Versi baru ini mencakup pengecekan ukuran file di SISI KLIEN sebelum upload.
- * Ini mencegah percobaan upload yang tidak perlu dan memberikan penanganan error yang lebih jelas
- * untuk masalah miskonfigurasi RLS Policy yang diketahui.
+ * [PERBAIKAN] Mengunggah gambar dari string Base64 ke Supabase Storage.
+ * Logika diubah untuk mengirim ArrayBuffer, bukan objek File, untuk menghindari potensi
+ * masalah metadata di sisi server Supabase yang dapat menyebabkan error RLS Policy.
+ * Pesan error untuk RLS Policy juga dibuat lebih instruktif.
  * @param base64String URL data lengkap dari gambar (misal: "data:image/png;base64,...").
  * @param userId ID pengguna yang mengunggah file.
  * @param projectId ID proyek tempat aset ini berada.
@@ -43,33 +43,32 @@ export const uploadImageFromBase64 = async (
         throw new Error('Gagal mengubah data Base64 menjadi file. Data mungkin korup atau formatnya salah.');
     }
 
-    // Langkah 2: [BARU] Validasi ukuran file di sisi klien.
+    // Langkah 2: Validasi ukuran file di sisi klien.
     if (blob.size > MAX_FILE_SIZE_BYTES) {
         throw new Error(`Upload gagal: Ukuran file (${(blob.size / 1024 / 1024).toFixed(2)} MB) melebihi batas maksimal (5 MB).`);
     }
     
-    // Langkah 3: Buat objek File dari Blob.
+    // Langkah 3: [BARU] Konversi Blob ke ArrayBuffer untuk di-upload.
+    const arrayBuffer = await blob.arrayBuffer();
     const fileName = `${assetType}-${Date.now()}.webp`;
-    const file = new File([blob], fileName, { type: 'image/webp' });
     const filePath = `${userId}/${projectId}/${fileName}`;
 
-    // Langkah 4: Upload File.
+    // Langkah 4: Upload ArrayBuffer.
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(filePath, file, {
+        .upload(filePath, arrayBuffer, { // Menggunakan ArrayBuffer
             cacheControl: '3600',
             upsert: false,
-            contentType: 'image/webp', 
+            contentType: 'image/webp', // Wajib disertakan saat upload ArrayBuffer
         });
 
     if (uploadError) {
         console.error('Supabase Storage Error:', uploadError);
         const errorString = (uploadError instanceof Error ? uploadError.message : JSON.stringify(uploadError)).toLowerCase();
 
-        // [Pesan Error Baru] Pesan error paling lugas, non-teknis, dan anti-bantah.
-        // Mengkonfirmasi masalah 100% ada di settingan dashboard Supabase, bukan di kode aplikasi.
+        // [Pesan Error Baru] Pesan yang sangat spesifik dan instruktif untuk masalah RLS Policy.
         if (errorString.includes('function ceil(text) does not exist') || errorString.includes('policy')) {
-            const rlsErrorMessage = "STOP! Upload Ditolak Satpam Supabase. Settingan RLS Policy di akun Supabase lo 100% salah. Ini BUKAN error di aplikasi. Mang AI nggak bisa benerin ini dari kode. Lo HARUS login ke Supabase dan benerin sendiri policy INSERT di bucket 'project-assets'.";
+            const rlsErrorMessage = "PERBAIKI DI DASHBOARD SUPABASE: Upload gagal karena RLS Policy untuk INSERT di bucket 'project-assets' salah. Buka dashboard Supabase > Storage > Policies. Edit policy INSERT Anda dan pastikan Anda menggunakan `(NEW.metadata->>'size')::bigint` untuk memeriksa ukuran file, BUKAN `ceil(...)`. Error ini TIDAK BISA diperbaiki dari kode aplikasi.";
             throw new Error(rlsErrorMessage);
         }
 

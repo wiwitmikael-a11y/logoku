@@ -15,6 +15,7 @@ interface State {
 // FIX: The ErrorBoundary class must extend React.Component to function as a React Error Boundary.
 // This gives it access to component lifecycle methods, state (`this.state`), and props (`this.props`),
 // which resolves the errors related to `this.setState` and `this.props` being undefined.
+// FIX: Extended React.Component<Props, State> to make ErrorBoundary a proper React class component. This resolves errors where `this.setState` and `this.props` were not found.
 class ErrorBoundary extends React.Component<Props, State> {
   state: State = {
     hasError: false,
