@@ -1,11 +1,9 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
+import { createWhiteCanvasBase64 } from '../utils/imageUtils';
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SeoData, AdsData } from '../types';
 
 // --- Environment Variable Setup ---
-// The API key must be available as import.meta.env.VITE_API_KEY.
-// Vercel requires a VITE_ prefix to expose environment variables to the browser.
 const API_KEY = import.meta.env?.VITE_API_KEY;
-
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
@@ -20,9 +18,6 @@ const getAiClient = (): GoogleGenAI => {
 
 /**
  * A centralized error handler for all AI API calls.
- * @param error The original error caught from the API call.
- * @param serviceName The name of the service that failed.
- * @returns A new Error object with a user-friendly message.
  */
 const handleApiError = (error: any, serviceName: string): Error => {
     console.error(`${serviceName} API Error:`, error);
@@ -37,7 +32,6 @@ const handleApiError = (error: any, serviceName: string): Error => {
     if (errorString.includes('api key') || errorString.includes('authorization') || errorString.includes('api key not valid')) {
         return new Error(`Waduh, API Key buat ${serviceName} kayaknya salah atau nggak valid, bro. Cek lagi gih.`);
     }
-    // Check for our custom API key missing error from getAiClient
     if (errorString.includes("nggak ketemu, bro!")) {
         return new Error((error as Error).message);
     }
@@ -45,483 +39,469 @@ const handleApiError = (error: any, serviceName: string): Error => {
     return new Error(`Gagal manggil ${serviceName}. Coba cek console buat detailnya.`);
 };
 
-// --- NEW: Robust JSON Parsing Helper ---
 /**
- * Safely parses a JSON string, providing a more specific error message on failure.
- * @param jsonString The raw string from the AI model.
- * @param serviceName The name of the function/service for error logging.
- * @returns The parsed object of type T.
- * @throws An error if parsing fails.
+ * Safely parses a JSON string.
  */
 const safeJsonParse = <T>(jsonString: string, serviceName: string): T => {
   try {
-    // Attempt to parse the JSON string.
     return JSON.parse(jsonString);
   } catch (parseError) {
-    // Log the detailed error and the problematic string for debugging.
     console.error(`JSON Parse Error in ${serviceName}:`, parseError, "Raw string received:", jsonString);
-    // Throw a user-friendly error.
     throw new Error(`Waduh, Mang AI lagi ngelindur. Respon dari ${serviceName} formatnya aneh dan nggak bisa dibaca. Coba generate ulang, ya.`);
   }
 };
 
+// --- NEW MASTER IMAGE GENERATION LOGIC ---
 
-// --- Persona & Slogan Generation (Gemini Text) ---
-export const generateBrandPersona = async (
-  businessName: string,
-  industry: string,
-  targetAudience: string,
-  valueProposition: string
-): Promise<BrandPersona[]> => {
-  const ai = getAiClient();
-  const brandVoiceSchema = { type: Type.OBJECT, properties: { deskripsi: { type: Type.STRING }, kata_yang_digunakan: { type: Type.ARRAY, items: { type: Type.STRING } }, kata_yang_dihindari: { type: Type.ARRAY, items: { type: Type.STRING } } } };
-  const customerAvatarSchema = { type: Type.OBJECT, properties: { nama_avatar: { type: Type.STRING }, deskripsi_demografis: { type: Type.STRING }, pain_points: { type: Type.ARRAY, items: { type: Type.STRING } }, media_sosial: { type: Type.ARRAY, items: { type: Type.STRING } } } };
-  const brandPersonaSchema = { type: Type.OBJECT, properties: { nama_persona: { type: Type.STRING }, deskripsi_singkat: { type: Type.STRING }, kata_kunci: { type: Type.ARRAY, items: { type: Type.STRING } }, palet_warna_hex: { type: Type.ARRAY, items: { type: Type.STRING } }, customer_avatars: { type: Type.ARRAY, items: customerAvatarSchema }, brand_voice: brandVoiceSchema } };
-  const finalSchema = { type: Type.OBJECT, properties: { personas: { type: Type.ARRAY, description: "Array dari 3 alternatif persona brand yang komprehensif.", items: brandPersonaSchema } } };
-
-  try {
-    const userPrompt = `Kamu adalah seorang brand strategist ahli untuk UMKM Indonesia. Berdasarkan info ini:
-- Nama Bisnis: "${businessName}"
-- Industri: ${industry}
-- Target Pelanggan: ${targetAudience}
-- Nilai Jual: ${valueProposition}
-Buatkan 3 alternatif persona brand yang komprehensif. Setiap persona harus mencakup semua field yang ada di schema JSON yang diminta. Pastikan palet warna adalah kode hex yang valid.`;
-    
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: userPrompt,
-        config: { 
-            responseMimeType: "application/json", 
-            responseSchema: finalSchema,
-            thinkingConfig: { thinkingBudget: 0 } 
-        }
-    });
-
-    const jsonString = response.text.trim();
-    const result = safeJsonParse<{ personas: BrandPersona[] }>(jsonString, "Brand Persona");
-    if (!result || !Array.isArray(result.personas)) {
-        throw new Error("Struktur data Persona yang diterima dari AI tidak sesuai harapan.");
-    }
-    return result.personas;
-  } catch (error) {
-    if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
-        throw error;
-    }
-    throw handleApiError(error, "Google Gemini");
-  }
-};
-
-export const generateSlogans = async (
-    businessName: string,
-    persona: BrandPersona,
-    competitors: string
-): Promise<string[]> => {
+/**
+ * Step 1: Enhance a simple prompt using the fast text model.
+ */
+const enhancePromptForImageGeneration = async (simplePrompt: string): Promise<string> => {
     const ai = getAiClient();
+    const enhancementInstruction = `You are an expert prompt engineer for an AI image generator. Your task is to take a simple user request and expand it into a detailed, descriptive, and artistic prompt. The final image MUST be a simple, clean, flat vector illustration, NOT a photograph or a realistic mockup. Focus on style, colors, and composition.
+
+User Request: "${simplePrompt}"
+
+Enhanced Prompt:`;
+
     try {
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: `Buatkan 5 alternatif slogan/tagline untuk bisnis bernama "${businessName}" dengan persona brand "${persona.nama_persona}: ${persona.deskripsi_singkat}".
-            Beberapa kompetitornya adalah: ${competitors}.
-            Buat slogan yang menonjol dan berbeda dari kompetitor. Output harus berupa array JSON string.`,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } },
-                thinkingConfig: { thinkingBudget: 0 }
-            }
+            model: 'gemini-2.5-flash',
+            contents: enhancementInstruction,
+            config: { temperature: 0.7 }
         });
-        const jsonString = response.text.trim();
-        const result = safeJsonParse<string[]>(jsonString, "Slogan");
-        if (!Array.isArray(result)) {
-            throw new Error("Struktur data Slogan yang diterima dari AI tidak sesuai harapan (seharusnya array of strings).");
-        }
-        return result;
+        return response.text.trim();
     } catch (error) {
-        if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
-            throw error;
-        }
-        throw handleApiError(error, "Google Gemini");
+        console.warn("Prompt enhancement failed, using original prompt.", error);
+        return simplePrompt; // Fallback to the original prompt
     }
 };
 
-export const generateCaptions = async (
-    businessName: string,
-    persona: BrandPersona,
-    topic: string,
-    tone: string,
-): Promise<GeneratedCaption[]> => {
+/**
+ * Step 2: Generate an image on a white canvas using the enhanced prompt.
+ */
+const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' | '4:3' | '16:9' | '9:16' | '3:4' = '1:1'): Promise<string> => {
     const ai = getAiClient();
-    const schema = {
-        type: Type.OBJECT,
-        properties: {
-            captions: {
-                type: Type.ARRAY,
-                description: "Array dari 3-5 alternatif caption sosial media.",
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        caption: {
-                            type: Type.STRING,
-                            description: "Teks caption yang menarik dan engaging."
-                        },
-                        hashtags: {
-                            type: Type.ARRAY,
-                            items: { type: Type.STRING },
-                            description: "Array berisi 5-7 hashtag yang relevan."
-                        }
-                    },
-                    required: ["caption", "hashtags"],
-                }
-            }
-        }
-    };
-    try {
-        const userPrompt = `Kamu adalah seorang social media manager profesional untuk UMKM Indonesia.
-Brand: "${businessName}"
-Persona Brand: "${persona.nama_persona} - ${persona.deskripsi_singkat}"
-Gaya Bicara: Gunakan kata-kata seperti "${persona.brand_voice.kata_yang_digunakan.join(', ')}", hindari kata-kata seperti "${persona.brand_voice.kata_yang_dihindari.join(', ')}".
-Tugas: Buatkan 3 alternatif caption sosial media (misal: untuk Instagram).
-Topik Postingan: "${topic}"
-Nada Bicara: "${tone}"
-Setiap alternatif harus berisi caption yang menarik dan daftar hashtag yang relevan. Ikuti JSON schema yang diberikan.`;
 
+    let width = 1024;
+    let height = 1024;
+
+    if (aspectRatio === '4:3') { width = 1024; height = 768; }
+    else if (aspectRatio === '16:9') { width = 1280; height = 720; }
+    else if (aspectRatio === '9:16') { width = 720; height = 1280; }
+    else if (aspectRatio === '3:4') { width = 768; height = 1024; }
+
+    const whiteCanvasBase64 = createWhiteCanvasBase64(width, height);
+    const base64Data = whiteCanvasBase64.split(',')[1];
+    const mimeType = 'image/png';
+
+    try {
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: userPrompt,
+            model: 'gemini-2.5-flash-image-preview',
+            contents: {
+                parts: [
+                    { inlineData: { data: base64Data, mimeType } },
+                    { text: prompt },
+                ],
+            },
             config: {
-                responseMimeType: "application/json",
-                responseSchema: schema,
-                thinkingConfig: { thinkingBudget: 0 }
-            }
-        });
-        const jsonString = response.text.trim();
-        const result = safeJsonParse<{ captions: GeneratedCaption[] }>(jsonString, "Caption");
-        if (!result || !Array.isArray(result.captions)) {
-            throw new Error("Struktur data Caption yang diterima dari AI tidak sesuai harapan.");
-        }
-        return result.captions;
-    } catch (error) {
-        if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
-            throw error;
-        }
-        throw handleApiError(error, "Google Gemini (Caption)");
-    }
-};
-
-
-// --- Centralized Image Generation (using imagen-4.0-generate-001) ---
-const generateImages = async (
-    prompt: string, 
-    numberOfImages: number = 1, 
-    aspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9' = '1:1'
-): Promise<string[]> => {
-    const ai = getAiClient();
-    try {
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: prompt,
-            config: {
-              numberOfImages: numberOfImages,
-              outputMimeType: 'image/webp', // Use webp for efficiency
-              aspectRatio: aspectRatio,
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
             },
         });
 
-        if (!response.generatedImages || response.generatedImages.length === 0) {
-             throw new Error("Waduh, Mang AI tidak menghasilkan gambar. Ini bisa jadi karena prompt-nya terlalu rumit atau ada gangguan sementara. Coba lagi dengan prompt yang lebih simpel.");
+        for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            }
         }
-
-        // The API returns raw base64 strings, we need to format them into data URLs.
-        return response.generatedImages.map(img => `data:image/webp;base64,${img.image.imageBytes}`);
+        throw new Error("Waduh, Mang AI gagal ngegambar di kanvas putih. Model tidak mengembalikan gambar.");
     } catch (error) {
-        if (error instanceof Error && error.message.startsWith("Waduh, Mang AI tidak menghasilkan gambar")) {
-            throw error;
-        }
-        throw handleApiError(error, "Google Imagen 4.0");
-    }
-};
-
-
-export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
-  return generateImages(prompt, 1, '1:1');
-};
-
-export const generateLogoVariations = async (basePrompt: string): Promise<Omit<LogoVariations, 'main'>> => {
-    try {
-        const [iconResult, monochromeResult] = await Promise.all([
-            generateImages(`${basePrompt}, simplified icon only, clean, centered`, 1, '1:1'),
-            generateImages(`${basePrompt}, monochrome, black and white version`, 1, '1:1')
-        ]);
-        if (!iconResult[0] || !monochromeResult[0]) {
-            throw new Error("Gagal generate salah satu variasi logo.");
-        }
-        return { icon: iconResult[0], monochrome: monochromeResult[0] };
-    } catch(error) {
-        // The inner function already handles the API error, just re-throw it
+        console.error("Error in generateImageFromWhiteCanvas:", error);
         throw error;
     }
 };
 
-// --- Image Editing (Gemini Vision) ---
+/**
+ * Master Function: The new 2-step process for all image generation.
+ */
+const generateImage = async (simplePrompt: string, aspectRatio: '1:1' | '4:3' | '16:9' | '9:16' | '3:4' = '1:1'): Promise<string> => {
+    const enhancedPrompt = await enhancePromptForImageGeneration(simplePrompt);
+    return await generateImageFromWhiteCanvas(enhancedPrompt, aspectRatio);
+}
+
+// --- Text Generation Functions (Unchanged) ---
+export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string): Promise<BrandPersona[]> => {
+  const ai = getAiClient();
+  const prompt = `Based on the following business details, create 3 distinct brand personas. Each persona should be a complete JSON object.
+  
+  Business Details:
+  - Name: ${businessName}
+  - Industry: ${industry}
+  - Target Audience: ${targetAudience}
+  - Value Proposition: ${valueProposition}
+
+  For each persona, provide:
+  1.  "nama_persona": A catchy name for the persona (e.g., "The Modern Minimalist", "The Playful Companion").
+  2.  "deskripsi_singkat": A brief description of the brand's personality.
+  3.  "kata_kunci": An array of 3-5 keywords that describe the brand's style.
+  4.  "palet_warna_hex": An array of 5 hex color codes that match the persona.
+  5.  "customer_avatars": An array of 2 customer avatars, each with:
+      - "nama_avatar": A name for the customer segment.
+      - "deskripsi_demografis": Their demographic description.
+      - "pain_points": An array of their problems or needs.
+      - "media_sosial": An array of social media platforms they use.
+  6.  "brand_voice": An object describing the communication style, with:
+      - "deskripsi": A description of the voice.
+      - "kata_yang_digunakan": An array of words to use.
+      - "kata_yang_dihindari": An array of words to avoid.
+      
+  Return an array of exactly 3 complete BrandPersona JSON objects.`;
+
+  try {
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        nama_persona: { type: Type.STRING },
+                        deskripsi_singkat: { type: Type.STRING },
+                        kata_kunci: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        palet_warna_hex: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        customer_avatars: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    nama_avatar: { type: Type.STRING },
+                                    deskripsi_demografis: { type: Type.STRING },
+                                    pain_points: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                    media_sosial: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                },
+                                required: ['nama_avatar', 'deskripsi_demografis', 'pain_points', 'media_sosial']
+                            }
+                        },
+                        brand_voice: {
+                            type: Type.OBJECT,
+                            properties: {
+                                deskripsi: { type: Type.STRING },
+                                kata_yang_digunakan: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                kata_yang_dihindari: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            },
+                             required: ['deskripsi', 'kata_yang_digunakan', 'kata_yang_dihindari']
+                        }
+                    },
+                     required: ['nama_persona', 'deskripsi_singkat', 'kata_kunci', 'palet_warna_hex', 'customer_avatars', 'brand_voice']
+                }
+            }
+        },
+    });
+    
+    return safeJsonParse<BrandPersona[]>(response.text.trim(), 'generateBrandPersona');
+  } catch (error) {
+    throw handleApiError(error, "Brand Persona");
+  }
+};
+export const generateSlogans = async (businessName: string, persona: BrandPersona, competitors: string): Promise<string[]> => {
+    const ai = getAiClient();
+    const prompt = `Create 5 short, catchy, and memorable slogans for a business named "${businessName}".
+
+    Business Information:
+    - Brand Persona: ${persona.nama_persona} (${persona.deskripsi_singkat})
+    - Brand Voice Keywords: ${persona.brand_voice.kata_yang_digunakan.join(', ')}
+    - Competitors: ${competitors}
+
+    The slogans should align with the brand persona and be distinct from the competitors. Return a JSON array of 5 strings.`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                }
+            },
+        });
+        return safeJsonParse<string[]>(response.text.trim(), 'generateSlogans');
+    } catch (error) {
+        throw handleApiError(error, "Slogan");
+    }
+};
+export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string): Promise<GeneratedCaption[]> => {
+    const ai = getAiClient();
+    const prompt = `Create 3 social media captions for a business named "${businessName}".
+
+    Business Information:
+    - Brand Persona: ${persona.nama_persona} (${persona.deskripsi_singkat})
+    - Brand Voice: Use words like "${persona.brand_voice.kata_yang_digunakan.join(', ')}" and avoid words like "${persona.brand_voice.kata_yang_dihindari.join(', ')}".
+
+    Post Details:
+    - Topic: ${topic}
+    - Desired Tone: ${tone}
+
+    For each of the 3 captions, provide a JSON object with:
+    1. "caption": The social media caption text.
+    2. "hashtags": An array of 5-7 relevant hashtags.
+
+    Return a JSON array containing these 3 objects.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            caption: { type: Type.STRING },
+                            hashtags: { type: Type.ARRAY, items: { type: Type.STRING } }
+                        },
+                        required: ['caption', 'hashtags']
+                    }
+                }
+            },
+        });
+        return safeJsonParse<GeneratedCaption[]>(response.text.trim(), 'generateCaptions');
+    } catch (error) {
+        throw handleApiError(error, "Caption");
+    }
+};
+export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
+    const ai = getAiClient();
+    const prompt = `Create a 7-day social media content calendar for a business named "${businessName}".
+    
+    Business Information:
+    - Brand Persona: ${persona.nama_persona} (${persona.deskripsi_singkat})
+    - Brand Keywords: ${persona.kata_kunci.join(', ')}
+    - Target Audience: ${persona.customer_avatars.map(a => a.deskripsi_demografis).join(', ')}
+
+    For each day from "Senin" to "Minggu", provide a JSON object with:
+    - "hari": The day of the week (e.g., "Senin").
+    - "tipe_konten": The type of content (e.g., "Edukasi", "Promosi", "Interaksi").
+    - "ide_konten": A concrete content idea.
+    - "draf_caption": A draft caption for the post, written in the brand's voice.
+    - "rekomendasi_hashtag": An array of 5 relevant hashtags.
+
+    Return the result as a single JSON array containing exactly 7 objects, one for each day.
+    Do not include any text or markdown formatting before or after the JSON array.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                tools: [{ googleSearch: {} }],
+            },
+        });
+        
+        const calendar = safeJsonParse<ContentCalendarEntry[]>(response.text.trim(), 'generateContentCalendar');
+        const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+        return { calendar, sources };
+    } catch (error) {
+        throw handleApiError(error, "Content Calendar");
+    }
+};
+export const generateSeoContent = async (brandInputs: BrandInputs): Promise<SeoData> => {
+    const ai = getAiClient();
+    const prompt = `Generate SEO content for a business with the following details:
+    - Business Name: ${brandInputs.businessName}
+    - Industry: ${brandInputs.industry}
+    - Target Audience: ${brandInputs.targetAudience}
+    - Value Proposition: ${brandInputs.valueProposition}
+
+    Provide the following as a single JSON object:
+    1. "keywords": An array of 10-15 relevant SEO keywords.
+    2. "metaTitle": A compelling meta title for the website homepage (under 60 characters).
+    3. "metaDescription": A concise meta description (under 160 characters).
+    4. "gmbDescription": A friendly and informative description for a Google My Business profile (under 750 characters).`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        metaTitle: { type: Type.STRING },
+                        metaDescription: { type: Type.STRING },
+                        gmbDescription: { type: Type.STRING },
+                    },
+                    required: ['keywords', 'metaTitle', 'metaDescription', 'gmbDescription']
+                }
+            },
+        });
+        return safeJsonParse<SeoData>(response.text.trim(), 'generateSeoContent');
+    } catch (error) {
+        throw handleApiError(error, "SEO Content");
+    }
+};
+export const generateGoogleAdsContent = async (brandInputs: BrandInputs, slogan: string): Promise<AdsData> => {
+    const ai = getAiClient();
+    const prompt = `Generate 3 distinct Google Ads variations for a business.
+
+    Business Details:
+    - Name: ${brandInputs.businessName}
+    - Slogan: ${slogan}
+    - Value Proposition: ${brandInputs.valueProposition}
+    - Target Audience: ${brandInputs.targetAudience}
+
+    For each of the 3 ad variations, provide a JSON object with:
+    - "headlines": An array of 3 short, punchy headlines (max 30 characters each).
+    - "descriptions": An array of 2 compelling descriptions (max 90 characters each).
+    - "keywords": An array of 5-7 relevant ad keywords.
+    
+    Return the result as a JSON array of these 3 ad objects.`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            headlines: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            descriptions: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        },
+                        required: ['headlines', 'descriptions', 'keywords']
+                    }
+                }
+            },
+        });
+        return safeJsonParse<AdsData>(response.text.trim(), 'generateGoogleAdsContent');
+    } catch (error) {
+        throw handleApiError(error, "Google Ads");
+    }
+};
+
+
+// --- REWRITTEN Image Generation Functions (Flash Preview ONLY) ---
+
+export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
+    try {
+        const generatedBase64 = await generateImage(prompt, '1:1');
+        return [generatedBase64];
+    } catch (error) {
+        throw handleApiError(error, "Flash Preview (Logo)");
+    }
+};
+
+export const generateLogoVariations = async (basePrompt: string): Promise<LogoVariations> => {
+    try {
+        const iconPrompt = `An icon-only version of this logo: "${basePrompt}". A simple, clean, vector symbol on a white background. No text.`;
+        const monochromePrompt = `A monochrome, black and white version of this logo: "${basePrompt}". Vector, clean, on a white background.`;
+
+        // We don't need to enhance these specific, technical prompts.
+        const [iconBase64, monochromeBase64] = await Promise.all([
+            generateImageFromWhiteCanvas(iconPrompt, '1:1'),
+            generateImageFromWhiteCanvas(monochromePrompt, '1:1')
+        ]);
+        return { main: '', icon: iconBase64, monochrome: monochromeBase64 };
+    } catch (error) {
+        throw handleApiError(error, "Flash Preview (Variasi Logo)");
+    }
+};
+
 export const editLogo = async (base64ImageData: string, mimeType: string, prompt: string): Promise<string> => {
     const ai = getAiClient();
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image-preview',
-            contents: { parts: [{ inlineData: { data: base64ImageData, mimeType } }, { text: prompt }] },
-            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+            contents: {
+                parts: [
+                    { inlineData: { data: base64ImageData, mimeType } },
+                    { text: prompt },
+                ],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
         });
-        
-        const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-        if (imagePart?.inlineData) {
-            return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+
+        for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            }
         }
-        throw new Error("Mang AI tidak menghasilkan gambar editan.");
+        throw new Error("Model tidak mengembalikan gambar setelah diedit.");
     } catch (error) {
-        throw handleApiError(error, "Google Gemini (Image Edit)");
+        throw handleApiError(error, "Flash Preview (Edit Logo)");
     }
 };
 
-// --- Content Calendar (Gemini with Google Search) ---
-export const generateContentCalendar = async (
-  businessName: string,
-  persona: BrandPersona
-): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
-  const ai = getAiClient();
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Buatkan draf kalender konten Instagram untuk 1 minggu (Senin-Jumat) untuk bisnis "${businessName}" dengan persona brand "${persona.nama_persona}".
-Gunakan Google Search untuk mencari tren atau topik relevan di Indonesia minggu ini yang sesuai dengan industri dan persona brand.
-Untuk setiap hari, berikan: 'hari', 'tipe_konten', 'ide_konten' (berdasarkan tren jika ada), 'draf_caption', dan 'rekomendasi_hashtag' (array 5 hashtag).
-PENTING: Format output HARUS berupa JSON object yang valid, tanpa markdown formatting. JSON object harus memiliki satu key "calendar" yang valuenya adalah array dari 5 objek harian.`,
-      config: { 
-          tools: [{googleSearch: {}}],
-          thinkingConfig: { thinkingBudget: 0 }
-      },
-    });
-    
-    let jsonString = response.text.trim();
-    if (jsonString.startsWith('```json')) {
-        jsonString = jsonString.substring(7, jsonString.length - 3).trim();
-    } else if (jsonString.startsWith('```')) {
-        jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+export const generateSocialMediaPostImage = async (idea: string, keywords: string[]): Promise<string[]> => {
+    try {
+        const prompt = `A social media post about "${idea}". Style should be modern, clean, and related to these keywords: ${keywords.join(', ')}.`;
+        const generatedBase64 = await generateImage(prompt, '1:1');
+        return [generatedBase64];
+    } catch (error) {
+        throw handleApiError(error, "Flash Preview (Gambar Sosmed)");
     }
-
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const parsedJson = safeJsonParse<{ calendar: ContentCalendarEntry[] }>(jsonString, "Content Calendar");
-    if (!parsedJson || !Array.isArray(parsedJson.calendar)) {
-        throw new Error("Struktur data Kalender Konten yang diterima dari AI tidak sesuai harapan.");
-    }
-    return { calendar: parsedJson.calendar, sources };
-  } catch (error) {
-    if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
-        throw error;
-    }
-    throw handleApiError(error, "Google Gemini (Search)");
-  }
 };
 
-// --- SEO Content Generation ---
-export const generateSeoContent = async (
-  brandInputs: BrandInputs
-): Promise<SeoData> => {
-  const ai = getAiClient();
-  const schema = {
-    type: Type.OBJECT,
-    properties: {
-      keywords: {
-        type: Type.ARRAY,
-        items: { type: Type.STRING },
-        description: "5-10 kata kunci relevan (short & long-tail) dalam Bahasa Indonesia."
-      },
-      metaTitle: {
-        type: Type.STRING,
-        description: "Judul meta SEO yang menarik, di bawah 60 karakter."
-      },
-      metaDescription: {
-        type: Type.STRING,
-        description: "Deskripsi meta SEO yang informatif, di bawah 160 karakter."
-      },
-      gmbDescription: {
-        type: Type.STRING,
-        description: "Deskripsi Google Business Profile yang engaging, maksimal 750 karakter."
-      }
-    },
-    required: ["keywords", "metaTitle", "metaDescription", "gmbDescription"]
-  };
-  
-  try {
-    const prompt = `Kamu adalah seorang spesialis SEO untuk UMKM di Indonesia. Berdasarkan informasi bisnis ini:
-- Nama Bisnis: "${brandInputs.businessName}"
-- Industri: "${brandInputs.industry}"
-- Target Pelanggan: "${brandInputs.targetAudience}"
-- Nilai Jual Unik: "${brandInputs.valueProposition}"
-Tugas: Buatkan paket optimasi Google (SEO) dasar.
-1.  **Keywords**: Berikan 5-10 kata kunci yang paling relevan, campur antara short-tail dan long-tail.
-2.  **Meta Title**: Buat judul SEO untuk halaman utama website, harus menarik dan di bawah 60 karakter.
-3.  **Meta Description**: Buat deskripsi SEO yang persuasif, di bawah 160 karakter.
-4.  **Google Business Profile Description**: Buat deskripsi profil bisnis untuk Google Maps yang informatif dan menarik, maksimal 750 karakter.
-Pastikan semua output dalam Bahasa Indonesia dan sesuai dengan JSON schema yang diberikan.`;
+export const generatePrintMedia = async (mediaType: 'business_card' | 'flyer' | 'banner' | 'roll_banner', projectData: { brandInputs: BrandInputs, selectedPersona: BrandPersona, logoPrompt: string }): Promise<string[]> => {
+    const { brandInputs, selectedPersona, logoPrompt } = projectData;
+    let simplePrompt = '';
+    let aspectRatio: '1:1' | '4:3' | '16:9' | '9:16' | '3:4' = '4:3';
 
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: schema,
-            thinkingConfig: { thinkingBudget: 0 }
-        }
-    });
-    
-    const jsonString = response.text.trim();
-    const result = safeJsonParse<SeoData>(jsonString, "SEO Content");
-    if (!result || typeof result.keywords === 'undefined' || typeof result.metaTitle === 'undefined') {
-        throw new Error("Struktur data SEO yang diterima dari AI tidak sesuai harapan.");
+    switch (mediaType) {
+        case 'business_card':
+            aspectRatio = '3:4';
+            simplePrompt = `A business card for "${brandInputs.businessName}". Info: ${brandInputs.contactInfo?.name}, ${brandInputs.contactInfo?.title}, ${brandInputs.contactInfo?.phone}, ${brandInputs.contactInfo?.email}, ${brandInputs.contactInfo?.website}. The logo is: "${logoPrompt}". Brand style: ${selectedPersona.nama_persona}.`;
+            break;
+        case 'flyer':
+            aspectRatio = '9:16';
+            simplePrompt = `A promotional A5 flyer for "${brandInputs.businessName}". Headline: "${brandInputs.flyerContent?.headline}". Body: "${brandInputs.flyerContent?.body}". CTA: "${brandInputs.flyerContent?.cta}". The logo is: "${logoPrompt}". Brand style: ${selectedPersona.kata_kunci.join(', ')}.`;
+            break;
+        case 'banner':
+            aspectRatio = '16:9';
+            simplePrompt = `A large horizontal banner for "${brandInputs.businessName}". Headline: "${brandInputs.bannerContent?.headline}". Sub-headline: "${brandInputs.bannerContent?.subheadline}". The logo is: "${logoPrompt}". Brand style: ${selectedPersona.nama_persona}.`;
+            break;
+        case 'roll_banner':
+            aspectRatio = '9:16';
+            simplePrompt = `A tall roll-up banner for "${brandInputs.businessName}". Headline: "${brandInputs.rollBannerContent?.headline}". Body: "${brandInputs.rollBannerContent?.body}". Contact: "${brandInputs.rollBannerContent?.contact}". The logo is: "${logoPrompt}".`;
+            break;
     }
-    return result;
-  } catch(error) {
-    if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
-        throw error;
+
+    try {
+        const generatedBase64 = await generateImage(simplePrompt, aspectRatio);
+        return [generatedBase64];
+    } catch (error) {
+        throw handleApiError(error, `Flash Preview (${mediaType})`);
     }
-    throw handleApiError(error, "Google Gemini (SEO)");
-  }
 };
 
-// --- Google Ads Content Generation ---
-export const generateGoogleAdsContent = async (
-  brandInputs: BrandInputs,
-  slogan: string
-): Promise<AdsData> => {
-  const ai = getAiClient();
-  const adSchema = {
-    type: Type.OBJECT,
-    properties: {
-      headlines: {
-        type: Type.ARRAY,
-        items: { type: Type.STRING },
-        description: "Array berisi 3-5 headline. Setiap headline HARUS di bawah 30 karakter."
-      },
-      descriptions: {
-        type: Type.ARRAY,
-        items: { type: Type.STRING },
-        description: "Array berisi 2 deskripsi. Setiap deskripsi HARUS di bawah 90 karakter."
-      },
-      keywords: {
-        type: Type.ARRAY,
-        items: { type: Type.STRING },
-        description: "Array berisi 5-7 kata kunci yang sangat relevan untuk ad group ini."
-      }
-    },
-    required: ["headlines", "descriptions", "keywords"]
-  };
-
-  const finalSchema = {
-    type: Type.OBJECT,
-    properties: {
-      ads: {
-        type: Type.ARRAY,
-        description: "Array berisi 3 alternatif teks iklan Google Ads yang lengkap.",
-        items: adSchema
-      }
-    }
-  };
-  
-  try {
-    const prompt = `Kamu adalah seorang spesialis Google Ads untuk UMKM di Indonesia. Berdasarkan informasi bisnis ini:
-- Nama Bisnis: "${brandInputs.businessName}"
-- Industri: "${brandInputs.industry}"
-- Target Pelanggan: "${brandInputs.targetAudience}"
-- Nilai Jual Unik: "${brandInputs.valueProposition}"
-- Slogan: "${slogan}"
-Tugas: Buatkan 3 alternatif teks iklan (ad copy) untuk kampanye Google Search.
-Untuk setiap alternatif, berikan:
-1.  **Headlines**: 3-5 judul yang menarik dan relevan. Patuhi batas maksimal 30 karakter per judul.
-2.  **Descriptions**: 2 deskripsi yang persuasif dan informatif. Patuhi batas maksimal 90 karakter per deskripsi.
-3.  **Keywords**: 5-7 kata kunci yang paling cocok untuk grup iklan ini.
-Pastikan semua output dalam Bahasa Indonesia dan sesuai dengan JSON schema yang diberikan.`;
-
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: finalSchema,
-            thinkingConfig: { thinkingBudget: 0 }
-        }
-    });
-    
-    const jsonString = response.text.trim();
-    const result = safeJsonParse<{ ads: AdsData }>(jsonString, "Google Ads Content");
-    if (!result || !Array.isArray(result.ads)) {
-        throw new Error("Struktur data Iklan Google yang diterima dari AI tidak sesuai harapan.");
-    }
-    return result.ads;
-  } catch(error) {
-    if (error instanceof Error && (error.message.includes('ngelindur') || error.message.includes('tidak sesuai'))) {
-        throw error;
-    }
-    throw handleApiError(error, "Google Gemini (Ads)");
-  }
-};
-
-
-// --- Social Media Post Image Generation ---
-export const generateSocialMediaPostImage = async (
-    contentIdea: string,
-    brandKeywords: string[]
-): Promise<string[]> => {
-    // A prompt designed to create visually appealing images without text, focusing on the theme.
-    const prompt = `Create a visually stunning, high-quality social media post graphic suitable for an Instagram feed, in a 1:1 aspect ratio. The image should visually represent the following theme or idea: "${contentIdea}". The overall artistic style should be: ${brandKeywords.join(', ')}. IMPORTANT: The image must not contain any text, words, or letters. It should be a pure visual representation. Style: professional, commercial photography, vibrant, engaging, clean aesthetic.`;
-    return generateImages(prompt, 1, '1:1');
-};
-
-// --- Print Media Generation ---
-export const generatePrintMedia = async (
-    type: 'business_card' | 'flyer' | 'banner' | 'roll_banner',
-    data: {
-        brandInputs: BrandInputs;
-        selectedPersona: BrandPersona;
-        logoPrompt: string;
-    }
-): Promise<string[]> => {
-    let prompt = '';
-    let aspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9' = '4:3';
-    const { brandInputs, selectedPersona, logoPrompt } = data;
-    const style = selectedPersona.kata_kunci.join(', ');
-    const colors = selectedPersona.palet_warna_hex.join(', ');
-
-    if (type === 'business_card' && brandInputs.contactInfo) {
-        const { name, title, phone, email, website } = brandInputs.contactInfo;
-        prompt = `A professional business card design for "${brandInputs.businessName}". Style: ${style}, clean, modern, print-ready. Colors: ${colors}. Logo described as: "${logoPrompt}". The card must legibly display: Name: ${name}, Title: ${title}, Phone: ${phone}, Email: ${email}, Website: ${website}. Realistic mockup.`;
-        aspectRatio = '4:3';
-    } else if (type === 'flyer' && brandInputs.flyerContent) {
-        const { headline, body, cta } = brandInputs.flyerContent;
-        prompt = `A professional A5 flyer design for "${brandInputs.businessName}". Style: ${style}, eye-catching, easy to read. Colors: ${colors}. Logo described as: "${logoPrompt}". Text: Headline: "${headline}" (large), Body: "${body}", CTA: "${cta}" (stands out). Realistic mockup.`;
-        aspectRatio = '3:4';
-    } else if (type === 'banner' && brandInputs.bannerContent) {
-        const { headline, subheadline } = brandInputs.bannerContent;
-        prompt = `A professional horizontal banner (spanduk) design for "${brandInputs.businessName}". Style: ${style}, highly visible from a distance. Colors: ${colors}. Logo described as: "${logoPrompt}" (large and clear). Text: Headline: "${headline}" (very large), Sub-headline: "${subheadline}". Realistic outdoor mockup.`;
-        aspectRatio = '16:9';
-    } else if (type === 'roll_banner' && brandInputs.rollBannerContent) {
-        const { headline, body, contact } = brandInputs.rollBannerContent;
-        prompt = `A professional vertical roll-up banner design for "${brandInputs.businessName}". Style: ${style}, elegant, informative. Colors: ${colors}. Logo described as: "${logoPrompt}" (at the top). Content: Headline: "${headline}" (top), Body: "${body}" (bullet points), Contact: "${contact}" (bottom). Realistic standing mockup.`;
-        aspectRatio = '9:16';
-    } else {
-        throw new Error("Informasi yang dibutuhkan untuk generate media cetak tidak lengkap.");
-    }
-
-    // Add a disclaimer about text rendering quality.
-    prompt += " IMPORTANT: Any text in the image is for layout and style demonstration only, it may not be accurate. Focus on the overall design.";
-    
-    return generateImages(prompt, 1, aspectRatio);
-};
-
-// --- Packaging & Merchandise Generation ---
 export const generatePackagingDesign = async (prompt: string): Promise<string[]> => {
-  const fullPrompt = `2D packaging design mockup, printable concept for a product. ${prompt}, flat lay, product photography style, clean background, commercial look.`;
-  return generateImages(fullPrompt, 1, '4:3');
+    try {
+        const generatedBase64 = await generateImage(prompt, '4:3');
+        return [generatedBase64];
+    } catch (error) {
+        throw handleApiError(error, "Flash Preview (Kemasan)");
+    }
 };
 
 export const generateMerchandiseMockup = async (prompt: string): Promise<string[]> => {
-  return generateImages(prompt, 1, '1:1');
+    try {
+        const generatedBase64 = await generateImage(prompt, '1:1');
+        return [generatedBase64];
+    } catch (error) {
+        throw handleApiError(error, "Flash Preview (Merchandise)");
+    }
 };

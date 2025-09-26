@@ -64,3 +64,22 @@ export const compressAndConvertToWebP = (base64String: string, quality = 0.85): 
         };
     });
 };
+
+/**
+ * Creates a white canvas as a Base64 data URL.
+ * This is used as a base for the image editing model to act like a generation model.
+ * @param width The width of the canvas.
+ * @param height The height of the canvas.
+ * @returns A string representing the Base64 data URL of the white image.
+ */
+export const createWhiteCanvasBase64 = (width = 1024, height = 1024): string => {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
+    }
+    return canvas.toDataURL('image/png'); // Using PNG as a safe default
+};

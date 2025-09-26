@@ -27,19 +27,19 @@ const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
     id: 't-shirt',
     name: 'T-Shirt',
     prompt:
-      'A realistic mockup of a plain colored t-shirt on a clean, neutral background. The t-shirt prominently features a logo for a brand named "{{businessName}}". The logo is described as: "{{logoPrompt}}". The photo is high-quality, commercial-style, showing the texture of the fabric.',
+      'A simple flat vector illustration of a t-shirt mockup. The t-shirt prominently features a logo for a brand named "{{businessName}}". The logo is described as: "{{logoPrompt}}". The style is clean, minimalist, on a plain background. Not a photograph.',
   },
   {
     id: 'mug',
     name: 'Mug',
     prompt:
-      'A realistic mockup of a ceramic coffee mug on a simple table. The mug has a logo printed on it for a brand called "{{businessName}}". The logo is described as: "{{logoPrompt}}". The lighting is soft and natural, product photography style.',
+      'A simple flat vector illustration of a ceramic coffee mug mockup. The mug has a logo printed on it for a brand called "{{businessName}}". The logo is described as: "{{logoPrompt}}". The style is clean, minimalist, on a plain background. Not a photograph.',
   },
   {
     id: 'tote-bag',
     name: 'Tote Bag',
     prompt:
-      'A realistic mockup of a canvas tote bag hanging against a clean wall. The tote bag has a logo printed in the center for a company named "{{businessName}}". The logo is described as: "{{logoPrompt}}". The image looks like a professional product photo for an online store.',
+      'A simple flat vector illustration of a canvas tote bag mockup. The tote bag has a logo printed in the center for a company named "{{businessName}}". The logo is described as: "{{logoPrompt}}". The style is clean, minimalist, on a plain background. Not a photograph.',
   },
 ];
 
@@ -126,7 +126,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Mockup Merchandise Mang AI</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Mockup Merchandise Mang AI</h2>
         <p className="text-gray-400">
           Lihat gimana brand lo tampil di produk nyata. Pilih jenis merchandise, dan Mang AI bakal bikinin mockup realistisnya buat lo.
         </p>

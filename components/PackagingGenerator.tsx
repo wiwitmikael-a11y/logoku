@@ -41,7 +41,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
   useEffect(() => {
     // Auto-generate a prompt based on the persona
     const personaStyle = persona.kata_kunci.join(', ');
-    const initialPrompt = `packaging design for a product from "${businessName}". The brand personality is ${persona.deskripsi_singkat.toLowerCase()}. Style should be ${personaStyle}, modern, clean, commercially viable.`;
+    const initialPrompt = `A simple flat vector illustration of a packaging design for a product from "${businessName}". The brand personality is ${persona.deskripsi_singkat.toLowerCase()}. Style should be ${personaStyle}, modern, clean, minimalist. Not a photograph.`;
     setPrompt(initialPrompt);
   }, [persona, businessName]);
 
@@ -95,7 +95,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 6: Desain Kemasan Lo</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 8: Desain Kemasan Lo</h2>
         <p className="text-gray-400">Sentuhan terakhir! Berdasarkan persona brand lo, kita udah siapin prompt buat desain kemasan produk lo. Edit kalo perlu, terus generate konsepnya.</p>
       </div>
 
