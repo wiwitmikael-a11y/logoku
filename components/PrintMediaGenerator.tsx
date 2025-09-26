@@ -1,29 +1,25 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
-import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { ProjectData, BrandInputs, PrintMediaAssets } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
-import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
-import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => void;
-  userId: string;
-  projectId: number;
 }
 
 type MediaTab = 'business_card' | 'flyer' | 'banner' | 'roll_banner';
 const GENERATION_COST = 1;
 
-const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
+const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -58,15 +54,15 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
   const [bannerDesigns, setBannerDesigns] = useState<string[]>([]);
   const [rollBannerDesigns, setRollBannerDesigns] = useState<string[]>([]);
 
-  const [selectedCardUrl, setSelectedCardUrl] = useState<string | null>(null);
-  const [selectedFlyerUrl, setSelectedFlyerUrl] = useState<string | null>(null);
-  const [selectedBannerUrl, setSelectedBannerUrl] = useState<string | null>(null);
-  const [selectedRollBannerUrl, setSelectedRollBannerUrl] = useState<string | null>(null);
+  const [selectedCardBase64, setSelectedCardBase64] = useState<string | null>(null);
+  const [selectedFlyerBase64, setSelectedFlyerBase64] = useState<string | null>(null);
+  const [selectedBannerBase64, setSelectedBannerBase64] = useState<string | null>(null);
+  const [selectedRollBannerBase64, setSelectedRollBannerBase64] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
-  const [showNextStepNudge, setShowNextStepNudge] = useState(false); // State for the nudge
+  const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
@@ -77,10 +73,10 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
   };
   
   const designData = {
-    business_card: { designs: cardDesigns, setDesigns: setCardDesigns, selected: selectedCardUrl, setSelected: setSelectedCardUrl },
-    flyer: { designs: flyerDesigns, setDesigns: setFlyerDesigns, selected: selectedFlyerUrl, setSelected: setSelectedFlyerUrl },
-    banner: { designs: bannerDesigns, setDesigns: setBannerDesigns, selected: selectedBannerUrl, setSelected: setSelectedBannerUrl },
-    roll_banner: { designs: rollBannerDesigns, setDesigns: setRollBannerDesigns, selected: selectedRollBannerUrl, setSelected: setSelectedRollBannerUrl },
+    business_card: { designs: cardDesigns, setDesigns: setCardDesigns, selected: selectedCardBase64, setSelected: setSelectedCardBase64 },
+    flyer: { designs: flyerDesigns, setDesigns: setFlyerDesigns, selected: selectedFlyerBase64, setSelected: setSelectedFlyerBase64 },
+    banner: { designs: bannerDesigns, setDesigns: setBannerDesigns, selected: selectedBannerBase64, setSelected: setSelectedBannerBase64 },
+    roll_banner: { designs: rollBannerDesigns, setDesigns: setRollBannerDesigns, selected: selectedRollBannerBase64, setSelected: setSelectedRollBannerBase64 },
   };
   
   const { designs, setDesigns, setSelected } = designData[activeTab];
@@ -102,7 +98,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
 
     setIsLoading(true);
     setError(null);
-    setShowNextStepNudge(false); // Reset nudge
+    setShowNextStepNudge(false);
     playSound('start');
 
     const { brandInputs, selectedPersona, logoPrompt } = projectData;
@@ -129,12 +125,12 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
             logoPrompt
         };
       const results = await generatePrintMedia(activeTab, payload);
-      const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, activeTab);
+      const imageBase64 = results[0];
 
-      await deductCredits(GENERATION_COST); // Deduct only on success
-      setDesigns([uploadedUrl]);
-      setSelected(uploadedUrl); // Auto-select the generated design
-      setShowNextStepNudge(true); // Show nudge on success
+      await deductCredits(GENERATION_COST);
+      setDesigns([imageBase64]);
+      setSelected(imageBase64);
+      setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
@@ -143,15 +139,15 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected, userId, projectId]);
+  }, [activeTab, projectData, cardInfo, flyerInfo, bannerInfo, rollBannerInfo, credits, deductCredits, setShowOutOfCreditsModal, setDesigns, setSelected]);
 
   const handleContinue = () => {
     onComplete({
         assets: {
-            cardUrl: selectedCardUrl || undefined,
-            flyerUrl: selectedFlyerUrl || undefined,
-            bannerUrl: selectedBannerUrl || undefined,
-            rollBannerUrl: selectedRollBannerUrl || undefined,
+            cardUrl: selectedCardBase64 || undefined,
+            flyerUrl: selectedFlyerBase64 || undefined,
+            bannerUrl: selectedBannerBase64 || undefined,
+            rollBannerUrl: selectedRollBannerBase64 || undefined,
         },
         inputs: {
             contactInfo: cardInfo,
@@ -165,7 +161,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
   const handleTabClick = (tab: MediaTab) => {
       playSound('select');
       setActiveTab(tab);
-      setShowNextStepNudge(false); // Reset nudge when changing tabs
+      setShowNextStepNudge(false);
   }
 
   const renderContent = () => {

@@ -1,38 +1,34 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
-import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
-import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
-import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
   persona: BrandPersona;
   businessName: string;
-  onComplete: (packagingUrl: string) => void;
-  userId: string;
-  projectId: number;
+  onComplete: (packagingBase64: string) => void;
 }
 
 const GENERATION_COST = 1;
 
-const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete, userId, projectId }) => {
+const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState('');
-  const [designs, setDesigns] = useState<string[]>([]);
-  const [selectedDesignUrl, setSelectedDesignUrl] = useState<string | null>(null);
+  const [designs, setDesigns] = useState<string[]>([]); // Will hold Base64
+  const [selectedDesignBase64, setSelectedDesignBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
-  const [showNextStepNudge, setShowNextStepNudge] = useState(false); // State for the nudge
+  const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
@@ -64,18 +60,17 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     setIsLoading(true);
     setError(null);
     setDesigns([]);
-    setSelectedDesignUrl(null);
-    setShowNextStepNudge(false); // Reset nudge
+    setSelectedDesignBase64(null);
+    setShowNextStepNudge(false);
     playSound('start');
 
     try {
-      const results = await generatePackagingDesign(prompt);
-      const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, 'packaging');
+      const results = await generatePackagingDesign(prompt); // Returns Base64
       
       await deductCredits(GENERATION_COST);
-      setDesigns([uploadedUrl]);
-      setSelectedDesignUrl(uploadedUrl);
-      setShowNextStepNudge(true); // Show nudge on success
+      setDesigns(results);
+      setSelectedDesignBase64(results[0]);
+      setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
@@ -84,11 +79,11 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleContinue = () => {
-    if (selectedDesignUrl) {
-      onComplete(selectedDesignUrl);
+    if (selectedDesignBase64) {
+      onComplete(selectedDesignBase64);
     }
   };
 
@@ -136,7 +131,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
                 Desain kemasan siap!
               </CalloutPopup>
             )}
-            <Button onClick={handleContinue} disabled={!selectedDesignUrl}>
+            <Button onClick={handleContinue} disabled={!selectedDesignBase64}>
               Lanjut ke Merchandise &rarr;
             </Button>
           </div>

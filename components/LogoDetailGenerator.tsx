@@ -1,41 +1,36 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
-import { uploadImageFromBase64 } from '../services/storageService';
-import { fetchImageAsBase64 } from '../utils/imageUtils';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { LogoVariations } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
-import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
-import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
-  baseLogoUrl: string;
+  baseLogoUrl: string; // This will now be a Base64 string
   basePrompt: string;
-  onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
-  userId: string;
-  projectId: number;
+  onComplete: (data: { finalLogoBase64: string; variations: LogoVariations }) => void;
 }
 
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
-const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete, userId, projectId }) => {
+const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
-  const [finalLogoUrl, setFinalLogoUrl] = useState<string>(baseLogoUrl);
+  const [finalLogoBase64, setFinalLogoBase64] = useState<string>(baseLogoUrl);
   const [variations, setVariations] = useState<LogoVariations | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
-  const [showNextStepNudge, setShowNextStepNudge] = useState(false); // State for the nudge
+  const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const variationsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
@@ -56,19 +51,16 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
 
     setIsGeneratingVariations(true);
     setError(null);
-    setShowNextStepNudge(false); // Reset nudge
+    setShowNextStepNudge(false);
     playSound('start');
     try {
+      // API now returns Base64 strings directly
       const generatedVariations = await generateLogoVariations(basePrompt);
-      const [iconUrl, monochromeUrl] = await Promise.all([
-          uploadImageFromBase64(generatedVariations.icon, userId, projectId, 'logo-icon'),
-          uploadImageFromBase64(generatedVariations.monochrome, userId, projectId, 'logo-monochrome')
-      ]);
 
-      await deductCredits(VARIATION_COST); // Deduct on success
-      const completeVariations = { main: finalLogoUrl, icon: iconUrl, monochrome: monochromeUrl };
+      await deductCredits(VARIATION_COST);
+      const completeVariations = { main: finalLogoBase64, icon: generatedVariations.icon, monochrome: generatedVariations.monochrome };
       setVariations(completeVariations);
-      setShowNextStepNudge(true); // Show nudge on success
+      setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Gagal membuat variasi logo.';
@@ -77,7 +69,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [basePrompt, finalLogoBase64, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,16 +84,16 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setIsEditing(true);
     setError(null);
     playSound('start');
+    // FIX: Corrected a syntax error in the try/catch block.
     try {
-      const currentImageBase64 = await fetchImageAsBase64(finalLogoUrl);
-      const base64Data = currentImageBase64.split(',')[1];
-      const mimeType = currentImageBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+      // No need to fetch, finalLogoBase64 is already a Base64 string
+      const base64Data = finalLogoBase64.split(',')[1];
+      const mimeType = finalLogoBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
       
       const editedBase64Result = await editLogo(base64Data, mimeType, editPrompt);
-      const newPublicUrl = await uploadImageFromBase64(editedBase64Result, userId, projectId, 'logo-edited');
 
-      await deductCredits(EDIT_COST); // Deduct on success
-      setFinalLogoUrl(newPublicUrl);
+      await deductCredits(EDIT_COST);
+      setFinalLogoBase64(editedBase64Result); // Update state with the new Base64 string
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Gagal mengedit logo.';
@@ -114,8 +106,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
 
   const handleContinue = () => {
     if (variations) {
-        const finalVariations = { ...variations, main: finalLogoUrl };
-        onComplete({ finalLogoUrl, variations: finalVariations });
+        const finalVariations = { ...variations, main: finalLogoBase64 };
+        onComplete({ finalLogoBase64, variations: finalVariations });
     }
   };
 
@@ -129,8 +121,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-lg md:text-xl font-bold">Logo Utama Lo</h3>
-            <div className="bg-white p-4 rounded-lg flex justify-center items-center aspect-square cursor-pointer group" onClick={() => openModal(finalLogoUrl)}>
-                <img src={finalLogoUrl} alt="Logo Utama" className="max-w-full max-h-64 object-contain group-hover:scale-105 transition-transform" />
+            <div className="bg-white p-4 rounded-lg flex justify-center items-center aspect-square cursor-pointer group" onClick={() => openModal(finalLogoBase64)}>
+                <img src={finalLogoBase64} alt="Logo Utama" className="max-w-full max-h-64 object-contain group-hover:scale-105 transition-transform" />
             </div>
 
             {variations ? (

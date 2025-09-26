@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
+import { uploadImageFromBase64 } from './services/storageService';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, PrintMediaAssets, SeoData, AdsData } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
@@ -79,6 +80,7 @@ const MainApp: React.FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
     const [generalError, setGeneralError] = useState<string | null>(null);
+    const [isFinalizing, setIsFinalizing] = useState(false); // New state for final upload process
     
     // State for the welcome banner
     const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
@@ -86,7 +88,7 @@ const MainApp: React.FC = () => {
     // Modals visibility state
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
-    const [showCaptcha, setShowCaptcha] = useState(false); // New state for CAPTCHA
+    const [showCaptcha, setShowCaptcha] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -284,11 +286,8 @@ const MainApp: React.FC = () => {
 
             // 3. Update UI state
             setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
-
-            // 4. Refresh user profile to get updated storage usage
-            await refreshProfile();
             
-            playSound('success'); // Or a dedicated delete sound
+            playSound('success');
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus project.';
@@ -325,47 +324,39 @@ const MainApp: React.FC = () => {
         saveWorkflowState(updatedData);
     }, [selectedProjectId]);
 
-    // --- Workflow Step Completion Handlers (Refactored) ---
+    // --- Workflow Step Completion Handlers ---
     const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData: Partial<ProjectData> = {
-            ...currentState, // Merge with current state to avoid data loss on re-edits
+            ...currentState,
             brandInputs: data.inputs,
             selectedPersona: data.selectedPersona,
             selectedSlogan: data.selectedSlogan,
         };
-        try {
-            await saveCheckpoint(updatedData);
-            navigateTo('logo');
-        } catch (e) { /* error is handled by saveCheckpoint */ }
-    }, [saveCheckpoint]);
+        saveWorkflowState(updatedData);
+        navigateTo('logo');
+    }, []);
     
-    const handleLogoComplete = useCallback(async (data: { logoUrl: string; prompt: string }) => {
+    const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => {
         const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, selectedLogoUrl: data.logoUrl, logoPrompt: data.prompt };
-        try {
-            await saveCheckpoint(updatedData);
-            navigateTo('logo_detail');
-        } catch (e) { /* error is handled */ }
-    }, [saveCheckpoint]);
+        const updatedData = { ...currentState, selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt };
+        saveWorkflowState(updatedData);
+        navigateTo('logo_detail');
+    }, []);
 
-    const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
+    const handleLogoDetailComplete = useCallback(async (data: { finalLogoBase64: string; variations: LogoVariations }) => {
         const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
-        try {
-            await saveCheckpoint(updatedData);
-            navigateTo('content');
-        } catch (e) { /* error is handled */ }
-    }, [saveCheckpoint]);
+        const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoBase64, logoVariations: data.variations };
+        saveWorkflowState(updatedData);
+        navigateTo('content');
+    }, []);
 
     const handleContentComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, contentCalendar: data.calendar, searchSources: data.sources };
-        try {
-            await saveCheckpoint(updatedData);
-            navigateTo('print');
-        } catch (e) { /* error is handled */ }
-    }, [saveCheckpoint]);
+        saveWorkflowState(updatedData);
+        navigateTo('print');
+    }, []);
 
     const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets, inputs: Pick<BrandInputs, 'contactInfo' | 'flyerContent' | 'bannerContent' | 'rollBannerContent'> }) => {
         const currentState = loadWorkflowState() || {};
@@ -374,65 +365,131 @@ const MainApp: React.FC = () => {
             selectedPrintMedia: data.assets,
             brandInputs: { ...(currentState.brandInputs || {}), ...data.inputs } as BrandInputs,
         };
-        try {
-            await saveCheckpoint(updatedData);
-            navigateTo('seo');
-        } catch (e) { /* error is handled */ }
-    }, [saveCheckpoint]);
+        saveWorkflowState(updatedData);
+        navigateTo('seo');
+    }, []);
 
     const handleSeoComplete = useCallback(async (data: { seoData: SeoData }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, seoData: data.seoData };
-        try {
-            await saveCheckpoint(updatedData);
-            navigateTo('ads');
-        } catch (e) { /* error is handled */ }
-    }, [saveCheckpoint]);
+        saveWorkflowState(updatedData);
+        navigateTo('ads');
+    }, []);
 
     const handleAdsComplete = useCallback(async (data: { adsData: AdsData }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, adsData: data.adsData };
-        try {
-            await saveCheckpoint(updatedData);
-            navigateTo('packaging');
-        } catch (e) { /* error is handled */ }
-    }, [saveCheckpoint]);
+        saveWorkflowState(updatedData);
+        navigateTo('packaging');
+    }, []);
 
-    const handlePackagingComplete = useCallback(async (packagingUrl: string) => {
+    const handlePackagingComplete = useCallback(async (packagingBase64: string) => {
        const currentState = loadWorkflowState() || {};
-       const updatedData = { ...currentState, selectedPackagingUrl: packagingUrl };
-       try {
-            await saveCheckpoint(updatedData);
-            navigateTo('merchandise');
-       } catch(e) { /* error is handled */ }
-    }, [saveCheckpoint]);
+       const updatedData = { ...currentState, selectedPackagingUrl: packagingBase64 };
+       saveWorkflowState(updatedData);
+       navigateTo('merchandise');
+    }, []);
 
-    const handleMerchandiseComplete = useCallback(async (merchandiseUrl: string) => {
+    const handleFinalizeProject = useCallback(async (merchandiseBase64: string) => {
         if (!session?.user || !selectedProjectId) return;
         
-        const currentState = loadWorkflowState() || {};
-        const finalProjectData: ProjectData = {
-            ...currentState,
-            selectedMerchandiseUrl: merchandiseUrl,
-        } as ProjectData;
+        setIsFinalizing(true);
+        setGeneralError(null);
+        
+        try {
+            const currentState = loadWorkflowState() || {};
+            const tempProjectData = { ...currentState, selectedMerchandiseUrl: merchandiseBase64 };
 
-        const { data, error } = await supabase
-            .from('projects')
-            .update({ project_data: finalProjectData, status: 'completed' })
-            .eq('id', selectedProjectId)
-            .select()
-            .single();
+            const finalProjectData: Partial<ProjectData> = { ...tempProjectData };
+            const userId = session.user.id;
+            
+            // --- MASS UPLOAD PROCESS ---
+            const uploadPromises: Promise<void>[] = [];
+            const uploadAndAssign = async (key: keyof ProjectData, base64: string, assetType: string) => {
+                const url = await uploadImageFromBase64(base64, userId, selectedProjectId, assetType);
+                (finalProjectData as any)[key] = url;
+            };
 
-        if (error) {
-            console.error("Error saving final project", error);
-            setGeneralError(`Gagal menyimpan project: ${error.message}`);
-        } else {
+            // Logo
+            if (tempProjectData.selectedLogoUrl) {
+                uploadPromises.push(uploadAndAssign('selectedLogoUrl', tempProjectData.selectedLogoUrl, 'logo-main'));
+            }
+            if (tempProjectData.logoVariations?.icon) {
+                uploadPromises.push(uploadAndAssign('logoVariations.icon' as any, tempProjectData.logoVariations.icon, 'logo-icon'));
+            }
+            if (tempProjectData.logoVariations?.monochrome) {
+                uploadPromises.push(uploadAndAssign('logoVariations.monochrome' as any, tempProjectData.logoVariations.monochrome, 'logo-monochrome'));
+            }
+
+            // Print Media
+            if (tempProjectData.selectedPrintMedia?.cardUrl) {
+                 uploadPromises.push(uploadAndAssign('selectedPrintMedia.cardUrl' as any, tempProjectData.selectedPrintMedia.cardUrl, 'print-card'));
+            }
+            if (tempProjectData.selectedPrintMedia?.flyerUrl) {
+                 uploadPromises.push(uploadAndAssign('selectedPrintMedia.flyerUrl' as any, tempProjectData.selectedPrintMedia.flyerUrl, 'print-flyer'));
+            }
+            if (tempProjectData.selectedPrintMedia?.bannerUrl) {
+                 uploadPromises.push(uploadAndAssign('selectedPrintMedia.bannerUrl' as any, tempProjectData.selectedPrintMedia.bannerUrl, 'print-banner'));
+            }
+             if (tempProjectData.selectedPrintMedia?.rollBannerUrl) {
+                 uploadPromises.push(uploadAndAssign('selectedPrintMedia.rollBannerUrl' as any, tempProjectData.selectedPrintMedia.rollBannerUrl, 'print-rollbanner'));
+            }
+
+            // Packaging & Merchandise
+            if (tempProjectData.selectedPackagingUrl) {
+                 uploadPromises.push(uploadAndAssign('selectedPackagingUrl', tempProjectData.selectedPackagingUrl, 'packaging'));
+            }
+            if (tempProjectData.selectedMerchandiseUrl) {
+                 uploadPromises.push(uploadAndAssign('selectedMerchandiseUrl', tempProjectData.selectedMerchandiseUrl, 'merchandise'));
+            }
+
+            // Content Calendar Images
+            if (tempProjectData.contentCalendar) {
+                const calendarUploads = tempProjectData.contentCalendar
+                    .map((entry, index) => ({ entry, index }))
+                    .filter(({ entry }) => entry.imageUrl && entry.imageUrl.startsWith('data:image'))
+                    .map(async ({ entry, index }) => {
+                        const url = await uploadImageFromBase64(entry.imageUrl!, userId, selectedProjectId, `content-${index}`);
+                        // This modification is tricky, so we'll do it after the promises resolve.
+                        return { index, url };
+                    });
+                
+                const calendarResults = await Promise.all(calendarUploads);
+                 // Create a deep copy to modify
+                const newCalendar = JSON.parse(JSON.stringify(finalProjectData.contentCalendar));
+                calendarResults.forEach(({ index, url }) => {
+                    newCalendar[index].imageUrl = url;
+                });
+                finalProjectData.contentCalendar = newCalendar;
+            }
+
+            // Execute all non-calendar uploads
+            await Promise.all(uploadPromises);
+            
+            // --- SAVE FINAL DATA TO DATABASE ---
+            const { data, error } = await supabase
+                .from('projects')
+                .update({ project_data: finalProjectData, status: 'completed' })
+                .eq('id', selectedProjectId)
+                .select()
+                .single();
+
+            if (error) throw error;
+
             const updatedProject: Project = data as any;
             setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
             setSelectedProjectId(updatedProject.id);
             clearWorkflowState();
             navigateTo('summary');
+
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat finalisasi project.';
+            setGeneralError(errorMessage);
+            playSound('error');
+        } finally {
+            setIsFinalizing(false);
         }
+
     }, [session, selectedProjectId]);
 
     const openContactModal = useCallback(() => { playSound('click'); setShowContactModal(true); }, []);
@@ -471,8 +528,6 @@ const MainApp: React.FC = () => {
                         persona={workflowData.selectedPersona} 
                         businessName={workflowData.brandInputs.businessName} 
                         onComplete={handleLogoComplete} 
-                        userId={session.user.id}
-                        projectId={selectedProjectId}
                     />;
                 }
                 break;
@@ -482,8 +537,6 @@ const MainApp: React.FC = () => {
                         baseLogoUrl={workflowData.selectedLogoUrl} 
                         basePrompt={workflowData.logoPrompt} 
                         onComplete={handleLogoDetailComplete}
-                        userId={session.user.id}
-                        projectId={selectedProjectId}
                     />;
                 }
                 break;
@@ -492,8 +545,6 @@ const MainApp: React.FC = () => {
                     return <ContentCalendarGenerator
                         projectData={workflowData}
                         onComplete={handleContentComplete}
-                        userId={session.user.id}
-                        projectId={selectedProjectId}
                     />;
                 }
                 break;
@@ -502,8 +553,6 @@ const MainApp: React.FC = () => {
                     return <PrintMediaGenerator 
                         projectData={workflowData} 
                         onComplete={handlePrintMediaComplete} 
-                        userId={session.user.id}
-                        projectId={selectedProjectId}
                     />;
                 }
                 break;
@@ -523,8 +572,6 @@ const MainApp: React.FC = () => {
                         persona={workflowData.selectedPersona} 
                         businessName={workflowData.brandInputs.businessName} 
                         onComplete={handlePackagingComplete} 
-                        userId={session.user.id}
-                        projectId={selectedProjectId}
                     />;
                 }
                 break;
@@ -533,9 +580,8 @@ const MainApp: React.FC = () => {
                     return <MerchandiseGenerator 
                         logoPrompt={workflowData.logoPrompt} 
                         businessName={workflowData.brandInputs.businessName} 
-                        onComplete={handleMerchandiseComplete} 
-                        userId={session.user.id}
-                        projectId={selectedProjectId}
+                        onComplete={handleFinalizeProject} 
+                        isFinalizing={isFinalizing}
                     />;
                 }
                 break;

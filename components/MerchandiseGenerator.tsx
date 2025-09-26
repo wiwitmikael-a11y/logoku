@@ -1,22 +1,19 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
-import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
-import Spinner from './common/Spinner';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
-import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
   logoPrompt: string;
   businessName: string;
-  onComplete: (merchandiseUrl: string) => void;
-  userId: string;
-  projectId: number;
+  onComplete: (merchandiseBase64: string) => void;
+  isFinalizing: boolean;
 }
 
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
@@ -43,18 +40,18 @@ const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
   },
 ];
 
-const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onComplete, userId, projectId }) => {
+const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onComplete, isFinalizing }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [activeTab, setActiveTab] = useState<MerchType>('t-shirt');
   const [prompt, setPrompt] = useState('');
-  const [designs, setDesigns] = useState<string[]>([]);
-  const [selectedDesignUrl, setSelectedDesignUrl] = useState<string | null>(null);
+  const [designs, setDesigns] = useState<string[]>([]); // Will hold Base64
+  const [selectedDesignBase64, setSelectedDesignBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
-  const [showNextStepNudge, setShowNextStepNudge] = useState(false); // State for the nudge
+  const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
@@ -89,18 +86,17 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     setIsLoading(true);
     setError(null);
     setDesigns([]);
-    setSelectedDesignUrl(null);
-    setShowNextStepNudge(false); // Reset nudge
+    setSelectedDesignBase64(null);
+    setShowNextStepNudge(false);
     playSound('start');
 
     try {
-      const results = await generateMerchandiseMockup(prompt);
-      const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, activeTab);
+      const results = await generateMerchandiseMockup(prompt); // Returns Base64
       
       await deductCredits(GENERATION_COST);
-      setDesigns([uploadedUrl]);
-      setSelectedDesignUrl(uploadedUrl); // Auto-select the first (and only) design
-      setShowNextStepNudge(true); // Show nudge on success
+      setDesigns(results);
+      setSelectedDesignBase64(results[0]);
+      setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
@@ -109,18 +105,18 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, activeTab]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
 
-  const handleContinue = () => {
-    if (selectedDesignUrl) {
-      onComplete(selectedDesignUrl);
+  const handleFinalize = () => {
+    if (selectedDesignBase64) {
+      onComplete(selectedDesignBase64);
     }
   };
 
   const handleTabClick = (tab: MerchType) => {
       playSound('select');
       setActiveTab(tab);
-      setShowNextStepNudge(false); // Reset nudge when changing tabs
+      setShowNextStepNudge(false);
   }
 
   return (
@@ -128,7 +124,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Mockup Merchandise Mang AI</h2>
         <p className="text-gray-400">
-          Lihat gimana brand lo tampil di produk nyata. Pilih jenis merchandise, dan Mang AI bakal bikinin mockup realistisnya buat lo.
+          Lihat gimana brand lo tampil di produk nyata. Pilih jenis merchandise, dan Mang AI bakal bikinin ilustrasi mockup-nya buat lo.
         </p>
       </div>
       
@@ -180,8 +176,8 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
                 Satu langkah lagi!
             </CalloutPopup>
         )}
-        <Button onClick={handleContinue} disabled={!selectedDesignUrl}>
-          Selesai & Lihat Brand Kit Lengkap &rarr;
+        <Button onClick={handleFinalize} disabled={!selectedDesignBase64 || isFinalizing} isLoading={isFinalizing}>
+          {isFinalizing ? 'Finalisasi Project...' : 'Selesai & Lihat Brand Kit Lengkap &rarr;'}
         </Button>
       </div>
       

@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
-import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
@@ -17,9 +16,7 @@ const LegalDisclaimerModal = React.lazy(() => import('./common/LegalDisclaimerMo
 interface Props {
   persona: BrandPersona;
   businessName: string;
-  onComplete: (data: { logoUrl: string; prompt: string }) => void;
-  userId: string;
-  projectId: number;
+  onComplete: (data: { logoBase64: string; prompt: string }) => void;
 }
 
 const GENERATION_COST = 1;
@@ -81,19 +78,19 @@ const logoStyles = [
     }
 ];
 
-const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, userId, projectId }) => {
+const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState('');
-  const [logos, setLogos] = useState<string[]>([]);
-  const [selectedLogoUrl, setSelectedLogoUrl] = useState<string | null>(null);
+  const [logos, setLogos] = useState<string[]>([]); // Will now hold Base64 strings
+  const [selectedLogoBase64, setSelectedLogoBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStyleId, setSelectedStyleId] = useState<string>('minimalist');
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
-  const [showNextStepNudge, setShowNextStepNudge] = useState(false); // State for the nudge
+  const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
@@ -110,7 +107,6 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, use
     }
   }, [selectedStyleId, persona, businessName]);
 
-  // Auto-scroll to results
   useEffect(() => {
     if (logos.length > 0 && resultsRef.current) {
       resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -130,18 +126,17 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, use
     setIsLoading(true);
     setError(null);
     setLogos([]);
-    setSelectedLogoUrl(null);
-    setShowNextStepNudge(false); // Reset nudge
+    setSelectedLogoBase64(null);
+    setShowNextStepNudge(false);
     playSound('start');
 
     try {
-      const results = await generateLogoOptions(prompt);
-      const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, 'logo');
-      
-      await deductCredits(GENERATION_COST); // Deduct credits only on success
-      setLogos([uploadedUrl]);
-      setSelectedLogoUrl(uploadedUrl);
-      setShowNextStepNudge(true); // Show nudge on success
+      const results = await generateLogoOptions(prompt); // Returns Base64
+      // NO UPLOAD HERE. Just set the Base64 state.
+      await deductCredits(GENERATION_COST);
+      setLogos(results);
+      setSelectedLogoBase64(results[0]);
+      setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
@@ -150,11 +145,11 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, use
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
   
   const handleContinue = () => {
-    if (selectedLogoUrl) {
-      onComplete({ logoUrl: selectedLogoUrl, prompt });
+    if (selectedLogoBase64) {
+      onComplete({ logoBase64: selectedLogoBase64, prompt });
     }
   };
   
@@ -238,7 +233,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, use
              <Button onClick={() => handleSubmit()} variant="secondary" isLoading={isLoading} disabled={credits < GENERATION_COST}>
                 Generate Ulang ({GENERATION_COST} Kredit)
             </Button>
-            <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoUrl}>
+            <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64}>
               Pilih & Finalisasi Logo &rarr;
             </Button>
           </div>
