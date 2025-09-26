@@ -17,28 +17,43 @@ interface Props {
 
 const GENERATION_COST = 1;
 
-// --- NEW: Smart Packaging Configuration ---
-const packagingConfigs: { [key: string]: { prompt: string } } = {
-  'Makanan': {
-    prompt: 'Take the provided logo image. Create a realistic mockup of modern food packaging for "{{businessDetail}}", like a paper meal box, a food pouch, or a bowl presentation. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, clean, and appetizing. This is a commercial product photo, not a flat vector.',
-  },
-  'Minuman': {
-    prompt: 'Take the provided logo image. Create a realistic mockup of a beverage packaging for "{{businessDetail}}", such as a coffee cup, a bottle, or a can. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, modern, and refreshing. This is a professional product photo.',
-  },
-  'Fashion': {
-    prompt: 'Take the provided logo image. Create a realistic mockup of fashion packaging, like a branded paper bag, a clothing tag, or a box for accessories for a brand called "{{businessName}}". Place the logo prominently. The product is {{businessDetail}}. The style is {{personaStyle}}, chic, and stylish.',
-  },
-  'Kecantikan': {
-    prompt: 'Take the provided logo image. Create a realistic mockup of a cosmetic product packaging for "{{businessDetail}}", such as a tube, a jar, or a bottle with a box. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, elegant, and clean.',
-  },
-  'Jasa': {
-      prompt: 'Take the provided logo image. Create a conceptual mockup that represents a service for "{{businessDetail}}". This could be a branded folder, a clipboard, or a digital tablet screen. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, professional, and trustworthy.',
-  },
-  'Lainnya': {
-    prompt: 'Take the provided logo image. Create a realistic mockup of a generic but high-quality product packaging (like a box or a pouch) for "{{businessDetail}}". Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, modern, and clean. This is a commercial product photo.',
-  },
+// --- NEW: Hyper-Specific, Indonesian UMKM-focused Packaging Configuration ---
+interface PackagingOption {
+  id: string;
+  name: string;
+  prompt: string;
+}
+
+interface PackagingCategory {
+  [category: string]: PackagingOption[];
+}
+
+const packagingConfigs: PackagingCategory = {
+  'Makanan': [
+    { id: 'paper_bowl', name: 'Paper Bowl / Rice Bowl', prompt: 'Take the provided logo image. Create a realistic, high-quality product mockup of a white paper bowl, commonly used for rice bowl dishes in Indonesia. The bowl is filled with appetizing food like chicken katsu rice. Place the logo prominently and clearly on the side of the bowl. The brand is "{{businessName}}". The background is a clean, minimalist cafe setting. This is a commercial product photo, not a flat vector.' },
+    { id: 'rice_box', name: 'Nasi Box Karton', prompt: 'Take the provided logo image. Create a realistic mockup of a folded cardboard takeaway box (nasi box). The box is a natural brown kraft paper color. Place the logo large and centered on the top lid. The brand is "{{businessName}}". The mockup should look like a professional photo for a food delivery service like GoFood/GrabFood.' },
+    { id: 'standing_pouch', name: 'Standing Pouch (Snack/Frozen Food)', prompt: 'Take the provided logo image. Create a realistic product mockup of a sealed plastic or foil standing pouch (kemasan pouch) for snacks like chips (keripik) or frozen food. The pouch is on a clean, white surface. Place the logo prominently on the front. The brand is "{{businessName}}". The style is professional and ready for retail.' },
+    { id: 'paper_wrap', name: 'Kertas Bungkus (Kebab/Burger)', prompt: 'Take the provided logo image. Create a realistic mockup of a burger or kebab wrapped in branded brown kraft paper. The logo is repeated as a pattern on the paper. The food is held by a hand. The brand is "{{businessName}}". The style is for a trendy street food stall.' },
+  ],
+  'Minuman': [
+    { id: 'plastic_cup', name: 'Gelas Plastik (Kopi/Boba)', prompt: 'Take the provided logo image. Create a realistic photo mockup of a transparent plastic cup with a lid, filled with an iced coffee milk drink (es kopi susu). Place the logo clearly on the side of the cup. The brand is "{{businessName}}". The style is modern and trendy, suitable for a contemporary Indonesian coffee shop. Clean, bright background.' },
+    { id: 'beverage_bottle', name: 'Botol Plastik (Jus/Kopi Literan)', prompt: 'Take the provided logo image. Create a realistic mockup of a 250ml or 1 liter plastic bottle, suitable for selling coffee, juice, or jamu. The logo is on a sticker label on the bottle. The brand is "{{businessName}}". The style is clean and modern.' },
+  ],
+  'Fashion': [
+    { id: 'mailer_box', name: 'Mailer Box (Toko Online)', prompt: 'Take the provided logo image. Create a realistic mockup of a brown corrugated cardboard mailer box, suitable for e-commerce shipping. The box is closed. Place the logo on the top of the box as if it were printed or stamped. The brand is "{{businessName}}". The photo has a clean, minimalist aesthetic for an online store.' },
+    { id: 'paper_bag', name: 'Paper Bag Belanja', prompt: 'Take the provided logo image. Create a realistic mockup of a stylish paper bag. Place the logo large and centered. The brand is "{{businessName}}". The style is {{personaStyle}}, chic, and stylish for a fashion brand.' },
+  ],
+  'Kecantikan': [
+    { id: 'cosmetic_bottle', name: 'Botol Skincare (Serum/Toner)', prompt: 'Take the provided logo image. Create a realistic mockup of a cosmetic product bottle (e.g., with a pump or dropper) with an elegant box next to it. Place the logo prominently on both the bottle and the box. The brand name is "{{businessName}}". The style is {{personaStyle}}, elegant, and clean.' },
+    { id: 'cosmetic_jar', name: 'Jar Kosmetik (Krim)', prompt: 'Take the provided logo image. Create a realistic mockup of a cosmetic cream jar. Place the logo on the lid and the side. The brand name is "{{businessName}}". The style is {{personaStyle}}, clean, and premium.' },
+  ],
+  'Jasa': [
+      { id: 'service_mockup', name: 'Mockup Konseptual Jasa', prompt: 'Take the provided logo image. Create a conceptual mockup that represents a service for "{{businessDetail}}". This could be a branded folder, a clipboard, or a digital tablet screen showing a website. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, professional, and trustworthy.' },
+  ],
+  'Lainnya': [
+    { id: 'generic_box', name: 'Box Produk Serbaguna', prompt: 'Take the provided logo image. Create a realistic mockup of a high-quality product box for "{{businessDetail}}". Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, modern, and clean. This is a commercial product photo.' },
+  ],
 };
-// Default is the same as 'Lainnya'
 packagingConfigs['Kerajinan Tangan'] = packagingConfigs['Lainnya'];
 
 
@@ -47,23 +62,36 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState('');
-  const [designs, setDesigns] = useState<string[]>([]); // Will hold Base64
+  const [designs, setDesigns] = useState<string[]>([]);
   const [selectedDesignBase64, setSelectedDesignBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
+  
+  const category = projectData.brandInputs?.businessCategory || 'Lainnya';
+  const availableOptions = packagingConfigs[category] || packagingConfigs['Lainnya'];
+  
+  const [selectedPackagingTypeId, setSelectedPackagingTypeId] = useState<string>(availableOptions[0].id);
+
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
+    // When category changes, reset the specific type to the first available option
+    const options = packagingConfigs[category] || packagingConfigs['Lainnya'];
+    setSelectedPackagingTypeId(options[0].id);
+  }, [category]);
+  
+  useEffect(() => {
+    // This effect now generates the prompt based on BOTH category and specific type
     if (!projectData.brandInputs || !projectData.selectedPersona) return;
 
     const { brandInputs, selectedPersona } = projectData;
-    const category = brandInputs.businessCategory || 'Lainnya';
-    const config = packagingConfigs[category] || packagingConfigs['Lainnya'];
+    const options = packagingConfigs[category] || packagingConfigs['Lainnya'];
+    const config = options.find(opt => opt.id === selectedPackagingTypeId) || options[0];
     
     const personaStyle = selectedPersona.kata_kunci.join(', ');
 
@@ -73,7 +101,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         .replace(/\{\{personaStyle\}\}/g, personaStyle);
 
     setPrompt(initialPrompt);
-  }, [projectData]);
+  }, [projectData, category, selectedPackagingTypeId]);
 
   useEffect(() => {
     if (designs.length > 0 && resultsRef.current) {
@@ -81,6 +109,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     }
   }, [designs]);
 
+  // FIX: Added the missing `logoBase64` argument (`projectData.selectedLogoUrl`) to the `generatePackagingDesign` call to resolve the "Expected 2 arguments, but got 1" error.
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -99,9 +128,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
-      // FIX: The function call was missing the second argument `projectData.selectedLogoUrl`.
       const results = await generatePackagingDesign(prompt, projectData.selectedLogoUrl);
-      
       await deductCredits(GENERATION_COST);
       setDesigns(results);
       setSelectedDesignBase64(results[0]);
@@ -126,12 +153,29 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 8: Desain Kemasan Lo</h2>
-        <p className="text-gray-400">Sentuhan terakhir! Berdasarkan kategori dan persona brand lo, Mang AI udah siapin prompt cerdas buat desain kemasan. Edit kalo perlu, terus generate konsepnya.</p>
+        <p className="text-gray-400">Sentuhan terakhir! Pilih jenis kemasan yang paling pas buat produk lo. Mang AI udah siapin prompt cerdas, edit kalo perlu, terus generate konsepnya.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {/* NEW: Specific Packaging Type Dropdown */}
+        <div className="p-6 bg-gray-800/50 rounded-lg border border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                 <label htmlFor="packagingType" className="block mb-2 text-sm font-medium text-gray-300">Pilih Jenis Kemasan Spesifik</label>
+                 <select
+                    id="packagingType"
+                    name="packagingType"
+                    value={selectedPackagingTypeId}
+                    onChange={(e) => setSelectedPackagingTypeId(e.target.value)}
+                    className="w-full px-4 py-2 text-gray-200 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                 >
+                    {availableOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
+                 </select>
+            </div>
+            <p className="text-sm text-gray-400 md:pt-8">Pilihan ini disesuaikan berdasarkan kategori bisnis "<span className="font-semibold text-indigo-300">{category}</span>" yang lo pilih di awal.</p>
+        </div>
+
         <Textarea
-          label="Prompt Deskripsi Kemasan"
+          label="Prompt Deskripsi Kemasan (Sudah Otomatis, Bisa Diedit)"
           name="packagingPrompt"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}

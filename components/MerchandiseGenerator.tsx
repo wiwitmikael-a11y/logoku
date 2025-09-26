@@ -88,7 +88,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
-      // FIX: The function call was missing the second argument.
+      // FIX: Added the missing second argument, `projectData.selectedLogoUrl`, to the `generateMerchandiseMockup` function call.
       const results = await generateMerchandiseMockup(prompt, projectData.selectedLogoUrl);
       
       await deductCredits(GENERATION_COST);

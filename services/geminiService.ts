@@ -505,9 +505,8 @@ export const generateSocialMediaPostImage = async (idea: string, keywords: strin
 };
 
 // FIX: Added logoUrl parameter to match function definition and usage.
-export const generatePackagingDesign = async (prompt: string, logoUrl: string): Promise<string[]> => {
+export const generatePackagingDesign = async (prompt: string, logoBase64: string): Promise<string[]> => {
     try {
-        const logoBase64 = logoUrl;
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
@@ -515,10 +514,9 @@ export const generatePackagingDesign = async (prompt: string, logoUrl: string): 
     }
 };
 
-// FIX: Added logoUrl parameter to match function definition and usage.
-export const generatePrintMedia = async (prompt: string, logoUrl: string): Promise<string[]> => {
+// FIX: The function signature was corrected to accept a prompt and a logoBase64 string.
+export const generatePrintMedia = async (prompt: string, logoBase64: string): Promise<string[]> => {
     try {
-        const logoBase64 = logoUrl;
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
@@ -527,9 +525,8 @@ export const generatePrintMedia = async (prompt: string, logoUrl: string): Promi
 };
 
 // FIX: Added missing function for MerchandiseGenerator component
-export const generateMerchandiseMockup = async (prompt: string, logoUrl: string): Promise<string[]> => {
+export const generateMerchandiseMockup = async (prompt: string, logoBase64: string): Promise<string[]> => {
     try {
-        const logoBase64 = logoUrl;
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {

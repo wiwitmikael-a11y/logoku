@@ -248,7 +248,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
               </CalloutPopup>
             )}
              <Button onClick={() => handleSubmit()} variant="secondary" isLoading={isLoading} disabled={credits < LOGO_GENERATION_COST}>
-                Generate Ulang ({LOGO_GENERATION_COST} Kredit)
+                Racik Ulang Logo ({LOGO_GENERATION_COST} Kredit)
             </Button>
             <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64}>
               Pilih & Finalisasi Logo &rarr;

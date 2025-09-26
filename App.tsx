@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -522,9 +523,7 @@ const MainApp: React.FC = () => {
             case 'packaging':
                 if (workflowData?.selectedPersona && workflowData.brandInputs && workflowData.selectedLogoUrl) {
                     return <PackagingGenerator 
-                        persona={workflowData.selectedPersona} 
-                        businessName={workflowData.brandInputs.businessName} 
-                        logoUrl={workflowData.selectedLogoUrl}
+                        projectData={workflowData}
                         onComplete={handlePackagingComplete} 
                     />;
                 }

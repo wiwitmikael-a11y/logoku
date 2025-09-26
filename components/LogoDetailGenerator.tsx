@@ -121,8 +121,20 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
         {/* Logo Preview & Variations */}
         <div className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-xl font-bold">Logo Utama Lo</h3>
-            <div className="bg-white p-4 rounded-lg flex justify-center items-center aspect-square cursor-pointer group" onClick={() => openModal(finalLogoUrl)}>
-                <img src={finalLogoUrl} alt="Logo Utama" className="max-w-full max-h-64 object-contain group-hover:scale-105 transition-transform" />
+            <div
+              className="relative bg-white p-4 rounded-lg flex justify-center items-center aspect-square group"
+              onClick={() => !isEditing && openModal(finalLogoUrl)}
+            >
+              <img 
+                src={finalLogoUrl} 
+                alt="Logo Utama" 
+                className={`max-w-full max-h-64 object-contain transition-all duration-300 ${isEditing ? 'opacity-40 filter blur-sm' : 'group-hover:scale-105 cursor-pointer'}`} 
+              />
+              {isEditing && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-lg backdrop-blur-sm bg-black/10">
+                  <LoadingMessage />
+                </div>
+              )}
             </div>
 
             {variations ? (

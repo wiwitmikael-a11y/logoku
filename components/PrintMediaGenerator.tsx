@@ -60,6 +60,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
     }
   }, [designs]);
 
+  // FIX: The handleSubmit function was completely rewritten to correctly build a prompt string and call the `generatePrintMedia` service with the right arguments, resolving a type mismatch error.
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -76,7 +77,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
     setShowNextStepNudge(false);
     playSound('start');
 
-    // FIX: Correctly construct the prompt string and call generatePrintMedia with the right arguments.
     const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
     if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
         setError("Data project (logo/persona) tidak lengkap.");
