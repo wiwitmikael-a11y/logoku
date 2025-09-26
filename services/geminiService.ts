@@ -49,7 +49,9 @@ const handleApiError = (error: any, serviceName: string): Error => {
  */
 const safeJsonParse = <T>(jsonString: string, serviceName: string): T => {
   try {
-    return JSON.parse(jsonString);
+    // FIX: Clean JSON string before parsing to handle markdown fences and other noise.
+    const cleanedString = cleanJsonString(jsonString);
+    return JSON.parse(cleanedString);
   } catch (parseError) {
     console.error(`JSON Parse Error in ${serviceName}:`, parseError, "Raw string received:", jsonString);
     throw new Error(`Waduh, Mang AI lagi ngelindur. Respon dari ${serviceName} formatnya aneh dan nggak bisa dibaca. Coba generate ulang, ya.`);
@@ -271,8 +273,7 @@ export const generateBrandPersona = async (businessName: string, industry: strin
         },
     });
     
-    const cleanedJson = cleanJsonString(response.text, 'array');
-    return safeJsonParse<BrandPersona[]>(cleanedJson, 'generateBrandPersona');
+    return safeJsonParse<BrandPersona[]>(response.text, 'generateBrandPersona');
   } catch (error) {
     throw handleApiError(error, "Brand Persona");
   }
@@ -300,8 +301,7 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
                 }
             },
         });
-        const cleanedJson = cleanJsonString(response.text, 'array');
-        return safeJsonParse<string[]>(cleanedJson, 'generateSlogans');
+        return safeJsonParse<string[]>(response.text, 'generateSlogans');
     } catch (error) {
         throw handleApiError(error, "Slogan");
     }
@@ -343,8 +343,7 @@ export const generateCaptions = async (businessName: string, persona: BrandPerso
                 }
             },
         });
-        const cleanedJson = cleanJsonString(response.text, 'array');
-        return safeJsonParse<GeneratedCaption[]>(cleanedJson, 'generateCaptions');
+        return safeJsonParse<GeneratedCaption[]>(response.text, 'generateCaptions');
     } catch (error) {
         throw handleApiError(error, "Caption");
     }
@@ -560,8 +559,7 @@ export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: 
                 }
             },
         });
-        const cleanedJson = cleanJsonString(response.text, 'object');
-        return safeJsonParse<SocialProfileData>(cleanedJson, 'generateSocialProfiles');
+        return safeJsonParse<SocialProfileData>(response.text, 'generateSocialProfiles');
     } catch (error) {
         throw handleApiError(error, "Social Profiles");
     }
@@ -603,8 +601,7 @@ export const generateSocialAds = async (brandInputs: BrandInputs, persona: Brand
                 }
             },
         });
-        const cleanedJson = cleanJsonString(response.text, 'array');
-        return safeJsonParse<SocialAdsData>(cleanedJson, 'generateSocialAds');
+        return safeJsonParse<SocialAdsData>(response.text, 'generateSocialAds');
     } catch (error) {
         throw handleApiError(error, "Social Ads");
     }

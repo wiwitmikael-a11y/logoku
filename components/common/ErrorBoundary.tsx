@@ -1,3 +1,4 @@
+
 import React, { ErrorInfo, ReactNode } from 'react';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -13,11 +14,18 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Converted to constructor-based state initialization and method binding
+  // to ensure 'this' context is correctly bound, resolving potential runtime errors
+  // where 'this.setState' or 'this.props' might not be found.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
@@ -28,7 +36,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
   
-  handleCopy = () => {
+  handleCopy() {
       if(this.state.error) {
           navigator.clipboard.writeText(this.state.error.toString());
           this.setState({ isCopied: true });

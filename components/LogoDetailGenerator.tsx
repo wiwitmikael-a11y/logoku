@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
+import { fetchImageAsBase64 } from '../utils/imageUtils';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { LogoVariations } from '../types';
@@ -11,15 +13,17 @@ import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
-  baseLogoUrl: string; // This will now be a Base64 string
+  baseLogoUrl: string; // This is now a Supabase URL
   basePrompt: string;
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
+  userId: string;
+  projectId: number;
 }
 
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
-const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete }) => {
+const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -30,8 +34,9 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
-  const [showNextStepNudge, setShowNextStepNudge] = useState(false); // State for the nudge
+  const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const variationsRef = useRef<HTMLDivElement>(null);
+  const [isEditingLogo, setIsEditingLogo] = useState(false);
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
@@ -54,12 +59,18 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setShowNextStepNudge(false);
     playSound('start');
     try {
-      // CRITICAL FIX: Now calls the corrected service function which edits the existing logo.
-      const generatedVariations = await generateLogoVariations(finalLogoUrl);
+      const finalLogoBase64 = await fetchImageAsBase64(finalLogoUrl);
+      const generatedVariationsBase64 = await generateLogoVariations(finalLogoBase64);
+      
+      const [iconUrl, monochromeUrl] = await Promise.all([
+          uploadImageFromBase64(generatedVariationsBase64.icon, userId, projectId, 'logo-icon'),
+          uploadImageFromBase64(generatedVariationsBase64.monochrome, userId, projectId, 'logo-monochrome')
+      ]);
       
       await deductCredits(VARIATION_COST);
       
-      setVariations(generatedVariations);
+      const completeVariations: LogoVariations = { main: finalLogoUrl, icon: iconUrl, monochrome: monochromeUrl };
+      setVariations(completeVariations);
       setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
@@ -69,7 +80,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,24 +93,27 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     if (!editPrompt.trim()) return;
 
     setIsEditing(true);
+    setIsEditingLogo(true); // For visual feedback on the image
     setError(null);
     playSound('start');
     try {
-      const base64Data = finalLogoUrl.split(',')[1];
-      const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/png';
+      const currentImageBase64 = await fetchImageAsBase64(finalLogoUrl);
+      const base64Data = currentImageBase64.split(',')[1];
+      const mimeType = currentImageBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
       
       const editedBase64Result = await editLogo(base64Data, mimeType, editPrompt);
+      const newPublicUrl = await uploadImageFromBase64(editedBase64Result, userId, projectId, 'logo-edited');
       
       await deductCredits(EDIT_COST);
-      setFinalLogoUrl(editedBase64Result);
+      setFinalLogoUrl(newPublicUrl);
       playSound('success');
-    } catch (err)
-     {
+    } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Gagal mengedit logo.';
       setError(errorMessage);
       playSound('error');
     } finally {
       setIsEditing(false);
+      setIsEditingLogo(false);
     }
   };
 
@@ -118,11 +132,15 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Logo Preview & Variations */}
         <div className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-xl font-bold">Logo Utama Lo</h3>
-            <div className="bg-white p-4 rounded-lg flex justify-center items-center aspect-square cursor-pointer group" onClick={() => openModal(finalLogoUrl)}>
-                <img src={finalLogoUrl} alt="Logo Utama" className="max-w-full max-h-64 object-contain group-hover:scale-105 transition-transform" />
+            <div className="relative bg-white p-4 rounded-lg flex justify-center items-center aspect-square cursor-pointer group" onClick={() => openModal(finalLogoUrl)}>
+                <img src={finalLogoUrl} alt="Logo Utama" className={`max-w-full max-h-64 object-contain group-hover:scale-105 transition-transform duration-300 ${isEditingLogo ? 'opacity-50 blur-sm' : ''}`} />
+                {isEditingLogo && (
+                  <div className="absolute inset-0 flex justify-center items-center bg-black/30">
+                    <LoadingMessage />
+                  </div>
+                )}
             </div>
 
             {variations ? (
@@ -150,7 +168,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
             )}
         </div>
 
-        {/* AI Edit Section */}
         <div className="flex flex-col gap-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-xl font-bold">Revisi Cepat dengan Mang AI</h3>
             <p className="text-sm text-gray-400">Kasih perintah simpel buat ubah logo lo. Misal: "ganti warnanya jadi biru dongker" atau "tambahin outline tipis".</p>

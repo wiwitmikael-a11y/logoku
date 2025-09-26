@@ -6,8 +6,8 @@
  */
 export const fetchImageAsBase64 = async (imageUrl: string): Promise<string> => {
     try {
-        // Use a proxy or specific fetch settings if you encounter CORS issues in development.
-        // For production on the same domain or with proper Supabase bucket policies, this should work.
+        // Using a no-cors proxy for development might be needed if Supabase bucket policies are strict.
+        // For production, ensure the bucket allows reads from your app's domain.
         const response = await fetch(imageUrl);
         if (!response.ok) {
             throw new Error(`Gagal mengambil gambar: ${response.statusText} (status: ${response.status})`);
@@ -30,15 +30,14 @@ export const fetchImageAsBase64 = async (imageUrl: string): Promise<string> => {
         });
     } catch (error) {
         console.error("Error fetching image as Base64:", error);
-        // Re-throw the error so the calling component can handle it
         throw new Error(`Tidak dapat memuat gambar dari ${imageUrl} untuk diedit. Pastikan CORS policy di bucket Supabase sudah benar.`);
     }
 };
 
 /**
  * Compresses an image from a Base64 string and converts it to the WebP format.
- * This function is the core of the storage optimization strategy for the free tier.
- * @param base64String The original Base64 data URL (e.g., from Gemini API).
+ * This is a key part of the storage optimization strategy.
+ * @param base64String The original Base64 data URL.
  * @param quality The desired quality for the output WebP image (0.0 to 1.0).
  * @returns A promise that resolves with the compressed Base64 data URL in WebP format.
  */
@@ -67,7 +66,7 @@ export const compressAndConvertToWebP = (base64String: string, quality = 0.85): 
 
 /**
  * Creates a white canvas as a Base64 data URL.
- * This is used as a base for the image editing model to act like a generation model.
+ * Used as a base for the image editing model to simulate image generation.
  * @param width The width of the canvas.
  * @param height The height of the canvas.
  * @returns A string representing the Base64 data URL of the white image.
@@ -81,5 +80,5 @@ export const createWhiteCanvasBase64 = (width = 1024, height = 1024): string => 
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, width, height);
     }
-    return canvas.toDataURL('image/png'); // Using PNG as a safe default
+    return canvas.toDataURL('image/png');
 };

@@ -1,5 +1,7 @@
+
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
@@ -10,16 +12,17 @@ import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
-  logoUrl: string; // This will now be a Base64 string
+  logoUrl: string; // This is a Supabase URL
   businessName: string;
-  onComplete: (merchandiseBase64: string) => void;
+  onComplete: (merchandiseUrl: string) => void;
   isFinalizing: boolean;
+  userId: string;
+  projectId: number;
 }
 
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
 const GENERATION_COST = 1;
 
-// FIX: Updated prompt templates to instruct the AI to use the provided logo image, not a text prompt.
 const merchandiseTypes: { id: MerchType; name: string; promptTemplate: string }[] = [
   {
     id: 't-shirt',
@@ -42,14 +45,13 @@ const merchandiseTypes: { id: MerchType; name: string; promptTemplate: string }[
 ];
 
 
-const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComplete, isFinalizing }) => {
+const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComplete, isFinalizing, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [activeTab, setActiveTab] = useState<MerchType>('t-shirt');
   const [prompt, setPrompt] = useState('');
-  const [designs, setDesigns] = useState<string[]>([]); // Will hold Base64
-  const [selectedDesignBase64, setSelectedDesignBase64] = useState<string | null>(null);
+  const [designUrl, setDesignUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
@@ -68,10 +70,10 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
   }, [activeTab, businessName]);
   
   useEffect(() => {
-    if (designs.length > 0 && resultsRef.current) {
+    if (designUrl && resultsRef.current) {
         resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [designs]);
+  }, [designUrl]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,18 +87,20 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
 
     setIsLoading(true);
     setError(null);
-    setDesigns([]);
-    setSelectedDesignBase64(null);
+    setDesignUrl(null);
     setShowNextStepNudge(false);
     playSound('start');
 
     try {
-      // FIX: Added the missing logoUrl argument to the function call.
-      const results = await generateMerchandiseMockup(prompt, logoUrl);
+// FIX: `generateMerchandiseMockup` returns a string array. Access the first element for upload.
+      const designBase64Array = await generateMerchandiseMockup(prompt, logoUrl);
+      if (!designBase64Array || designBase64Array.length === 0) {
+        throw new Error("AI tidak mengembalikan gambar merchandise.");
+      }
+      const uploadedUrl = await uploadImageFromBase64(designBase64Array[0], userId, projectId, `merch-${activeTab}`);
       
       await deductCredits(GENERATION_COST);
-      setDesigns(results);
-      setSelectedDesignBase64(results[0]);
+      setDesignUrl(uploadedUrl);
       setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
@@ -106,11 +110,11 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, logoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, logoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, activeTab]);
 
   const handleFinalize = () => {
-    if (selectedDesignBase64) {
-      onComplete(selectedDesignBase64);
+    if (designUrl) {
+      onComplete(designUrl);
     }
   };
 
@@ -162,15 +166,15 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
       
       {error && <ErrorMessage message={error} />}
 
-      {designs.length > 0 && (
+      {designUrl && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
             <h3 className="text-lg md:text-xl font-bold">Mockup Hasil Generate:</h3>
           <div className="flex justify-center w-full max-w-sm">
             <div 
                 className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-square ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
-                onClick={() => openModal(designs[0])}
+                onClick={() => openModal(designUrl)}
               >
-                <img src={designs[0]} alt={`Generated mockup for ${activeTab}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                <img src={designUrl} alt={`Generated mockup for ${activeTab}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
               </div>
           </div>
         </div>
@@ -182,7 +186,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComple
                 Satu langkah lagi!
             </CalloutPopup>
         )}
-        <Button onClick={handleFinalize} disabled={!selectedDesignBase64 || isFinalizing} isLoading={isFinalizing}>
+        <Button onClick={handleFinalize} disabled={!designUrl || isFinalizing} isLoading={isFinalizing}>
           {isFinalizing ? 'Finalisasi & Simpan Project...' : 'Selesai & Lihat Brand Kit Lengkap &rarr;'}
         </Button>
       </div>

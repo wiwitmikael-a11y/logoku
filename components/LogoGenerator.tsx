@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
@@ -16,6 +17,8 @@ interface Props {
   persona: BrandPersona;
   businessName: string;
   onComplete: (data: { logoBase64: string; prompt: string }) => void;
+  userId: string;
+  projectId: number;
 }
 
 const LOGO_GENERATION_COST = 2; // Increased cost for 4 images
@@ -83,12 +86,12 @@ const logoStyles = [
     }
 ];
 
-const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
+const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState('');
-  const [logos, setLogos] = useState<string[]>([]); // Will now hold Base64 strings
+  const [logos, setLogos] = useState<string[]>([]);
   const [selectedLogoBase64, setSelectedLogoBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

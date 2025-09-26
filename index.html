@@ -171,30 +171,31 @@
         100% { transform: translateX(-180px) scale(-1, 1); }
       }
 
+      /* OPTIMIZED: Uses transform instead of 'left' for better performance */
       @keyframes mario-bottom-breathing-bounce {
         /* --- Going Left to Right --- */
-        0%   { left: 5%; transform: scale(-1, 1) translateY(0); }
+        0%   { transform: translateX(5vw) scale(-1, 1) translateY(0); }
         /* Idle breathe */
-        10%  { left: 5%; transform: scale(-1.03, 0.97) translateY(1px); }
-        20%  { left: 5%; transform: scale(-1, 1) translateY(0); }
+        10%  { transform: translateX(5vw) scale(-1.03, 0.97) translateY(1px); }
+        20%  { transform: translateX(5vw) scale(-1, 1) translateY(0); }
         
         /* Big Jump Across */
-        30%  { left: 50%; transform: scale(-1, 1) translateY(-130px); }
-        40%  { left: calc(95% - 128px); transform: scale(-1.2, 0.8) translateY(0); } /* Land hard */
-        45%  { left: calc(95% - 128px); transform: scale(-1, 1) translateY(0); } /* Settle */
+        30%  { transform: translateX(50vw) scale(-1, 1) translateY(-130px); }
+        40%  { transform: translateX(calc(95vw - 128px)) scale(-1.2, 0.8) translateY(0); } /* Land hard */
+        45%  { transform: translateX(calc(95vw - 128px)) scale(-1, 1) translateY(0); } /* Settle */
 
         /* Turn around & breathe */
-        50%  { left: calc(95% - 128px); transform: scale(1, 1) translateY(0); }
-        60%  { left: calc(95% - 128px); transform: scale(1.03, 0.97) translateY(1px); }
-        70%  { left: calc(95% - 128px); transform: scale(1, 1) translateY(0); }
+        50%  { transform: translateX(calc(95vw - 128px)) scale(1, 1) translateY(0); }
+        60%  { transform: translateX(calc(95vw - 128px)) scale(1.03, 0.97) translateY(1px); }
+        70%  { transform: translateX(calc(95vw - 128px)) scale(1, 1) translateY(0); }
         
         /* --- Going Right to Left --- */
         /* Big Jump Back */
-        80%  { left: 50%; transform: scale(1, 1) translateY(-130px); }
-        90%  { left: 5%; transform: scale(1.2, 0.8) translateY(0); } /* Land hard */
-        95%  { left: 5%; transform: scale(1, 1) translateY(0); } /* Settle */
+        80%  { transform: translateX(50vw) scale(1, 1) translateY(-130px); }
+        90%  { transform: translateX(5vw) scale(1.2, 0.8) translateY(0); } /* Land hard */
+        95%  { transform: translateX(5vw) scale(1, 1) translateY(0); } /* Settle */
         
-        100% { left: 5%; transform: scale(-1, 1) translateY(0); }
+        100% { transform: translateX(5vw) scale(-1, 1) translateY(0); }
       }
       
       /* Keyframes for the small header Mang AI (Balanced Bouncy Walk) */
@@ -484,9 +485,11 @@
       .animate-mario-bottom-breathing {
         animation: mario-bottom-breathing-bounce 6s linear infinite;
         position: fixed;
+        left: 0; /* Set a base position for transform to work on */
         bottom: 0;
         pointer-events: none;
         z-index: 20;
+        will-change: transform; /* Hint for browser performance */
       }
        .animate-mario-bottom-breathing::before {
         animation: shadow-for-bottom-mario 6s linear infinite;

@@ -1,5 +1,7 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
+import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { BrandPersona } from '../types';
@@ -13,19 +15,20 @@ import CalloutPopup from './common/CalloutPopup';
 interface Props {
   persona: BrandPersona;
   businessName: string;
-  logoUrl: string; // This will now be a Base64 string
-  onComplete: (packagingBase64: string) => void;
+  logoUrl: string; // This is a Supabase URL
+  onComplete: (packagingUrl: string) => void;
+  userId: string;
+  projectId: number;
 }
 
 const GENERATION_COST = 1;
 
-const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, onComplete }) => {
+const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState('');
-  const [designs, setDesigns] = useState<string[]>([]); // Will hold Base64
-  const [selectedDesignBase64, setSelectedDesignBase64] = useState<string | null>(null);
+  const [designUrl, setDesignUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
@@ -36,17 +39,16 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
   const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
-    // Auto-generate a prompt based on the persona to PLACE the logo
     const personaStyle = persona.kata_kunci.join(', ');
     const initialPrompt = `Take the provided logo image. Create a realistic mockup of a packaging design for a product from "${businessName}". Place the logo prominently. The brand personality is ${persona.deskripsi_singkat.toLowerCase()}. The style should be ${personaStyle}, modern, and clean. The final output should not be a flat vector illustration, but a commercial product mockup.`;
     setPrompt(initialPrompt);
   }, [persona, businessName]);
 
   useEffect(() => {
-    if (designs.length > 0 && resultsRef.current) {
+    if (designUrl && resultsRef.current) {
         resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [designs]);
+  }, [designUrl]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,18 +62,20 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
 
     setIsLoading(true);
     setError(null);
-    setDesigns([]);
-    setSelectedDesignBase64(null);
+    setDesignUrl(null);
     setShowNextStepNudge(false);
     playSound('start');
 
     try {
-      // FIX: Added the missing logoUrl argument to the function call.
-      const results = await generatePackagingDesign(prompt, logoUrl);
+// FIX: `generatePackagingDesign` returns a string array. Access the first element for upload.
+      const designBase64Array = await generatePackagingDesign(prompt, logoUrl);
+      if (!designBase64Array || designBase64Array.length === 0) {
+        throw new Error("AI tidak mengembalikan gambar kemasan.");
+      }
+      const uploadedUrl = await uploadImageFromBase64(designBase64Array[0], userId, projectId, 'packaging');
       
       await deductCredits(GENERATION_COST);
-      setDesigns(results);
-      setSelectedDesignBase64(results[0]);
+      setDesignUrl(uploadedUrl);
       setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
@@ -81,11 +85,11 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, logoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, logoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
 
   const handleContinue = () => {
-    if (selectedDesignBase64) {
-      onComplete(selectedDesignBase64);
+    if (designUrl) {
+      onComplete(designUrl);
     }
   };
 
@@ -114,7 +118,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
 
       {error && <ErrorMessage message={error} />}
 
-      {designs.length > 0 && (
+      {designUrl && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
           <div>
             <h3 className="text-lg md:text-xl font-bold mb-2">Desain Hasil Generate:</h3>
@@ -122,9 +126,9 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
           <div className="flex justify-center w-full max-w-lg">
             <div
                 className="bg-white rounded-lg p-2 aspect-[4/3] flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
-                onClick={() => openModal(designs[0])}
+                onClick={() => openModal(designUrl)}
             >
-                <img src={designs[0]} alt="Generated packaging design" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                <img src={designUrl} alt="Generated packaging design" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
             </div>
           </div>
           <div className="self-center relative">
@@ -133,7 +137,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, o
                 Desain kemasan siap!
               </CalloutPopup>
             )}
-            <Button onClick={handleContinue} disabled={!selectedDesignBase64}>
+            <Button onClick={handleContinue} disabled={!designUrl}>
               Lanjut ke Merchandise &rarr;
             </Button>
           </div>

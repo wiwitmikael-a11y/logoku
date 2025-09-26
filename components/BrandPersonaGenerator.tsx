@@ -162,7 +162,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
           </Button>
            {personas.length > 0 && !isLoadingPersona && (
             <Button variant="secondary" onClick={() => handleGeneratePersona()} isLoading={isLoadingPersona}>
-              Coba Racik Lagi
+              Racik Ulang Persona
             </Button>
           )}
         </div>

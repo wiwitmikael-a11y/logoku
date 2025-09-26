@@ -149,7 +149,7 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
                   <div>
                       <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Logo Utama</h5>
                       <div className="bg-white p-4 rounded-lg flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(selectedLogoUrl)}>
-                          <img src={selectedLogoUrl} alt="Logo Utama" className="max-w-full max-h-32 object-contain group-hover:scale-105 transition-transform"/>
+                          <img src={selectedLogoUrl} alt="Logo Utama" className="max-w-full max-h-32 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
                       </div>
                   </div>
                    {logoVariations && (
@@ -157,13 +157,13 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
                            <div>
                                 <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Versi Ikon</h5>
                                <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.icon)}>
-                                   <img src={logoVariations.icon} alt="Ikon Logo" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
+                                   <img src={logoVariations.icon} alt="Ikon Logo" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
                                </div>
                            </div>
                             <div>
                                <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Versi Monokrom</h5>
                                <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.monochrome)}>
-                                   <img src={logoVariations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
+                                   <img src={logoVariations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
                                </div>
                            </div>
                        </div>
@@ -177,13 +177,13 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
                          <div>
                             <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Foto Profil</h5>
                             <div className="bg-white rounded-full p-2 w-32 h-32 mx-auto flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(socialMediaKit.profilePictureUrl)}>
-                                <img src={socialMediaKit.profilePictureUrl} alt="Foto Profil" className="max-w-full max-h-full object-contain rounded-full group-hover:scale-105 transition-transform"/>
+                                <img src={socialMediaKit.profilePictureUrl} alt="Foto Profil" className="max-w-full max-h-full object-contain rounded-full group-hover:scale-105 transition-transform" loading="lazy"/>
                             </div>
                         </div>
                         <div>
                             <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Banner Facebook / Header</h5>
                             <div className="bg-white p-2 rounded-lg cursor-pointer group no-print" onClick={() => openModal(socialMediaKit.bannerUrl)}>
-                                <img src={socialMediaKit.bannerUrl} alt="Banner" className="w-full object-contain group-hover:scale-105 transition-transform"/>
+                                <img src={socialMediaKit.bannerUrl} alt="Banner" className="w-full object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
                             </div>
                         </div>
                     </div>
@@ -193,14 +193,14 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
              {selectedPackagingUrl && (
                   <Card title="Desain Kemasan" className="print-card">
                       <div className="bg-white rounded-lg p-2 flex items-center justify-center aspect-[4/3] cursor-pointer group no-print" onClick={() => openModal(selectedPackagingUrl)}>
-                        <img src={selectedPackagingUrl} alt="Selected Packaging" className="max-h-48 object-contain transition-transform duration-300 group-hover:scale-105" />
+                        <img src={selectedPackagingUrl} alt="Selected Packaging" className="max-h-48 object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy"/>
                       </div>
                   </Card>
               )}
                {selectedMerchandiseUrl && (
                   <Card title="Mockup Merchandise" className="print-card">
                       <div className="bg-white rounded-lg p-2 flex items-center justify-center aspect-square cursor-pointer group no-print" onClick={() => openModal(selectedMerchandiseUrl)}>
-                        <img src={selectedMerchandiseUrl} alt="Selected Merchandise" className="max-h-48 object-contain transition-transform duration-300 group-hover:scale-105" />
+                        <img src={selectedMerchandiseUrl} alt="Selected Merchandise" className="max-h-48 object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy"/>
                       </div>
                   </Card>
               )}
@@ -216,7 +216,7 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew }) => {
                               <p className="text-xs text-gray-400 mt-1 print-text-color">{item.ide_konten}</p>
                               {item.imageUrl && (
                                 <div className="mt-3 bg-white p-2 rounded-lg flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(item.imageUrl!)}>
-                                    <img src={item.imageUrl} alt={`Visual untuk ${item.ide_konten}`} className="max-w-full max-h-32 object-contain group-hover:scale-105 transition-transform"/>
+                                    <img src={item.imageUrl} alt={`Visual untuk ${item.ide_konten}`} className="max-w-full max-h-32 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
                                 </div>
                               )}
                               <div className="relative">
