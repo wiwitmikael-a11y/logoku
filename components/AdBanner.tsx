@@ -7,8 +7,9 @@ import { AD_PUBLISHER_ID, AD_SLOT_ID_BANNER } from '../services/adsenseConfig';
  * - Secara dinamis menyesuaikan layout konten utama agar tidak tumpang tindih.
  * - Menggunakan MutationObserver untuk deteksi iklan yang andal.
  */
-// FIX: Added an explicit return type to resolve a potential type inference issue.
-const AdBanner = (): JSX.Element | null => {
+// FIX: Changed signature to React.FC to resolve missing JSX namespace error,
+// aligning with other components in the project.
+const AdBanner: React.FC = () => {
   const adPushed = useRef(false);
   const adInsRef = useRef<HTMLModElement>(null);
   const [isAdVisible, setIsAdVisible] = useState(false);

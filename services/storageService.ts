@@ -55,9 +55,18 @@ export const uploadImageFromBase64 = async (
 
     if (uploadError) {
         console.error('Supabase Storage Error:', uploadError);
-        // NEW: More direct and actionable error message for the specific RLS issue.
-        if (uploadError.message.includes('ceil(text)')) {
-             throw new Error("Waduh, RLS Policy di Supabase lo error, Juragan! Error 'ceil(text)' ini 100% karena ada policy yang salah di tabel 'storage.objects'. Lo harus buka Supabase Dashboard > Authentication > Policies, pilih tabel 'objects' di schema 'storage', HAPUS SEMUA policy yang ada, lalu buat 3 policy baru yang benar sesuai instruksi terakhir. Jangan pakai skrip SQL, lakukan manual di UI dashboard.");
+        const errorMessage = uploadError.message.toLowerCase();
+
+        // Check for specific RLS policy errors
+        if (errorMessage.includes('security policy') || errorMessage.includes('rls')) {
+            let userFriendlyMessage = "Waduh, RLS Policy di Supabase lo error, Juragan! Masalah ini 100% karena policy di bucket 'project-assets' salah. Buka Supabase Dashboard > Storage > Pilih bucket 'project-assets' > Klik tab 'Policies'. Hapus semua policy lama, lalu buat 3 policy baru yang benar sesuai instruksi terakhir.";
+
+            if (errorMessage.includes('ceil(text)')) {
+                userFriendlyMessage += " Error spesifiknya 'ceil(text)', artinya ada perhitungan 'size' yang salah di policy INSERT lo.";
+            } else if (errorMessage.includes('text') && errorMessage.includes('uuid')) {
+                userFriendlyMessage += " Error spesifiknya 'operator text = uuid', artinya lo salah pake kolom 'owner_id' (text). Ganti semua jadi 'owner' (uuid) di policy SELECT dan DELETE.";
+            }
+             throw new Error(userFriendlyMessage);
         }
         throw new Error(`Gagal mengunggah gambar ke Supabase Storage: ${uploadError.message}. Pastikan bucket 'project-assets' sudah ada dan bersifat publik.`);
     }
