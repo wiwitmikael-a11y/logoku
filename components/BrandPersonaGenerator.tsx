@@ -263,7 +263,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
       {(selectedPersonaIndex !== null && selectedSlogan) && (
         <div className="self-center mt-4 relative">
             {showNextStepNudge && (
-              <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
+              <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-fade-in">
                 Sip! Klik di sini buat lanjut.
               </CalloutPopup>
             )}

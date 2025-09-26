@@ -36,11 +36,16 @@ const handleApiError = (error: any, serviceName: string): Error => {
         return new Error((error as Error).message);
     }
     
+    // Pass through custom error messages from our own logic
+    if (error instanceof Error && (error.message.includes("Model tidak mengembalikan gambar") || error.message.includes("tidak mengandung format"))) {
+        return error;
+    }
+
     return new Error(`Gagal manggil ${serviceName}. Coba cek console buat detailnya.`);
 };
 
 /**
- * Safely parses a JSON string.
+ * Safely parses a JSON string. Throws a user-friendly error on failure.
  */
 const safeJsonParse = <T>(jsonString: string, serviceName: string): T => {
   try {
@@ -50,6 +55,39 @@ const safeJsonParse = <T>(jsonString: string, serviceName: string): T => {
     throw new Error(`Waduh, Mang AI lagi ngelindur. Respon dari ${serviceName} formatnya aneh dan nggak bisa dibaca. Coba generate ulang, ya.`);
   }
 };
+
+/**
+ * Cleans a string to extract a valid JSON object or array.
+ * It removes markdown code fences and trims surrounding text.
+ * @param rawText The raw text response from the AI.
+ * @param expectedType The expected root JSON type, either 'object' or 'array'.
+ * @returns A clean JSON string.
+ */
+const cleanJsonString = (rawText: string, expectedType: 'object' | 'array' = 'array'): string => {
+    let jsonString = rawText.trim();
+
+    // Handle markdown code fences (```json ... ```)
+    if (jsonString.startsWith('```') && jsonString.endsWith('```')) {
+        jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+        if (jsonString.startsWith('json')) {
+            jsonString = jsonString.substring(4).trim();
+        }
+    }
+
+    const startChar = expectedType === 'array' ? '[' : '{';
+    const endChar = expectedType === 'array' ? ']' : '}';
+
+    const startIndex = jsonString.indexOf(startChar);
+    const endIndex = jsonString.lastIndexOf(endChar);
+
+    if (startIndex === -1 || endIndex === -1) {
+        console.error(`Could not find a valid JSON ${expectedType} in the response.`, "Raw response:", rawText);
+        throw new Error(`Respon dari Mang AI tidak mengandung format ${expectedType} yang valid.`);
+    }
+
+    return jsonString.substring(startIndex, endIndex + 1);
+};
+
 
 // --- NEW MASTER IMAGE GENERATION LOGIC ---
 
@@ -109,12 +147,20 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
             },
         });
 
-        for (const part of response.candidates[0].content.parts) {
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
             if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
                 return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
             }
         }
-        throw new Error("Waduh, Mang AI gagal ngegambar di kanvas putih. Model tidak mengembalikan gambar.");
+        
+        // If no image is found, check for a text response
+        const textResponse = response.text?.trim();
+        if (textResponse) {
+            console.error("Model did not return an image. Text response:", textResponse);
+            throw new Error(`Model tidak mengembalikan gambar. Pesan dari AI: "${textResponse}"`);
+        }
+        throw new Error("Waduh, Mang AI gagal ngegambar. Model tidak mengembalikan gambar atau teks.");
+
     } catch (error) {
         console.error("Error in generateImageFromWhiteCanvas:", error);
         throw error;
@@ -129,7 +175,7 @@ const generateImage = async (simplePrompt: string, aspectRatio: '1:1' | '4:3' | 
     return await generateImageFromWhiteCanvas(enhancedPrompt, aspectRatio);
 }
 
-// --- Text Generation Functions (Unchanged) ---
+// --- Text Generation Functions ---
 export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string): Promise<BrandPersona[]> => {
   const ai = getAiClient();
   const prompt = `Based on the following business details, create 3 distinct brand personas. Each persona should be a complete JSON object.
@@ -201,7 +247,8 @@ export const generateBrandPersona = async (businessName: string, industry: strin
         },
     });
     
-    return safeJsonParse<BrandPersona[]>(response.text.trim(), 'generateBrandPersona');
+    const cleanedJson = cleanJsonString(response.text, 'array');
+    return safeJsonParse<BrandPersona[]>(cleanedJson, 'generateBrandPersona');
   } catch (error) {
     throw handleApiError(error, "Brand Persona");
   }
@@ -229,7 +276,8 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
                 }
             },
         });
-        return safeJsonParse<string[]>(response.text.trim(), 'generateSlogans');
+        const cleanedJson = cleanJsonString(response.text, 'array');
+        return safeJsonParse<string[]>(cleanedJson, 'generateSlogans');
     } catch (error) {
         throw handleApiError(error, "Slogan");
     }
@@ -271,7 +319,8 @@ export const generateCaptions = async (businessName: string, persona: BrandPerso
                 }
             },
         });
-        return safeJsonParse<GeneratedCaption[]>(response.text.trim(), 'generateCaptions');
+        const cleanedJson = cleanJsonString(response.text, 'array');
+        return safeJsonParse<GeneratedCaption[]>(cleanedJson, 'generateCaptions');
     } catch (error) {
         throw handleApiError(error, "Caption");
     }
@@ -304,27 +353,8 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
             },
         });
         
-        let jsonString = response.text.trim();
-
-        // Handle cases where the response is wrapped in markdown ```json ... ```
-        if (jsonString.startsWith('```') && jsonString.endsWith('```')) {
-            jsonString = jsonString.substring(3, jsonString.length - 3).trim();
-            if (jsonString.startsWith('json')) {
-                jsonString = jsonString.substring(4).trim();
-            }
-        }
-        
-        // Find the start and end of the main JSON array to ensure we only parse that
-        const startIndex = jsonString.indexOf('[');
-        const endIndex = jsonString.lastIndexOf(']');
-        if (startIndex === -1 || endIndex === -1) {
-            console.error("Could not find a valid JSON array in the response from Content Calendar.", "Raw response:", response.text);
-            throw new Error("Respon dari Mang AI tidak mengandung format kalender yang valid.");
-        }
-        jsonString = jsonString.substring(startIndex, endIndex + 1);
-
-
-        const calendar = safeJsonParse<ContentCalendarEntry[]>(jsonString, 'generateContentCalendar');
+        const cleanedJson = cleanJsonString(response.text, 'array');
+        const calendar = safeJsonParse<ContentCalendarEntry[]>(cleanedJson, 'generateContentCalendar');
         const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
         return { calendar, sources };
     } catch (error) {
@@ -363,7 +393,8 @@ export const generateSeoContent = async (brandInputs: BrandInputs): Promise<SeoD
                 }
             },
         });
-        return safeJsonParse<SeoData>(response.text.trim(), 'generateSeoContent');
+        const cleanedJson = cleanJsonString(response.text, 'object');
+        return safeJsonParse<SeoData>(cleanedJson, 'generateSeoContent');
     } catch (error) {
         throw handleApiError(error, "SEO Content");
     }
@@ -405,7 +436,8 @@ export const generateGoogleAdsContent = async (brandInputs: BrandInputs, slogan:
                 }
             },
         });
-        return safeJsonParse<AdsData>(response.text.trim(), 'generateGoogleAdsContent');
+        const cleanedJson = cleanJsonString(response.text, 'array');
+        return safeJsonParse<AdsData>(cleanedJson, 'generateGoogleAdsContent');
     } catch (error) {
         throw handleApiError(error, "Google Ads");
     }
@@ -455,10 +487,16 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
             },
         });
 
-        for (const part of response.candidates[0].content.parts) {
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
             if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
                 return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
             }
+        }
+        
+        const textResponse = response.text?.trim();
+        if (textResponse) {
+            console.error("Model did not return an image after edit. Text response:", textResponse);
+            throw new Error(`Model tidak mengembalikan gambar. Pesan dari AI: "${textResponse}"`);
         }
         throw new Error("Model tidak mengembalikan gambar setelah diedit.");
     } catch (error) {
