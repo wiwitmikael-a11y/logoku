@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
-import { playSound } from './services/soundService';
+import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import { uploadImageFromBase64 } from './services/storageService';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData } from './types';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
 // --- Error Handling & Loading ---
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -25,11 +24,11 @@ const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersona
 const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
 const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
 const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
-// --- RENAMED Social-Centric Components ---
-const SocialMediaKitGenerator = React.lazy(() => import('./components/SocialMediaKitGenerator'));
-const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'));
-const SocialAdsGenerator = React.lazy(() => import('./components/SocialAdsGenerator'));
-// --- End of Renamed Components ---
+// --- NEW Social-Centric Components ---
+const SocialMediaKitGenerator = React.lazy(() => import('./components/PrintMediaGenerator')); // Re-purposed
+const ProfileOptimizer = React.lazy(() => import('./components/SeoGenerator')); // Re-purposed
+const SocialAdsGenerator = React.lazy(() => import('./components/GoogleAdsGenerator')); // Re-purposed
+// --- End of New Components ---
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
 const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
@@ -57,48 +56,6 @@ const App: React.FC = () => {
     );
 };
 
-// Custom Hook to manage projects data logic
-const useProjects = (userId: string | undefined) => {
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchProjects = useCallback(async () => {
-        if (!userId) return;
-        const { data, error: fetchError } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-            
-        if (fetchError) {
-            console.error("Error fetching projects:", fetchError);
-            setError(`Gagal mengambil data project: ${fetchError.message}`);
-            setProjects([]);
-        } else {
-            setProjects(data as Project[]);
-        }
-    }, [userId]);
-
-    useEffect(() => {
-        fetchProjects();
-    }, [fetchProjects]);
-    
-    const addProject = (project: Project) => {
-        setProjects(prev => [project, ...prev]);
-    };
-    
-    const updateProjectInList = (updatedProject: Project) => {
-         setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-    };
-
-    const deleteProjectFromList = (projectId: number) => {
-        setProjects(prev => prev.filter(p => p.id !== projectId));
-    };
-    
-    return { projects, error, fetchProjects, addProject, updateProjectInList, deleteProjectFromList, setProjects, setError };
-};
-
-
 const MainApp: React.FC = () => {
     const { 
         session, 
@@ -109,17 +66,16 @@ const MainApp: React.FC = () => {
         setShowOutOfCreditsModal,
         showLogoutConfirm,
         setShowLogoutConfirm,
-        executeLogout: authExecuteLogout,
+        handleLogout,
+        executeLogout: authExecuteLogout, // Renamed to avoid conflict
         handleDeleteAccount, 
         handleToggleMute, 
         isMuted, 
         authError,
+        refreshProfile,
         bgmSelection,
         handleBgmChange,
-        handleLogout,
     } = useAuth();
-    
-    const { projects, error: projectsError, addProject, updateProjectInList, deleteProjectFromList, setProjects, setError: setProjectsError } = useProjects(user?.id);
     
     // --- State Persistence on Refresh ---
     const [appState, setAppState] = useState<AppState>(
@@ -130,10 +86,12 @@ const MainApp: React.FC = () => {
         return id ? parseInt(id, 10) : null;
     });
 
+    const [projects, setProjects] = useState<Project[]>([]);
     const [generalError, setGeneralError] = useState<string | null>(null);
-    const [isFinalizing, setIsFinalizing] = useState(false);
+    const [isFinalizing, setIsFinalizing] = useState(false); // New state for final upload process
+    
+    // State for the welcome banner
     const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
-    const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     
     // Modals visibility state
     const [showContactModal, setShowContactModal] = useState(false);
@@ -148,18 +106,21 @@ const MainApp: React.FC = () => {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);
 
+    // Refs for closing popovers on outside click
     const userMenuRef = useRef<HTMLDivElement>(null);
     const tokenInfoRef = useRef<HTMLDivElement>(null);
     
     const previousAppState = useRef<AppState>(appState);
     const previousSession = useRef<typeof session>(session);
 
+    // NEW, more logical workflow order
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'social_kit', 'profile_optimizer', 'social_ads', 'packaging', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
 
+    // --- Effect for Persisting Navigation State ---
     useEffect(() => {
-        if (session) {
+        if (session) { // Only persist state if user is logged in
             if (appState === 'dashboard') {
                 sessionStorage.removeItem('logoku_app_state');
                 sessionStorage.removeItem('logoku_project_id');
@@ -175,24 +136,56 @@ const MainApp: React.FC = () => {
     }, [appState, selectedProjectId, session]);
     
     useEffect(() => {
-        if (!authLoading && session && !previousSession.current) {
-            setShowWelcomeBanner(true);
+        if (!authLoading && session) {
+            // If user just logged in (previous session was null)
+            if (!previousSession.current && session) {
+                setShowWelcomeBanner(true);
+            }
+            fetchProjects();
         }
         previousSession.current = session;
     }, [session, authLoading]);
     
+    // Automatically show CAPTCHA modal on the login screen, which then triggers the ToS modal.
     useEffect(() => {
-        if (!session && !authLoading) setShowCaptcha(true);
+        if (!session && !authLoading) {
+            setShowCaptcha(true);
+        }
     }, [session, authLoading]);
     
+    // Effect to close popovers/dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false);
-            if (tokenInfoRef.current && !tokenInfoRef.current.contains(event.target as Node)) setIsTokenInfoOpen(false);
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
+             if (tokenInfoRef.current && !tokenInfoRef.current.contains(event.target as Node)) {
+                setIsTokenInfoOpen(false);
+            }
         };
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
+
+    const fetchProjects = async () => {
+        if (!session?.user) return;
+        const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false });
+            
+        if (error) {
+            console.error("Error fetching projects:", error);
+            setGeneralError(`Gagal mengambil data project: ${error.message}`);
+            setProjects([]);
+        } else {
+            setProjects(data as Project[]);
+        }
+    };
 
     useEffect(() => {
         if (previousAppState.current !== appState) {
@@ -201,23 +194,18 @@ const MainApp: React.FC = () => {
         }
         previousAppState.current = appState;
     }, [appState]);
-    
-     useEffect(() => {
-        if(projectsError) setGeneralError(projectsError);
-    }, [projectsError]);
 
     const navigateTo = (state: AppState) => {
-        setSyncMessage(null); // Clear sync message on navigation
         setAppState(state);
     };
 
     const handleNewProject = useCallback(async () => {
-        if (!user) return;
-        setProjectsError(null);
+        if (!session?.user) return;
+        setGeneralError(null);
         
         const { data, error } = await supabase
             .from('projects')
-            .insert({ user_id: user.id, project_data: {}, status: 'in-progress' })
+            .insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' })
             .select()
             .single();
             
@@ -226,11 +214,12 @@ const MainApp: React.FC = () => {
             return;
         }
 
-        addProject(data as Project);
-        setSelectedProjectId(data.id);
+        const newProject: Project = data as any;
+        setProjects(prev => [newProject, ...prev]);
+        setSelectedProjectId(newProject.id);
         clearWorkflowState();
         navigateTo('persona');
-    }, [user, addProject, setProjectsError]);
+    }, [session]);
     
     const handleReturnToDashboard = useCallback(() => {
         clearWorkflowState();
@@ -250,6 +239,7 @@ const MainApp: React.FC = () => {
         setSelectedProjectId(project.id);
         saveWorkflowState(project.project_data);
         
+        // Determine the next step based on what data exists, following the new workflow
         const data = project.project_data;
         let nextState: AppState = 'persona';
         if (data.selectedMerchandiseUrl) nextState = 'summary';
@@ -264,40 +254,17 @@ const MainApp: React.FC = () => {
         
         navigateTo(nextState);
     }, [projects]);
-    
-    const handleNavigateFromSummary = (tool: AppState) => {
-        const project = projects.find(p => p.id === selectedProjectId);
-        if (project) {
-            saveWorkflowState(project.project_data); // Ensure workflow state is current
-            navigateTo(tool);
-        }
-    };
 
-    const handleSyncProject = async (projectId: number) => {
+    const handleGoToCaptionGenerator = useCallback((projectId: number) => {
         const project = projects.find(p => p.id === projectId);
-        if (!project) {
-             setSyncMessage({ type: 'error', text: 'Project tidak ditemukan untuk disinkronkan.' });
-             return;
+        if (project) {
+            saveWorkflowState(project.project_data); // Use workflow state for caption generator too
+            setSelectedProjectId(project.id);
+            navigateTo('caption');
         }
-        try {
-            const { error: updateError } = await supabase
-                .from('projects')
-                .update({ project_data: project.project_data })
-                .eq('id', projectId);
-            
-            if (updateError) throw updateError;
-            
-            setSyncMessage({ type: 'success', text: 'Project berhasil disinkronkan ke database!' });
-            playSound('success');
+    }, [projects]);
 
-        } catch (error) {
-            const err = error as Error;
-            setSyncMessage({ type: 'error', text: `Gagal sinkronisasi: ${err.message}` });
-            playSound('error');
-        }
-        setTimeout(() => setSyncMessage(null), 4000); // Hide message after 4 seconds
-    };
-
+    // --- Project Deletion Handlers ---
     const handleRequestDeleteProject = useCallback((projectId: number) => {
         const project = projects.find(p => p.id === projectId);
         if (project) {
@@ -313,10 +280,12 @@ const MainApp: React.FC = () => {
 
     const handleConfirmDelete = async () => {
         if (!projectToDelete || !user) return;
+
         setIsDeleting(true);
         setGeneralError(null);
 
         try {
+            // Since we are not using Supabase Storage anymore for this flow, we only need to delete the project record.
             const { error: deleteError } = await supabase
                 .from('projects')
                 .delete()
@@ -324,8 +293,11 @@ const MainApp: React.FC = () => {
             
             if (deleteError) throw new Error(`Gagal menghapus data project: ${deleteError.message}`);
 
-            deleteProjectFromList(projectToDelete.id);
+            // Update UI state
+            setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
+            
             playSound('success');
+
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus project.';
             setGeneralError(errorMessage);
@@ -337,47 +309,52 @@ const MainApp: React.FC = () => {
         }
     };
     
+    // --- Centralized Checkpoint Saver ---
     const saveCheckpoint = useCallback(async (updatedData: Partial<ProjectData>) => {
-        if (!selectedProjectId) throw new Error("ID Project tidak ditemukan.");
+        if (!selectedProjectId) {
+            setGeneralError("ID Project tidak ditemukan untuk menyimpan progress.");
+            throw new Error("ID Project tidak ditemukan.");
+        }
         
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('projects')
             .update({ project_data: updatedData })
-            .eq('id', selectedProjectId)
-            .select()
-            .single();
+            .eq('id', selectedProjectId);
             
-        if (error) throw new Error(`Gagal menyimpan progress: ${error.message}`);
+        if (error) {
+            setGeneralError(`Gagal menyimpan progress: ${error.message}`);
+            throw new Error(error.message);
+        }
         
-        updateProjectInList(data as Project);
+        setProjects(prev => prev.map(p => 
+            p.id === selectedProjectId ? { ...p, project_data: updatedData as ProjectData } : p
+        ));
+        
         saveWorkflowState(updatedData);
-    }, [selectedProjectId, updateProjectInList]);
+    }, [selectedProjectId]);
 
-    // --- Workflow Handlers with new Hybrid Storage Strategy ---
+    // --- Workflow Step Completion Handlers ---
     const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         const currentState = loadWorkflowState() || {};
-        const updatedData = { 
-            ...currentState, 
+        const updatedData: Partial<ProjectData> = {
+            ...currentState,
             brandInputs: data.inputs,
             selectedPersona: data.selectedPersona,
-            selectedSlogan: data.selectedSlogan
+            selectedSlogan: data.selectedSlogan,
         };
         saveWorkflowState(updatedData);
         navigateTo('logo');
     }, []);
     
     const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => {
-        if (!user || selectedProjectId === null) return;
-        const logoUrl = await uploadImageFromBase64(data.logoBase64, user.id, selectedProjectId, 'logo_utama');
         const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, selectedLogoUrl: logoUrl, logoPrompt: data.prompt };
+        const updatedData = { ...currentState, selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt };
         saveWorkflowState(updatedData);
         navigateTo('logo_detail');
-    }, [user, selectedProjectId]);
+    }, []);
 
     const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
         const currentState = loadWorkflowState() || {};
-        // The finalLogoUrl from LogoDetailGenerator is already a Supabase URL
         const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
         saveWorkflowState(updatedData);
         navigateTo('content');
@@ -387,7 +364,7 @@ const MainApp: React.FC = () => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, contentCalendar: data.calendar, searchSources: data.sources };
         saveWorkflowState(updatedData);
-        navigateTo('social_kit');
+        navigateTo('social_kit'); // Next step is now Social Media Kit
     }, []);
 
     const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => {
@@ -411,35 +388,35 @@ const MainApp: React.FC = () => {
         navigateTo('packaging');
     }, []);
 
-    const handlePackagingComplete = useCallback(async (packagingUrl: string) => {
+    const handlePackagingComplete = useCallback(async (packagingBase64: string) => {
        const currentState = loadWorkflowState() || {};
-       const updatedData = { ...currentState, selectedPackagingUrl: packagingUrl };
+       const updatedData = { ...currentState, selectedPackagingUrl: packagingBase64 };
        saveWorkflowState(updatedData);
        navigateTo('merchandise');
     }, []);
 
-    const handleFinalizeProject = useCallback(async (merchandiseUrl: string) => {
-        if (!user || selectedProjectId === null) return;
+    const handleFinalizeProject = useCallback(async (merchandiseBase64: string) => {
+        if (!session?.user || !selectedProjectId) return;
         
         setIsFinalizing(true);
         setGeneralError(null);
         
         try {
             const currentState = loadWorkflowState() || {};
-            const finalProjectData = { ...currentState, selectedMerchandiseUrl: merchandiseUrl };
+            const finalProjectData = { ...currentState, selectedMerchandiseUrl: merchandiseBase64 };
 
-            await saveCheckpoint(finalProjectData);
-            
             const { data, error } = await supabase
                 .from('projects')
-                .update({ status: 'completed' })
+                .update({ project_data: finalProjectData, status: 'completed' })
                 .eq('id', selectedProjectId)
                 .select()
                 .single();
 
             if (error) throw error;
 
-            updateProjectInList(data as Project);
+            const updatedProject: Project = data as any;
+            setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+            setSelectedProjectId(updatedProject.id);
             clearWorkflowState();
             navigateTo('summary');
 
@@ -451,12 +428,14 @@ const MainApp: React.FC = () => {
             setIsFinalizing(false);
         }
 
-    }, [user, selectedProjectId, saveCheckpoint, updateProjectInList]);
+    }, [session, selectedProjectId]);
 
     const openContactModal = useCallback(() => { playSound('click'); setShowContactModal(true); }, []);
     const closeContactModal = useCallback(() => setShowContactModal(false), []);
     const openToSModal = useCallback(() => { playSound('click'); setShowToSModal(true); }, []);
-    const closeToSModal = useCallback(() => setShowToSModal(false), []);
+    const closeToSModal = useCallback(() => {
+        setShowToSModal(false);
+    }, []);
     const openProfileModal = useCallback(() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }, []);
     const closeProfileModal = useCallback(() => setShowProfileModal(false), []);
     
@@ -464,82 +443,111 @@ const MainApp: React.FC = () => {
         playSound('click');
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.origin },
+          options: {
+            redirectTo: window.location.origin,
+          },
         });
-        if (error) { setGeneralError(`Gagal login: ${error.message}`); playSound('error'); }
+        if (error) {
+          setGeneralError(`Gagal login: ${error.message}`);
+          playSound('error');
+        }
     };
     
     const executeLogout = async () => {
         clearWorkflowState();
-        sessionStorage.clear();
+        sessionStorage.removeItem('logoku_app_state');
+        sessionStorage.removeItem('logoku_project_id');
         await authExecuteLogout();
-        setProjects([]);
         setAppState('dashboard');
         setSelectedProjectId(null);
     };
 
     const renderContent = () => {
         const workflowData = loadWorkflowState();
-        const commonProps = { userId: user?.id, projectId: selectedProjectId };
 
         switch (appState) {
             case 'persona':
                 return <BrandPersonaGenerator onComplete={handlePersonaComplete} />;
             case 'logo':
-                if (workflowData?.selectedPersona && workflowData.brandInputs && user && selectedProjectId !== null) {
-                    return <LogoGenerator persona={workflowData.selectedPersona} businessName={workflowData.brandInputs.businessName} onComplete={handleLogoComplete} {...commonProps} />;
+                if (workflowData?.selectedPersona && workflowData.brandInputs) {
+                    return <LogoGenerator 
+                        persona={workflowData.selectedPersona} 
+                        businessName={workflowData.brandInputs.businessName} 
+                        onComplete={handleLogoComplete} 
+                    />;
                 }
                 break;
             case 'logo_detail':
-                if (workflowData?.selectedLogoUrl && workflowData.logoPrompt && user && selectedProjectId !== null) {
-                    return <LogoDetailGenerator baseLogoUrl={workflowData.selectedLogoUrl} basePrompt={workflowData.logoPrompt} onComplete={handleLogoDetailComplete} {...commonProps} />;
+                if (workflowData?.selectedLogoUrl && workflowData.logoPrompt) {
+                    return <LogoDetailGenerator 
+                        baseLogoUrl={workflowData.selectedLogoUrl} 
+                        basePrompt={workflowData.logoPrompt} 
+                        onComplete={handleLogoDetailComplete}
+                    />;
                 }
                 break;
             case 'content':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && user && selectedProjectId !== null) {
-                    return <ContentCalendarGenerator projectData={workflowData} onComplete={handleContentComplete} {...commonProps} />;
+                if (workflowData?.brandInputs && workflowData.selectedPersona) {
+                    return <ContentCalendarGenerator
+                        projectData={workflowData}
+                        onComplete={handleContentComplete}
+                    />;
                 }
                 break;
             case 'social_kit':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl && workflowData.selectedSlogan && user && selectedProjectId !== null) {
-                    return <SocialMediaKitGenerator projectData={workflowData as any} onComplete={handleSocialKitComplete} {...commonProps} />;
+                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl && workflowData.selectedSlogan) {
+                    return <SocialMediaKitGenerator 
+                        projectData={workflowData as any} 
+                        onComplete={handleSocialKitComplete} 
+                    />;
                 }
                 break;
             case 'profile_optimizer':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && user && selectedProjectId !== null) {
-                    return <ProfileOptimizer projectData={workflowData} onComplete={handleProfileOptimizerComplete} {...commonProps} />;
+                if (workflowData?.brandInputs && workflowData.selectedPersona) {
+                    return <ProfileOptimizer projectData={workflowData} onComplete={handleProfileOptimizerComplete} />;
                 }
                 break;
             case 'social_ads':
-                 if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedSlogan && user && selectedProjectId !== null) {
-                    return <SocialAdsGenerator projectData={workflowData} onComplete={handleSocialAdsComplete} {...commonProps} />;
+                 if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedSlogan) {
+                    return <SocialAdsGenerator projectData={workflowData} onComplete={handleSocialAdsComplete} />;
                 }
                 break;
             case 'packaging':
-                if (workflowData?.selectedPersona && workflowData.brandInputs && workflowData.selectedLogoUrl && user && selectedProjectId !== null) {
-                    return <PackagingGenerator persona={workflowData.selectedPersona} businessName={workflowData.brandInputs.businessName} logoUrl={workflowData.selectedLogoUrl} onComplete={handlePackagingComplete} {...commonProps} />;
+                if (workflowData?.selectedPersona && workflowData.brandInputs && workflowData.selectedLogoUrl) {
+                    return <PackagingGenerator 
+                        persona={workflowData.selectedPersona} 
+                        businessName={workflowData.brandInputs.businessName} 
+                        logoUrl={workflowData.selectedLogoUrl}
+                        onComplete={handlePackagingComplete} 
+                    />;
                 }
                 break;
             case 'merchandise':
-                if (workflowData?.selectedLogoUrl && workflowData.brandInputs?.businessName && user && selectedProjectId !== null) {
-                    return <MerchandiseGenerator logoUrl={workflowData.selectedLogoUrl} businessName={workflowData.brandInputs.businessName} onComplete={handleFinalizeProject} isFinalizing={isFinalizing} {...commonProps} />;
+                if (workflowData?.selectedLogoUrl && workflowData.brandInputs?.businessName) {
+                    return <MerchandiseGenerator 
+                        logoUrl={workflowData.selectedLogoUrl} 
+                        businessName={workflowData.brandInputs.businessName} 
+                        onComplete={handleFinalizeProject} 
+                        isFinalizing={isFinalizing}
+                    />;
                 }
                 break;
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);
                 if (projectToShow) {
-                    return <ProjectSummary project={projectToShow} onStartNew={handleReturnToDashboard} onNavigateToTool={handleNavigateFromSummary} onSyncProject={handleSyncProject} syncMessage={syncMessage} />;
+                    return <ProjectSummary project={projectToShow} onStartNew={handleReturnToDashboard} />;
                 }
                 break;
             case 'caption':
-                if (workflowData && selectedProjectId !== null) {
-                    return <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} />;
+                if (workflowData) {
+                    return <CaptionGenerator projectData={workflowData} onBack={handleReturnToDashboard} />;
                 }
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
+                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} onGoToCaptionGenerator={handleGoToCaptionGenerator} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
         }
+        // Fallback: If required data is missing, go to dashboard
         handleReturnToDashboard();
         return <AuthLoadingScreen />;
     };
@@ -551,7 +559,13 @@ const MainApp: React.FC = () => {
             <>
                 <LoginScreen onGoogleLogin={handleGoogleLogin} isCaptchaSolved={!showCaptcha} />
                 <Suspense fallback={null}>
-                    <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => { setShowCaptcha(false); openToSModal(); }} />
+                    <PuzzleCaptchaModal
+                        show={showCaptcha}
+                        onSuccess={() => {
+                            setShowCaptcha(false);
+                            openToSModal(); // Show ToS after captcha is solved
+                        }}
+                    />
                     <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
                 </Suspense>
             </>
@@ -562,16 +576,26 @@ const MainApp: React.FC = () => {
         <div className="text-white min-h-screen font-sans">
             <header className="py-3 px-4 md:py-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
                 <div className="max-w-7xl mx-auto flex justify-between items-center relative">
-                    <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI walking in the header" className="animate-header-ai w-12 h-12" />
+                    <img
+                        src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
+                        alt="Mang AI walking in the header"
+                        className="animate-header-ai w-12 h-12"
+                    />
                     <div className="flex items-baseline gap-3">
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleReturnToDashboard}>
                             <span>logo<span className="text-white">.ku</span></span>
                         </h1>
-                        <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={openContactModal}>by @rangga.p.h</div>
+                        <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={openContactModal}>
+                            by @rangga.p.h
+                        </div>
                     </div>
                      <div className="flex items-center gap-4">
                         <div className="relative" ref={tokenInfoRef}>
-                            <div onClick={() => setIsTokenInfoOpen(prev => !prev)} className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/70 transition-colors" title="Klik untuk info token">
+                            <div
+                                onClick={() => setIsTokenInfoOpen(prev => !prev)}
+                                className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/70 transition-colors"
+                                title="Klik untuk info token"
+                            >
                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                                 <span className="font-bold text-sm text-white">Sisa Token: {profile?.credits ?? 0}</span>
                             </div>
@@ -602,7 +626,12 @@ const MainApp: React.FC = () => {
                                      <div className="border-t border-gray-700 my-1"></div>
                                         <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilih Musik</div>
                                         <div className="px-2 pb-2">
-                                            <select aria-label="Pilih musik latar" value={bgmSelection} onChange={(e) => handleBgmChange(e.target.value as any)} className="w-full text-left px-2 py-1.5 text-sm text-gray-200 bg-gray-700/50 border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                            <select
+                                                aria-label="Pilih musik latar"
+                                                value={bgmSelection}
+                                                onChange={(e) => handleBgmChange(e.target.value as BgmSelection)}
+                                                className="w-full text-left px-2 py-1.5 text-sm text-gray-200 bg-gray-700/50 border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            >
                                                 <option value="Mute">Bisukan BGM</option>
                                                 <option value="Random">Acak</option>
                                                 <option value="Jingle">Jingle</option>
@@ -628,7 +657,9 @@ const MainApp: React.FC = () => {
             <main id="main-content" className="py-6 md:py-10 px-4 md:px-8">
                 <div className="max-w-7xl mx-auto">
                     {authError && <ErrorMessage message={authError} />}
-                    {generalError ? ( <ErrorMessage message={`Terjadi error kritis: ${generalError}`} /> ) : (
+                    {generalError ? (
+                        <ErrorMessage message={`Terjadi error kritis yang tak terduga: ${generalError}`} />
+                    ) : (
                         <ErrorBoundary>
                             {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
                             <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
@@ -638,17 +669,43 @@ const MainApp: React.FC = () => {
                     )}
                 </div>
             </main>
-             <footer className="text-center py-6 px-4 text-sm text-gray-400 border-t border-gray-800">Powered by Atharrazka Core. Built for UMKM Indonesia.</footer>
+             <footer className="text-center py-6 px-4 text-sm text-gray-400 border-t border-gray-800">
+                Powered by Atharrazka Core. Built for UMKM Indonesia.
+            </footer>
             <AdBanner />
             <Suspense fallback={null}>
                 <ContactModal show={showContactModal} onClose={closeContactModal} />
                 <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
                 <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
-                <ProfileSettingsModal show={showProfileModal} onClose={closeProfileModal} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={openToSModal} onShowContact={openContactModal} />
-                <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Eh, Bentar Dulu, Juragan!" confirmText="Ya, Cabut Aja" cancelText="Gak Jadi, Balik Lagi">
+                <ProfileSettingsModal 
+                    show={showProfileModal} 
+                    onClose={closeProfileModal}
+                    user={user}
+                    profile={profile}
+                    onLogout={handleLogout}
+                    onDeleteAccount={handleDeleteAccount}
+                    onShowToS={openToSModal}
+                    onShowContact={openContactModal}
+                />
+                <ConfirmationModal
+                    show={showLogoutConfirm}
+                    onClose={() => setShowLogoutConfirm(false)}
+                    onConfirm={executeLogout}
+                    title="Eh, Bentar Dulu, Juragan!"
+                    confirmText="Ya, Cabut Aja"
+                    cancelText="Gak Jadi, Balik Lagi"
+                >
                     Kalo lo logout sekarang, progres yang belom ke-save otomatis (checkpoint) bisa ilang lho. Sayang kan kalo ide brilian lo ngawang gitu aja. Tetep mau lanjut?
                 </ConfirmationModal>
-                <ConfirmationModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} title="Yakin Mau Hapus Project?" confirmText={isDeleting ? 'Menghapus...' : 'Ya, Hapus Saja'} cancelText="Gak Jadi">
+                <ConfirmationModal
+                    show={showDeleteConfirm}
+                    onClose={handleCancelDelete}
+                    onConfirm={handleConfirmDelete}
+                    isConfirmLoading={isDeleting}
+                    title="Yakin Mau Hapus Project?"
+                    confirmText={isDeleting ? 'Menghapus...' : 'Ya, Hapus Saja'}
+                    cancelText="Gak Jadi"
+                >
                     Project "{projectToDelete?.project_data.brandInputs?.businessName || 'ini'}" dan semua asetnya bakal dihapus permanen lho. Gak bisa balik lagi. Tetap mau lanjut?
                 </ConfirmationModal>
             </Suspense>

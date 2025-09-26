@@ -98,7 +98,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack }) => {
             Buatin Captionnya, Mang!
           </Button>
            <Button onClick={onBack} variant="secondary">
-            &larr; Kembali ke Ringkasan Project
+            &larr; Kembali ke Dashboard
           </Button>
         </div>
 

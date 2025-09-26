@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateContentCalendar, generateSocialMediaPostImage } from '../services/geminiService';
-import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { ContentCalendarEntry, ProjectData } from '../types';
@@ -15,13 +14,11 @@ import CopyButton from './common/CopyButton';
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (data: { calendar: ContentCalendarEntry[], sources: any[] }) => void;
-  userId: string;
-  projectId: number;
 }
 
 const GENERATION_COST = 1;
 
-const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
+const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -92,12 +89,12 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, us
         const { kata_kunci } = projectData.selectedPersona;
 
         const imageResults = await generateSocialMediaPostImage(ide_konten, kata_kunci);
-        const imageUrl = await uploadImageFromBase64(imageResults[0], userId, projectId, `content-image-${index}`);
+        const imageBase64 = imageResults[0];
         
         await deductCredits(GENERATION_COST);
 
         const newCalendar = [...calendar];
-        newCalendar[index] = { ...newCalendar[index], imageUrl: imageUrl };
+        newCalendar[index] = { ...newCalendar[index], imageUrl: imageBase64 };
         setCalendar(newCalendar);
 
         playSound('success');
@@ -108,7 +105,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, us
     } finally {
         setGeneratingImageForIndex(null);
     }
-  }, [calendar, credits, projectData, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [calendar, credits, projectData, deductCredits, setShowOutOfCreditsModal]);
 
   const handleContinue = () => {
     onComplete({ calendar, sources });
