@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { createWhiteCanvasBase64 } from '../utils/imageUtils';
+import { createWhiteCanvasBase64, fetchImageAsBase64 } from '../utils/imageUtils';
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SeoData, AdsData } from '../types';
 
 // --- Environment Variable Setup ---
@@ -198,14 +198,6 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
         throw error;
     }
 };
-
-/**
- * Master Function: The generic 2-step process for all NON-LOGO image generation.
- */
-const generateImage = async (simplePrompt: string, aspectRatio: '1:1' | '4:3' | '16:9' | '9:16' | '3:4' = '1:1'): Promise<string> => {
-    const enhancedPrompt = await enhancePromptForImageGeneration(simplePrompt);
-    return await generateImageFromWhiteCanvas(enhancedPrompt, aspectRatio);
-}
 
 // --- Text Generation Functions ---
 export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string): Promise<BrandPersona[]> => {
@@ -545,61 +537,106 @@ export const generateLogoVariations = async (baseLogoBase64: string, basePrompt:
     }
 };
 
+/**
+ * A specialized function to generate a new image by applying a provided logo onto a new scene.
+ * @param logoBase64 The Base64 string of the logo to apply.
+ * @param instructionPrompt The text prompt describing the scene and how to place the logo.
+ * @returns A promise that resolves with the Base64 data URL of the generated image.
+ */
+const generateImageWithLogo = async (logoBase64: string, instructionPrompt: string): Promise<string> => {
+    const ai = getAiClient();
+    try {
+        const logoData = logoBase64.split(',')[1];
+        const logoMimeType = logoBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+
+        const imagePart = { inlineData: { data: logoData, mimeType: logoMimeType } };
+        const textPart = { text: instructionPrompt };
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image-preview',
+            contents: { parts: [imagePart, textPart] },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        });
+
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
+            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            }
+        }
+
+        const textResponse = response.text?.trim();
+        if (textResponse) {
+            throw new Error(`Model tidak mengembalikan gambar. Pesan dari AI: "${textResponse}"`);
+        }
+        throw new Error("Waduh, Mang AI gagal ngegambar. Model tidak mengembalikan gambar atau teks.");
+    } catch (error) {
+        console.error("Error in generateImageWithLogo:", error);
+        throw error; // Re-throw to be handled by the calling function
+    }
+};
+
 
 export const generateSocialMediaPostImage = async (idea: string, keywords: string[]): Promise<string[]> => {
     try {
-        const prompt = `A social media post about "${idea}". Style should be modern, clean, and related to these keywords: ${keywords.join(', ')}.`;
-        const generatedBase64 = await generateImage(prompt, '1:1');
+        const simplePrompt = `A social media post about "${idea}". Style should be modern, clean, and related to these keywords: ${keywords.join(', ')}. simple flat vector illustration.`;
+        const enhancedPrompt = await enhancePromptForImageGeneration(simplePrompt);
+        const generatedBase64 = await generateImageFromWhiteCanvas(enhancedPrompt, '1:1');
         return [generatedBase64];
     } catch (error) {
         throw handleApiError(error, "Flash Preview (Gambar Sosmed)");
     }
 };
 
-export const generatePrintMedia = async (mediaType: 'business_card' | 'flyer' | 'banner' | 'roll_banner', projectData: { brandInputs: BrandInputs, selectedPersona: BrandPersona, logoPrompt: string }): Promise<string[]> => {
-    const { brandInputs, selectedPersona, logoPrompt } = projectData;
-    let simplePrompt = '';
-    let aspectRatio: '1:1' | '4:3' | '16:9' | '9:16' | '3:4' = '4:3';
-
-    switch (mediaType) {
-        case 'business_card':
-            aspectRatio = '3:4';
-            simplePrompt = `A business card for "${brandInputs.businessName}". Info: ${brandInputs.contactInfo?.name}, ${brandInputs.contactInfo?.title}, ${brandInputs.contactInfo?.phone}, ${brandInputs.contactInfo?.email}, ${brandInputs.contactInfo?.website}. The logo is: "${logoPrompt}". Brand style: ${selectedPersona.nama_persona}.`;
-            break;
-        case 'flyer':
-            aspectRatio = '9:16';
-            simplePrompt = `A promotional A5 flyer for "${brandInputs.businessName}". Headline: "${brandInputs.flyerContent?.headline}". Body: "${brandInputs.flyerContent?.body}". CTA: "${brandInputs.flyerContent?.cta}". The logo is: "${logoPrompt}". Brand style: ${selectedPersona.kata_kunci.join(', ')}.`;
-            break;
-        case 'banner':
-            aspectRatio = '16:9';
-            simplePrompt = `A large horizontal banner for "${brandInputs.businessName}". Headline: "${brandInputs.bannerContent?.headline}". Sub-headline: "${brandInputs.bannerContent?.subheadline}". The logo is: "${logoPrompt}". Brand style: ${selectedPersona.nama_persona}.`;
-            break;
-        case 'roll_banner':
-            aspectRatio = '9:16';
-            simplePrompt = `A tall roll-up banner for "${brandInputs.businessName}". Headline: "${brandInputs.rollBannerContent?.headline}". Body: "${brandInputs.rollBannerContent?.body}". Contact: "${brandInputs.rollBannerContent?.contact}". The logo is: "${logoPrompt}".`;
-            break;
-    }
+export const generatePrintMedia = async (
+    mediaType: 'business_card' | 'flyer' | 'banner' | 'roll_banner',
+    projectData: { brandInputs: BrandInputs; selectedPersona: BrandPersona; selectedLogoUrl: string }
+): Promise<string[]> => {
+    const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
+    let instructionPrompt = '';
 
     try {
-        const generatedBase64 = await generateImage(simplePrompt, aspectRatio);
+        // Fetch the master logo image to be used in the prompt
+        const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
+
+        switch (mediaType) {
+            case 'business_card':
+                instructionPrompt = `Take the provided logo image. Create a realistic mockup of a professional business card for "${brandInputs.businessName}". Place the logo appropriately. Add the following text information clearly: Name: ${brandInputs.contactInfo?.name}, Title: ${brandInputs.contactInfo?.title}, Phone: ${brandInputs.contactInfo?.phone}, Email: ${brandInputs.contactInfo?.email}, Website: ${brandInputs.contactInfo?.website}. The overall design should match the brand style: ${selectedPersona.nama_persona}.`;
+                break;
+            case 'flyer':
+                instructionPrompt = `Take the provided logo image. Create a realistic mockup of a promotional A5 flyer for "${brandInputs.businessName}". Place the logo at the top. The headline is "${brandInputs.flyerContent?.headline}". The body text is "${brandInputs.flyerContent?.body}". The call to action is "${brandInputs.flyerContent?.cta}". The design style should be: ${selectedPersona.kata_kunci.join(', ')}.`;
+                break;
+            case 'banner':
+                instructionPrompt = `Take the provided logo image. Create a realistic mockup of a large horizontal banner (spanduk) for "${brandInputs.businessName}". Place the logo on either the left or right side. The main headline is "${brandInputs.bannerContent?.headline}". The sub-headline is "${brandInputs.bannerContent?.subheadline}". The design style should be ${selectedPersona.nama_persona}.`;
+                break;
+            case 'roll_banner':
+                instructionPrompt = `Take the provided logo image. Create a realistic mockup of a tall roll-up banner for "${brandInputs.businessName}". Place the logo near the top. The headline is "${brandInputs.rollBannerContent?.headline}". The body text is "${brandInputs.rollBannerContent?.body}". The contact info is "${brandInputs.rollBannerContent?.contact}".`;
+                break;
+        }
+
+        const generatedBase64 = await generateImageWithLogo(logoBase64, instructionPrompt);
         return [generatedBase64];
+
     } catch (error) {
         throw handleApiError(error, `Flash Preview (${mediaType})`);
     }
 };
 
-export const generatePackagingDesign = async (prompt: string): Promise<string[]> => {
+export const generatePackagingDesign = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
-        const generatedBase64 = await generateImage(prompt, '4:3');
+        const logoBase64 = await fetchImageAsBase64(logoUrl);
+        const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
         throw handleApiError(error, "Flash Preview (Kemasan)");
     }
 };
 
-export const generateMerchandiseMockup = async (prompt: string): Promise<string[]> => {
+export const generateMerchandiseMockup = async (prompt: string, logoUrl: string): Promise<string[]> => {
     try {
-        const generatedBase64 = await generateImage(prompt, '1:1');
+        const logoBase64 = await fetchImageAsBase64(logoUrl);
+        const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
         throw handleApiError(error, "Flash Preview (Merchandise)");

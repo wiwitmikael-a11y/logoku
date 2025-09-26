@@ -101,9 +101,11 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     setShowNextStepNudge(false);
     playSound('start');
 
-    const { brandInputs, selectedPersona, logoPrompt } = projectData;
-    if (!brandInputs || !selectedPersona || !logoPrompt) {
-        setError("Waduh, data project-nya ada yang kurang buat generate media cetak.");
+    // FIX: The function expects `selectedLogoUrl`, but `logoPrompt` was being passed.
+    // Destructure `selectedLogoUrl` from `projectData` and use it in the payload.
+    const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
+    if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
+        setError("Waduh, data project (terutama logo) ada yang kurang buat generate media cetak.");
         setIsLoading(false);
         playSound('error');
         return;
@@ -122,7 +124,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
                 rollBannerContent: rollBannerInfo
             },
             selectedPersona,
-            logoPrompt
+            selectedLogoUrl
         };
       const results = await generatePrintMedia(activeTab, payload);
       const imageBase64 = results[0];

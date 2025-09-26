@@ -47,9 +47,12 @@ export const uploadImageFromBase64 = async (
     }
     
     // Langkah 3: Buat objek `File` standar untuk diunggah.
-    const fileName = `${assetType}-${Date.now()}.webp`;
+    // WORKAROUND: Struktur path diubah untuk menghindari bug RLS di backend Supabase.
+    // Daripada `userId/projectId/file.webp`, kita gunakan `userId/projectId_file.webp`.
+    // Ini mencegah RLS mencoba memproses segmen path 'projectId' yang tampaknya memicu error.
+    const fileName = `${projectId}_${assetType}-${Date.now()}.webp`;
+    const filePath = `${userId}/${fileName}`;
     const file = new File([blob], fileName, { type: 'image/webp' });
-    const filePath = `${userId}/${projectId}/${fileName}`;
 
     // Langkah 4: Upload file. RLS Policy di Supabase sudah disederhanakan.
     const { error: uploadError } = await supabase.storage

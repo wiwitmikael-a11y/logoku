@@ -13,12 +13,13 @@ import CalloutPopup from './common/CalloutPopup';
 interface Props {
   persona: BrandPersona;
   businessName: string;
+  logoUrl: string;
   onComplete: (packagingBase64: string) => void;
 }
 
 const GENERATION_COST = 1;
 
-const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
+const PackagingGenerator: React.FC<Props> = ({ persona, businessName, logoUrl, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -35,9 +36,9 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
   const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
-    // Auto-generate a prompt based on the persona
+    // Auto-generate a prompt based on the persona to PLACE the logo
     const personaStyle = persona.kata_kunci.join(', ');
-    const initialPrompt = `A simple flat vector illustration of a packaging design for a product from "${businessName}". The brand personality is ${persona.deskripsi_singkat.toLowerCase()}. Style should be ${personaStyle}, modern, clean, minimalist. Not a photograph.`;
+    const initialPrompt = `Take the provided logo image. Create a realistic mockup of a packaging design for a product from "${businessName}". Place the logo prominently. The brand personality is ${persona.deskripsi_singkat.toLowerCase()}. The style should be ${personaStyle}, modern, and clean. The final output should not be a flat vector illustration, but a commercial product mockup.`;
     setPrompt(initialPrompt);
   }, [persona, businessName]);
 
@@ -65,7 +66,8 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     playSound('start');
 
     try {
-      const results = await generatePackagingDesign(prompt); // Returns Base64
+      // FIX: The function call was missing the `logoUrl` argument.
+      const results = await generatePackagingDesign(prompt, logoUrl); // Returns Base64
       
       await deductCredits(GENERATION_COST);
       setDesigns(results);
@@ -79,7 +81,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, logoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleContinue = () => {
     if (selectedDesignBase64) {

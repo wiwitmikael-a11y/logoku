@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
@@ -60,17 +61,18 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setShowNextStepNudge(false); // Reset nudge
     playSound('start');
     try {
-      // FIX: Fetch the current logo's base64 data to pass to the variation generator.
+      // FIX: The generateLogoVariations function expects two arguments, the base logo image and a prompt. The original call was only passing the prompt. Now, we fetch the current logo's image data as a Base64 string and pass it along with the prompt to satisfy the function signature.
       const currentImageBase64 = await fetchImageAsBase64(finalLogoUrl);
-      // FIX: Pass both the image data and the original prompt to the service function.
       const generatedVariations = await generateLogoVariations(currentImageBase64, basePrompt);
-      const [iconUrl, monochromeUrl] = await Promise.all([
-          uploadImageFromBase64(generatedVariations.icon, userId, projectId, 'logo-icon'),
-          uploadImageFromBase64(generatedVariations.monochrome, userId, projectId, 'logo-monochrome')
-      ]);
-
+      
+      // The variations are returned as Base64, we will pass them directly to the onComplete handler
+      // without uploading them here. Uploads will happen in the finalization step.
       await deductCredits(VARIATION_COST); // Deduct on success
-      const completeVariations = { main: finalLogoUrl, icon: iconUrl, monochrome: monochromeUrl };
+      const completeVariations = { 
+          main: finalLogoUrl, // Keep the URL for main, pass base64 for others
+          icon: generatedVariations.icon, 
+          monochrome: generatedVariations.monochrome 
+      };
       setVariations(completeVariations);
       setShowNextStepNudge(true); // Show nudge on success
       playSound('success');
@@ -97,7 +99,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setError(null);
     playSound('start');
     try {
-      // Fetch current image from Supabase URL and convert back to Base64 for the API
+      // Fetch current image from its URL and convert back to Base64 for the API
       const currentImageBase64 = await fetchImageAsBase64(finalLogoUrl);
       const base64Data = currentImageBase64.split(',')[1];
       const mimeType = currentImageBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
@@ -105,13 +107,11 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
       // Call the edit API with the Base64 data
       const editedBase64Result = await editLogo(base64Data, mimeType, editPrompt);
       
-      // Upload the new edited image to Supabase Storage
-      const newPublicUrl = await uploadImageFromBase64(editedBase64Result, userId, projectId, 'logo-edited');
-
       await deductCredits(EDIT_COST); // Deduct on success
-      setFinalLogoUrl(newPublicUrl); // Update the main displayed logo with the new public URL
+      setFinalLogoUrl(editedBase64Result); // Update the main displayed logo with the new Base64 result
       playSound('success');
-    } catch (err) {
+    } catch (err)
+     {
       const errorMessage = err instanceof Error ? err.message : 'Gagal mengedit logo.';
       setError(errorMessage);
       playSound('error');

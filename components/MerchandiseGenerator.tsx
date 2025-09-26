@@ -10,7 +10,7 @@ import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
-  logoPrompt: string;
+  logoUrl: string;
   businessName: string;
   onComplete: (merchandiseBase64: string) => void;
   isFinalizing: boolean;
@@ -19,28 +19,29 @@ interface Props {
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
 const GENERATION_COST = 1;
 
-const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
+const merchandiseTypes: { id: MerchType; name: string; promptTemplate: string }[] = [
   {
     id: 't-shirt',
     name: 'T-Shirt',
-    prompt:
-      'A simple flat vector illustration of a t-shirt mockup. The t-shirt prominently features a logo for a brand named "{{businessName}}". The logo is described as: "{{logoPrompt}}". The style is clean, minimalist, on a plain background. Not a photograph.',
+    promptTemplate:
+      'Take the provided logo image. Create a realistic mockup of a t-shirt with the logo placed naturally on the chest. The t-shirt should be on a clean, plain background, suitable for a product catalog for a brand named "{{businessName}}".',
   },
   {
     id: 'mug',
     name: 'Mug',
-    prompt:
-      'A simple flat vector illustration of a ceramic coffee mug mockup. The mug has a logo printed on it for a brand called "{{businessName}}". The logo is described as: "{{logoPrompt}}". The style is clean, minimalist, on a plain background. Not a photograph.',
+    promptTemplate:
+      'Take the provided logo image. Create a realistic mockup of a ceramic coffee mug with the logo printed on its side. The mug should be on a simple, clean background, like a product photo for a brand named "{{businessName}}".',
   },
   {
     id: 'tote-bag',
     name: 'Tote Bag',
-    prompt:
-      'A simple flat vector illustration of a canvas tote bag mockup. The tote bag has a logo printed in the center for a company named "{{businessName}}". The logo is described as: "{{logoPrompt}}". The style is clean, minimalist, on a plain background. Not a photograph.',
+    promptTemplate:
+      'Take the provided logo image. Create a realistic mockup of a canvas tote bag with the logo printed in the center. The mockup should look like a professional product photo, on a clean background, for a brand named "{{businessName}}".',
   },
 ];
 
-const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onComplete, isFinalizing }) => {
+
+const MerchandiseGenerator: React.FC<Props> = ({ logoUrl, businessName, onComplete, isFinalizing }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -60,12 +61,10 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
   useEffect(() => {
     const currentMerch = merchandiseTypes.find(m => m.id === activeTab);
     if (currentMerch) {
-      const newPrompt = currentMerch.prompt
-        .replace('{{businessName}}', businessName)
-        .replace('{{logoPrompt}}', logoPrompt);
+      const newPrompt = currentMerch.promptTemplate.replace('{{businessName}}', businessName);
       setPrompt(newPrompt);
     }
-  }, [activeTab, businessName, logoPrompt]);
+  }, [activeTab, businessName]);
   
   useEffect(() => {
     if (designs.length > 0 && resultsRef.current) {
@@ -91,7 +90,8 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     playSound('start');
 
     try {
-      const results = await generateMerchandiseMockup(prompt); // Returns Base64
+      // FIX: The function call was missing the `logoUrl` argument.
+      const results = await generateMerchandiseMockup(prompt, logoUrl);
       
       await deductCredits(GENERATION_COST);
       setDesigns(results);
@@ -105,7 +105,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, logoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleFinalize = () => {
     if (selectedDesignBase64) {

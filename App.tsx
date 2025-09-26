@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -285,21 +284,27 @@ const MainApp: React.FC = () => {
         setGeneralError(null);
 
         try {
-            // 1. Delete associated files from Supabase Storage
-            const folderPath = `${user.id}/${projectToDelete.id}`;
-            const { data: files, error: listError } = await supabase.storage
+            // 1. Delete associated files from Supabase Storage (new logic)
+            const userFolderPath = `${user.id}`;
+            const { data: allUserFiles, error: listError } = await supabase.storage
                 .from('project-assets')
-                .list(folderPath);
+                .list(userFolderPath);
 
             if (listError) throw new Error(`Gagal membaca file project: ${listError.message}`);
 
-            if (files && files.length > 0) {
-                const filePaths = files.map(file => `${folderPath}/${file.name}`);
-                const { error: removeError } = await supabase.storage
-                    .from('project-assets')
-                    .remove(filePaths);
-                if (removeError) throw new Error(`Gagal menghapus aset project: ${removeError.message}`);
+            if (allUserFiles && allUserFiles.length > 0) {
+                const projectFilePrefix = `${projectToDelete.id}_`;
+                const filesToDelete = allUserFiles.filter(file => file.name.startsWith(projectFilePrefix));
+                
+                if (filesToDelete.length > 0) {
+                    const filePathsToDelete = filesToDelete.map(file => `${userFolderPath}/${file.name}`);
+                    const { error: removeError } = await supabase.storage
+                        .from('project-assets')
+                        .remove(filePathsToDelete);
+                    if (removeError) throw new Error(`Gagal menghapus aset project: ${removeError.message}`);
+                }
             }
+
 
             // 2. Delete the project record from the database
             const { error: deleteError } = await supabase
@@ -585,7 +590,7 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'print':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.logoPrompt && selectedProjectId && session?.user?.id) {
+                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl && selectedProjectId && session?.user?.id) {
                     return <PrintMediaGenerator 
                         projectData={workflowData} 
                         onComplete={handlePrintMediaComplete} 
@@ -603,18 +608,19 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'packaging':
-                if (workflowData?.selectedPersona && workflowData.brandInputs && selectedProjectId && session?.user?.id) {
+                if (workflowData?.selectedPersona && workflowData.brandInputs && workflowData.selectedLogoUrl && selectedProjectId && session?.user?.id) {
                     return <PackagingGenerator 
                         persona={workflowData.selectedPersona} 
                         businessName={workflowData.brandInputs.businessName} 
+                        logoUrl={workflowData.selectedLogoUrl}
                         onComplete={handlePackagingComplete} 
                     />;
                 }
                 break;
             case 'merchandise':
-                if (workflowData?.logoPrompt && workflowData.brandInputs?.businessName && selectedProjectId && session?.user?.id) {
+                if (workflowData?.selectedLogoUrl && workflowData.brandInputs?.businessName && selectedProjectId && session?.user?.id) {
                     return <MerchandiseGenerator 
-                        logoPrompt={workflowData.logoPrompt} 
+                        logoUrl={workflowData.selectedLogoUrl} 
                         businessName={workflowData.brandInputs.businessName} 
                         onComplete={handleFinalizeProject} 
                         isFinalizing={isFinalizing}
