@@ -92,7 +92,7 @@ const cleanJsonString = (rawText: string, expectedType: 'object' | 'array' = 'ar
 // --- NEW MASTER IMAGE GENERATION LOGIC ---
 
 /**
- * Step 1: Enhance a simple prompt using the fast text model.
+ * Step 1: Enhance a simple prompt using the fast text model. Used for generic, non-logo images.
  */
 const enhancePromptForImageGeneration = async (simplePrompt: string): Promise<string> => {
     const ai = getAiClient();
@@ -116,7 +116,40 @@ Enhanced Prompt:`;
 };
 
 /**
- * Step 2: Generate an image on a white canvas using the enhanced prompt.
+ * NEW Step 1 (Advanced): A sophisticated prompt engineering chain specifically for logos.
+ */
+const generateAdvancedLogoPrompt = async (logoRequestPrompt: string): Promise<string> => {
+    const ai = getAiClient();
+    const promptChainInstruction = `You are a world-class branding expert and AI prompt engineer collaborating on a logo design. Your task is to transform a basic user request into a sophisticated, detailed, and artistic prompt for an image generation model.
+
+Follow these steps meticulously:
+
+1.  **Deconstruct the Request**: Analyze the user's request: "${logoRequestPrompt}". Extract the core business, its persona keywords (e.g., minimalist, rustic, fun), and any key symbols mentioned.
+
+2.  **Brainstorm Visual Concepts**: Based on your analysis, brainstorm 3 distinct visual concepts. Think metaphorically. For a coffee shop, instead of a simple coffee cup, you might suggest "a stylized sun rising from a coffee cup," "interlocking geometric shapes forming a coffee bean," or "a warm, hand-drawn illustration of a steam wisp forming an elegant letter."
+
+3.  **Develop a Rich Descriptive Vocabulary**: For the best concept, create a list of evocative adjectives and nouns. Focus on artistic styles (e.g., art deco, geometric minimalism, neo-vintage), line quality (e.g., sharp vector lines, soft gradients, clean edges), and color theory (e.g., duotone color scheme, vibrant analogous colors, high contrast).
+
+4.  **Synthesize the Final Prompt**: Combine the best ideas into a single, cohesive, and highly descriptive final prompt. The prompt **must** describe a **"Minimalist vector logo"** or **"Clean vector graphic logo"**. It must specify **"on a solid white background"**. It is critical to **avoid asking for text or letters**, as the image model cannot render them well. Instead, describe a composition that leaves clear, balanced space for text to be added later. The final prompt should be a masterpiece of clarity and artistic direction.
+
+**Final, Polished Prompt for Image Generation:**`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: promptChainInstruction,
+            config: { temperature: 0.85 }
+        });
+        const cleanedPrompt = response.text.trim().replace(/^"|"$/g, '');
+        return cleanedPrompt;
+    } catch (error) {
+        console.warn("Advanced prompt generation failed, falling back to simpler enhancement.", error);
+        return await enhancePromptForImageGeneration(logoRequestPrompt);
+    }
+};
+
+/**
+ * Step 2: Generate an image on a white canvas using an enhanced prompt.
  */
 const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' | '4:3' | '16:9' | '9:16' | '3:4' = '1:1'): Promise<string> => {
     const ai = getAiClient();
@@ -153,7 +186,6 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
             }
         }
         
-        // If no image is found, check for a text response
         const textResponse = response.text?.trim();
         if (textResponse) {
             console.error("Model did not return an image. Text response:", textResponse);
@@ -168,7 +200,7 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
 };
 
 /**
- * Master Function: The new 2-step process for all image generation.
+ * Master Function: The generic 2-step process for all NON-LOGO image generation.
  */
 const generateImage = async (simplePrompt: string, aspectRatio: '1:1' | '4:3' | '16:9' | '9:16' | '3:4' = '1:1'): Promise<string> => {
     const enhancedPrompt = await enhancePromptForImageGeneration(simplePrompt);
@@ -448,7 +480,10 @@ export const generateGoogleAdsContent = async (brandInputs: BrandInputs, slogan:
 
 export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
     try {
-        const generatedBase64 = await generateImage(prompt, '1:1');
+        // Use the new, advanced prompt engineering logic for higher quality logos
+        const advancedPrompt = await generateAdvancedLogoPrompt(prompt);
+        // Directly call the image generator with the superior prompt
+        const generatedBase64 = await generateImageFromWhiteCanvas(advancedPrompt, '1:1');
         return [generatedBase64];
     } catch (error) {
         throw handleApiError(error, "Flash Preview (Logo)");
