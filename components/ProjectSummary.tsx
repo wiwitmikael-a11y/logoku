@@ -9,9 +9,12 @@ interface Props {
   project: Project;
   onStartNew: () => void;
   onGoToCaptionGenerator: (projectId: number) => void;
+  onDeleteProject: (projectId: number) => void;
+  onSyncProject: (projectId: number) => void;
+  syncingProjectId: number | null;
 }
 
-const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGenerator }) => {
+const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGenerator, onDeleteProject, onSyncProject, syncingProjectId }) => {
   const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, printMediaAssets } = project.project_data;
   
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
@@ -282,7 +285,23 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGen
         
         <div className="mt-6 flex flex-wrap gap-4 justify-center no-print">
             <Button onClick={handleDownload}>Download Brand Kit (PDF)</Button>
-            <Button onClick={onStartNew}>Bikin Brand Kit Baru</Button>
+            <Button onClick={onStartNew} variant="secondary">Bikin Project Baru</Button>
+            {project.status === 'local-complete' && (
+              <Button 
+                onClick={() => onSyncProject(project.id)}
+                isLoading={syncingProjectId === project.id}
+                disabled={syncingProjectId !== null}
+              >
+                Sinkronkan Project
+              </Button>
+            )}
+             <Button 
+                onClick={() => onDeleteProject(project.id)} 
+                variant="secondary"
+                className="!border-red-500/50 !text-red-400 hover:!bg-red-500/20"
+              >
+                Hapus Project Ini
+            </Button>
         </div>
       </div>
       

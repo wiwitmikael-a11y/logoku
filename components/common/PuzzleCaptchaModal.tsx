@@ -1,6 +1,8 @@
-
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { playSound, playBGM } from '../../services/soundService';
+
+// NEW: Lazily import the new branding tip modal
+const BrandingTipModal = React.lazy(() => import('./BrandingTipModal'));
 
 interface Props {
   show: boolean;
@@ -13,6 +15,8 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [sliderLeft, setSliderLeft] = useState(0);
   const [isSolved, setIsSolved] = useState(false);
+  // NEW: State to control the visibility of the "Did You Know?" modal
+  const [showBrandingTip, setShowBrandingTip] = useState(false);
   
   const sliderRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -36,13 +40,11 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (isSolved) return;
     
-    // Play BGM on the first interaction with the slider
     if (!jinglePlayedRef.current) {
         playBGM('welcome');
         jinglePlayedRef.current = true;
     }
     
-    // Remove transition for smooth dragging
     if (sliderRef.current) sliderRef.current.style.transition = 'none';
 
     setIsDragging(true);
@@ -55,7 +57,6 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
     const newLeft = clientX - trackRect.left - (sliderRef.current.clientWidth / 2);
     const { maxSliderLeft } = getTrackBounds();
 
-    // Clamp the value between 0 and the max allowed left position
     const clampedLeft = Math.max(0, Math.min(newLeft, maxSliderLeft));
     setSliderLeft(clampedLeft);
   }, [isDragging, getTrackBounds]);
@@ -76,19 +77,19 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
 
     const { maxSliderLeft } = getTrackBounds();
 
-    // Check if slider is near the end (within 5px tolerance)
     if (sliderLeft >= maxSliderLeft - 5) {
       playSound('puzzle_drop');
-      setSliderLeft(maxSliderLeft); // Snap to the end
+      setSliderLeft(maxSliderLeft);
       setIsSolved(true);
+      // MODIFIED: Instead of calling onSuccess, show the branding tip modal
       setTimeout(() => {
-        onSuccess();
-      }, 800);
+        setShowBrandingTip(true);
+      }, 500); // A small delay to let the user see the "solved" state
     } else {
       playSound('puzzle_fail');
       resetSlider();
     }
-  }, [isDragging, sliderLeft, getTrackBounds, onSuccess, resetSlider]);
+  }, [isDragging, sliderLeft, getTrackBounds, resetSlider]);
   
   useEffect(() => {
     if (isDragging) {
@@ -110,9 +111,9 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
     if (show) {
       modalRef.current?.focus();
     } else {
-      // Reset state when modal is hidden/closed
       setTimeout(() => {
           setIsSolved(false);
+          setShowBrandingTip(false); // Reset new state
           resetSlider();
           jinglePlayedRef.current = false;
       }, 300);
@@ -124,59 +125,68 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   }
 
   return (
-    <div
-      ref={modalRef}
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-content-fade-in"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="captcha-title"
-      tabIndex={-1}
-    >
-      <div className={`relative max-w-sm w-full bg-gray-800 border rounded-2xl shadow-2xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-500 ring-4 ring-green-500/30' : 'border-gray-700'}`}>
-        <img
-            src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-            alt="Mang AI character"
-            className="w-24 mb-4 animate-breathing-ai"
-            style={{ imageRendering: 'pixelated' }}
-        />
-        <h2 id="captcha-title" className="text-xl font-bold text-indigo-400 mb-2">Eits, Tahan Dulu, Juragan!</h2>
-        <p className="text-gray-300 mb-8 text-center text-sm">Sebelum kita mulai ngeracik brand juara, buktikan kalo lo pejuang UMKM sejati dengan geser slider ini sampe mentok!</p>
-
-        <div 
-          ref={trackRef}
-          className="w-full h-14 bg-gray-900 rounded-full flex items-center p-2 relative"
-        >
-          <div 
-            className="absolute left-0 top-0 h-full bg-indigo-600/50 rounded-full"
-            style={{ width: `${sliderLeft + 40}px` }}
+    <>
+      <div
+        ref={modalRef}
+        className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-content-fade-in"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="captcha-title"
+        tabIndex={-1}
+      >
+        <div className={`relative max-w-sm w-full bg-gray-800 border rounded-2xl shadow-2xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-500 ring-4 ring-green-500/30' : 'border-gray-700'} ${showBrandingTip ? 'filter blur-sm' : ''}`}>
+          <img
+              src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
+              alt="Mang AI character"
+              className="w-24 mb-4 animate-breathing-ai"
+              style={{ imageRendering: 'pixelated' }}
           />
+          <h2 id="captcha-title" className="text-xl font-bold text-indigo-400 mb-2">Eits, Tahan Dulu, Juragan!</h2>
+          <p className="text-gray-300 mb-8 text-center text-sm">Sebelum kita mulai ngeracik brand juara, buktikan kalo lo pejuang UMKM sejati dengan geser slider ini sampe mentok!</p>
 
-          <div
-            ref={sliderRef}
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
-            className={`w-10 h-10 bg-indigo-600 rounded-full absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none ${isSolved ? '!bg-green-500' : ''}`}
-            style={{ left: `${sliderLeft}px` }}
-            aria-label="Geser untuk verifikasi"
-            role="slider"
+          <div 
+            ref={trackRef}
+            className="w-full h-14 bg-gray-900 rounded-full flex items-center p-2 relative"
           >
-            {isSolved ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            )}
-          </div>
+            <div 
+              className="absolute left-0 top-0 h-full bg-indigo-600/50 rounded-full"
+              style={{ width: `${sliderLeft + 40}px` }}
+            />
 
-          <span className={`text-center w-full font-semibold transition-opacity duration-300 ${isDragging || isSolved ? 'opacity-0' : 'opacity-100 text-gray-400'}`}>
-            Ayo, geser ke kanan, juragan!
-          </span>
+            <div
+              ref={sliderRef}
+              onMouseDown={handleDragStart}
+              onTouchStart={handleDragStart}
+              className={`w-10 h-10 bg-indigo-600 rounded-full absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none ${isSolved ? '!bg-green-500' : ''}`}
+              style={{ left: `${sliderLeft}px` }}
+              aria-label="Geser untuk verifikasi"
+              role="slider"
+            >
+              {isSolved ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              )}
+            </div>
+
+            <span className={`text-center w-full font-semibold transition-opacity duration-300 ${isDragging || isSolved ? 'opacity-0' : 'opacity-100 text-gray-400'}`}>
+              Ayo, geser ke kanan, juragan!
+            </span>
+          </div>
+          
+          {isSolved && !showBrandingTip && (
+              <p className="text-green-400 font-bold animate-pulse mt-6">Mantap! Ternyata beneran juragan, bukan kaleng-kaleng. Sokin lanjut!</p>
+          )}
         </div>
-        
-        {isSolved && (
-            <p className="text-green-400 font-bold animate-pulse mt-6">Mantap! Ternyata beneran juragan, bukan kaleng-kaleng. Sokin lanjut!</p>
-        )}
       </div>
-    </div>
+      {/* NEW: Render the BrandingTipModal when showBrandingTip is true */}
+      <Suspense fallback={null}>
+        <BrandingTipModal
+            show={showBrandingTip}
+            onConfirm={onSuccess}
+        />
+      </Suspense>
+    </>
   );
 };
 

@@ -1,38 +1,15 @@
-
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import type { Project } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Card from './common/Card';
-import InFeedAd from './common/InFeedAd'; // Import komponen iklan baru
-
-type AppState = 'persona' | 'logo' | 'logo_detail' | 'content' | 'social_kit' | 'profile_optimizer' | 'social_ads' | 'packaging' | 'print_media' | 'caption' | 'summary';
-
-const workflowSteps: { id: AppState; name: string }[] = [
-    { id: 'persona', name: '1. Brand Persona' },
-    { id: 'logo', name: '2. Desain Logo' },
-    { id: 'logo_detail', name: '3. Finalisasi Logo' },
-    { id: 'content', name: '4. Kalender Konten' },
-    { id: 'social_kit', name: '5. Social Media Kit' },
-    { id: 'profile_optimizer', name: '6. Optimasi Profil' },
-    { id: 'social_ads', name: '7. Teks Iklan' },
-    { id: 'packaging', name: '8. Desain Kemasan' },
-    { id: 'print_media', name: '9. Media Cetak' },
-    { id: 'caption', name: 'Tools: Caption Generator' },
-    { id: 'summary', name: 'Lihat Ringkasan' },
-];
 
 interface ProjectDashboardProps {
   projects: Project[];
   onNewProject: () => void;
   onSelectProject: (projectId: number) => void;
-  onContinueProject: (projectId: number) => void;
-  onDeleteProject: (projectId: number) => void;
-  onSyncProject: (projectId: number) => void;
-  syncingProjectId: number | null;
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
-  onJumpToStep: (projectId: number, step: AppState) => void;
 }
 
 const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
@@ -58,53 +35,21 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
     );
 };
 
-const ProjectCardMenu: React.FC<{ project: Project; onJumpToStep: (projectId: number, step: AppState) => void }> = ({ project, onJumpToStep }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const handleSelectStep = (step: AppState) => {
-        onJumpToStep(project.id, step);
-        setIsOpen(false);
-    };
-
-    return (
-        <div ref={menuRef} className="absolute top-3 right-3 z-10">
-            <button
-                onClick={(e) => { e.stopPropagation(); setIsOpen(prev => !prev); }}
-                className="p-1.5 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white transition-colors"
-                title="Konfigurasi Project"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
-            </button>
-            {isOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
-                    {workflowSteps.map(step => (
-                        <button
-                            key={step.id}
-                            onClick={(e) => { e.stopPropagation(); handleSelectStep(step.id); }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
-                        >
-                            {step.name}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
+const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
+  <button
+    onClick={onClick}
+    className="absolute top-3 right-3 z-10 p-1.5 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white transition-colors"
+    title="Lihat & Edit Project"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+      <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+    </svg>
+  </button>
+);
 
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onDeleteProject, onSyncProject, syncingProjectId, showWelcomeBanner, onWelcomeBannerClose, onJumpToStep }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
@@ -114,6 +59,20 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
     const completed = projects.filter(p => p.status === 'completed');
     return { inProgressProjects: inProgress, localCompleteProjects: localComplete, completedProjects: completed };
   }, [projects]);
+  
+  const getProgressDescription = (project: Project): string => {
+      const data = project.project_data;
+      if (!data.selectedPersona) return "Memulai: Persona Brand";
+      if (!data.selectedLogoUrl) return "Progres: Desain Logo";
+      if (!data.logoVariations) return "Progres: Finalisasi Logo";
+      if (!data.contentCalendar) return "Progres: Kalender Konten";
+      if (!data.socialMediaKit) return "Progres: Social Media Kit";
+      if (!data.socialProfiles) return "Progres: Optimasi Profil";
+      if (!data.socialAds) return "Progres: Teks Iklan";
+      if (!data.selectedPackagingUrl) return "Progres: Desain Kemasan";
+      if (!data.printMediaAssets) return "Progres: Media Cetak";
+      return "Lanjutkan project...";
+  }
 
   return (
     <div className="flex flex-col gap-8 items-center text-center">
@@ -144,25 +103,17 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
             {inProgressProjects.map(project => (
                 <div key={project.id} className="relative group">
                     <Card 
-                    title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
-                    onClick={() => onContinueProject(project.id)}
+                      title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
+                      onClick={() => onSelectProject(project.id)}
                     >
-                    <p className="text-sm text-gray-400 min-h-[40px]">
-                        {project.project_data.selectedSlogan ? `"${project.project_data.selectedSlogan}"` : 'Lanjutkan untuk membuat slogan...'}
-                    </p>
-                    <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
-                        <p className="text-xs text-gray-500">Progres tersimpan...</p>
-                        <Button onClick={(e) => { e.stopPropagation(); onContinueProject(project.id); }} variant="secondary" size="small">Lanjutkan</Button>
-                    </div>
+                      <p className="text-sm text-gray-400 min-h-[40px] italic">
+                        {getProgressDescription(project)}
+                      </p>
+                      <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
+                          <p className="text-xs text-gray-500">Klik untuk lanjut...</p>
+                      </div>
                     </Card>
-                     <ProjectCardMenu project={project} onJumpToStep={onJumpToStep} />
-                     <button
-                        onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                        className="absolute bottom-3 left-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10 opacity-0 group-hover:opacity-100"
-                        title="Hapus Project"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                    </button>
+                    <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
                 </div>
             ))}
           </div>
@@ -177,36 +128,18 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                 <div key={project.id} className="relative group">
                 <Card 
                     title={project.project_data.brandInputs.businessName}
+                    onClick={() => onSelectProject(project.id)}
                 >
                     <div className="space-y-3">
-                    <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
-                    <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
-                        <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
-                        <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
-                    </div>
-                    <p className="text-xs text-yellow-400 pt-2 border-t border-gray-700">Tersimpan lokal. Klik untuk menyimpan permanen & asetnya.</p>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
-                    <Button 
-                        onClick={(e) => { e.stopPropagation(); onSyncProject(project.id); }} 
-                        variant="primary"
-                        size="small"
-                        isLoading={syncingProjectId === project.id}
-                        disabled={syncingProjectId !== null}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
-                        Sinkronkan
-                    </Button>
+                      <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
+                      <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
+                          <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
+                          <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
+                      </div>
+                      <p className="text-xs text-yellow-400 pt-2 border-t border-gray-700">Siap disinkronkan ke database.</p>
                     </div>
                 </Card>
-                 <ProjectCardMenu project={project} onJumpToStep={onJumpToStep} />
-                 <button
-                    onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                    className="absolute bottom-3 left-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10 opacity-0 group-hover:opacity-100"
-                    title="Hapus Project"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                </button>
+                 <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
                 </div>
             ))}
             </div>
@@ -220,29 +153,19 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
             {completedProjects.map(project => (
                  <div key={project.id} className="relative group">
                     <Card 
-                    title={project.project_data.brandInputs.businessName}
-                    onClick={() => onSelectProject(project.id)}
+                      title={project.project_data.brandInputs.businessName}
+                      onClick={() => onSelectProject(project.id)}
                     >
-                    <div className="space-y-3">
-                        <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
-                        <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
-                        <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
-                        <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
-                        </div>
-                        <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
-                        <Button onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} variant="secondary" size="small">Lihat Brand Kit</Button>
-                    </div>
+                      <div className="space-y-3">
+                          <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
+                          <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
+                            <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
+                            <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
+                          </div>
+                          <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                      </div>
                     </Card>
-                    <ProjectCardMenu project={project} onJumpToStep={onJumpToStep} />
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                        className="absolute bottom-3 left-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10 opacity-0 group-hover:opacity-100"
-                        title="Hapus Project"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                    </button>
+                    <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
                 </div>
             ))}
           </div>

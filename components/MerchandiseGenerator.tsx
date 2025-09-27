@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+// FIX: Import ProjectData type
 import type { ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -10,8 +11,11 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
+// FIX: Import utility to fetch image as base64
+import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
+  // FIX: Update props to accept projectData for access to selectedLogoUrl
   projectData: Partial<ProjectData>;
   onComplete: (merchandiseUrl: string) => void;
 }
@@ -94,8 +98,10 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
+      // FIX: Fetch the logo from its URL to get Base64 data for the API.
+      const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
       // FIX: Correctly call generateMerchandiseMockup with two arguments.
-      const results = await generateMerchandiseMockup(prompt, projectData.selectedLogoUrl);
+      const results = await generateMerchandiseMockup(prompt, logoBase64);
       
       await deductCredits(GENERATION_COST);
       setDesigns(results);

@@ -10,6 +10,8 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
+// FIX: Import fetchImageAsBase64 to handle logo URLs
+import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
   projectData: Partial<ProjectData>;
@@ -133,8 +135,10 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
+      // FIX: Fetch the logo from its URL to get the Base64 data required by the API.
+      const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
       // FIX: Correctly call generatePackagingDesign with two arguments.
-      const results = await generatePackagingDesign(prompt, projectData.selectedLogoUrl);
+      const results = await generatePackagingDesign(prompt, logoBase64);
       await deductCredits(GENERATION_COST);
       setDesigns(results);
       setSelectedDesignBase64(results[0]);

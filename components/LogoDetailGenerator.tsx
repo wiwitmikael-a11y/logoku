@@ -10,10 +10,13 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
+// FIX: Import utility to handle converting image URLs to Base64 for the API
+import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
   baseLogoUrl: string; // This will now be a Base64 string
   basePrompt: string;
+  // FIX: Added businessName to props, as it's required for generating variations.
   businessName: string;
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
 }
@@ -56,7 +59,12 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     setShowNextStepNudge(false);
     playSound('start');
     try {
-      const generatedVariations = await generateLogoVariations(finalLogoUrl, businessName);
+      // FIX: The API expects base64 data, but finalLogoUrl might be a URL from a previous edit.
+      // Fetch the image content as base64 before passing it to the service.
+      const logoBase64 = await fetchImageAsBase64(finalLogoUrl);
+
+      // FIX: Call generateLogoVariations with the correct two arguments: base64 logo data and the business name.
+      const generatedVariations = await generateLogoVariations(logoBase64, businessName);
       
       await deductCredits(VARIATION_COST);
       
@@ -86,8 +94,10 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     setError(null);
     playSound('start');
     try {
-      const base64Data = finalLogoUrl.split(',')[1];
-      const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/png';
+      // FIX: Fetch image as Base64 before sending to the edit function
+      const imageAsBase64 = await fetchImageAsBase64(finalLogoUrl);
+      const base64Data = imageAsBase64.split(',')[1];
+      const mimeType = imageAsBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
       
       const editedBase64Result = await editLogo(base64Data, mimeType, editPrompt);
       
@@ -141,6 +151,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
               )}
             </div>
 
+            {/* FIX: Updated rendering logic to display the correct logo variations (stacked, horizontal, monochrome) */}
             {variations ? (
                 <div ref={variationsRef}>
                     <h4 className="font-bold mb-4">Paket Logo Lengkap:</h4>

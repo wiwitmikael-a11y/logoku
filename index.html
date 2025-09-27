@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>logo.ku - Studio Logo & Branding Mang AI</title>
+    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/Mang_AI.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
@@ -198,37 +199,24 @@
         100% { transform: translateX(5vw) scale(-1, 1) translateY(0); }
       }
       
-      /* Keyframes for the small header Mang AI (Balanced Bouncy Walk) */
-      @keyframes header-ai-antics {
-        0% { transform: translateX(calc(-50vw - 60px)) scale(-1, 1); z-index: 9; }
-        
-        /* Walk from left */
-        10% { transform: translateX(calc(-50vw + 100px)) scale(-1, 1) translateY(-5px); }
-        20% { transform: translateX(calc(-50vw + 250px)) scale(-1, 1) translateY(0); }
-
-        /* Jump in middle */
-        25% { transform: translateX(0) scale(-1, 1) translateY(-25px); z-index: 11; }
-        30% { transform: translateX(50px) scale(-1.1, 0.9) translateY(0); z-index: 11; }
-        32% { transform: translateX(50px) scale(-1, 1) translateY(0); z-index: 11; }
-        
-        /* Turn around */
-        40% { transform: translateX(50px) scale(1, 1); }
-        
-        /* Walk to right edge */
-        50% { transform: translateX(calc(50vw - 250px)) scale(1, 1) translateY(-5px); }
-        60% { transform: translateX(calc(50vw + 60px)) scale(1, 1) translateY(0); z-index: 9; }
-        
-        /* Pause off-screen right */
-        75% { transform: translateX(calc(50vw + 60px)) scale(1, 1); }
-
-        /* Re-enter from right */
-        76% { transform: translateX(calc(50vw + 60px)) scale(1, 1); }
-        
-        /* Quick dash back to left */
-        85% { transform: translateX(0) scale(1, 1) translateY(-10px); z-index: 11; }
-        95% { transform: translateX(calc(-50vw - 60px)) scale(1.1, 0.9) translateY(0); z-index: 9; }
-
-        100% { transform: translateX(calc(-50vw - 60px)) scale(-1, 1); z-index: 9; }
+      /* NEW: Keyframes for Header Mang AI Peeking */
+      @keyframes header-ai-peeking {
+        0%, 85% { 
+          transform: translateX(30px) translateY(5px) scaleX(-1); 
+          opacity: 0;
+        }
+        90% {
+          transform: translateX(-20px) translateY(5px) scaleX(-1);
+          opacity: 1;
+        }
+        96% {
+          transform: translateX(-20px) translateY(5px) scaleX(-1);
+          opacity: 1;
+        }
+        100% {
+          transform: translateX(30px) translateY(5px) scaleX(-1);
+          opacity: 0;
+        }
       }
       
       /* NEW: Keyframes for Login Screen Mang AI */
@@ -323,13 +311,6 @@
         90% { transform: translateX(-50%) scale(1.2); opacity: 0.8; }
         98% { transform: translateX(-50%) scale(2.5); opacity: 0; }
       }
-      @keyframes dust-for-header-ai {
-        0%, 29.9%, 84.9%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
-        30% { transform: translateX(-50%) scale(0.6); opacity: 0.7; }
-        38% { transform: translateX(-50%) scale(1.5); opacity: 0; }
-        85% { transform: translateX(-50%) scale(0.7); opacity: 0.7; }
-        93% { transform: translateX(-50%) scale(1.8); opacity: 0; }
-      }
       @keyframes dust-for-bouncing-ai {
         0%, 19%, 30%, 59%, 70%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
         20% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
@@ -379,13 +360,6 @@
         90%  { transform: translateX(-50%) scale(1.4); opacity: 0.35; }
         95%  { transform: translateX(-50%) scale(1); opacity: 0.25; }
       }
-      @keyframes shadow-for-header-ai {
-        0%, 100% { opacity: 0.2; }
-        25% { transform: translateX(-50%) scale(0.6); opacity: 0.1; }
-        30% { transform: translateX(-50%) scale(1.2); opacity: 0.25; }
-        85% { transform: translateX(-50%) scale(0.7); opacity: 0.1; }
-        95% { transform: translateX(-50%) scale(1.3); opacity: 0.3; }
-      }
       @keyframes shadow-for-bouncing-ai {
         0%   { transform: translateX(-50%) scale(0.5); opacity: 0; }
         20%  { transform: translateX(-50%) scale(1.1); opacity: 0.25; }
@@ -412,7 +386,6 @@
       /* Base style for the new shadow pseudo-element */
       .animate-mario-top-breathing::before,
       .animate-mario-bottom-breathing::before,
-      .animate-header-ai::before,
       .animate-bouncing-ai::before,
       .animate-login-ai::before {
         content: '';
@@ -429,7 +402,6 @@
       /* Base style for the existing dust pseudo-element */
       .animate-mario-top-breathing::after,
       .animate-mario-bottom-breathing::after,
-      .animate-header-ai::after,
       .animate-bouncing-ai::after,
       .animate-login-ai::after {
         content: '';
@@ -498,23 +470,15 @@
         animation: dust-for-bottom-mario 6s linear infinite;
       }
 
-      .animate-header-ai {
+      .animate-header-ai-peek {
         position: absolute;
-        left: 50%;
-        top: 100%; /* Position it right below the header */
-        animation: header-ai-antics 20s linear infinite;
+        left: 0;
+        bottom: -10px;
+        animation: header-ai-peeking 12s linear infinite;
         image-rendering: pixelated;
-        will-change: transform, z-index;
-      }
-      .animate-header-ai::before {
-        animation: shadow-for-header-ai 20s linear infinite;
-        bottom: -2px; /* Adjust for smaller character */
-        width: 60%;
-        height: 8px;
-      }
-      .animate-header-ai::after {
-        animation: dust-for-header-ai 20s linear infinite;
-        bottom: -5px;
+        will-change: transform, opacity;
+        pointer-events: none;
+        z-index: -1;
       }
       
       .animate-breathing-ai {

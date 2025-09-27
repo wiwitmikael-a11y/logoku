@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -40,6 +39,7 @@ const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCred
 const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
 const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
+const BrandingTipModal = React.lazy(() => import('./components/common/BrandingTipModal')); // NEW
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'social_kit' | 'profile_optimizer' | 'social_ads' | 'packaging' | 'print_media' | 'summary' | 'caption';
@@ -235,43 +235,32 @@ const MainApp: React.FC = () => {
     }, []);
 
     const handleSelectProject = useCallback((projectId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+        
         setSelectedProjectId(projectId);
-        navigateTo('summary');
-    }, []);
-    
-    const handleContinueProject = useCallback((projectId: number) => {
-        const project = projects.find(p => p.id === projectId);
-        if (!project) return;
         
-        setSelectedProjectId(project.id);
-        saveWorkflowState(project.project_data); // Load DB data into local session
-        
-        // Determine the next step based on what data exists
-        const data = project.project_data;
-        let nextState: AppState = 'persona';
-        if (data.printMediaAssets) nextState = 'summary'; // Should not happen for in-progress
-        else if (data.selectedPackagingUrl) nextState = 'print_media';
-        else if (data.socialAds) nextState = 'packaging';
-        else if (data.socialProfiles) nextState = 'social_ads';
-        else if (data.socialMediaKit) nextState = 'profile_optimizer';
-        else if (data.contentCalendar) nextState = 'social_kit';
-        else if (data.logoVariations) nextState = 'content';
-        else if (data.selectedLogoUrl) nextState = 'logo_detail';
-        else if (data.selectedPersona) nextState = 'logo';
-        
-        navigateTo(nextState);
+        if (project.status === 'in-progress') {
+            saveWorkflowState(project.project_data); // Load DB data into local session for in-progress projects
+            // Determine the next step based on what data exists
+            const data = project.project_data;
+            let nextState: AppState = 'persona';
+            if (data.printMediaAssets) nextState = 'summary'; // Should not happen for in-progress
+            else if (data.selectedPackagingUrl) nextState = 'print_media';
+            else if (data.socialAds) nextState = 'packaging';
+            else if (data.socialProfiles) nextState = 'social_ads';
+            else if (data.socialMediaKit) nextState = 'profile_optimizer';
+            else if (data.contentCalendar) nextState = 'social_kit';
+            else if (data.logoVariations) nextState = 'content';
+            else if (data.selectedLogoUrl) nextState = 'logo_detail';
+            else if (data.selectedPersona) nextState = 'logo';
+            
+            navigateTo(nextState);
+        } else {
+            // For completed or local-complete, always go to summary
+            navigateTo('summary');
+        }
     }, [projects]);
-
-    // NEW: Handler for jumping to a specific step
-    const handleJumpToStep = useCallback((projectId: number, step: AppState) => {
-        const project = projects.find(p => p.id === projectId);
-        if (!project) return;
-
-        setSelectedProjectId(project.id);
-        saveWorkflowState(project.project_data); // Always load the project's state
-        navigateTo(step);
-    }, [projects]);
-
 
     const handleGoToCaptionGenerator = useCallback((projectId: number) => {
         const project = projects.find(p => p.id === projectId);
@@ -320,6 +309,9 @@ const MainApp: React.FC = () => {
             if (deleteError) throw new Error(`Gagal menghapus data project: ${deleteError.message}`);
 
             setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
+            if (selectedProjectId === projectToDelete.id) {
+                handleReturnToDashboard(); // Go to dashboard if the deleted project was the active one
+            }
             playSound('success');
 
         } catch (err) {
@@ -574,7 +566,14 @@ const MainApp: React.FC = () => {
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);
                 if (projectToShow) {
-                    return <ProjectSummary project={projectToShow} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} />;
+                    return <ProjectSummary 
+                        project={projectToShow} 
+                        onStartNew={handleReturnToDashboard} 
+                        onGoToCaptionGenerator={handleGoToCaptionGenerator}
+                        onDeleteProject={handleRequestDeleteProject}
+                        onSyncProject={handleSyncProject}
+                        syncingProjectId={syncingProjectId}
+                    />;
                 }
                 break;
             case 'caption':
@@ -588,13 +587,8 @@ const MainApp: React.FC = () => {
                     projects={projects} 
                     onNewProject={handleNewProject} 
                     onSelectProject={handleSelectProject} 
-                    onContinueProject={handleContinueProject} 
                     showWelcomeBanner={showWelcomeBanner} 
                     onWelcomeBannerClose={() => setShowWelcomeBanner(false)} 
-                    onDeleteProject={handleRequestDeleteProject}
-                    onSyncProject={handleSyncProject}
-                    syncingProjectId={syncingProjectId}
-                    onJumpToStep={handleJumpToStep}
                 />;
         }
         // Fallback: If required data is missing, go to dashboard
@@ -613,7 +607,6 @@ const MainApp: React.FC = () => {
                         show={showCaptcha}
                         onSuccess={() => {
                             setShowCaptcha(false);
-                            // Do not automatically show ToS here anymore; let the user click the link.
                         }}
                     />
                     <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
@@ -626,11 +619,6 @@ const MainApp: React.FC = () => {
         <div className="text-white min-h-screen font-sans">
             <header className="py-3 px-4 md:py-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
                 <div className="max-w-7xl mx-auto flex justify-between items-center relative">
-                    <img
-                        src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-                        alt="Mang AI walking in the header"
-                        className="animate-header-ai w-12 h-12"
-                    />
                     <div className="flex items-baseline gap-3">
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleReturnToDashboard}>
                             <span>logo<span className="text-white">.ku</span></span>
@@ -639,7 +627,12 @@ const MainApp: React.FC = () => {
                             by @rangga.p.h
                         </div>
                     </div>
-                     <div className="flex items-center gap-4">
+                     <div className="flex items-center gap-4 relative">
+                        <img
+                            src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
+                            alt="Mang AI peeking from behind the token display"
+                            className="animate-header-ai-peek w-12 h-12"
+                        />
                         <div className="relative" ref={tokenInfoRef}>
                             <div
                                 onClick={() => setIsTokenInfoOpen(prev => !prev)}
