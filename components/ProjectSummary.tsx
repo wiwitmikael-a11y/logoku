@@ -9,12 +9,13 @@ interface Props {
   project: Project;
   onStartNew: () => void;
   onGoToCaptionGenerator: (projectId: number) => void;
+  onGoToInstantContent: (projectId: number) => void; // NEW
   onDeleteProject: (projectId: number) => void;
   onSyncProject: (projectId: number) => void;
   syncingProjectId: number | null;
 }
 
-const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGenerator, onDeleteProject, onSyncProject, syncingProjectId }) => {
+const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGenerator, onGoToInstantContent, onDeleteProject, onSyncProject, syncingProjectId }) => {
   const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, printMediaAssets } = project.project_data;
   
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
@@ -269,12 +270,19 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGen
                {/* --- NEW: Advanced Tools Hub --- */}
                 <div className="flex flex-col gap-6 no-print">
                     <Card title="Branding Lanjutan & Tools" className="print-card">
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                             <div>
+                                <h5 className="font-semibold text-gray-200 mb-2">Generator Konten Instan ✨</h5>
+                                <p className="text-sm text-gray-400 mb-3">Butuh ide & visual cepat buat postingan dadakan? Masukin topiknya, Mang AI bikinin konten lengkap (visual + caption).</p>
+                                <Button size="small" variant="secondary" onClick={() => onGoToInstantContent(project.id)}>
+                                    Buat Konten Instan
+                                </Button>
+                            </div>
+                             <div className="pt-6 border-t border-gray-700">
                                 <h5 className="font-semibold text-gray-200 mb-2">Generator Caption Sosmed</h5>
-                                <p className="text-sm text-gray-400 mb-3">Butuh ide caption cepat untuk postingan di luar rencana? Gunakan tool ini dengan konteks brand yang sudah ada.</p>
+                                <p className="text-sm text-gray-400 mb-3">Udah punya gambar tapi bingung captionnya? Pake tool ini buat generate beberapa pilihan caption aja.</p>
                                 <Button size="small" variant="secondary" onClick={() => onGoToCaptionGenerator(project.id)}>
-                                    Buat Caption Cepat
+                                    Buat Caption Aja
                                 </Button>
                             </div>
                         </div>

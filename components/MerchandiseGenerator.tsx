@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -16,6 +14,7 @@ import { fetchImageAsBase64 } from '../utils/imageUtils';
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (merchandiseUrl: string) => void;
+  onGoToDashboard: () => void;
 }
 
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
@@ -45,7 +44,7 @@ const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
 ];
 
 
-const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -166,7 +165,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         </div>
       </form>
       
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">

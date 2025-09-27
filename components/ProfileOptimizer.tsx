@@ -12,11 +12,12 @@ import CopyButton from './common/CopyButton';
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (data: { profiles: SocialProfileData }) => void;
+  onGoToDashboard: () => void;
 }
 
 const GENERATION_COST = 1;
 
-const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete }) => {
+const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { deductCredits, setShowOutOfCreditsModal, profile } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -84,7 +85,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete }) => {
         Buatin Profilnya, Mang AI! ({GENERATION_COST} Kredit)
       </Button>
 
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {profileData && (
         <div ref={resultsRef} className="w-full max-w-5xl flex flex-col items-center gap-8 mt-4 scroll-mt-24">

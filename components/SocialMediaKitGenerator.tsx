@@ -11,11 +11,12 @@ import CalloutPopup from './common/CalloutPopup';
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (data: { assets: SocialMediaKitAssets }) => void;
+  onGoToDashboard: () => void;
 }
 
 const GENERATION_COST = 2; // Cost for generating two assets at once
 
-const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -92,7 +93,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete }) =
         Buatin Kit Sosmednya! ({GENERATION_COST} Kredit)
       </Button>
       
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {assets && (
         <div ref={resultsRef} className="flex flex-col gap-8 items-center scroll-mt-24 w-full max-w-4xl">

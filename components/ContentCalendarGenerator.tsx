@@ -14,11 +14,12 @@ import CopyButton from './common/CopyButton';
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (data: { calendar: ContentCalendarEntry[], sources: any[] }) => void;
+  onGoToDashboard: () => void;
 }
 
 const GENERATION_COST = 1;
 
-const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -124,7 +125,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
         </Button>
       </div>
 
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {calendar.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 scroll-mt-24">

@@ -33,16 +33,17 @@ const PackagingGenerator = React.lazy(() => import('./components/PackagingGenera
 const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 const CaptionGenerator = React.lazy(() => import('./components/CaptionGenerator'));
+const InstantContentGenerator = React.lazy(() => import('./components/InstantContentGenerator')); // NEW
 const ContactModal = React.lazy(() => import('./components/ContactModal'));
 const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
 const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
 const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
-const BrandingTipModal = React.lazy(() => import('./components/common/BrandingTipModal')); // NEW
+const BrandingTipModal = React.lazy(() => import('./components/common/BrandingTipModal'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'social_kit' | 'profile_optimizer' | 'social_ads' | 'packaging' | 'print_media' | 'summary' | 'caption';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'social_kit' | 'profile_optimizer' | 'social_ads' | 'packaging' | 'print_media' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const App: React.FC = () => {
@@ -271,6 +272,15 @@ const MainApp: React.FC = () => {
         }
     }, [projects]);
     
+    const handleGoToInstantContent = useCallback((projectId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+            saveWorkflowState(project.project_data);
+            setSelectedProjectId(project.id);
+            navigateTo('instant_content');
+        }
+    }, [projects]);
+
     const handleReturnToSummary = useCallback(() => {
         // Does not clear workflow state
         if (selectedProjectId) {
@@ -497,16 +507,18 @@ const MainApp: React.FC = () => {
 
     const renderContent = () => {
         const workflowData = loadWorkflowState();
+        const commonErrorProps = { onGoToDashboard: handleReturnToDashboard };
 
         switch (appState) {
             case 'persona':
-                return <BrandPersonaGenerator onComplete={handlePersonaComplete} />;
+                return <BrandPersonaGenerator onComplete={handlePersonaComplete} {...commonErrorProps} />;
             case 'logo':
                 if (workflowData?.selectedPersona && workflowData.brandInputs) {
                     return <LogoGenerator 
                         persona={workflowData.selectedPersona} 
                         businessName={workflowData.brandInputs.businessName} 
                         onComplete={handleLogoComplete} 
+                        {...commonErrorProps}
                     />;
                 }
                 break;
@@ -517,6 +529,7 @@ const MainApp: React.FC = () => {
                         basePrompt={workflowData.logoPrompt} 
                         businessName={workflowData.brandInputs.businessName}
                         onComplete={handleLogoDetailComplete}
+                        {...commonErrorProps}
                     />;
                 }
                 break;
@@ -525,6 +538,7 @@ const MainApp: React.FC = () => {
                     return <ContentCalendarGenerator
                         projectData={workflowData}
                         onComplete={handleContentComplete}
+                        {...commonErrorProps}
                     />;
                 }
                 break;
@@ -533,17 +547,18 @@ const MainApp: React.FC = () => {
                     return <SocialMediaKitGenerator 
                         projectData={workflowData as any} 
                         onComplete={handleSocialKitComplete} 
+                        {...commonErrorProps}
                     />;
                 }
                 break;
             case 'profile_optimizer':
                 if (workflowData?.brandInputs && workflowData.selectedPersona) {
-                    return <ProfileOptimizer projectData={workflowData} onComplete={handleProfileOptimizerComplete} />;
+                    return <ProfileOptimizer projectData={workflowData} onComplete={handleProfileOptimizerComplete} {...commonErrorProps} />;
                 }
                 break;
             case 'social_ads':
                  if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedSlogan) {
-                    return <SocialAdsGenerator projectData={workflowData} onComplete={handleSocialAdsComplete} />;
+                    return <SocialAdsGenerator projectData={workflowData} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
                 }
                 break;
             case 'packaging':
@@ -551,6 +566,7 @@ const MainApp: React.FC = () => {
                     return <PackagingGenerator 
                         projectData={workflowData}
                         onComplete={handlePackagingComplete} 
+                        {...commonErrorProps}
                     />;
                 }
                 break;
@@ -560,6 +576,7 @@ const MainApp: React.FC = () => {
                         projectData={workflowData}
                         onComplete={handlePrintMediaComplete} 
                         isFinalizing={isFinalizing}
+                        {...commonErrorProps}
                     />;
                 }
                 break;
@@ -570,6 +587,7 @@ const MainApp: React.FC = () => {
                         project={projectToShow} 
                         onStartNew={handleReturnToDashboard} 
                         onGoToCaptionGenerator={handleGoToCaptionGenerator}
+                        onGoToInstantContent={handleGoToInstantContent}
                         onDeleteProject={handleRequestDeleteProject}
                         onSyncProject={handleSyncProject}
                         syncingProjectId={syncingProjectId}
@@ -578,7 +596,12 @@ const MainApp: React.FC = () => {
                 break;
             case 'caption':
                 if (workflowData && selectedProjectId) {
-                    return <CaptionGenerator projectData={workflowData} onBack={handleReturnToSummary} />;
+                    return <CaptionGenerator projectData={workflowData} onBack={handleReturnToSummary} {...commonErrorProps} />;
+                }
+                break;
+            case 'instant_content':
+                if (workflowData && selectedProjectId) {
+                    return <InstantContentGenerator projectData={workflowData} onBack={handleReturnToSummary} {...commonErrorProps} />;
                 }
                 break;
             case 'dashboard':
@@ -699,11 +722,11 @@ const MainApp: React.FC = () => {
             </header>
             <main id="main-content" className="py-6 md:py-10 px-4 md:px-8">
                 <div className="max-w-7xl mx-auto">
-                    {authError && <ErrorMessage message={authError} />}
+                    {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (
-                        <ErrorMessage message={`Terjadi error kritis yang tak terduga: ${generalError}`} />
+                        <ErrorMessage message={`Terjadi error kritis yang tak terduga: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />
                     ) : (
-                        <ErrorBoundary>
+                        <ErrorBoundary onReset={handleReturnToDashboard}>
                             {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
                             <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
                                 <div key={appState} className="animate-content-fade-in">{renderContent()}</div>

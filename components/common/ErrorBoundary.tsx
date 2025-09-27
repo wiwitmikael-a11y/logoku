@@ -1,11 +1,11 @@
-
-
 import React, { ErrorInfo, ReactNode } from 'react';
+import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 interface Props {
   children: ReactNode;
+  onReset?: () => void;
 }
 
 interface State {
@@ -15,8 +15,8 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched from class field properties to initializing state and binding methods in the constructor.
-  // This is a more robust pattern that avoids potential 'this' context issues with certain TypeScript compiler configurations.
+  // FIX: Refactored to use a constructor for state initialization and method binding
+  // to ensure 'this' context is correctly handled across different environments.
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -59,14 +59,18 @@ class ErrorBoundary extends React.Component<Props, State> {
                 <p className="text-red-200 mb-4">
                     Mang AI pusing, ada yang rusak di dalam aplikasi. Coba refresh halaman ini. Kalau masih error, mungkin Mang AI lagi istirahat dulu.
                 </p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="px-6 py-3 font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
-                >
-                    Refresh Halaman
-                </button>
+                <div className="flex flex-wrap justify-center items-center gap-4">
+                    <Button onClick={() => window.location.reload()}>
+                        Refresh Halaman
+                    </Button>
+                    {this.props.onReset && (
+                        <Button onClick={this.props.onReset} variant="secondary">
+                            &larr; Kembali ke Menu
+                        </Button>
+                    )}
+                </div>
                 {this.state.error && (
-                    <details className="mt-4 text-left text-xs text-gray-400">
+                    <details className="mt-6 text-left text-xs text-gray-400">
                         <summary className="cursor-pointer">Detail Error (untuk developer)</summary>
                         <pre className="mt-2 p-2 bg-gray-800 rounded overflow-auto">
                             {this.state.error.toString()}

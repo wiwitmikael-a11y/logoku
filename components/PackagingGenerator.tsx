@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -16,6 +14,7 @@ import { fetchImageAsBase64 } from '../utils/imageUtils';
 interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (packagingBase64: string) => void;
+  onGoToDashboard: () => void;
 }
 
 const GENERATION_COST = 1;
@@ -59,7 +58,7 @@ const packagingConfigs: PackagingCategory = {
 packagingConfigs['Kerajinan Tangan'] = packagingConfigs['Lainnya'];
 
 
-const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
+const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -195,7 +194,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         </div>
       </form>
 
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">

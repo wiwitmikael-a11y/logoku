@@ -10,11 +10,12 @@ import ErrorMessage from './common/ErrorMessage';
 interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
+  onGoToDashboard: () => void;
 }
 
 const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Interaktif"];
 
-const CaptionGenerator: React.FC<Props> = ({ projectData, onBack }) => {
+const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
   const [topic, setTopic] = useState('');
   const [tone, setTone] = useState('Promosi');
   const [captions, setCaptions] = useState<GeneratedCaption[]>([]);
@@ -103,7 +104,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack }) => {
         </div>
 
 
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {captions.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 mt-4 scroll-mt-24">

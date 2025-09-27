@@ -14,12 +14,13 @@ import CalloutPopup from './common/CalloutPopup'; // Import the new component
 
 interface Props {
   onComplete: (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => void;
+  onGoToDashboard: () => void;
 }
 
 const businessCategories = ["Makanan", "Minuman", "Fashion", "Jasa", "Kecantikan", "Kerajinan Tangan", "Lainnya"];
 const targetAudienceCategories = ["Masyarakat Umum", "Mahasiswa", "Pekerja Kantoran", "Keluarga", "Remaja", "Anak-anak"];
 
-const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
+const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard }) => {
   // NEW: Local form state to handle the split audience input and empty defaults
   const [formState, setFormState] = useState({
     businessName: '',
@@ -238,7 +239,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
         </div>
       </form>
 
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {personas.length > 0 && (
         <>

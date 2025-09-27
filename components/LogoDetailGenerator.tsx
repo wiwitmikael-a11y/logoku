@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -18,12 +16,13 @@ interface Props {
   basePrompt: string;
   businessName: string;
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
+  onGoToDashboard: () => void;
 }
 
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
-const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, businessName, onComplete }) => {
+const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, businessName, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -198,7 +197,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
         </div>
       </div>
 
-      {error && <div className="mt-4"><ErrorMessage message={error} /></div>}
+      {error && <div className="mt-4"><ErrorMessage message={error} onGoToDashboard={onGoToDashboard} /></div>}
 
       <div className="self-center mt-6 relative">
         {showNextStepNudge && (

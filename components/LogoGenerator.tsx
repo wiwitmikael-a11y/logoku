@@ -16,6 +16,7 @@ interface Props {
   persona: BrandPersona;
   businessName: string;
   onComplete: (data: { logoBase64: string; prompt: string }) => void;
+  onGoToDashboard: () => void;
 }
 
 const LOGO_GENERATION_COST = 2; // Increased cost for 4 images
@@ -83,7 +84,7 @@ const logoStyles = [
     }
 ];
 
-const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) => {
+const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -220,7 +221,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete }) =
         </div>
       </div>
 
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {logos.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">

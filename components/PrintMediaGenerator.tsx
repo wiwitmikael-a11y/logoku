@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -18,12 +16,13 @@ interface Props {
   projectData: Partial<ProjectData>;
   onComplete: (printMediaAssets: PrintMediaAssets) => void;
   isFinalizing: boolean;
+  onGoToDashboard: () => void;
 }
 
 type MediaTab = 'roll_banner' | 'banner';
 const GENERATION_COST = 1;
 
-const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinalizing }) => {
+const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinalizing, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
   const businessHandle = projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
@@ -185,7 +184,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
         </div>
       </form>
       
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
