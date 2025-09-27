@@ -76,7 +76,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
     playSound('start');
 
     const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
-// FIX: Add a guard clause to ensure all necessary project data exists.
+
     if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
         setError("Data project (logo/persona) tidak lengkap.");
         setIsLoading(false);

@@ -607,13 +607,13 @@ const MainApp: React.FC = () => {
     if (!session) {
         return (
             <>
-                <LoginScreen onGoogleLogin={handleGoogleLogin} isCaptchaSolved={!showCaptcha} />
+                <LoginScreen onGoogleLogin={handleGoogleLogin} isCaptchaSolved={!showCaptcha} onShowToS={openToSModal} />
                 <Suspense fallback={null}>
                     <PuzzleCaptchaModal
                         show={showCaptcha}
                         onSuccess={() => {
                             setShowCaptcha(false);
-                            openToSModal(); // Show ToS after captcha is solved
+                            // Do not automatically show ToS here anymore; let the user click the link.
                         }}
                     />
                     <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />

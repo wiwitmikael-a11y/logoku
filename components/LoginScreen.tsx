@@ -1,14 +1,16 @@
+
 import React from 'react';
 import Button from './common/Button';
 
 interface Props {
   onGoogleLogin: () => void;
   isCaptchaSolved: boolean;
+  onShowToS: () => void;
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved }) => {
+const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowToS }) => {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 text-center">
       <div className="max-w-md w-full">
@@ -36,7 +38,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved }) => {
         </div>
 
         <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-          Wih, ada juragan! Pusing mikirin logo atau bingung mau posting apa di sosmed? Tenang, serahin aja sama ahlinya... Mang AI! Di sini, kita bakal ngeracik logo anti-mainstream, nentuin persona brand, sampe bikinin jadwal konten lengkap sama caption-nya. Hemat waktu, hemat biaya, hasilnya dijamin hore!
+          Siap bikin brand lo naik kelas, Juragan? Lupakan pusingnya mikirin logo, bingung mau posting apa, atau bayar mahal agensi. Mang AI hadir sebagai partner setia lo! Cuma butuh beberapa menit, kita bakal sulap ide lo jadi logo profesional, persona brand yang kuat, sampe rentetan konten sosmed siap pakai. Ini bukan sekadar aplikasi, ini studio branding di saku lo. Hemat waktu, hemat biaya, saatnya bisnis lo jadi juara!
         </p>
         
         <div className="bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-3 mb-8 max-w-sm mx-auto text-sm text-yellow-200">
@@ -63,9 +65,13 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved }) => {
         
         <p className="text-xs text-gray-500 mt-8">
           Dengan masuk, lo setuju sama{' '}
-          <span className={`text-indigo-400 ${!isCaptchaSolved ? 'opacity-50 cursor-not-allowed' : ''}`}>
+          <button 
+            onClick={isCaptchaSolved ? onShowToS : undefined} 
+            disabled={!isCaptchaSolved}
+            className="text-indigo-400 hover:underline focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+          >
             Ketentuan Layanan
-          </span>{' '}
+          </button>{' '}
           kami.
            {!isCaptchaSolved && <span className="block text-yellow-400 text-[11px] mt-1">Selesaikan puzzle di atas dulu, Juragan!</span>}
         </p>

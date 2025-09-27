@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import Button from './Button';
 
@@ -51,7 +52,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
              <h2 id="tos-title" className="text-2xl font-bold text-indigo-400">
                 Ketentuan Layanan (Terms of Service)
             </h2>
-            <p className="text-sm text-gray-400">Terakhir diperbarui: 12 September 2025</p>
+            <p className="text-sm text-gray-400">Terakhir diperbarui: 15 Juli 2024</p>
         </header>
 
         <main className="p-6 overflow-y-auto text-gray-300 text-sm space-y-4">
@@ -68,7 +69,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
             </div>
 
              <div className="space-y-2">
-                <h3 className="font-bold text-white text-base">3. Kepemilikan dan Tanggung Jawab Pengguna</h3>
+                <h3 className="font-bold text-white text-base">3. Kepemilikan Konten dan Tanggung Jawab Pengguna</h3>
                 <p>Anda memegang hak untuk menggunakan Konten yang Dihasilkan untuk keperluan pribadi maupun komersial. Namun, Anda, sebagai pengguna, memikul tanggung jawab penuh atas penggunaan tersebut. Sebelum menggunakan logo atau aset brand lainnya untuk tujuan komersial, Anda <strong className="text-yellow-400">WAJIB</strong> melakukan uji tuntas (due diligence) Anda sendiri. Ini termasuk, namun tidak terbatas pada:</p>
                 <ul className="list-disc list-inside pl-4 space-y-1">
                     <li>Melakukan pencarian merek dagang (trademark) pada database pemerintah yang relevan (misalnya, Pangkalan Data Kekayaan Intelektual - PDKI di Indonesia).</li>
@@ -88,12 +89,28 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
             </div>
 
             <div className="space-y-2">
-                <h3 className="font-bold text-white text-base">6. Ganti Rugi (Indemnifikasi)</h3>
-                <p>Anda setuju untuk membela, mengganti rugi, dan membebaskan logo.ku dan para pengembangnya dari segala klaim, kerusakan, kewajiban, kerugian, dan pengeluaran yang timbul dari penggunaan Konten yang Dihasilkan oleh Anda yang melanggar hak pihak ketiga atau melanggar Ketentuan Layanan ini.</p>
+                <h3 className="font-bold text-white text-base">6. Penggunaan yang Dilarang</h3>
+                 <p>Anda setuju untuk tidak menggunakan Layanan untuk tujuan apa pun yang melanggar hukum atau dilarang oleh Ketentuan ini. Anda tidak boleh menggunakan Layanan untuk:</p>
+                 <ul className="list-disc list-inside pl-4 space-y-1">
+                    <li>Membuat konten yang bersifat melecehkan, memfitnah, cabul, diskriminatif, atau melanggar hukum.</li>
+                    <li>Melanggar hak kekayaan intelektual atau hak privasi pihak lain.</li>
+                    <li>Mencoba merekayasa balik (reverse engineer), mendekompilasi, atau membongkar bagian mana pun dari Aplikasi.</li>
+                    <li>Menyebarkan virus, malware, atau kode berbahaya lainnya.</li>
+                </ul>
             </div>
 
             <div className="space-y-2">
-                <h3 className="font-bold text-white text-base">7. Perubahan dan Penghentian Layanan</h3>
+                <h3 className="font-bold text-white text-base">7. Ganti Rugi (Indemnifikasi)</h3>
+                <p>Anda setuju untuk membela, mengganti rugi, dan membebaskan logo.ku dan para pengembangnya dari segala klaim, kerusakan, kewajiban, kerugian, dan pengeluaran yang timbul dari penggunaan Konten yang Dihasilkan oleh Anda yang melanggar hak pihak ketiga atau melanggar Ketentuan Layanan ini.</p>
+            </div>
+
+             <div className="space-y-2">
+                <h3 className="font-bold text-white text-base">8. Hukum yang Mengatur</h3>
+                <p>Ketentuan Layanan ini diatur oleh dan ditafsirkan sesuai dengan hukum yang berlaku di Republik Indonesia, tanpa memperhatikan pertentangan ketentuan hukum.</p>
+            </div>
+
+            <div className="space-y-2">
+                <h3 className="font-bold text-white text-base">9. Perubahan dan Penghentian Layanan</h3>
                 <p>Kami berhak untuk mengubah atau menghentikan Layanan (atau bagian apa pun darinya) kapan saja dengan atau tanpa pemberitahuan. Kami juga berhak untuk menangguhkan atau menghentikan akun pengguna yang melanggar Ketentuan ini.</p>
             </div>
 

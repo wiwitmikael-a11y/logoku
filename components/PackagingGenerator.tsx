@@ -118,7 +118,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         playSound('error');
         return;
     }
-// FIX: Add a guard clause to ensure the logo URL exists before proceeding.
+
     if (!prompt || !projectData.selectedLogoUrl) {
         setError("Data logo tidak ditemukan untuk membuat desain kemasan.");
         playSound('error');

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { playSound, playBGM } from '../../services/soundService';
 
@@ -139,7 +140,7 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
             style={{ imageRendering: 'pixelated' }}
         />
         <h2 id="captcha-title" className="text-xl font-bold text-indigo-400 mb-2">Eits, Tahan Dulu, Juragan!</h2>
-        <p className="text-gray-300 mb-8 text-center text-sm">Mang AI curiga nih, jangan-jangan lo robot kiriman kompetitor. Coba buktiin dulu kalo lo manusia dengan geser slider ini sampe mentok.</p>
+        <p className="text-gray-300 mb-8 text-center text-sm">Sebelum kita mulai ngeracik brand juara, buktikan kalo lo pejuang UMKM sejati dengan geser slider ini sampe mentok!</p>
 
         <div 
           ref={trackRef}

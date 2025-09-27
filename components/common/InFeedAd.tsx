@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { AD_PUBLISHER_ID, AD_SLOT_ID_IN_CONTENT } from '../../services/adsenseConfig';
 
@@ -5,7 +6,7 @@ import { AD_PUBLISHER_ID, AD_SLOT_ID_IN_CONTENT } from '../../services/adsenseCo
  * Komponen untuk menampilkan iklan Display responsif di dalam feed/konten.
  * Ini lebih andal daripada "In-feed" untuk aplikasi React yang dirender di sisi klien.
  */
-const InFeedAd: React.FC = () => {
+const InFeedAd = () => {
   const adPushed = useRef(false);
 
   useEffect(() => {
