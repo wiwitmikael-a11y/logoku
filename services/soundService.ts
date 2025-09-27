@@ -103,12 +103,8 @@ export const playBGM = (bgmName: BgmName): void => {
         currentBGM.onended = null;
     }
     currentBGM = getAudio(bgmUrls[bgmName], true);
-    // Special volume for the welcome/logo jingle
-    if (bgmName === 'welcome' || bgmName === 'Jingle') {
-        currentBGM.volume = 0.4; // Louder volume for the jingle
-    } else {
-        currentBGM.volume = 0.15; // Standard volume for other background music
-    }
+    // Set a consistent, subtle volume for ALL background music.
+    currentBGM.volume = 0.15;
     currentBGM.play().catch(() => {});
 };
 
