@@ -94,6 +94,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
+      // FIX: Correctly call generateMerchandiseMockup with two arguments.
       const results = await generateMerchandiseMockup(prompt, projectData.selectedLogoUrl);
       
       await deductCredits(GENERATION_COST);

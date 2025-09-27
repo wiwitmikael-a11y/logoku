@@ -133,6 +133,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
+      // FIX: Correctly call generatePackagingDesign with two arguments.
       const results = await generatePackagingDesign(prompt, projectData.selectedLogoUrl);
       await deductCredits(GENERATION_COST);
       setDesigns(results);

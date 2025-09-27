@@ -17,16 +17,20 @@ interface Props {
 }
 
 const businessCategories = ["Makanan", "Minuman", "Fashion", "Jasa", "Kecantikan", "Kerajinan Tangan", "Lainnya"];
+const targetAudienceCategories = ["Masyarakat Umum", "Mahasiswa", "Pekerja Kantoran", "Keluarga", "Remaja", "Anak-anak"];
 
 const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
-  const [formData, setFormData] = useState<Omit<BrandInputs, 'industry'>>({
-    businessName: 'Kopi Senja',
-    businessCategory: 'Minuman',
-    businessDetail: 'Kopi Susu Gula Aren',
-    targetAudience: 'Mahasiswa dan pekerja muda usia 18-28 tahun',
-    valueProposition: 'Tempat yang nyaman untuk bekerja dan bersantai dengan harga terjangkau.',
-    competitors: 'Starbucks, Kopi Kenangan',
+  // NEW: Local form state to handle the split audience input and empty defaults
+  const [formState, setFormState] = useState({
+    businessName: '',
+    businessCategory: 'Makanan',
+    businessDetail: '',
+    targetAudienceCat: 'Masyarakat Umum',
+    targetAudienceAge: '',
+    valueProposition: 'Kualitas premium dengan harga terjangkau dan pelayanan yang ramah.',
+    competitors: '',
   });
+
   const [personas, setPersonas] = useState<BrandPersona[]>([]);
   const [slogans, setSlogans] = useState<string[]>([]);
   const [selectedPersonaIndex, setSelectedPersonaIndex] = useState<number | null>(null);
@@ -40,10 +44,25 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
   const slogansRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load persisted state on component mount
+    // Load persisted state and parse it into the local form state
     const persistedState = loadWorkflowState();
     if (persistedState?.brandInputs) {
-      setFormData(persistedState.brandInputs);
+      const { businessName, businessCategory, businessDetail, targetAudience, valueProposition, competitors } = persistedState.brandInputs;
+      
+      // Simple regex to parse back the age
+      const ageMatch = targetAudience.match(/usia ([\d\-]+)/i);
+      const age = ageMatch ? ageMatch[1] : '';
+      const category = targetAudience.replace(/(\s+usia\s+[\d\-]+)/i, '').trim() || 'Masyarakat Umum';
+      
+      setFormState({
+        businessName: businessName || '',
+        businessCategory: businessCategory || 'Makanan',
+        businessDetail: businessDetail || '',
+        targetAudienceCat: category,
+        targetAudienceAge: age,
+        valueProposition: valueProposition || 'Kualitas premium dengan harga terjangkau dan pelayanan yang ramah.',
+        competitors: competitors || '',
+      });
     }
   }, []);
 
@@ -72,7 +91,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormState(prev => ({ ...prev, [name]: value }));
   };
 
   const handleGeneratePersona = useCallback(async (e?: React.FormEvent) => {
@@ -86,14 +105,15 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
     setShowNextStepNudge(false); // Reset nudge
     playSound('start');
 
-    const combinedIndustry = `${formData.businessCategory} ${formData.businessDetail}`.trim();
+    const combinedIndustry = `${formState.businessCategory} ${formState.businessDetail}`.trim();
+    const combinedAudience = `${formState.targetAudienceCat}${formState.targetAudienceAge ? ` usia ${formState.targetAudienceAge}` : ''}`.trim();
 
     try {
       const result = await generateBrandPersona(
-        formData.businessName,
+        formState.businessName,
         combinedIndustry,
-        formData.targetAudience,
-        formData.valueProposition
+        combinedAudience,
+        formState.valueProposition
       );
       setPersonas(result);
       playSound('success');
@@ -104,7 +124,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
     } finally {
       setIsLoadingPersona(false);
     }
-  }, [formData]);
+  }, [formState]);
   
   const handleSelectPersona = useCallback((index: number) => {
       if (selectedPersonaIndex !== index) {
@@ -125,7 +145,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
     playSound('start');
 
     try {
-        const result = await generateSlogans(formData.businessName, personas[selectedPersonaIndex], formData.competitors);
+        const result = await generateSlogans(formState.businessName, personas[selectedPersonaIndex], formState.competitors);
         setSlogans(result);
         playSound('success');
     } catch (err) {
@@ -135,13 +155,24 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
     } finally {
         setIsLoadingSlogan(false);
     }
-  }, [selectedPersonaIndex, personas, formData]);
+  }, [selectedPersonaIndex, personas, formState]);
 
 
   const handleContinue = () => {
     if (selectedPersonaIndex !== null && selectedSlogan && personas[selectedPersonaIndex]) {
-      const combinedIndustry = `${formData.businessCategory} ${formData.businessDetail}`.trim();
-      const inputs: BrandInputs = { ...formData, industry: combinedIndustry };
+      const combinedIndustry = `${formState.businessCategory} ${formState.businessDetail}`.trim();
+      const combinedAudience = `${formState.targetAudienceCat}${formState.targetAudienceAge ? ` usia ${formState.targetAudienceAge}` : ''}`.trim();
+      
+      const inputs: BrandInputs = {
+        businessName: formState.businessName,
+        businessCategory: formState.businessCategory,
+        businessDetail: formState.businessDetail,
+        industry: combinedIndustry,
+        targetAudience: combinedAudience,
+        valueProposition: formState.valueProposition,
+        competitors: formState.competitors,
+      };
+
       onComplete({
         inputs,
         selectedPersona: personas[selectedPersonaIndex],
@@ -157,31 +188,45 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
         <p className="text-gray-400">Ceritain bisnismu. Mang AI akan meracik persona, target avatar, gaya bicara, sampai slogan yang paling pas.</p>
       </div>
 
-      <form onSubmit={handleGeneratePersona} className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-        <Input label="Nama Bisnis" name="businessName" value={formData.businessName} onChange={handleChange} placeholder="cth: Kopi Senja" />
+      <form onSubmit={handleGeneratePersona} className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+        <Input label="Nama Bisnis" name="businessName" value={formState.businessName} onChange={handleChange} placeholder="cth: Kopi Senja" />
         
-        {/* --- NEW STRUCTURED BUSINESS INPUT --- */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
                  <label htmlFor="businessCategory" className="block mb-2 text-sm font-medium text-gray-300">Kategori Bisnis</label>
                  <select
                     id="businessCategory"
                     name="businessCategory"
-                    value={formData.businessCategory}
+                    value={formState.businessCategory}
                     onChange={handleChange}
                     className="w-full px-4 py-2 text-gray-200 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                  >
                     {businessCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                  </select>
             </div>
-             <Input label="Detail Bisnis" name="businessDetail" value={formData.businessDetail} onChange={handleChange} placeholder="cth: Sate Padang" />
+             <Input label="Detail Bisnis" name="businessDetail" value={formState.businessDetail} onChange={handleChange} placeholder="cth: Kopi Susu Gula Aren" />
         </div>
 
-        <Textarea label="Target Pasar" name="targetAudience" value={formData.targetAudience} onChange={handleChange} placeholder="cth: Anak muda, keluarga" rows={3} />
-        <Textarea label="Yang Bikin Beda (Value Proposition)" name="valueProposition" value={formData.valueProposition} onChange={handleChange} placeholder="cth: Organik, murah, mewah" rows={3} />
-        <Textarea className="md:col-span-2" label="Sebutin 1-2 Kompetitor" name="competitors" value={formData.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+                 <label htmlFor="targetAudienceCat" className="block mb-2 text-sm font-medium text-gray-300">Target Pasar</label>
+                 <select
+                    id="targetAudienceCat"
+                    name="targetAudienceCat"
+                    value={formState.targetAudienceCat}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 text-gray-200 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                 >
+                    {targetAudienceCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                 </select>
+            </div>
+             <Input label="Usia Target Pasar (Tahun)" name="targetAudienceAge" value={formState.targetAudienceAge} onChange={handleChange} placeholder="cth: 18-25" />
+        </div>
+
+        <Textarea label="Yang Bikin Beda (Value Proposition)" name="valueProposition" value={formState.valueProposition} onChange={handleChange} placeholder="cth: Organik, murah, mewah" rows={3} />
+        <Textarea label="Sebutin 1-2 Kompetitor" name="competitors" value={formState.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
         
-        <div className="md:col-span-2 flex items-center gap-4">
+        <div className="flex items-center gap-4">
           <Button type="submit" isLoading={isLoadingPersona}>
             Racik Persona Sekarang!
           </Button>

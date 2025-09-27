@@ -445,7 +445,7 @@ export const generateLogoVariations = async (baseLogoBase64: string, businessNam
         const [stackedResultBase64, horizontalResultBase64, monochromeResultBase64] = await Promise.all([
             editLogo(base64Data, mimeType, stackedPrompt),
             editLogo(base64Data, mimeType, horizontalPrompt),
-// FIX: The monochrome version should be generated from the original base logo to avoid dependency on the horizontal version, which might fail.
+            // FIX: The monochrome version should be generated from the original base logo to avoid dependency on the horizontal version, which might fail.
             editLogo(base64Data, mimeType, monochromePrompt)
         ]);
         

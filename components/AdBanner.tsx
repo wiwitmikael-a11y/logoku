@@ -10,7 +10,7 @@ import { AD_PUBLISHER_ID, AD_SLOT_ID_BANNER } from '../services/adsenseConfig';
  */
 // FIX: Changed signature to React.FC to resolve missing JSX namespace error,
 // aligning with other components in the project.
-const AdBanner = () => {
+const AdBanner: React.FC = () => {
   const adPushed = useRef(false);
   const adInsRef = useRef<HTMLModElement>(null);
   const [isAdVisible, setIsAdVisible] = useState(false);

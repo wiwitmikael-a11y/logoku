@@ -105,6 +105,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
           The design must be highly legible from a distance. Place the logo prominently. Ensure all text is clear.`;
       }
 
+      // FIX: Correctly call generatePrintMedia with two string arguments.
       const results = await generatePrintMedia(prompt, selectedLogoUrl);
       
       await deductCredits(GENERATION_COST);
