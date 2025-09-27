@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,7 +18,7 @@ interface Props {
   isFinalizing: boolean;
 }
 
-type MediaTab = 'business_card' | 'banner';
+type MediaTab = 'roll_banner' | 'banner';
 const GENERATION_COST = 1;
 
 const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinalizing }) => {
@@ -25,9 +26,10 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
   const credits = profile?.credits ?? 0;
   const businessHandle = projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
 
-  const [activeTab, setActiveTab] = useState<MediaTab>('business_card');
+  const [activeTab, setActiveTab] = useState<MediaTab>('roll_banner');
   const [designs, setDesigns] = useState<string[]>([]);
-  const [selectedDesignBase64, setSelectedDesignBase64] = useState<string | null>(null);
+  const [generatedAssets, setGeneratedAssets] = useState<PrintMediaAssets>({});
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
@@ -35,16 +37,14 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
   const resultsRef = useRef<HTMLDivElement>(null);
   
   // State for inputs
-  const [cardInfo, setCardInfo] = useState({
-    name: 'Rangga P. H.',
-    title: 'Owner',
-    phone: '0812-3456-7890',
-    email: `halo@${businessHandle}.com`,
-    website: `www.${businessHandle}.com`,
-  });
   const [bannerInfo, setBannerInfo] = useState({
     headline: 'SEGERA DIBUKA!',
     subheadline: `Nantikan ${projectData.brandInputs?.businessName} di kota Anda!`,
+  });
+  const [rollBannerInfo, setRollBannerInfo] = useState({
+    headline: `Selamat Datang di ${projectData.brandInputs?.businessName}`,
+    body: '• Kopi Berkualitas\n• Tempat Nyaman\n• Harga Terjangkau',
+    contact: `@${businessHandle}`,
   });
 
   const openModal = (url: string) => setModalImageUrl(url);
@@ -60,7 +60,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
     }
   }, [designs]);
 
-  // FIX: The handleSubmit function was completely rewritten to correctly build a prompt string and call the `generatePrintMedia` service with the right arguments, resolving a type mismatch error.
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -73,14 +72,15 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
     setIsLoading(true);
     setError(null);
     setDesigns([]);
-    setSelectedDesignBase64(null);
     setShowNextStepNudge(false);
     playSound('start');
 
     const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
+// FIX: Add a guard clause to ensure all necessary project data exists.
     if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
         setError("Data project (logo/persona) tidak lengkap.");
         setIsLoading(false);
+        playSound('error');
         return;
     }
 
@@ -89,15 +89,15 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       const colors = selectedPersona.palet_warna_hex.join(', ');
       const style = selectedPersona.kata_kunci.join(', ');
 
-      if (activeTab === 'business_card') {
-          prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a business card. Do NOT create a mockup, create the final print-ready design (aspect ratio 3.5:2).
+      if (activeTab === 'roll_banner') {
+          prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a vertical roll-up banner (aspect ratio 9:16). Do NOT create a mockup, create the final print-ready design.
           - Brand Name: ${brandInputs.businessName}
-          - Style: ${style}, minimalist, professional.
+          - Style: ${style}, modern, eye-catching.
           - Colors: Use this palette: ${colors}.
-          - Content to include: Name: ${cardInfo.name}, Title: ${cardInfo.title}, Phone: ${cardInfo.phone}, Email: ${cardInfo.email}, Website: ${cardInfo.website}.
-          The design must be clean, legible, and follow the brand's persona. Place the logo appropriately. Ensure all text is clear.`;
+          - Content to include: Headline at top: "${rollBannerInfo.headline}", Body text in middle: "${rollBannerInfo.body}", Contact info at bottom: "${rollBannerInfo.contact}".
+          The design must be highly legible. Place the logo prominently near the top. Ensure all text is clear.`;
       } else if (activeTab === 'banner') {
-          prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a horizontal outdoor banner (spanduk, aspect ratio 16:9). Do NOT create a mockup, create the final print-ready design.
+          prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a horizontal outdoor banner (spanduk, aspect ratio 3:1). Do NOT create a mockup, create the final print-ready design.
           - Brand Name: ${brandInputs.businessName}
           - Style: ${style}, bold, eye-catching.
           - Colors: Use this palette: ${colors}.
@@ -109,7 +109,14 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       
       await deductCredits(GENERATION_COST);
       setDesigns(results);
-      setSelectedDesignBase64(results[0]);
+      
+      // Store the result in the corresponding asset state
+      if (activeTab === 'roll_banner') {
+        setGeneratedAssets(prev => ({ ...prev, rollBannerUrl: results[0] }));
+      } else if (activeTab === 'banner') {
+        setGeneratedAssets(prev => ({ ...prev, bannerUrl: results[0] }));
+      }
+
       setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
@@ -119,15 +126,10 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, activeTab, cardInfo, bannerInfo]);
+  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, activeTab, rollBannerInfo, bannerInfo]);
 
   const handleFinalize = () => {
-    if (selectedDesignBase64) {
-      const assets: PrintMediaAssets = {};
-      if(activeTab === 'business_card') assets.businessCardUrl = selectedDesignBase64;
-      if(activeTab === 'banner') assets.bannerUrl = selectedDesignBase64;
-      onComplete(assets);
-    }
+    onComplete(generatedAssets);
   };
 
   const handleTabClick = (tab: MediaTab) => {
@@ -135,19 +137,16 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       setActiveTab(tab);
       setShowNextStepNudge(false);
       setDesigns([]);
-      setSelectedDesignBase64(null);
   }
   
   const renderForm = () => {
       switch(activeTab) {
-          case 'business_card':
-            return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                    <Input label="Nama Lengkap" name="name" value={cardInfo.name} onChange={(e) => handleInfoChange(e, setCardInfo)} />
-                    <Input label="Jabatan/Title" name="title" value={cardInfo.title} onChange={(e) => handleInfoChange(e, setCardInfo)} />
-                    <Input label="Nomor Telepon" name="phone" value={cardInfo.phone} onChange={(e) => handleInfoChange(e, setCardInfo)} />
-                    <Input label="Alamat Email" name="email" value={cardInfo.email} onChange={(e) => handleInfoChange(e, setCardInfo)} />
-                    <Input className="md:col-span-2" label="Website / Social Media" name="website" value={cardInfo.website} onChange={(e) => handleInfoChange(e, setCardInfo)} />
+          case 'roll_banner':
+             return (
+                 <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <Input label="Headline (di bagian atas)" name="headline" value={rollBannerInfo.headline} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} />
+                    <Textarea label="Isi Konten (bisa pakai bullet point)" name="body" value={rollBannerInfo.body} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} rows={4} />
+                    <Input label="Info Kontak (di bagian bawah)" name="contact" value={rollBannerInfo.contact} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} placeholder="cth: @namabisnislo" />
                 </div>
             );
           case 'banner':
@@ -170,15 +169,15 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       </div>
       
       <div className="flex flex-wrap border-b border-gray-700">
-          <button onClick={() => handleTabClick('business_card')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'business_card' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Kartu Nama</button>
-          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk</button>
+          <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Roll Banner (Vertikal)</button>
+          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk (Horizontal)</button>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {renderForm()}
         <div className="self-start">
             <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>
-                {`Bikinin Desain ${activeTab === 'business_card' ? 'Kartu Nama' : 'Spanduk'}! (${GENERATION_COST} Kredit)`}
+                {`Bikinin Desain ${activeTab === 'roll_banner' ? 'Roll Banner' : 'Spanduk'}! (${GENERATION_COST} Kredit)`}
             </Button>
         </div>
       </form>
@@ -205,7 +204,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
                 Satu langkah lagi!
             </CalloutPopup>
         )}
-        <Button onClick={handleFinalize} disabled={!selectedDesignBase64 || isFinalizing} isLoading={isFinalizing}>
+        <Button onClick={handleFinalize} disabled={Object.keys(generatedAssets).length === 0 || isFinalizing} isLoading={isFinalizing}>
           {isFinalizing ? 'Finalisasi & Simpan Project...' : 'Selesai & Lihat Brand Kit Lengkap &rarr;'}
         </Button>
       </div>

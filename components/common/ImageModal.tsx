@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 
 interface ImageModalProps {
@@ -49,7 +50,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) =
         } catch (e) { /* Invalid URL, fallback to png */ }
     }
     
-    const filename = `${altText.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${extension}`;
+    const filename = `${altText.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'download'}.${extension}`;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
@@ -65,7 +66,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) =
         const response = await fetch(imageUrl);
         const blob = await response.blob();
         const extension = blob.type.split('/')[1] || 'png';
-        const filename = `${altText.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${extension}`;
+        const filename = `${altText.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'download'}.${extension}`;
         const file = new File([blob], filename, { type: blob.type });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {

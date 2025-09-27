@@ -1,9 +1,26 @@
-import React, { useEffect, useState, useMemo } from 'react';
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import type { Project } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Card from './common/Card';
 import InFeedAd from './common/InFeedAd'; // Import komponen iklan baru
+
+type AppState = 'persona' | 'logo' | 'logo_detail' | 'content' | 'social_kit' | 'profile_optimizer' | 'social_ads' | 'packaging' | 'print_media' | 'caption' | 'summary';
+
+const workflowSteps: { id: AppState; name: string }[] = [
+    { id: 'persona', name: '1. Brand Persona' },
+    { id: 'logo', name: '2. Desain Logo' },
+    { id: 'logo_detail', name: '3. Finalisasi Logo' },
+    { id: 'content', name: '4. Kalender Konten' },
+    { id: 'social_kit', name: '5. Social Media Kit' },
+    { id: 'profile_optimizer', name: '6. Optimasi Profil' },
+    { id: 'social_ads', name: '7. Teks Iklan' },
+    { id: 'packaging', name: '8. Desain Kemasan' },
+    { id: 'print_media', name: '9. Media Cetak' },
+    { id: 'caption', name: 'Tools: Caption Generator' },
+    { id: 'summary', name: 'Lihat Ringkasan' },
+];
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -15,6 +32,7 @@ interface ProjectDashboardProps {
   syncingProjectId: number | null;
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
+  onJumpToStep: (projectId: number, step: AppState) => void;
 }
 
 const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
@@ -40,8 +58,53 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
     );
 };
 
+const ProjectCardMenu: React.FC<{ project: Project; onJumpToStep: (projectId: number, step: AppState) => void }> = ({ project, onJumpToStep }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onDeleteProject, onSyncProject, syncingProjectId, showWelcomeBanner, onWelcomeBannerClose }) => {
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleSelectStep = (step: AppState) => {
+        onJumpToStep(project.id, step);
+        setIsOpen(false);
+    };
+
+    return (
+        <div ref={menuRef} className="absolute top-3 right-3 z-10">
+            <button
+                onClick={(e) => { e.stopPropagation(); setIsOpen(prev => !prev); }}
+                className="p-1.5 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white transition-colors"
+                title="Konfigurasi Project"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
+            </button>
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
+                    {workflowSteps.map(step => (
+                        <button
+                            key={step.id}
+                            onClick={(e) => { e.stopPropagation(); handleSelectStep(step.id); }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                        >
+                            {step.name}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onDeleteProject, onSyncProject, syncingProjectId, showWelcomeBanner, onWelcomeBannerClose, onJumpToStep }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
@@ -79,7 +142,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
           <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {inProgressProjects.map(project => (
-                <div key={project.id} className="relative">
+                <div key={project.id} className="relative group">
                     <Card 
                     title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
                     onClick={() => onContinueProject(project.id)}
@@ -92,9 +155,10 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                         <Button onClick={(e) => { e.stopPropagation(); onContinueProject(project.id); }} variant="secondary" size="small">Lanjutkan</Button>
                     </div>
                     </Card>
-                    <button
+                     <ProjectCardMenu project={project} onJumpToStep={onJumpToStep} />
+                     <button
                         onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                        className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
+                        className="absolute bottom-3 left-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10 opacity-0 group-hover:opacity-100"
                         title="Hapus Project"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
@@ -110,7 +174,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
             <h3 className="text-lg md:text-xl font-bold mb-4">Project Siap Sinkronisasi:</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {localCompleteProjects.map(project => (
-                <div key={project.id} className="relative">
+                <div key={project.id} className="relative group">
                 <Card 
                     title={project.project_data.brandInputs.businessName}
                 >
@@ -135,9 +199,10 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                     </Button>
                     </div>
                 </Card>
+                 <ProjectCardMenu project={project} onJumpToStep={onJumpToStep} />
                  <button
                     onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                    className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
+                    className="absolute bottom-3 left-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10 opacity-0 group-hover:opacity-100"
                     title="Hapus Project"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
@@ -153,7 +218,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
           <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {completedProjects.map(project => (
-                 <div key={project.id} className="relative">
+                 <div key={project.id} className="relative group">
                     <Card 
                     title={project.project_data.brandInputs.businessName}
                     onClick={() => onSelectProject(project.id)}
@@ -170,9 +235,10 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                         <Button onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} variant="secondary" size="small">Lihat Brand Kit</Button>
                     </div>
                     </Card>
+                    <ProjectCardMenu project={project} onJumpToStep={onJumpToStep} />
                     <button
                         onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-                        className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
+                        className="absolute bottom-3 left-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10 opacity-0 group-hover:opacity-100"
                         title="Hapus Project"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>

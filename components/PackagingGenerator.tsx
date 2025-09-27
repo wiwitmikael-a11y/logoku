@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -117,7 +118,12 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         playSound('error');
         return;
     }
-    if (!prompt || !projectData.selectedLogoUrl) return;
+// FIX: Add a guard clause to ensure the logo URL exists before proceeding.
+    if (!prompt || !projectData.selectedLogoUrl) {
+        setError("Data logo tidak ditemukan untuk membuat desain kemasan.");
+        playSound('error');
+        return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -127,7 +133,6 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
-      // FIX: Added the missing `logoBase64` argument (`projectData.selectedLogoUrl`) to the `generatePackagingDesign` call to resolve the "Expected 2 arguments, but got 1" error.
       const results = await generatePackagingDesign(prompt, projectData.selectedLogoUrl);
       await deductCredits(GENERATION_COST);
       setDesigns(results);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -260,6 +261,17 @@ const MainApp: React.FC = () => {
         
         navigateTo(nextState);
     }, [projects]);
+
+    // NEW: Handler for jumping to a specific step
+    const handleJumpToStep = useCallback((projectId: number, step: AppState) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        setSelectedProjectId(project.id);
+        saveWorkflowState(project.project_data); // Always load the project's state
+        navigateTo(step);
+    }, [projects]);
+
 
     const handleGoToCaptionGenerator = useCallback((projectId: number) => {
         const project = projects.find(p => p.id === projectId);
@@ -582,6 +594,7 @@ const MainApp: React.FC = () => {
                     onDeleteProject={handleRequestDeleteProject}
                     onSyncProject={handleSyncProject}
                     syncingProjectId={syncingProjectId}
+                    onJumpToStep={handleJumpToStep}
                 />;
         }
         // Fallback: If required data is missing, go to dashboard

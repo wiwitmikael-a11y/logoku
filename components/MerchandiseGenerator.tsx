@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -78,7 +79,12 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
         playSound('error');
         return;
     }
-    if (!prompt || !projectData.selectedLogoUrl) return;
+// FIX: Add a guard clause to ensure the logo URL is present before making an API call.
+    if (!prompt || !projectData.selectedLogoUrl) {
+        setError("Data logo tidak ditemukan untuk membuat mockup merchandise.");
+        playSound('error');
+        return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -88,7 +94,6 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
-      // FIX: Added the missing second argument, `projectData.selectedLogoUrl`, to the `generateMerchandiseMockup` function call.
       const results = await generateMerchandiseMockup(prompt, projectData.selectedLogoUrl);
       
       await deductCredits(GENERATION_COST);

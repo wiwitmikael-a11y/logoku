@@ -1,3 +1,4 @@
+
 import { supabase } from './supabaseClient';
 import { compressAndConvertToWebP } from '../utils/imageUtils';
 import type { Project, ProjectData } from '../types';
@@ -46,7 +47,8 @@ export const uploadImageFromBase64 = async (
     }
     
     const fileName = `${projectId}_${assetType}-${Date.now()}.webp`;
-    const filePath = `${userId}/${fileName}`;
+    // FIX: Changed path to a flat structure to avoid potential RLS issues with subdirectories.
+    const filePath = `${userId}-${fileName}`; 
     const file = new File([blob], fileName, { type: 'image/webp' });
 
     const { error: uploadError } = await supabase.storage
@@ -140,6 +142,11 @@ export const uploadAndSyncProjectAssets = async (project: Project): Promise<Proj
          if (isBase64DataUrl(newData.printMediaAssets.bannerUrl)) {
              createUploadTask(newData.printMediaAssets.bannerUrl, 'print-banner', url => {
                 if (newData.printMediaAssets) newData.printMediaAssets.bannerUrl = url;
+            });
+        }
+         if (isBase64DataUrl(newData.printMediaAssets.rollBannerUrl)) {
+             createUploadTask(newData.printMediaAssets.rollBannerUrl, 'print-roll-banner', url => {
+                if (newData.printMediaAssets) newData.printMediaAssets.rollBannerUrl = url;
             });
         }
     }

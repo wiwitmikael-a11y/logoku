@@ -1,3 +1,4 @@
+
 import React, { ErrorInfo, ReactNode } from 'react';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -13,15 +14,18 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Replaced constructor with a class property initializer.
-  // This resolves errors where `this.state` or `this.props` might not be correctly
-  // recognized by some TypeScript configurations or build tools.
-  // FIX: Removed 'public' accessor which may cause issues with some TS/build configs.
-  state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+// FIX: Explicitly bind the 'this' context of handleCopy in the constructor.
+// This is a robust way to prevent errors where `this.setState` might not be found
+// if the method is passed as a callback.
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
@@ -32,8 +36,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
   
-  // Using an arrow function to automatically bind `this`.
-  handleCopy = () => {
+// FIX: Changed from an arrow function to a standard class method.
+// Binding is now handled in the constructor for clarity and compatibility.
+  handleCopy() {
       if(this.state.error) {
           navigator.clipboard.writeText(this.state.error.toString());
           this.setState({ isCopied: true });

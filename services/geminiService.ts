@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { createWhiteCanvasBase64, fetchImageAsBase64 } from '../utils/imageUtils';
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets } from '../types';
@@ -110,7 +111,6 @@ Enhanced Prompt:`;
             contents: enhancementInstruction,
             config: { temperature: 0.7 }
         });
-        // FIX: The `text` property should be accessed directly, not called as a function.
         return response.text.trim();
     } catch (error) {
         console.warn("Prompt enhancement failed, using original prompt.", error);
@@ -133,7 +133,7 @@ Follow these steps meticulously:
 
 3.  **Develop a Rich Descriptive Vocabulary**: For the best concept, create a list of evocative adjectives and nouns. Focus on artistic styles (e.g., art deco, geometric minimalism, neo-vintage), line quality (e.g., sharp vector lines, soft gradients, clean edges), and color theory (e.g., duotone color scheme, vibrant analogous colors, high contrast). Think about 'logomark', 'symbol', 'negative space', and 'golden ratio'.
 
-4.  **Synthesize the Final Prompt**: Combine the best ideas into a single, cohesive, and highly descriptive final prompt. This final prompt is for an award-winning design. It MUST start with "masterpiece vector logo of...". It MUST specify "clean vector, minimalist, on a solid pure white background, #ffffff background". It must be EXTREMELY specific about shapes, lines, and colors. CRITICAL: ABSOLUTELY NO TEXT, WORDS, or LETTERS should be requested. Describe a symbolic, abstract icon only. The composition must be balanced, centered, and visually stunning.
+4.  **Synthesize the Final Prompt**: Combine the best ideas into a single, cohesive, and highly descriptive final prompt. This final prompt is for an award-winning design. It MUST start with "masterpiece vector logo of...". It MUST specify "clean vector, minimalist, on a solid pure white background, #ffffff background". It must be EXTREMELY specific about shapes, lines, and colors. CRITICAL: The logo design should occupy about 70% of the canvas to ensure it is prominent and not too small. ABSOLUTELY NO TEXT, WORDS, or LETTERS should be requested. Describe a symbolic, abstract icon only. The composition must be balanced, centered, and visually stunning.
 
 **Final, Polished Prompt for Image Generation:**`;
 
@@ -143,7 +143,6 @@ Follow these steps meticulously:
             contents: promptChainInstruction,
             config: { temperature: 0.85 }
         });
-        // FIX: The `text` property should be accessed directly, not called as a function.
         const cleanedPrompt = response.text.trim().replace(/^"|"$/g, '');
         return cleanedPrompt;
     } catch (error) {
@@ -155,7 +154,7 @@ Follow these steps meticulously:
 /**
  * Step 2: Generate an image on a white canvas using an enhanced prompt.
  */
-const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' | '4:3' | '16:9' | '9:16' | '3:4' = '1:1'): Promise<string> => {
+const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' | '4:3' | '16:9' | '9:16' | '3:4' | '3:1' = '1:1'): Promise<string> => {
     const ai = getAiClient();
 
     let width = 1024;
@@ -165,6 +164,7 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
     else if (aspectRatio === '16:9') { width = 1280; height = 720; }
     else if (aspectRatio === '9:16') { width = 720; height = 1280; }
     else if (aspectRatio === '3:4') { width = 768; height = 1024; }
+    else if (aspectRatio === '3:1') { width = 1536; height = 512; }
 
     const whiteCanvasBase64 = createWhiteCanvasBase64(width, height);
     const base64Data = whiteCanvasBase64.split(',')[1];
@@ -190,7 +190,6 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
             }
         }
         
-        // FIX: The `text` property should be accessed directly, not called as a function.
         const textResponse = response.text?.trim();
         if (textResponse) {
             console.error("Model did not return an image. Text response:", textResponse);
@@ -276,7 +275,6 @@ export const generateBrandPersona = async (businessName: string, industry: strin
         },
     });
     
-    // FIX: The `text` property should be accessed directly, not called as a function.
     return safeJsonParse<BrandPersona[]>(response.text, 'generateBrandPersona');
   } catch (error) {
     throw handleApiError(error, "Brand Persona");
@@ -305,7 +303,6 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
                 }
             },
         });
-        // FIX: The `text` property should be accessed directly, not called as a function.
         return safeJsonParse<string[]>(response.text, 'generateSlogans');
     } catch (error) {
         throw handleApiError(error, "Slogan");
@@ -348,7 +345,6 @@ export const generateCaptions = async (businessName: string, persona: BrandPerso
                 }
             },
         });
-        // FIX: The `text` property should be accessed directly, not called as a function.
         return safeJsonParse<GeneratedCaption[]>(response.text, 'generateCaptions');
     } catch (error) {
         throw handleApiError(error, "Caption");
@@ -382,9 +378,6 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
             },
         });
         
-        // FIX: The googleSearch tool does not guarantee a clean JSON response.
-        // It may be wrapped in markdown. Use cleanJsonString to safely extract it.
-        // FIX: The `text` property should be accessed directly, not called as a function.
         const cleanedJson = cleanJsonString(response.text, 'array');
         const calendar = safeJsonParse<ContentCalendarEntry[]>(cleanedJson, 'generateContentCalendar');
         const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
@@ -429,7 +422,6 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
             }
         }
         
-        // FIX: The `text` property should be accessed directly, not called as a function.
         const textResponse = response.text?.trim();
         if (textResponse) {
             console.error("Model did not return an image after edit. Text response:", textResponse);
@@ -448,18 +440,15 @@ export const generateLogoVariations = async (baseLogoBase64: string, businessNam
         
         const stackedPrompt = `Take the provided logo icon. Place the brand name "${businessName}" cleanly below the icon. Use a modern, legible sans-serif font that perfectly complements the logo's style. The entire composition should be centered and balanced. The final output must be a clean vector logo on a solid white background. Ensure the text is spelled correctly.`;
         const horizontalPrompt = `Take the provided logo icon. Place the brand name "${businessName}" cleanly to the right of the icon. Vertically align the icon and the text in the middle. Use a modern, legible sans-serif font that matches the logo's style. The whole design must be balanced. The final output must be a clean vector logo on a solid white background. Ensure the text is spelled correctly.`;
+        const monochromePrompt = `Take the provided logo image (icon only, no text). Convert the entire design into a high-contrast, monochrome (black and white) version. Do not change the shape or layout, only remove all color. The final output must be a clean vector logo on a solid white background.`;
 
-        const [stackedResultBase64, horizontalResultBase64] = await Promise.all([
+        const [stackedResultBase64, horizontalResultBase64, monochromeResultBase64] = await Promise.all([
             editLogo(base64Data, mimeType, stackedPrompt),
-            editLogo(base64Data, mimeType, horizontalPrompt)
+            editLogo(base64Data, mimeType, horizontalPrompt),
+// FIX: The monochrome version should be generated from the original base logo to avoid dependency on the horizontal version, which might fail.
+            editLogo(base64Data, mimeType, monochromePrompt)
         ]);
         
-        // Use the horizontal version to create the monochrome one
-        const horizontalData = horizontalResultBase64.split(',')[1];
-        const horizontalMime = horizontalResultBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
-        const monochromePrompt = `Take the provided logo image (which includes text). Convert the entire design into a high-contrast, monochrome (black and white) version. Do not change the shape or layout, only remove all color. The final output must be a clean vector logo on a solid white background.`;
-
-        const monochromeResultBase64 = await editLogo(horizontalData, horizontalMime, monochromePrompt);
 
         return { 
             main: baseLogoBase64, 
@@ -502,7 +491,6 @@ const generateImageWithLogo = async (logoBase64: string, instructionPrompt: stri
             }
         }
 
-        // FIX: The `text` property should be accessed directly, not called as a function.
         const textResponse = response.text?.trim();
         if (textResponse) {
             throw new Error(`Model tidak mengembalikan gambar. Pesan dari AI: "${textResponse}"`);
@@ -526,7 +514,6 @@ export const generateSocialMediaPostImage = async (idea: string, keywords: strin
     }
 };
 
-// FIX: Added logoUrl parameter to match function definition and usage.
 export const generatePackagingDesign = async (prompt: string, logoBase64: string): Promise<string[]> => {
     try {
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
@@ -536,9 +523,10 @@ export const generatePackagingDesign = async (prompt: string, logoBase64: string
     }
 };
 
-// FIX: The function signature was corrected to accept a prompt and a logoBase64 string.
 export const generatePrintMedia = async (prompt: string, logoBase64: string): Promise<string[]> => {
     try {
+        // This is a simplified version. A more complex one could generate a blank canvas first.
+        // For now, we rely on prompt engineering to get the desired aspect ratio.
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
         return [generatedBase64];
     } catch (error) {
@@ -546,7 +534,6 @@ export const generatePrintMedia = async (prompt: string, logoBase64: string): Pr
     }
 };
 
-// FIX: Added missing function for MerchandiseGenerator component
 export const generateMerchandiseMockup = async (prompt: string, logoBase64: string): Promise<string[]> => {
     try {
         const generatedBase64 = await generateImageWithLogo(logoBase64, prompt);
@@ -590,7 +577,6 @@ export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: 
                 }
             },
         });
-        // FIX: The `text` property should be accessed directly, not called as a function.
         return safeJsonParse<SocialProfileData>(response.text, 'generateSocialProfiles');
     } catch (error) {
         throw handleApiError(error, "Social Profiles");
@@ -633,7 +619,6 @@ export const generateSocialAds = async (brandInputs: BrandInputs, persona: Brand
                 }
             },
         });
-        // FIX: The `text` property should be accessed directly, not called as a function.
         return safeJsonParse<SocialAdsData>(response.text, 'generateSocialAds');
     } catch (error) {
         throw handleApiError(error, "Social Ads");
