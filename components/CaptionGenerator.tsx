@@ -114,7 +114,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
               <Card key={index} title={`Opsi ${index + 1}`}>
                  <div className="space-y-4">
                     <div className="relative">
-                         <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10">{item.caption}</p>
+                         <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10 selectable-text">{item.caption}</p>
                          <button 
                             onClick={() => copyToClipboard(item.caption)} 
                             title="Salin caption" 
@@ -124,7 +124,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
                         </button>
                     </div>
                     <div className="border-t border-gray-700 pt-3">
-                        <p className="text-indigo-300 text-xs break-words">{item.hashtags.join(' ')}</p>
+                        <p className="text-indigo-300 text-xs break-words selectable-text">{item.hashtags.join(' ')}</p>
                     </div>
                  </div>
               </Card>

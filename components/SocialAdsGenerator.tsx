@@ -103,14 +103,14 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
                                 </div>
                             </div>
                             <div className="relative">
-                                <p className="text-sm text-gray-300 whitespace-pre-wrap">{ad.adCopy}</p>
+                                <p className="text-sm text-gray-300 whitespace-pre-wrap selectable-text">{ad.adCopy}</p>
                                 <CopyButton textToCopy={ad.adCopy} className="absolute top-0 right-0" />
                             </div>
                         </div>
                         
                         {/* Keywords */}
                          <div className="relative">
-                            <p className="text-indigo-300 text-xs break-words">{ad.hashtags.join(' ')}</p>
+                            <p className="text-indigo-300 text-xs break-words selectable-text">{ad.hashtags.join(' ')}</p>
                             <CopyButton textToCopy={ad.hashtags.join(' ')} className="absolute top-0 right-0" />
                         </div>
                     </div>

@@ -15,17 +15,13 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Refactored to use a constructor for state initialization and method binding
-  // to ensure 'this' context is correctly handled across different environments.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  // FIX: Converted to use a class property for state and an arrow function for methods
+  // to ensure correct 'this' binding and simplify the component.
+  public state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error, isCopied: false };
@@ -35,7 +31,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
   
-  handleCopy() {
+  handleCopy = () => {
       if(this.state.error) {
           navigator.clipboard.writeText(this.state.error.toString());
           this.setState({ isCopied: true });
@@ -72,7 +68,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                 {this.state.error && (
                     <details className="mt-6 text-left text-xs text-gray-400">
                         <summary className="cursor-pointer">Detail Error (untuk developer)</summary>
-                        <pre className="mt-2 p-2 bg-gray-800 rounded overflow-auto">
+                        <pre className="mt-2 p-2 bg-gray-800 rounded overflow-auto selectable-text">
                             {this.state.error.toString()}
                         </pre>
                         <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-indigo-300 bg-transparent border border-indigo-500 hover:bg-indigo-500/20">

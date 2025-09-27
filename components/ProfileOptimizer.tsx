@@ -100,7 +100,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
                     </div>
                 </div>
                 <div className="relative">
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap">{profileData.instagramBio}</p>
+                    <p className="text-sm text-gray-300 whitespace-pre-wrap selectable-text">{profileData.instagramBio}</p>
                     <CopyButton textToCopy={profileData.instagramBio} className="absolute top-0 right-0" />
                 </div>
               </div>
@@ -112,7 +112,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
                 <img src={projectData.socialMediaKit?.profilePictureUrl} alt="logo" className="w-16 h-16 rounded-full bg-white p-1 mx-auto" />
                 <p className="font-bold text-white mt-2">@{businessHandle}</p>
                 <div className="relative mt-2">
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap">{profileData.tiktokBio}</p>
+                    <p className="text-sm text-gray-300 whitespace-pre-wrap selectable-text">{profileData.tiktokBio}</p>
                     <CopyButton textToCopy={profileData.tiktokBio} className="absolute top-0 right-0" />
                 </div>
               </div>
@@ -121,7 +121,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
             {/* Marketplace Description */}
             <Card title="Deskripsi Toko Marketplace">
                 <div className="relative">
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap max-h-48 overflow-auto">{profileData.marketplaceDescription}</p>
+                    <p className="text-sm text-gray-300 whitespace-pre-wrap max-h-48 overflow-auto selectable-text">{profileData.marketplaceDescription}</p>
                     <CopyButton textToCopy={profileData.marketplaceDescription} className="absolute top-0 right-0" />
                 </div>
             </Card>

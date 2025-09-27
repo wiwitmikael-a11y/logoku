@@ -56,6 +56,15 @@
         z-index: 0;
         /* The SVG circuit background has been removed. */
       }
+      
+      /* NEW: Allow text selection on specific elements */
+      .selectable-text {
+        -webkit-user-select: text; /* For Safari */
+        -moz-user-select: text;    /* For Firefox */
+        -ms-user-select: text;     /* For IE */
+        user-select: text;       /* Standard syntax */
+      }
+
 
       /* Layer 1: Static diagonal lines */
       body::before {

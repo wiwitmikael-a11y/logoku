@@ -27,7 +27,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, onGoToDashboard })
             />
             <div className="flex-1">
                 <h4 className="font-bold text-red-400 text-lg mb-1">Waduh, Ada Masalah!</h4>
-                <p className="text-red-200 text-sm">{message}</p>
+                <p className="text-red-200 text-sm selectable-text">{message}</p>
                 <div className="flex items-center gap-4 mt-4">
                     <Button 
                         onClick={handleCopy} 

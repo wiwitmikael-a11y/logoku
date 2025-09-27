@@ -255,19 +255,19 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
                 onClick={() => handleSelectPersona(index)}
                 isSelected={selectedPersonaIndex === index}
               >
-                <p className="text-gray-300 mb-4 h-20 overflow-auto">{persona.deskripsi_singkat}</p>
+                <p className="text-gray-300 mb-4 h-20 overflow-auto selectable-text">{persona.deskripsi_singkat}</p>
                 
                 {selectedPersonaIndex === index && (
                     <div className="flex flex-col gap-4 mt-4 pt-4 border-t border-gray-700">
                         <div>
                             <h4 className="font-semibold text-gray-200 mb-2">Avatar Pelanggan:</h4>
                             {persona.customer_avatars.map((avatar, i) => (
-                                <div key={i} className="text-xs p-2 bg-gray-700/50 rounded-md mb-2">
+                                <div key={i} className="text-xs p-2 bg-gray-700/50 rounded-md mb-2 selectable-text">
                                     <strong>{avatar.nama_avatar}:</strong> {avatar.deskripsi_demografis}. Aktif di {avatar.media_sosial.join(', ')}.
                                 </div>
                             ))}
                         </div>
-                        <div>
+                        <div className="selectable-text">
                             <h4 className="font-semibold text-gray-200 mb-2">Gaya Bicara:</h4>
                             <p className="text-xs text-gray-400"><strong>Gunakan:</strong> {persona.brand_voice.kata_yang_digunakan.join(', ')}</p>
                             <p className="text-xs text-gray-400"><strong>Hindari:</strong> {persona.brand_voice.kata_yang_dihindari.join(', ')}</p>
@@ -314,7 +314,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
                                 setSelectedSlogan(slogan);
                               }}
                               onMouseEnter={() => playSound('hover')}
-                              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
+                              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 selectable-text ${
                                   selectedSlogan === slogan
                                   ? 'bg-indigo-600 text-white'
                                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'

@@ -145,11 +145,11 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
                   <Card key={index} title={`Opsi Caption ${index + 1}`} className="bg-gray-800/50">
                      <div className="space-y-3">
                         <div className="relative">
-                             <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10">{item.caption}</p>
+                             <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10 selectable-text">{item.caption}</p>
                              <CopyButton textToCopy={item.caption} className="absolute top-0 right-0"/>
                         </div>
                         <div className="relative border-t border-gray-700 pt-3">
-                            <p className="text-indigo-300 text-xs break-words pr-10">{item.hashtags.join(' ')}</p>
+                            <p className="text-indigo-300 text-xs break-words pr-10 selectable-text">{item.hashtags.join(' ')}</p>
                             <CopyButton textToCopy={item.hashtags.join(' ')} className="absolute top-0 right-0"/>
                         </div>
                      </div>

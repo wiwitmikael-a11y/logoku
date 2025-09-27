@@ -78,11 +78,11 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGen
           <div className="flex flex-col gap-6">
             <Card title="Strategi Brand" className="print-card">
               <h4 className="text-xl font-bold text-gray-100 print-text-color">{brandInputs.businessName}</h4>
-              <p className="text-indigo-300 italic mt-1 print-text-brand">"{selectedSlogan}"</p>
+              <p className="text-indigo-300 italic mt-1 print-text-brand selectable-text">"{selectedSlogan}"</p>
               
               <div className="mt-4 pt-4 border-t border-gray-700">
                 <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Persona: {selectedPersona.nama_persona}</h5>
-                <p className="text-sm text-gray-300 print-text-color">{selectedPersona.deskripsi_singkat}</p>
+                <p className="text-sm text-gray-300 print-text-color selectable-text">{selectedPersona.deskripsi_singkat}</p>
               </div>
 
               <div className="mt-4 pt-4 border-t border-gray-700">
@@ -91,7 +91,7 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGen
                   {selectedPersona.palet_warna_hex.map((hex, i) => (
                     <div key={i} className="flex flex-col items-center gap-1">
                       <div className="w-10 h-10 rounded-full border-2 border-gray-500" style={{ backgroundColor: hex }}></div>
-                      <span className="text-xs text-gray-400 print-text-color">{hex}</span>
+                      <span className="text-xs text-gray-400 print-text-color selectable-text">{hex}</span>
                     </div>
                   ))}
                 </div>
@@ -104,21 +104,21 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGen
                         <div>
                             <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Bio Instagram</h5>
                             <div className="relative bg-gray-700/50 p-3 rounded-lg print-bg-gray">
-                                <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color">{socialProfiles.instagramBio}</p>
+                                <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color selectable-text">{socialProfiles.instagramBio}</p>
                                 <CopyButton textToCopy={socialProfiles.instagramBio} className="absolute top-2 right-2 no-print"/>
                             </div>
                         </div>
                          <div>
                             <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Bio TikTok</h5>
                             <div className="relative bg-gray-700/50 p-3 rounded-lg print-bg-gray">
-                                <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color">{socialProfiles.tiktokBio}</p>
+                                <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color selectable-text">{socialProfiles.tiktokBio}</p>
                                 <CopyButton textToCopy={socialProfiles.tiktokBio} className="absolute top-2 right-2 no-print"/>
                             </div>
                         </div>
                         <div>
                             <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Deskripsi Toko (Marketplace)</h5>
                             <div className="relative bg-gray-700/50 p-3 rounded-lg print-bg-gray">
-                                <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color">{socialProfiles.marketplaceDescription}</p>
+                                <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color selectable-text">{socialProfiles.marketplaceDescription}</p>
                                  <CopyButton textToCopy={socialProfiles.marketplaceDescription} className="absolute top-2 right-2 no-print"/>
                             </div>
                         </div>
@@ -133,11 +133,11 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGen
                           <div key={index} className="border-b border-gray-700 pb-3 last:border-b-0 last:pb-0">
                             <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Iklan {ad.platform}</h5>
                             <div className="relative bg-gray-900/50 p-3 rounded-lg print-bg-gray">
-                               <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color">{ad.adCopy}</p>
+                               <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color selectable-text">{ad.adCopy}</p>
                                <CopyButton textToCopy={ad.adCopy} className="absolute top-2 right-2 no-print"/>
                             </div>
                             <div className="relative mt-2">
-                                <p className="text-xs text-indigo-400 break-words pr-10 print-text-brand">{ad.hashtags.join(' ')}</p>
+                                <p className="text-xs text-indigo-400 break-words pr-10 print-text-brand selectable-text">{ad.hashtags.join(' ')}</p>
                                 <CopyButton textToCopy={ad.hashtags.join(' ')} className="absolute top-0 right-0 no-print"/>
                             </div>
                           </div>
@@ -239,18 +239,18 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGen
                       {contentCalendar && contentCalendar.map((item, index) => (
                           <div key={index} className="border-b border-gray-700 pb-3 last:border-b-0 last:pb-0 text-sm">
                               <h5 className="font-bold text-gray-200 print-text-color">{item.hari} - <span className="text-indigo-300 print-text-brand">{item.tipe_konten}</span></h5>
-                              <p className="text-xs text-gray-400 mt-1 print-text-color">{item.ide_konten}</p>
+                              <p className="text-xs text-gray-400 mt-1 print-text-color selectable-text">{item.ide_konten}</p>
                               {item.imageUrl && (
                                 <div className="mt-3 bg-white p-2 rounded-lg flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(item.imageUrl!)}>
                                     <img src={item.imageUrl} alt={`Visual untuk ${item.ide_konten}`} className="max-w-full max-h-32 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
                                 </div>
                               )}
                               <div className="relative">
-                                <p className="text-gray-300 whitespace-pre-wrap mt-2 text-xs pr-10 print-text-color">{item.draf_caption}</p>
+                                <p className="text-gray-300 whitespace-pre-wrap mt-2 text-xs pr-10 print-text-color selectable-text">{item.draf_caption}</p>
                                 <CopyButton textToCopy={item.draf_caption} className="absolute top-2 right-0 no-print"/>
                               </div>
                               <div className="relative mt-2">
-                                <p className="text-indigo-400 text-xs break-words pr-10 print-text-brand">{item.rekomendasi_hashtag.join(' ')}</p>
+                                <p className="text-indigo-400 text-xs break-words pr-10 print-text-brand selectable-text">{item.rekomendasi_hashtag.join(' ')}</p>
                                 <CopyButton textToCopy={item.rekomendasi_hashtag.join(' ')} className="absolute top-0 right-0 no-print"/>
                               </div>
                           </div>

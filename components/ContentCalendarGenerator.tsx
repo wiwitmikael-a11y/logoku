@@ -141,16 +141,16 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
                  <div className="space-y-4">
                     <div>
                         <h4 className="font-semibold text-gray-200 text-sm mb-1">Ide Konten:</h4>
-                        <p className="text-gray-300 text-sm">{item.ide_konten}</p>
+                        <p className="text-gray-300 text-sm selectable-text">{item.ide_konten}</p>
                     </div>
                     <div className="relative border-t border-gray-700 pt-3">
                          <h4 className="font-semibold text-gray-200 text-sm mb-1">Draf Caption:</h4>
-                         <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10">{item.draf_caption}</p>
+                         <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10 selectable-text">{item.draf_caption}</p>
                          <CopyButton textToCopy={item.draf_caption} className="absolute top-2 right-0"/>
                     </div>
                     <div className="relative border-t border-gray-700 pt-3">
                         <h4 className="font-semibold text-gray-200 text-sm mb-1">Hashtag:</h4>
-                        <p className="text-indigo-300 text-xs break-words pr-10">{item.rekomendasi_hashtag.join(' ')}</p>
+                        <p className="text-indigo-300 text-xs break-words pr-10 selectable-text">{item.rekomendasi_hashtag.join(' ')}</p>
                         <CopyButton textToCopy={item.rekomendasi_hashtag.join(' ')} className="absolute top-2 right-0"/>
                     </div>
                     <div className="border-t border-gray-700 pt-3">
