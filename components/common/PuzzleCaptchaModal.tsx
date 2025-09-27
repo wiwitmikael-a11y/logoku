@@ -1,7 +1,7 @@
+
 import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { playSound, playBGM } from '../../services/soundService';
 
-// NEW: Lazily import the new branding tip modal
 const BrandingTipModal = React.lazy(() => import('./BrandingTipModal'));
 
 interface Props {
@@ -15,7 +15,6 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [sliderLeft, setSliderLeft] = useState(0);
   const [isSolved, setIsSolved] = useState(false);
-  // NEW: State to control the visibility of the "Did You Know?" modal
   const [showBrandingTip, setShowBrandingTip] = useState(false);
   
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -81,10 +80,9 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
       playSound('puzzle_drop');
       setSliderLeft(maxSliderLeft);
       setIsSolved(true);
-      // MODIFIED: Instead of calling onSuccess, show the branding tip modal
       setTimeout(() => {
         setShowBrandingTip(true);
-      }, 500); // A small delay to let the user see the "solved" state
+      }, 500); 
     } else {
       playSound('puzzle_fail');
       resetSlider();
@@ -113,7 +111,7 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
     } else {
       setTimeout(() => {
           setIsSolved(false);
-          setShowBrandingTip(false); // Reset new state
+          setShowBrandingTip(false);
           resetSlider();
           jinglePlayedRef.current = false;
       }, 300);
@@ -179,7 +177,6 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
           )}
         </div>
       </div>
-      {/* NEW: Render the BrandingTipModal when showBrandingTip is true */}
       <Suspense fallback={null}>
         <BrandingTipModal
             show={showBrandingTip}

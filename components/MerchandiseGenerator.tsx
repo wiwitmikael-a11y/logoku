@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -13,8 +14,6 @@ import CalloutPopup from './common/CalloutPopup';
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
-  // FIX: Updated props to accept the whole projectData object.
-  // This provides access to the selectedLogoUrl, which is required for image generation.
   projectData: Partial<ProjectData>;
   onComplete: (merchandiseUrl: string) => void;
 }
@@ -22,6 +21,8 @@ interface Props {
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
 const GENERATION_COST = 1;
 
+// FIX: Updated prompts to work with an image composition model (`generateImageWithLogo`)
+// by instructing it to "Take the provided logo image" instead of describing the logo in text.
 const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
   {
     id: 't-shirt',
@@ -97,10 +98,9 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
-      // FIX: The service requires Base64 data for the logo. Fetch the image from its URL.
+      // FIX: Fetch the logo as base64 and pass it to the service function.
       const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
-      // FIX: Correctly call generateMerchandiseMockup with two arguments (prompt and logoBase64).
-      // This resolves the "Expected 2 arguments, but got 1" error.
+      // FIX: Correctly call generateMerchandiseMockup with both prompt and logoBase64 arguments.
       const results = await generateMerchandiseMockup(prompt, logoBase64);
       
       await deductCredits(GENERATION_COST);

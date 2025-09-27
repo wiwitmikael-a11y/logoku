@@ -1,4 +1,3 @@
-
 // FIX: Added explicit type definitions for Vite's environment variables
 // to resolve errors where `import.meta.env` was not recognized by TypeScript.
 // This provides the necessary types that would otherwise come from 'vite/client'.

@@ -10,10 +10,12 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import { fetchImageAsBase64 } from '../utils/imageUtils';
+import type { ProjectData } from '../types';
 
 interface Props {
-  logoPrompt: string;
-  businessName: string;
+  // FIX: Changed props to accept projectData to get logoUrl and businessName
+  projectData: Partial<ProjectData>;
   onComplete: (merchandiseUrl: string) => void;
   userId: string;
   projectId: number;
@@ -22,28 +24,30 @@ interface Props {
 type MerchType = 't-shirt' | 'mug' | 'tote-bag';
 const GENERATION_COST = 1;
 
+// FIX: Updated prompts to work with an image composition model (`generateImageWithLogo`)
+// by instructing it to "Take the provided logo image" instead of describing the logo in text.
 const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
   {
     id: 't-shirt',
     name: 'T-Shirt',
     prompt:
-      'A realistic mockup of a plain colored t-shirt on a clean, neutral background. The t-shirt prominently features a logo for a brand named "{{businessName}}". The logo is described as: "{{logoPrompt}}". The photo is high-quality, commercial-style, showing the texture of the fabric.',
+      'Take the provided logo image. Create a realistic mockup of a plain colored t-shirt on a clean, neutral background. The t-shirt prominently features the logo. The photo is high-quality, commercial-style, showing the texture of the fabric.',
   },
   {
     id: 'mug',
     name: 'Mug',
     prompt:
-      'A realistic mockup of a ceramic coffee mug on a simple table. The mug has a logo printed on it for a brand called "{{businessName}}". The logo is described as: "{{logoPrompt}}". The lighting is soft and natural, product photography style.',
+      'Take the provided logo image. Create a realistic mockup of a ceramic coffee mug on a simple table. The mug has the logo printed on it. The lighting is soft and natural, product photography style.',
   },
   {
     id: 'tote-bag',
     name: 'Tote Bag',
     prompt:
-      'A realistic mockup of a canvas tote bag hanging against a clean wall. The tote bag has a logo printed in the center for a company named "{{businessName}}". The logo is described as: "{{logoPrompt}}". The image looks like a professional product photo for an online store.',
+      'Take the provided logo image. Create a realistic mockup of a canvas tote bag hanging against a clean wall. The tote bag has the logo printed in the center. The image looks like a professional product photo for an online store.',
   },
 ];
 
-const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onComplete, userId, projectId }) => {
+const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -63,12 +67,9 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
   useEffect(() => {
     const currentMerch = merchandiseTypes.find(m => m.id === activeTab);
     if (currentMerch) {
-      const newPrompt = currentMerch.prompt
-        .replace('{{businessName}}', businessName)
-        .replace('{{logoPrompt}}', logoPrompt);
-      setPrompt(newPrompt);
+      setPrompt(currentMerch.prompt);
     }
-  }, [activeTab, businessName, logoPrompt]);
+  }, [activeTab]);
   
   useEffect(() => {
     if (designs.length > 0 && resultsRef.current) {
@@ -84,7 +85,11 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
         playSound('error');
         return;
     }
-    if (!prompt) return;
+    // FIX: Check for selectedLogoUrl from projectData
+    if (!prompt || !projectData.selectedLogoUrl) {
+        setError("Data logo tidak ditemukan untuk membuat mockup.");
+        return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -94,7 +99,10 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     playSound('start');
 
     try {
-      const results = await generateMerchandiseMockup(prompt);
+      // FIX: Fetch the logo as base64 and pass it to the service function.
+      const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
+      // FIX: Correctly call generateMerchandiseMockup with both prompt and logoBase64 arguments.
+      const results = await generateMerchandiseMockup(prompt, logoBase64);
       const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, activeTab);
       
       await deductCredits(GENERATION_COST);
@@ -109,7 +117,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, activeTab]);
+  }, [projectData, prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId, activeTab]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {
@@ -188,7 +196,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ logoPrompt, businessName, onCom
       {modalImageUrl && (
         <ImageModal 
           imageUrl={modalImageUrl}
-          altText={`Mockup merchandise untuk ${businessName}`}
+          altText={`Mockup merchandise untuk ${projectData.brandInputs?.businessName}`}
           onClose={closeModal}
         />
       )}

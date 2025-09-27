@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -22,8 +23,6 @@ interface Props {
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
-// FIX: This component was using an outdated implementation. It has been updated to align with the newer components.
-// It now correctly calls geminiService functions with the expected arguments and handles data flow properly.
 const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, businessName, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
@@ -59,17 +58,14 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     setShowNextStepNudge(false);
     playSound('start');
     try {
-      // FIX: The API expects base64 data. Fetch the image content as base64 before passing it to the service.
+      // FIX: Fetch the current logo as base64 to generate variations from it.
       const logoBase64 = await fetchImageAsBase64(finalLogoUrl);
 
-      // FIX: Call generateLogoVariations with the correct two arguments: base64 logo data and the business name.
-      // This resolves the "Expected 2 arguments, but got 1" error.
+      // FIX: Called generateLogoVariations with correct arguments: base64 string and business name.
       const generatedVariations = await generateLogoVariations(logoBase64, businessName);
       
       await deductCredits(VARIATION_COST);
       
-      // FIX: The returned object `generatedVariations` now correctly matches the `LogoVariations` type.
-      // This resolves the "Property 'icon' does not exist" error.
       setVariations(generatedVariations);
       setShowNextStepNudge(true);
       playSound('success');
@@ -151,6 +147,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
             </div>
 
             {variations ? (
+                // FIX: Updated JSX to show the correct variations: stacked, horizontal, monochrome.
                 <div ref={variationsRef}>
                     <h4 className="font-bold mb-4">Paket Logo Lengkap:</h4>
                     <div className="grid grid-cols-2 gap-4 text-center">

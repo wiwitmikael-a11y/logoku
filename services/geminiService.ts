@@ -440,7 +440,6 @@ export const generateLogoVariations = async (baseLogoBase64: string, businessNam
         
         const stackedPrompt = `Take the provided logo icon. Place the brand name "${businessName}" cleanly below the icon. Use a modern, legible sans-serif font that perfectly complements the logo's style. The entire composition should be centered and balanced. The final output must be a clean vector logo on a solid white background. Ensure the text is spelled correctly.`;
         const horizontalPrompt = `Take the provided logo icon. Place the brand name "${businessName}" cleanly to the right of the icon. Vertically align the icon and the text in the middle. Use a modern, legible sans-serif font that matches the logo's style. The whole design must be balanced. The final output must be a clean vector logo on a solid white background. Ensure the text is spelled correctly.`;
-        // FIX: The monochrome prompt was using the horizontal version, which could have text. This is now corrected to use the original icon-only logo.
         const monochromePrompt = `Take the provided logo icon. Convert the entire design into a high-contrast, monochrome (black and white) version. Do not change the shape or layout, only remove all color. The final output must be a clean vector logo on a solid white background.`;
 
         const [stackedResultBase64, horizontalResultBase64, monochromeResultBase64] = await Promise.all([

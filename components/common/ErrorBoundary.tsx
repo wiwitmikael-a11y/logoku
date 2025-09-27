@@ -1,4 +1,5 @@
 
+
 import React, { ErrorInfo, ReactNode } from 'react';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -28,9 +29,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
   
-  // FIX: Ensured `handleCopy` is an arrow function to automatically bind `this`.
-  // This resolves the errors where `this.state` and `this.setState` were not found
-  // because the context of `this` was incorrect in a regular class method used as a callback.
   handleCopy = () => {
       if(this.state.error) {
           navigator.clipboard.writeText(this.state.error.toString());
@@ -77,7 +75,6 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: `this.props` is correctly accessed here within the render method of a class component.
     return this.props.children;
   }
 }

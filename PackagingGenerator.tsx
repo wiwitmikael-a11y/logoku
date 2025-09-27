@@ -3,7 +3,7 @@ import { generatePackagingDesign } from '../services/geminiService';
 import { uploadImageFromBase64 } from '../services/storageService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-import type { BrandPersona } from '../types';
+import type { BrandPersona, ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Spinner from './common/Spinner';
@@ -11,10 +11,11 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
-  persona: BrandPersona;
-  businessName: string;
+  // FIX: Changed props to accept the whole projectData object to access selectedLogoUrl
+  projectData: Partial<ProjectData>;
   onComplete: (packagingUrl: string) => void;
   userId: string;
   projectId: number;
@@ -22,7 +23,7 @@ interface Props {
 
 const GENERATION_COST = 1;
 
-const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete, userId, projectId }) => {
+const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, userId, projectId }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -39,11 +40,12 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
   const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
+    if (!projectData.selectedPersona || !projectData.brandInputs) return;
     // Auto-generate a prompt based on the persona
-    const personaStyle = persona.kata_kunci.join(', ');
-    const initialPrompt = `packaging design for a product from "${businessName}". The brand personality is ${persona.deskripsi_singkat.toLowerCase()}. Style should be ${personaStyle}, modern, clean, commercially viable.`;
+    const personaStyle = projectData.selectedPersona.kata_kunci.join(', ');
+    const initialPrompt = `packaging design for a product from "${projectData.brandInputs.businessName}". The brand personality is ${projectData.selectedPersona.deskripsi_singkat.toLowerCase()}. Style should be ${personaStyle}, modern, clean, commercially viable.`;
     setPrompt(initialPrompt);
-  }, [persona, businessName]);
+  }, [projectData]);
 
   useEffect(() => {
     if (designs.length > 0 && resultsRef.current) {
@@ -59,7 +61,11 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
         playSound('error');
         return;
     }
-    if (!prompt) return;
+    // FIX: Check for selectedLogoUrl from projectData
+    if (!prompt || !projectData.selectedLogoUrl) {
+        setError("Data logo tidak ditemukan. Tidak bisa generate kemasan.");
+        return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -69,7 +75,10 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     playSound('start');
 
     try {
-      const results = await generatePackagingDesign(prompt);
+      // FIX: Fetch the logo's base64 data and pass it to the service function.
+      const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
+      // FIX: Called generatePackagingDesign with both prompt and logoBase64.
+      const results = await generatePackagingDesign(prompt, logoBase64);
       const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, 'packaging');
       
       await deductCredits(GENERATION_COST);
@@ -84,7 +93,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [prompt, projectData, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
 
   const handleContinue = () => {
     if (selectedDesignUrl) {
@@ -146,7 +155,7 @@ const PackagingGenerator: React.FC<Props> = ({ persona, businessName, onComplete
       {modalImageUrl && (
         <ImageModal 
           imageUrl={modalImageUrl}
-          altText={`Desain kemasan untuk ${businessName}`}
+          altText={`Desain kemasan untuk ${projectData.brandInputs?.businessName}`}
           onClose={closeModal}
         />
       )}

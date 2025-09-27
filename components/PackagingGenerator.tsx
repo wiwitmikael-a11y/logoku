@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -131,9 +132,9 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
+      // FIX: Fetch the logo as base64 and pass it to the service function.
       const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
-      // FIX: Correctly call generatePackagingDesign with two arguments (prompt and logoBase64)
-      // This resolves the "Expected 2 arguments, but got 1" error.
+      // FIX: Correctly call generatePackagingDesign with both prompt and logoBase64 arguments.
       const results = await generatePackagingDesign(prompt, logoBase64);
       await deductCredits(GENERATION_COST);
       setDesigns(results);

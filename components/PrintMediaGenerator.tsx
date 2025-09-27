@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -89,6 +90,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       const colors = selectedPersona.palet_warna_hex.join(', ');
       const style = selectedPersona.kata_kunci.join(', ');
 
+      // FIX: Added detailed prompt generation logic for each tab.
       if (activeTab === 'roll_banner') {
           prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a vertical roll-up banner (aspect ratio 9:16). Do NOT create a mockup, create the final print-ready design.
           - Brand Name: ${brandInputs.businessName}
@@ -105,11 +107,8 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
           The design must be highly legible from a distance. Place the logo prominently. Ensure all text is clear.`;
       }
 
-      // FIX: The `generatePrintMedia` service requires a Base64 string for the logo.
-      // This fetches the image from its URL before calling the service.
+      // FIX: Correctly call generatePrintMedia with the generated prompt and the logo's base64 data.
       const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
-      // FIX: Correctly call `generatePrintMedia` with two string arguments (prompt and logoBase64).
-      // This resolves the error where an object was incorrectly passed as the second argument.
       const results = await generatePrintMedia(prompt, logoBase64);
       
       await deductCredits(GENERATION_COST);

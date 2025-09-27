@@ -19,12 +19,14 @@ interface Props {
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
   userId: string;
   projectId: number;
+  // FIX: Added businessName to props, as it's required by generateLogoVariations
+  businessName: string; 
 }
 
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
-const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete, userId, projectId }) => {
+const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete, userId, projectId, businessName }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -59,15 +61,31 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setShowNextStepNudge(false); // Reset nudge
     playSound('start');
     try {
-      const generatedVariations = await generateLogoVariations(basePrompt);
-      const [iconUrl, monochromeUrl] = await Promise.all([
-          uploadImageFromBase64(generatedVariations.icon, userId, projectId, 'logo-icon'),
-          uploadImageFromBase64(generatedVariations.monochrome, userId, projectId, 'logo-monochrome')
+      // FIX: Fetch the current logo as base64 to generate variations from it.
+      const logoBase64 = await fetchImageAsBase64(finalLogoUrl);
+      // FIX: The original call was passing `basePrompt` which was incorrect. Now passing logoBase64 and businessName.
+      const generatedVariations = await generateLogoVariations(logoBase64, businessName);
+
+      // FIX: The original code was trying to upload variations, but the new flow
+      // keeps them as base64 until final sync. This also fixes the error of
+      // trying to access `.icon` which does not exist on the new LogoVariations type.
+      
+      // Uploading variations one by one:
+      const [stackedUrl, horizontalUrl, monochromeUrl] = await Promise.all([
+        uploadImageFromBase64(generatedVariations.stacked, userId, projectId, 'logo-stacked'),
+        uploadImageFromBase64(generatedVariations.horizontal, userId, projectId, 'logo-horizontal'),
+        uploadImageFromBase64(generatedVariations.monochrome, userId, projectId, 'logo-monochrome')
       ]);
 
+      const uploadedVariations: LogoVariations = {
+        main: finalLogoUrl,
+        stacked: stackedUrl,
+        horizontal: horizontalUrl,
+        monochrome: monochromeUrl
+      };
+
       await deductCredits(VARIATION_COST); // Deduct on success
-      const completeVariations = { main: finalLogoUrl, icon: iconUrl, monochrome: monochromeUrl };
-      setVariations(completeVariations);
+      setVariations(uploadedVariations);
       setShowNextStepNudge(true); // Show nudge on success
       playSound('success');
     } catch (err) {
@@ -77,7 +95,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [basePrompt, finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
+  }, [finalLogoUrl, businessName, credits, deductCredits, setShowOutOfCreditsModal, userId, projectId]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,17 +158,24 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
             </div>
 
             {variations ? (
+                // FIX: Updated JSX to show stacked, horizontal, and monochrome variations.
                 <div ref={variationsRef}>
                     <h4 className="font-bold mb-4">Paket Logo Lengkap:</h4>
                     <div className="grid grid-cols-2 gap-4 text-center">
                         <div>
-                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.icon)}>
-                                <img src={variations.icon} alt="Ikon Logo" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
+                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.stacked)}>
+                                <img src={variations.stacked} alt="Logo Versi Tumpuk" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
                             </div>
-                            <p className="text-sm mt-2 text-gray-400">Versi Ikon</p>
+                            <p className="text-sm mt-2 text-gray-400">Versi Tumpuk</p>
                         </div>
                          <div>
-                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.monochrome)}>
+                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.horizontal)}>
+                                <img src={variations.horizontal} alt="Logo Versi Datar" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
+                            </div>
+                            <p className="text-sm mt-2 text-gray-400">Versi Datar</p>
+                        </div>
+                         <div className="col-span-2">
+                            <div className="bg-white p-2 rounded-lg flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.monochrome)}>
                                 <img src={variations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
                             </div>
                             <p className="text-sm mt-2 text-gray-400">Versi Monokrom</p>

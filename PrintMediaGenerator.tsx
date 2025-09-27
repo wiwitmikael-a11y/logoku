@@ -12,6 +12,7 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup'; // Import the new component
+import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
   projectData: Partial<ProjectData>;
@@ -105,8 +106,8 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
     setShowNextStepNudge(false); // Reset nudge
     playSound('start');
 
-    const { brandInputs, selectedPersona, logoPrompt } = projectData;
-    if (!brandInputs || !selectedPersona || !logoPrompt) {
+    const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
+    if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
         setError("Waduh, data project-nya ada yang kurang buat generate media cetak.");
         setIsLoading(false);
         playSound('error');
@@ -117,18 +118,44 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
     setSelected(null);
 
     try {
-        const payload = {
-            brandInputs: {
-                ...brandInputs,
-                contactInfo: cardInfo,
-                flyerContent: flyerInfo,
-                bannerContent: bannerInfo,
-                rollBannerContent: rollBannerInfo
-            },
-            selectedPersona,
-            logoPrompt
-        };
-      const results = await generatePrintMedia(activeTab, payload);
+        // FIX: Replaced the incorrect `payload` object with logic to build a detailed prompt string.
+        let prompt = '';
+        const colors = selectedPersona.palet_warna_hex.join(', ');
+        const style = selectedPersona.kata_kunci.join(', ');
+
+        if (activeTab === 'business_card') {
+            prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a standard business card (aspect ratio ~1.7). Do NOT create a mockup, create the final print-ready design.
+            - Brand Name: ${brandInputs.businessName}
+            - Style: ${style}.
+            - Colors: Use this palette: ${colors}.
+            - Content: Name: "${cardInfo.name}", Title: "${cardInfo.title}", Phone: "${cardInfo.phone}", Email: "${cardInfo.email}", Website: "${cardInfo.website}".
+            Place the logo prominently. The design must be highly legible. Ensure all text is clear.`;
+        } else if (activeTab === 'flyer') {
+            prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for an A5 flyer (aspect ratio ~1.4). Do NOT create a mockup, create the final print-ready design.
+            - Brand Name: ${brandInputs.businessName}
+            - Style: ${style}.
+            - Colors: Use this palette: ${colors}.
+            - Content: Headline: "${flyerInfo.headline}", Body: "${flyerInfo.body}", Call to Action: "${flyerInfo.cta}".
+            Place the logo prominently. The design must be highly legible. Ensure all text is clear.`;
+        } else if (activeTab === 'roll_banner') {
+            prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a vertical roll-up banner (aspect ratio 9:16). Do NOT create a mockup, create the final print-ready design.
+            - Brand Name: ${brandInputs.businessName}
+            - Style: ${style}, modern, eye-catching.
+            - Colors: Use this palette: ${colors}.
+            - Content to include: Headline at top: "${rollBannerInfo.headline}", Body text in middle: "${rollBannerInfo.body}", Contact info at bottom: "${rollBannerInfo.contact}".
+            The design must be highly legible. Place the logo prominently near the top. Ensure all text is clear.`;
+        } else if (activeTab === 'banner') {
+            prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a horizontal outdoor banner (spanduk, aspect ratio 3:1). Do NOT create a mockup, create the final print-ready design.
+            - Brand Name: ${brandInputs.businessName}
+            - Style: ${style}, bold, eye-catching.
+            - Colors: Use this palette: ${colors}.
+            - Content to include: Headline (very large): "${bannerInfo.headline}", Sub-headline (smaller): "${bannerInfo.subheadline}".
+            The design must be highly legible from a distance. Place the logo prominently. Ensure all text is clear.`;
+        }
+
+      // FIX: Correctly call generatePrintMedia with the generated prompt and the logo's base64 data.
+      const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
+      const results = await generatePrintMedia(prompt, logoBase64);
       const uploadedUrl = await uploadImageFromBase64(results[0], userId, projectId, activeTab);
 
       await deductCredits(GENERATION_COST); // Deduct only on success
@@ -148,7 +175,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, userId,
   const handleContinue = () => {
     onComplete({
         assets: {
-            cardUrl: selectedCardUrl || undefined,
+            businessCardUrl: selectedCardUrl || undefined,
             flyerUrl: selectedFlyerUrl || undefined,
             bannerUrl: selectedBannerUrl || undefined,
             rollBannerUrl: selectedRollBannerUrl || undefined,
