@@ -350,58 +350,58 @@ const MainApp: React.FC = () => {
             selectedPersona: data.selectedPersona,
             selectedSlogan: data.selectedSlogan,
         };
-        saveWorkflowState(updatedData);
+        await saveCheckpoint(updatedData);
         navigateTo('logo');
-    }, []);
+    }, [saveCheckpoint]);
     
     const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt };
-        saveWorkflowState(updatedData);
+        await saveCheckpoint(updatedData);
         navigateTo('logo_detail');
-    }, []);
+    }, [saveCheckpoint]);
 
     const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
-        saveWorkflowState(updatedData);
+        await saveCheckpoint(updatedData);
         navigateTo('content');
-    }, []);
+    }, [saveCheckpoint]);
 
     const handleContentComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, contentCalendar: data.calendar, searchSources: data.sources };
-        saveWorkflowState(updatedData);
+        await saveCheckpoint(updatedData);
         navigateTo('social_kit'); // Next step is now Social Media Kit
-    }, []);
+    }, [saveCheckpoint]);
 
     const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, socialMediaKit: data.assets };
-        saveWorkflowState(updatedData);
+        await saveCheckpoint(updatedData);
         navigateTo('profile_optimizer');
-    }, []);
+    }, [saveCheckpoint]);
 
     const handleProfileOptimizerComplete = useCallback(async (data: { profiles: SocialProfileData }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, socialProfiles: data.profiles };
-        saveWorkflowState(updatedData);
+        await saveCheckpoint(updatedData);
         navigateTo('social_ads');
-    }, []);
+    }, [saveCheckpoint]);
 
     const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, socialAds: data.adsData };
-        saveWorkflowState(updatedData);
+        await saveCheckpoint(updatedData);
         navigateTo('packaging');
-    }, []);
+    }, [saveCheckpoint]);
 
     const handlePackagingComplete = useCallback(async (packagingBase64: string) => {
        const currentState = loadWorkflowState() || {};
        const updatedData = { ...currentState, selectedPackagingUrl: packagingBase64 };
-       saveWorkflowState(updatedData);
+       await saveCheckpoint(updatedData);
        navigateTo('print_media');
-    }, []);
+    }, [saveCheckpoint]);
 
     const handlePrintMediaComplete = useCallback(async (printMediaAssets: PrintMediaAssets) => {
         if (!session?.user || !selectedProjectId) return;

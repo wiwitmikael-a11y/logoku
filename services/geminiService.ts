@@ -376,6 +376,8 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
             },
         });
         
+        // FIX: The googleSearch tool does not guarantee a clean JSON response.
+        // It may be wrapped in markdown. Use cleanJsonString to safely extract it.
         const cleanedJson = cleanJsonString(response.text, 'array');
         const calendar = safeJsonParse<ContentCalendarEntry[]>(cleanedJson, 'generateContentCalendar');
         const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];

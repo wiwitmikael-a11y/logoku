@@ -109,7 +109,6 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     }
   }, [designs]);
 
-  // FIX: Added the missing `logoBase64` argument (`projectData.selectedLogoUrl`) to the `generatePackagingDesign` call to resolve the "Expected 2 arguments, but got 1" error.
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -128,6 +127,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
+      // FIX: Added the missing `logoBase64` argument (`projectData.selectedLogoUrl`) to the `generatePackagingDesign` call to resolve the "Expected 2 arguments, but got 1" error.
       const results = await generatePackagingDesign(prompt, projectData.selectedLogoUrl);
       await deductCredits(GENERATION_COST);
       setDesigns(results);

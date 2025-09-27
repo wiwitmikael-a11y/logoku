@@ -1,12 +1,14 @@
+
 import React, { useState } from 'react';
 import { playSound } from '../../services/soundService';
 
 interface CopyButtonProps {
   textToCopy: string;
   className?: string;
+  title?: string;
 }
 
-const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy, className }) => {
+const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy, className, title }) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
@@ -21,7 +23,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy, className }) => {
   return (
     <button
       onClick={handleCopy}
-      title={isCopied ? "Teks tersalin!" : "Salin teks"}
+      title={isCopied ? "Teks tersalin!" : (title || "Salin teks")}
       className={`p-2 transition-colors bg-gray-800/50 hover:bg-gray-700/50 rounded-full ${isCopied ? 'text-green-400' : 'text-gray-400 hover:text-indigo-400'} ${className}`}
     >
       {isCopied ? (

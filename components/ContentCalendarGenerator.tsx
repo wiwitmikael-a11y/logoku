@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateContentCalendar, generateSocialMediaPostImage } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -131,7 +132,12 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete }) 
           <h3 className="text-lg md:text-xl font-bold">Draf Kalender Konten Lo:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {calendar.map((item, index) => (
-              <Card key={index} title={`${item.hari} - ${item.tipe_konten}`}>
+              <Card key={index} title={`${item.hari} - ${item.tipe_konten}`} className="relative">
+                 <CopyButton 
+                    textToCopy={`Ide Konten: ${item.ide_konten}\n\nDraf Caption:\n${item.draf_caption}\n\nRekomendasi Hashtag:\n${item.rekomendasi_hashtag.join(' ')}`}
+                    className="absolute top-4 right-4 z-10"
+                    title="Salin semua info hari ini"
+                  />
                  <div className="space-y-4">
                     <div>
                         <h4 className="font-semibold text-gray-200 text-sm mb-1">Ide Konten:</h4>
