@@ -110,6 +110,7 @@ Enhanced Prompt:`;
             contents: enhancementInstruction,
             config: { temperature: 0.7 }
         });
+        // FIX: The `text` property should be accessed directly, not called as a function.
         return response.text.trim();
     } catch (error) {
         console.warn("Prompt enhancement failed, using original prompt.", error);
@@ -142,6 +143,7 @@ Follow these steps meticulously:
             contents: promptChainInstruction,
             config: { temperature: 0.85 }
         });
+        // FIX: The `text` property should be accessed directly, not called as a function.
         const cleanedPrompt = response.text.trim().replace(/^"|"$/g, '');
         return cleanedPrompt;
     } catch (error) {
@@ -188,6 +190,7 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
             }
         }
         
+        // FIX: The `text` property should be accessed directly, not called as a function.
         const textResponse = response.text?.trim();
         if (textResponse) {
             console.error("Model did not return an image. Text response:", textResponse);
@@ -273,6 +276,7 @@ export const generateBrandPersona = async (businessName: string, industry: strin
         },
     });
     
+    // FIX: The `text` property should be accessed directly, not called as a function.
     return safeJsonParse<BrandPersona[]>(response.text, 'generateBrandPersona');
   } catch (error) {
     throw handleApiError(error, "Brand Persona");
@@ -301,6 +305,7 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
                 }
             },
         });
+        // FIX: The `text` property should be accessed directly, not called as a function.
         return safeJsonParse<string[]>(response.text, 'generateSlogans');
     } catch (error) {
         throw handleApiError(error, "Slogan");
@@ -343,6 +348,7 @@ export const generateCaptions = async (businessName: string, persona: BrandPerso
                 }
             },
         });
+        // FIX: The `text` property should be accessed directly, not called as a function.
         return safeJsonParse<GeneratedCaption[]>(response.text, 'generateCaptions');
     } catch (error) {
         throw handleApiError(error, "Caption");
@@ -378,6 +384,7 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
         
         // FIX: The googleSearch tool does not guarantee a clean JSON response.
         // It may be wrapped in markdown. Use cleanJsonString to safely extract it.
+        // FIX: The `text` property should be accessed directly, not called as a function.
         const cleanedJson = cleanJsonString(response.text, 'array');
         const calendar = safeJsonParse<ContentCalendarEntry[]>(cleanedJson, 'generateContentCalendar');
         const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
@@ -422,6 +429,7 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
             }
         }
         
+        // FIX: The `text` property should be accessed directly, not called as a function.
         const textResponse = response.text?.trim();
         if (textResponse) {
             console.error("Model did not return an image after edit. Text response:", textResponse);
@@ -433,21 +441,32 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
     }
 };
 
-// CRITICAL FIX: This function now EDITS the provided logo, ensuring consistency.
-export const generateLogoVariations = async (baseLogoBase64: string): Promise<LogoVariations> => {
+export const generateLogoVariations = async (baseLogoBase64: string, businessName: string): Promise<LogoVariations> => {
     try {
         const base64Data = baseLogoBase64.split(',')[1];
         const mimeType = baseLogoBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
         
-        const iconPrompt = `From the provided logo image, extract a simplified icon-only version. Remove all text and lettering. Keep the core symbol or shape. The final output must be a clean vector icon on a solid white background.`;
-        const monochromePrompt = `Convert the provided logo image into a high-contrast, monochrome (black and white) version. Do not change the shape or design elements, only remove all color. The final output must be a clean vector logo on a solid white background.`;
+        const stackedPrompt = `Take the provided logo icon. Place the brand name "${businessName}" cleanly below the icon. Use a modern, legible sans-serif font that perfectly complements the logo's style. The entire composition should be centered and balanced. The final output must be a clean vector logo on a solid white background. Ensure the text is spelled correctly.`;
+        const horizontalPrompt = `Take the provided logo icon. Place the brand name "${businessName}" cleanly to the right of the icon. Vertically align the icon and the text in the middle. Use a modern, legible sans-serif font that matches the logo's style. The whole design must be balanced. The final output must be a clean vector logo on a solid white background. Ensure the text is spelled correctly.`;
 
-        const [iconResultBase64, monochromeResultBase64] = await Promise.all([
-            editLogo(base64Data, mimeType, iconPrompt),
-            editLogo(base64Data, mimeType, monochromePrompt)
+        const [stackedResultBase64, horizontalResultBase64] = await Promise.all([
+            editLogo(base64Data, mimeType, stackedPrompt),
+            editLogo(base64Data, mimeType, horizontalPrompt)
         ]);
+        
+        // Use the horizontal version to create the monochrome one
+        const horizontalData = horizontalResultBase64.split(',')[1];
+        const horizontalMime = horizontalResultBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+        const monochromePrompt = `Take the provided logo image (which includes text). Convert the entire design into a high-contrast, monochrome (black and white) version. Do not change the shape or layout, only remove all color. The final output must be a clean vector logo on a solid white background.`;
 
-        return { main: baseLogoBase64, icon: iconResultBase64, monochrome: monochromeResultBase64 };
+        const monochromeResultBase64 = await editLogo(horizontalData, horizontalMime, monochromePrompt);
+
+        return { 
+            main: baseLogoBase64, 
+            stacked: stackedResultBase64, 
+            horizontal: horizontalResultBase64, 
+            monochrome: monochromeResultBase64 
+        };
     } catch (error) {
         throw handleApiError(error, "Flash Preview (Variasi Logo)");
     }
@@ -483,6 +502,7 @@ const generateImageWithLogo = async (logoBase64: string, instructionPrompt: stri
             }
         }
 
+        // FIX: The `text` property should be accessed directly, not called as a function.
         const textResponse = response.text?.trim();
         if (textResponse) {
             throw new Error(`Model tidak mengembalikan gambar. Pesan dari AI: "${textResponse}"`);
@@ -570,6 +590,7 @@ export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: 
                 }
             },
         });
+        // FIX: The `text` property should be accessed directly, not called as a function.
         return safeJsonParse<SocialProfileData>(response.text, 'generateSocialProfiles');
     } catch (error) {
         throw handleApiError(error, "Social Profiles");
@@ -612,6 +633,7 @@ export const generateSocialAds = async (brandInputs: BrandInputs, persona: Brand
                 }
             },
         });
+        // FIX: The `text` property should be accessed directly, not called as a function.
         return safeJsonParse<SocialAdsData>(response.text, 'generateSocialAds');
     } catch (error) {
         throw handleApiError(error, "Social Ads");

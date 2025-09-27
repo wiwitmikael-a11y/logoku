@@ -72,9 +72,10 @@ export interface ContentCalendarEntry {
 }
 
 export interface LogoVariations {
-  main: string;
-  icon: string;
-  monochrome: string;
+  main: string;       // The original icon-only logo
+  stacked: string;    // Icon with text below
+  horizontal: string; // Icon with text beside
+  monochrome: string; // The horizontal or stacked version, but in B&W
 }
 
 // NEW: Social Media focused types
@@ -130,10 +131,12 @@ export interface ProjectData {
 }
 
 // This represents a project row fetched from the Supabase 'projects' table
+export type ProjectStatus = 'in-progress' | 'local-complete' | 'completed';
+
 export interface Project {
   id: number; // The database primary key
   user_id: string;
   created_at: string; // The database timestamp
   project_data: ProjectData; // All the branding data is nested here
-  status: 'in-progress' | 'completed'; // New status field for checkpoint system
+  status: ProjectStatus; 
 }

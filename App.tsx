@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets } from './types';
+import { uploadAndSyncProjectAssets } from './services/storageService';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
 // --- Error Handling & Loading ---
@@ -18,6 +18,7 @@ import ErrorMessage from './components/common/ErrorMessage';
 import LoginScreen from './components/LoginScreen';
 import ProgressStepper from './components/common/ProgressStepper';
 import AdBanner from './components/AdBanner';
+import Toast from './components/common/Toast'; // New Toast component
 
 // --- Lazily Loaded Components (with new, clear naming) ---
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
@@ -87,7 +88,9 @@ const MainApp: React.FC = () => {
 
     const [projects, setProjects] = useState<Project[]>([]);
     const [generalError, setGeneralError] = useState<string | null>(null);
-    const [isFinalizing, setIsFinalizing] = useState(false); // New state for final upload process
+    const [isFinalizing, setIsFinalizing] = useState(false);
+    const [toast, setToast] = useState({ message: '', show: false });
+    const [syncingProjectId, setSyncingProjectId] = useState<number | null>(null);
     
     // State for the welcome banner
     const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
@@ -116,6 +119,10 @@ const MainApp: React.FC = () => {
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'social_kit', 'profile_optimizer', 'social_ads', 'packaging', 'print_media'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
+    
+    const showToast = useCallback((message: string) => {
+        setToast({ message, show: true });
+    }, []);
 
     // --- Effect for Persisting Navigation State ---
     useEffect(() => {
@@ -204,7 +211,7 @@ const MainApp: React.FC = () => {
         
         const { data, error } = await supabase
             .from('projects')
-            .insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' })
+            .insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' as ProjectStatus })
             .select()
             .single();
             
@@ -236,12 +243,12 @@ const MainApp: React.FC = () => {
         if (!project) return;
         
         setSelectedProjectId(project.id);
-        saveWorkflowState(project.project_data);
+        saveWorkflowState(project.project_data); // Load DB data into local session
         
-        // Determine the next step based on what data exists, following the new workflow
+        // Determine the next step based on what data exists
         const data = project.project_data;
         let nextState: AppState = 'persona';
-        if (data.printMediaAssets) nextState = 'summary';
+        if (data.printMediaAssets) nextState = 'summary'; // Should not happen for in-progress
         else if (data.selectedPackagingUrl) nextState = 'print_media';
         else if (data.socialAds) nextState = 'packaging';
         else if (data.socialProfiles) nextState = 'social_ads';
@@ -293,7 +300,6 @@ const MainApp: React.FC = () => {
         setGeneralError(null);
 
         try {
-            // Since we are not using Supabase Storage anymore for this flow, we only need to delete the project record.
             const { error: deleteError } = await supabase
                 .from('projects')
                 .delete()
@@ -301,9 +307,7 @@ const MainApp: React.FC = () => {
             
             if (deleteError) throw new Error(`Gagal menghapus data project: ${deleteError.message}`);
 
-            // Update UI state
             setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
-            
             playSound('success');
 
         } catch (err) {
@@ -317,91 +321,69 @@ const MainApp: React.FC = () => {
         }
     };
     
-    // --- Centralized Checkpoint Saver ---
-    const saveCheckpoint = useCallback(async (updatedData: Partial<ProjectData>) => {
-        if (!selectedProjectId) {
-            setGeneralError("ID Project tidak ditemukan untuk menyimpan progress.");
-            throw new Error("ID Project tidak ditemukan.");
-        }
-        
-        const { error } = await supabase
-            .from('projects')
-            .update({ project_data: updatedData })
-            .eq('id', selectedProjectId);
-            
-        if (error) {
-            setGeneralError(`Gagal menyimpan progress: ${error.message}`);
-            throw new Error(error.message);
-        }
-        
-        setProjects(prev => prev.map(p => 
-            p.id === selectedProjectId ? { ...p, project_data: updatedData as ProjectData } : p
-        ));
-        
+    // --- Centralized Local Checkpoint Saver ---
+    const saveLocalCheckpoint = useCallback((updatedData: Partial<ProjectData>) => {
         saveWorkflowState(updatedData);
-    }, [selectedProjectId]);
+        showToast("Progres tersimpan sementara di browser!");
+    }, [showToast]);
 
-    // --- Workflow Step Completion Handlers ---
+
+    // --- Workflow Step Completion Handlers (Now use local checkpoint) ---
     const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         const currentState = loadWorkflowState() || {};
-        const updatedData: Partial<ProjectData> = {
-            ...currentState,
-            brandInputs: data.inputs,
-            selectedPersona: data.selectedPersona,
-            selectedSlogan: data.selectedSlogan,
-        };
-        await saveCheckpoint(updatedData);
+        const updatedData: Partial<ProjectData> = { ...currentState, brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan };
+        saveLocalCheckpoint(updatedData);
         navigateTo('logo');
-    }, [saveCheckpoint]);
+    }, [saveLocalCheckpoint]);
     
     const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt };
-        await saveCheckpoint(updatedData);
+        saveLocalCheckpoint(updatedData);
         navigateTo('logo_detail');
-    }, [saveCheckpoint]);
+    }, [saveLocalCheckpoint]);
 
     const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
-        await saveCheckpoint(updatedData);
+        saveLocalCheckpoint(updatedData);
         navigateTo('content');
-    }, [saveCheckpoint]);
+    }, [saveLocalCheckpoint]);
 
     const handleContentComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, contentCalendar: data.calendar, searchSources: data.sources };
-        await saveCheckpoint(updatedData);
-        navigateTo('social_kit'); // Next step is now Social Media Kit
-    }, [saveCheckpoint]);
+        saveLocalCheckpoint(updatedData);
+        navigateTo('social_kit');
+    }, [saveLocalCheckpoint]);
 
     const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, socialMediaKit: data.assets };
-        await saveCheckpoint(updatedData);
+        saveLocalCheckpoint(updatedData);
         navigateTo('profile_optimizer');
-    }, [saveCheckpoint]);
+    }, [saveLocalCheckpoint]);
 
     const handleProfileOptimizerComplete = useCallback(async (data: { profiles: SocialProfileData }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, socialProfiles: data.profiles };
-        await saveCheckpoint(updatedData);
+        saveLocalCheckpoint(updatedData);
         navigateTo('social_ads');
-    }, [saveCheckpoint]);
+    }, [saveLocalCheckpoint]);
 
     const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, socialAds: data.adsData };
-        await saveCheckpoint(updatedData);
+        saveLocalCheckpoint(updatedData);
         navigateTo('packaging');
-    }, [saveCheckpoint]);
+    }, [saveLocalCheckpoint]);
 
     const handlePackagingComplete = useCallback(async (packagingBase64: string) => {
        const currentState = loadWorkflowState() || {};
        const updatedData = { ...currentState, selectedPackagingUrl: packagingBase64 };
-       await saveCheckpoint(updatedData);
+       saveLocalCheckpoint(updatedData);
        navigateTo('print_media');
-    }, [saveCheckpoint]);
+    }, [saveLocalCheckpoint]);
 
     const handlePrintMediaComplete = useCallback(async (printMediaAssets: PrintMediaAssets) => {
         if (!session?.user || !selectedProjectId) return;
@@ -415,7 +397,7 @@ const MainApp: React.FC = () => {
 
             const { data, error } = await supabase
                 .from('projects')
-                .update({ project_data: finalProjectData, status: 'completed' })
+                .update({ project_data: finalProjectData, status: 'local-complete' as ProjectStatus })
                 .eq('id', selectedProjectId)
                 .select()
                 .single();
@@ -424,9 +406,9 @@ const MainApp: React.FC = () => {
 
             const updatedProject: Project = data as any;
             setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-            setSelectedProjectId(updatedProject.id);
             clearWorkflowState();
-            navigateTo('summary');
+            setSelectedProjectId(null);
+            navigateTo('dashboard');
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat finalisasi project.';
@@ -437,6 +419,45 @@ const MainApp: React.FC = () => {
         }
 
     }, [session, selectedProjectId]);
+
+    const handleSyncProject = useCallback(async (projectId: number) => {
+        if (!session?.user) return;
+        const projectToSync = projects.find(p => p.id === projectId);
+        if (!projectToSync) {
+            setGeneralError("Project yang mau disinkronkan tidak ditemukan.");
+            return;
+        }
+
+        setSyncingProjectId(projectId);
+        setGeneralError(null);
+        playSound('start');
+
+        try {
+            const newDataWithUrls = await uploadAndSyncProjectAssets(projectToSync);
+
+            const { data, error } = await supabase
+                .from('projects')
+                .update({ project_data: newDataWithUrls, status: 'completed' as ProjectStatus })
+                .eq('id', projectId)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            const updatedProject: Project = data as any;
+            setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+            playSound('success');
+            showToast("Project berhasil disinkronkan ke database!");
+
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat sinkronisasi.';
+            setGeneralError(errorMessage);
+            playSound('error');
+        } finally {
+            setSyncingProjectId(null);
+        }
+    }, [session, projects, showToast]);
+
 
     const openContactModal = useCallback(() => { playSound('click'); setShowContactModal(true); }, []);
     const closeContactModal = useCallback(() => setShowContactModal(false), []);
@@ -486,10 +507,11 @@ const MainApp: React.FC = () => {
                 }
                 break;
             case 'logo_detail':
-                if (workflowData?.selectedLogoUrl && workflowData.logoPrompt) {
+                if (workflowData?.selectedLogoUrl && workflowData.logoPrompt && workflowData.brandInputs) {
                     return <LogoDetailGenerator 
                         baseLogoUrl={workflowData.selectedLogoUrl} 
                         basePrompt={workflowData.logoPrompt} 
+                        businessName={workflowData.brandInputs.businessName}
                         onComplete={handleLogoDetailComplete}
                     />;
                 }
@@ -550,7 +572,17 @@ const MainApp: React.FC = () => {
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onContinueProject={handleContinueProject} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
+                return <ProjectDashboard 
+                    projects={projects} 
+                    onNewProject={handleNewProject} 
+                    onSelectProject={handleSelectProject} 
+                    onContinueProject={handleContinueProject} 
+                    showWelcomeBanner={showWelcomeBanner} 
+                    onWelcomeBannerClose={() => setShowWelcomeBanner(false)} 
+                    onDeleteProject={handleRequestDeleteProject}
+                    onSyncProject={handleSyncProject}
+                    syncingProjectId={syncingProjectId}
+                />;
         }
         // Fallback: If required data is missing, go to dashboard
         handleReturnToDashboard();
@@ -678,6 +710,7 @@ const MainApp: React.FC = () => {
                 Powered by Atharrazka Core. Built for UMKM Indonesia.
             </footer>
             <AdBanner />
+            <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
             <Suspense fallback={null}>
                 <ContactModal show={showContactModal} onClose={closeContactModal} />
                 <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
@@ -700,7 +733,7 @@ const MainApp: React.FC = () => {
                     confirmText="Ya, Cabut Aja"
                     cancelText="Gak Jadi, Balik Lagi"
                 >
-                    Kalo lo logout sekarang, progres yang belom ke-save otomatis (checkpoint) bisa ilang lho. Sayang kan kalo ide brilian lo ngawang gitu aja. Tetep mau lanjut?
+                    Kalo lo logout sekarang, progres project yang lagi jalan (yang cuma kesimpen di browser) bakal ilang lho. Sayang kan kalo ide brilian lo ngawang gitu aja. Tetep mau lanjut?
                 </ConfirmationModal>
                 <ConfirmationModal
                     show={showDeleteConfirm}

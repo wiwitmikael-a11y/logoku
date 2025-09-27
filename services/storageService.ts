@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { compressAndConvertToWebP } from '../utils/imageUtils';
+import type { Project, ProjectData } from '../types';
 
 // Batas ukuran file maksimal yang diizinkan (5 MB)
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -33,7 +34,6 @@ export const uploadImageFromBase64 = async (
 ): Promise<string> => {
     const BUCKET_NAME = 'project-assets';
 
-    // Langkah 1: Kompres dan konversi gambar ke Blob WebP.
     const compressedBase64 = await compressAndConvertToWebP(base64String);
     const blob = await base64ToBlob(compressedBase64);
 
@@ -41,20 +41,14 @@ export const uploadImageFromBase64 = async (
         throw new Error('Gagal mengubah data Base64 menjadi file. Data mungkin korup atau formatnya salah.');
     }
 
-    // Langkah 2: [GERBANG UTAMA] Validasi ukuran file 100% di sisi aplikasi.
     if (blob.size > MAX_FILE_SIZE_BYTES) {
         throw new Error(`Upload gagal: Ukuran file (${(blob.size / 1024 / 1024).toFixed(2)} MB) melebihi batas maksimal (5 MB).`);
     }
     
-    // Langkah 3: Buat objek `File` standar untuk diunggah.
-    // WORKAROUND: Struktur path diubah untuk menghindari bug RLS di backend Supabase.
-    // Daripada `userId/projectId/file.webp`, kita gunakan `userId/projectId_file.webp`.
-    // Ini mencegah RLS mencoba memproses segmen path 'projectId' yang tampaknya memicu error.
     const fileName = `${projectId}_${assetType}-${Date.now()}.webp`;
     const filePath = `${userId}/${fileName}`;
     const file = new File([blob], fileName, { type: 'image/webp' });
 
-    // Langkah 4: Upload file. RLS Policy di Supabase sudah disederhanakan.
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(filePath, file, {
@@ -64,11 +58,9 @@ export const uploadImageFromBase64 = async (
 
     if (uploadError) {
         console.error('Supabase Storage Error:', uploadError);
-        // Error disederhanakan karena validasi size sudah di app. Error di sini kemungkinan besar karena RLS ownership atau masalah koneksi.
         throw new Error(`Gagal upload ke Supabase Storage: ${uploadError.message}. Pastikan RLS Policy untuk ownership sudah benar.`);
     }
 
-    // Langkah 5: Dapatkan URL publik.
     const { data: publicUrlData } = supabase.storage
         .from(BUCKET_NAME)
         .getPublicUrl(filePath);
@@ -78,4 +70,91 @@ export const uploadImageFromBase64 = async (
     }
 
     return publicUrlData.publicUrl;
+};
+
+/**
+ * Checks if a string is a Base64 data URL.
+ */
+const isBase64DataUrl = (str: string | undefined): str is string => {
+    return typeof str === 'string' && str.startsWith('data:image');
+}
+
+/**
+ * Takes a project with base64 assets, uploads them all to Supabase Storage,
+ * and returns a new ProjectData object with public URLs.
+ */
+export const uploadAndSyncProjectAssets = async (project: Project): Promise<ProjectData> => {
+    const { id: projectId, user_id: userId, project_data } = project;
+    
+    const newData: ProjectData = JSON.parse(JSON.stringify(project_data));
+    const uploadTasks: Promise<void>[] = [];
+
+    const createUploadTask = (
+        data: string,
+        assetType: string,
+        updateFn: (url: string) => void
+    ) => {
+        uploadTasks.push(
+            uploadImageFromBase64(data, userId, projectId, assetType).then(updateFn)
+        );
+    };
+
+    if (isBase64DataUrl(newData.selectedLogoUrl)) {
+        createUploadTask(newData.selectedLogoUrl, 'logo-main', url => { newData.selectedLogoUrl = url; });
+    }
+
+    if (newData.logoVariations) {
+        for (const key of Object.keys(newData.logoVariations) as Array<keyof typeof newData.logoVariations>) {
+            const variationData = newData.logoVariations[key];
+            if (isBase64DataUrl(variationData)) {
+                createUploadTask(variationData, `logo-variation-${key}`, url => {
+                    if (newData.logoVariations) newData.logoVariations[key] = url;
+                });
+            }
+        }
+    }
+    
+    if (newData.socialMediaKit) {
+        if (isBase64DataUrl(newData.socialMediaKit.profilePictureUrl)) {
+             createUploadTask(newData.socialMediaKit.profilePictureUrl, 'social-profile-pic', url => {
+                if (newData.socialMediaKit) newData.socialMediaKit.profilePictureUrl = url;
+            });
+        }
+        if (isBase64DataUrl(newData.socialMediaKit.bannerUrl)) {
+             createUploadTask(newData.socialMediaKit.bannerUrl, 'social-banner', url => {
+                if (newData.socialMediaKit) newData.socialMediaKit.bannerUrl = url;
+            });
+        }
+    }
+
+    if (isBase64DataUrl(newData.selectedPackagingUrl)) {
+         createUploadTask(newData.selectedPackagingUrl, 'packaging', url => { newData.selectedPackagingUrl = url; });
+    }
+
+    if (newData.printMediaAssets) {
+        if (isBase64DataUrl(newData.printMediaAssets.businessCardUrl)) {
+             createUploadTask(newData.printMediaAssets.businessCardUrl, 'print-business-card', url => {
+                if (newData.printMediaAssets) newData.printMediaAssets.businessCardUrl = url;
+            });
+        }
+         if (isBase64DataUrl(newData.printMediaAssets.bannerUrl)) {
+             createUploadTask(newData.printMediaAssets.bannerUrl, 'print-banner', url => {
+                if (newData.printMediaAssets) newData.printMediaAssets.bannerUrl = url;
+            });
+        }
+    }
+
+    if (newData.contentCalendar) {
+        newData.contentCalendar.forEach((entry, index) => {
+            if (isBase64DataUrl(entry.imageUrl)) {
+                createUploadTask(entry.imageUrl, `content-image-${index}`, url => {
+                   if (newData.contentCalendar) newData.contentCalendar[index].imageUrl = url;
+                });
+            }
+        });
+    }
+
+    await Promise.all(uploadTasks);
+
+    return newData;
 };

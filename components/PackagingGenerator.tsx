@@ -141,7 +141,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, projectData.selectedLogoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, projectData, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleContinue = () => {
     if (selectedDesignBase64) {

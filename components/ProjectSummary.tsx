@@ -148,7 +148,7 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGen
             <Card title="Paket Logo Lengkap" className="print-card">
               <div className="space-y-4">
                   <div>
-                      <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Logo Utama</h5>
+                      <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Logo Utama (Ikon)</h5>
                       <div className="bg-white p-4 rounded-lg flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(selectedLogoUrl)}>
                           <img src={selectedLogoUrl} alt="Logo Utama" className="max-w-full max-h-32 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
                       </div>
@@ -156,14 +156,20 @@ const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGen
                    {logoVariations && (
                        <div className="grid grid-cols-2 gap-4 text-center">
                            <div>
-                                <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Versi Ikon</h5>
-                               <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.icon)}>
-                                   <img src={logoVariations.icon} alt="Ikon Logo" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
+                                <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Versi Tumpuk</h5>
+                               <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.stacked)}>
+                                   <img src={logoVariations.stacked} alt="Logo Versi Tumpuk" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
                                </div>
                            </div>
                             <div>
+                               <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Versi Datar</h5>
+                               <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.horizontal)}>
+                                   <img src={logoVariations.horizontal} alt="Logo Versi Datar" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
+                               </div>
+                           </div>
+                           <div className="col-span-2">
                                <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Versi Monokrom</h5>
-                               <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.monochrome)}>
+                               <div className="bg-white p-2 rounded-lg flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.monochrome)}>
                                    <img src={logoVariations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
                                </div>
                            </div>

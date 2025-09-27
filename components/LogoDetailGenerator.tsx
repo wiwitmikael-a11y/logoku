@@ -13,13 +13,14 @@ import CalloutPopup from './common/CalloutPopup';
 interface Props {
   baseLogoUrl: string; // This will now be a Base64 string
   basePrompt: string;
+  businessName: string;
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
 }
 
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
-const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onComplete }) => {
+const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, businessName, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -54,8 +55,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     setShowNextStepNudge(false);
     playSound('start');
     try {
-      // CRITICAL FIX: Now calls the corrected service function which edits the existing logo.
-      const generatedVariations = await generateLogoVariations(finalLogoUrl);
+      const generatedVariations = await generateLogoVariations(finalLogoUrl, businessName);
       
       await deductCredits(VARIATION_COST);
       
@@ -69,7 +69,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     } finally {
       setIsGeneratingVariations(false);
     }
-  }, [finalLogoUrl, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [finalLogoUrl, businessName, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +92,9 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
       
       await deductCredits(EDIT_COST);
       setFinalLogoUrl(editedBase64Result);
+      // After editing the main logo, clear the old variations as they are now outdated
+      setVariations(null);
+      setShowNextStepNudge(false);
       playSound('success');
     } catch (err)
      {
@@ -114,13 +117,13 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 3: Finalisasi & Paket Logo</h2>
-        <p className="text-gray-400">Logo pilihan lo udah siap. Sekarang lo bisa bikin paket logo lengkap (buat ikon, stempel, dll.) atau kasih revisi minor pakai Mang AI.</p>
+        <p className="text-gray-400">Logo pilihan lo udah siap. Sekarang lo bisa bikin paket logo lengkap (versi tumpuk, datar, monokrom) atau kasih revisi minor pakai Mang AI.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* Logo Preview & Variations */}
         <div className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-            <h3 className="text-xl font-bold">Logo Utama Lo</h3>
+            <h3 className="text-xl font-bold">Logo Utama (Ikon)</h3>
             <div
               className="relative bg-white p-4 rounded-lg flex justify-center items-center aspect-square group"
               onClick={() => !isEditing && openModal(finalLogoUrl)}
@@ -142,13 +145,19 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
                     <h4 className="font-bold mb-4">Paket Logo Lengkap:</h4>
                     <div className="grid grid-cols-2 gap-4 text-center">
                         <div>
-                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.icon)}>
-                                <img src={variations.icon} alt="Ikon Logo" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
+                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.stacked)}>
+                                <img src={variations.stacked} alt="Logo Versi Tumpuk" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
                             </div>
-                            <p className="text-sm mt-2 text-gray-400">Versi Ikon</p>
+                            <p className="text-sm mt-2 text-gray-400">Versi Tumpuk</p>
                         </div>
                          <div>
-                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.monochrome)}>
+                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.horizontal)}>
+                                <img src={variations.horizontal} alt="Logo Versi Datar" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
+                            </div>
+                            <p className="text-sm mt-2 text-gray-400">Versi Datar</p>
+                        </div>
+                         <div className="col-span-2">
+                            <div className="bg-white p-2 rounded-lg flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.monochrome)}>
                                 <img src={variations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
                             </div>
                             <p className="text-sm mt-2 text-gray-400">Versi Monokrom</p>
@@ -165,7 +174,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, onCompl
         {/* AI Edit Section */}
         <div className="flex flex-col gap-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-xl font-bold">Revisi Cepat dengan Mang AI</h3>
-            <p className="text-sm text-gray-400">Kasih perintah simpel buat ubah logo lo. Misal: "ganti warnanya jadi biru dongker" atau "tambahin outline tipis".</p>
+            <p className="text-sm text-gray-400">Kasih perintah simpel buat ubah logo lo. Misal: "ganti warnanya jadi biru dongker" atau "tambahin outline tipis". Mengedit logo akan menghapus variasi yang sudah dibuat.</p>
             <form onSubmit={handleEdit} className="flex flex-col gap-3">
                 <Input 
                     label="Perintah Revisi"

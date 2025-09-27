@@ -11,6 +11,8 @@ interface ProjectDashboardProps {
   onSelectProject: (projectId: number) => void;
   onContinueProject: (projectId: number) => void;
   onDeleteProject: (projectId: number) => void;
+  onSyncProject: (projectId: number) => void;
+  syncingProjectId: number | null;
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
 }
@@ -39,69 +41,16 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
 };
 
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onDeleteProject, showWelcomeBanner, onWelcomeBannerClose }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onContinueProject, onDeleteProject, onSyncProject, syncingProjectId, showWelcomeBanner, onWelcomeBannerClose }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
-  const { inProgressProjects, completedProjects } = useMemo(() => {
-    const inProgress = projects.filter(p => p.status !== 'completed');
+  const { inProgressProjects, localCompleteProjects, completedProjects } = useMemo(() => {
+    const inProgress = projects.filter(p => p.status === 'in-progress');
+    const localComplete = projects.filter(p => p.status === 'local-complete');
     const completed = projects.filter(p => p.status === 'completed');
-    return { inProgressProjects: inProgress, completedProjects: completed };
+    return { inProgressProjects: inProgress, localCompleteProjects: localComplete, completedProjects: completed };
   }, [projects]);
-
-  // Helper function untuk merender project dan menyisipkan iklan
-  const renderProjectsWithAds = (projectList: Project[], type: 'in-progress' | 'completed') => {
-    return projectList.flatMap((project, index) => {
-      const projectCard = (
-        <div key={project.id} className="relative">
-          {type === 'in-progress' ? (
-            <Card 
-              title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
-              onClick={() => onContinueProject(project.id)}
-            >
-              <p className="text-sm text-gray-400 min-h-[40px]">
-                {project.project_data.selectedSlogan ? `"${project.project_data.selectedSlogan}"` : 'Lanjutkan untuk membuat slogan...'}
-              </p>
-              <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
-                <p className="text-xs text-gray-500">Progres tersimpan...</p>
-                <Button onClick={(e) => { e.stopPropagation(); onContinueProject(project.id); }} variant="secondary" size="small">Lanjutkan</Button>
-              </div>
-            </Card>
-          ) : (
-            <Card 
-              title={project.project_data.brandInputs.businessName}
-              onClick={() => onSelectProject(project.id)}
-            >
-              <div className="space-y-3">
-                <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
-                <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
-                  <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
-                  <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
-                </div>
-                <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-              </div>
-               <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
-                <Button onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} variant="secondary" size="small">Lihat Brand Kit</Button>
-              </div>
-            </Card>
-          )}
-          <button
-            onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
-            className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
-            title="Hapus Project"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-          </button>
-        </div>
-      );
-      
-      // Sisipkan iklan setelah setiap 2 project (index 1, 3, 5, dst.)
-      if (index > 0 && index % 2 !== 0) {
-        return [projectCard, <InFeedAd key={`ad-${type}-${project.id}`} />];
-      }
-      return [projectCard];
-    });
-  };
 
   return (
     <div className="flex flex-col gap-8 items-center text-center">
@@ -129,8 +78,73 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <div className="w-full text-left mt-8">
           <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {renderProjectsWithAds(inProgressProjects, 'in-progress')}
+            {inProgressProjects.map(project => (
+                <div key={project.id} className="relative">
+                    <Card 
+                    title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
+                    onClick={() => onContinueProject(project.id)}
+                    >
+                    <p className="text-sm text-gray-400 min-h-[40px]">
+                        {project.project_data.selectedSlogan ? `"${project.project_data.selectedSlogan}"` : 'Lanjutkan untuk membuat slogan...'}
+                    </p>
+                    <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
+                        <p className="text-xs text-gray-500">Progres tersimpan...</p>
+                        <Button onClick={(e) => { e.stopPropagation(); onContinueProject(project.id); }} variant="secondary" size="small">Lanjutkan</Button>
+                    </div>
+                    </Card>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
+                        className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
+                        title="Hapus Project"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                    </button>
+                </div>
+            ))}
           </div>
+        </div>
+      )}
+
+      {localCompleteProjects.length > 0 && (
+        <div className="w-full text-left mt-8">
+            <h3 className="text-lg md:text-xl font-bold mb-4">Project Siap Sinkronisasi:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {localCompleteProjects.map(project => (
+                <div key={project.id} className="relative">
+                <Card 
+                    title={project.project_data.brandInputs.businessName}
+                >
+                    <div className="space-y-3">
+                    <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
+                    <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
+                        <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
+                        <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
+                    </div>
+                    <p className="text-xs text-yellow-400 pt-2 border-t border-gray-700">Tersimpan lokal. Klik untuk menyimpan permanen & asetnya.</p>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
+                    <Button 
+                        onClick={(e) => { e.stopPropagation(); onSyncProject(project.id); }} 
+                        variant="primary"
+                        size="small"
+                        isLoading={syncingProjectId === project.id}
+                        disabled={syncingProjectId !== null}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+                        Sinkronkan
+                    </Button>
+                    </div>
+                </Card>
+                 <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
+                    className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
+                    title="Hapus Project"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                </button>
+                </div>
+            ))}
+            </div>
         </div>
       )}
 
@@ -138,7 +152,33 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <div className="w-full text-left mt-8">
           <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {renderProjectsWithAds(completedProjects, 'completed')}
+            {completedProjects.map(project => (
+                 <div key={project.id} className="relative">
+                    <Card 
+                    title={project.project_data.brandInputs.businessName}
+                    onClick={() => onSelectProject(project.id)}
+                    >
+                    <div className="space-y-3">
+                        <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
+                        <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
+                        <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
+                        <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
+                        </div>
+                        <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-700 flex justify-end">
+                        <Button onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} variant="secondary" size="small">Lihat Brand Kit</Button>
+                    </div>
+                    </Card>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
+                        className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-red-900/50 hover:text-red-400 transition-colors z-10"
+                        title="Hapus Project"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                    </button>
+                </div>
+            ))}
           </div>
         </div>
       )}
