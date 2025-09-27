@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>logo.ku - Studio Logo & Branding Mang AI</title>
-    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/Mang_AI.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/Mang_AI.png?v=2" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
@@ -199,22 +199,22 @@
         100% { transform: translateX(5vw) scale(-1, 1) translateY(0); }
       }
       
-      /* NEW: Keyframes for Header Mang AI Peeking */
+      /* NEW & FIXED: Keyframes for Header Mang AI Peeking */
       @keyframes header-ai-peeking {
         0%, 85% { 
-          transform: translateX(30px) translateY(5px) scaleX(-1); 
+          transform: translateX(30px) translateY(5px) scaleX(-1); /* Posisi tersembunyi */
           opacity: 0;
         }
         90% {
-          transform: translateX(-20px) translateY(5px) scaleX(-1);
+          transform: translateX(-45px) translateY(5px) scaleX(-1); /* Nongol lebih jauh ke kiri */
           opacity: 1;
         }
         96% {
-          transform: translateX(-20px) translateY(5px) scaleX(-1);
+          transform: translateX(-45px) translateY(5px) scaleX(-1); /* Tahan sebentar */
           opacity: 1;
         }
         100% {
-          transform: translateX(30px) translateY(5px) scaleX(-1);
+          transform: translateX(30px) translateY(5px) scaleX(-1); /* Sembunyi lagi */
           opacity: 0;
         }
       }

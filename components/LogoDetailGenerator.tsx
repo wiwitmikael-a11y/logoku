@@ -10,13 +10,11 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
-// FIX: Import utility to handle converting image URLs to Base64 for the API
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
-  baseLogoUrl: string; // This will now be a Base64 string
+  baseLogoUrl: string;
   basePrompt: string;
-  // FIX: Added businessName to props, as it's required for generating variations.
   businessName: string;
   onComplete: (data: { finalLogoUrl: string; variations: LogoVariations }) => void;
 }
@@ -24,6 +22,8 @@ interface Props {
 const VARIATION_COST = 2;
 const EDIT_COST = 1;
 
+// FIX: This component was using an outdated implementation. It has been updated to align with the newer components.
+// It now correctly calls geminiService functions with the expected arguments and handles data flow properly.
 const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, businessName, onComplete }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
@@ -35,7 +35,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
-  const [showNextStepNudge, setShowNextStepNudge] = useState(false); // State for the nudge
+  const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const variationsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
@@ -59,15 +59,17 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     setShowNextStepNudge(false);
     playSound('start');
     try {
-      // FIX: The API expects base64 data, but finalLogoUrl might be a URL from a previous edit.
-      // Fetch the image content as base64 before passing it to the service.
+      // FIX: The API expects base64 data. Fetch the image content as base64 before passing it to the service.
       const logoBase64 = await fetchImageAsBase64(finalLogoUrl);
 
       // FIX: Call generateLogoVariations with the correct two arguments: base64 logo data and the business name.
+      // This resolves the "Expected 2 arguments, but got 1" error.
       const generatedVariations = await generateLogoVariations(logoBase64, businessName);
       
       await deductCredits(VARIATION_COST);
       
+      // FIX: The returned object `generatedVariations` now correctly matches the `LogoVariations` type.
+      // This resolves the "Property 'icon' does not exist" error.
       setVariations(generatedVariations);
       setShowNextStepNudge(true);
       playSound('success');
@@ -94,7 +96,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     setError(null);
     playSound('start');
     try {
-      // FIX: Fetch image as Base64 before sending to the edit function
       const imageAsBase64 = await fetchImageAsBase64(finalLogoUrl);
       const base64Data = imageAsBase64.split(',')[1];
       const mimeType = imageAsBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
@@ -103,7 +104,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
       
       await deductCredits(EDIT_COST);
       setFinalLogoUrl(editedBase64Result);
-      // After editing the main logo, clear the old variations as they are now outdated
       setVariations(null);
       setShowNextStepNudge(false);
       playSound('success');
@@ -132,7 +132,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Logo Preview & Variations */}
         <div className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-xl font-bold">Logo Utama (Ikon)</h3>
             <div
@@ -151,7 +150,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
               )}
             </div>
 
-            {/* FIX: Updated rendering logic to display the correct logo variations (stacked, horizontal, monochrome) */}
             {variations ? (
                 <div ref={variationsRef}>
                     <h4 className="font-bold mb-4">Paket Logo Lengkap:</h4>
@@ -183,7 +181,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
             )}
         </div>
 
-        {/* AI Edit Section */}
         <div className="flex flex-col gap-4 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-xl font-bold">Revisi Cepat dengan Mang AI</h3>
             <p className="text-sm text-gray-400">Kasih perintah simpel buat ubah logo lo. Misal: "ganti warnanya jadi biru dongker" atau "tambahin outline tipis". Mengedit logo akan menghapus variasi yang sudah dibuat.</p>

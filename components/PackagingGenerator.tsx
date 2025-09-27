@@ -10,7 +10,6 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
-// FIX: Import fetchImageAsBase64 to handle logo URLs
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
@@ -20,7 +19,6 @@ interface Props {
 
 const GENERATION_COST = 1;
 
-// --- NEW: Hyper-Specific, Indonesian UMKM-focused Packaging Configuration ---
 interface PackagingOption {
   id: string;
   name: string;
@@ -83,13 +81,11 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
   const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
-    // When category changes, reset the specific type to the first available option
     const options = packagingConfigs[category] || packagingConfigs['Lainnya'];
     setSelectedPackagingTypeId(options[0].id);
   }, [category]);
   
   useEffect(() => {
-    // This effect now generates the prompt based on BOTH category and specific type
     if (!projectData.brandInputs || !projectData.selectedPersona) return;
 
     const { brandInputs, selectedPersona } = projectData;
@@ -135,9 +131,9 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
     playSound('start');
 
     try {
-      // FIX: Fetch the logo from its URL to get the Base64 data required by the API.
       const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
-      // FIX: Correctly call generatePackagingDesign with two arguments.
+      // FIX: Correctly call generatePackagingDesign with two arguments (prompt and logoBase64)
+      // This resolves the "Expected 2 arguments, but got 1" error.
       const results = await generatePackagingDesign(prompt, logoBase64);
       await deductCredits(GENERATION_COST);
       setDesigns(results);
@@ -167,7 +163,6 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {/* NEW: Specific Packaging Type Dropdown */}
         <div className="p-6 bg-gray-800/50 rounded-lg border border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                  <label htmlFor="packagingType" className="block mb-2 text-sm font-medium text-gray-300">Pilih Jenis Kemasan Spesifik</label>

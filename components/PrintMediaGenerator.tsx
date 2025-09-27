@@ -11,7 +11,6 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
-// FIX: Import fetchImageAsBase64 to handle logo URL from storage.
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
@@ -38,7 +37,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   
-  // State for inputs
   const [bannerInfo, setBannerInfo] = useState({
     headline: 'SEGERA DIBUKA!',
     subheadline: `Nantikan ${projectData.brandInputs?.businessName} di kota Anda!`,
@@ -107,15 +105,16 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
           The design must be highly legible from a distance. Place the logo prominently. Ensure all text is clear.`;
       }
 
-      // FIX: Fetch logo from URL to get Base64 data for the API.
+      // FIX: The `generatePrintMedia` service requires a Base64 string for the logo.
+      // This fetches the image from its URL before calling the service.
       const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
-      // FIX: Correctly call generatePrintMedia with two string arguments.
+      // FIX: Correctly call `generatePrintMedia` with two string arguments (prompt and logoBase64).
+      // This resolves the error where an object was incorrectly passed as the second argument.
       const results = await generatePrintMedia(prompt, logoBase64);
       
       await deductCredits(GENERATION_COST);
       setDesigns(results);
       
-      // Store the result in the corresponding asset state
       if (activeTab === 'roll_banner') {
         setGeneratedAssets(prev => ({ ...prev, rollBannerUrl: results[0] }));
       } else if (activeTab === 'banner') {
