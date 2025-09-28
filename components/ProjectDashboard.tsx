@@ -13,6 +13,8 @@ interface ProjectDashboardProps {
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
   onDeleteProject: (projectId: number) => void;
+  onSyncProject: (projectId: number) => void;
+  syncingProjectId: number | null;
 }
 
 const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
@@ -63,8 +65,23 @@ const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onCl
   </button>
 );
 
+const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
+    const statusMap = {
+        'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-500/20', dotColor: 'bg-yellow-400', textColor: 'text-yellow-300' },
+        'local-complete': { text: 'Siap Sinkronisasi', color: 'bg-blue-500/20', dotColor: 'bg-blue-400', textColor: 'text-blue-300' },
+        'completed': { text: 'Tersinkron', color: 'bg-green-500/20', dotColor: 'bg-green-400', textColor: 'text-green-300' },
+    };
+    const { text, color, dotColor, textColor } = statusMap[status] || { text: 'Unknown', color: 'bg-gray-500/20', dotColor: 'bg-gray-400', textColor: 'text-gray-300' };
+    return (
+        <div className={`absolute top-4 right-4 z-10 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${color}`}>
+            <span className={`h-2 w-2 rounded-full ${dotColor}`}></span>
+            <span className={textColor}>{text}</span>
+        </div>
+    );
+};
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject }) => {
+
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject, onSyncProject, syncingProjectId }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
@@ -80,12 +97,6 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       if (!data.selectedPersona) return "Memulai: Persona Brand";
       if (!data.selectedLogoUrl) return "Progres: Desain Logo";
       if (!data.logoVariations) return "Progres: Finalisasi Logo";
-      if (!data.contentCalendar) return "Progres: Kalender Konten";
-      if (!data.socialMediaKit) return "Progres: Social Media Kit";
-      if (!data.socialProfiles) return "Progres: Optimasi Profil";
-      if (!data.socialAds) return "Progres: Teks Iklan";
-      if (!data.selectedPackagingUrl) return "Progres: Desain Kemasan";
-      if (!data.printMediaAssets) return "Progres: Media Cetak";
       return "Lanjutkan project...";
   }
 
@@ -121,7 +132,8 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                       title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
                       onClick={() => onSelectProject(project.id)}
                     >
-                      <p className="text-sm text-gray-400 min-h-[40px] italic">
+                      <StatusBadge status={project.status} />
+                      <p className="text-sm text-gray-400 min-h-[40px] italic pr-12">
                         {getProgressDescription(project)}
                       </p>
                       <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
@@ -129,7 +141,6 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                       </div>
                     </Card>
                     <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
-                    <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
                 </div>
             ))}
           </div>
@@ -138,7 +149,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
 
       {localCompleteProjects.length > 0 && (
         <div className="w-full text-left mt-8">
-            <h3 className="text-lg md:text-xl font-bold mb-4">Project Siap Sinkronisasi:</h3>
+            <h3 className="text-lg md:text-xl font-bold mb-4">Lokal Selesai (Siap Sinkronisasi):</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {localCompleteProjects.map(project => (
                 <div key={project.id} className="relative group">
@@ -146,17 +157,26 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                     title={project.project_data.brandInputs.businessName}
                     onClick={() => onSelectProject(project.id)}
                 >
-                    <div className="space-y-3">
+                    <StatusBadge status={project.status} />
+                    <div className="space-y-3 pr-12">
                       <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
                       <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
                           <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
                           <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
                       </div>
-                      <p className="text-xs text-yellow-400 pt-2 border-t border-gray-700">Siap disinkronkan ke database.</p>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-700">
+                       <Button 
+                          onClick={(e) => { e.stopPropagation(); onSyncProject(project.id); }}
+                          isLoading={syncingProjectId === project.id}
+                          size="small"
+                          className="w-full"
+                      >
+                          Sinkronkan ke Cloud
+                      </Button>
                     </div>
                 </Card>
                  <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
-                 <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
                 </div>
             ))}
             </div>
@@ -165,7 +185,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
 
       {completedProjects.length > 0 && (
         <div className="w-full text-left mt-8">
-          <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
+          <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai (Tersinkron):</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {completedProjects.map(project => (
                  <div key={project.id} className="relative group">
@@ -173,7 +193,8 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                       title={project.project_data.brandInputs.businessName}
                       onClick={() => onSelectProject(project.id)}
                     >
-                      <div className="space-y-3">
+                      <StatusBadge status={project.status} />
+                      <div className="space-y-3 pr-12">
                           <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
                           <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
                             <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />

@@ -209,9 +209,11 @@ const MainApp: React.FC = () => {
         setSelectedProjectId(projectId);
         saveWorkflowState(project.project_data);
         
-        if (project.project_data.logoVariations) {
-            navigateTo('summary'); // Project is finalized, go to Brand Hub
+        // Go to Brand Hub only for fully synced, completed projects.
+        if (project.status === 'completed') {
+            navigateTo('summary');
         } else {
+            // For in-progress or local-complete, continue the workflow
             let nextState: AppState = 'persona';
             if (project.project_data.selectedLogoUrl) nextState = 'logo_detail';
             else if (project.project_data.selectedPersona) nextState = 'logo';
@@ -288,29 +290,73 @@ const MainApp: React.FC = () => {
         navigateTo('logo_detail');
     }, [saveLocalCheckpoint]);
 
-    // BRAND HUB TRANSITION: After logo detail, go to summary (Brand Hub)
     const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
         if (!session?.user || !selectedProjectId) return;
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
         
-        // This is the first time the project is "complete" enough for the Hub.
-        // Save to DB to lock it in.
+        // Save project with base64 assets and 'local-complete' status.
         const { data: dbData, error } = await supabase
             .from('projects')
-            .update({ project_data: updatedData, status: 'completed' as ProjectStatus })
+            .update({ project_data: updatedData, status: 'local-complete' as ProjectStatus })
             .eq('id', selectedProjectId)
             .select()
             .single();
+            
         if (error) {
             setGeneralError(`Gagal menyimpan finalisasi logo: ${error.message}`);
             return;
         }
+        
         const updatedProject: Project = dbData as any;
         setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-        saveWorkflowState(updatedData);
-        navigateTo('summary');
-    }, [session, selectedProjectId, saveLocalCheckpoint]);
+        
+        // Go back to the dashboard to see the sync option.
+        handleReturnToDashboard();
+        showToast("Project disimpan lokal, siap disinkronkan!");
+
+    }, [session, selectedProjectId, handleReturnToDashboard, showToast]);
+
+    // --- [NEW] Project Synchronization ---
+    const handleSyncProject = useCallback(async (projectId: number) => {
+        setSyncingProjectId(projectId);
+        setGeneralError(null);
+        
+        const projectToSync = projects.find(p => p.id === projectId);
+        if (!projectToSync) {
+            setGeneralError("Project yang akan disinkronkan tidak ditemukan.");
+            setSyncingProjectId(null);
+            return;
+        }
+
+        try {
+            // Step 1: Upload assets and get new data object with public URLs
+            const syncedProjectData = await uploadAndSyncProjectAssets(projectToSync);
+            
+            // Step 2: Update the project in the database with new data and 'completed' status
+            const { data: updatedProject, error } = await supabase
+                .from('projects')
+                .update({ project_data: syncedProjectData, status: 'completed' as ProjectStatus })
+                .eq('id', projectId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            
+            // Step 3: Update local state to reflect the change
+            setProjects(prev => prev.map(p => p.id === projectId ? (updatedProject as Project) : p));
+            showToast("Project berhasil disinkronkan ke cloud!");
+            playSound('success');
+
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat sinkronisasi.';
+            setGeneralError(msg);
+            playSound('error');
+        } finally {
+            setSyncingProjectId(null);
+        }
+    }, [projects, showToast]);
+
 
     // --- [BRAND HUB] Centralized Asset Regeneration Logic ---
     const handleRegenerateAsset = async <T,>(
@@ -521,7 +567,16 @@ const MainApp: React.FC = () => {
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
+                return <ProjectDashboard 
+                    projects={projects} 
+                    onNewProject={handleNewProject} 
+                    onSelectProject={handleSelectProject} 
+                    showWelcomeBanner={showWelcomeBanner} 
+                    onWelcomeBannerClose={() => setShowWelcomeBanner(false)} 
+                    onDeleteProject={handleRequestDeleteProject} 
+                    onSyncProject={handleSyncProject}
+                    syncingProjectId={syncingProjectId}
+                />;
         }
         handleReturnToDashboard();
         return <AuthLoadingScreen />;
