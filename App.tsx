@@ -672,6 +672,19 @@ const MainApp: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                        <a
+                            href="https://saweria.co/logoku"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => playSound('click')}
+                            className="hidden md:flex items-center gap-2 bg-amber-500 text-gray-900 px-3 py-1.5 rounded-full font-bold text-sm hover:bg-amber-600 transition-colors"
+                            title="Suka aplikasi ini? Traktir Mang AI kopi!"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                            </svg>
+                            <span>Traktir Kopi</span>
+                        </a>
                          <div className="relative" ref={userMenuRef}>
                             <button onClick={() => setIsUserMenuOpen(prev => !prev)} title="User Menu" className="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 rounded-full">
                                 <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full" />
