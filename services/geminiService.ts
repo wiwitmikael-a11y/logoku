@@ -131,9 +131,9 @@ Follow these steps meticulously:
 
 2.  **Brainstorm Visual Concepts**: Based on your analysis, brainstorm 3 distinct visual concepts. Think metaphorically. For a coffee shop, instead of a simple coffee cup, you might suggest "a stylized sun rising from a coffee cup," "interlocking geometric shapes forming a coffee bean," or "a warm, hand-drawn illustration of a steam wisp forming an elegant letter."
 
-3.  **Develop a Rich Descriptive Vocabulary**: For the best concept, create a list of evocative adjectives and nouns. Focus on artistic styles (e.g., art deco, geometric minimalism, neo-vintage), line quality (e.g., sharp vector lines, soft gradients, clean edges), and color theory (e.g., duotone color scheme, vibrant analogous colors, high contrast). Think about 'logomark', 'symbol', 'negative space', and 'golden ratio'.
+3.  **Develop a Rich Descriptive Vocabulary**: For the best concept, create a list of evocative adjectives and nouns. Focus on artistic styles (e.g., flat icon design, art deco, geometric minimalism, neo-vintage), line quality (e.g., sharp vector lines, clean edges, line art), and color theory (e.g., duotone color scheme, vibrant analogous colors, high contrast). Think about design principles like 'logomark', 'symbol', 'abstract mark', 'negative space', and 'golden ratio'.
 
-4.  **Synthesize the Final Prompt**: Combine the best ideas into a single, cohesive, and highly descriptive final prompt. This final prompt is for an award-winning design. It MUST start with "masterpiece vector logo of...". It MUST specify "clean vector, minimalist, on a solid pure white background, #ffffff background". It must be EXTREMELY specific about shapes, lines, and colors. CRITICAL: The logo design should occupy about 70% of the canvas to ensure it is prominent and not too small. ABSOLUTELY NO TEXT, WORDS, or LETTERS should be requested. Describe a symbolic, abstract icon only. The composition must be balanced, centered, and visually stunning.
+4.  **Synthesize the Final Prompt**: Combine the best ideas into a single, cohesive, and highly descriptive final prompt. This final prompt is for an award-winning design. It MUST start with "award-winning masterpiece vector logo of...". It must specify "clean vector, minimalist, on a solid pure white background, #ffffff background, trending on Dribbble". It must be EXTREMELY specific about shapes, lines, and colors. CRITICAL: The logo design should occupy about 70% of the canvas to ensure it is prominent and not too small. ABSOLUTELY NO TEXT, WORDS, or LETTERS should be requested. Describe a symbolic, abstract icon only. The composition must be balanced, centered, and visually stunning, suitable for a modern brand identity.
 
 **Final, Polished Prompt for Image Generation:**`;
 
@@ -150,6 +150,43 @@ Follow these steps meticulously:
         return await enhancePromptForImageGeneration(logoRequestPrompt);
     }
 };
+
+/**
+ * Step 1.5: Generates multiple variations of a master prompt to ensure diverse image outputs.
+ */
+const generateMultipleLogoPrompts = async (basePrompt: string, count: number): Promise<string[]> => {
+    const ai = getAiClient();
+    const instruction = `Based on the following polished and detailed logo prompt, generate ${count} distinct variations of it. Each variation should explore a slightly different artistic direction, composition, or metaphorical concept while staying true to the core request. Ensure each prompt is a complete, standalone masterpiece prompt, starting with "award-winning masterpiece vector logo of..." and specifying "clean vector, minimalist, on a solid pure white background, #ffffff background, trending on Dribbble".
+
+    Base Prompt: "${basePrompt}"
+
+    Return a JSON array of ${count} unique prompt strings.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: instruction,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                }
+            },
+        });
+        const prompts = safeJsonParse<string[]>(response.text, 'generateMultipleLogoPrompts');
+        if (prompts.length !== count) {
+            console.warn(`Expected ${count} prompts, but got ${prompts.length}. Falling back to repeating base prompt.`);
+            return Array(count).fill(basePrompt);
+        }
+        return prompts;
+    } catch (error) {
+        console.warn("Failed to generate prompt variations, using original prompt.", error);
+        // Fallback: repeat the original advanced prompt 'count' times
+        return Array(count).fill(basePrompt);
+    }
+};
+
 
 /**
  * Step 2: Generate an image on a white canvas using an enhanced prompt.
@@ -398,8 +435,10 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
 export const generateLogoOptions = async (prompt: string, count: number = 4): Promise<string[]> => {
     try {
         const advancedPrompt = await generateAdvancedLogoPrompt(prompt);
-        // Generate 'count' logo options in parallel for better user choice
-        const promises = Array(count).fill(0).map(() => generateImageFromWhiteCanvas(advancedPrompt, '1:1'));
+        // Generate varied prompts for more distinct logo options
+        const variedPrompts = await generateMultipleLogoPrompts(advancedPrompt, count);
+        
+        const promises = variedPrompts.map(p => generateImageFromWhiteCanvas(p, '1:1'));
         const results = await Promise.all(promises);
         return results;
     } catch (error) {

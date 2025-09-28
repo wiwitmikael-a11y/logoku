@@ -35,7 +35,9 @@ class ErrorBoundary extends React.Component<Props, State> {
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
+      // FIX: Added 'this.' to correctly call setState on the component instance.
       this.setState({ isCopied: true });
+      // FIX: Added 'this.' to correctly call setState on the component instance.
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
@@ -60,7 +62,9 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()}>
                         Refresh Halaman
                     </Button>
+                    {/* FIX: Added 'this.' to correctly access props. */}
                     {this.props.onReset && (
+                        // FIX: Added 'this.' to correctly access props.
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
                         </Button>
@@ -82,6 +86,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
+    // FIX: Added 'this.' to correctly access props.
     return this.props.children;
   }
 }

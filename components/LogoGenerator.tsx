@@ -28,61 +28,73 @@ const logoStyles = [
         id: 'minimalist',
         name: 'Modern & Simpel',
         description: 'Gaya ini mengedepankan kesederhanaan. Bersih, mudah diingat, dan serbaguna di berbagai media. Cocok untuk brand yang ingin terlihat modern dan efisien.',
-        promptTemplate: 'masterpiece vector logo for a company named "{{businessName}}", {{personaDescription}}. Style: {{personaKeywords}}, minimalist logomark, geometric, clean vector, solid white background.'
+        promptTemplate: 'a minimalist logomark for "{{businessName}}", {{personaDescription}}. Style: {{personaKeywords}}, geometric, clean vector lines, high contrast, solid white background.'
     },
     {
         id: 'mascot',
         name: 'Maskot / Fun',
         description: 'Bikin brand jadi lebih "manusiawi" dan gampang diingat. Cocok Untuk: Bisnis F&B, produk anak, laundry, pet shop.',
-        promptTemplate: 'masterpiece vector logo for a company named "{{businessName}}", a friendly and cute character mascot. Style: fun, cartoon mascot, playful, vibrant colors, solid white background.'
+        promptTemplate: 'a friendly and cute character mascot for "{{businessName}}". Style: fun, modern cartoon illustration, playful, vibrant colors, solid white background, {{personaKeywords}}.'
     },
     {
         id: 'elegant',
         name: 'Elegan / Klasik',
         description: 'Cocok untuk UMKM yang mau naik kelas. Kesannya bersih, mahal, dan terpercaya. Cocok Untuk: Brand fashion, hampers premium, patisserie, jasa MUA.',
-        promptTemplate: 'masterpiece vector logo for a premium company named "{{businessName}}", an elegant and clean symbol. Style: elegant, luxurious, classic, monogram, minimalist, solid white background.'
+        promptTemplate: 'an elegant and premium symbol for "{{businessName}}". Style: luxurious, classic, clean monogram, minimalist, refined, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'geometric',
         name: 'Geometris / Abstrak',
         description: 'Menggunakan bentuk-bentuk dasar untuk menciptakan logo yang cerdas dan modern. Cocok Untuk: Jasa digital, logistik, agensi, brand teknologi.',
-        promptTemplate: 'masterpiece vector logo for a company named "{{businessName}}", a minimalist icon made of clean geometric lines forming an abstract shape. Style: geometric, modern, tech, line art, solid white background.'
+        promptTemplate: 'a minimalist icon made of clean geometric lines forming an abstract mark for "{{businessName}}". Style: geometric, modern, tech, line art, precise, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'badge',
         name: 'Badge / Emblem',
         description: 'Membungkus nama brand dan ikon dalam sebuah bentuk. Memberi kesan mapan dan berkualitas. Cocok Untuk: Komunitas, barbershop, coffee shop, brand clothing.',
-        promptTemplate: 'masterpiece vector logo for a company named "{{businessName}}", a circular badge emblem logo with a simple icon in the center. Style: badge, emblem, vintage, retro, monochrome, solid white background.'
+        promptTemplate: 'a circular badge emblem for "{{businessName}}", with a simple icon in the center. Style: badge, emblem, vintage, retro, detailed illustration, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'rustic',
         name: 'Rustic / Handmade',
         description: 'Memberi kesan otentik, alami, dan berkualitas. Cocok Untuk: Produk organik, kerajinan tangan, coffee roastery, bakery.',
-        promptTemplate: 'masterpiece vector logo for an artisanal company named "{{businessName}}", a hand-drawn illustration symbol. Style: rustic, handmade, vintage, stamp effect, organic, solid white background.'
+        promptTemplate: 'a hand-drawn illustration symbol for an artisanal company named "{{businessName}}". Style: rustic, handmade, vintage, stamp effect, organic, earthy tones, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'ethnic',
         name: 'Etnik / Kultural',
         description: 'Menonjolkan akar budaya Indonesia. Punya nilai jual yang sangat kuat karena keunikannya. Cocok Untuk: Restoran masakan daerah, oleh-oleh khas, jamu, batik.',
-        promptTemplate: 'masterpiece vector logo for a company named "{{businessName}}", a stylized icon infused with a simple Indonesian ethnic pattern (like batik or tenun). Style: ethnic, traditional, cultural, modern twist, solid white background.'
+        promptTemplate: 'a stylized icon infused with a simple Indonesian ethnic pattern (e.g. batik, tenun, dayak ornament) for "{{businessName}}". Style: ethnic, traditional, cultural, modern twist, elegant, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'kawaii',
         name: 'Kawaii / Cute',
         description: 'Gaya imut dan menggemaskan dari Jepang. Sangat menarik perhatian dan disukai target pasar muda. Cocok untuk: Bisnis dessert, aksesoris, ATK, produk karakter.',
-        promptTemplate: 'masterpiece vector logo of a cute symbol for a company named "{{businessName}}". Style: kawaii, cute, chibi, pastel colors, soft, rounded, Japanese style, solid white background.'
+        promptTemplate: 'a cute and adorable symbol for "{{businessName}}". Style: kawaii, chibi, pastel colors, soft, rounded, Japanese illustration style, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'tech',
         name: 'Tech / Futuristik',
         description: 'Memberi kesan canggih, inovatif, dan terdepan. Garis-garis tajam dan warna-warna cerah. Cocok untuk: Startup teknologi, jasa digital, e-sports, gadget.',
-        promptTemplate: 'masterpiece vector logo of a futuristic symbol for a company named "{{businessName}}". Style: tech, futuristic, digital, sharp lines, circuit, neon, vibrant blue and purple, solid white background.'
+        promptTemplate: 'a futuristic symbol for a tech company named "{{businessName}}". Style: futuristic, digital, sharp lines, circuit board aesthetic, neon glow, vibrant blue and purple, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'graffiti',
         name: 'Graffiti / Street Art',
         description: 'Terinspirasi dari budaya jalanan, memberi kesan berani, enerjik, dan anti-mainstream. Cocok untuk: Distro, barbershop, studio kreatif, event musik.',
-        promptTemplate: 'masterpiece vector logo of a bold symbol for a brand named "{{businessName}}". Style: graffiti, street art, urban, edgy, spray paint texture, bold, solid white background.'
+        promptTemplate: 'a bold symbol for a brand named "{{businessName}}". Style: graffiti, street art, urban, edgy, spray paint texture, dynamic, {{personaKeywords}}, solid white background.'
+    },
+    {
+        id: 'gradient',
+        name: 'Modern & Gradasi',
+        description: 'Menggunakan perpaduan warna gradasi yang halus untuk menciptakan efek 3D dan kesan modern. Cocok untuk: Startup, aplikasi mobile, brand teknologi.',
+        promptTemplate: 'a modern abstract logomark for "{{businessName}}". Style: vibrant gradients, 3d effect, glassmorphism, clean, futuristic, {{personaKeywords}}, solid white background.'
+    },
+    {
+        id: 'hand_drawn',
+        name: 'Ilustrasi Tangan',
+        description: 'Memberi sentuhan personal dan artistik. Cocok untuk brand yang ingin menonjolkan kreativitas dan keunikan. Cocok untuk: Ilustrator, studio seni, produk custom.',
+        promptTemplate: 'a charming hand-drawn illustration logo for "{{businessName}}". Style: whimsical, sketchy, organic lines, creative, artistic, {{personaKeywords}}, solid white background.'
     }
 ];
 
