@@ -105,6 +105,7 @@ const MainApp: React.FC = () => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
     
     // Dropdowns visibility state
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -234,6 +235,20 @@ const MainApp: React.FC = () => {
         setSelectedProjectId(null);
         navigateTo('dashboard');
     }, []);
+
+    const handleRequestReturnToDashboard = () => {
+        if (appState === 'dashboard') {
+            setIsUserMenuOpen(false);
+            return;
+        }
+        setShowDashboardConfirm(true);
+        setIsUserMenuOpen(false);
+    };
+
+    const confirmAndReturnToDashboard = () => {
+        handleReturnToDashboard();
+        setShowDashboardConfirm(false);
+    };
 
     const handleSelectProject = useCallback((projectId: number) => {
         const project = projects.find(p => p.id === projectId);
@@ -672,36 +687,34 @@ const MainApp: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <a
-                            href="https://saweria.co/logoku"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => playSound('click')}
-                            className="hidden md:flex items-center gap-2 bg-amber-500 text-gray-900 px-3 py-1.5 rounded-full font-bold text-sm hover:bg-amber-600 transition-colors"
-                            title="Suka aplikasi ini? Traktir Mang AI kopi!"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                            </svg>
-                            <span>Traktir Kopi</span>
-                        </a>
                          <div className="relative" ref={userMenuRef}>
                             <button onClick={() => setIsUserMenuOpen(prev => !prev)} title="User Menu" className="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 rounded-full">
                                 <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full" />
                             </button>
                             {isUserMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
+                                    <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2-2a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 00-1-1H5zm5 0a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 00-1-1h-2zM5 9a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm5 0a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2z" clipRule="evenodd" /></svg>
+                                        <span>Dashboard</span>
+                                    </button>
+                                    <div className="border-t border-gray-700 my-1"></div>
                                     <button onClick={openProfileModal} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" /></svg>
                                         <span>Pengaturan Akun</span>
                                     </button>
-                                    <button onClick={() => { handleToggleMute(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
-                                        {isMuted ? (
-                                            <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg><span>Suara Aktif</span></>
-                                        ) : (
-                                            <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg><span>Bisukan</span></>
-                                        )}
-                                    </button>
+                                     <a 
+                                        href="https://saweria.co/logoku"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={() => { playSound('click'); setIsUserMenuOpen(false); }}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                                        title="Suka aplikasi ini? Traktir Mang AI kopi!"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                                        </svg>
+                                        <span>Traktir Kopi</span>
+                                    </a>
                                      <div className="border-t border-gray-700 my-1"></div>
                                         <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilih Musik</div>
                                         <div className="px-2 pb-2">
@@ -722,6 +735,13 @@ const MainApp: React.FC = () => {
                                                 <option value="Cozy">Santai</option>
                                             </select>
                                         </div>
+                                    <button onClick={() => { handleToggleMute(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
+                                        {isMuted ? (
+                                            <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg><span>Suara Aktif</span></>
+                                        ) : (
+                                            <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg><span>Bisukan</span></>
+                                        )}
+                                    </button>
                                     <div className="border-t border-gray-700 my-1"></div>
                                      <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -776,6 +796,16 @@ const MainApp: React.FC = () => {
                     cancelText="Gak Jadi, Balik Lagi"
                 >
                     Kalo lo logout sekarang, progres project yang lagi jalan (yang cuma kesimpen di browser) bakal ilang lho. Sayang kan kalo ide brilian lo ngawang gitu aja. Tetep mau lanjut?
+                </ConfirmationModal>
+                 <ConfirmationModal
+                    show={showDashboardConfirm}
+                    onClose={() => setShowDashboardConfirm(false)}
+                    onConfirm={confirmAndReturnToDashboard}
+                    title="Kembali ke Dashboard?"
+                    confirmText="Ya, Kembali Saja"
+                    cancelText="Gak Jadi"
+                >
+                    Progres yang belum disimpan di tahap ini bakal hilang lho. Yakin mau kembali ke dashboard?
                 </ConfirmationModal>
                 <ConfirmationModal
                     show={showDeleteConfirm}
