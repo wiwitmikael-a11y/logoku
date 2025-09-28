@@ -1,4 +1,3 @@
-
 import React, { ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
 
@@ -16,21 +15,24 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  state: State = {
+  // FIX: Replaced the constructor with public class fields for state and an arrow function for the handler.
+  // The previous constructor-based approach was causing TypeScript errors where properties like 'state' and 'props' were not found on 'this'.
+  // This modern syntax is cleaner and correctly handles 'this' context.
+  public state: State = {
     hasError: false,
     error: undefined,
     isCopied: false,
   };
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  handleCopy = () => {
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -38,7 +40,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   };
 
-  render(): React.ReactNode {
+  public render(): React.ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

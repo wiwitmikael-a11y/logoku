@@ -15,7 +15,7 @@ const LegalDisclaimerModal = React.lazy(() => import('./common/LegalDisclaimerMo
 interface Props {
   persona: BrandPersona;
   businessName: string;
-  onComplete: (data: { allLogos: string[]; logoBase64: string; prompt: string }) => void;
+  onComplete: (data: { logoBase64: string; prompt: string }) => void;
   onGoToDashboard: () => void;
 }
 
@@ -214,7 +214,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   
   const handleContinue = () => {
     if (selectedLogoBase64) {
-      onComplete({ allLogos: logos, logoBase64: selectedLogoBase64, prompt });
+      onComplete({ logoBase64: selectedLogoBase64, prompt });
     }
   };
   

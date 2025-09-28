@@ -13,7 +13,7 @@ import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup'; // Import the new component
 
 interface Props {
-  onComplete: (data: { inputs: BrandInputs; allPersonas: BrandPersona[]; selectedPersona: BrandPersona; allSlogans: string[]; selectedSlogan: string }) => void;
+  onComplete: (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => void;
   onGoToDashboard: () => void;
 }
 
@@ -188,9 +188,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
 
       onComplete({
         inputs,
-        allPersonas: personas,
         selectedPersona: personas[selectedPersonaIndex],
-        allSlogans: slogans,
         selectedSlogan: selectedSlogan,
       });
     }

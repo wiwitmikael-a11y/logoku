@@ -113,18 +113,10 @@ export interface GeneratedCaption {
 // This represents the data structure stored in the 'project_data' JSONB column
 export interface ProjectData {
   brandInputs: BrandInputs;
-  
-  // Generation history
-  generatedPersonas?: BrandPersona[];
   selectedPersona: BrandPersona;
-  
-  generatedSlogans?: string[];
   selectedSlogan: string; 
-  
-  generatedLogoOptions?: string[];
   selectedLogoUrl: string; 
   logoPrompt: string; 
-  
   logoVariations?: LogoVariations; 
   contentCalendar?: ContentCalendarEntry[]; 
   searchSources?: any[]; 
@@ -136,18 +128,6 @@ export interface ProjectData {
 
   selectedPackagingUrl?: string;
   printMediaAssets?: PrintMediaAssets;
-  
-  // History for auxiliary tools
-  instantContentHistory?: {
-      topic: string;
-      imageUrl: string;
-      captions: GeneratedCaption[];
-  }[];
-  captionHistory?: {
-      topic: string;
-      tone: string;
-      captions: GeneratedCaption[];
-  }[];
 }
 
 // This represents a project row fetched from the Supabase 'projects' table

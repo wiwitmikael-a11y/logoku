@@ -11,12 +11,11 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
-  onCaptionsGenerated: (data: { topic: string; tone: string; captions: GeneratedCaption[] }) => void;
 }
 
 const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Interaktif"];
 
-const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, onCaptionsGenerated }) => {
+const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
   const [topic, setTopic] = useState('');
   const [tone, setTone] = useState('Promosi');
   const [captions, setCaptions] = useState<GeneratedCaption[]>([]);
@@ -46,7 +45,6 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
         tone
       );
       setCaptions(result);
-      onCaptionsGenerated({ topic, tone, captions: result }); // Auto-save on generation
       playSound('success');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
@@ -55,7 +53,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, tone, onCaptionsGenerated]);
+  }, [projectData, topic, tone]);
 
   const copyToClipboard = (text: string) => {
     playSound('click');
