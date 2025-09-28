@@ -1,3 +1,4 @@
+
 import React, { ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
 
@@ -15,35 +16,29 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to a constructor for state initialization and method binding.
-  // This resolves type errors where 'this' context was not being correctly inferred.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
-  public static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy() {
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
-  }
+  };
 
-  public render(): React.ReactNode {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

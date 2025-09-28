@@ -4,8 +4,6 @@ import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { ProjectData, PrintMediaAssets } from '../types';
 import Button from './common/Button';
-import Textarea from './common/Textarea';
-import Input from './common/Input';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
@@ -25,7 +23,6 @@ const GENERATION_COST = 1;
 const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinalizing, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
-  const businessHandle = projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
 
   const [activeTab, setActiveTab] = useState<MediaTab>('roll_banner');
   const [designs, setDesigns] = useState<string[]>([]);
@@ -36,23 +33,9 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
-  
-  const [bannerInfo, setBannerInfo] = useState({
-    headline: 'SEGERA DIBUKA!',
-    subheadline: `Nantikan ${projectData.brandInputs?.businessName} di kota Anda!`,
-  });
-  const [rollBannerInfo, setRollBannerInfo] = useState({
-    headline: `Selamat Datang di ${projectData.brandInputs?.businessName}`,
-    body: '• Kopi Berkualitas\n• Tempat Nyaman\n• Harga Terjangkau',
-    contact: `@${businessHandle}`,
-  });
 
   const openModal = (url: string) => setModalImageUrl(url);
   const closeModal = () => setModalImageUrl(null);
-  
-  const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, setter: React.Dispatch<React.SetStateAction<any>>) => {
-    setter(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
 
   useEffect(() => {
     if (designs.length > 0 && resultsRef.current) {
@@ -89,24 +72,12 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       const colors = selectedPersona.palet_warna_hex.join(', ');
       const style = selectedPersona.kata_kunci.join(', ');
 
-      // FIX: Added detailed prompt generation logic for each tab.
       if (activeTab === 'roll_banner') {
-          prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a vertical roll-up banner (aspect ratio 9:16). Do NOT create a mockup, create the final print-ready design.
-          - Brand Name: ${brandInputs.businessName}
-          - Style: ${style}, modern, eye-catching.
-          - Colors: Use this palette: ${colors}.
-          - Content to include: Headline at top: "${rollBannerInfo.headline}", Body text in middle: "${rollBannerInfo.body}", Contact info at bottom: "${rollBannerInfo.contact}".
-          The design must be highly legible. Place the logo prominently near the top. Ensure all text is clear.`;
+          prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner. CRITICAL: The final image MUST have a tall vertical aspect ratio of 9:16. Do NOT create a realistic 3D mockup; create a flat, 2D, print-ready design. Use the brand's color palette: ${colors}. The design should be stylish, modern, and incorporate the brand's style keywords: ${style}. Place the logo prominently, usually near the top. The design MUST have significant empty space and placeholder colored blocks for text to be added later by the user. CRITICAL: DO NOT generate any text, letters, or words.`;
       } else if (activeTab === 'banner') {
-          prompt = `Take the provided logo image. Create a professional, clean, flat graphic design for a horizontal outdoor banner (spanduk, aspect ratio 3:1). Do NOT create a mockup, create the final print-ready design.
-          - Brand Name: ${brandInputs.businessName}
-          - Style: ${style}, bold, eye-catching.
-          - Colors: Use this palette: ${colors}.
-          - Content to include: Headline (very large): "${bannerInfo.headline}", Sub-headline (smaller): "${bannerInfo.subheadline}".
-          The design must be highly legible from a distance. Place the logo prominently. Ensure all text is clear.`;
+          prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk). CRITICAL: The final image MUST have a wide horizontal aspect ratio of 3:1. Do NOT create a realistic 3D mockup; create a flat, 2D, print-ready design. Use the brand's color palette: ${colors}. The design should be bold, eye-catching, and incorporate the brand's style keywords: ${style}. Place the logo prominently. The design MUST have large empty spaces or simple colored background shapes for text to be added later by the user. CRITICAL: DO NOT generate any text, letters, or words.`;
       }
-
-      // FIX: Correctly call generatePrintMedia with the generated prompt and the logo's base64 data.
+      
       const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
       const results = await generatePrintMedia(prompt, logoBase64);
       
@@ -128,7 +99,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, activeTab, rollBannerInfo, bannerInfo]);
+  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, activeTab]);
 
   const handleFinalize = () => {
     onComplete(generatedAssets);
@@ -140,33 +111,13 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       setShowNextStepNudge(false);
       setDesigns([]);
   }
-  
-  const renderForm = () => {
-      switch(activeTab) {
-          case 'roll_banner':
-             return (
-                 <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                    <Input label="Headline (di bagian atas)" name="headline" value={rollBannerInfo.headline} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} />
-                    <Textarea label="Isi Konten (bisa pakai bullet point)" name="body" value={rollBannerInfo.body} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} rows={4} />
-                    <Input label="Info Kontak (di bagian bawah)" name="contact" value={rollBannerInfo.contact} onChange={(e) => handleInfoChange(e, setRollBannerInfo)} placeholder="cth: @namabisnislo" />
-                </div>
-            );
-          case 'banner':
-            return (
-                 <div className="grid grid-cols-1 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                    <Input label="Headline (Teks Paling Besar)" name="headline" value={bannerInfo.headline} onChange={(e) => handleInfoChange(e, setBannerInfo)} placeholder="cth: GRAND OPENING!" />
-                    <Input label="Sub-headline (Teks Pendukung)" name="subheadline" value={bannerInfo.subheadline} onChange={(e) => handleInfoChange(e, setBannerInfo)} placeholder="cth: Diskon 50% Semua Item" />
-                </div>
-            );
-      }
-  }
 
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Studio Media Cetak Mang AI</h2>
         <p className="text-gray-400">
-          Saatnya bikin amunisi promosi! Pilih jenis media, isi infonya, dan Mang AI bakal bikinin desain siap cetak buat lo.
+          Saatnya bikin amunisi promosi! Pilih jenis media, dan Mang AI bakal bikinin template desain siap cetak buat lo. Lo tinggal tambahin tulisan pake aplikasi lain.
         </p>
       </div>
       
@@ -176,10 +127,11 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {renderForm()}
-        <div className="self-start">
-            <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>
-                {`Bikinin Desain ${activeTab === 'roll_banner' ? 'Roll Banner' : 'Spanduk'}! (${GENERATION_COST} Kredit)`}
+        <div className="p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+            <h3 className="text-lg font-bold text-indigo-300 mb-2">Desain Template untuk {activeTab === 'roll_banner' ? 'Roll Banner' : 'Spanduk'}</h3>
+            <p className="text-sm text-gray-400 mb-4">Mang AI akan membuatkan desain visual menggunakan logo dan palet warna brand-mu. Desain ini akan memiliki area kosong yang bisa kamu isi dengan tulisan sendiri menggunakan software editing gambar.</p>
+             <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>
+                {`Bikinin Template Desain! (${GENERATION_COST} Kredit)`}
             </Button>
         </div>
       </form>

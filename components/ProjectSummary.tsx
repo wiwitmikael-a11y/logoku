@@ -1,326 +1,324 @@
+
 import React, { useState } from 'react';
-import type { Project } from '../types';
+import { uploadAndSyncProjectAssets } from '../services/storageService';
+import { playSound } from '../services/soundService';
+import { supabase } from '../services/supabaseClient';
+import type { Project, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
 import ImageModal from './common/ImageModal';
 import CopyButton from './common/CopyButton';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Props {
-  project: Project;
-  onStartNew: () => void;
-  onGoToCaptionGenerator: (projectId: number) => void;
-  onGoToInstantContent: (projectId: number) => void; // NEW
-  onDeleteProject: (projectId: number) => void;
-  onSyncProject: (projectId: number) => void;
-  syncingProjectId: number | null;
+  projectData: ProjectData;
+  activeProject: Project;
+  onGoToDashboard: () => void;
+  onOpenCaptionGenerator: () => void;
+  onOpenInstantContent: () => void;
+  onSyncComplete: () => void;
 }
 
-const ProjectSummary: React.FC<Props> = ({ project, onStartNew, onGoToCaptionGenerator, onGoToInstantContent, onDeleteProject, onSyncProject, syncingProjectId }) => {
-  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, searchSources, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, printMediaAssets } = project.project_data;
-  
-  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+const isBase64 = (str: string) => str.startsWith('data:image');
 
-  const openModal = (url: string) => setModalImageUrl(url);
+const ProjectSummary: React.FC<Props> = ({ projectData, activeProject, onGoToDashboard, onOpenCaptionGenerator, onOpenInstantContent, onSyncComplete }) => {
+  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, printMediaAssets } = projectData;
+  const { profile } = useAuth();
+
+  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  const hasUnsyncedAssets = 
+      isBase64(selectedLogoUrl) ||
+      (logoVariations && Object.values(logoVariations).some(isBase64)) ||
+      (socialMediaKit && Object.values(socialMediaKit).some(isBase64)) ||
+      (contentCalendar && contentCalendar.some(c => c.imageUrl && isBase64(c.imageUrl))) ||
+      (selectedPackagingUrl && isBase64(selectedPackagingUrl)) ||
+      (printMediaAssets && Object.values(printMediaAssets).some(url => url && isBase64(url)));
+
+  const handleSyncAssets = async () => {
+      if (!activeProject || !hasUnsyncedAssets) return;
+      setIsSyncing(true);
+      playSound('start');
+      try {
+          const syncedProjectData = await uploadAndSyncProjectAssets(activeProject);
+          
+          // Update the project in Supabase with the new URLs
+          const { error } = await supabase
+              .from('projects')
+              .update({ project_data: syncedProjectData, status: 'completed' })
+              .eq('id', activeProject.id);
+
+          if (error) throw error;
+          
+          playSound('success');
+          onSyncComplete(); // This will refetch projects and show a toast
+      } catch (error) {
+          console.error("Failed to sync assets:", error);
+          playSound('error');
+          // TODO: Show an error message to the user
+      } finally {
+          setIsSyncing(false);
+      }
+  };
+
+
+  const openModal = (url: string | undefined) => {
+    if (url) setModalImageUrl(url);
+  };
   const closeModal = () => setModalImageUrl(null);
   
-  const handleDownload = () => {
-      window.print();
-  }
-  
-  const businessHandle = brandInputs.businessName.toLowerCase().replace(/\s/g, '');
+  const businessHandle = brandInputs.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
 
   return (
-    <>
-      <style>{`
-        @media print {
-          body {
-            background-color: white !important;
-            color: black !important;
-          }
-          .no-print {
-            display: none !important;
-          }
-          .print-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          .print-card {
-             background-color: #f3f4f6 !important;
-             border: 1px solid #d1d5db !important;
-             color: black !important;
-             box-shadow: none !important;
-             -webkit-print-color-adjust: exact;
-             color-adjust: exact;
-          }
-          .print-text-color { color: black !important; }
-          .print-text-brand { color: #4338ca !important; }
-          .print-bg-brand { background-color: #4338ca !important; }
-          .print-bg-gray { background-color: #e5e7eb !important; }
-          .print-text-blue { color: #2563eb !important; }
-        }
-      `}</style>
-      <div id="brand-kit-summary" className="flex flex-col gap-10 items-center text-center print-container">
-        <div className="no-print">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-indigo-400 mb-2">
-            Brand Kit untuk "{brandInputs.businessName}" Udah Jadi!
-          </h2>
-          <p className="text-gray-400 max-w-3xl">
-            Selamat! Ini adalah rangkuman lengkap identitas brand lo. Semua aset siap pakai, dari strategi sampai konten.
-          </p>
-        </div>
+    <div className="flex flex-col gap-12 animate-content-fade-in">
+      {/* Header */}
+      <div className="text-center">
+        <img src={selectedLogoUrl} alt="Logo Utama" className="w-24 h-24 mx-auto mb-4 bg-white p-2 rounded-xl shadow-lg" />
+        <h1 className="text-3xl md:text-4xl font-bold text-white">{brandInputs.businessName}</h1>
+        <p className="text-lg md:text-xl text-indigo-300 italic mt-2">"{selectedSlogan}"</p>
+      </div>
 
-        <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
-          
-          {/* Column 1: Strategy & Text Assets */}
-          <div className="flex flex-col gap-6">
-            <Card title="Strategi Brand" className="print-card">
-              <h4 className="text-xl font-bold text-gray-100 print-text-color">{brandInputs.businessName}</h4>
-              <p className="text-indigo-300 italic mt-1 print-text-brand selectable-text">"{selectedSlogan}"</p>
-              
-              <div className="mt-4 pt-4 border-t border-gray-700">
-                <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Persona: {selectedPersona.nama_persona}</h5>
-                <p className="text-sm text-gray-300 print-text-color selectable-text">{selectedPersona.deskripsi_singkat}</p>
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-gray-700">
-                 <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Palet Warna</h5>
-                 <div className="flex items-center gap-3">
-                  {selectedPersona.palet_warna_hex.map((hex, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1">
-                      <div className="w-10 h-10 rounded-full border-2 border-gray-500" style={{ backgroundColor: hex }}></div>
-                      <span className="text-xs text-gray-400 print-text-color selectable-text">{hex}</span>
-                    </div>
-                  ))}
+       {hasUnsyncedAssets && (
+            <div className="w-full max-w-2xl mx-auto bg-yellow-900/50 border border-yellow-700 rounded-lg p-4 flex items-center gap-4 text-left">
+                <div className="flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" /></svg>
                 </div>
-              </div>
-            </Card>
+                <div>
+                <h4 className="font-bold text-white">Satu Langkah Terakhir!</h4>
+                <p className="text-sm text-yellow-200">
+                    Aset visual lo masih disimpan sementara di browser. Klik "Simpan & Sinkronkan" untuk mengunggah semuanya ke penyimpanan permanen dan mendapatkan URL publik.
+                </p>
+                 <Button onClick={handleSyncAssets} isLoading={isSyncing} size="small" className="mt-3">
+                    {isSyncing ? 'Mengunggah Aset...' : 'Simpan & Sinkronkan Aset'}
+                </Button>
+                </div>
+            </div>
+        )}
+      
+       {/* Quick Tools */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto w-full">
+         <Card title="Butuh Caption Cepat?" className="text-center !border-indigo-600/50">
+            <p className="text-sm text-gray-400 mb-4">Ubah ide jadi caption sosmed dalam sekejap pakai persona brand lo.</p>
+            <Button onClick={onOpenCaptionGenerator}>Buka Generator Caption</Button>
+         </Card>
+         <Card title="Mau Ngonten Sat-Set?" className="text-center !border-indigo-600/50">
+             <p className="text-sm text-gray-400 mb-4">Bikin gambar + caption siap posting dari satu topik aja. Cepat dan praktis!</p>
+            <Button onClick={onOpenInstantContent}>Buka Konten Instan</Button>
+         </Card>
+      </div>
 
-            {socialProfiles && (
-                <Card title="Optimasi Profil" className="print-card">
-                    <div className="space-y-4">
-                        <div>
-                            <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Bio Instagram</h5>
-                            <div className="relative bg-gray-700/50 p-3 rounded-lg print-bg-gray">
-                                <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color selectable-text">{socialProfiles.instagramBio}</p>
-                                <CopyButton textToCopy={socialProfiles.instagramBio} className="absolute top-2 right-2 no-print"/>
-                            </div>
-                        </div>
-                         <div>
-                            <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Bio TikTok</h5>
-                            <div className="relative bg-gray-700/50 p-3 rounded-lg print-bg-gray">
-                                <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color selectable-text">{socialProfiles.tiktokBio}</p>
-                                <CopyButton textToCopy={socialProfiles.tiktokBio} className="absolute top-2 right-2 no-print"/>
-                            </div>
-                        </div>
-                        <div>
-                            <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Deskripsi Toko (Marketplace)</h5>
-                            <div className="relative bg-gray-700/50 p-3 rounded-lg print-bg-gray">
-                                <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color selectable-text">{socialProfiles.marketplaceDescription}</p>
-                                 <CopyButton textToCopy={socialProfiles.marketplaceDescription} className="absolute top-2 right-2 no-print"/>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-            )}
 
-            {socialAds && socialAds.length > 0 && (
-                <Card title="Teks Iklan Sosmed" className="print-card">
-                    <div className="space-y-4">
-                        {socialAds.map((ad, index) => (
-                          <div key={index} className="border-b border-gray-700 pb-3 last:border-b-0 last:pb-0">
-                            <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Iklan {ad.platform}</h5>
-                            <div className="relative bg-gray-900/50 p-3 rounded-lg print-bg-gray">
-                               <p className="text-sm text-gray-300 whitespace-pre-wrap pr-10 print-text-color selectable-text">{ad.adCopy}</p>
-                               <CopyButton textToCopy={ad.adCopy} className="absolute top-2 right-2 no-print"/>
-                            </div>
-                            <div className="relative mt-2">
-                                <p className="text-xs text-indigo-400 break-words pr-10 print-text-brand selectable-text">{ad.hashtags.join(' ')}</p>
-                                <CopyButton textToCopy={ad.hashtags.join(' ')} className="absolute top-0 right-0 no-print"/>
-                            </div>
-                          </div>
+      {/* Brand Persona Section */}
+      <section>
+        <h2 className="text-2xl font-bold text-indigo-400 mb-6 text-center">Intisari Brand</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card title="Persona Brand" className="lg:col-span-1">
+                 <h3 className="text-xl font-bold text-white mb-2">{selectedPersona.nama_persona}</h3>
+                 <p className="text-gray-300 mb-4 selectable-text">{selectedPersona.deskripsi_singkat}</p>
+                 <div className="flex flex-wrap gap-2 mb-4">
+                     {selectedPersona.kata_kunci.map(kw => <span key={kw} className="bg-gray-700 text-gray-300 text-xs font-medium px-2.5 py-1 rounded-full">{kw}</span>)}
+                 </div>
+                 <div className="border-t border-gray-700 pt-4">
+                    <h4 className="font-semibold text-gray-200 mb-2">Palet Warna:</h4>
+                    <div className="flex items-center gap-3">
+                        {selectedPersona.palet_warna_hex.map((hex) => (
+                            <div key={hex} className="w-10 h-10 rounded-full border-2 border-gray-500 shadow-md" style={{ backgroundColor: hex }} title={hex}></div>
                         ))}
                     </div>
-                </Card>
-            )}
-          </div>
-
-          {/* Column 2: Visual Assets */}
-          <div className="flex flex-col gap-6">
-            <Card title="Paket Logo Lengkap" className="print-card">
-              <div className="space-y-4">
-                  <div>
-                      <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Logo Utama (Ikon)</h5>
-                      <div className="bg-white p-4 rounded-lg flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(selectedLogoUrl)}>
-                          <img src={selectedLogoUrl} alt="Logo Utama" className="max-w-full max-h-32 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
-                      </div>
-                  </div>
-                   {logoVariations && (
-                       <div className="grid grid-cols-2 gap-4 text-center">
-                           <div>
-                                <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Versi Tumpuk</h5>
-                               <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.stacked)}>
-                                   <img src={logoVariations.stacked} alt="Logo Versi Tumpuk" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
-                               </div>
-                           </div>
-                            <div>
-                               <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Versi Datar</h5>
-                               <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.horizontal)}>
-                                   <img src={logoVariations.horizontal} alt="Logo Versi Datar" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
-                               </div>
-                           </div>
-                           <div className="col-span-2">
-                               <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Versi Monokrom</h5>
-                               <div className="bg-white p-2 rounded-lg flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(logoVariations.monochrome)}>
-                                   <img src={logoVariations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
-                               </div>
-                           </div>
-                       </div>
-                   )}
-              </div>
+                 </div>
             </Card>
-            
-            {socialMediaKit && (
-                <Card title="Social Media Kit" className="print-card">
-                    <div className="space-y-4">
-                         <div>
-                            <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Foto Profil</h5>
-                            <div className="bg-white rounded-full p-2 w-32 h-32 mx-auto flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(socialMediaKit.profilePictureUrl)}>
-                                <img src={socialMediaKit.profilePictureUrl} alt="Foto Profil" className="max-w-full max-h-full object-contain rounded-full group-hover:scale-105 transition-transform" loading="lazy"/>
+            <Card title="Gaya Bicara & Target Pelanggan" className="lg:col-span-1">
+                 <div className="space-y-4">
+                    <div className="selectable-text">
+                        <h4 className="font-semibold text-gray-200 mb-2">Gaya Bicara (Brand Voice):</h4>
+                        <p className="text-sm text-gray-400"><strong>Deskripsi:</strong> {selectedPersona.brand_voice.deskripsi}</p>
+                        <p className="text-sm text-gray-400 mt-1"><strong>Gunakan:</strong> {selectedPersona.brand_voice.kata_yang_digunakan.join(', ')}</p>
+                        <p className="text-sm text-gray-400"><strong>Hindari:</strong> {selectedPersona.brand_voice.kata_yang_dihindari.join(', ')}</p>
+                    </div>
+                    <div className="border-t border-gray-700 pt-4">
+                        <h4 className="font-semibold text-gray-200 mb-2">Avatar Pelanggan:</h4>
+                        <div className="space-y-2">
+                        {selectedPersona.customer_avatars.map((avatar, i) => (
+                            <div key={i} className="text-sm p-2 bg-gray-700/50 rounded-md selectable-text">
+                                <strong>{avatar.nama_avatar}:</strong> {avatar.deskripsi_demografis}. Aktif di {avatar.media_sosial.join(', ')}.
                             </div>
-                        </div>
-                        <div>
-                            <h5 className="font-semibold text-gray-200 mb-2 print-text-color">Banner Facebook / Header</h5>
-                            <div className="bg-white p-2 rounded-lg cursor-pointer group no-print" onClick={() => openModal(socialMediaKit.bannerUrl)}>
-                                <img src={socialMediaKit.bannerUrl} alt="Banner" className="w-full object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
-                            </div>
+                        ))}
                         </div>
                     </div>
-                </Card>
-            )}
-             
-             {selectedPackagingUrl && (
-                  <Card title="Desain Kemasan" className="print-card">
-                      <div className="bg-white rounded-lg p-2 flex items-center justify-center aspect-[4/3] cursor-pointer group no-print" onClick={() => openModal(selectedPackagingUrl)}>
-                        <img src={selectedPackagingUrl} alt="Selected Packaging" className="max-h-48 object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy"/>
+                 </div>
+            </Card>
+        </div>
+      </section>
+
+      {/* Logo & Visual Assets Section */}
+      <section>
+          <h2 className="text-2xl font-bold text-indigo-400 mb-6 text-center">Aset Visual Utama</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+              {logoVariations && Object.entries(logoVariations).map(([key, url]) => (
+                  <div key={key} className="flex flex-col items-center gap-2">
+                      <div className="bg-white rounded-lg p-2 w-full aspect-square flex items-center justify-center shadow-lg cursor-pointer group" onClick={() => openModal(url)}>
+                          <img src={url} alt={`Logo ${key}`} className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform" />
                       </div>
-                  </Card>
-              )}
-               {printMediaAssets && (
-                  <Card title="Aset Media Cetak" className="print-card">
-                      <div className="space-y-4">
-                        {printMediaAssets.businessCardUrl && (
-                            <div>
-                                <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Kartu Nama</h5>
-                                <div className="bg-white p-2 rounded-lg cursor-pointer group no-print" onClick={() => openModal(printMediaAssets.businessCardUrl!)}>
-                                    <img src={printMediaAssets.businessCardUrl} alt="Desain Kartu Nama" className="w-full object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
-                                </div>
-                            </div>
-                        )}
-                         {printMediaAssets.bannerUrl && (
-                            <div>
-                                <h5 className="font-semibold text-gray-200 mb-2 text-sm print-text-color">Spanduk</h5>
-                                <div className="bg-white p-2 rounded-lg cursor-pointer group no-print" onClick={() => openModal(printMediaAssets.bannerUrl!)}>
-                                    <img src={printMediaAssets.bannerUrl} alt="Desain Spanduk" className="w-full object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
-                                </div>
-                            </div>
-                        )}
-                      </div>
-                  </Card>
-              )}
-          </div>
-          
-          {/* Column 3: Content */}
-          <div className="flex flex-col gap-6">
-             <Card title="Kalender Konten Mingguan" className="max-h-[800px] overflow-y-auto print-card">
-                  <div className="flex flex-col gap-4">
-                      {contentCalendar && contentCalendar.map((item, index) => (
-                          <div key={index} className="border-b border-gray-700 pb-3 last:border-b-0 last:pb-0 text-sm">
-                              <h5 className="font-bold text-gray-200 print-text-color">{item.hari} - <span className="text-indigo-300 print-text-brand">{item.tipe_konten}</span></h5>
-                              <p className="text-xs text-gray-400 mt-1 print-text-color selectable-text">{item.ide_konten}</p>
-                              {item.imageUrl && (
-                                <div className="mt-3 bg-white p-2 rounded-lg flex justify-center items-center cursor-pointer group no-print" onClick={() => openModal(item.imageUrl!)}>
-                                    <img src={item.imageUrl} alt={`Visual untuk ${item.ide_konten}`} className="max-w-full max-h-32 object-contain group-hover:scale-105 transition-transform" loading="lazy"/>
-                                </div>
-                              )}
-                              <div className="relative">
-                                <p className="text-gray-300 whitespace-pre-wrap mt-2 text-xs pr-10 print-text-color selectable-text">{item.draf_caption}</p>
-                                <CopyButton textToCopy={item.draf_caption} className="absolute top-2 right-0 no-print"/>
-                              </div>
-                              <div className="relative mt-2">
-                                <p className="text-indigo-400 text-xs break-words pr-10 print-text-brand selectable-text">{item.rekomendasi_hashtag.join(' ')}</p>
-                                <CopyButton textToCopy={item.rekomendasi_hashtag.join(' ')} className="absolute top-0 right-0 no-print"/>
-                              </div>
-                          </div>
-                      ))}
-                      {searchSources && searchSources.length > 0 && (
-                          <div className="pt-3 border-t border-gray-700 no-print">
-                              <h5 className="font-semibold text-gray-200 mb-2 text-sm">Sumber Riset Konten:</h5>
-                              <div className="flex flex-wrap gap-1">
-                                  {searchSources.map((source, i) => source.web && (
-                                    <a href={source.web.uri} key={i} target="_blank" rel="noopener noreferrer" className="bg-gray-600 text-gray-200 text-[10px] px-2 py-0.5 rounded-full hover:bg-gray-500">{source.web.title}</a>
-                                  ))}
-                              </div>
-                          </div>
-                      )}
+                      <p className="text-sm font-semibold text-gray-400 capitalize">{key}</p>
                   </div>
-              </Card>
-               {/* --- NEW: Advanced Tools Hub --- */}
-                <div className="flex flex-col gap-6 no-print">
-                    <Card title="Branding Lanjutan & Tools" className="print-card">
-                        <div className="space-y-6">
-                            <div>
-                                <h5 className="font-semibold text-gray-200 mb-2">Generator Konten Instan ✨</h5>
-                                <p className="text-sm text-gray-400 mb-3">Butuh ide & visual cepat buat postingan dadakan? Masukin topiknya, Mang AI bikinin konten lengkap (visual + caption).</p>
-                                <Button size="small" variant="secondary" onClick={() => onGoToInstantContent(project.id)}>
-                                    Buat Konten Instan
-                                </Button>
-                            </div>
-                             <div className="pt-6 border-t border-gray-700">
-                                <h5 className="font-semibold text-gray-200 mb-2">Generator Caption Sosmed</h5>
-                                <p className="text-sm text-gray-400 mb-3">Udah punya gambar tapi bingung captionnya? Pake tool ini buat generate beberapa pilihan caption aja.</p>
-                                <Button size="small" variant="secondary" onClick={() => onGoToCaptionGenerator(project.id)}>
-                                    Buat Caption Aja
-                                </Button>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
+              ))}
           </div>
-        </div>
-        
-        <div className="mt-6 flex flex-wrap gap-4 justify-center no-print">
-            <Button onClick={handleDownload}>Download Brand Kit (PDF)</Button>
-            <Button onClick={onStartNew} variant="secondary">Bikin Project Baru</Button>
-            {project.status === 'local-complete' && (
-              <Button 
-                onClick={() => onSyncProject(project.id)}
-                isLoading={syncingProjectId === project.id}
-                disabled={syncingProjectId !== null}
-              >
-                Sinkronkan Project
-              </Button>
+      </section>
+
+      {/* Social Media Kit Section */}
+      {socialMediaKit && (
+        <section>
+          <h2 className="text-2xl font-bold text-indigo-400 mb-6 text-center">Social Media Kit</h2>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              <div className="md:col-span-2 flex flex-col items-center gap-3">
+                  <h4 className="font-semibold text-lg text-white">Foto Profil</h4>
+                  <div className="bg-white rounded-full p-2 flex items-center justify-center shadow-lg w-48 h-48 cursor-pointer group" onClick={() => openModal(socialMediaKit.profilePictureUrl)}>
+                    <img src={socialMediaKit.profilePictureUrl} alt="Foto Profil" className="object-contain rounded-full max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                  </div>
+              </div>
+              <div className="md:col-span-3 flex flex-col items-center gap-3">
+                  <h4 className="font-semibold text-lg text-white">Banner / Header</h4>
+                    <div className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-video cursor-pointer group" onClick={() => openModal(socialMediaKit.bannerUrl)}>
+                        <img src={socialMediaKit.bannerUrl} alt="Banner" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                    </div>
+              </div>
+          </div>
+        </section>
+      )}
+
+      {/* Social Media Content Section */}
+      {(socialProfiles || socialAds) && (
+        <section>
+          <h2 className="text-2xl font-bold text-indigo-400 mb-6 text-center">Amunisi Konten Sosmed</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {socialProfiles && (
+              <>
+                <Card title="Bio Instagram">
+                  <div className="bg-gray-900/50 p-4 rounded-lg space-y-2">
+                    <div className="flex items-center gap-3">
+                        {socialMediaKit && <img src={socialMediaKit.profilePictureUrl} alt="logo" className="w-12 h-12 rounded-full bg-white p-0.5" />}
+                        <div><p className="font-bold text-white text-sm">{businessHandle}</p></div>
+                    </div>
+                    <div className="relative"><p className="text-sm text-gray-300 whitespace-pre-wrap selectable-text">{socialProfiles.instagramBio}</p><CopyButton textToCopy={socialProfiles.instagramBio} className="absolute top-0 right-0" /></div>
+                  </div>
+                </Card>
+                <Card title="Bio TikTok">
+                  <div className="bg-gray-900/50 p-4 rounded-lg text-center">
+                    {socialMediaKit && <img src={socialMediaKit.profilePictureUrl} alt="logo" className="w-16 h-16 rounded-full bg-white p-1 mx-auto" />}
+                    <p className="font-bold text-white mt-2">@{businessHandle}</p>
+                    <div className="relative mt-2"><p className="text-sm text-gray-300 whitespace-pre-wrap selectable-text">{socialProfiles.tiktokBio}</p><CopyButton textToCopy={socialProfiles.tiktokBio} className="absolute top-0 right-0" /></div>
+                  </div>
+                </Card>
+                 <Card title="Deskripsi Toko Marketplace" className="md:col-span-2 lg:col-span-1">
+                    <div className="relative"><p className="text-sm text-gray-300 whitespace-pre-wrap max-h-48 overflow-auto selectable-text">{socialProfiles.marketplaceDescription}</p><CopyButton textToCopy={socialProfiles.marketplaceDescription} className="absolute top-0 right-0" /></div>
+                </Card>
+              </>
             )}
-             <Button 
-                onClick={() => onDeleteProject(project.id)} 
-                variant="secondary"
-                className="!border-red-500/50 !text-red-400 hover:!bg-red-500/20"
-              >
-                Hapus Project Ini
-            </Button>
-        </div>
+            {socialAds && socialAds.map((ad, index) => (
+                <Card key={index} title={`Opsi Iklan untuk ${ad.platform}`}>
+                    <div className="space-y-4">
+                        <div className="bg-gray-900/50 p-4 rounded-lg">
+                             <div className="flex items-center gap-3 mb-3">
+                                {socialMediaKit && <img src={socialMediaKit.profilePictureUrl} alt="logo" className="w-10 h-10 rounded-full bg-white p-0.5" />}
+                                <div><p className="font-bold text-white text-sm">{businessHandle}</p><p className="text-xs text-gray-400">Sponsored</p></div>
+                            </div>
+                            <div className="relative"><p className="text-sm text-gray-300 whitespace-pre-wrap selectable-text">{ad.adCopy}</p><CopyButton textToCopy={ad.adCopy} className="absolute top-0 right-0" /></div>
+                        </div>
+                         <div className="relative"><p className="text-indigo-300 text-xs break-words selectable-text">{ad.hashtags.join(' ')}</p><CopyButton textToCopy={ad.hashtags.join(' ')} className="absolute top-0 right-0" /></div>
+                    </div>
+                </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Content Calendar Section */}
+      {contentCalendar && (
+        <section>
+            <h2 className="text-2xl font-bold text-indigo-400 mb-6 text-center">Kalender Konten</h2>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {contentCalendar.map((item, index) => (
+                <Card key={index} title={`${item.hari} - ${item.tipe_konten}`} className="relative">
+                    <CopyButton textToCopy={`Ide Konten: ${item.ide_konten}\n\nDraf Caption:\n${item.draf_caption}\n\nHashtag:\n${item.rekomendasi_hashtag.join(' ')}`} className="absolute top-4 right-4 z-10" title="Salin semua info hari ini" />
+                    <div className="space-y-4">
+                        <div>
+                            <h4 className="font-semibold text-gray-200 text-sm mb-1">Ide Konten:</h4>
+                            <p className="text-gray-300 text-sm selectable-text">{item.ide_konten}</p>
+                        </div>
+                        <div className="relative border-t border-gray-700 pt-3">
+                            <h4 className="font-semibold text-gray-200 text-sm mb-1">Draf Caption:</h4>
+                            <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10 selectable-text">{item.draf_caption}</p>
+                            <CopyButton textToCopy={item.draf_caption} className="absolute top-2 right-0"/>
+                        </div>
+                        <div className="relative border-t border-gray-700 pt-3">
+                            <h4 className="font-semibold text-gray-200 text-sm mb-1">Hashtag:</h4>
+                            <p className="text-indigo-300 text-xs break-words pr-10 selectable-text">{item.rekomendasi_hashtag.join(' ')}</p>
+                            <CopyButton textToCopy={item.rekomendasi_hashtag.join(' ')} className="absolute top-2 right-0"/>
+                        </div>
+                        {item.imageUrl && (
+                            <div className="border-t border-gray-700 pt-3">
+                                <h4 className="font-semibold text-gray-200 text-sm mb-2">Aset Visual</h4>
+                                <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(item.imageUrl)}>
+                                    <img src={item.imageUrl} alt={`Visual untuk ${item.ide_konten}`} className="max-w-full max-h-48 object-contain group-hover:scale-105 transition-transform"/>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </Card>
+                ))}
+            </div>
+        </section>
+      )}
+
+      {/* Packaging & Print Media */}
+      {(selectedPackagingUrl || printMediaAssets) && (
+        <section>
+          <h2 className="text-2xl font-bold text-indigo-400 mb-6 text-center">Aset Promosi & Kemasan</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {selectedPackagingUrl && (
+              <div className="flex flex-col items-center gap-2">
+                <h4 className="font-semibold text-lg text-white">Desain Kemasan</h4>
+                <div className="bg-white rounded-lg p-2 w-full aspect-[4/3] flex items-center justify-center shadow-lg cursor-pointer group" onClick={() => openModal(selectedPackagingUrl)}>
+                  <img src={selectedPackagingUrl} alt="Desain Kemasan" className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                </div>
+              </div>
+            )}
+            {printMediaAssets?.bannerUrl && (
+              <div className="flex flex-col items-center gap-2">
+                <h4 className="font-semibold text-lg text-white">Spanduk</h4>
+                <div className="bg-white rounded-lg p-2 w-full aspect-[3/1] flex items-center justify-center shadow-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.bannerUrl)}>
+                  <img src={printMediaAssets.bannerUrl} alt="Spanduk" className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                </div>
+              </div>
+            )}
+             {printMediaAssets?.rollBannerUrl && (
+              <div className="flex flex-col items-center gap-2">
+                <h4 className="font-semibold text-lg text-white">Roll Banner</h4>
+                <div className="bg-white rounded-lg p-2 w-full aspect-[9/16] flex items-center justify-center shadow-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.rollBannerUrl)}>
+                  <img src={printMediaAssets.rollBannerUrl} alt="Roll Banner" className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+
+      <div className="mt-8 text-center">
+        <Button onClick={onGoToDashboard} variant="secondary">
+          &larr; Kembali ke Dashboard
+        </Button>
       </div>
-      
+
       {modalImageUrl && (
         <ImageModal 
           imageUrl={modalImageUrl}
-          altText="Preview Aset"
+          altText={`Aset untuk ${brandInputs.businessName}`}
           onClose={closeModal}
         />
       )}
-    </>
+    </div>
   );
 };
 

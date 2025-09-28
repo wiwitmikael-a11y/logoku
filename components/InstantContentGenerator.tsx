@@ -15,6 +15,7 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
+  onContentGenerated: (data: { topic: string; imageUrl: string; captions: GeneratedCaption[] }) => void;
 }
 
 const GENERATION_COST = 2; // 1 for image, 1 for captions
@@ -24,7 +25,7 @@ interface GeneratedContent {
     captions: GeneratedCaption[];
 }
 
-const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
+const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, onContentGenerated }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -72,10 +73,13 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
 
       await deductCredits(GENERATION_COST);
       
-      setGeneratedContent({
+      const content = {
           imageUrl: imageResult[0],
           captions: captionsResult,
-      });
+      };
+
+      setGeneratedContent(content);
+      onContentGenerated({ topic, ...content }); // Auto-save on generation
 
       playSound('success');
     } catch (err) {
@@ -85,7 +89,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [projectData, topic, credits, deductCredits, setShowOutOfCreditsModal, onContentGenerated]);
 
 
   return (
