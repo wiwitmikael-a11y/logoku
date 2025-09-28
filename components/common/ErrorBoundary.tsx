@@ -35,9 +35,9 @@ class ErrorBoundary extends React.Component<Props, State> {
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
-      // FIX: Added 'this.' to correctly call setState on the component instance.
+      // FIX: Correctly call setState on the component instance.
       this.setState({ isCopied: true });
-      // FIX: Added 'this.' to correctly call setState on the component instance.
+      // FIX: Correctly call setState on the component instance.
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
