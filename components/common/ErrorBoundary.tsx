@@ -15,14 +15,17 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to modern class property syntax for state initialization and
-  // arrow functions for methods. This is the standard, most reliable way to
-  // handle 'this' context in React class components and resolves the type errors.
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Switched to a constructor for state initialization and method binding.
+  // This resolves type errors where 'this' context was not being correctly inferred.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
@@ -32,12 +35,10 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
-      // FIX: Correctly call setState on the component instance.
       this.setState({ isCopied: true });
-      // FIX: Correctly call setState on the component instance.
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
@@ -62,9 +63,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()}>
                         Refresh Halaman
                     </Button>
-                    {/* FIX: Added 'this.' to correctly access props. */}
                     {this.props.onReset && (
-                        // FIX: Added 'this.' to correctly access props.
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
                         </Button>
@@ -86,7 +85,6 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: Added 'this.' to correctly access props.
     return this.props.children;
   }
 }
