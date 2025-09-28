@@ -24,7 +24,7 @@ const InFeedAd = () => {
   
   if (!AD_SLOT_ID_IN_CONTENT) {
     return (
-        <div className="bg-gray-800 border border-dashed border-gray-600 rounded-xl p-4 text-center text-sm text-gray-400 min-h-[250px] flex flex-col justify-center items-center">
+        <div className="bg-gray-800 border border-dashed border-gray-600 rounded-xl p-4 text-center text-sm text-gray-400 min-h-[120px] flex flex-col justify-center items-center">
             <p className="font-semibold text-yellow-400">Slot Iklan Display</p>
             <p>Admin, buat unit iklan "Display" baru di AdSense dan masukkan slot ID-nya di `services/adsenseConfig.ts`</p>
         </div>
@@ -32,7 +32,7 @@ const InFeedAd = () => {
   }
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 w-full h-full min-h-[250px] flex flex-col justify-center items-center">
+    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 w-full h-full min-h-[120px] flex flex-col justify-center items-center">
         <span className="text-[10px] text-gray-500 self-start mb-2">Advertisement</span>
         <ins 
             className="adsbygoogle"

@@ -15,14 +15,18 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Refactored to use modern class property syntax for state and arrow functions for methods.
-  // This is the standard approach in modern React and inherently handles the `this` context correctly,
-  // which appears to be the root cause of the errors.
-  state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Reverted state initialization to use a constructor instead of class property syntax.
+  // The class property syntax, while modern, can sometimes cause issues with build configurations,
+  // leading to incorrect type inference for `this`. The constructor is a more established pattern and
+  // explicitly sets up the component's state, which should resolve the type errors.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+  }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };

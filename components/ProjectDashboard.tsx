@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import type { Project } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -98,13 +97,6 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         + Bikin Project Branding Baru
       </Button>
 
-      {/* --- AD PLACEMENT --- */}
-      {projects.length > 0 && (
-          <div className="w-full max-w-4xl my-4">
-              <InFeedAd />
-          </div>
-      )}
-
       {inProgressProjects.length > 0 && (
         <div className="w-full text-left mt-8">
           <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
@@ -185,6 +177,13 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
           <div className="mt-8 text-center text-gray-500">
               <p>Lo belom punya project nih.</p>
               <p>Klik tombol di atas buat bikin brand pertama lo!</p>
+          </div>
+      )}
+      
+      {/* --- AD PLACEMENT --- */}
+      {projects.length > 0 && (
+          <div className="w-full max-w-4xl mt-12">
+              <InFeedAd />
           </div>
       )}
     </div>
