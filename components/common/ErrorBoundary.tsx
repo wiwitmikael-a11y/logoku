@@ -15,15 +15,12 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Replaced class property state initialization with a constructor to resolve TypeScript errors where `this.props` and `this.setState` were not being found on the component instance.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-  }
+  // FIX: Replaced constructor with class property for state initialization. This is a more modern syntax and can resolve 'this' context issues in some build environments that may have been causing the original errors.
+  state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error, isCopied: false };
@@ -36,9 +33,7 @@ class ErrorBoundary extends React.Component<Props, State> {
   handleCopy = () => {
       if(this.state.error) {
           navigator.clipboard.writeText(this.state.error.toString());
-          // FIX: Corrected access to setState, which is now available on `this`.
           this.setState({ isCopied: true });
-          // FIX: Corrected access to setState, which is now available on `this`.
           setTimeout(() => this.setState({ isCopied: false }), 2000);
       }
   }
@@ -63,9 +58,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()}>
                         Refresh Halaman
                     </Button>
-                    {/* FIX: Corrected access to props, which is now available on `this`. */}
                     {this.props.onReset && (
-                        // FIX: Corrected access to props, which is now available on `this`.
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
                         </Button>
@@ -87,7 +80,6 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: Corrected access to props, which is now available on `this`.
     return this.props.children;
   }
 }
