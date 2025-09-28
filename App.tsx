@@ -6,6 +6,11 @@ import { uploadAndSyncProjectAssets } from './services/storageService';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
+// --- API Services ---
+import * as geminiService from './services/geminiService';
+import { fetchImageAsBase64 } from './utils/imageUtils';
+
+
 // --- Error Handling & Loading ---
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
@@ -18,22 +23,16 @@ import ErrorMessage from './components/common/ErrorMessage';
 import LoginScreen from './components/LoginScreen';
 import ProgressStepper from './components/common/ProgressStepper';
 import AdBanner from './components/AdBanner';
-import Toast from './components/common/Toast'; // New Toast component
+import Toast from './components/common/Toast';
 
-// --- Lazily Loaded Components (with new, clear naming) ---
+// --- Lazily Loaded Components ---
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
 const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersonaGenerator'));
 const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
 const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
-const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
-const SocialMediaKitGenerator = React.lazy(() => import('./components/SocialMediaKitGenerator'));
-const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'));
-const SocialAdsGenerator = React.lazy(() => import('./components/SocialAdsGenerator'));
-const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
-const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 const CaptionGenerator = React.lazy(() => import('./components/CaptionGenerator'));
-const InstantContentGenerator = React.lazy(() => import('./components/InstantContentGenerator')); // NEW
+const InstantContentGenerator = React.lazy(() => import('./components/InstantContentGenerator'));
 const ContactModal = React.lazy(() => import('./components/ContactModal'));
 const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
@@ -44,11 +43,10 @@ const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCa
 const BrandingTipModal = React.lazy(() => import('./components/common/BrandingTipModal'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content' | 'social_kit' | 'profile_optimizer' | 'social_ads' | 'packaging' | 'print_media' | 'summary' | 'caption' | 'instant_content';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const App: React.FC = () => {
-    // Critical startup checks
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
     if (!import.meta.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
 
@@ -61,29 +59,16 @@ const App: React.FC = () => {
 
 const MainApp: React.FC = () => {
     const { 
-        session, 
-        user, 
-        profile, 
-        loading: authLoading, 
-        showOutOfCreditsModal, 
-        setShowOutOfCreditsModal,
-        showLogoutConfirm,
-        setShowLogoutConfirm,
-        handleLogout,
-        executeLogout: authExecuteLogout, // Renamed to avoid conflict
-        handleDeleteAccount, 
-        handleToggleMute, 
-        isMuted, 
-        authError,
-        refreshProfile,
-        bgmSelection,
-        handleBgmChange,
+        session, user, profile, loading: authLoading, 
+        showOutOfCreditsModal, setShowOutOfCreditsModal,
+        showLogoutConfirm, setShowLogoutConfirm,
+        handleLogout, executeLogout: authExecuteLogout,
+        handleDeleteAccount, handleToggleMute, isMuted, 
+        authError, refreshProfile, bgmSelection, handleBgmChange,
+        deductCredits
     } = useAuth();
     
-    // --- State Persistence on Refresh ---
-    const [appState, setAppState] = useState<AppState>(
-        () => (sessionStorage.getItem('logoku_app_state') as AppState) || 'dashboard'
-    );
+    const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('logoku_app_state') as AppState) || 'dashboard');
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(() => {
         const id = sessionStorage.getItem('logoku_project_id');
         return id ? parseInt(id, 10) : null;
@@ -91,14 +76,11 @@ const MainApp: React.FC = () => {
 
     const [projects, setProjects] = useState<Project[]>([]);
     const [generalError, setGeneralError] = useState<string | null>(null);
-    const [isFinalizing, setIsFinalizing] = useState(false);
     const [toast, setToast] = useState({ message: '', show: false });
     const [syncingProjectId, setSyncingProjectId] = useState<number | null>(null);
-    
-    // State for the welcome banner
     const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
     
-    // Modals visibility state
+    // Modals visibility
     const [showContactModal, setShowContactModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
     const [showCaptcha, setShowCaptcha] = useState(false);
@@ -108,19 +90,17 @@ const MainApp: React.FC = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
     
-    // Dropdowns visibility state
+    // Dropdowns visibility
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);
 
-    // Refs for closing popovers on outside click
+    // Refs
     const userMenuRef = useRef<HTMLDivElement>(null);
     const tokenInfoRef = useRef<HTMLDivElement>(null);
-    
     const previousAppState = useRef<AppState>(appState);
     const previousSession = useRef<typeof session>(session);
 
-    // NEW, more logical workflow order
-    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content', 'social_kit', 'profile_optimizer', 'social_ads', 'packaging', 'print_media'];
+    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
     
@@ -128,9 +108,9 @@ const MainApp: React.FC = () => {
         setToast({ message, show: true });
     }, []);
 
-    // --- Effect for Persisting Navigation State ---
+    // --- Effects for State Persistence & Initial Load ---
     useEffect(() => {
-        if (session) { // Only persist state if user is logged in
+        if (session) {
             if (appState === 'dashboard') {
                 sessionStorage.removeItem('logoku_app_state');
                 sessionStorage.removeItem('logoku_project_id');
@@ -147,49 +127,29 @@ const MainApp: React.FC = () => {
     
     useEffect(() => {
         if (!authLoading && session) {
-            // If user just logged in (previous session was null)
-            if (!previousSession.current && session) {
-                setShowWelcomeBanner(true);
-            }
+            if (!previousSession.current && session) setShowWelcomeBanner(true);
             fetchProjects();
         }
         previousSession.current = session;
     }, [session, authLoading]);
     
-    // Automatically show CAPTCHA modal on the login screen, which then triggers the ToS modal.
     useEffect(() => {
-        if (!session && !authLoading) {
-            setShowCaptcha(true);
-        }
+        if (!session && !authLoading) setShowCaptcha(true);
     }, [session, authLoading]);
     
-    // Effect to close popovers/dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-                setIsUserMenuOpen(false);
-            }
-             if (tokenInfoRef.current && !tokenInfoRef.current.contains(event.target as Node)) {
-                setIsTokenInfoOpen(false);
-            }
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false);
+            if (tokenInfoRef.current && !tokenInfoRef.current.contains(event.target as Node)) setIsTokenInfoOpen(false);
         };
-
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const fetchProjects = async () => {
         if (!session?.user) return;
-        const { data, error } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .order('created_at', { ascending: false });
-            
+        const { data, error } = await supabase.from('projects').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false });
         if (error) {
-            console.error("Error fetching projects:", error);
             setGeneralError(`Gagal mengambil data project: ${error.message}`);
             setProjects([]);
         } else {
@@ -205,25 +165,16 @@ const MainApp: React.FC = () => {
         previousAppState.current = appState;
     }, [appState]);
 
-    const navigateTo = (state: AppState) => {
-        setAppState(state);
-    };
+    const navigateTo = (state: AppState) => setAppState(state);
 
+    // --- Core Navigation & Project Management ---
     const handleNewProject = useCallback(async () => {
         if (!session?.user) return;
-        setGeneralError(null);
-        
-        const { data, error } = await supabase
-            .from('projects')
-            .insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' as ProjectStatus })
-            .select()
-            .single();
-            
+        const { data, error } = await supabase.from('projects').insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' as ProjectStatus }).select().single();
         if (error) {
             setGeneralError(`Gagal memulai project baru: ${error.message}`);
             return;
         }
-
         const newProject: Project = data as any;
         setProjects(prev => [newProject, ...prev]);
         setSelectedProjectId(newProject.id);
@@ -256,33 +207,22 @@ const MainApp: React.FC = () => {
         if (!project) return;
         
         setSelectedProjectId(projectId);
+        saveWorkflowState(project.project_data);
         
-        if (project.status === 'in-progress') {
-            saveWorkflowState(project.project_data); // Load DB data into local session for in-progress projects
-            // Determine the next step based on what data exists
-            const data = project.project_data;
-            let nextState: AppState = 'persona';
-            if (data.printMediaAssets) nextState = 'summary'; // Should not happen for in-progress
-            else if (data.selectedPackagingUrl) nextState = 'print_media';
-            else if (data.socialAds) nextState = 'packaging';
-            else if (data.socialProfiles) nextState = 'social_ads';
-            else if (data.socialMediaKit) nextState = 'profile_optimizer';
-            else if (data.contentCalendar) nextState = 'social_kit';
-            else if (data.logoVariations) nextState = 'content';
-            else if (data.selectedLogoUrl) nextState = 'logo_detail';
-            else if (data.selectedPersona) nextState = 'logo';
-            
-            navigateTo(nextState);
+        if (project.project_data.logoVariations) {
+            navigateTo('summary'); // Project is finalized, go to Brand Hub
         } else {
-            // For completed or local-complete, always go to summary
-            navigateTo('summary');
+            let nextState: AppState = 'persona';
+            if (project.project_data.selectedLogoUrl) nextState = 'logo_detail';
+            else if (project.project_data.selectedPersona) nextState = 'logo';
+            navigateTo(nextState);
         }
     }, [projects]);
 
     const handleGoToCaptionGenerator = useCallback((projectId: number) => {
         const project = projects.find(p => p.id === projectId);
         if (project) {
-            saveWorkflowState(project.project_data); // Use workflow state for caption generator too
+            saveWorkflowState(project.project_data);
             setSelectedProjectId(project.id);
             navigateTo('caption');
         }
@@ -296,15 +236,6 @@ const MainApp: React.FC = () => {
             navigateTo('instant_content');
         }
     }, [projects]);
-
-    const handleReturnToSummary = useCallback(() => {
-        // Does not clear workflow state
-        if (selectedProjectId) {
-             navigateTo('summary');
-        } else {
-            handleReturnToDashboard();
-        }
-    }, [selectedProjectId, handleReturnToDashboard]);
 
     // --- Project Deletion Handlers ---
     const handleRequestDeleteProject = useCallback((projectId: number) => {
@@ -322,33 +253,18 @@ const MainApp: React.FC = () => {
 
     const handleConfirmDelete = async () => {
         if (!projectToDelete || !user) return;
-
         setIsDeleting(true);
-        setGeneralError(null);
-
-        try {
-            const { error: deleteError } = await supabase
-                .from('projects')
-                .delete()
-                .eq('id', projectToDelete.id);
-            
-            if (deleteError) throw new Error(`Gagal menghapus data project: ${deleteError.message}`);
-
+        const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
+        setIsDeleting(false);
+        if (error) {
+            setGeneralError(`Gagal menghapus project: ${error.message}`);
+        } else {
             setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
-            if (selectedProjectId === projectToDelete.id) {
-                handleReturnToDashboard(); // Go to dashboard if the deleted project was the active one
-            }
+            if (selectedProjectId === projectToDelete.id) handleReturnToDashboard();
             playSound('success');
-
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus project.';
-            setGeneralError(errorMessage);
-            playSound('error');
-        } finally {
-            setIsDeleting(false);
-            setShowDeleteConfirm(false);
-            setProjectToDelete(null);
         }
+        setShowDeleteConfirm(false);
+        setProjectToDelete(null);
     };
     
     // --- Centralized Local Checkpoint Saver ---
@@ -357,8 +273,7 @@ const MainApp: React.FC = () => {
         showToast("Progres tersimpan sementara di browser!");
     }, [showToast]);
 
-
-    // --- Workflow Step Completion Handlers (Now use local checkpoint) ---
+    // --- Initial Workflow Step Handlers ---
     const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         const currentState = loadWorkflowState() || {};
         const updatedData: Partial<ProjectData> = { ...currentState, brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan };
@@ -373,145 +288,182 @@ const MainApp: React.FC = () => {
         navigateTo('logo_detail');
     }, [saveLocalCheckpoint]);
 
+    // BRAND HUB TRANSITION: After logo detail, go to summary (Brand Hub)
     const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
+        if (!session?.user || !selectedProjectId) return;
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
-        saveLocalCheckpoint(updatedData);
-        navigateTo('content');
-    }, [saveLocalCheckpoint]);
-
-    const handleContentComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, contentCalendar: data.calendar, searchSources: data.sources };
-        saveLocalCheckpoint(updatedData);
-        navigateTo('social_kit');
-    }, [saveLocalCheckpoint]);
-
-    const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, socialMediaKit: data.assets };
-        saveLocalCheckpoint(updatedData);
-        navigateTo('profile_optimizer');
-    }, [saveLocalCheckpoint]);
-
-    const handleProfileOptimizerComplete = useCallback(async (data: { profiles: SocialProfileData }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, socialProfiles: data.profiles };
-        saveLocalCheckpoint(updatedData);
-        navigateTo('social_ads');
-    }, [saveLocalCheckpoint]);
-
-    const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, socialAds: data.adsData };
-        saveLocalCheckpoint(updatedData);
-        navigateTo('packaging');
-    }, [saveLocalCheckpoint]);
-
-    const handlePackagingComplete = useCallback(async (packagingBase64: string) => {
-       const currentState = loadWorkflowState() || {};
-       const updatedData = { ...currentState, selectedPackagingUrl: packagingBase64 };
-       saveLocalCheckpoint(updatedData);
-       navigateTo('print_media');
-    }, [saveLocalCheckpoint]);
-
-    const handlePrintMediaComplete = useCallback(async (printMediaAssets: PrintMediaAssets) => {
-        if (!session?.user || !selectedProjectId) return;
         
-        setIsFinalizing(true);
-        setGeneralError(null);
-        
-        try {
-            const currentState = loadWorkflowState() || {};
-            const finalProjectData = { ...currentState, printMediaAssets };
-
-            const { data, error } = await supabase
-                .from('projects')
-                .update({ project_data: finalProjectData, status: 'local-complete' as ProjectStatus })
-                .eq('id', selectedProjectId)
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            const updatedProject: Project = data as any;
-            setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-            clearWorkflowState();
-            setSelectedProjectId(null);
-            navigateTo('dashboard');
-
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat finalisasi project.';
-            setGeneralError(errorMessage);
-            playSound('error');
-        } finally {
-            setIsFinalizing(false);
-        }
-
-    }, [session, selectedProjectId]);
-
-    const handleSyncProject = useCallback(async (projectId: number) => {
-        if (!session?.user) return;
-        const projectToSync = projects.find(p => p.id === projectId);
-        if (!projectToSync) {
-            setGeneralError("Project yang mau disinkronkan tidak ditemukan.");
+        // This is the first time the project is "complete" enough for the Hub.
+        // Save to DB to lock it in.
+        const { data: dbData, error } = await supabase
+            .from('projects')
+            .update({ project_data: updatedData, status: 'completed' as ProjectStatus })
+            .eq('id', selectedProjectId)
+            .select()
+            .single();
+        if (error) {
+            setGeneralError(`Gagal menyimpan finalisasi logo: ${error.message}`);
             return;
         }
+        const updatedProject: Project = dbData as any;
+        setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+        saveWorkflowState(updatedData);
+        navigateTo('summary');
+    }, [session, selectedProjectId, saveLocalCheckpoint]);
 
-        setSyncingProjectId(projectId);
+    // --- [BRAND HUB] Centralized Asset Regeneration Logic ---
+    const handleRegenerateAsset = async <T,>(
+        projectId: number,
+        assetKey: keyof ProjectData,
+        cost: number,
+        generationFunc: () => Promise<T>,
+        successMessage: string
+    ) => {
         setGeneralError(null);
-        playSound('start');
+        if ((profile?.credits ?? 0) < cost) {
+            setShowOutOfCreditsModal(true);
+            return;
+        }
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
 
         try {
-            const newDataWithUrls = await uploadAndSyncProjectAssets(projectToSync);
+            const result = await generationFunc();
+            await deductCredits(cost);
+
+            const updatedProjectData = { ...project.project_data, [assetKey]: result };
 
             const { data, error } = await supabase
                 .from('projects')
-                .update({ project_data: newDataWithUrls, status: 'completed' as ProjectStatus })
+                .update({ project_data: updatedProjectData })
                 .eq('id', projectId)
                 .select()
                 .single();
-
+            
             if (error) throw error;
-
-            const updatedProject: Project = data as any;
-            setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-            playSound('success');
-            showToast("Project berhasil disinkronkan ke database!");
-
+            
+            setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p));
+            showToast(successMessage);
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat sinkronisasi.';
-            setGeneralError(errorMessage);
-            playSound('error');
-        } finally {
-            setSyncingProjectId(null);
-        }
-    }, [session, projects, showToast]);
-
-
-    const openContactModal = useCallback(() => { playSound('click'); setShowContactModal(true); }, []);
-    const closeContactModal = useCallback(() => setShowContactModal(false), []);
-    const openToSModal = useCallback(() => { playSound('click'); setShowToSModal(true); }, []);
-    const closeToSModal = useCallback(() => {
-        setShowToSModal(false);
-    }, []);
-    const openProfileModal = useCallback(() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }, []);
-    const closeProfileModal = useCallback(() => setShowProfileModal(false), []);
-    
-    const handleGoogleLogin = async () => {
-        playSound('click');
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: window.location.origin,
-          },
-        });
-        if (error) {
-          setGeneralError(`Gagal login: ${error.message}`);
-          playSound('error');
+            const msg = err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.';
+            setGeneralError(msg);
         }
     };
+
+    const handleRegenerateContentCalendar = (projectId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project?.project_data.brandInputs || !project.project_data.selectedPersona) return;
+        handleRegenerateAsset(
+            projectId,
+            'contentCalendar',
+            1,
+            () => geminiService.generateContentCalendar(project.project_data.brandInputs.businessName, project.project_data.selectedPersona).then(res => res.calendar),
+            "Kalender konten baru berhasil dibuat!"
+        );
+    };
+
+    const handleRegenerateSocialKit = (projectId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project?.project_data.selectedLogoUrl) return;
+        handleRegenerateAsset(
+            projectId,
+            'socialMediaKit',
+            2,
+            () => geminiService.generateSocialMediaKitAssets(project.project_data as any),
+            "Social media kit baru berhasil dibuat!"
+        );
+    };
+
+    const handleRegenerateProfiles = (projectId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project?.project_data.brandInputs || !project.project_data.selectedPersona) return;
+        handleRegenerateAsset(
+            projectId,
+            'socialProfiles',
+            1,
+            () => geminiService.generateSocialProfiles(project.project_data.brandInputs, project.project_data.selectedPersona),
+            "Profil sosmed baru berhasil dibuat!"
+        );
+    };
     
+    const handleRegenerateSocialAds = (projectId: number) => {
+        const project = projects.find(p => p.id === projectId);
+        if (!project?.project_data.brandInputs || !project.project_data.selectedPersona || !project.project_data.selectedSlogan) return;
+        handleRegenerateAsset(
+            projectId,
+            'socialAds',
+            1,
+            () => geminiService.generateSocialAds(project.project_data.brandInputs, project.project_data.selectedPersona, project.project_data.selectedSlogan),
+            "Teks iklan baru berhasil dibuat!"
+        );
+    };
+
+    const handleRegeneratePackaging = async (projectId: number) => {
+        setGeneralError(null);
+        if ((profile?.credits ?? 0) < 1) { setShowOutOfCreditsModal(true); return; }
+        const project = projects.find(p => p.id === projectId);
+        if (!project || !project.project_data.brandInputs || !project.project_data.selectedPersona || !project.project_data.selectedLogoUrl) return;
+
+        try {
+            const { brandInputs, selectedPersona, selectedLogoUrl } = project.project_data;
+            const prompt = `Take the provided logo image. Create a realistic, high-quality product mockup of a generic product box. The product is "${brandInputs.businessDetail}". It is critical that the image visually represents "${brandInputs.businessDetail}". Place the logo prominently. The brand is "${brandInputs.businessName}". The style is ${selectedPersona.kata_kunci.join(', ')}, modern, and clean. This is a commercial product photo.`;
+            
+            const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
+            const results = await geminiService.generatePackagingDesign(prompt, logoBase64);
+            
+            await deductCredits(1);
+            const updatedProjectData = { ...project.project_data, selectedPackagingUrl: results[0] };
+            const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
+            if (error) throw error;
+            
+            setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p));
+            showToast("Desain kemasan baru berhasil dibuat!");
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+            setGeneralError(msg);
+        }
+    };
+
+    const handleRegeneratePrintMedia = async (projectId: number, mediaType: 'banner' | 'roll_banner') => {
+        setGeneralError(null);
+        if ((profile?.credits ?? 0) < 1) { setShowOutOfCreditsModal(true); return; }
+        const project = projects.find(p => p.id === projectId);
+        if (!project || !project.project_data.brandInputs || !project.project_data.selectedPersona || !project.project_data.selectedLogoUrl) return;
+
+        try {
+            const { selectedPersona, selectedLogoUrl } = project.project_data;
+            let prompt = '';
+            const colors = selectedPersona.palet_warna_hex.join(', ');
+            const style = selectedPersona.kata_kunci.join(', ');
+
+            if (mediaType === 'banner') {
+                prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk). CRITICAL: The final image MUST have a wide horizontal aspect ratio of 3:1. Do NOT create a realistic 3D mockup; create a flat, 2D, print-ready design. Use the brand's color palette: ${colors}. The design should be bold, eye-catching, and incorporate the brand's style keywords: ${style}. Place the logo prominently. The design MUST have large empty spaces or simple colored background shapes for text to be added later by the user. CRITICAL: DO NOT generate any text, letters, or words.`;
+            } else { // roll_banner
+                prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner. CRITICAL: The final image MUST have a tall vertical aspect ratio of 9:16. Do NOT create a realistic 3D mockup; create a flat, 2D, print-ready design. Use the brand's color palette: ${colors}. The design should be stylish, modern, and incorporate the brand's style keywords: ${style}. Place the logo prominently, usually near the top. The design MUST have significant empty space and placeholder colored blocks for text to be added later by the user. CRITICAL: DO NOT generate any text, letters, or words.`;
+            }
+
+            const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
+            const results = await geminiService.generatePrintMedia(prompt, logoBase64);
+
+            await deductCredits(1);
+            const currentAssets = project.project_data.printMediaAssets || {};
+            const updatedAssets = mediaType === 'banner' ? { ...currentAssets, bannerUrl: results[0] } : { ...currentAssets, rollBannerUrl: results[0] };
+            
+            const updatedProjectData = { ...project.project_data, printMediaAssets: updatedAssets };
+            const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
+            if (error) throw error;
+            
+            setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p));
+            showToast(`Template ${mediaType === 'banner' ? 'spanduk' : 'roll banner'} baru berhasil dibuat!`);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+            setGeneralError(msg);
+        }
+    };
+
+
+    // --- Other Handlers ---
     const executeLogout = async () => {
         clearWorkflowState();
         sessionStorage.removeItem('logoku_app_state');
@@ -521,79 +473,21 @@ const MainApp: React.FC = () => {
         setSelectedProjectId(null);
     };
 
+    // --- Content Rendering ---
     const renderContent = () => {
         const workflowData = loadWorkflowState();
         const commonErrorProps = { onGoToDashboard: handleReturnToDashboard };
 
         switch (appState) {
-            case 'persona':
-                return <BrandPersonaGenerator onComplete={handlePersonaComplete} {...commonErrorProps} />;
+            case 'persona': return <BrandPersonaGenerator onComplete={handlePersonaComplete} {...commonErrorProps} />;
             case 'logo':
                 if (workflowData?.selectedPersona && workflowData.brandInputs) {
-                    return <LogoGenerator 
-                        persona={workflowData.selectedPersona} 
-                        businessName={workflowData.brandInputs.businessName} 
-                        onComplete={handleLogoComplete} 
-                        {...commonErrorProps}
-                    />;
+                    return <LogoGenerator persona={workflowData.selectedPersona} businessName={workflowData.brandInputs.businessName} onComplete={handleLogoComplete} {...commonErrorProps} />;
                 }
                 break;
             case 'logo_detail':
                 if (workflowData?.selectedLogoUrl && workflowData.logoPrompt && workflowData.brandInputs) {
-                    return <LogoDetailGenerator 
-                        baseLogoUrl={workflowData.selectedLogoUrl} 
-                        basePrompt={workflowData.logoPrompt} 
-                        businessName={workflowData.brandInputs.businessName}
-                        onComplete={handleLogoDetailComplete}
-                        {...commonErrorProps}
-                    />;
-                }
-                break;
-            case 'content':
-                if (workflowData?.brandInputs && workflowData.selectedPersona) {
-                    return <ContentCalendarGenerator
-                        projectData={workflowData}
-                        onComplete={handleContentComplete}
-                        {...commonErrorProps}
-                    />;
-                }
-                break;
-            case 'social_kit':
-                if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedLogoUrl && workflowData.selectedSlogan) {
-                    return <SocialMediaKitGenerator 
-                        projectData={workflowData as any} 
-                        onComplete={handleSocialKitComplete} 
-                        {...commonErrorProps}
-                    />;
-                }
-                break;
-            case 'profile_optimizer':
-                if (workflowData?.brandInputs && workflowData.selectedPersona) {
-                    return <ProfileOptimizer projectData={workflowData} onComplete={handleProfileOptimizerComplete} {...commonErrorProps} />;
-                }
-                break;
-            case 'social_ads':
-                 if (workflowData?.brandInputs && workflowData.selectedPersona && workflowData.selectedSlogan) {
-                    return <SocialAdsGenerator projectData={workflowData} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
-                }
-                break;
-            case 'packaging':
-                if (workflowData?.selectedPersona && workflowData.brandInputs && workflowData.selectedLogoUrl) {
-                    return <PackagingGenerator 
-                        projectData={workflowData}
-                        onComplete={handlePackagingComplete} 
-                        {...commonErrorProps}
-                    />;
-                }
-                break;
-            case 'print_media':
-                if (workflowData?.selectedLogoUrl && workflowData.brandInputs && workflowData.selectedPersona) {
-                    return <PrintMediaGenerator
-                        projectData={workflowData}
-                        onComplete={handlePrintMediaComplete} 
-                        isFinalizing={isFinalizing}
-                        {...commonErrorProps}
-                    />;
+                    return <LogoDetailGenerator baseLogoUrl={workflowData.selectedLogoUrl} basePrompt={workflowData.logoPrompt} businessName={workflowData.brandInputs.businessName} onComplete={handleLogoDetailComplete} {...commonErrorProps} />;
                 }
                 break;
             case 'summary':
@@ -605,51 +499,44 @@ const MainApp: React.FC = () => {
                         onGoToCaptionGenerator={handleGoToCaptionGenerator}
                         onGoToInstantContent={handleGoToInstantContent}
                         onDeleteProject={handleRequestDeleteProject}
-                        onSyncProject={handleSyncProject}
-                        syncingProjectId={syncingProjectId}
+                        // Pass new regeneration handlers
+                        onRegenerateContentCalendar={() => handleRegenerateContentCalendar(projectToShow.id)}
+                        onRegenerateSocialKit={() => handleRegenerateSocialKit(projectToShow.id)}
+                        onRegenerateProfiles={() => handleRegenerateProfiles(projectToShow.id)}
+                        onRegenerateSocialAds={() => handleRegenerateSocialAds(projectToShow.id)}
+                        onRegeneratePackaging={() => handleRegeneratePackaging(projectToShow.id)}
+                        onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(projectToShow.id, type)}
                     />;
                 }
                 break;
             case 'caption':
                 if (workflowData && selectedProjectId) {
-                    return <CaptionGenerator projectData={workflowData} onBack={handleReturnToSummary} {...commonErrorProps} />;
+                    return <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonErrorProps} />;
                 }
                 break;
             case 'instant_content':
                 if (workflowData && selectedProjectId) {
-                    return <InstantContentGenerator projectData={workflowData} onBack={handleReturnToSummary} {...commonErrorProps} />;
+                    return <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonErrorProps} />;
                 }
                 break;
             case 'dashboard':
             default:
-                return <ProjectDashboard 
-                    projects={projects} 
-                    onNewProject={handleNewProject} 
-                    onSelectProject={handleSelectProject} 
-                    showWelcomeBanner={showWelcomeBanner} 
-                    onWelcomeBannerClose={() => setShowWelcomeBanner(false)} 
-                    onDeleteProject={handleRequestDeleteProject}
-                />;
+                return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} />;
         }
-        // Fallback: If required data is missing, go to dashboard
         handleReturnToDashboard();
         return <AuthLoadingScreen />;
     };
     
+    // --- Main Component Return ---
     if (authLoading) return <AuthLoadingScreen />;
     
     if (!session) {
         return (
             <>
-                <LoginScreen onGoogleLogin={handleGoogleLogin} isCaptchaSolved={!showCaptcha} onShowToS={openToSModal} />
+                <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} onShowToS={() => setShowToSModal(true)} />
                 <Suspense fallback={null}>
-                    <PuzzleCaptchaModal
-                        show={showCaptcha}
-                        onSuccess={() => {
-                            setShowCaptcha(false);
-                        }}
-                    />
-                    <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
+                    <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} />
+                    <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
                 </Suspense>
             </>
         );
@@ -659,31 +546,26 @@ const MainApp: React.FC = () => {
         <div className="text-white min-h-screen font-sans">
             <header className="py-3 px-4 md:py-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
                 <div className="max-w-7xl mx-auto flex justify-between items-center relative">
+                    {/* Header Left */}
                     <div className="flex items-baseline gap-3">
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleReturnToDashboard}>
                             <span>logo<span className="text-white">.ku</span></span>
                         </h1>
-                        <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={openContactModal}>
+                        <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={() => setShowContactModal(true)}>
                             by @rangga.p.h
                         </div>
                     </div>
-                     <div className="flex items-center gap-4 relative">
-                        <img
-                            src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-                            alt="Mang AI peeking from behind the token display"
-                            className="animate-header-ai-peek w-12 h-12"
-                        />
+                    {/* Header Right */}
+                    <div className="flex items-center gap-4 relative">
+                        <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI peeking" className="animate-header-ai-peek w-12 h-12" />
+                        {/* Token Info */}
                         <div className="relative" ref={tokenInfoRef}>
-                            <div
-                                onClick={() => setIsTokenInfoOpen(prev => !prev)}
-                                className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/70 transition-colors"
-                                title="Klik untuk info token"
-                            >
+                            <div onClick={() => setIsTokenInfoOpen(p => !p)} className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/70 transition-colors" title="Info token">
                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                                 <span className="font-bold text-sm text-white">Sisa Token: {profile?.credits ?? 0}</span>
                             </div>
                              {isTokenInfoOpen && (
-                                <div className="absolute top-full right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
+                                <div className="absolute top-full right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in">
                                     <p className="font-bold text-white mb-1">Info Token Harian</p>
                                     <p className="text-gray-300">
                                         <span className="text-yellow-300">Bonus 20 token</span> di hari pertama, lalu dapatkan <span className="text-yellow-300">5 token gratis</span> setiap hari untuk terus berkarya!
@@ -691,73 +573,28 @@ const MainApp: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                         <div className="relative" ref={userMenuRef}>
-                            <button onClick={() => setIsUserMenuOpen(prev => !prev)} title="User Menu" className="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 rounded-full">
+                         {/* User Menu */}
+                        <div className="relative" ref={userMenuRef}>
+                            <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 rounded-full">
                                 <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full" />
                             </button>
                             {isUserMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
-                                    <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2-2a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 00-1-1H5zm5 0a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 00-1-1h-2zM5 9a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm5 0a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2z" clipRule="evenodd" /></svg>
-                                        <span>Dashboard</span>
-                                    </button>
+                                <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in">
+                                    {/* Menu Items */}
+                                    <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Dashboard</button>
                                     <div className="border-t border-gray-700 my-1"></div>
-                                    <button onClick={openProfileModal} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" /></svg>
-                                        <span>Pengaturan Akun</span>
-                                    </button>
-                                     <a 
-                                        href="https://saweria.co/logoku"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={() => { playSound('click'); setIsUserMenuOpen(false); }}
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors"
-                                        title="Suka aplikasi ini? Traktir Mang AI kopi!"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                                        </svg>
-                                        <span>Traktir Kopi</span>
-                                    </a>
-                                    <div 
-                                        title="Segera Hadir!"
-                                        className="w-full text-left px-4 py-2 text-sm text-gray-500 flex items-center gap-3 cursor-not-allowed"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 2a1 1 0 00-1 1v1.618a4 4 0 00-2 3.164v5.036a4 4 0 002 3.164V17a1 1 0 001 1h10a1 1 0 001-1v-1.018a4 4 0 002-3.164v-5.036a4 4 0 00-2-3.164V3a1 1 0 00-1-1H5zm4 10a1 1 0 100 2h2a1 1 0 100-2H9z" clipRule="evenodd" /></svg>
-                                        <span>Upgrade ke Pro</span>
+                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Pengaturan Akun</button>
+                                    <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Traktir Kopi</a>
+                                    <div className="border-t border-gray-700 my-1"></div>
+                                    <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilih Musik</div>
+                                    <div className="px-2 pb-2">
+                                        <select aria-label="Pilih musik latar" value={bgmSelection} onChange={(e) => handleBgmChange(e.target.value as BgmSelection)} className="w-full text-left px-2 py-1.5 text-sm text-gray-200 bg-gray-700/50 border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                            <option value="Mute">Bisukan BGM</option><option value="Random">Acak</option><option value="Jingle">Jingle</option><option value="Acoustic">Akustik</option><option value="Uplifting">Semangat</option><option value="LoFi">Lo-Fi</option><option value="Bamboo">Bambu</option><option value="Ethnic">Etnik</option><option value="Cozy">Santai</option>
+                                        </select>
                                     </div>
-                                     <div className="border-t border-gray-700 my-1"></div>
-                                        <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilih Musik</div>
-                                        <div className="px-2 pb-2">
-                                            <select
-                                                aria-label="Pilih musik latar"
-                                                value={bgmSelection}
-                                                onChange={(e) => handleBgmChange(e.target.value as BgmSelection)}
-                                                className="w-full text-left px-2 py-1.5 text-sm text-gray-200 bg-gray-700/50 border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                            >
-                                                <option value="Mute">Bisukan BGM</option>
-                                                <option value="Random">Acak</option>
-                                                <option value="Jingle">Jingle</option>
-                                                <option value="Acoustic">Akustik</option>
-                                                <option value="Uplifting">Semangat</option>
-                                                <option value="LoFi">Lo-Fi</option>
-                                                <option value="Bamboo">Bambu</option>
-                                                <option value="Ethnic">Etnik</option>
-                                                <option value="Cozy">Santai</option>
-                                            </select>
-                                        </div>
-                                    <button onClick={() => { handleToggleMute(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
-                                        {isMuted ? (
-                                            <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg><span>Suara Aktif</span></>
-                                        ) : (
-                                            <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg><span>Bisukan</span></>
-                                        )}
-                                    </button>
+                                    <button onClick={() => { handleToggleMute(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">{isMuted ? 'Suara Aktif' : 'Bisukan'}</button>
                                     <div className="border-t border-gray-700 my-1"></div>
-                                     <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                                        <span>Logout</span>
-                                    </button>
+                                    <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Logout</button>
                                 </div>
                             )}
                         </div>
@@ -767,9 +604,7 @@ const MainApp: React.FC = () => {
             <main id="main-content" className="py-6 md:py-10 px-4 md:px-8">
                 <div className="max-w-7xl mx-auto">
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
-                    {generalError ? (
-                        <ErrorMessage message={`Terjadi error kritis yang tak terduga: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />
-                    ) : (
+                    {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
                         <ErrorBoundary onReset={handleReturnToDashboard}>
                             {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
                             <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
@@ -779,52 +614,18 @@ const MainApp: React.FC = () => {
                     )}
                 </div>
             </main>
-             <footer className="text-center py-6 px-4 text-sm text-gray-400 border-t border-gray-800">
-                Powered by Atharrazka Core. Built for UMKM Indonesia.
-            </footer>
+             <footer className="text-center py-6 px-4 text-sm text-gray-400 border-t border-gray-800">Powered by Atharrazka Core. Built for UMKM Indonesia.</footer>
             <AdBanner />
             <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
+            {/* Modals */}
             <Suspense fallback={null}>
-                <ContactModal show={showContactModal} onClose={closeContactModal} />
-                <TermsOfServiceModal show={showToSModal} onClose={closeToSModal} />
+                <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
+                <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
                 <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
-                <ProfileSettingsModal 
-                    show={showProfileModal} 
-                    onClose={closeProfileModal}
-                    user={user}
-                    profile={profile}
-                    onLogout={handleLogout}
-                    onDeleteAccount={handleDeleteAccount}
-                    onShowToS={openToSModal}
-                    onShowContact={openContactModal}
-                />
-                <ConfirmationModal
-                    show={showLogoutConfirm}
-                    onClose={() => setShowLogoutConfirm(false)}
-                    onConfirm={executeLogout}
-                    title="Eh, Bentar Dulu, Juragan!"
-                    confirmText="Ya, Cabut Aja"
-                    cancelText="Gak Jadi, Balik Lagi"
-                >
-                    Kalo lo logout sekarang, progres project yang lagi jalan (yang cuma kesimpen di browser) bakal ilang lho. Sayang kan kalo ide brilian lo ngawang gitu aja. Tetep mau lanjut?
-                </ConfirmationModal>
-                 <ConfirmationModal
-                    show={showDashboardConfirm}
-                    onClose={() => setShowDashboardConfirm(false)}
-                    onConfirm={confirmAndReturnToDashboard}
-                    title="Kembali ke Dashboard?"
-                    confirmText="Ya, Kembali Saja"
-                    cancelText="Gak Jadi"
-                >
-                    Progres yang belum disimpan di tahap ini bakal hilang lho. Yakin mau kembali ke dashboard?
-                </ConfirmationModal>
-                <DeleteProjectSliderModal
-                    show={showDeleteConfirm}
-                    onClose={handleCancelDelete}
-                    onConfirm={handleConfirmDelete}
-                    isConfirmLoading={isDeleting}
-                    projectNameToDelete={projectToDelete?.project_data.brandInputs?.businessName || 'Project Ini'}
-                />
+                <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={() => setShowToSModal(true)} onShowContact={() => setShowContactModal(true)} />
+                <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
+                <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
+                <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data.brandInputs?.businessName || 'Project Ini'} />
             </Suspense>
         </div>
     );

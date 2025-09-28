@@ -15,24 +15,27 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Replaced the constructor with public class fields for state and an arrow function for the handler.
-  // The previous constructor-based approach was causing TypeScript errors where properties like 'state' and 'props' were not found on 'this'.
-  // This modern syntax is cleaner and correctly handles 'this' context.
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Switched to constructor for state initialization. This resolves type inference
+  // issues in some TypeScript configurations where inherited members like 'props' and
+  // 'setState' were not being recognized on the class instance.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+  }
 
-  public static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -40,7 +43,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   };
 
-  public render(): React.ReactNode {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

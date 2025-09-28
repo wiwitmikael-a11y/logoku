@@ -24,7 +24,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
-  const [activeTab, setActiveTab] = useState<MediaTab>('roll_banner');
+  const [activeTab, setActiveTab] = useState<MediaTab>('banner');
   const [designs, setDesigns] = useState<string[]>([]);
   const [generatedAssets, setGeneratedAssets] = useState<PrintMediaAssets>({});
   
@@ -72,10 +72,10 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       const colors = selectedPersona.palet_warna_hex.join(', ');
       const style = selectedPersona.kata_kunci.join(', ');
 
-      if (activeTab === 'roll_banner') {
-          prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner. CRITICAL: The final image MUST have a tall vertical aspect ratio of 9:16. Do NOT create a realistic 3D mockup; create a flat, 2D, print-ready design. Use the brand's color palette: ${colors}. The design should be stylish, modern, and incorporate the brand's style keywords: ${style}. Place the logo prominently, usually near the top. The design MUST have significant empty space and placeholder colored blocks for text to be added later by the user. CRITICAL: DO NOT generate any text, letters, or words.`;
-      } else if (activeTab === 'banner') {
+      if (activeTab === 'banner') {
           prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk). CRITICAL: The final image MUST have a wide horizontal aspect ratio of 3:1. Do NOT create a realistic 3D mockup; create a flat, 2D, print-ready design. Use the brand's color palette: ${colors}. The design should be bold, eye-catching, and incorporate the brand's style keywords: ${style}. Place the logo prominently. The design MUST have large empty spaces or simple colored background shapes for text to be added later by the user. CRITICAL: DO NOT generate any text, letters, or words.`;
+      } else if (activeTab === 'roll_banner') {
+          prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner. CRITICAL: The final image MUST have a tall vertical aspect ratio of 9:16. Do NOT create a realistic 3D mockup; create a flat, 2D, print-ready design. Use the brand's color palette: ${colors}. The design should be stylish, modern, and incorporate the brand's style keywords: ${style}. Place the logo prominently, usually near the top. The design MUST have significant empty space and placeholder colored blocks for text to be added later by the user. CRITICAL: DO NOT generate any text, letters, or words.`;
       }
       
       const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
@@ -122,8 +122,8 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       </div>
       
       <div className="flex flex-wrap border-b border-gray-700">
+          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk (Horizontal 3:1)</button>
           <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Roll Banner (Vertikal)</button>
-          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk (Horizontal)</button>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -141,7 +141,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
             <h3 className="text-lg md:text-xl font-bold">Desain Hasil Generate:</h3>
-          <div className="flex justify-center w-full max-w-lg">
+          <div className="flex justify-center w-full max-w-2xl">
             <div 
                 className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-video ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
                 onClick={() => openModal(designs[0])}
