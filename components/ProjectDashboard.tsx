@@ -1,8 +1,10 @@
+
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import type { Project } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Card from './common/Card';
+import InFeedAd from './common/InFeedAd';
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -95,6 +97,13 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       <Button onClick={onNewProject}>
         + Bikin Project Branding Baru
       </Button>
+
+      {/* --- AD PLACEMENT --- */}
+      {projects.length > 0 && (
+          <div className="w-full max-w-4xl my-4">
+              <InFeedAd />
+          </div>
+      )}
 
       {inProgressProjects.length > 0 && (
         <div className="w-full text-left mt-8">

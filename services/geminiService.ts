@@ -352,22 +352,29 @@ export const generateCaptions = async (businessName: string, persona: BrandPerso
 };
 export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
     const ai = getAiClient();
-    const prompt = `Create a 7-day social media content calendar for a business named "${businessName}".
-    
-    Business Information:
-    - Brand Persona: ${persona.nama_persona} (${persona.deskripsi_singkat})
-    - Brand Keywords: ${persona.kata_kunci.join(', ')}
-    - Target Audience: ${persona.customer_avatars.map(a => a.deskripsi_demografis).join(', ')}
+    const prompt = `Act as a creative and savvy social media manager for an Indonesian small business (UMKM). Your task is to create a highly engaging 7-day content calendar for a business named "${businessName}". Use Google Search to find current trends and relevant topics in Indonesia for this industry.
 
-    For each day from "Senin" to "Minggu", provide a JSON object with:
+    Business Profile:
+    - Brand Persona: "${persona.nama_persona}" which is described as "${persona.deskripsi_singkat}".
+    - Keywords: ${persona.kata_kunci.join(', ')}.
+    - Target Audience in Indonesia: ${persona.customer_avatars.map(a => a.deskripsi_demografis).join(', ')}.
+    - Brand Voice: Use words like "${persona.brand_voice.kata_yang_digunakan.join(', ')}" and avoid "${persona.brand_voice.kata_yang_dihindari.join(', ')}".
+
+    For each day from "Senin" to "Minggu", generate creative and actionable ideas. Go beyond simple promotions. Include a mix of content types like:
+    - **Edukasi**: Tips, tricks, or fun facts related to the product/service.
+    - **Inspirasi**: Quotes or stories that align with the brand.
+    - **Behind the Scenes**: Show the making-of process, the team, or the workspace.
+    - **Interaksi**: Ask questions, create polls, or run a simple quiz.
+    - **User-Generated Content (UGC)**: Encourage customers to share their photos with a specific hashtag.
+    - **Promosi Kreatif**: Announce offers in a fun, non-hard-sell way.
+    - **Hiburan**: Memes, jokes, or content that is simply entertaining and relevant.
+
+    Return a single JSON array of exactly 7 objects. Each object must contain:
     - "hari": The day of the week (e.g., "Senin").
-    - "tipe_konten": The type of content (e.g., "Edukasi", "Promosi", "Interaksi").
-    - "ide_konten": A concrete content idea.
-    - "draf_caption": A draft caption for the post, written in the brand's voice.
-    - "rekomendasi_hashtag": An array of 5 relevant hashtags.
-
-    Return the result as a single JSON array containing exactly 7 objects, one for each day.
-    Do not include any text or markdown formatting before or after the JSON array.`;
+    - "tipe_konten": The creative content type you chose (e.g., "Behind the Scenes").
+    - "ide_konten": A specific and engaging content idea based on the type.
+    - "draf_caption": A compelling draft caption in the correct brand voice, including a call-to-action.
+    - "rekomendasi_hashtag": An array of 5-7 relevant and trending hashtags.`;
 
     try {
         const response = await ai.models.generateContent({
