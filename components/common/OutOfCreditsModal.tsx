@@ -62,11 +62,25 @@ const OutOfCreditsModal: React.FC<Props> = ({ show, onClose }) => {
         />
         <h2 id="credits-modal-title" className="text-2xl font-bold text-yellow-400 mb-2">Waduh, Amunisi Mang AI Abis!</h2>
         <p className="text-gray-300 mb-6">
-          Jatah 'kopi item' Mang AI buat gambar-gambar udah abis buat hari ini, bro. Gak bisa mikir lagi doi. Coba lagi besok ya, jatahnya bakal diisi ulang otomatis!
+          Jatah <span className="font-bold text-white">5 token harian</span> lo udah abis, bro. Coba lagi besok ya, jatahnya bakal diisi ulang otomatis!
         </p>
-        <Button onClick={handleClose}>
-            Oke, Mang, Istirahat Dulu
-        </Button>
+        <div className="flex flex-col gap-4 items-center">
+            <Button onClick={handleClose}>
+                Oke, Mang, Besok Lagi
+            </Button>
+            <div className="w-full text-center p-3 bg-gray-900/50 rounded-lg">
+                 <p className="text-xs text-gray-400 mb-2">Butuh token tanpa batas & gak mau nunggu?</p>
+                 <Button 
+                    variant="secondary" 
+                    size="small" 
+                    disabled={true} 
+                    title="Segera Hadir!" 
+                    className="!border-amber-500/50 !text-amber-300 hover:!bg-amber-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                     Upgrade ke Paket Pro (Segera Hadir)
+                </Button>
+            </div>
+        </div>
       </div>
     </div>
   );

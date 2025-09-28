@@ -685,7 +685,9 @@ const MainApp: React.FC = () => {
                              {isTokenInfoOpen && (
                                 <div className="absolute top-full right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in" style={{ animationDuration: '0.2s'}}>
                                     <p className="font-bold text-white mb-1">Info Token Harian</p>
-                                    <p className="text-gray-300">Ini adalah "amunisi" Mang AI buat generate gambar. Jatah lo bakal di-reset jadi 10 token setiap hari. Selamat berkarya!</p>
+                                    <p className="text-gray-300">
+                                        <span className="text-yellow-300">Bonus 20 token</span> di hari pertama, lalu dapatkan <span className="text-yellow-300">5 token gratis</span> setiap hari untuk terus berkarya!
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -717,6 +719,13 @@ const MainApp: React.FC = () => {
                                         </svg>
                                         <span>Traktir Kopi</span>
                                     </a>
+                                    <div 
+                                        title="Segera Hadir!"
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-500 flex items-center gap-3 cursor-not-allowed"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 2a1 1 0 00-1 1v1.618a4 4 0 00-2 3.164v5.036a4 4 0 002 3.164V17a1 1 0 001 1h10a1 1 0 001-1v-1.018a4 4 0 002-3.164v-5.036a4 4 0 00-2-3.164V3a1 1 0 00-1-1H5zm4 10a1 1 0 100 2h2a1 1 0 100-2H9z" clipRule="evenodd" /></svg>
+                                        <span>Upgrade ke Pro</span>
+                                    </div>
                                      <div className="border-t border-gray-700 my-1"></div>
                                         <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilih Musik</div>
                                         <div className="px-2 pb-2">

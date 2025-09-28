@@ -91,7 +91,9 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
             <div className="bg-gray-900/50 p-4 rounded-lg">
                 <h3 className="text-sm font-semibold text-indigo-400 mb-1">Status Token Harian</h3>
                 <p className="text-2xl font-bold text-white">{profile?.credits ?? '0'} <span className="text-base font-normal text-gray-300">Token Tersisa</span></p>
-                <p className="text-xs text-gray-400 mt-1">Token akan di-reset menjadi 10 setiap hari. Selamat berkarya!</p>
+                <p className="text-xs text-gray-400 mt-1">
+                    Bonus <span className="font-semibold text-yellow-300">20 token</span> di hari pertama, lalu <span className="font-semibold text-yellow-300">5 token gratis</span> setiap hari!
+                </p>
             </div>
             
              <div className="bg-gray-900/50 p-4 rounded-lg">

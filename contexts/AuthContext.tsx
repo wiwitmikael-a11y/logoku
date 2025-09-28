@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, credits, last_credit_reset') // Only fetch what's needed now
+        .select('id, credits, last_credit_reset, welcome_bonus_claimed')
         .eq('id', userId)
         .single();
 
@@ -61,18 +61,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthError('Gagal mengambil data profil pengguna.');
         return;
     }
+    
+    // --- NEW TOKEN STRATEGY LOGIC ---
+    
+    // Case 1: Brand new user, no profile exists yet.
+    if (!data) {
+        const WELCOME_BONUS = 20;
+        const newProfile = { 
+            id: userId, 
+            credits: WELCOME_BONUS, 
+            last_credit_reset: getTodaysDateWIB(),
+            welcome_bonus_claimed: true 
+        };
+        const { error: insertError } = await supabase.from('profiles').insert(newProfile);
+        if (insertError) {
+            console.error('Failed to create new profile:', insertError);
+            setAuthError('Gagal membuat profil baru untuk Juragan.');
+        } else {
+            setProfile(newProfile as Profile);
+        }
+        return;
+    }
+    
+    const profileData = data as Profile;
+    
+    // Case 2: Existing user who hasn't received the welcome bonus yet (for migration)
+    if (!profileData.welcome_bonus_claimed) {
+        const WELCOME_BONUS = 20;
+        const updatedProfileWithBonus = { ...profileData, credits: WELCOME_BONUS, welcome_bonus_claimed: true, last_credit_reset: getTodaysDateWIB() };
 
-    // Since storage check is removed, we don't need storage_used_kb here.
-    const profileData = (data as Profile) || { id: userId, credits: 10, last_credit_reset: '1970-01-01', storage_used_kb: 0 };
-    
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ credits: WELCOME_BONUS, welcome_bonus_claimed: true, last_credit_reset: getTodaysDateWIB() })
+            .eq('id', userId);
+        
+        if (updateError) {
+             console.error("Gagal klaim bonus sambutan:", updateError);
+             setAuthError("Gagal klaim bonus sambutan, tapi jangan khawatir, data lama masih aman.");
+             setProfile(profileData); // Fallback to old data
+        } else {
+            setProfile(updatedProfileWithBonus);
+        }
+        return;
+    }
+
+    // Case 3: Returning user, check for daily reset
     const todayWIB = getTodaysDateWIB();
-    
     if (profileData.last_credit_reset !== todayWIB) {
-        const updatedProfileWithCredits = { ...profileData, credits: 10, last_credit_reset: todayWIB };
+        const DAILY_TOKENS = 5;
+        const updatedProfile = { ...profileData, credits: DAILY_TOKENS, last_credit_reset: todayWIB };
         
         const { error: updateError } = await supabase
             .from('profiles')
-            .update({ credits: 10, last_credit_reset: todayWIB })
+            .update({ credits: DAILY_TOKENS, last_credit_reset: todayWIB })
             .eq('id', userId);
         
         if (updateError) {
@@ -80,9 +121,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setAuthError("Gagal me-reset token harian, tapi jangan khawatir, data lama masih aman.");
             setProfile(profileData);
         } else {
-            setProfile(updatedProfileWithCredits);
+            setProfile(updatedProfile);
         }
     } else {
+        // No reset needed, just set the profile from DB
         setProfile(profileData);
     }
   }, []);

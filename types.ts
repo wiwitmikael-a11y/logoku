@@ -1,4 +1,3 @@
-
 import type { User } from '@supabase/supabase-js';
 
 export type { User };
@@ -7,7 +6,7 @@ export interface Profile {
   id: string; // Corresponds to Supabase user ID
   credits: number;
   last_credit_reset: string; // Date string in 'YYYY-MM-DD' format
-  storage_used_kb: number;
+  welcome_bonus_claimed: boolean; // NEW: To track one-time welcome bonus
 }
 
 export interface BrandInputs {
