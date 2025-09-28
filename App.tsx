@@ -39,6 +39,7 @@ const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOf
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
 const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
+const DeleteProjectSliderModal = React.lazy(() => import('./components/common/DeleteProjectSliderModal'));
 const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
 const BrandingTipModal = React.lazy(() => import('./components/common/BrandingTipModal'));
 
@@ -627,6 +628,7 @@ const MainApp: React.FC = () => {
                     onSelectProject={handleSelectProject} 
                     showWelcomeBanner={showWelcomeBanner} 
                     onWelcomeBannerClose={() => setShowWelcomeBanner(false)} 
+                    onDeleteProject={handleRequestDeleteProject}
                 />;
         }
         // Fallback: If required data is missing, go to dashboard
@@ -807,17 +809,13 @@ const MainApp: React.FC = () => {
                 >
                     Progres yang belum disimpan di tahap ini bakal hilang lho. Yakin mau kembali ke dashboard?
                 </ConfirmationModal>
-                <ConfirmationModal
+                <DeleteProjectSliderModal
                     show={showDeleteConfirm}
                     onClose={handleCancelDelete}
                     onConfirm={handleConfirmDelete}
                     isConfirmLoading={isDeleting}
-                    title="Yakin Mau Hapus Project?"
-                    confirmText={isDeleting ? 'Menghapus...' : 'Ya, Hapus Saja'}
-                    cancelText="Gak Jadi"
-                >
-                    Project "{projectToDelete?.project_data.brandInputs?.businessName || 'ini'}" dan semua asetnya bakal dihapus permanen lho. Gak bisa balik lagi. Tetap mau lanjut?
-                </ConfirmationModal>
+                    projectNameToDelete={projectToDelete?.project_data.brandInputs?.businessName || 'Project Ini'}
+                />
             </Suspense>
         </div>
     );

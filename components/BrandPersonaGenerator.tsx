@@ -97,8 +97,20 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
 
   const handleGeneratePersona = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
+    setError(null); // Clear previous errors
+
+    // --- NEW VALIDATION LOGIC ---
+    const requiredFields: (keyof typeof formState)[] = ['businessName', 'businessDetail', 'targetAudienceAge', 'valueProposition', 'competitors'];
+    const emptyField = requiredFields.find(field => !formState[field].trim());
+
+    if (emptyField) {
+        setError("Waduh, Juragan! Ada isian yang masih kosong, nih. Biar Mang AI bisa ngeracik persona yang pas, tolong lengkapi dulu semua detailnya ya. Dari nama bisnis sampe kompetitor, semuanya penting!");
+        playSound('error');
+        return; // Stop execution
+    }
+    // --- END VALIDATION ---
+
     setIsLoadingPersona(true);
-    setError(null);
     setPersonas([]);
     setSlogans([]);
     setSelectedPersonaIndex(null);

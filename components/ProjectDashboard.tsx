@@ -12,6 +12,7 @@ interface ProjectDashboardProps {
   onSelectProject: (projectId: number) => void;
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
+  onDeleteProject: (projectId: number) => void;
 }
 
 const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
@@ -37,6 +38,18 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
     );
 };
 
+const DeleteButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
+  <button
+    onClick={onClick}
+    className="absolute top-3 right-12 z-10 p-1.5 rounded-full text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+    title="Hapus Project"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm4 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
+    </svg>
+  </button>
+);
+
 const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
   <button
     onClick={onClick}
@@ -51,7 +64,7 @@ const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onCl
 );
 
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
@@ -115,6 +128,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                           <p className="text-xs text-gray-500">Klik untuk lanjut...</p>
                       </div>
                     </Card>
+                    <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
                     <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
                 </div>
             ))}
@@ -141,6 +155,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                       <p className="text-xs text-yellow-400 pt-2 border-t border-gray-700">Siap disinkronkan ke database.</p>
                     </div>
                 </Card>
+                 <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
                  <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
                 </div>
             ))}
@@ -167,6 +182,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                           <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                       </div>
                     </Card>
+                    <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
                     <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
                 </div>
             ))}
@@ -182,12 +198,10 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       )}
       
       {/* --- AD & SUPPORT PLACEMENT --- */}
-      {projects.length > 0 && (
-          <div className="w-full max-w-4xl mt-12 space-y-8">
-              <SaweriaWidget />
-              <InFeedAd />
-          </div>
-      )}
+      <div className="w-full max-w-4xl mt-12 space-y-8">
+          <SaweriaWidget />
+          <InFeedAd />
+      </div>
     </div>
   );
 };

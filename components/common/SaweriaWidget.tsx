@@ -1,25 +1,39 @@
 import React from 'react';
 
-const SAWERRIA_WIDGET_URL = 'https://saweria.co/widgets/recent?streamKey=9f0562857accae5eeb6163e3d2248fd0';
-
 const SaweriaWidget: React.FC = () => {
+  const supporters = [
+    { name: 'Juragan Kopi Sachet', amount: 'Rp 10.000', emoji: '✨' },
+    { name: 'Sultan Skincare', amount: 'Rp 50.000', emoji: '🔥' },
+    { name: 'Ratu Frozen Food', amount: 'Rp 25.000', emoji: '🧊' },
+    { name: 'CEO Keripik Level 30', amount: 'Rp 15.000', emoji: '🌶️' },
+    { name: 'Owner Distro Keren', amount: 'Rp 30.000', emoji: '👕' },
+    { name: 'Bos Ayam Geprek', amount: 'Rp 20.000', emoji: '🍗' },
+  ];
+
+  // Duplicate for seamless loop
+  const displaySupporters = [...supporters, ...supporters];
+
   return (
     <div className="w-full p-6 bg-gray-800/50 border border-amber-600/50 rounded-xl text-center animate-content-fade-in">
       <h3 className="text-xl font-bold text-amber-400 mb-4 font-handwritten tracking-wide">Dukungan Terbaru dari Juragan Baik Hati!</h3>
       <p className="text-gray-400 mb-6 max-w-2xl mx-auto text-sm">
-        Setiap traktiran kopi dari kalian jadi bahan bakar buat Mang AI biar makin pinter dan bisa terus bantu UMKM Indonesia. Makasih banyak, ya! Sehat dan lancar terus rezekinya!
+        Setiap traktiran kopi jadi bahan bakar buat Mang AI biar makin pinter. Makasih banyak, ya! Sehat dan lancar terus rezekinya!
       </p>
-      <div className="w-full h-80 rounded-lg overflow-hidden border-2 border-gray-700 bg-gray-900">
-        <iframe
-          src={SAWERRIA_WIDGET_URL}
-          width="100%"
-          height="100%"
-          style={{ border: 'none' }}
-          title="Donasi Terbaru Saweria"
-          sandbox="allow-scripts allow-same-origin"
-          loading="lazy"
-        ></iframe>
+      
+      {/* Running Text Marquee */}
+      <div className="w-full h-12 bg-gray-900 rounded-lg overflow-hidden relative border-2 border-gray-700">
+        <div className="absolute top-0 left-0 h-full flex items-center animate-marquee">
+          {displaySupporters.map((s, i) => (
+            <p key={i} className="text-sm mx-6 flex-shrink-0">
+              <span className="font-bold text-amber-300">{s.name}</span>
+              <span className="text-gray-400"> baru traktir </span>
+              <span className="font-semibold text-white">{s.amount}!</span>
+              <span className="ml-2">{s.emoji}</span>
+            </p>
+          ))}
+        </div>
       </div>
+
        <a 
           href="https://saweria.co/logoku"
           target="_blank"

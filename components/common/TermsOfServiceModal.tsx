@@ -52,7 +52,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
              <h2 id="tos-title" className="text-2xl font-bold text-indigo-400">
                 Ketentuan Layanan (Terms of Service)
             </h2>
-            <p className="text-sm text-gray-400">Terakhir diperbarui: 15 Juli 2024</p>
+            <p className="text-sm text-gray-400">Terakhir diperbarui: 12 September 2025</p>
         </header>
 
         <main className="p-6 overflow-y-auto text-gray-300 text-sm space-y-4">

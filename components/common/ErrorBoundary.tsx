@@ -15,14 +15,9 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Explicitly declare the state property on the class.
-  // This resolves TypeScript errors where `this.state` is not recognized, which can happen with
-  // certain build configurations or tsconfig settings (like `useDefineForClassFields: true`).
-  // Even though React.Component has a `state` property, this explicit declaration ensures
-  // the compiler understands it's a property of this specific class instance, which also helps
-  // resolve related errors with `this.props`.
-  state: State;
-
+  // FIX: Refactored to use a constructor for state and method binding.
+  // This classic approach ensures `this` is correctly bound, resolving type errors
+  // where inherited properties like `props` and `setState` were not being recognized.
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -30,25 +25,26 @@ class ErrorBoundary extends React.Component<Props, State> {
       error: undefined,
       isCopied: false,
     };
+    this.handleCopy = this.handleCopy.bind(this);
   }
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
-  
-  handleCopy = () => {
-      if(this.state.error) {
-          navigator.clipboard.writeText(this.state.error.toString());
-          this.setState({ isCopied: true });
-          setTimeout(() => this.setState({ isCopied: false }), 2000);
-      }
+
+  private handleCopy() {
+    if (this.state.error) {
+      navigator.clipboard.writeText(this.state.error.toString());
+      this.setState({ isCopied: true });
+      setTimeout(() => this.setState({ isCopied: false }), 2000);
+    }
   }
 
-  render(): React.ReactNode {
+  public render(): React.ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
