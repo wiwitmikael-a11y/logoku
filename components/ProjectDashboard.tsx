@@ -103,7 +103,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         </div>
         <div>
           <h4 className="font-bold text-white">Info Fase Pengenalan</h4>
-          <p className="text-sm text-gray-300">Selama masa ini, semua fitur `logo.ku` 100% gratis, hanya dibatasi jatah token harian. Manfaatin buat eksplorasi sepuasnya ya, Juragan!</p>
+          <p className="text-sm text-gray-300">Selama masa pengenalan, nikmati bonus sambutan <span className="font-bold text-yellow-300">20 token</span> di hari pertama! Setelah itu, dapatkan <span className="font-bold text-yellow-300">5 token gratis setiap hari</span> untuk terus berkarya. Manfaatin buat eksplorasi sepuasnya ya, Juragan!</p>
         </div>
       </div>
       
