@@ -19,7 +19,7 @@ interface Props {
   onGoToDashboard: () => void;
 }
 
-const VARIATION_COST = 2;
+const VARIATION_COST = 3;
 const EDIT_COST = 1;
 
 const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, businessName, onComplete, onGoToDashboard }) => {

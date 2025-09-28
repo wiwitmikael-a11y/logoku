@@ -19,7 +19,9 @@ interface Props {
   onGoToDashboard: () => void;
 }
 
-const LOGO_GENERATION_COST = 2; // Increased cost for 4 images
+const INITIAL_LOGO_COST = 1;
+const ADDITIONAL_LOGO_COST = 3;
+
 
 const logoStyles = [
     {
@@ -92,6 +94,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   const [logos, setLogos] = useState<string[]>([]); // Will now hold Base64 strings
   const [selectedLogoBase64, setSelectedLogoBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStyleId, setSelectedStyleId] = useState<string>('minimalist');
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
@@ -131,7 +134,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    if (credits < LOGO_GENERATION_COST) {
+    if (credits < INITIAL_LOGO_COST) {
         setShowOutOfCreditsModal(true);
         playSound('error');
         return;
@@ -146,8 +149,8 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
     playSound('start');
 
     try {
-      const results = await generateLogoOptions(prompt); // Returns array of Base64
-      await deductCredits(LOGO_GENERATION_COST);
+      const results = await generateLogoOptions(prompt, 1);
+      await deductCredits(INITIAL_LOGO_COST);
       setLogos(results);
       playSound('success');
     } catch (err) {
@@ -156,6 +159,32 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
       playSound('error');
     } finally {
       setIsLoading(false);
+    }
+  }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
+
+  const handleGenerateMore = useCallback(async () => {
+    if (credits < ADDITIONAL_LOGO_COST) {
+        setShowOutOfCreditsModal(true);
+        playSound('error');
+        return;
+    }
+    if (!prompt.trim()) return;
+
+    setIsGeneratingMore(true);
+    setError(null);
+    playSound('start');
+
+    try {
+      const results = await generateLogoOptions(prompt, 3);
+      await deductCredits(ADDITIONAL_LOGO_COST);
+      setLogos(prev => [...prev, ...results]);
+      playSound('success');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
+      setError(errorMessage);
+      playSound('error');
+    } finally {
+      setIsGeneratingMore(false);
     }
   }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
   
@@ -171,7 +200,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 2: Desain Logo Lo</h2>
-        <p className="text-gray-400">Pilih gaya yang pas sama brand lo. Mang AI bakal kasih 4 pilihan sekaligus. Lo juga bisa edit prompt-nya kalo mau.</p>
+        <p className="text-gray-400">Pilih gaya yang pas sama brand lo. Mang AI bakal kasih 1 pilihan dulu biar hemat. Lo juga bisa edit prompt-nya kalo mau.</p>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -214,8 +243,8 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
           rows={5}
         />
         <div className="self-start">
-          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!prompt.trim() || credits < LOGO_GENERATION_COST}>
-            Spill 4 Logo-nya, Mang AI! ({LOGO_GENERATION_COST} Kredit)
+          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!prompt.trim() || credits < INITIAL_LOGO_COST}>
+            Spill 1 Logo-nya, Mang AI! ({INITIAL_LOGO_COST} Kredit)
           </Button>
            <p className="text-xs text-gray-500 mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
         </div>
@@ -228,7 +257,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
             <div>
               <h3 className="text-lg md:text-2xl font-bold mb-2">Pilih Logo Jagoan Lo:</h3>
             </div>
-          <div className="grid grid-cols-2 gap-4 w-full max-w-xl">
+          <div className={`grid gap-4 w-full ${logos.length === 1 ? 'max-w-xs' : 'grid-cols-2 max-w-xl'}`}>
               {logos.map((logo, index) => (
                 <div 
                     key={index}
@@ -248,9 +277,11 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
                 Mantap! Klik di sini buat lanjut.
               </CalloutPopup>
             )}
-             <Button onClick={() => handleSubmit()} variant="secondary" isLoading={isLoading} disabled={credits < LOGO_GENERATION_COST}>
-                Racik Ulang Logo ({LOGO_GENERATION_COST} Kredit)
-            </Button>
+             {logos.length < 4 && (
+                <Button onClick={handleGenerateMore} variant="secondary" isLoading={isGeneratingMore} disabled={isGeneratingMore || credits < ADDITIONAL_LOGO_COST}>
+                    Kasih 3 Pilihan Lain! ({ADDITIONAL_LOGO_COST} Kredit)
+                </Button>
+             )}
             <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64}>
               Pilih & Finalisasi Logo &rarr;
             </Button>

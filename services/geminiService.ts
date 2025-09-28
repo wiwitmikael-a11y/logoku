@@ -395,11 +395,11 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
 };
 // --- REWRITTEN Image Generation Functions (Flash Preview ONLY) ---
 
-export const generateLogoOptions = async (prompt: string): Promise<string[]> => {
+export const generateLogoOptions = async (prompt: string, count: number = 4): Promise<string[]> => {
     try {
         const advancedPrompt = await generateAdvancedLogoPrompt(prompt);
-        // Generate 4 logo options in parallel for better user choice
-        const promises = Array(4).fill(0).map(() => generateImageFromWhiteCanvas(advancedPrompt, '1:1'));
+        // Generate 'count' logo options in parallel for better user choice
+        const promises = Array(count).fill(0).map(() => generateImageFromWhiteCanvas(advancedPrompt, '1:1'));
         const results = await Promise.all(promises);
         return results;
     } catch (error) {
