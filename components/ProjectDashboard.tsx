@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Card from './common/Card';
 import InFeedAd from './common/InFeedAd';
+import SaweriaWidget from './common/SaweriaWidget';
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -180,9 +181,10 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
           </div>
       )}
       
-      {/* --- AD PLACEMENT --- */}
+      {/* --- AD & SUPPORT PLACEMENT --- */}
       {projects.length > 0 && (
-          <div className="w-full max-w-4xl mt-12">
+          <div className="w-full max-w-4xl mt-12 space-y-8">
+              <SaweriaWidget />
               <InFeedAd />
           </div>
       )}
