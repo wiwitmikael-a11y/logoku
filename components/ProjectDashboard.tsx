@@ -73,7 +73,7 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     };
     const { text, color, dotColor, textColor } = statusMap[status] || { text: 'Unknown', color: 'bg-gray-500/20', dotColor: 'bg-gray-400', textColor: 'text-gray-300' };
     return (
-        <div className={`absolute top-4 right-4 z-10 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${color}`}>
+        <div className={`text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${color} flex-shrink-0`}>
             <span className={`h-2 w-2 rounded-full ${dotColor}`}></span>
             <span className={textColor}>{text}</span>
         </div>
@@ -129,15 +129,21 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
             {inProgressProjects.map(project => (
                 <div key={project.id} className="relative group">
                     <Card 
-                      title={project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}
+                      title={
+                        <div className="flex justify-between items-start gap-2">
+                            <span className="truncate pr-2">{project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}</span>
+                            <StatusBadge status={project.status} />
+                        </div>
+                      }
                       onClick={() => onSelectProject(project.id)}
                     >
-                      <StatusBadge status={project.status} />
-                      <p className="text-sm text-gray-400 min-h-[40px] italic pr-12">
-                        {getProgressDescription(project)}
-                      </p>
-                      <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
-                          <p className="text-xs text-gray-500">Klik untuk lanjut...</p>
+                      <div className="pr-12">
+                          <p className="text-sm text-gray-400 min-h-[40px] italic">
+                            {getProgressDescription(project)}
+                          </p>
+                          <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
+                              <p className="text-xs text-gray-500">Klik untuk lanjut...</p>
+                          </div>
                       </div>
                     </Card>
                     <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
@@ -154,10 +160,14 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
             {localCompleteProjects.map(project => (
                 <div key={project.id} className="relative group">
                 <Card 
-                    title={project.project_data.brandInputs.businessName}
+                    title={
+                        <div className="flex justify-between items-start gap-2">
+                            <span className="truncate pr-2">{project.project_data.brandInputs.businessName}</span>
+                            <StatusBadge status={project.status} />
+                        </div>
+                    }
                     onClick={() => onSelectProject(project.id)}
                 >
-                    <StatusBadge status={project.status} />
                     <div className="space-y-3 pr-12">
                       <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
                       <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
@@ -177,6 +187,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                     </div>
                 </Card>
                  <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
+                 <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
                 </div>
             ))}
             </div>
@@ -190,10 +201,14 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
             {completedProjects.map(project => (
                  <div key={project.id} className="relative group">
                     <Card 
-                      title={project.project_data.brandInputs.businessName}
+                      title={
+                        <div className="flex justify-between items-start gap-2">
+                            <span className="truncate pr-2">{project.project_data.brandInputs.businessName}</span>
+                            <StatusBadge status={project.status} />
+                        </div>
+                      }
                       onClick={() => onSelectProject(project.id)}
                     >
-                      <StatusBadge status={project.status} />
                       <div className="space-y-3 pr-12">
                           <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
                           <div className="flex items-center gap-4 pt-2 border-t border-gray-700">

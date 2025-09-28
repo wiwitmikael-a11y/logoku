@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
 
 interface CardProps {
-  title: string;
+  title: React.ReactNode;
   children: React.ReactNode;
   onClick?: () => void;
   isSelected?: boolean;
