@@ -1,4 +1,3 @@
-
 import { supabase } from './supabaseClient';
 import { compressAndConvertToWebP } from '../utils/imageUtils';
 import type { Project, ProjectData } from '../types';
@@ -33,6 +32,10 @@ export const uploadImageFromBase64 = async (
     projectId: number,
     assetType: string
 ): Promise<string> => {
+    if (!userId) {
+        throw new Error('Upload gagal: User ID tidak valid atau tidak ditemukan. Pengguna harus login untuk mengunggah file.');
+    }
+    
     const BUCKET_NAME = 'project-assets';
 
     const compressedBase64 = await compressAndConvertToWebP(base64String);
@@ -47,8 +50,8 @@ export const uploadImageFromBase64 = async (
     }
     
     const fileName = `${projectId}_${assetType}-${Date.now()}.webp`;
-    // FIX: Changed path to a flat structure to avoid potential RLS issues with subdirectories.
-    const filePath = `${userId}-${fileName}`; 
+    // NEW: Menggunakan struktur folder per pengguna untuk RLS yang lebih kuat.
+    const filePath = `${userId}/${fileName}`; 
     const file = new File([blob], fileName, { type: 'image/webp' });
 
     const { error: uploadError } = await supabase.storage
@@ -60,7 +63,8 @@ export const uploadImageFromBase64 = async (
 
     if (uploadError) {
         console.error('Supabase Storage Error:', uploadError);
-        throw new Error(`Gagal upload ke Supabase Storage: ${uploadError.message}. Pastikan RLS Policy untuk ownership sudah benar.`);
+        // NEW: Pesan error yang lebih deskriptif untuk membantu developer.
+        throw new Error(`Gagal upload ke Supabase Storage: ${uploadError.message}. Pastikan RLS Policy di bucket 'project-assets' mengizinkan pengguna untuk INSERT ke dalam folder mereka sendiri (contoh: (storage.foldername(name))[1] = auth.uid()::text).`);
     }
 
     const { data: publicUrlData } = supabase.storage
