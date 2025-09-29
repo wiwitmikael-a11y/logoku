@@ -47,6 +47,21 @@ const packagingConfigs: PackagingCategory = {
       name: 'Line-up Frozen Food', 
       prompt: 'Create a single, cohesive, high-quality commercial product photoshoot against a clean, white background with subtle icy textures. The image must feature three packaging variations for "{{businessName}}", a brand selling frozen "{{businessDetail}}". The style is {{personaStyle}}. The composition must showcase:\n\n1.  **Center Focus:** A vacuum-sealed plastic pack showing the frozen product clearly.\n2.  **Left:** A designed cardboard box for the frozen food, ready for retail freezer display.\n3.  **Right:** The product "{{businessDetail}}" cooked and beautifully plated on a modern dish, to show the final result.' 
     },
+    {
+      id: 'sambal_jar_set',
+      name: 'Set Sambal, Bumbu & Selai',
+      prompt: 'Create a single, cohesive, high-quality product photoshoot emphasizing texture and fresh ingredients. The image must feature three variations for "{{businessName}}", a brand selling "{{businessDetail}}". The composition on a rustic wooden surface must showcase:\n\n1.  **Center Focus:** The product in a clear glass jar with a branded label.\n2.  **Front:** A small amount of the product on a spoon or in a mini traditional bowl (cobek) to show its rich texture.\n3.  **Background:** Artfully arranged fresh raw ingredients like chili peppers, onions, or strawberries.\nThe overall style is {{personaStyle}}, natural, and appetizing.'
+    },
+    {
+      id: 'bakery_set',
+      name: 'Sajian Kue & Roti (Bakery)',
+      prompt: 'Create a single, elegant, high-quality bakery photoshoot. The image must feature three perspectives for "{{businessName}}", which sells "{{businessDetail}}". The composition must showcase:\n\n1.  **Center Focus:** The whole cake or loaf of bread on a stylish stand.\n2.  **Front:** A single slice of the product on a plate, revealing the inner texture and layers.\n3.  **Background:** A premium, branded cake box for takeaway.\nThe lighting should be soft and inviting, with a style of {{personaStyle}}.'
+    },
+    {
+      id: 'hampers_pack',
+      name: 'Paket Hampers & Katering',
+      prompt: 'Create a single, luxurious, high-quality flat lay photograph of a food hamper from "{{businessName}}". The image must showcase the "{{businessDetail}}" package from three perspectives:\n\n1.  **Center Focus:** The beautifully wrapped, closed hamper basket or box.\n2.  **Arranged Around:** A top-down view of all the individual food items from the hamper, artfully arranged.\n3.  **Prominently Placed:** A close-up of a branded greeting card or tag featuring the provided logo.\nThe overall style should be {{personaStyle}}, premium, and celebratory.'
+    }
   ],
   'Minuman': [
     { 
@@ -59,38 +74,108 @@ const packagingConfigs: PackagingCategory = {
       name: 'Set Jamu & Minuman Herbal', 
       prompt: 'Create a single, cohesive, high-quality product photo with an earthy, natural aesthetic. The image must feature three product variations for "{{businessName}}", a brand selling "{{businessDetail}}". The composition must showcase:\n\n1.  **Center Focus:** A classic amber or green glass bottle (botol kaca) with a simple, elegant label featuring the provided logo.\n2.  **Left:** A small, traditional glass (gelas sloki) filled with the beverage.\n3.  **Right:** The raw ingredients (e.g., turmeric, ginger, tamarind) used to make the beverage, arranged artfully next to the bottle.\nThe style should be {{personaStyle}}, emphasizing natural and healthy qualities.' 
     },
+    {
+      id: 'tea_set',
+      name: 'Rangkaian Teh & Tisane',
+      prompt: 'Create a single, serene, and high-quality product photoshoot for a tea brand named "{{businessName}}". The image must showcase the process of enjoying "{{businessDetail}}" in three stages:\n\n1.  **Background:** The loose-leaf tea in its branded packaging (a pouch or a tin can).\n2.  **Center Focus:** The tea being steeped in a clear glass teapot, showing the beautiful color of the infusion.\n3.  **Foreground:** A single, elegant teacup filled with the ready-to-drink tea, with a wisp of steam rising.\nThe style should be {{personaStyle}}, calm, and minimalist.'
+    },
+    {
+      id: 'powdered_drink_trio',
+      name: 'Trio Minuman Bubuk (Cokelat, Matcha, Susu)',
+      prompt: 'Create a single, clean, and dynamic product photoshoot for a powdered drink brand, "{{businessName}}", which sells "{{businessDetail}}". The composition must showcase:\n\n1.  **Background:** The main product packaging (pouch or can) with the provided logo.\n2.  **Mid-ground:** A scoop or spoon showing the fine texture of the powder.\n3.  **Foreground:** A tall glass of the prepared beverage (hot or iced), looking delicious and ready to drink.\nThe overall style is {{personaStyle}}, modern, and energetic.'
+    }
   ],
   'Fashion': [
     { 
-      id: 'clothing_brand_pack', 
-      name: 'Paket Brand Fashion (Baju, Hang Tag, Box)', 
-      prompt: 'Create a single, clean, high-end flat lay product photograph for a fashion e-commerce store called "{{businessName}}", which sells "{{businessDetail}}". The background is a neutral, textured surface. The composition must showcase:\n\n1.  **Center Focus:** A neatly folded t-shirt or piece of clothing.\n2.  **On the clothing:** A close-up of a stylish cardboard hang-tag featuring the provided logo.\n3.  **Next to it:** A sleek, branded mailer box or paper bag, also with the logo.\nThe overall aesthetic must be {{personaStyle}}, chic and stylish.' 
+      id: 'apparel_pack', 
+      name: 'Paket Brand Apparel (Baju, Hang Tag, Box)', 
+      prompt: 'Create a single, clean, high-end flat lay product photograph for a fashion e-commerce store called "{{businessName}}", which sells "{{businessDetail}}". The background is a neutral, textured surface. The composition must showcase:\n\n1.  **Center Focus:** A neatly folded t-shirt or piece of clothing.\n2.  **On the clothing:** A close-up of a stylish cardboard hang-tag featuring the provided logo.\n3.  **Next to it:** A sleek, branded mailer box or polymailer for shipping.\nThe overall aesthetic must be {{personaStyle}}, chic and stylish.' 
     },
+    {
+      id: 'hijab_set',
+      name: 'Set Hijab & Scarf',
+      prompt: 'Create a single, elegant flat lay photograph for a hijab brand, "{{businessName}}". The image must emphasize texture, pattern, and premium packaging. The composition must showcase:\n\n1.  **Main:** The hijab folded gracefully to highlight the branded label.\n2.  **Detail:** A close-up, macro shot of the fabric\'s texture or a key part of the pattern.\n3.  **Packaging:** An exclusive pouch or thin box used for packaging.\nThe style is {{personaStyle}}, sophisticated, and modest.'
+    },
+    {
+      id: 'accessories_trio',
+      name: 'Trio Aksesoris (Tas, Sepatu, Dompet)',
+      prompt: 'Create a single, cohesive, high-quality commercial product photoshoot for an accessories brand, "{{businessName}}", which sells "{{businessDetail}}". The composition must showcase:\n\n1.  **Main:** The full view of the product (e.g., handbag, pair of shoes).\n2.  **Detail:** A close-up shot focusing on a specific detail like stitching, a buckle, or the material texture.\n3.  **Packaging:** The protective dust bag or branded box it comes with.\nThe style should be {{personaStyle}}, clean, and focused on craftsmanship.'
+    }
   ],
-  'Kecantikan': [
+  'Kecantikan & Perawatan Diri': [
     { 
       id: 'skincare_product_line', 
       name: 'Rangkaian Produk Skincare', 
       prompt: 'Create a single, cohesive, high-quality cosmetic product photoshoot against a clean, elegant background. The image must feature three packaging variations for "{{businessName}}", a brand selling "{{businessDetail}}". The composition must showcase:\n\n1.  **Center Focus:** A serum bottle with a dropper.\n2.  **Left:** A cosmetic cream jar.\n3.  **Right:** The outer product box for one of the items.\nAll items must feature the provided logo and look like a cohesive product line. The style is {{personaStyle}}, premium, and clean.' 
     },
+    {
+      id: 'makeup_demo',
+      name: 'Demo Produk Makeup (Lipstik, Foundation)',
+      prompt: 'Create a single, chic, high-quality cosmetic product photoshoot. The image must demonstrate the product "{{businessDetail}}" from "{{businessName}}". The composition must showcase:\n\n1.  **Product:** The primary packaging of the product (e.g., lipstick tube, foundation bottle).\n2.  **Texture/Color:** A textural smear or swatch of the product on a clean, flat surface (like a piece of acrylic) to show its true color and texture.\n3.  **Packaging:** The secondary outer box for the product.\nThe style should be {{personaStyle}}, clean, modern, and macro-focused.'
+    },
+    {
+      id: 'body_care_set',
+      name: 'Set Perawatan Tubuh (Sabun, Lulur, Minyak)',
+      prompt: 'Create a single, spa-like, relaxing product photoshoot for a body care brand, "{{businessName}}". The image must showcase "{{businessDetail}}" in an appealing way. The composition, arranged on a surface like slate or wood, must include:\n\n1.  **Product:** The main product (e.g., a bar of soap, a jar of body scrub).\n2.  **Texture:** A demonstration of its texture (e.g., rich lather, scrub granules).\n3.  **Ingredients:** Natural props related to its ingredients (e.g., dried flowers, coffee beans, a slice of lemon).\nThe style should be {{personaStyle}}, natural, and serene.'
+    }
   ],
   'Jasa': [
-      { 
-        id: 'service_branding_kit', 
-        name: 'Branding Kit untuk Jasa', 
-        prompt: 'Create a single, cohesive, high-quality mockup showcasing a branding kit for a service-based business, "{{businessName}}", which offers "{{businessDetail}}". The style is professional and trustworthy. The flat lay composition on a clean desk must include:\n\n1.  **Center Focus:** A business card featuring the provided logo and contact details.\n2.  **Left:** A branded A4 letterhead or folder.\n3.  **Right:** A smartphone or tablet screen displaying the hero section of a website, with the logo clearly visible.\nThe overall aesthetic must be {{personaStyle}}.' 
-      },
+    { 
+      id: 'service_branding_kit', 
+      name: 'Branding Kit untuk Jasa Profesional', 
+      prompt: 'Create a single, cohesive, high-quality mockup showcasing a branding kit for a service-based business, "{{businessName}}", which offers "{{businessDetail}}". The style is professional and trustworthy. The flat lay composition on a clean desk must include:\n\n1.  **Center Focus:** A business card featuring the provided logo and contact details.\n2.  **Left:** A branded A4 letterhead or folder.\n3.  **Right:** A smartphone or tablet screen displaying the hero section of a website, with the logo clearly visible.\nThe overall aesthetic must be {{personaStyle}}.' 
+    },
+    {
+      id: 'creative_service_demo',
+      name: 'Proses & Hasil Jasa Kreatif',
+      prompt: 'Create a single, professional mockup image to visualize a creative service by "{{businessName}}". The image should show a "process and result" concept. The composition must include:\n\n1.  **Process:** A "behind-the-scenes" element like a camera or a design software interface on a screen.\n2.  **Result:** The final output of the service (a printed photo, a finished design on a screen).\n3.  **Testimonial:** A mockup of a client testimonial quote displayed on a smartphone screen.\nThe style should be {{personaStyle}}, modern, and results-oriented.'
+    },
+    {
+      id: 'physical_service_demo',
+      name: 'Paket Jasa Layanan Fisik',
+      prompt: 'Create a single, compelling "before and after" diptych image for a service like laundry, cleaning, or a workshop called "{{businessName}}". The composition must showcase:\n\n1.  **Before:** An object in its "before" state (e.g., a dirty shoe).\n2.  **After:** The same object in its clean, pristine "after" state.\n3.  **Branding:** The final product being handed over in a branded bag or box with the provided logo.\nThe style should be clean and emphasize the dramatic, positive transformation.'
+    }
   ],
-  'Lainnya': [
+  'Kerajinan Tangan & Dekorasi Rumah': [
     { 
       id: 'generic_product_trio', 
       name: 'Trio Produk Serbaguna', 
       prompt: 'Create a single, cohesive, high-quality commercial product photoshoot. The image must feature three packaging variations for "{{businessName}}", a brand selling "{{businessDetail}}". The style is {{personaStyle}}. The composition must showcase:\n\n1.  **Center Focus:** The main product in a premium cardboard box.\n2.  **Left:** The product itself, unboxed and presented attractively.\n3.  **Right:** A branded paper bag or pouch for the product.\nThe entire scene must look professional and ready for an e-commerce website.' 
     },
+    {
+      id: 'aromatherapy_set',
+      name: 'Set Produk Aromaterapi (Lilin, Diffuser)',
+      prompt: 'Create a single, cozy, and atmospheric product photoshoot for an aromatherapy brand "{{businessName}}" selling "{{businessDetail}}". The composition must showcase:\n\n1.  **Product:** The product in its container (a candle in a glass jar, a diffuser bottle).\n2.  **In Use:** A detail of the product in action (the flickering flame of the candle, the reed sticks in the diffuser).\n3.  **Packaging:** The elegant outer box for the product.\nThe lighting should be warm and soft, creating a tranquil mood. The style is {{personaStyle}}.'
+    },
+    {
+      id: 'stationery_set',
+      name: 'Rangkaian Alat Tulis & Kertas',
+      prompt: 'Create a single, beautiful flat lay photograph for a stationery brand, "{{businessName}}". The image must showcase the quality and design of "{{businessDetail}}". The composition must include:\n\n1.  **Cover:** The front cover of the product (e.g., a journal, planner).\n2.  **Interior:** The product opened to a sample inner page.\n3.  **Detail:** A close-up of a unique feature (e.g., a holographic sticker, the spiral binding, a custom bookmark).\nThe style should be {{personaStyle}}, creative, and well-organized.'
+    }
   ],
+   'Agrikultur & Produk Tani': [
+    {
+      id: 'fresh_produce_trio',
+      name: 'Trio Hasil Panen (Buah, Sayur, Madu)',
+      prompt: 'Create a single, fresh, and vibrant product photoshoot for an agricultural business, "{{businessName}}", selling "{{businessDetail}}". The image must emphasize freshness and natural quality. The composition must include:\n\n1.  **Packaging:** The produce in its delivery packaging (a rustic basket, a branded box).\n2.  **Produce:** The fresh produce itself, artfully arranged and looking delicious.\n3.  **Detail:** A close-up shot showing a detail like a drop of honey, condensation on a fruit, or the texture of a vegetable.\nThe style should be {{personaStyle}}, bright, and organic.'
+    },
+    {
+      id: 'gardening_kit',
+      name: 'Set Benih & Perlengkapan Berkebun',
+      prompt: 'Create a single, hopeful, and inspiring product photoshoot for a gardening brand, "{{businessName}}". The image should show a complete starter kit for "{{businessDetail}}". The composition must include:\n\n1.  **Seeds:** The branded seed packet.\n2.  **Supplies:** A bag of potting soil or other necessary supplies.\n3.  **Result:** A small, healthy plant seedling growing in a pot, representing the successful outcome.\nThe style should be {{personaStyle}}, earthy, and encouraging.'
+    }
+  ]
 };
-packagingConfigs['Kerajinan Tangan'] = packagingConfigs['Lainnya'];
-
+// Map old categories to new ones for compatibility
+const categoryMap: { [key: string]: string } = {
+  'Makanan': 'Makanan',
+  'Minuman': 'Minuman',
+  'Fashion': 'Fashion',
+  'Jasa': 'Jasa',
+  'Kecantikan': 'Kecantikan & Perawatan Diri',
+  'Kerajinan Tangan': 'Kerajinan Tangan & Dekorasi Rumah',
+  'Lainnya': 'Kerajinan Tangan & Dekorasi Rumah'
+};
 
 const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
@@ -104,8 +189,9 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   
-  const category = projectData.brandInputs?.businessCategory || 'Lainnya';
-  const availableOptions = packagingConfigs[category] || packagingConfigs['Lainnya'];
+  const rawCategory = projectData.brandInputs?.businessCategory || 'Lainnya';
+  const mappedCategory = categoryMap[rawCategory] || 'Kerajinan Tangan & Dekorasi Rumah';
+  const availableOptions = packagingConfigs[mappedCategory] || packagingConfigs['Kerajinan Tangan & Dekorasi Rumah'];
   
   const [selectedPackagingTypeId, setSelectedPackagingTypeId] = useState<string>(availableOptions[0].id);
 
@@ -115,15 +201,19 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   const closeModal = () => setModalImageUrl(null);
 
   useEffect(() => {
-    const options = packagingConfigs[category] || packagingConfigs['Lainnya'];
-    setSelectedPackagingTypeId(options[0].id);
-  }, [category]);
+    // Reset selected option if the category changes or doesn't have the current selection
+    const currentOptions = packagingConfigs[mappedCategory] || [];
+    const selectionExists = currentOptions.some(opt => opt.id === selectedPackagingTypeId);
+    if (!selectionExists && currentOptions.length > 0) {
+      setSelectedPackagingTypeId(currentOptions[0].id);
+    }
+  }, [mappedCategory, selectedPackagingTypeId]);
   
   useEffect(() => {
     if (!projectData.brandInputs || !projectData.selectedPersona) return;
 
     const { brandInputs, selectedPersona } = projectData;
-    const options = packagingConfigs[category] || packagingConfigs['Lainnya'];
+    const options = packagingConfigs[mappedCategory] || packagingConfigs['Kerajinan Tangan & Dekorasi Rumah'];
     const config = options.find(opt => opt.id === selectedPackagingTypeId) || options[0];
     
     const personaStyle = selectedPersona.kata_kunci.join(', ');
@@ -134,7 +224,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
         .replace(/\{\{personaStyle\}\}/g, personaStyle);
 
     setPrompt(initialPrompt);
-  }, [projectData, category, selectedPackagingTypeId]);
+  }, [projectData, mappedCategory, selectedPackagingTypeId]);
 
   useEffect(() => {
     if (designs.length > 0 && resultsRef.current) {
@@ -208,7 +298,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
                     {availableOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
                  </select>
             </div>
-            <p className="text-sm text-gray-400 md:pt-8">Pilihan ini disesuaikan berdasarkan kategori bisnis "<span className="font-semibold text-indigo-300">{category}</span>" yang lo pilih di awal.</p>
+            <p className="text-sm text-gray-400 md:pt-8">Pilihan ini disesuaikan berdasarkan kategori bisnis "<span className="font-semibold text-indigo-300">{rawCategory}</span>", dan menggunakan skenario untuk "<span className="font-semibold text-indigo-300">{mappedCategory}</span>".</p>
         </div>
 
         <Textarea
@@ -217,7 +307,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="cth: Kotak minimalis untuk biji kopi, warna earth tone..."
-          rows={8}
+          rows={10}
         />
         <div className="self-start">
           <Button type="submit" isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>
