@@ -127,6 +127,7 @@ export interface ProjectData {
   socialMediaKit?: SocialMediaKitAssets;
 
   selectedPackagingUrl?: string;
+  selectedMerchandiseUrl?: string;
   printMediaAssets?: PrintMediaAssets;
 }
 

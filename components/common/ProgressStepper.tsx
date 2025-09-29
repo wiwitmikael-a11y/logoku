@@ -14,14 +14,13 @@ const CheckIcon: React.FC = () => (
 
 const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
   return (
-    <div className="mb-12">
-        <ol className="flex items-center w-full">
+    <div className="mb-12 overflow-x-auto pb-4">
+        <ol className="flex items-start w-full min-w-[700px]">
             {steps.map((step, index) => {
                 const isCompleted = index < currentStep;
                 const isActive = index === currentStep;
-                const isUpcoming = index > currentStep;
                 
-                const circleClasses = `flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-300 ${
+                const circleClasses = `flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-300 flex-shrink-0 ${
                     isCompleted ? 'bg-indigo-600' :
                     isActive ? 'bg-indigo-600 ring-4 ring-indigo-500/30' :
                     'bg-gray-700 border-2 border-gray-600'
@@ -31,14 +30,14 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
                     isActive ? 'text-indigo-300' :
                     'text-gray-500'
                 }`;
-                 const lineClasses = `flex-auto border-t-2 transition-all duration-500 ${
+                 const lineClasses = `flex-auto border-t-2 transition-all duration-500 mx-2 ${
                     isCompleted ? 'border-indigo-600' : 'border-gray-700'
                 }`;
 
 
                 return (
                     <React.Fragment key={step}>
-                        <li className="flex flex-col items-center relative flex-shrink-0">
+                        <li className="flex flex-col items-center relative flex-1">
                            <div className={circleClasses}>
                                {isCompleted ? <CheckIcon /> : <span className={isActive ? 'text-white' : 'text-gray-400'}>{index + 1}</span>}
                            </div>
