@@ -32,28 +32,61 @@ interface PackagingCategory {
 
 const packagingConfigs: PackagingCategory = {
   'Makanan': [
-    { id: 'paper_bowl', name: 'Paper Bowl / Rice Bowl', prompt: 'Take the provided logo image. Create a realistic, high-quality product mockup of a white paper bowl. The bowl is filled with a photorealistic and appetizing depiction of the actual product which is: "{{businessDetail}}". It is critical that the food shown is exactly "{{businessDetail}}" and not a generic food item. Place the logo prominently and clearly on the side of the bowl. The brand is "{{businessName}}". The background is a clean, minimalist cafe setting. This is a commercial product photo.' },
-    { id: 'rice_box', name: 'Nasi Box Karton', prompt: 'Take the provided logo image. Create a realistic mockup of a folded cardboard takeaway box (nasi box). It is critical that the food shown inside or next to the box is "{{businessDetail}}". The box is a natural brown kraft paper color. Place the logo large and centered on the top lid. The brand is "{{businessName}}". The mockup should look like a professional photo for a food delivery service like GoFood/GrabFood.' },
-    { id: 'standing_pouch', name: 'Standing Pouch (Snack/Frozen Food)', prompt: 'Take the provided logo image. Create a realistic product mockup of a sealed plastic or foil standing pouch (kemasan pouch) designed for the snack "{{businessDetail}}". It is critical that the product itself is visible through a clear window on the pouch or placed attractively next to it. The pouch is on a clean, white surface. Place the logo prominently on the front. The brand is "{{businessName}}". The style is professional and ready for retail.' },
-    { id: 'paper_wrap', name: 'Kertas Bungkus (Kebab/Burger)', prompt: 'Take the provided logo image. Create a realistic mockup of a "{{businessDetail}}" wrapped in branded brown kraft paper. The logo is repeated as a pattern on the paper. The food is held by a hand. It is critical that the food shown is clearly identifiable as "{{businessDetail}}". The brand is "{{businessName}}". The style is for a trendy street food stall.' },
+    { 
+      id: 'snack_trio', 
+      name: 'Trio Kemasan Snack & Makanan Ringan', 
+      prompt: 'Create a single, cohesive, high-quality commercial product photoshoot on a clean, minimalist surface. The image must feature three packaging variations for "{{businessName}}", a brand selling "{{businessDetail}}". The style should be {{personaStyle}}. The composition must showcase:\n\n1.  **Center Focus:** A modern standing pouch with a clear window showing the product inside. The provided logo is prominent.\n2.  **Left:** A smaller, sealed foil sachet for single servings, with the logo.\n3.  **Right:** A stack of the actual product (e.g., chips, cookies) next to an open pouch to show texture and appeal.' 
+    },
+    { 
+      id: 'rice_box_set', 
+      name: 'Set Nasi Box & Lauk Pauk', 
+      prompt: 'Create a single, top-down (flat lay) photo for a food delivery service. The image must feature three variations for "{{businessName}}", a brand selling "{{businessDetail}}". The style should be modern and appetizing. The composition must showcase:\n\n1.  **Center Focus:** A closed brown kraft paper rice box with the provided logo stamped clearly on top.\n2.  **Left:** An open rice box showing the complete meal "{{businessDetail}}" neatly arranged inside.\n3.  **Right:** A separate paper bowl containing just the main lauk (side dish) from the meal, to highlight it.' 
+    },
+    { 
+      id: 'frozen_food_lineup', 
+      name: 'Line-up Frozen Food', 
+      prompt: 'Create a single, cohesive, high-quality commercial product photoshoot against a clean, white background with subtle icy textures. The image must feature three packaging variations for "{{businessName}}", a brand selling frozen "{{businessDetail}}". The style is {{personaStyle}}. The composition must showcase:\n\n1.  **Center Focus:** A vacuum-sealed plastic pack showing the frozen product clearly.\n2.  **Left:** A designed cardboard box for the frozen food, ready for retail freezer display.\n3.  **Right:** The product "{{businessDetail}}" cooked and beautifully plated on a modern dish, to show the final result.' 
+    },
   ],
   'Minuman': [
-    { id: 'plastic_cup', name: 'Gelas Plastik (Kopi/Boba)', prompt: 'Take the provided logo image. Create a realistic photo mockup of a transparent plastic cup with a lid, filled with a beverage that is clearly identifiable as "{{businessDetail}}". Place the logo clearly on the side of the cup. The brand is "{{businessName}}". The style is modern and trendy, suitable for a contemporary Indonesian coffee shop. Clean, bright background.' },
-    { id: 'beverage_bottle', name: 'Botol Plastik (Jus/Kopi Literan)', prompt: 'Take the provided logo image. Create a realistic mockup of a 250ml or 1 liter plastic bottle filled with a beverage that is clearly identifiable as "{{businessDetail}}". The logo is on a sticker label on the bottle. The brand is "{{businessName}}". The style is clean and modern.' },
+    { 
+      id: 'coffee_shop_trio', 
+      name: 'Trio Kopi Kekinian (Gelas, Botol, Biji)', 
+      prompt: 'Create a single, cohesive, high-quality commercial product photoshoot on a minimalist cafe table with soft lighting. The image must feature three product variations for "{{businessName}}", which sells "{{businessDetail}}". The composition must showcase:\n\n1.  **Left:** A tall, iced plastic cup of the beverage with the provided logo clearly visible.\n2.  **Center Focus:** A sleek 1-liter bottle (botol kopi literan) with a branded label featuring the provided logo.\n3.  **Right:** A small, branded paper pouch filled with roasted coffee beans, with the logo on it.\nThe entire composition must look professional, trendy, and match the brand style: {{personaStyle}}.' 
+    },
+    { 
+      id: 'jamu_herbal_set', 
+      name: 'Set Jamu & Minuman Herbal', 
+      prompt: 'Create a single, cohesive, high-quality product photo with an earthy, natural aesthetic. The image must feature three product variations for "{{businessName}}", a brand selling "{{businessDetail}}". The composition must showcase:\n\n1.  **Center Focus:** A classic amber or green glass bottle (botol kaca) with a simple, elegant label featuring the provided logo.\n2.  **Left:** A small, traditional glass (gelas sloki) filled with the beverage.\n3.  **Right:** The raw ingredients (e.g., turmeric, ginger, tamarind) used to make the beverage, arranged artfully next to the bottle.\nThe style should be {{personaStyle}}, emphasizing natural and healthy qualities.' 
+    },
   ],
   'Fashion': [
-    { id: 'mailer_box', name: 'Mailer Box (Toko Online)', prompt: 'Take the provided logo image. Create a realistic mockup of a brown corrugated cardboard mailer box, suitable for e-commerce shipping for a "{{businessDetail}}" brand. The box is closed. Place the logo on the top of the box as if it were printed or stamped. The brand is "{{businessName}}". The photo has a clean, minimalist aesthetic for an online store.' },
-    { id: 'paper_bag', name: 'Paper Bag Belanja', prompt: 'Take the provided logo image. Create a realistic mockup of a stylish paper bag for a "{{businessDetail}}" brand. Place the logo large and centered. The brand is "{{businessName}}". The style is {{personaStyle}}, chic, and stylish for a fashion brand.' },
+    { 
+      id: 'clothing_brand_pack', 
+      name: 'Paket Brand Fashion (Baju, Hang Tag, Box)', 
+      prompt: 'Create a single, clean, high-end flat lay product photograph for a fashion e-commerce store called "{{businessName}}", which sells "{{businessDetail}}". The background is a neutral, textured surface. The composition must showcase:\n\n1.  **Center Focus:** A neatly folded t-shirt or piece of clothing.\n2.  **On the clothing:** A close-up of a stylish cardboard hang-tag featuring the provided logo.\n3.  **Next to it:** A sleek, branded mailer box or paper bag, also with the logo.\nThe overall aesthetic must be {{personaStyle}}, chic and stylish.' 
+    },
   ],
   'Kecantikan': [
-    { id: 'cosmetic_bottle', name: 'Botol Skincare (Serum/Toner)', prompt: 'Take the provided logo image. Create a realistic mockup of a cosmetic product bottle (e.g., with a pump or dropper) for "{{businessDetail}}" with an elegant box next to it. Place the logo prominently on both the bottle and the box. The brand name is "{{businessName}}". The style is {{personaStyle}}, elegant, and clean.' },
-    { id: 'cosmetic_jar', name: 'Jar Kosmetik (Krim)', prompt: 'Take the provided logo image. Create a realistic mockup of a cosmetic cream jar for "{{businessDetail}}". Place the logo on the lid and the side. The brand name is "{{businessName}}". The style is {{personaStyle}}, clean, and premium.' },
+    { 
+      id: 'skincare_product_line', 
+      name: 'Rangkaian Produk Skincare', 
+      prompt: 'Create a single, cohesive, high-quality cosmetic product photoshoot against a clean, elegant background. The image must feature three packaging variations for "{{businessName}}", a brand selling "{{businessDetail}}". The composition must showcase:\n\n1.  **Center Focus:** A serum bottle with a dropper.\n2.  **Left:** A cosmetic cream jar.\n3.  **Right:** The outer product box for one of the items.\nAll items must feature the provided logo and look like a cohesive product line. The style is {{personaStyle}}, premium, and clean.' 
+    },
   ],
   'Jasa': [
-      { id: 'service_mockup', name: 'Mockup Konseptual Jasa', prompt: 'Take the provided logo image. Create a conceptual mockup that represents a service for "{{businessDetail}}". This could be a branded folder, a clipboard, or a digital tablet screen showing a website. Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, professional, and trustworthy.' },
+      { 
+        id: 'service_branding_kit', 
+        name: 'Branding Kit untuk Jasa', 
+        prompt: 'Create a single, cohesive, high-quality mockup showcasing a branding kit for a service-based business, "{{businessName}}", which offers "{{businessDetail}}". The style is professional and trustworthy. The flat lay composition on a clean desk must include:\n\n1.  **Center Focus:** A business card featuring the provided logo and contact details.\n2.  **Left:** A branded A4 letterhead or folder.\n3.  **Right:** A smartphone or tablet screen displaying the hero section of a website, with the logo clearly visible.\nThe overall aesthetic must be {{personaStyle}}.' 
+      },
   ],
   'Lainnya': [
-    { id: 'generic_box', name: 'Box Produk Serbaguna', prompt: 'Take the provided logo image. Create a realistic mockup of a high-quality product box for "{{businessDetail}}". Place the logo prominently. The brand name is "{{businessName}}". The style is {{personaStyle}}, modern, and clean. This is a commercial product photo.' },
+    { 
+      id: 'generic_product_trio', 
+      name: 'Trio Produk Serbaguna', 
+      prompt: 'Create a single, cohesive, high-quality commercial product photoshoot. The image must feature three packaging variations for "{{businessName}}", a brand selling "{{businessDetail}}". The style is {{personaStyle}}. The composition must showcase:\n\n1.  **Center Focus:** The main product in a premium cardboard box.\n2.  **Left:** The product itself, unboxed and presented attractively.\n3.  **Right:** A branded paper bag or pouch for the product.\nThe entire scene must look professional and ready for an e-commerce website.' 
+    },
   ],
 };
 packagingConfigs['Kerajinan Tangan'] = packagingConfigs['Lainnya'];
@@ -157,14 +190,14 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 8: Desain Kemasan Lo</h2>
-        <p className="text-gray-400">Sentuhan terakhir! Pilih jenis kemasan yang paling pas buat produk lo. Mang AI udah siapin prompt cerdas, edit kalo perlu, terus generate konsepnya.</p>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 8: Foto Produk & Kemasan 3-in-1</h2>
+        <p className="text-gray-400">Level up! Mang AI bakal bikinin 1 foto produk profesional yang isinya 3 variasi kemasan atau penyajian sekaligus. Hemat token, hasil maksimal! Pilih skenario yang paling pas buat produk lo.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="p-6 bg-gray-800/50 rounded-lg border border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                 <label htmlFor="packagingType" className="block mb-2 text-sm font-medium text-gray-300">Pilih Jenis Kemasan Spesifik</label>
+                 <label htmlFor="packagingType" className="block mb-2 text-sm font-medium text-gray-300">Pilih Skenario Foto Produk</label>
                  <select
                     id="packagingType"
                     name="packagingType"
@@ -179,16 +212,16 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
         </div>
 
         <Textarea
-          label="Prompt Deskripsi Kemasan (Sudah Otomatis, Bisa Diedit)"
+          label="Prompt Foto Produk (Sudah Otomatis, Bisa Diedit)"
           name="packagingPrompt"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="cth: Kotak minimalis untuk biji kopi, warna earth tone..."
-          rows={5}
+          rows={8}
         />
         <div className="self-start">
           <Button type="submit" isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>
-            Bungkus Desainnya, Mang AI! ({GENERATION_COST} Token)
+            Jepret Foto Produknya, Mang! ({GENERATION_COST} Token)
           </Button>
         </div>
       </form>
@@ -198,7 +231,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
           <div>
-            <h3 className="text-lg md:text-xl font-bold mb-2">Desain Hasil Generate:</h3>
+            <h3 className="text-lg md:text-xl font-bold mb-2">Hasil Foto Produk 3-in-1:</h3>
           </div>
           <div className="flex justify-center w-full max-w-lg">
             <div
@@ -211,7 +244,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
           <div className="self-center relative">
             {showNextStepNudge && (
               <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
-                Desain kemasan siap!
+                Foto produk siap!
               </CalloutPopup>
             )}
             <Button onClick={handleContinue} disabled={!selectedDesignBase64}>
