@@ -35,6 +35,7 @@ const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 const CaptionGenerator = React.lazy(() => import('./components/CaptionGenerator'));
 const InstantContentGenerator = React.lazy(() => import('./components/InstantContentGenerator'));
 const ContactModal = React.lazy(() => import('./components/ContactModal'));
+const AboutModal = React.lazy(() => import('./components/common/AboutModal'));
 const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
 const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
@@ -90,6 +91,7 @@ const MainApp: React.FC = () => {
     
     // Modals visibility
     const [showContactModal, setShowContactModal] = useState(false);
+    const [showAboutModal, setShowAboutModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
     const [showCaptcha, setShowCaptcha] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -662,6 +664,7 @@ const MainApp: React.FC = () => {
                                 <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in">
                                     {/* Menu Items */}
                                     <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Dashboard</button>
+                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Tentang Aplikasi</button>
                                     <div className="border-t border-gray-700 my-1"></div>
                                     <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Pengaturan Akun</button>
                                     <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Traktir Kopi</a>
@@ -700,6 +703,7 @@ const MainApp: React.FC = () => {
             {/* Modals */}
             <Suspense fallback={null}>
                 <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
+                <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
                 <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
                 <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
                 <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={() => setShowToSModal(true)} onShowContact={() => setShowContactModal(true)} />

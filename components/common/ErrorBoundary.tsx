@@ -26,6 +26,8 @@ class ErrorBoundary extends React.Component<Props, State> {
       error: undefined,
       isCopied: false,
     };
+    // FIX: Manually bind `this` for the event handler as the build environment may not support class field arrow functions.
+    this.handleCopy = this.handleCopy.bind(this);
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
@@ -36,8 +38,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // An arrow function correctly binds 'this' for event handlers.
-  handleCopy = () => {
+  // FIX: Switched to a standard class method bound in the constructor for maximum compatibility, avoiding class field syntax.
+  handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
