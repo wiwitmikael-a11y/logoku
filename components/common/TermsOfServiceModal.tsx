@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import Button from './Button';
 
@@ -60,7 +59,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
 
             <div className="space-y-2">
                 <h3 className="font-bold text-white text-base">1. Akun dan Privasi Data</h3>
-                <p>Untuk menggunakan Layanan, Anda harus login menggunakan akun Google Anda (Google Authentication). Dengan melakukannya, Anda mengizinkan kami untuk mengakses informasi dasar profil Anda (nama, alamat email, foto profil) sesuai dengan kebijakan privasi Google. Data ini kami gunakan semata-mata untuk keperluan identifikasi akun, personalisasi pengalaman, dan penyimpanan proyek Anda di database kami yang dikelola oleh Supabase. Kami berkomitmen untuk menjaga privasi Anda; kami tidak akan menjual atau membagikan data pribadi Anda kepada pihak ketiga tanpa persetujuan Anda, kecuali diwajibkan oleh hukum.</p>
+                <p>Untuk menggunakan Layanan, Anda harus login menggunakan akun Google Anda (Google Authentication). Dengan melakukannya, Anda mengizinkan kami untuk mengakses informasi dasar profil Anda (nama, alamat email, foto profil) sesuai dengan <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">kebijakan privasi Google</a>. Data ini kami gunakan semata-mata untuk keperluan identifikasi akun, personalisasi pengalaman, dan penyimpanan proyek Anda di database kami yang dikelola oleh <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Supabase</a>. Kami berkomitmen untuk menjaga privasi Anda; kami tidak akan menjual atau membagikan data pribadi Anda kepada pihak ketiga tanpa persetujuan Anda, kecuali diwajibkan oleh hukum.</p>
             </div>
 
             <div className="space-y-2">
@@ -72,7 +71,12 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
                 <h3 className="font-bold text-white text-base">3. Kepemilikan Konten dan Tanggung Jawab Pengguna</h3>
                 <p>Anda memegang hak untuk menggunakan Konten yang Dihasilkan untuk keperluan pribadi maupun komersial. Namun, Anda, sebagai pengguna, memikul tanggung jawab penuh atas penggunaan tersebut. Sebelum menggunakan logo atau aset brand lainnya untuk tujuan komersial, Anda <strong className="text-yellow-400">WAJIB</strong> melakukan uji tuntas (due diligence) Anda sendiri. Ini termasuk, namun tidak terbatas pada:</p>
                 <ul className="list-disc list-inside pl-4 space-y-1">
-                    <li>Melakukan pencarian merek dagang (trademark) pada database pemerintah yang relevan (misalnya, Pangkalan Data Kekayaan Intelektual - PDKI di Indonesia).</li>
+                    <li>
+                        Melakukan pencarian merek dagang (trademark) pada database pemerintah yang relevan (misalnya,{' '}
+                        <a href="https://pdki-indonesia.dgip.go.id/" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">
+                            Pangkalan Data Kekayaan Intelektual - PDKI di Indonesia
+                        </a>).
+                    </li>
                     <li>Memastikan desain tidak melanggar hak cipta yang ada.</li>
                     <li>Memverifikasi bahwa penggunaan aset tidak akan menyebabkan kebingungan konsumen dengan merek lain.</li>
                 </ul>
