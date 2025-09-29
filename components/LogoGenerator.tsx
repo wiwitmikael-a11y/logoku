@@ -22,89 +22,103 @@ interface Props {
 const INITIAL_LOGO_COST = 1;
 const ADDITIONAL_LOGO_COST = 3;
 
-
+const GITHUB_ASSETS_URL_STYLES = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/styles/';
 const logoStyles = [
     {
         id: 'minimalist',
         name: 'Modern & Simpel',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_1.jpg`,
         description: 'Gaya ini mengedepankan kesederhanaan. Bersih, mudah diingat, dan serbaguna di berbagai media. Cocok untuk brand yang ingin terlihat modern dan efisien.',
         promptTemplate: 'an ultra-minimalist logomark for "{{businessName}}", using clever negative space or the golden ratio. Style: {{personaKeywords}}, geometric precision, clean vector lines, high contrast, single color, solid white background.'
     },
     {
         id: 'mascot',
         name: 'Maskot / Fun',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_2.jpg`,
         description: 'Bikin brand jadi lebih "manusiawi" dan gampang diingat. Cocok Untuk: Bisnis F&B, produk anak, laundry, pet shop.',
         promptTemplate: 'a professional character mascot logo for "{{businessName}}", in a dynamic and expressive pose. Style: modern vector illustration, clean lines, vibrant colors, fun, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'elegant',
         name: 'Elegan / Klasik',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_3.jpg`,
         description: 'Cocok untuk UMKM yang mau naik kelas. Kesannya bersih, mahal, dan terpercaya. Cocok Untuk: Brand fashion, hampers premium, patisserie, jasa MUA.',
         promptTemplate: 'an ultra-luxurious and elegant logo for "{{businessName}}", inspired by art deco design. Featuring clean lines and a sophisticated serif monogram. Style: premium, classic, refined, {{personaKeywords}}, high contrast, solid white background.'
     },
     {
         id: 'geometric',
         name: 'Geometris / Abstrak',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_4.jpg`,
         description: 'Menggunakan bentuk-bentuk dasar untuk menciptakan logo yang cerdas dan modern. Cocok Untuk: Jasa digital, logistik, agensi, brand teknologi.',
         promptTemplate: 'a clever abstract mark for "{{businessName}}", constructed from precise and symmetrical geometric shapes and lines. Style: modern, tech, line art, intelligent design, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'badge',
         name: 'Badge / Emblem',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_5.jpg`,
         description: 'Membungkus nama brand dan ikon dalam sebuah bentuk. Memberi kesan mapan dan berkualitas. Cocok Untuk: Komunitas, barbershop, coffee shop, brand clothing.',
         promptTemplate: 'a classic circular badge emblem logo for "{{businessName}}", with a detailed icon in the center and sharp, clean text. Style: vintage, retro, detailed line work, premium, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'rustic',
         name: 'Rustic / Handmade',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_6.jpg`,
         description: 'Memberi kesan otentik, alami, dan berkualitas. Cocok Untuk: Produk organik, kerajinan tangan, coffee roastery, bakery.',
         promptTemplate: 'an artisanal, hand-drawn logo for "{{businessName}}", with an organic texture and a woodcut illustration style. Style: rustic, handmade, vintage, stamp effect, earthy tones, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'ethnic',
         name: 'Etnik / Kultural',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_7.jpg`,
         description: 'Menonjolkan akar budaya Indonesia. Punya nilai jual yang sangat kuat karena keunikannya. Cocok Untuk: Restoran masakan daerah, oleh-oleh khas, jamu, batik.',
         promptTemplate: 'a modern interpretation of a traditional Indonesian ethnic pattern (e.g., stylized Batik Mega Mendung, Dayak ornament) as a logomark for "{{businessName}}". Style: ethnic, cultural, elegant, minimalist twist, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'kawaii',
         name: 'Kawaii / Cute',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_8.jpg`,
         description: 'Gaya imut dan menggemaskan dari Jepang. Sangat menarik perhatian dan disukai target pasar muda. Cocok untuk: Bisnis dessert, aksesoris, ATK, produk karakter.',
         promptTemplate: 'an ultra-cute chibi character logo for "{{businessName}}". Style: Japanese kawaii, soft pastel gradients, rounded shapes, adorable and simple, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'tech',
         name: 'Tech / Futuristik',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_9.jpg`,
         description: 'Memberi kesan canggih, inovatif, dan terdepan. Garis-garis tajam dan warna-warna cerah. Cocok untuk: Startup teknologi, jasa digital, e-sports, gadget.',
         promptTemplate: 'a futuristic and innovative logo for a tech company named "{{businessName}}", incorporating abstract circuit board patterns or data visualization elements. Style: digital, sharp vector lines, neon glow, vibrant blue and purple, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'graffiti',
         name: 'Graffiti / Street Art',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_10.jpg`,
         description: 'Terinspirasi dari budaya jalanan, memberi kesan berani, enerjik, dan anti-mainstream. Cocok untuk: Distro, barbershop, studio kreatif, event musik.',
         promptTemplate: 'a bold urban tag logo for "{{businessName}}", with a dynamic spray paint texture and subtle drip effects. Style: graffiti, street art, edgy, energetic, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'gradient',
         name: 'Modern & Gradasi',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_11.jpg`,
         description: 'Menggunakan perpaduan warna gradasi yang halus untuk menciptakan efek 3D dan kesan modern. Cocok untuk: Startup, aplikasi mobile, brand teknologi.',
         promptTemplate: 'a modern 3D icon logo for "{{businessName}}", using vibrant color gradients and a subtle glassmorphism effect. Style: futuristic, clean, digital, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'hand_drawn',
         name: 'Ilustrasi Tangan',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_12.jpg`,
         description: 'Memberi sentuhan personal dan artistik. Cocok untuk brand yang ingin menonjolkan kreativitas dan keunikan. Cocok untuk: Ilustrator, studio seni, produk custom.',
         promptTemplate: 'a charming and whimsical hand-drawn illustration logo for "{{businessName}}", with sketchy yet clean organic lines. Style: creative, artistic, personal touch, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'esports',
         name: 'E-sports / Gaming',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_13.jpg`,
         description: 'Desain garang dan dinamis, seringkali menggunakan bentuk perisai, hewan buas, atau senjata. Cocok untuk: Tim e-sports, channel gaming, turnamen, atau brand yang menargetkan komunitas gamer.',
         promptTemplate: 'an aggressive and dynamic esports team logo for "{{businessName}}", featuring a fierce mascot like a dragon or wolf. Style: shield emblem, metallic sheen, neon glow effect, sharp vector lines, high contrast, detailed illustration, {{personaKeywords}}, solid white background.'
     },
     {
         id: 'gen_z',
         name: 'Gaya Gen Z / Y2K',
+        imageUrl: `${GITHUB_ASSETS_URL_STYLES}Style_14.jpg`,
         description: 'Terinspirasi dari estetika tahun 2000-an (Y2K), gaya ini menggunakan warna-warna cerah, font yang unik, dan elemen desain yang fun. Cocok untuk: Brand fashion, thrift store, event, atau produk yang menyasar pasar Gen Z.',
         promptTemplate: 'a fun and trendy logo for "{{businessName}}", inspired by Y2K aesthetics and early 2000s internet culture. Style: glossy 3D letters, bubble font, chrome effect, iridescent colors, vibrant pinks and blues, {{personaKeywords}}, solid white background.'
     }
@@ -251,9 +265,19 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
       </div>
 
       {selectedStyleInfo && (
-        <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-          <h4 className="font-bold text-indigo-400">Gaya: {selectedStyleInfo.name}</h4>
-          <p className="text-gray-400 mt-1 text-sm">{selectedStyleInfo.description}</p>
+        <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 flex flex-col sm:flex-row items-start gap-4">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-md flex-shrink-0 bg-white p-1">
+              <img 
+                  src={selectedStyleInfo.imageUrl} 
+                  alt={`Contoh gaya ${selectedStyleInfo.name}`} 
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+              />
+            </div>
+            <div>
+                <h4 className="font-bold text-indigo-400">Gaya: {selectedStyleInfo.name}</h4>
+                <p className="text-gray-400 mt-1 text-sm">{selectedStyleInfo.description}</p>
+            </div>
         </div>
       )}
 
