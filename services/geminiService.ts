@@ -484,16 +484,21 @@ export const generateLogoVariations = async (baseLogoBase64: string, businessNam
         const base64Data = baseLogoBase64.split(',')[1];
         const mimeType = baseLogoBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
         
+        // Step 1: Generate stacked and horizontal versions from the main icon
         const stackedPrompt = `Take the provided logo icon. Place the brand name "${businessName}" cleanly below the icon. Use a modern, legible sans-serif font that perfectly complements the logo's style. The entire composition should be centered and balanced. The final output must be a clean vector logo on a solid white background. Ensure the text is spelled correctly.`;
         const horizontalPrompt = `Take the provided logo icon. Place the brand name "${businessName}" cleanly to the right of the icon. Vertically align the icon and the text in the middle. Use a modern, legible sans-serif font that matches the logo's style. The whole design must be balanced. The final output must be a clean vector logo on a solid white background. Ensure the text is spelled correctly.`;
-        const monochromePrompt = `Take the provided logo icon. Convert the entire design into a high-contrast, monochrome (black and white) version. Do not change the shape or layout, only remove all color. The final output must be a clean vector logo on a solid white background.`;
 
-        const [stackedResultBase64, horizontalResultBase64, monochromeResultBase64] = await Promise.all([
+        const [stackedResultBase64, horizontalResultBase64] = await Promise.all([
             editLogo(base64Data, mimeType, stackedPrompt),
-            editLogo(base64Data, mimeType, horizontalPrompt),
-            editLogo(base64Data, mimeType, monochromePrompt)
+            editLogo(base64Data, mimeType, horizontalPrompt)
         ]);
         
+        // Step 2: Generate the monochrome version from the horizontal logo (which now includes text)
+        const horizontalResultData = horizontalResultBase64.split(',')[1];
+        const horizontalMimeType = horizontalResultBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+        const monochromePrompt = `Take the provided logo image (which already includes text). Convert the entire design into a high-contrast, monochrome (black and white) version. Do not change the shape or layout, only remove all color. The final output must be a clean vector logo on a solid white background.`;
+
+        const monochromeResultBase64 = await editLogo(horizontalResultData, horizontalMimeType, monochromePrompt);
 
         return { 
             main: baseLogoBase64, 

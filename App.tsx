@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -459,17 +460,20 @@ const MainApp: React.FC = () => {
     };
 
     // --- REGENERATION HANDLER IMPLEMENTATIONS ---
-    const handleRegenerateContentCalendar = (projectId: number) => {
+    // FIX: Mark function as async to return a Promise.
+    const handleRegenerateContentCalendar = async (projectId: number) => {
         const p = projects.find(p => p.id === projectId);
         if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return;
         handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs.businessName, p.project_data.selectedPersona).then(res => res.calendar), "Kalender konten baru berhasil dibuat!");
     };
-    const handleRegenerateProfiles = (projectId: number) => {
+    // FIX: Mark function as async to return a Promise.
+    const handleRegenerateProfiles = async (projectId: number) => {
         const p = projects.find(p => p.id === projectId);
         if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return;
         handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p.project_data.brandInputs, p.project_data.selectedPersona), "Profil sosmed baru berhasil dibuat!");
     };
-    const handleRegenerateSocialAds = (projectId: number) => {
+    // FIX: Mark function as async to return a Promise.
+    const handleRegenerateSocialAds = async (projectId: number) => {
         const p = projects.find(p => p.id === projectId);
         if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return;
         handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs, p.project_data.selectedPersona, p.project_data.selectedSlogan), "Teks iklan baru berhasil dibuat!");
@@ -498,7 +502,8 @@ const MainApp: React.FC = () => {
             setGeneralError(err instanceof Error ? err.message : 'Gagal membuat social media kit.');
         }
     };
-    const handleRegeneratePackaging = (projectId: number) => {
+    // FIX: Mark function as async to return a Promise.
+    const handleRegeneratePackaging = async (projectId: number) => {
         const p = projects.find(p => p.id === projectId);
         if (!p || !p.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return;
         const { brandInputs, selectedPersona, selectedLogoUrl } = p.project_data;
@@ -508,7 +513,8 @@ const MainApp: React.FC = () => {
             return geminiService.generatePackagingDesign(prompt, logoBase64);
         }, "Desain kemasan baru berhasil dibuat!", 'packaging');
     };
-    const handleRegeneratePrintMedia = (projectId: number, mediaType: 'banner' | 'roll_banner') => {
+    // FIX: Mark function as async to return a Promise.
+    const handleRegeneratePrintMedia = async (projectId: number, mediaType: 'banner' | 'roll_banner') => {
         const p = projects.find(p => p.id === projectId);
         if (!p || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return;
         const { selectedPersona, selectedLogoUrl } = p.project_data;

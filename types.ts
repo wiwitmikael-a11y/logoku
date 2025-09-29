@@ -100,6 +100,7 @@ export interface SocialMediaKitAssets {
 // NEW: Print Media Assets
 export interface PrintMediaAssets {
   businessCardUrl?: string;
+  flyerUrl?: string;
   bannerUrl?: string; // a horizontal banner
   rollBannerUrl?: string; // a vertical banner
 }

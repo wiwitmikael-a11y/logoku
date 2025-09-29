@@ -17,8 +17,11 @@ interface Props {
 }
 
 const BrandPersonaGenerator: React.FC<Props> = ({ onComplete }) => {
+  // FIX: Added missing properties `businessCategory` and `businessDetail` to satisfy the BrandInputs type.
   const [formData, setFormData] = useState<BrandInputs>({
     businessName: 'Kopi Senja',
+    businessCategory: 'Minuman',
+    businessDetail: 'Kopi',
     industry: 'Minuman Kopi',
     targetAudience: 'Mahasiswa dan pekerja muda usia 18-28 tahun',
     valueProposition: 'Tempat yang nyaman untuk bekerja dan bersantai dengan harga terjangkau.',

@@ -68,18 +68,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Case 1: Brand new user, no profile exists yet.
     if (!data) {
         const WELCOME_BONUS = 20;
-        const newProfile = { 
-            id: userId, 
-            credits: WELCOME_BONUS, 
-            last_credit_reset: getTodaysDateWIB(),
-            welcome_bonus_claimed: true 
-        };
-        const { error: insertError } = await supabase.from('profiles').insert(newProfile);
+        const { data: newProfileData, error: insertError } = await supabase
+            .from('profiles')
+            .insert({ 
+                id: userId, 
+                credits: WELCOME_BONUS, 
+                last_credit_reset: getTodaysDateWIB(),
+                welcome_bonus_claimed: true 
+            })
+            .select()
+            .single();
+
         if (insertError) {
             console.error('Failed to create new profile:', insertError);
             setAuthError('Gagal membuat profil baru untuk Juragan.');
         } else {
-            setProfile(newProfile as Profile);
+            setProfile(newProfileData as Profile);
         }
         return;
     }
@@ -89,19 +93,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Case 2: Existing user who hasn't received the welcome bonus yet (for migration)
     if (!profileData.welcome_bonus_claimed) {
         const WELCOME_BONUS = 20;
-        const updatedProfileWithBonus = { ...profileData, credits: WELCOME_BONUS, welcome_bonus_claimed: true, last_credit_reset: getTodaysDateWIB() };
-
-        const { error: updateError } = await supabase
+        const { data: updatedProfileData, error: updateError } = await supabase
             .from('profiles')
             .update({ credits: WELCOME_BONUS, welcome_bonus_claimed: true, last_credit_reset: getTodaysDateWIB() })
-            .eq('id', userId);
+            .eq('id', userId)
+            .select()
+            .single();
         
         if (updateError) {
              console.error("Gagal klaim bonus sambutan:", updateError);
              setAuthError("Gagal klaim bonus sambutan, tapi jangan khawatir, data lama masih aman.");
              setProfile(profileData); // Fallback to old data
         } else {
-            setProfile(updatedProfileWithBonus);
+            setProfile(updatedProfileData as Profile);
         }
         return;
     }
@@ -110,19 +114,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const todayWIB = getTodaysDateWIB();
     if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
-        const updatedProfile = { ...profileData, credits: DAILY_TOKENS, last_credit_reset: todayWIB };
-        
-        const { error: updateError } = await supabase
+        const { data: updatedProfileData, error: updateError } = await supabase
             .from('profiles')
             .update({ credits: DAILY_TOKENS, last_credit_reset: todayWIB })
-            .eq('id', userId);
+            .eq('id', userId)
+            .select()
+            .single();
         
         if (updateError) {
             console.error("Gagal me-reset token harian:", updateError);
             setAuthError("Gagal me-reset token harian, tapi jangan khawatir, data lama masih aman.");
             setProfile(profileData);
         } else {
-            setProfile(updatedProfile);
+            setProfile(updatedProfileData as Profile);
         }
     } else {
         // No reset needed, just set the profile from DB
@@ -229,17 +233,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const newCredits = profile.credits - amount;
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('profiles')
         .update({ credits: newCredits })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select()
+        .single();
 
     if (error) {
         setAuthError(`Gagal mengurangi token: ${error.message}`);
         return false;
     }
 
-    setProfile(prev => prev ? { ...prev, credits: newCredits } : null);
+    setProfile(data as Profile);
     return true;
   };
 
