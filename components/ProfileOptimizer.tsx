@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateSocialProfiles } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -82,7 +83,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
       </div>
 
       <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST}>
-        Buatin Profilnya, Mang AI! ({GENERATION_COST} Kredit)
+        Buatin Profilnya, Mang AI! ({GENERATION_COST} Token)
       </Button>
 
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}

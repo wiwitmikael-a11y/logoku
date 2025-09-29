@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -292,7 +293,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
         />
         <div className="self-start">
           <Button onClick={handleSubmit} isLoading={isLoading} disabled={!prompt.trim() || credits < INITIAL_LOGO_COST}>
-            Spill 1 Logo-nya, Mang AI! ({INITIAL_LOGO_COST} Kredit)
+            Spill 1 Logo-nya, Mang AI! ({INITIAL_LOGO_COST} Token)
           </Button>
            <p className="text-xs text-gray-500 mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
         </div>
@@ -327,7 +328,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
             )}
              {logos.length < 4 && (
                 <Button onClick={handleGenerateMore} variant="secondary" isLoading={isGeneratingMore} disabled={isGeneratingMore || credits < ADDITIONAL_LOGO_COST}>
-                    Kasih 3 Pilihan Lain! ({ADDITIONAL_LOGO_COST} Kredit)
+                    Kasih 3 Pilihan Lain! ({ADDITIONAL_LOGO_COST} Token)
                 </Button>
              )}
             <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64}>

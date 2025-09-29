@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateSocialAds } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -82,7 +83,7 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
       </div>
 
       <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST}>
-        Buatin Teks Iklannya Dong! ({GENERATION_COST} Kredit)
+        Buatin Teks Iklannya Dong! ({GENERATION_COST} Token)
       </Button>
 
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}

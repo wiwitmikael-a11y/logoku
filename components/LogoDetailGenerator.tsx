@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -172,7 +173,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
                 </div>
             ) : (
                 <Button onClick={handleGenerateVariations} isLoading={isGeneratingVariations} disabled={credits < VARIATION_COST}>
-                    Siapin Paket Komplitnya! ({VARIATION_COST} Kredit)
+                    Siapin Paket Komplitnya! ({VARIATION_COST} Token)
                 </Button>
             )}
         </div>
@@ -190,7 +191,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
                 />
                 <div className="self-start">
                     <Button type="submit" isLoading={isEditing} disabled={credits < EDIT_COST}>
-                        Revisi, Gercep! ({EDIT_COST} Kredit)
+                        Revisi, Gercep! ({EDIT_COST} Token)
                     </Button>
                 </div>
             </form>

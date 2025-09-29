@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions, generateSocialMediaPostImage } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -110,7 +111,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
       
        <div className="flex items-center gap-4">
           <Button onClick={handleSubmit} isLoading={isLoading} disabled={!topic.trim() || credits < GENERATION_COST}>
-            Buatin Kontennya, Mang! ({GENERATION_COST} Kredit)
+            Buatin Kontennya, Mang! ({GENERATION_COST} Token)
           </Button>
            <Button onClick={onBack} variant="secondary">
             &larr; Kembali ke Ringkasan

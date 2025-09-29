@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
@@ -218,7 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deductCredits = async (amount: number): Promise<boolean> => {
     if (!profile || !user) {
-        setAuthError("Pengguna tidak terautentikasi untuk mengurangi kredit.");
+        setAuthError("Pengguna tidak terautentikasi untuk mengurangi token.");
         return false;
     }
 
@@ -234,7 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', user.id);
 
     if (error) {
-        setAuthError(`Gagal mengurangi kredit: ${error.message}`);
+        setAuthError(`Gagal mengurangi token: ${error.message}`);
         return false;
     }
 

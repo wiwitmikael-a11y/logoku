@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateSocialMediaKitAssets } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -91,7 +92,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onG
       </div>
       
       <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST}>
-        Buatin Kit Sosmednya! ({GENERATION_COST} Kredit)
+        Buatin Kit Sosmednya! ({GENERATION_COST} Token)
       </Button>
       
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
@@ -119,7 +120,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onG
                         className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-video cursor-pointer group"
                         onClick={() => openModal(assets.bannerUrl)}
                     >
-                        <img src={assets.bannerUrl} alt="Generated Banner" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                        <img src={assets.bannerUrl} alt="Generated Banner" className="w-full object-contain group-hover:scale-105 transition-transform" />
                     </div>
                      <p className="text-xs text-center text-gray-400">Cocok untuk header Facebook, X, YouTube, dll.</p>
               </div>

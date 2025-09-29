@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -13,7 +14,7 @@ import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
   projectData: Partial<ProjectData>;
-  onComplete: (packagingBase64: string) => void;
+  onComplete: (data: { packagingUrl: string }) => void;
   onGoToDashboard: () => void;
 }
 
@@ -149,7 +150,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
 
   const handleContinue = () => {
     if (selectedDesignBase64) {
-      onComplete(selectedDesignBase64);
+      onComplete({ packagingUrl: selectedDesignBase64 });
     }
   };
 
@@ -187,7 +188,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
         />
         <div className="self-start">
           <Button type="submit" isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>
-            Bungkus Desainnya, Mang AI! ({GENERATION_COST} Kredit)
+            Bungkus Desainnya, Mang AI! ({GENERATION_COST} Token)
           </Button>
         </div>
       </form>

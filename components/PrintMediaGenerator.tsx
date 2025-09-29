@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -162,7 +163,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
             <h3 className="text-lg font-bold text-indigo-300 mb-2">Desain Template untuk {activeTab === 'roll_banner' ? 'Roll Banner' : 'Spanduk'}</h3>
             <p className="text-sm text-gray-400 mb-4">Mang AI akan membuatkan desain visual menggunakan logo dan palet warna brand-mu. Desain ini akan memiliki area kosong yang bisa kamu isi dengan tulisan sendiri menggunakan software editing gambar.</p>
              <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>
-                {`Bikinin Template Desain! (${GENERATION_COST} Kredit)`}
+                {`Bikinin Template Desain! (${GENERATION_COST} Token)`}
             </Button>
         </div>
       </form>

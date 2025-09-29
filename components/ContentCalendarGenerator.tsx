@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateContentCalendar, generateSocialMediaPostImage } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -170,7 +171,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
                                     onClick={() => handleGenerateImage(index)}
                                     disabled={credits < GENERATION_COST || generatingImageForIndex !== null}
                                 >
-                                    Buat Gambar ({GENERATION_COST} Kredit)
+                                    Buat Gambar ({GENERATION_COST} Token)
                                 </Button>
                                 {imageGenError?.index === index && (
                                     <p className="text-xs text-red-400 mt-2">{imageGenError.message}</p>
