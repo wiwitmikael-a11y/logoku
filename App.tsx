@@ -345,7 +345,7 @@ const MainApp: React.FC = () => {
         navigateTo('print_media');
     }, [saveLocalCheckpoint]);
 
-    const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets }) => {
+    const handlePrintMediaComplete = async (data: { assets: PrintMediaAssets }) => {
         if (!session?.user || !selectedProjectId) return;
         const currentState = loadWorkflowState() || {};
         const updatedData = { ...currentState, printMediaAssets: data.assets };
@@ -366,7 +366,7 @@ const MainApp: React.FC = () => {
         setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
         handleReturnToDashboard();
         showToast("Project disimpan lokal, siap disinkronkan!");
-    }, [session, selectedProjectId, handleReturnToDashboard, showToast]);
+    };
 
     // --- Project Synchronization ---
     const handleSyncProject = useCallback(async (projectId: number) => {
@@ -567,7 +567,7 @@ const MainApp: React.FC = () => {
             case 'profiles': return <ProfileOptimizer projectData={workflowData || {}} onComplete={handleProfilesComplete} {...commonErrorProps} />;
             case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
             case 'packaging': return <PackagingGenerator projectData={workflowData || {}} onComplete={handlePackagingComplete} {...commonErrorProps} />;
-            case 'print_media': return <PrintMediaGenerator projectData={workflowData || {}} onComplete={handlePrintMediaComplete} isFinalizing={false} {...commonErrorProps} />;
+            case 'print_media': return <PrintMediaGenerator projectData={workflowData || {}} onComplete={handlePrintMediaComplete} {...commonErrorProps} />;
 
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);

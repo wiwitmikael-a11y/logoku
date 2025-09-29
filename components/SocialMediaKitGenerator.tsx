@@ -58,8 +58,9 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onG
     }
 
     try {
-        const payload = { brandInputs, selectedPersona, selectedLogoUrl, selectedSlogan };
-        const resultAssets = await generateSocialMediaKitAssets(payload);
+        // FIX: Pass the whole projectData object and cast it to the required type.
+        // The wizard flow ensures all necessary properties exist at this stage.
+        const resultAssets = await generateSocialMediaKitAssets(projectData as ProjectData);
       
         await deductCredits(GENERATION_COST);
         setAssets(resultAssets);

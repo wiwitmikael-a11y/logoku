@@ -671,21 +671,36 @@ export const generateSocialAds = async (brandInputs: BrandInputs, persona: Brand
 };
 
 export const generateSocialMediaKitAssets = async (
-    projectData: { selectedLogoUrl: string; selectedPersona: BrandPersona; brandInputs: BrandInputs; selectedSlogan: string }
+    projectData: ProjectData
 ): Promise<SocialMediaKitAssets> => {
-    const { selectedLogoUrl, selectedPersona, brandInputs, selectedSlogan } = projectData;
-    const logoBase64 = selectedLogoUrl;
+    const { selectedLogoUrl, selectedPersona, brandInputs, selectedSlogan, logoVariations } = projectData;
     
     try {
         const primaryColor = selectedPersona.palet_warna_hex[0] || '#6366f1';
 
+        // --- Profile Picture Generation (uses main icon) ---
+        const profilePicBase64 = await fetchImageAsBase64(selectedLogoUrl);
         const profilePicPrompt = `Take the provided logo image. Place this logo perfectly centered on a solid color background. The background color should be exactly this hex code: ${primaryColor}. The final output should be a clean, square profile picture.`;
+        const generatedProfilePicPromise = generateImageWithLogo(profilePicBase64, profilePicPrompt);
 
-        const bannerPrompt = `Take the provided logo image. Create a simple and clean Facebook banner (16:9 aspect ratio). The background should be a solid color, using this hex code: ${primaryColor}. Place the logo on the left or right side. Then, add the business name "${brandInputs.businessName}" and the slogan "${selectedSlogan}" in a clean, legible font. Ensure all text is spelled correctly.`;
+        // --- Banner Generation (uses horizontal logo if available) ---
+        const useHorizontalLogo = logoVariations && logoVariations.horizontal;
+        const bannerLogoUrl = useHorizontalLogo ? logoVariations.horizontal : selectedLogoUrl;
+        const bannerLogoBase64 = await fetchImageAsBase64(bannerLogoUrl);
+
+        let bannerPrompt: string;
+        if (useHorizontalLogo) {
+            // If the horizontal logo (with text) is used, just place it.
+            bannerPrompt = `Take the provided logo image (which is a complete logo with icon and text). Create a simple and clean Facebook banner (16:9 aspect ratio). The background should be a solid color, using this hex code: ${primaryColor}. Place the logo on the left or right side, leaving ample empty space. CRITICAL: DO NOT add any more text.`;
+        } else {
+            // If only the main icon is available, add text.
+            bannerPrompt = `Take the provided logo image (icon only). Create a simple and clean Facebook banner (16:9 aspect ratio). The background should be a solid color, using this hex code: ${primaryColor}. Place the logo on the left or right side. Then, add the business name "${brandInputs.businessName}" and the slogan "${selectedSlogan}" in a clean, legible font. Ensure all text is spelled correctly.`;
+        }
+        const generatedBannerPromise = generateImageWithLogo(bannerLogoBase64, bannerPrompt);
 
         const [profilePictureUrl, bannerUrl] = await Promise.all([
-            generateImageWithLogo(logoBase64, profilePicPrompt),
-            generateImageWithLogo(logoBase64, bannerPrompt)
+            generatedProfilePicPromise,
+            generatedBannerPromise
         ]);
         
         return { profilePictureUrl, bannerUrl };

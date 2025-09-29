@@ -15,17 +15,14 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Reverted to constructor for state initialization and method binding.
-  // The modern class field syntax was causing type errors where inherited members
-  // like `this.props` and `this.setState` were not recognized in this environment.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-  }
+  // FIX: Reverted to modern class field syntax for state initialization and method binding.
+  // The constructor-based approach was causing TypeScript errors related to `this` context.
+  // Class fields correctly declare properties on the instance and arrow functions auto-bind `this`.
+  state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
@@ -41,7 +38,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       this.setState({ isCopied: true });
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
-  };
+  }
 
   render(): React.ReactNode {
     if (this.state.hasError) {

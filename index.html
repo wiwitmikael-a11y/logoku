@@ -62,6 +62,16 @@
         /* The SVG circuit background has been removed. */
       }
       
+      /* NEW: Smooth scrolling for Brand Hub */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* NEW: Offset for sticky header when scrolling to anchors */
+      section[id] {
+        scroll-margin-top: 100px;
+      }
+      
       /* NEW: Allow text selection on specific elements */
       .selectable-text {
         -webkit-user-select: text; /* For Safari */

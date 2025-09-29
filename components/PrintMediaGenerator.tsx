@@ -12,15 +12,14 @@ import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
   projectData: Partial<ProjectData>;
-  onComplete: (printMediaAssets: PrintMediaAssets) => void;
-  isFinalizing: boolean;
+  onComplete: (data: { assets: PrintMediaAssets }) => Promise<void>;
   onGoToDashboard: () => void;
 }
 
 type MediaTab = 'roll_banner' | 'banner';
 const GENERATION_COST = 1;
 
-const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinalizing, onGoToDashboard }) => {
+const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -29,6 +28,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
   const [generatedAssets, setGeneratedAssets] = useState<PrintMediaAssets>({});
   
   const [isLoading, setIsLoading] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
@@ -58,7 +58,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
     setShowNextStepNudge(false);
     playSound('start');
 
-    const { brandInputs, selectedPersona, selectedLogoUrl } = projectData;
+    const { brandInputs, selectedPersona, selectedLogoUrl, logoVariations } = projectData;
 
     if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
         setError("Data project (logo/persona) tidak lengkap.");
@@ -71,14 +71,39 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       let prompt = '';
       const colors = selectedPersona.palet_warna_hex.join(', ');
       const style = selectedPersona.kata_kunci.join(', ');
+      
+      let logoToUseUrl = selectedLogoUrl;
+      let promptContainsText = false;
 
-      if (activeTab === 'banner') {
-          prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk). CRITICAL: The final image MUST have a wide horizontal aspect ratio of 3:1. Do NOT create a realistic 3D mockup; create a flat, 2D, print-ready design. Use the brand's color palette: ${colors}. The design should be bold, eye-catching, and incorporate the brand's style keywords: ${style}. Place the logo prominently. The design MUST have large empty spaces or simple colored background shapes for text to be added later by the user. CRITICAL: DO NOT generate any text, letters, or words.`;
-      } else if (activeTab === 'roll_banner') {
-          prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner. CRITICAL: The final image MUST have a tall vertical aspect ratio of 9:16. Do NOT create a realistic 3D mockup; create a flat, 2D, print-ready design. Use the brand's color palette: ${colors}. The design should be stylish, modern, and incorporate the brand's style keywords: ${style}. Place the logo prominently, usually near the top. The design MUST have significant empty space and placeholder colored blocks for text to be added later by the user. CRITICAL: DO NOT generate any text, letters, or words.`;
+      if (activeTab === 'banner' && logoVariations?.horizontal) {
+          logoToUseUrl = logoVariations.horizontal;
+          promptContainsText = true;
+      } else if (activeTab === 'roll_banner' && logoVariations?.stacked) {
+          logoToUseUrl = logoVariations.stacked;
+          promptContainsText = true;
       }
       
-      const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
+      const textInstruction = promptContainsText 
+        ? "The provided logo already has text, so DO NOT generate any additional text." 
+        : "DO NOT generate any text, letters, or words.";
+
+      if (activeTab === 'banner') {
+          prompt = `Take the provided logo image. Create a visually stunning and highly functional flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk, 3:1 aspect ratio). Do NOT create a realistic 3D mockup. The design must be a 2D, print-ready file.
+- **Visual Hierarchy:** Place the logo prominently in a corner (e.g., top-left) to establish brand identity first.
+- **Color Palette:** Use the brand's color palette (${colors}) to create a dynamic and abstract background with geometric shapes or subtle gradients that are not distracting.
+- **Functional Layout:** The core principle is functionality. A large, clean primary area (either centered or following the rule of thirds) MUST be left with a very light, solid color from the palette. This is a placeholder for the user to add a large headline and other text.
+- **Style:** The overall aesthetic should be professional, modern, and incorporate the brand's style: ${style}.
+- **Critical Instruction:** ${textInstruction}`;
+      } else if (activeTab === 'roll_banner') {
+          prompt = `Take the provided logo image. Create a visually stunning and highly functional flat graphic design TEMPLATE for a vertical roll-up banner with a **1:3 aspect ratio (tall and narrow)**. Do NOT create a realistic 3D mockup. The design must be a 2D, print-ready file.
+- **Visual Hierarchy:** Place the logo at the top-center, leaving adequate 'headroom' above it as the primary focal point.
+- **Color Palette:** Use the brand's color palette (${colors}) to create elegant, abstract shapes or vertical bands of color along the sides, framing the main content area.
+- **Functional Layout:** The central vertical column of the banner must be a clean, solid, light color from the palette. This large empty space is the primary placeholder for the user to add a headline, bullet points, and contact information. The layout should guide the viewer's eye from top to bottom.
+- **Style:** The overall aesthetic should be professional, stylish, and incorporate the brand's style: ${style}.
+- **Critical Instruction:** ${textInstruction}`;
+      }
+      
+      const logoBase64 = await fetchImageAsBase64(logoToUseUrl);
       const results = await generatePrintMedia(prompt, logoBase64);
       
       await deductCredits(GENERATION_COST);
@@ -101,8 +126,10 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
     }
   }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, activeTab]);
 
-  const handleFinalize = () => {
-    onComplete(generatedAssets);
+  const handleFinalize = async () => {
+    setIsFinalizing(true);
+    await onComplete({ assets: generatedAssets });
+    // The parent component will navigate away, so no need to set isFinalizing back to false
   };
 
   const handleTabClick = (tab: MediaTab) => {
@@ -111,6 +138,10 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       setShowNextStepNudge(false);
       setDesigns([]);
   }
+  
+  const previewContainerClasses = activeTab === 'banner' 
+    ? 'w-full aspect-[3/1]' 
+    : 'w-full max-w-[240px] aspect-[1/3] mx-auto';
 
   return (
     <div className="flex flex-col gap-8">
@@ -123,7 +154,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
       
       <div className="flex flex-wrap border-b border-gray-700">
           <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk (Horizontal 3:1)</button>
-          <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Roll Banner (Vertikal)</button>
+          <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Roll Banner (Vertikal 1:3)</button>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -143,7 +174,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
             <h3 className="text-lg md:text-xl font-bold">Desain Hasil Generate:</h3>
           <div className="flex justify-center w-full max-w-2xl">
             <div 
-                className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-video ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
+                className={`bg-white rounded-lg p-2 flex items-center justify-center shadow-lg ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group ${previewContainerClasses}`}
                 onClick={() => openModal(designs[0])}
               >
                 <img src={designs[0]} alt={`Generated mockup for ${activeTab}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
@@ -159,7 +190,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, isFinal
             </CalloutPopup>
         )}
         <Button onClick={handleFinalize} disabled={Object.keys(generatedAssets).length === 0 || isFinalizing} isLoading={isFinalizing}>
-          {isFinalizing ? 'Finalisasi & Simpan Project...' : 'Selesai & Lihat Brand Kit Lengkap &rarr;'}
+          Selesai & Lihat Brand Kit Lengkap
         </Button>
       </div>
       
