@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -58,12 +57,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     setShowNextStepNudge(false);
     playSound('start');
     try {
-      // FIX: Fetch the current logo as base64 to generate variations from it.
-      const logoBase64 = await fetchImageAsBase64(finalLogoUrl);
-
-      // FIX: Called generateLogoVariations with correct arguments: base64 string and business name.
-      const generatedVariations = await generateLogoVariations(logoBase64, businessName);
-      
+      const generatedVariations = await generateLogoVariations(finalLogoUrl, businessName);
       await deductCredits(VARIATION_COST);
       
       setVariations(generatedVariations);
@@ -92,15 +86,14 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     setError(null);
     playSound('start');
     try {
-      const imageAsBase64 = await fetchImageAsBase64(finalLogoUrl);
-      const base64Data = imageAsBase64.split(',')[1];
-      const mimeType = imageAsBase64.match(/data:(.*);base64/)?.[1] || 'image/png';
+      const base64Data = finalLogoUrl.split(',')[1];
+      const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/png';
       
       const editedBase64Result = await editLogo(base64Data, mimeType, editPrompt);
       
       await deductCredits(EDIT_COST);
       setFinalLogoUrl(editedBase64Result);
-      setVariations(null);
+      setVariations(null); // Reset variations as the base logo has changed
       setShowNextStepNudge(false);
       playSound('success');
     } catch (err)
@@ -147,7 +140,6 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
             </div>
 
             {variations ? (
-                // FIX: Updated JSX to show the correct variations: stacked, horizontal, monochrome.
                 <div ref={variationsRef}>
                     <h4 className="font-bold mb-4">Paket Logo Lengkap:</h4>
                     <div className="grid grid-cols-2 gap-4 text-center">

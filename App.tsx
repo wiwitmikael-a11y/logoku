@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
@@ -289,11 +287,13 @@ const MainApp: React.FC = () => {
     
     // --- Centralized Local Checkpoint Saver ---
     const saveLocalCheckpoint = useCallback((updatedData: Partial<ProjectData>) => {
-        saveWorkflowState(updatedData);
+        const currentState = loadWorkflowState() || {};
+        const combinedData = { ...currentState, ...updatedData };
+        saveWorkflowState(combinedData);
         showToast("Progres tersimpan sementara di browser!");
     }, [showToast]);
 
-    // --- NEW A-Z WIZARD STEP HANDLERS ---
+    // --- NEW A-Z WIZARD STEP HANDLERS (REWORKED) ---
     const handlePersonaComplete = useCallback((data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         const updatedData: Partial<ProjectData> = { brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan };
         saveLocalCheckpoint(updatedData);
@@ -301,50 +301,43 @@ const MainApp: React.FC = () => {
     }, [saveLocalCheckpoint]);
     
     const handleLogoComplete = useCallback((data: { logoBase64: string; prompt: string }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt };
+        const updatedData = { selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt };
         saveLocalCheckpoint(updatedData);
         navigateTo('logo_detail');
     }, [saveLocalCheckpoint]);
 
     const handleLogoDetailComplete = useCallback((data: { finalLogoUrl: string; variations: LogoVariations }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
+        const updatedData = { selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
         saveLocalCheckpoint(updatedData);
         navigateTo('content_calendar');
     }, [saveLocalCheckpoint]);
 
     const handleContentCalendarComplete = useCallback((data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, contentCalendar: data.calendar, searchSources: data.sources };
+        const updatedData = { contentCalendar: data.calendar, searchSources: data.sources };
         saveLocalCheckpoint(updatedData);
         navigateTo('social_kit');
     }, [saveLocalCheckpoint]);
 
     const handleSocialKitComplete = useCallback((data: { assets: SocialMediaKitAssets }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, socialMediaKit: data.assets };
+        const updatedData = { socialMediaKit: data.assets };
         saveLocalCheckpoint(updatedData);
         navigateTo('profiles');
     }, [saveLocalCheckpoint]);
 
     const handleProfilesComplete = useCallback((data: { profiles: SocialProfileData }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, socialProfiles: data.profiles };
+        const updatedData = { socialProfiles: data.profiles };
         saveLocalCheckpoint(updatedData);
         navigateTo('social_ads');
     }, [saveLocalCheckpoint]);
 
     const handleSocialAdsComplete = useCallback((data: { adsData: SocialAdsData }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, socialAds: data.adsData };
+        const updatedData = { socialAds: data.adsData };
         saveLocalCheckpoint(updatedData);
         navigateTo('packaging');
     }, [saveLocalCheckpoint]);
 
     const handlePackagingComplete = useCallback((data: { packagingUrl: string }) => {
-        const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, selectedPackagingUrl: data.packagingUrl };
+        const updatedData = { selectedPackagingUrl: data.packagingUrl };
         saveLocalCheckpoint(updatedData);
         navigateTo('print_media');
     }, [saveLocalCheckpoint]);
@@ -434,19 +427,16 @@ const MainApp: React.FC = () => {
     };
 
     // --- REGENERATION HANDLER IMPLEMENTATIONS ---
-    // FIX: Mark function as async to return a Promise.
     const handleRegenerateContentCalendar = async (projectId: number) => {
         const p = projects.find(p => p.id === projectId);
         if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return;
         handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs.businessName, p.project_data.selectedPersona).then(res => res.calendar), "Kalender konten baru berhasil dibuat!");
     };
-    // FIX: Mark function as async to return a Promise.
     const handleRegenerateProfiles = async (projectId: number) => {
         const p = projects.find(p => p.id === projectId);
         if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return;
         handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p.project_data.brandInputs, p.project_data.selectedPersona), "Profil sosmed baru berhasil dibuat!");
     };
-    // FIX: Mark function as async to return a Promise.
     const handleRegenerateSocialAds = async (projectId: number) => {
         const p = projects.find(p => p.id === projectId);
         if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return;
@@ -476,7 +466,6 @@ const MainApp: React.FC = () => {
             setGeneralError(err instanceof Error ? err.message : 'Gagal membuat social media kit.');
         }
     };
-    // FIX: Mark function as async to return a Promise.
     const handleRegeneratePackaging = async (projectId: number) => {
         const p = projects.find(p => p.id === projectId);
         if (!p || !p.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return;
@@ -484,10 +473,10 @@ const MainApp: React.FC = () => {
         const prompt = `Take the provided logo image. Create a realistic, high-quality product mockup of a generic product box for "${brandInputs.businessDetail}". Place the logo prominently. The brand is "${brandInputs.businessName}". The style is ${selectedPersona.kata_kunci.join(', ')}, modern, and clean. This is a commercial product photo.`;
         handleRegenerateVisualAsset(projectId, 'selectedPackagingUrl', 1, async () => {
             const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
-            return geminiService.generatePackagingDesign(prompt, logoBase64);
+            const result = await geminiService.generatePackagingDesign(prompt, logoBase64);
+            return result[0];
         }, "Desain kemasan baru berhasil dibuat!", 'packaging');
     };
-    // FIX: Mark function as async to return a Promise.
     const handleRegeneratePrintMedia = async (projectId: number, mediaType: 'banner' | 'roll_banner') => {
         const p = projects.find(p => p.id === projectId);
         if (!p || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return;

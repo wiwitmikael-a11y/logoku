@@ -14,7 +14,6 @@ interface ProjectDashboardProps {
   onWelcomeBannerClose: () => void;
   onDeleteProject: (projectId: number) => void;
   onSyncProject: (projectId: number) => void;
-  syncingProjectId: number | null;
 }
 
 const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
@@ -81,7 +80,7 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
 };
 
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject, onSyncProject, syncingProjectId }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject, onSyncProject }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
@@ -178,7 +177,6 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
                     <div className="mt-4 pt-4 border-t border-gray-700">
                        <Button 
                           onClick={(e) => { e.stopPropagation(); onSyncProject(project.id); }}
-                          isLoading={syncingProjectId === project.id}
                           size="small"
                           className="w-full"
                       >
