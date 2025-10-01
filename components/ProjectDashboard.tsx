@@ -109,13 +109,18 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <p className="text-gray-400 max-w-2xl">Studio branding AI pribadi lo. Mulai project baru untuk membangun identitas brand dari nol, atau lihat dan kelola brand kit yang sudah pernah lo buat.</p>
       </div>
       
-      <div className="w-full max-w-2xl bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-center gap-4 text-left animate-content-fade-in">
-        <div className="flex-shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+      <div className="w-full max-w-2xl bg-blue-900/50 border border-blue-700/50 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in">
+        <div className="flex-shrink-0 pt-1">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
         </div>
         <div>
-          <h4 className="font-bold text-white">Info Fase Pengenalan</h4>
-          <p className="text-sm text-gray-300">Selama masa pengenalan, nikmati bonus sambutan <span className="font-bold text-yellow-300">20 token</span> di hari pertama! Setelah itu, dapatkan <span className="font-bold text-yellow-300">5 token gratis setiap hari</span> untuk terus berkarya. Manfaatin buat eksplorasi sepuasnya ya, Juragan!</p>
+          <h4 className="font-bold text-white">Penting: Cara Kerja Penyimpanan</h4>
+          <p className="text-sm text-gray-300 mt-1">
+            Daftar project di dashboard ini <strong className="text-white">tersinkronisasi</strong> antar perangkat. Namun, progres pengerjaan di dalam wizard (misal: milih logo, ngisi form) <strong className="text-white">disimpan secara lokal</strong> di masing-masing browser.
+          </p>
+           <p className="text-sm text-yellow-300 mt-2 font-semibold">
+            Untuk mencegah data tertimpa, hindari mengerjakan SATU PROJECT YANG SAMA di dua perangkat berbeda secara bersamaan.
+          </p>
         </div>
       </div>
       
