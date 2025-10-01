@@ -5,12 +5,17 @@ import type { Project, ProjectData } from '../types';
 // Batas ukuran file maksimal yang diizinkan (5 MB)
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
-// Helper untuk konversi Base64 ke Blob
-const base64ToBlob = async (base64: string): Promise<Blob | null> => {
+// Helper untuk konversi Base64 ke Blob (versi lebih robust)
+const base64ToBlob = (dataURI: string): Blob | null => {
     try {
-        const response = await fetch(base64);
-        const blob = await response.blob();
-        return blob;
+        const byteString = atob(dataURI.split(',')[1]);
+        const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: mimeString });
     } catch (e) {
         console.error("Gagal mengonversi data URL Base64 ke Blob:", e);
         return null;
@@ -39,7 +44,7 @@ export const uploadImageFromBase64 = async (
     const BUCKET_NAME = 'project-assets';
 
     const compressedBase64 = await compressAndConvertToWebP(base64String);
-    const blob = await base64ToBlob(compressedBase64);
+    const blob = base64ToBlob(compressedBase64);
 
     if (!blob) {
         throw new Error('Gagal mengubah data Base64 menjadi file. Data mungkin korup atau formatnya salah.');
