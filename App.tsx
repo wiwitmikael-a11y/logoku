@@ -684,14 +684,15 @@ const MainApp: React.FC = () => {
                 if (projectToSync) {
                     return <SyncProgressScreen 
                         project={projectToSync}
-                        onSyncComplete={() => {
-                            fetchProjects();
+                        onSyncComplete={async () => {
+                            await fetchProjects();
                             handleReturnToDashboard();
                             showToast("Project berhasil disinkronkan!");
                         }}
-                        onSyncError={(error) => {
+                        onSyncError={async (error) => {
                             setGeneralError(`Gagal sinkronisasi: ${error.message}`);
-                            handleReturnToDashboard(); // Also return to dashboard on error
+                            await fetchProjects();
+                            handleReturnToDashboard();
                         }}
                     />;
                 } break;
