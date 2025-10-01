@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import { uploadAndSyncProjectAssets, uploadImageFromBase64 } from './services/storageService';
+import { uploadImageFromBase64 } from './services/storageService';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
@@ -51,9 +51,10 @@ const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'
 const SocialAdsGenerator = React.lazy(() => import('./components/SocialAdsGenerator'));
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
 const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
+const SyncProgressScreen = React.lazy(() => import('./components/SyncProgressScreen'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content_calendar' | 'social_kit' | 'profiles' | 'social_ads' | 'packaging' | 'print_media' | 'summary' | 'caption' | 'instant_content';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content_calendar' | 'social_kit' | 'profiles' | 'social_ads' | 'packaging' | 'print_media' | 'summary' | 'caption' | 'instant_content' | 'sync_progress';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const App: React.FC = () => {
@@ -87,7 +88,6 @@ const MainApp: React.FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [generalError, setGeneralError] = useState<string | null>(null);
     const [toast, setToast] = useState({ message: '', show: false });
-    const [syncingProjectId, setSyncingProjectId] = useState<number | null>(null);
     const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
     
     // Modals visibility
@@ -374,40 +374,14 @@ const MainApp: React.FC = () => {
 
     // --- Project Synchronization ---
     const handleSyncProject = useCallback(async (projectId: number) => {
-        setSyncingProjectId(projectId);
-        setGeneralError(null);
-        
         const projectToSync = projects.find(p => p.id === projectId);
         if (!projectToSync) {
             setGeneralError("Project yang akan disinkronkan tidak ditemukan.");
-            setSyncingProjectId(null);
             return;
         }
-
-        try {
-            const syncedProjectData = await uploadAndSyncProjectAssets(projectToSync);
-            
-            const { data: updatedProject, error } = await supabase
-                .from('projects')
-                .update({ project_data: syncedProjectData, status: 'completed' as ProjectStatus })
-                .eq('id', projectId)
-                .select()
-                .single();
-
-            if (error) throw error;
-            
-            setProjects(prev => prev.map(p => p.id === projectId ? (updatedProject as Project) : p));
-            showToast("Project berhasil disinkronkan ke cloud!");
-            playSound('success');
-
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat sinkronisasi.';
-            setGeneralError(msg);
-            playSound('error');
-        } finally {
-            setSyncingProjectId(null);
-        }
-    }, [projects, showToast]);
+        setSelectedProjectId(projectId);
+        navigateTo('sync_progress');
+    }, [projects]);
 
 
     // --- [BRAND HUB] Centralized Asset Regeneration Logic ---
@@ -577,6 +551,23 @@ const MainApp: React.FC = () => {
             case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
             case 'packaging': return <PackagingGenerator projectData={workflowData || {}} onComplete={handlePackagingComplete} {...commonErrorProps} />;
             case 'print_media': return <PrintMediaGenerator projectData={workflowData || {}} onComplete={handlePrintMediaComplete} {...commonErrorProps} />;
+            
+            case 'sync_progress':
+                const projectToSync = projects.find(p => p.id === selectedProjectId);
+                if (projectToSync) {
+                    return <SyncProgressScreen 
+                        project={projectToSync}
+                        onSyncComplete={() => {
+                            fetchProjects();
+                            handleReturnToDashboard();
+                            showToast("Project berhasil disinkronkan!");
+                        }}
+                        onSyncError={(error) => {
+                            setGeneralError(`Gagal sinkronisasi: ${error.message}`);
+                            handleReturnToDashboard(); // Also return to dashboard on error
+                        }}
+                    />;
+                } break;
 
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);
@@ -608,7 +599,6 @@ const MainApp: React.FC = () => {
                     onWelcomeBannerClose={() => setShowWelcomeBanner(false)} 
                     onDeleteProject={handleRequestDeleteProject} 
                     onSyncProject={handleSyncProject}
-                    syncingProjectId={syncingProjectId}
                 />;
         }
         handleReturnToDashboard();

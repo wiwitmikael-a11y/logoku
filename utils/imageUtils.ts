@@ -83,3 +83,10 @@ export const createWhiteCanvasBase64 = (width = 1024, height = 1024): string => 
     }
     return canvas.toDataURL('image/png'); // Using PNG as a safe default
 };
+
+/**
+ * Checks if a string is a Base64 data URL.
+ */
+export const isBase64DataUrl = (str: string | undefined): str is string => {
+    return typeof str === 'string' && str.startsWith('data:image');
+};

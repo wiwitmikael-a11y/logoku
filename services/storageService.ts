@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { compressAndConvertToWebP } from '../utils/imageUtils';
+import { compressAndConvertToWebP, isBase64DataUrl } from '../utils/imageUtils';
 import type { Project, ProjectData } from '../types';
 
 // Batas ukuran file maksimal yang diizinkan (5 MB)
@@ -78,94 +78,70 @@ export const uploadImageFromBase64 = async (
     return publicUrlData.publicUrl;
 };
 
-/**
- * Checks if a string is a Base64 data URL.
- */
-const isBase64DataUrl = (str: string | undefined): str is string => {
-    return typeof str === 'string' && str.startsWith('data:image');
+
+export type ProgressStatus = 'pending' | 'uploading' | 'complete' | 'error';
+export interface ProgressUpdate {
+  assetKey: string;
+  assetName: string;
+  status: ProgressStatus;
+  message?: string;
 }
+export type ProgressCallback = (update: ProgressUpdate) => void;
 
 /**
  * Takes a project with base64 assets, uploads them all to Supabase Storage,
  * and returns a new ProjectData object with public URLs.
  */
-export const uploadAndSyncProjectAssets = async (project: Project): Promise<ProjectData> => {
+export const uploadAndSyncProjectAssets = async (project: Project, onProgress: ProgressCallback): Promise<ProjectData> => {
     const { id: projectId, user_id: userId, project_data } = project;
     
     const newData: ProjectData = JSON.parse(JSON.stringify(project_data));
-    const uploadTasks: Promise<void>[] = [];
-
-    const createUploadTask = (
-        data: string,
-        assetType: string,
-        updateFn: (url: string) => void
-    ) => {
-        uploadTasks.push(
-            uploadImageFromBase64(data, userId, projectId, assetType).then(updateFn)
-        );
-    };
-
-    if (isBase64DataUrl(newData.selectedLogoUrl)) {
-        createUploadTask(newData.selectedLogoUrl, 'logo-main', url => { newData.selectedLogoUrl = url; });
-    }
-
-    if (newData.logoVariations) {
-        for (const key of Object.keys(newData.logoVariations) as Array<keyof typeof newData.logoVariations>) {
-            const variationData = newData.logoVariations[key];
-            if (isBase64DataUrl(variationData)) {
-                createUploadTask(variationData, `logo-variation-${key}`, url => {
-                    if (newData.logoVariations) newData.logoVariations[key] = url;
-                });
-            }
-        }
-    }
     
+    const assetsToUpload: {
+        key: string;
+        name: string;
+        data: string | undefined;
+        updateFn: (url: string) => void;
+    }[] = [];
+    
+    const addAsset = (key: string, name: string, data: string | undefined, updateFn: (url: string) => void) => {
+        if (isBase64DataUrl(data)) {
+            assetsToUpload.push({ key, name, data, updateFn });
+        }
+    };
+    
+    addAsset('logo-main', 'Logo Utama', newData.selectedLogoUrl, url => { newData.selectedLogoUrl = url; });
+    if (newData.logoVariations) {
+        addAsset('logo-variation-stacked', 'Logo Tumpuk', newData.logoVariations.stacked, url => { if(newData.logoVariations) newData.logoVariations.stacked = url; });
+        addAsset('logo-variation-horizontal', 'Logo Datar', newData.logoVariations.horizontal, url => { if(newData.logoVariations) newData.logoVariations.horizontal = url; });
+        addAsset('logo-variation-monochrome', 'Logo Monokrom', newData.logoVariations.monochrome, url => { if(newData.logoVariations) newData.logoVariations.monochrome = url; });
+    }
     if (newData.socialMediaKit) {
-        if (isBase64DataUrl(newData.socialMediaKit.profilePictureUrl)) {
-             createUploadTask(newData.socialMediaKit.profilePictureUrl, 'social-profile-pic', url => {
-                if (newData.socialMediaKit) newData.socialMediaKit.profilePictureUrl = url;
-            });
-        }
-        if (isBase64DataUrl(newData.socialMediaKit.bannerUrl)) {
-             createUploadTask(newData.socialMediaKit.bannerUrl, 'social-banner', url => {
-                if (newData.socialMediaKit) newData.socialMediaKit.bannerUrl = url;
-            });
-        }
+        addAsset('social-profile-pic', 'Foto Profil Sosmed', newData.socialMediaKit.profilePictureUrl, url => { if(newData.socialMediaKit) newData.socialMediaKit.profilePictureUrl = url; });
+        addAsset('social-banner', 'Banner Sosmed', newData.socialMediaKit.bannerUrl, url => { if(newData.socialMediaKit) newData.socialMediaKit.bannerUrl = url; });
     }
-
-    if (isBase64DataUrl(newData.selectedPackagingUrl)) {
-         createUploadTask(newData.selectedPackagingUrl, 'packaging', url => { newData.selectedPackagingUrl = url; });
-    }
-
+    addAsset('packaging', 'Desain Kemasan', newData.selectedPackagingUrl, url => { newData.selectedPackagingUrl = url; });
     if (newData.printMediaAssets) {
-        if (isBase64DataUrl(newData.printMediaAssets.businessCardUrl)) {
-             createUploadTask(newData.printMediaAssets.businessCardUrl, 'print-business-card', url => {
-                if (newData.printMediaAssets) newData.printMediaAssets.businessCardUrl = url;
-            });
-        }
-         if (isBase64DataUrl(newData.printMediaAssets.bannerUrl)) {
-             createUploadTask(newData.printMediaAssets.bannerUrl, 'print-banner', url => {
-                if (newData.printMediaAssets) newData.printMediaAssets.bannerUrl = url;
-            });
-        }
-         if (isBase64DataUrl(newData.printMediaAssets.rollBannerUrl)) {
-             createUploadTask(newData.printMediaAssets.rollBannerUrl, 'print-roll-banner', url => {
-                if (newData.printMediaAssets) newData.printMediaAssets.rollBannerUrl = url;
-            });
+        addAsset('print-banner', 'Spanduk', newData.printMediaAssets.bannerUrl, url => { if(newData.printMediaAssets) newData.printMediaAssets.bannerUrl = url; });
+        addAsset('print-roll-banner', 'Roll Banner', newData.printMediaAssets.rollBannerUrl, url => { if(newData.printMediaAssets) newData.printMediaAssets.rollBannerUrl = url; });
+    }
+    newData.contentCalendar?.forEach((entry, index) => {
+        addAsset(`content-image-${index}`, `Visual Konten Hari Ke-${index + 1}`, entry.imageUrl, url => { if(newData.contentCalendar) newData.contentCalendar[index].imageUrl = url; });
+    });
+
+
+    for (const asset of assetsToUpload) {
+        try {
+            onProgress({ assetKey: asset.key, assetName: asset.name, status: 'uploading', message: 'Mempersiapkan & mengunggah...' });
+            const uploadedUrl = await uploadImageFromBase64(asset.data!, userId, projectId, asset.key);
+            asset.updateFn(uploadedUrl);
+            onProgress({ assetKey: asset.key, assetName: asset.name, status: 'complete', message: 'Berhasil!' });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            onProgress({ assetKey: asset.key, assetName: asset.name, status: 'error', message });
+            throw new Error(`Gagal mengunggah ${asset.name}: ${message}`);
         }
     }
-
-    if (newData.contentCalendar) {
-        newData.contentCalendar.forEach((entry, index) => {
-            if (isBase64DataUrl(entry.imageUrl)) {
-                createUploadTask(entry.imageUrl, `content-image-${index}`, url => {
-                   if (newData.contentCalendar) newData.contentCalendar[index].imageUrl = url;
-                });
-            }
-        });
-    }
-
-    await Promise.all(uploadTasks);
 
     return newData;
 };
