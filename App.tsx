@@ -536,7 +536,7 @@ const MainApp: React.FC = () => {
         const commonErrorProps = { onGoToDashboard: handleReturnToDashboard };
 
         switch (appState) {
-            case 'persona': return <BrandPersonaGenerator onComplete={handlePersonaComplete} {...commonErrorProps} />;
+            case 'persona': return <BrandPersonaGenerator onComplete={handlePersonaComplete} onGoToDashboard={handleReturnToDashboard} />;
             case 'logo':
                 if (workflowData?.selectedPersona && workflowData.brandInputs) {
                     return <LogoGenerator persona={workflowData.selectedPersona} businessName={workflowData.brandInputs.businessName} onComplete={handleLogoComplete} {...commonErrorProps} />;
