@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 
 interface ImageModalProps {
@@ -30,31 +31,40 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) =
   const handleZoomIn = () => setScale(prev => prev * 1.2);
   const handleZoomOut = () => setScale(prev => Math.max(0.5, prev / 1.2));
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = imageUrl;
+  const handleDownload = async () => {
+    try {
+      // 1. Fetch the image data and create a blob. This works for both http(s) and data: URLs.
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error('Gagal mengambil data gambar untuk diunduh.');
+      }
+      const blob = await response.blob();
 
-    let extension = 'png'; // Default to png
-    if (imageUrl.startsWith('data:')) {
-        const mimeType = imageUrl.match(/data:(image\/.*?);/)?.[1];
-        if (mimeType) {
-            extension = mimeType.split('/')[1];
-        }
-    } else {
-        try {
-            const urlPath = new URL(imageUrl).pathname;
-            const lastDot = urlPath.lastIndexOf('.');
-            if (lastDot !== -1) {
-                extension = urlPath.substring(lastDot + 1);
-            }
-        } catch (e) { /* Invalid URL, fallback to png */ }
+      // 2. Determine the filename and extension from the blob's MIME type.
+      const mimeType = blob.type || 'image/png';
+      let extension = mimeType.split('/')[1] || 'png';
+      // Handle potential complex mime types like 'svg+xml'
+      extension = extension.split('+')[0];
+
+      const filename = `${altText.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'download'}.${extension}`;
+
+      // 3. Create a temporary link using a blob URL, which is handled correctly by iOS.
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+
+      // 4. Trigger the download and then clean up.
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // 5. Revoke the object URL to free up memory.
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Waduh, gagal mengunduh gambar. Coba lagi, ya.');
     }
-    
-    const filename = `${altText.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'download'}.${extension}`;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handleShare = async () => {
