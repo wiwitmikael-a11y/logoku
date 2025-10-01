@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
+import { GoogleGenAI, Chat } from "@google/genai";
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
@@ -54,6 +55,143 @@ const SyncProgressScreen = React.lazy(() => import('./components/SyncProgressScr
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content_calendar' | 'social_kit' | 'profiles' | 'social_ads' | 'packaging' | 'print_media' | 'summary' | 'caption' | 'instant_content' | 'sync_progress';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+
+// --- NEW: AI Assistant Component ---
+const AiAssistant: React.FC = () => {
+    const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+    const [isOpen, setIsOpen] = useState(false);
+    const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
+    const [input, setInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const chatRef = useRef<Chat | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(scrollToBottom, [messages, isLoading]);
+    
+    useEffect(() => {
+        if(isOpen && messages.length === 0) {
+             setMessages([{ role: 'model', text: "Sore, Juragan! Mang AI siap bantu. Ada yang bisa dibantuin soal branding atau fitur di aplikasi ini?" }]);
+        }
+    }, [isOpen, messages.length]);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto'; // Reset height
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`; // Set new height up to max
+        }
+    }, [input]);
+
+    const togglePanel = () => setIsOpen(prev => !prev);
+
+    const handleSendMessage = async (e?: React.FormEvent, prompt?: string) => {
+        e?.preventDefault();
+        const messageText = (prompt || input).trim();
+        if (!messageText || isLoading) return;
+        
+        if ((profile?.credits ?? 0) < 1) {
+            setShowOutOfCreditsModal(true);
+            return;
+        }
+
+        setIsLoading(true);
+        setInput('');
+        setMessages(prev => [...prev, { role: 'user', text: messageText }]);
+
+        try {
+            if (!chatRef.current) {
+                const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_API_KEY});
+                chatRef.current = ai.chats.create({
+                    model: 'gemini-2.5-flash',
+                    config: {
+                         systemInstruction: "You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'logo.ku' application. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.",
+                    },
+                });
+            }
+            
+            const response = await chatRef.current.sendMessage({ message: messageText });
+            
+            await deductCredits(1);
+            setMessages(prev => [...prev, { role: 'model', text: response.text }]);
+            
+        } catch (error) {
+            console.error("AI Assistant Error:", error);
+            const errorMessage = error instanceof Error ? error.message : "Waduh, Mang AI lagi pusing, nih. Coba tanya lagi nanti ya.";
+            setMessages(prev => [...prev, { role: 'model', text: `Error: ${errorMessage}` }]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const promptStarters = [
+        "Gimana cara bikin variasi logo?",
+        "Kasih ide bio Instagram buat jualan kopi.",
+        "Apa itu persona brand?",
+        "Bedanya logo 'stacked' sama 'horizontal' apa?",
+    ];
+
+    return (
+        <>
+            <div id="ai-assistant-overlay" className={isOpen ? 'visible' : ''} onClick={togglePanel}></div>
+            <button id="ai-assistant-fab" onClick={togglePanel} title="Tanya Mang AI">
+                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className="animate-breathing-ai" />
+            </button>
+            <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>
+                <header className="ai-chat-header flex justify-between items-center">
+                    <h3 className="text-xl font-bold text-indigo-400">Tanya Mang AI</h3>
+                    <button onClick={togglePanel} title="Tutup" className="p-2 -mr-2 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white">
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </header>
+                <div className="ai-chat-messages">
+                    {messages.map((msg, index) => (
+                        <div key={index} className={`chat-bubble ${msg.role}`} dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') }} />
+                    ))}
+                    {isLoading && (
+                        <div className="chat-bubble model"><LoadingMessage /></div>
+                    )}
+                     {messages.length === 1 && !isLoading && (
+                        <div className="flex flex-col gap-2 items-start">
+                            <p className="text-sm text-gray-400 mb-2">Contoh pertanyaan:</p>
+                            {promptStarters.map(prompt => (
+                                <button key={prompt} onClick={() => handleSendMessage(undefined, prompt)} className="ai-prompt-starter">
+                                    {prompt}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                </div>
+                <form className="ai-chat-input-form" onSubmit={handleSendMessage}>
+                    <div className="ai-chat-input-wrapper">
+                        <textarea
+                            ref={textareaRef}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Ketik pertanyaan di sini..."
+                            rows={1}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage();
+                                }
+                            }}
+                        />
+                        <button type="submit" disabled={!input.trim() || isLoading} title="Kirim (1 Token)">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.428A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </>
+    );
+};
 
 const App: React.FC = () => {
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
@@ -696,6 +834,7 @@ const MainApp: React.FC = () => {
                 <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
                 <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data.brandInputs?.businessName || 'Project Ini'} />
             </Suspense>
+            <AiAssistant />
         </div>
     );
 };
