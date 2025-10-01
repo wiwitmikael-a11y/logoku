@@ -10,10 +10,16 @@ interface ImageModalProps {
 
 const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) => {
   const [scale, setScale] = useState(1);
+  const [isAppleDevice, setIsAppleDevice] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const canShare = typeof navigator !== 'undefined' && !!navigator.share;
 
   useEffect(() => {
+    // Detect Apple mobile devices to provide specific saving instructions.
+    if (typeof navigator !== 'undefined') {
+        setIsAppleDevice(/iPad|iPhone|iPod/.test(navigator.userAgent));
+    }
+    
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose();
@@ -141,6 +147,13 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) =
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
+            {/* NEW: Show instructions only on Apple mobile devices */}
+            {isAppleDevice && (
+                <div className="text-center bg-gray-900/50 p-3 rounded-lg self-center">
+                    <p className="text-sm text-indigo-300 font-semibold">Tips Simpan di iPhone/iPad:</p>
+                    <p className="text-xs text-gray-300">Tekan & tahan gambar, lalu pilih "Add to Photos".</p>
+                </div>
+            )}
             <div className="overflow-auto flex-grow flex items-center justify-center">
                 <img
                     src={imageUrl}
