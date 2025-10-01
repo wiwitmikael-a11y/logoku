@@ -15,15 +15,12 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  // FIX: Initialized state using a class property to avoid constructor boilerplate and potential `this` context issues.
+  state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
@@ -33,8 +30,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Correctly used `this.state` and `this.setState` to access and update the component's state.
-  private handleCopy() {
+  // FIX: Converted `handleCopy` to an arrow function property. This automatically binds `this`,
+  // ensuring `this.state` and `this.setState` can be accessed correctly without manual binding in a constructor.
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -43,7 +41,8 @@ class ErrorBoundary extends React.Component<Props, State> {
   }
 
   public render(): React.ReactNode {
-    // FIX: Correctly used `this.state` and `this.props` to access component state and properties.
+    // FIX: With the component correctly typed and methods bound, `this.state` and `this.props`
+    // are now correctly recognized and accessed within the render method.
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

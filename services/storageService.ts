@@ -49,9 +49,10 @@ export const uploadImageFromBase64 = async (
         throw new Error(`Upload gagal: Ukuran file (${(blob.size / 1024 / 1024).toFixed(2)} MB) melebihi batas maksimal (5 MB).`);
     }
     
+    // Sanitize the user ID by removing hyphens to prevent potential issues with Supabase RLS functions.
+    const sanitizedUserId = userId.replace(/-/g, '');
     const fileName = `${projectId}_${assetType}-${Date.now()}.webp`;
-    // NEW: Menggunakan struktur folder per pengguna untuk RLS yang lebih kuat.
-    const filePath = `${userId}/${fileName}`; 
+    const filePath = `${sanitizedUserId}/${fileName}`; 
     const file = new File([blob], fileName, { type: 'image/webp' });
 
     const { error: uploadError } = await supabase.storage
@@ -63,8 +64,7 @@ export const uploadImageFromBase64 = async (
 
     if (uploadError) {
         console.error('Supabase Storage Error:', uploadError);
-        // NEW: Pesan error yang lebih deskriptif untuk membantu developer.
-        throw new Error(`Gagal upload ke Supabase Storage: ${uploadError.message}. Pastikan RLS Policy di bucket 'project-assets' mengizinkan pengguna untuk INSERT ke dalam folder mereka sendiri (contoh: (storage.foldername(name))[1] = auth.uid()::text).`);
+        throw new Error(`Gagal upload ke Supabase Storage: ${uploadError.message}. Pastikan RLS Policy di bucket 'project-assets' mengizinkan pengguna untuk INSERT. Coba policy ini: "(storage.foldername(name))[1] = replace(auth.uid()::text, '-', '')"`);
     }
 
     const { data: publicUrlData } = supabase.storage
