@@ -1,3 +1,5 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';

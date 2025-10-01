@@ -1,3 +1,4 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { createWhiteCanvasBase64, fetchImageAsBase64 } from '../utils/imageUtils';

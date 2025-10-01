@@ -1,3 +1,4 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { generateLogoOptions } from '../services/geminiService';

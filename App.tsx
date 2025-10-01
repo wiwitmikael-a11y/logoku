@@ -1,3 +1,5 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { GoogleGenAI, Chat } from "@google/genai";
 import { supabase, supabaseError } from './services/supabaseClient';

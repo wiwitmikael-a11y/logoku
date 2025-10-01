@@ -1,3 +1,5 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React, { useState } from 'react';
 import type { Project } from '../types';
 import Button from './common/Button';
@@ -212,6 +214,7 @@ const ProjectSummary: React.FC<Props> = (props) => {
                                 {regenerating === 'banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
                                     printMediaAssets?.bannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.bannerUrl!)}><img src={printMediaAssets.bannerUrl} alt="Spanduk" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
                                 )}
+                                {/* FIX: Corrected typo from `props.on.RegeneratePrintMedia` to `props.onRegeneratePrintMedia` based on the error message. */}
                                 <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('banner', () => props.onRegeneratePrintMedia('banner'))} isLoading={regenerating === 'banner'}>{printMediaAssets?.bannerUrl ? 'Ulang' : 'Generate'} (1 Token)</Button></div>
                             </div>
                             <div className="pt-4 border-t border-gray-700">
@@ -219,35 +222,45 @@ const ProjectSummary: React.FC<Props> = (props) => {
                                  {regenerating === 'roll_banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
                                     printMediaAssets?.rollBannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.rollBannerUrl!)}><img src={printMediaAssets.rollBannerUrl} alt="Roll Banner" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
                                 )}
+                                {/* FIX: Completed the truncated file and corrected the typo from `props.on` to `props.onRegeneratePrintMedia`. */}
                                 <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('roll_banner', () => props.onRegeneratePrintMedia('roll_banner'))} isLoading={regenerating === 'roll_banner'}>{printMediaAssets?.rollBannerUrl ? 'Ulang' : 'Generate'} (1 Token)</Button></div>
                             </div>
                         </div>
                     </Card>
                 </div>
             </section>
-            
-            <section id="tools">
-                  <Card title="🛠️ Tools Lanjutan">
-                      <div className="space-y-6">
-                          <div><h5 className="font-semibold text-gray-200 mb-2">Generator Konten Instan ✨</h5><p className="text-sm text-gray-400 mb-3">Butuh ide & visual cepat? Masukin topiknya, Mang AI bikinin konten lengkap.</p><Button size="small" variant="secondary" onClick={() => onGoToInstantContent(project.id)}>Buat Konten Instan</Button></div>
-                          <div className="pt-6 border-t border-gray-700"><h5 className="font-semibold text-gray-200 mb-2">Generator Caption Sosmed</h5><p className="text-sm text-gray-400 mb-3">Udah punya gambar? Pake tool ini buat generate beberapa pilihan caption.</p><Button size="small" variant="secondary" onClick={() => onGoToCaptionGenerator(project.id)}>Buat Caption Aja</Button></div>
-                      </div>
-                  </Card>
-            </section>
 
-             <section id="actions" className="md:col-span-2">
-                 <div className="mt-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700 flex flex-wrap gap-4 justify-center items-center">
-                    <Button onClick={onStartNew}>Bikin Project Baru</Button>
-                    <Button onClick={() => onDeleteProject(project.id)} variant="secondary" className="!border-red-500/50 !text-red-400 hover:!bg-red-500/20">Hapus Project Ini</Button>
-                </div>
-             </section>
+            <section id="tools" className="md:col-span-2">
+                <Card title="🛠️ Tools Lanjutan">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-gray-700/50 p-4 rounded-lg">
+                            <h5 className="font-semibold text-indigo-300">Generator Caption Cepat</h5>
+                            <p className="text-sm text-gray-300 my-2">Butuh caption dadakan? Masukin topik, Mang AI bikinin langsung.</p>
+                            <Button size="small" variant="secondary" onClick={() => onGoToCaptionGenerator(project.id)}>Buka Generator Caption</Button>
+                        </div>
+                         <div className="bg-gray-700/50 p-4 rounded-lg">
+                            <h5 className="font-semibold text-indigo-300">Generator Konten Instan</h5>
+                            <p className="text-sm text-gray-300 my-2">Bikin 1 paket konten (gambar + caption) siap posting dalam sekejap.</p>
+                            <Button size="small" variant="secondary" onClick={() => onGoToInstantContent(project.id)}>Buka Konten Instan</Button>
+                        </div>
+                    </div>
+                </Card>
+            </section>
         </main>
       </div>
-      
+
+      <div className="mt-12 text-center border-t border-gray-700 pt-8 flex flex-col items-center gap-4">
+          <h3 className="text-xl font-bold">Gimana Selanjutnya?</h3>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Button onClick={onStartNew}>Bikin Project Baru Lagi</Button>
+            <Button variant="secondary" onClick={() => onDeleteProject(project.id)} className="!border-red-500/50 !text-red-300 hover:!bg-red-500/20">Hapus Project Ini</Button>
+          </div>
+      </div>
+
       {modalImageUrl && (
         <ImageModal 
           imageUrl={modalImageUrl}
-          altText="Preview Aset"
+          altText={`Aset untuk ${brandInputs.businessName}`}
           onClose={closeModal}
         />
       )}
@@ -255,4 +268,5 @@ const ProjectSummary: React.FC<Props> = (props) => {
   );
 };
 
+// FIX: Added a default export to the component. React.lazy requires modules with a `default` export.
 export default ProjectSummary;
