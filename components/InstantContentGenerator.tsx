@@ -1,4 +1,4 @@
-
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions, generateSocialMediaPostImage } from '../services/geminiService';
@@ -95,7 +95,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Generator Konten Instan</h2>
         <p className="text-gray-400">
-          Ubah ide jadi konten siap posting dalam sekejap! Cukup kasih topik, Mang AI bakal bikinin gambar + caption yang pas sama brand "{projectData.selectedPersona?.nama_persona}" lo.
+          Ubah ide jadi konten siap posting dalam sekejap! Cukup kasih topik, Mang AI bakal bikinin gambar + 3 pilihan caption yang pas sama brand "{projectData.selectedPersona?.nama_persona}" lo.
         </p>
       </div>
 
@@ -115,7 +115,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
             Buatin Kontennya, Mang! ({GENERATION_COST} Token)
           </Button>
            <Button onClick={onBack} variant="secondary">
-            &larr; Kembali ke Ringkasan
+            &larr; Kembali ke Brand Hub
           </Button>
         </div>
 

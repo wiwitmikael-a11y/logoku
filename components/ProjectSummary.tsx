@@ -44,7 +44,7 @@ const BrandHubSidebar: React.FC = () => {
                                 <a href={`#${item.id}`} className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 rounded-md hover:bg-gray-700/50 hover:text-white transition-colors">
                                     <span>{item.icon}</span>
                                     <span>{item.name}</span>
-                                </a>
+                                a>
                             </li>
                         ))}
                     </ul>
@@ -194,8 +194,8 @@ const ProjectSummary: React.FC<Props> = (props) => {
                   </Card>
             </section>
 
-            <section id="visual-konten">
-                <div className="flex flex-col gap-8">
+            <section id="visual-konten" className="md:col-span-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                      <Card title="🎨 Desain Kemasan">
                         {regenerating === 'packaging' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : (
                             selectedPackagingUrl ? (
@@ -214,7 +214,6 @@ const ProjectSummary: React.FC<Props> = (props) => {
                                 {regenerating === 'banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
                                     printMediaAssets?.bannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.bannerUrl!)}><img src={printMediaAssets.bannerUrl} alt="Spanduk" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
                                 )}
-                                {/* FIX: Corrected typo from `props.on.RegeneratePrintMedia` to `props.onRegeneratePrintMedia` based on the error message. */}
                                 <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('banner', () => props.onRegeneratePrintMedia('banner'))} isLoading={regenerating === 'banner'}>{printMediaAssets?.bannerUrl ? 'Ulang' : 'Generate'} (1 Token)</Button></div>
                             </div>
                             <div className="pt-4 border-t border-gray-700">
@@ -222,7 +221,6 @@ const ProjectSummary: React.FC<Props> = (props) => {
                                  {regenerating === 'roll_banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
                                     printMediaAssets?.rollBannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.rollBannerUrl!)}><img src={printMediaAssets.rollBannerUrl} alt="Roll Banner" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
                                 )}
-                                {/* FIX: Completed the truncated file and corrected the typo from `props.on` to `props.onRegeneratePrintMedia`. */}
                                 <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('roll_banner', () => props.onRegeneratePrintMedia('roll_banner'))} isLoading={regenerating === 'roll_banner'}>{printMediaAssets?.rollBannerUrl ? 'Ulang' : 'Generate'} (1 Token)</Button></div>
                             </div>
                         </div>
@@ -240,7 +238,7 @@ const ProjectSummary: React.FC<Props> = (props) => {
                         </div>
                          <div className="bg-gray-700/50 p-4 rounded-lg">
                             <h5 className="font-semibold text-indigo-300">Generator Konten Instan</h5>
-                            <p className="text-sm text-gray-300 my-2">Bikin 1 paket konten (gambar + caption) siap posting dalam sekejap.</p>
+                            <p className="text-sm text-gray-300 my-2">Bikin 1 paket konten (gambar + 3 caption) siap posting dalam sekejap.</p>
                             <Button size="small" variant="secondary" onClick={() => onGoToInstantContent(project.id)}>Buka Konten Instan</Button>
                         </div>
                     </div>
@@ -268,5 +266,4 @@ const ProjectSummary: React.FC<Props> = (props) => {
   );
 };
 
-// FIX: Added a default export to the component. React.lazy requires modules with a `default` export.
 export default ProjectSummary;

@@ -44,7 +44,7 @@ const ProfileSettingsModal = React.lazy(() => import('./components/common/Profil
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
 const DeleteProjectSliderModal = React.lazy(() => import('./components/common/DeleteProjectSliderModal'));
 const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
-const BrandingTipModal = React.lazy(() => import('./components/common/BrandingTipModal'));
+const ProFeatureModal = React.lazy(() => import('./components/common/ProFeatureModal')); // NEW
 // NEW: Import all generator components for the wizard
 const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
 const SocialMediaKitGenerator = React.lazy(() => import('./components/SocialMediaKitGenerator'));
@@ -235,6 +235,7 @@ const MainApp: React.FC = () => {
     const [showCaptcha, setShowCaptcha] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showProSyncModal, setShowProSyncModal] = useState(false); // NEW
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
@@ -506,16 +507,11 @@ const MainApp: React.FC = () => {
     };
 
     // --- Project Synchronization ---
-    const handleSyncProject = useCallback(async (projectId: number) => {
-        const projectToSync = projects.find(p => p.id === projectId);
-        if (!projectToSync) {
-            setGeneralError("Project yang akan disinkronkan tidak ditemukan.");
-            return;
-        }
-        setSelectedProjectId(projectId);
-        navigateTo('sync_progress');
-    }, [projects]);
-
+    const handleRequestSyncProject = useCallback((projectId: number) => {
+        // Instead of navigating, show the pro feature modal
+        setShowProSyncModal(true);
+        playSound('error');
+    }, []);
 
     // --- [BRAND HUB] Centralized Asset Regeneration Logic ---
     const handleRegenerateTextAsset = async <T,>(
@@ -728,7 +724,7 @@ const MainApp: React.FC = () => {
                     showWelcomeBanner={showWelcomeBanner} 
                     onWelcomeBannerClose={() => setShowWelcomeBanner(false)} 
                     onDeleteProject={handleRequestDeleteProject} 
-                    onSyncProject={handleSyncProject}
+                    onSyncProject={handleRequestSyncProject}
                 />;
         }
         handleReturnToDashboard();
@@ -825,6 +821,7 @@ const MainApp: React.FC = () => {
             </main>
              <footer className="text-center py-6 px-4 text-sm text-gray-400 border-t border-gray-800">Powered by Atharrazka Core. Built for UMKM Indonesia.</footer>
             <AdBanner />
+            <AiAssistant />
             <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
             {/* Modals */}
             <Suspense fallback={null}>
@@ -832,12 +829,12 @@ const MainApp: React.FC = () => {
                 <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
                 <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
                 <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
+                <ProFeatureModal show={showProSyncModal} onClose={() => setShowProSyncModal(false)} />
                 <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={() => setShowToSModal(true)} onShowContact={() => setShowContactModal(true)} />
                 <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout Saja" cancelText="Nggak Jadi">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
                 <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
-                <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data.brandInputs?.businessName || 'Project Ini'} />
+                <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} />
             </Suspense>
-            <AiAssistant />
         </div>
     );
 };
