@@ -180,19 +180,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     setLoading(true);
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user);
+    
+    const initializeSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user);
+        }
+      } catch (error) {
+        console.error("Error during initial session fetch:", error);
+        setAuthError("Gagal mengambil sesi awal. Coba refresh halaman.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }).catch(error => {
-      console.error("Error during initial session fetch:", error);
-      setAuthError("Gagal mengambil sesi awal. Coba refresh halaman.");
-      setLoading(false);
-    });
+    };
+
+    initializeSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {

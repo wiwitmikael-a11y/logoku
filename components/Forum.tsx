@@ -14,6 +14,7 @@ import Textarea from './common/Textarea';
 const THREADS_PAGE_SIZE = 15;
 const POSTS_PAGE_SIZE = 20;
 
+const MANG_AI_EMAIL = "mangai.desain@gmail.com";
 const MANG_AI_ACCOUNT_NAME = "Mang AI";
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 const MANG_AI_AVATAR = `${GITHUB_ASSETS_URL}Mang_AI.png`;
@@ -52,7 +53,7 @@ const Forum: React.FC = () => {
         const isOfficial = profile?.full_name === MANG_AI_ACCOUNT_NAME;
         return {
             isOfficial,
-            name: isOfficial ? "Mang AI (Official)" : profile?.full_name || "Anonim",
+            name: isOfficial ? "Mang AI (Official)" : profile?.full_name || "Juragan Anonim",
             avatar: isOfficial ? MANG_AI_AVATAR : profile?.avatar_url || 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/default_avatar.png',
         };
     };
