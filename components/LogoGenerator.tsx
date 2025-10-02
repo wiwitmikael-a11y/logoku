@@ -354,20 +354,22 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
                 </div>
               ))}
           </div>
-           <div className="self-center flex items-center gap-4 relative">
-             {showNextStepNudge && (
-              <CalloutPopup className="absolute bottom-full right-0 mb-2 w-max animate-fade-in">
-                Mantap! Klik di sini buat lanjut.
-              </CalloutPopup>
-            )}
+           <div className="self-center flex items-center gap-4">
              {logos.length < 4 && (
                 <Button onClick={handleGenerateMore} variant="secondary" isLoading={isGeneratingMore} disabled={isGeneratingMore || credits < ADDITIONAL_LOGO_COST}>
                     Kasih 3 Pilihan Lain! ({ADDITIONAL_LOGO_COST} Token)
                 </Button>
              )}
-            <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64}>
-              Pilih & Finalisasi Logo &rarr;
-            </Button>
+            <div className="relative">
+                {showNextStepNudge && (
+                  <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-fade-in">
+                    Mantap! Klik di sini buat lanjut.
+                  </CalloutPopup>
+                )}
+                <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64}>
+                  Pilih & Finalisasi Logo &rarr;
+                </Button>
+            </div>
           </div>
         </div>
       )}

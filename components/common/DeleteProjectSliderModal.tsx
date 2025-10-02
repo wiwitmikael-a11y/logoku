@@ -21,7 +21,7 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
   const sliderRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-  const paperRef = useRef<HTMLImageElement>(null);
+  const paperRef = useRef<HTMLDivElement>(null);
   const trashRef = useRef<SVGSVGElement>(null);
   const trackGlowRef = useRef<HTMLDivElement>(null);
 
@@ -159,7 +159,13 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
             aria-valuemax={100}
             aria-valuenow={Math.round((sliderLeft / getTrackBounds().maxSliderLeft) * 100) || 0}
           >
-             <img ref={paperRef} src="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/paper-stack-icon.png" alt="Hapus Project" className="w-7 h-7" />
+             <div ref={paperRef}>
+                {projectLogoUrl ? (
+                  <img src={projectLogoUrl} alt="Logo Project" className="w-8 h-8 object-contain bg-white p-1 rounded-md" />
+                ) : (
+                  <img src="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/paper-stack-icon.png" alt="Hapus Project" className="w-7 h-7" />
+                )}
+             </div>
           </div>
 
           <span className={`text-center w-full font-semibold transition-opacity duration-300 ${(isDragging || isSolved) ? 'opacity-0' : 'opacity-100 text-gray-400'}`}>

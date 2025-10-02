@@ -756,6 +756,14 @@ const MainApp: React.FC = () => {
         );
     }
     
+    const getUserTier = (level: number): string => {
+        if (level >= 50) return 'user-tier-amethyst';
+        if (level >= 20) return 'user-tier-gold';
+        if (level >= 10) return 'user-tier-silver';
+        return 'user-tier-bronze';
+    };
+    const tierClass = getUserTier(profile?.level ?? 1);
+    
     return (
         <div className="text-white min-h-screen font-sans">
             <header className="py-3 px-4 md:py-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
@@ -772,8 +780,6 @@ const MainApp: React.FC = () => {
                     {/* Header Right */}
                     <div className="flex items-center gap-2 md:gap-4 relative">
                         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI peeking" className="animate-header-ai-peek w-12 h-12" />
-                        {/* Gamification Stats */}
-                         <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
                         {/* Token Info */}
                         <div className="relative" ref={tokenInfoRef}>
                             <div onClick={() => setIsTokenInfoOpen(p => !p)} className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/70 transition-colors" title="Info token">
@@ -791,8 +797,17 @@ const MainApp: React.FC = () => {
                         </div>
                          {/* User Menu */}
                         <div className="relative" ref={userMenuRef}>
-                            <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 rounded-full">
-                                <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full" />
+                            <button
+                                onClick={() => setIsUserMenuOpen(p => !p)}
+                                title="User Menu"
+                                className={`flex items-center gap-2 rounded-full shadow-md transition-all duration-300 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 ${tierClass} p-0.5`}
+                              >
+                                <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
+                                <img
+                                  src={session.user.user_metadata.avatar_url}
+                                  alt={session.user.user_metadata.full_name}
+                                  className="w-9 h-9 rounded-full border-2 border-gray-900/50 flex-shrink-0"
+                                />
                             </button>
                             {isUserMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in">
