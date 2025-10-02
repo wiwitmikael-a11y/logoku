@@ -11,7 +11,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'normal' | 'small';
 }
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant = 'primary', size = 'normal', ...props }) => {
   

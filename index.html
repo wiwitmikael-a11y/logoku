@@ -18,7 +18,7 @@
     <meta property="og:url" content="https://desain.fun" />
     <meta property="og:title" content="desain.fun - Studio Logo & Branding Mang AI" />
     <meta property="og:description" content="Aplikasi Mang AI buat bantu UMKM dan bisnis kecil bikin logo, persona brand, dan konten sosmed unik dalam hitungan menit." />
-    <meta property="og:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/desainfun-og.png" />
+    <meta property="og:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/desainfun-og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="desain.fun" />
@@ -29,14 +29,14 @@
     <meta property="twitter:url" content="https://desain.fun" />
     <meta property="twitter:title" content="desain.fun - Studio Logo & Branding Mang AI" />
     <meta property="twitter:description" content="Aplikasi Mang AI buat bantu UMKM dan bisnis kecil bikin logo, persona brand, dan konten sosmed unik dalam hitungan menit." />
-    <meta property="twitter:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/desainfun-og.png" />
+    <meta property="twitter:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/desainfun-og.png" />
     <meta name="twitter:creator" content="@rangga_p_h" />
 
-    <link rel="icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/favicon.ico" type="image/x-icon" />
-    <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/apple-touch-icon.png">
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon.ico" type="image/x-icon" />
+    <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
@@ -271,17 +271,17 @@
         100% { transform: translateX(5vw) scale(-1, 1) translateY(0); }
       }
       
-      /* NEW & FIXED: Keyframes for Header Mang AI Peeking */
+      /* UPDATED: More frequent peeking for Header Mang AI */
       @keyframes header-ai-peeking {
-        0%, 85% { 
+        0%, 70% { 
           transform: translateX(30px) translateY(5px) scaleX(-1); /* Posisi tersembunyi */
           opacity: 0;
         }
-        90% {
+        75% {
           transform: translateX(-45px) translateY(5px) scaleX(-1); /* Nongol lebih jauh ke kiri */
           opacity: 1;
         }
-        96% {
+        95% {
           transform: translateX(-45px) translateY(5px) scaleX(-1); /* Tahan sebentar */
           opacity: 1;
         }
@@ -508,7 +508,7 @@
         transform-origin: center bottom;
         width: 80%;
         height: 50%;
-        background-image: url('https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/bouncy.png');
+        background-image: url('https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/bouncy.png');
         background-size: contain;
         background-position: center bottom;
         background-repeat: no-repeat;
@@ -576,7 +576,7 @@
         position: absolute;
         left: 0;
         bottom: -10px;
-        animation: header-ai-peeking 12s linear infinite;
+        animation: header-ai-peeking 10s linear infinite;
         image-rendering: pixelated;
         will-change: transform, opacity;
         pointer-events: none;
@@ -637,6 +637,26 @@
       }
       
       /* --- NEW: AI Assistant Styles --- */
+      /* NEW: Keyframe for FAB subtle bounce */
+      @keyframes fab-bounce {
+        0%, 100% { transform: translateY(0) scale(1.1); }
+        50% { transform: translateY(-4px) scale(1.1); }
+      }
+      .animate-fab-bounce {
+        animation: fab-bounce 4s ease-in-out infinite;
+      }
+
+      /* NEW: Keyframe for FAB greeting animation */
+      @keyframes mang-ai-greet {
+          0% { transform: scale(1) rotate(0); }
+          30% { transform: scale(1.25) rotate(-15deg); }
+          60% { transform: scale(0.9) rotate(8deg); }
+          100% { transform: scale(1) rotate(0); }
+      }
+      .animate-mang-ai-greet {
+          animation: mang-ai-greet 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+      }
+      
       @keyframes fab-pulse-ring {
         0% {
           transform: scale(1);

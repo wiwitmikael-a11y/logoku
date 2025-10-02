@@ -1,4 +1,4 @@
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // We'll keep track of audio elements to manage them.
 const audioCache: { [key: string]: HTMLAudioElement } = {};

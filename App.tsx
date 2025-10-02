@@ -58,7 +58,7 @@ const AchievementToast = React.lazy(() => import('./components/gamification/Achi
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content';
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // --- NEW: AI Assistant Component ---
 const AiAssistant: React.FC = () => {
@@ -70,6 +70,7 @@ const AiAssistant: React.FC = () => {
     const chatRef = useRef<Chat | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const fabImageRef = useRef<HTMLImageElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,7 +93,23 @@ const AiAssistant: React.FC = () => {
         }
     }, [input]);
 
-    const togglePanel = () => setIsOpen(prev => !prev);
+    const togglePanel = () => {
+        setIsOpen(prev => {
+            const willBeOpen = !prev;
+            if (willBeOpen) {
+                // Trigger greeting animation on open
+                const img = fabImageRef.current;
+                if (img) {
+                    img.classList.remove('animate-mang-ai-greet');
+                    // A tiny timeout to allow the class removal to register, ensuring the animation can be re-triggered.
+                    setTimeout(() => img.classList.add('animate-mang-ai-greet'), 10);
+                    // Remove the class after the animation is done to keep it clean.
+                    setTimeout(() => img.classList.remove('animate-mang-ai-greet'), 700);
+                }
+            }
+            return willBeOpen;
+        });
+    };
 
     const handleSendMessage = async (e?: React.FormEvent, prompt?: string) => {
         e?.preventDefault();
@@ -150,8 +167,8 @@ const AiAssistant: React.FC = () => {
     return (
         <>
             <div id="ai-assistant-overlay" className={isOpen ? 'visible' : ''} onClick={togglePanel}></div>
-            <button id="ai-assistant-fab" onClick={togglePanel} title="Tanya Mang AI">
-                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className={mangAiAnimationClass} />
+            <button id="ai-assistant-fab" onClick={togglePanel} title="Tanya Mang AI" className="animate-fab-bounce">
+                <img ref={fabImageRef} src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className={mangAiAnimationClass} />
             </button>
             <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>
                 <header className="ai-chat-header flex justify-between items-center">

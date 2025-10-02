@@ -22,7 +22,7 @@ interface Props {
 const INITIAL_LOGO_COST = 1;
 const ADDITIONAL_LOGO_COST = 3;
 
-const GITHUB_ASSETS_URL_STYLES = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/styles/';
+const GITHUB_ASSETS_URL_STYLES = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/styles/';
 const logoStyles = [
     {
         id: 'minimalist',

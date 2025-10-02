@@ -7,7 +7,7 @@ interface Props {
   onShowToS: () => void;
 }
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowToS }) => {
   return (

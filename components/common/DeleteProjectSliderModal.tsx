@@ -11,7 +11,7 @@ interface Props {
   isConfirmLoading?: boolean;
 }
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, projectNameToDelete, projectLogoUrl, isConfirmLoading }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -163,7 +163,7 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
                 {projectLogoUrl ? (
                   <img src={projectLogoUrl} alt="Logo Project" className="w-8 h-8 object-contain bg-white p-1 rounded-md" />
                 ) : (
-                  <img src="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/paper-stack-icon.png" alt="Hapus Project" className="w-7 h-7" />
+                  <img src="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/paper-stack-icon.png" alt="Hapus Project" className="w-7 h-7" />
                 )}
              </div>
           </div>

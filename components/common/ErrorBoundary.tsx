@@ -3,7 +3,7 @@
 import React, { ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 interface Props {
   children: ReactNode;
@@ -17,14 +17,17 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
-
-  // FIX: Removed constructor. The handleCopy method is now an arrow function, which automatically binds `this`.
-  // This is the modern, standard approach in React and resolves the type errors where `this.props` and `this.setState` were not found.
+  // FIX: Re-introduced the constructor to initialize state. The previous implementation using a class property for state
+  // was causing TypeScript to not recognize inherited properties like `this.props` and `this.setState` from React.Component.
+  // Initializing state in the constructor is a more robust pattern that ensures the component's `this` context is correctly typed.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
