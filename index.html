@@ -203,6 +203,21 @@
         animation: image-appear 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
       }
 
+      /* NEW: Keyframe for gallery cards */
+      @keyframes gallery-card-appear {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+      }
+      .animate-gallery-card-appear {
+          animation: gallery-card-appear 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      }
+
 
       /* Keyframes for Mang AI with breathing and bouncy hop effects */
       @keyframes mario-top-breathing-bounce {

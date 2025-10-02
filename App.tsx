@@ -55,9 +55,10 @@ const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGene
 const HeaderStats = React.lazy(() => import('./components/gamification/HeaderStats'));
 const LevelUpModal = React.lazy(() => import('./components/gamification/LevelUpModal'));
 const AchievementToast = React.lazy(() => import('./components/gamification/AchievementToast'));
+const BrandGallery = React.lazy(() => import('./components/BrandGallery'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content' | 'brand_gallery';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // --- NEW: AI Assistant Component ---
@@ -371,8 +372,9 @@ const MainApp: React.FC = () => {
     }, []);
 
     const handleRequestReturnToDashboard = () => {
-        if (appState === 'dashboard') {
+        if (appState === 'dashboard' || appState === 'brand_gallery') {
             setIsUserMenuOpen(false);
+            handleReturnToDashboard();
             return;
         }
         setShowDashboardConfirm(true);
@@ -734,6 +736,7 @@ const MainApp: React.FC = () => {
             case 'print_media': return <PrintMediaGenerator projectData={workflowData || {}} onComplete={handlePrintMediaComplete} {...commonErrorProps} />;
             case 'content_calendar': return <ContentCalendarGenerator projectData={workflowData || {}} onComplete={handleContentCalendarComplete} {...commonErrorProps} />;
             case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
+            case 'brand_gallery': return <BrandGallery onGoToDashboard={handleReturnToDashboard} />;
             
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);
@@ -799,12 +802,17 @@ const MainApp: React.FC = () => {
             <header className="py-3 px-4 md:py-4 md:px-8 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-800">
                 <div className="max-w-7xl mx-auto flex justify-between items-center relative">
                     {/* Header Left */}
-                    <div className="flex items-baseline gap-3">
+                    <div className="flex items-center gap-4">
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleReturnToDashboard}>
                             <span>desain<span className="text-white">.fun</span></span>
                         </h1>
-                        <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={() => setShowContactModal(true)}>
-                            by @rangga.p.h
+                        <div className="hidden sm:flex items-center gap-4 border-l border-gray-700 pl-4">
+                            <button onClick={() => navigateTo('brand_gallery')} className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">
+                                Pameran Brand
+                            </button>
+                            <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={() => setShowContactModal(true)}>
+                                by @rangga.p.h
+                            </div>
                         </div>
                     </div>
                     {/* Header Right */}
@@ -843,6 +851,7 @@ const MainApp: React.FC = () => {
                                 <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in">
                                     {/* Menu Items */}
                                     <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Dashboard</button>
+                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); navigateTo('brand_gallery'); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors sm:hidden">Pameran Brand</button>
                                     <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Tentang Aplikasi</button>
                                     <div className="border-t border-gray-700 my-1"></div>
                                     <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Pengaturan Akun</button>
