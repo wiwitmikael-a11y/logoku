@@ -1,10 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Switched to a namespace import (`import * as React from 'react'`).
-// The previous default import was not correctly resolving the React namespace,
-// preventing this component from inheriting properties like `props` and `setState`
-// from `React.Component`.
-import * as React from 'react';
+// FIX: Reverted to a standard React import to resolve type resolution issues in the class component.
+// The namespace import was causing `props` and `setState` to be unrecognized.
+import React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';

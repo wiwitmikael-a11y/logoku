@@ -14,23 +14,10 @@ import Textarea from './common/Textarea';
 const THREADS_PAGE_SIZE = 15;
 const POSTS_PAGE_SIZE = 20;
 
-const MANG_AI_EMAIL = "mangai.desain@gmail.com";
 const MANG_AI_ACCOUNT_NAME = "Mang AI";
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 const MANG_AI_AVATAR = `${GITHUB_ASSETS_URL}Mang_AI.png`;
 
-const MANG_AI_WELCOME_THREAD: ForumThread = {
-  id: 'mang-ai-welcome-thread',
-  created_at: new Date().toISOString(),
-  user_id: 'mang-ai-official',
-  title: "Sokin Atuh, Ngobrol di Forum Juragan! ☕",
-  content: "Wih, mantap! Selamat datang di Forum Juragan, tempatnya para pejuang UMKM ngumpul.\n\nDi sini bebas mau nanya soal branding, pamerin karya lo di 'Pameran Brand', cari inspirasi, atau sekadar curhat soal jualan.\n\nInget ya, saling support, no sikut-sikutan. Oke? Gasss!",
-  profiles: {
-    full_name: MANG_AI_ACCOUNT_NAME,
-    avatar_url: MANG_AI_AVATAR
-  },
-  posts: []
-};
 
 const Forum: React.FC = () => {
     const { user, profile } = useAuth();
@@ -64,11 +51,11 @@ const Forum: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('threads')
-                .select('id, title, created_at, content, profiles(full_name, avatar_url)')
+                .select('id, title, created_at, content, user_id, profiles(full_name, avatar_url)')
                 .order('created_at', { ascending: false })
                 .limit(THREADS_PAGE_SIZE);
             if (error) throw error;
-            setThreads([MANG_AI_WELCOME_THREAD, ...(data as any)]);
+            setThreads(data as any);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Gagal memuat topik forum.');
         } finally {
@@ -81,10 +68,6 @@ const Forum: React.FC = () => {
     }, [fetchThreads]);
 
     const fetchPosts = async (threadId: string) => {
-        if (threadId === MANG_AI_WELCOME_THREAD.id) {
-            setPosts([]);
-            return;
-        }
         setIsLoadingPosts(true);
         try {
             const { data, error } = await supabase
@@ -244,25 +227,18 @@ const Forum: React.FC = () => {
                                         </div>
                                     );
                                 })}
-                                {selectedThread.id === MANG_AI_WELCOME_THREAD.id && (
-                                    <div className="text-center text-gray-500 p-4">
-                                        <p>Thread ini hanya untuk pengumuman. Buat topik baru untuk memulai diskusi, ya!</p>
-                                    </div>
-                                )}
                             </div>
                         </div>
 
-                        {/* Reply Form (disable for welcome thread) */}
-                        {selectedThread.id !== MANG_AI_WELCOME_THREAD.id && (
-                             <div className="mt-6 pt-6 border-t border-gray-700 flex-shrink-0">
-                                 <form onSubmit={handleCreatePost} className="flex flex-col gap-3">
-                                    <Textarea label={`Balas sebagai ${profile?.full_name || 'Anda'}`} name="reply" value={newPostContent} onChange={e => setNewPostContent(e.target.value)} rows={3} required/>
-                                    <div className="self-end">
-                                        <Button type="submit" isLoading={isSubmitting}>Kirim Balasan</Button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
+                        {/* Reply Form */}
+                         <div className="mt-6 pt-6 border-t border-gray-700 flex-shrink-0">
+                             <form onSubmit={handleCreatePost} className="flex flex-col gap-3">
+                                <Textarea label={`Balas sebagai ${profile?.full_name || 'Anda'}`} name="reply" value={newPostContent} onChange={e => setNewPostContent(e.target.value)} rows={3} required/>
+                                <div className="self-end">
+                                    <Button type="submit" isLoading={isSubmitting}>Kirim Balasan</Button>
+                                </div>
+                            </form>
+                        </div>
                     </>
                 ) : (
                     <div className="flex-grow flex flex-col items-center justify-center text-gray-500 text-center">
