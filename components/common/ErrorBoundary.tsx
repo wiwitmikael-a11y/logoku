@@ -17,28 +17,26 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: The original code used class property syntax for state, but TypeScript was not recognizing
-  // inherited properties like `setState` and `props`. Reverting to a standard constructor-based
-  // initialization to ensure the component's context and inheritance are correctly established.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-  }
+  // FIX: Removed public access modifiers from class members.
+  // The explicit 'public' keyword is not conventional in React components and may have
+  // been causing issues with the TypeScript compiler or build toolchain, leading to it
+  // not recognizing that this class extends React.Component and has access to `this.props` and `this.setState`.
+  state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
-  public static getDerivedStateFromError(error: Error): Partial<State> {
-    // FIX: Also reset isCopied state on a new error for safety.
+  static getDerivedStateFromError(error: Error): Partial<State> {
+    // Also reset isCopied state on a new error for safety.
     return { hasError: true, error, isCopied: false };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  public handleCopy = () => {
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -46,7 +44,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  public render(): React.ReactNode {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
