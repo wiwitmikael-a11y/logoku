@@ -6,29 +6,34 @@ const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-a
 const SupabaseKeyErrorScreen = ({ error }: { error: string }) => {
     const [isCopied, setIsCopied] = useState(false);
     
-    const fullErrorMessage = `${error} Pastikan kamu sudah mengatur environment variable di Vercel dengan awalan 'VITE_' dan melakukan deploy ulang ya.`;
+    // The user-facing message is now static and on-brand.
+    const userFriendlyMessage = "Waduh, Juragan! Kayaknya ada yang nyabut kabel server Mang AI, nih. Jadi nggak bisa nyambung ke database.";
+    const secretErrorCode = "[ERROR: KABEL_SBLS]"; // SBLS = Supabase Login Services. Your secret code.
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(fullErrorMessage);
+        // Copy the friendly message AND the secret code for debugging.
+        navigator.clipboard.writeText(`${userFriendlyMessage}\n\n${secretErrorCode}\n(Internal: ${error})`);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
     };
 
     return (
     <div className="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center p-4 text-center">
-        <div className="max-w-md bg-red-900/50 border border-red-700 p-8 rounded-lg flex flex-col items-center gap-4">
+        <div className="max-w-md w-full flex flex-col items-center gap-6">
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-                alt="Mang AI looking confused"
-                className="w-24 h-24 object-contain filter grayscale opacity-80"
+                alt="Mang AI tersandung kabel"
+                className="w-40 h-40 object-contain animate-tripped-ai"
                 style={{ imageRendering: 'pixelated' }}
             />
-            <div>
-                <h2 className="text-2xl font-bold text-red-400 mb-2">Kesalahan Konfigurasi Supabase</h2>
-                <p className="text-red-200">{error}</p>
-                <p className="text-gray-400 mt-4 text-sm">Pastikan kamu sudah mengatur environment variable di Vercel dengan awalan 'VITE_' dan melakukan deploy ulang ya.</p>
+            <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-lg">
+                <h2 className="text-2xl font-bold text-yellow-400 mb-2">Koneksi Gagal!</h2>
+                <p className="text-gray-300">{userFriendlyMessage}</p>
+                 <p className="mt-4 text-sm text-gray-500 font-mono bg-gray-900/50 inline-block px-2 py-1 rounded">
+                    {secretErrorCode}
+                </p>
             </div>
-            <Button onClick={handleCopy} variant="secondary" size="small" className="mt-4 !border-red-500/50 !text-red-300 hover:!bg-red-500/20">
+            <Button onClick={handleCopy} variant="secondary" size="small" className="!border-yellow-500/50 !text-yellow-300 hover:!bg-yellow-500/20">
                 {isCopied ? 'Info Tersalin!' : 'Salin Info Error'}
             </Button>
         </div>

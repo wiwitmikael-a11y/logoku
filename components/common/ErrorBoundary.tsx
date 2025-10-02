@@ -21,13 +21,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
-  // FIX: Added constructor to explicitly bind `this` for the handleCopy method.
-  // This resolves potential `this` context issues that cause errors like "property 'setState' does not exist".
-  constructor(props: Props) {
-    super(props);
-    this.handleCopy = this.handleCopy.bind(this);
-  }
-
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
@@ -36,8 +29,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted from an arrow function to a standard class method. `this` is now bound in the constructor.
-  private handleCopy() {
+  // FIX: Use an arrow function for `handleCopy` to automatically bind `this`.
+  // This resolves context issues and removes the need for a constructor just for binding.
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });

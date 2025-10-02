@@ -11,7 +11,7 @@ let supabaseError: string | null = null;
 
 if (!supabaseUrl || !supabaseAnonKey) {
     // If keys are missing, set a user-friendly error message. The app will display this.
-    supabaseError = "Waduh, koneksi ke Supabase gagal. Environment variable VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY belum di-set di Vercel, bro. Cek lagi gih.";
+    supabaseError = "Inisialisasi Supabase gagal: environment variable VITE_SUPABASE_URL atau VITE_SUPABASE_ANON_KEY tidak ditemukan.";
     // To prevent runtime errors, we assign a dummy object, but the app should halt based on supabaseError.
     supabase = {} as SupabaseClient; 
 } else {
