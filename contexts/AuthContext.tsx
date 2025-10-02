@@ -40,6 +40,7 @@ interface AuthContextType {
   // NEW: Gamification states and functions
   addXp: (amount: number) => Promise<void>;
   grantAchievement: (achievementId: string) => Promise<void>;
+  grantFirstStepXp: (stepName: string) => Promise<void>;
   showLevelUpModal: boolean;
   levelUpInfo: LevelUpInfo | null;
   setShowLevelUpModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -57,6 +58,7 @@ const getTodaysDateWIB = (): string => {
 const ACHIEVEMENTS_MAP: { [key: string]: Achievement } = {
   BRAND_PERTAMA_LAHIR: { id: 'BRAND_PERTAMA_LAHIR', name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
   SANG_KOLEKTOR: { id: 'SANG_KOLEKTOR', name: 'Sang Kolektor', description: 'Berhasil menyelesaikan 5 project branding.', icon: '🥈' },
+  SULTAN_KONTEN: { id: 'SULTAN_KONTEN', name: 'Sultan Konten', description: 'Berhasil menyelesaikan 10 project branding.', icon: '🥉' },
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -100,7 +102,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 credits: WELCOME_BONUS, 
                 last_credit_reset: getTodaysDateWIB(),
                 welcome_bonus_claimed: true,
-                xp: 0, level: 1, achievements: [], total_projects_completed: 0 // Initialize gamification fields
+                xp: 0, level: 1, achievements: [], total_projects_completed: 0, // Initialize gamification fields
+                last_daily_xp_claim: getTodaysDateWIB(), // Initialize daily XP claim date
+                completed_first_steps: [], // Initialize completed steps
             })
             .select()
             .single();
@@ -121,6 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         level: data.level ?? 1,
         achievements: data.achievements ?? [],
         total_projects_completed: data.total_projects_completed ?? 0,
+        last_daily_xp_claim: data.last_daily_xp_claim ?? '2000-01-01',
+        completed_first_steps: data.completed_first_steps ?? [],
     };
     
     if (!profileData.welcome_bonus_claimed) {
@@ -143,21 +149,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const todayWIB = getTodaysDateWIB();
+    let updates: Partial<Profile> = {};
+    let shouldUpdate = false;
+
+    // Daily Credit Reset Logic
     if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
+        updates.credits = DAILY_TOKENS;
+        updates.last_credit_reset = todayWIB;
+        shouldUpdate = true;
+    }
+    
+    // NEW: Daily XP Claim Logic
+    if (profileData.last_daily_xp_claim !== todayWIB) {
+        const DAILY_XP = 10;
+        updates.xp = (profileData.xp ?? 0) + DAILY_XP;
+        updates.last_daily_xp_claim = todayWIB;
+        shouldUpdate = true;
+    }
+
+    if (shouldUpdate) {
         const { data: updatedProfileData, error: updateError } = await supabase
             .from('profiles')
-            .update({ credits: DAILY_TOKENS, last_credit_reset: todayWIB })
+            .update(updates)
             .eq('id', userId)
             .select()
             .single();
         
         if (updateError) {
-            console.error("Gagal me-reset token harian:", updateError);
-            setAuthError("Gagal me-reset token harian, tapi jangan khawatir, data lama masih aman.");
-            setProfile(profileData);
+            console.error("Gagal melakukan update harian (token/XP):", updateError);
+            setAuthError("Gagal melakukan update harian, tapi jangan khawatir, data lama masih aman.");
+            setProfile(profileData); // Use old data on failure
         } else {
-            // Combine updated data with existing gamification data to prevent overwrites
             setProfile({ ...profileData, ...updatedProfileData } as Profile);
         }
     } else {
@@ -346,6 +369,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
       }
   }, [profile, user]);
+  
+  const grantFirstStepXp = useCallback(async (stepName: string) => {
+      if (!profile || !user || profile.completed_first_steps.includes(stepName)) return;
+
+      const newCompletedSteps = [...profile.completed_first_steps, stepName];
+      const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ completed_first_steps: newCompletedSteps })
+          .eq('id', user.id);
+          
+      if (updateError) {
+          setAuthError(`Gagal menandai langkah selesai: ${updateError.message}`);
+      } else {
+          // Add XP after successfully updating the DB
+          await addXp(25);
+          // Manually update local profile to reflect change immediately
+          setProfile(prev => prev ? ({ ...prev, completed_first_steps: newCompletedSteps }) : null);
+      }
+  }, [profile, user, addXp]);
 
   const value: AuthContextType = {
     session, user, profile, loading, authError, isMuted,
@@ -354,7 +396,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleLogout, executeLogout, handleToggleMute, handleDeleteAccount,
     deductCredits, refreshProfile, bgmSelection, handleBgmChange,
     // Gamification
-    addXp, grantAchievement, showLevelUpModal, levelUpInfo, setShowLevelUpModal,
+    addXp, grantAchievement, grantFirstStepXp, showLevelUpModal, levelUpInfo, setShowLevelUpModal,
     unlockedAchievement, setUnlockedAchievement,
   };
 

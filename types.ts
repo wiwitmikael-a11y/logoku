@@ -13,6 +13,8 @@ export interface Profile {
   level: number;
   achievements: string[];
   total_projects_completed: number;
+  last_daily_xp_claim: string; // NEW: Date string for daily XP
+  completed_first_steps: string[]; // NEW: Array of wizard steps completed for the first time
 }
 
 export interface BrandInputs {

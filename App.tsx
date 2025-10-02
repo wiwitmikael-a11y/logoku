@@ -240,7 +240,7 @@ const MainApp: React.FC = () => {
         handleLogout, executeLogout: authExecuteLogout,
         handleDeleteAccount, handleToggleMute, isMuted, 
         authError, refreshProfile, bgmSelection, handleBgmChange,
-        deductCredits, addXp, grantAchievement, showLevelUpModal,
+        deductCredits, addXp, grantAchievement, grantFirstStepXp, showLevelUpModal,
         levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement
     } = useAuth();
     
@@ -466,53 +466,61 @@ const MainApp: React.FC = () => {
     }, [showToast]);
 
     // --- REWORKED WIZARD STEP HANDLERS (NEW FLOW) ---
-    const handlePersonaComplete = useCallback((data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
+    const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         const updatedData: Partial<ProjectData> = { brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan };
         saveLocalCheckpoint(updatedData);
+        await grantFirstStepXp('persona');
         navigateTo('logo');
-    }, [saveLocalCheckpoint]);
+    }, [saveLocalCheckpoint, grantFirstStepXp]);
     
-    const handleLogoComplete = useCallback((data: { logoBase64: string; prompt: string }) => {
+    const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => {
         const updatedData = { selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt };
         saveLocalCheckpoint(updatedData);
+        await grantFirstStepXp('logo');
         navigateTo('logo_detail');
-    }, [saveLocalCheckpoint]);
+    }, [saveLocalCheckpoint, grantFirstStepXp]);
 
-    const handleLogoDetailComplete = useCallback((data: { finalLogoUrl: string; variations: LogoVariations }) => {
+    const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
         const updatedData = { selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
         saveLocalCheckpoint(updatedData);
+        await grantFirstStepXp('logo_detail');
         navigateTo('social_kit'); // 1. To Social Kit
-    }, [saveLocalCheckpoint]);
+    }, [saveLocalCheckpoint, grantFirstStepXp]);
     
-    const handleSocialKitComplete = useCallback((data: { assets: SocialMediaKitAssets }) => {
+    const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => {
         const updatedData = { socialMediaKit: data.assets };
         saveLocalCheckpoint(updatedData);
+        await grantFirstStepXp('social_kit');
         navigateTo('profiles'); // 2. To Profiles
-    }, [saveLocalCheckpoint]);
+    }, [saveLocalCheckpoint, grantFirstStepXp]);
 
-    const handleProfilesComplete = useCallback((data: { profiles: SocialProfileData }) => {
+    const handleProfilesComplete = useCallback(async (data: { profiles: SocialProfileData }) => {
         const updatedData = { socialProfiles: data.profiles };
         saveLocalCheckpoint(updatedData);
+        await grantFirstStepXp('profiles');
         navigateTo('packaging'); // 3. To Packaging
-    }, [saveLocalCheckpoint]);
+    }, [saveLocalCheckpoint, grantFirstStepXp]);
 
-    const handlePackagingComplete = useCallback((data: { packagingUrl: string }) => {
+    const handlePackagingComplete = useCallback(async (data: { packagingUrl: string }) => {
         const updatedData = { selectedPackagingUrl: data.packagingUrl };
         saveLocalCheckpoint(updatedData);
+        await grantFirstStepXp('packaging');
         navigateTo('print_media'); // 4. To Print Media
-    }, [saveLocalCheckpoint]);
+    }, [saveLocalCheckpoint, grantFirstStepXp]);
 
-    const handlePrintMediaComplete = useCallback((data: { assets: PrintMediaAssets }) => {
+    const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets }) => {
         const updatedData = { printMediaAssets: data.assets };
         saveLocalCheckpoint(updatedData);
+        await grantFirstStepXp('print_media');
         navigateTo('content_calendar'); // 5. To Content Calendar
-    }, [saveLocalCheckpoint]);
+    }, [saveLocalCheckpoint, grantFirstStepXp]);
     
-    const handleContentCalendarComplete = useCallback((data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
+    const handleContentCalendarComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
         const updatedData = { contentCalendar: data.calendar, searchSources: data.sources };
         saveLocalCheckpoint(updatedData);
+        await grantFirstStepXp('content_calendar');
         navigateTo('social_ads'); // 6. To Social Ads
-    }, [saveLocalCheckpoint]);
+    }, [saveLocalCheckpoint, grantFirstStepXp]);
 
     // NEW FINAL STEP with GAMIFICATION
     const handleSocialAdsComplete = async (data: { adsData: SocialAdsData }) => {
@@ -520,6 +528,9 @@ const MainApp: React.FC = () => {
         const currentState = loadWorkflowState() || {};
         const finalProjectData = { ...currentState, socialAds: data.adsData };
         
+        // 0. Grant XP for the final step
+        await grantFirstStepXp('social_ads');
+
         // 1. Update project data and status
         const { data: dbData, error: projectError } = await supabase
             .from('projects')
@@ -543,6 +554,8 @@ const MainApp: React.FC = () => {
             await grantAchievement('BRAND_PERTAMA_LAHIR');
         } else if (newTotalCompleted === 5) {
             await grantAchievement('SANG_KOLEKTOR');
+        } else if (newTotalCompleted === 10) {
+            await grantAchievement('SULTAN_KONTEN');
         }
 
         // 3. Update local state and UI
