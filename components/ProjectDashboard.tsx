@@ -198,6 +198,45 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     );
 };
 
+// NEW: Dynamic Template Card Component
+interface TemplateCardProps {
+  template: {
+    name: string;
+    description: string;
+    imageUrl: string;
+    data: Partial<BrandInputs>;
+  };
+  onClick: (data: Partial<BrandInputs>) => void;
+}
+
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => {
+  return (
+    <div
+      onClick={() => onClick(template.data)}
+      className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg transition-transform duration-300 hover:scale-105"
+    >
+      <img
+        src={template.imageUrl}
+        alt={template.name}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+      
+      {/* Default Visible Content */}
+      <div className="absolute bottom-0 left-0 p-4 text-white">
+        <h4 className="text-lg font-bold">{template.name}</h4>
+      </div>
+
+      {/* Hover Content */}
+      <div className="absolute bottom-0 left-0 w-full p-4 bg-black/70 backdrop-blur-sm text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
+        <h4 className="text-lg font-bold">{template.name}</h4>
+        <p className="text-xs mt-1 mb-3 text-gray-300">{template.description}</p>
+        <p className="text-sm font-semibold text-indigo-400">Gunakan Template &rarr;</p>
+      </div>
+    </div>
+  );
+};
+
 
 const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject, onShowBrandGallery }) => {
   const { session } = useAuth();
@@ -217,20 +256,23 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       return "Lanjutkan project...";
   }
 
-  const templates: { name: string; description: string; data: Partial<BrandInputs> }[] = [
+  const templates = [
     {
       name: '☕ Coffee Shop Kekinian',
       description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/template_kopi.jpg',
       data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkrong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' }
     },
     {
       name: '🌶️ Warung Seblak Viral',
       description: 'Template untuk bisnis seblak pedas yang menyasar target pasar remaja dan Gen Z.',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/template_seblak.jpg',
       data: { businessName: 'Seblak [Isi Sendiri]', businessCategory: 'Makanan', businessDetail: 'Seblak prasmanan dengan aneka topping pedas level dewa', targetAudience: 'Remaja usia 15-22', valueProposition: 'Seblak paling komplit dan pedasnya nampol, bikin ketagihan.', competitors: 'Seblak Jeletet, Seblak Bloom' }
     },
     {
       name: '👕 Distro Indie',
       description: 'Template untuk brand fashion streetwear dengan desain orisinal dan eksklusif.',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/template_distro.jpg',
       data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' }
     }
   ];
@@ -257,13 +299,11 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <h3 className="text-lg md:text-xl font-bold mb-4 mt-2">Jalan Pintas Juragan 🚀</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">
           {templates.map(template => (
-            <Card 
-              key={template.name}
-              title={template.name}
-              onClick={() => onNewProject(template.data)}
-            >
-              <p className="text-sm text-gray-400">{template.description}</p>
-            </Card>
+            <TemplateCard 
+                key={template.name}
+                template={template}
+                onClick={onNewProject}
+            />
           ))}
         </div>
       </div>
