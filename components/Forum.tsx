@@ -88,7 +88,9 @@ const Forum: React.FC = () => {
     const handleSelectThread = (thread: ForumThread) => {
         setSelectedThread(thread);
         setPosts([]);
-        fetchPosts(thread.id);
+        if (thread.id !== '0') { // Do not fetch posts for static thread
+            fetchPosts(thread.id);
+        }
     };
 
     const handleCreateThread = async (e: React.FormEvent) => {
@@ -164,26 +166,33 @@ const Forum: React.FC = () => {
                 )}
 
                 {isLoadingThreads ? <LoadingMessage /> : error ? <ErrorMessage message={error}/> : (
-                    <div className="flex flex-col gap-3">
-                        {threads.map(thread => {
-                            const threadAuthor = getOfficialDisplayData(thread.profiles);
-                            return (
-                                <div
-                                    key={thread.id}
-                                    onClick={() => handleSelectThread(thread)}
-                                    className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedThread?.id === thread.id ? 'bg-indigo-900/50' : 'bg-gray-800/50 hover:bg-gray-700/50'} ${threadAuthor.isOfficial ? 'border-l-4 border-amber-400' : ''}`}
-                                >
-                                    <h3 className="font-semibold text-white truncate">{thread.title}</h3>
-                                    <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                                        <img src={threadAuthor.avatar} alt={threadAuthor.name} className={`w-4 h-4 rounded-full ${threadAuthor.isOfficial ? 'p-0.5 bg-amber-200' : ''}`} style={threadAuthor.isOfficial ? { imageRendering: 'pixelated' } : {}}/>
-                                        <span className={threadAuthor.isOfficial ? 'font-bold text-amber-300' : ''}>{threadAuthor.name}</span>
-                                        <span>•</span>
-                                        <span>{new Date(thread.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                    threads.length === 0 && !showNewThreadForm ? (
+                        <div className="text-center p-4 bg-gray-800/50 rounded-lg">
+                            <p className="text-gray-400 text-sm">Forumnya masih sepi, Mang! Sokin, bikin postingan pertama!</p>
+                             <Button size="small" onClick={() => setShowNewThreadForm(true)} className="mt-4">Bikin Topik Pertama</Button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-3">
+                            {threads.map(thread => {
+                                const threadAuthor = getOfficialDisplayData(thread.profiles);
+                                return (
+                                    <div
+                                        key={thread.id}
+                                        onClick={() => handleSelectThread(thread)}
+                                        className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedThread?.id === thread.id ? 'bg-indigo-900/50' : 'bg-gray-800/50 hover:bg-gray-700/50'} ${threadAuthor.isOfficial ? 'border-l-4 border-amber-400' : ''}`}
+                                    >
+                                        <h3 className="font-semibold text-white truncate">{thread.title}</h3>
+                                        <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                                            <img src={threadAuthor.avatar} alt={threadAuthor.name} className={`w-4 h-4 rounded-full ${threadAuthor.isOfficial ? 'p-0.5 bg-amber-200' : ''}`} style={threadAuthor.isOfficial ? { imageRendering: 'pixelated' } : {}}/>
+                                            <span className={threadAuthor.isOfficial ? 'font-bold text-amber-300' : ''}>{threadAuthor.name}</span>
+                                            <span>•</span>
+                                            <span>{new Date(thread.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
+                    )
                 )}
             </aside>
 
@@ -231,14 +240,16 @@ const Forum: React.FC = () => {
                         </div>
 
                         {/* Reply Form */}
-                         <div className="mt-6 pt-6 border-t border-gray-700 flex-shrink-0">
-                             <form onSubmit={handleCreatePost} className="flex flex-col gap-3">
-                                <Textarea label={`Balas sebagai ${profile?.full_name || 'Anda'}`} name="reply" value={newPostContent} onChange={e => setNewPostContent(e.target.value)} rows={3} required/>
-                                <div className="self-end">
-                                    <Button type="submit" isLoading={isSubmitting}>Kirim Balasan</Button>
-                                </div>
-                            </form>
-                        </div>
+                        {selectedThread.id !== '0' && ( // Don't show reply form for static thread
+                             <div className="mt-6 pt-6 border-t border-gray-700 flex-shrink-0">
+                                 <form onSubmit={handleCreatePost} className="flex flex-col gap-3">
+                                    <Textarea label={`Balas sebagai ${profile?.full_name || 'Anda'}`} name="reply" value={newPostContent} onChange={e => setNewPostContent(e.target.value)} rows={3} required/>
+                                    <div className="self-end">
+                                        <Button type="submit" isLoading={isSubmitting}>Kirim Balasan</Button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="flex-grow flex flex-col items-center justify-center text-gray-500 text-center">
