@@ -73,7 +73,7 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
         <img
           src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
           alt="Mang AI working..."
-          className="animate-bouncing-ai absolute left-1/2 -translate-x-1/2 bottom-full w-32 h-32"
+          className="animate-bouncing-ai absolute left-1/2 -translate-x-1/2 bottom-full w-24 h-24"
         />
       )}
       {isLoading ? <LoadingMessage /> : children}

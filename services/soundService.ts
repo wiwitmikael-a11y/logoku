@@ -88,7 +88,12 @@ type BgmName = keyof typeof bgmUrls;
 export const playSound = (soundName: SoundName): void => {
     if (isMuted) return;
     const sound = getAudio(soundUrls[soundName]);
-    sound.volume = 0.5;
+    // Reduce volume specifically for the bounce sound
+    if (soundName === 'bounce') {
+      sound.volume = 0.2;
+    } else {
+      sound.volume = 0.5;
+    }
     sound.currentTime = 0;
     sound.play().catch(() => {}); // Ignore play errors if interrupted
 };
