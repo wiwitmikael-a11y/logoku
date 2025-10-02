@@ -175,7 +175,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
                     <div className="border-t border-gray-700 pt-3">
                         <h4 className="font-semibold text-gray-200 text-sm mb-2">Aset Visual Postingan</h4>
                         {item.imageUrl ? (
-                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(item.imageUrl!)}>
+                            <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group animate-image-appear" onClick={() => openModal(item.imageUrl!)}>
                                 <img src={item.imageUrl} alt={`Visual untuk ${item.ide_konten}`} className="max-w-full max-h-48 object-contain group-hover:scale-105 transition-transform"/>
                             </div>
                         ) : generatingImageForIndex === index ? (

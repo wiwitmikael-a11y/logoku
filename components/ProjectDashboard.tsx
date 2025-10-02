@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import type { Project } from '../types';
+import type { Project, BrandInputs } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -10,7 +10,7 @@ import SaweriaWidget from './common/SaweriaWidget';
 
 interface ProjectDashboardProps {
   projects: Project[];
-  onNewProject: () => void;
+  onNewProject: (templateData?: Partial<BrandInputs>) => void;
   onSelectProject: (projectId: number) => void;
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
@@ -159,6 +159,24 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       return "Lanjutkan project...";
   }
 
+  const templates: { name: string; description: string; data: Partial<BrandInputs> }[] = [
+    {
+      name: '☕ Coffee Shop Kekinian',
+      description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.',
+      data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkrong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' }
+    },
+    {
+      name: '🌶️ Warung Seblak Viral',
+      description: 'Template untuk bisnis seblak pedas yang menyasar target pasar remaja dan Gen Z.',
+      data: { businessName: 'Seblak [Isi Sendiri]', businessCategory: 'Makanan', businessDetail: 'Seblak prasmanan dengan aneka topping pedas level dewa', targetAudience: 'Remaja usia 15-22', valueProposition: 'Seblak paling komplit dan pedasnya nampol, bikin ketagihan.', competitors: 'Seblak Jeletet, Seblak Bloom' }
+    },
+    {
+      name: '👕 Distro Indie',
+      description: 'Template untuk brand fashion streetwear dengan desain orisinal dan eksklusif.',
+      data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' }
+    }
+  ];
+
   return (
     <div className="flex flex-col gap-8 items-center text-center">
       {showWelcomeBanner && <WelcomeBanner userName={userName} onClose={onWelcomeBannerClose} />}
@@ -169,9 +187,29 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       
       <DynamicInfoBox />
       
-      <Button onClick={onNewProject}>
+      <Button onClick={() => onNewProject()}>
         + Bikin Project Branding Baru
       </Button>
+      
+      <div className="w-full text-center mt-6">
+        <div className="relative inline-block my-2">
+          <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gray-600"></div>
+          <span className="relative bg-gray-900 px-4 text-gray-400 text-sm">Atau pake...</span>
+        </div>
+        <h3 className="text-lg md:text-xl font-bold mb-4 mt-2">Jalan Pintas Juragan 🚀</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">
+          {templates.map(template => (
+            <Card 
+              key={template.name}
+              title={template.name}
+              onClick={() => onNewProject(template.data)}
+            >
+              <p className="text-sm text-gray-400">{template.description}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+
 
       {inProgressProjects.length > 0 && (
         <div className="w-full text-left mt-8">

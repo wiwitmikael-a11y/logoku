@@ -146,7 +146,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
           <h3 className="text-lg md:text-xl font-bold">Konten Siap Posting Buat Lo:</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Image Column */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 animate-image-appear">
                 <h4 className="font-semibold text-gray-200">Visual Konten:</h4>
                 <div 
                     className="bg-white rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg w-full cursor-pointer group"

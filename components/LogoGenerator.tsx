@@ -138,6 +138,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
+  const [showTip, setShowTip] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const openModal = (url: string) => setModalImageUrl(url);
@@ -153,6 +154,13 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
         setPrompt(newPrompt);
     }
   }, [selectedStyleId, persona, businessName]);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowTip(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (logos.length > 0 && resultsRef.current) {
@@ -242,7 +250,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
         <p className="text-gray-400">Pilih gaya yang pas sama brand lo. Mang AI bakal kasih 1 pilihan dulu biar hemat. Lo juga bisa edit prompt-nya kalo mau.</p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 relative">
         <label className="block text-sm font-medium text-gray-300">Pilih Gaya Logo:</label>
         <div className="flex flex-wrap gap-3">
           {logoStyles.map(style => (
@@ -263,6 +271,11 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
             </button>
           ))}
         </div>
+        {showTip && (
+            <CalloutPopup className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-max animate-content-fade-in">
+                Bro, buat F&B, gaya 'Maskot' atau 'Rustic' biasanya paling nampol, lho!
+            </CalloutPopup>
+        )}
       </div>
 
       {selectedStyleInfo && (
@@ -326,13 +339,18 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
               {logos.map((logo, index) => (
                 <div 
                     key={index}
-                    className={`bg-white rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg cursor-pointer group transition-all duration-200 ${selectedLogoBase64 === logo ? 'ring-4 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'opacity-80 hover:opacity-100'}`}
-                    onClick={() => {
-                        playSound('select');
-                        setSelectedLogoBase64(logo);
-                    }}
+                    className="animate-image-appear"
+                    style={{ animationDelay: `${index * 100}ms` }}
                 >
-                    <img src={logo} alt={`Generated logo option ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                    <div 
+                        className={`bg-white rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg cursor-pointer group transition-all duration-200 ${selectedLogoBase64 === logo ? 'ring-4 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'opacity-80 hover:opacity-100'}`}
+                        onClick={() => {
+                            playSound('select');
+                            setSelectedLogoBase64(logo);
+                        }}
+                    >
+                        <img src={logo} alt={`Generated logo option ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
+                    </div>
                 </div>
               ))}
           </div>

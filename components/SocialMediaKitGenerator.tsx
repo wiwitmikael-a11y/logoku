@@ -117,7 +117,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onG
             <h3 className="text-xl font-bold">Aset Visual Sosmed Lo:</h3>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 w-full">
               {/* Profile Picture */}
-              <div className="md:col-span-2 flex flex-col items-center gap-3">
+              <div className="md:col-span-2 flex flex-col items-center gap-3 animate-image-appear">
                   <h4 className="font-semibold text-lg">Foto Profil</h4>
                   <div 
                     className="bg-white rounded-full p-2 flex items-center justify-center shadow-lg w-48 h-48 cursor-pointer group"
@@ -129,7 +129,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onG
               </div>
 
               {/* Banner */}
-              <div className="md:col-span-3 flex flex-col items-center gap-3">
+              <div className="md:col-span-3 flex flex-col items-center gap-3 animate-image-appear" style={{animationDelay: '150ms'}}>
                   <h4 className="font-semibold text-lg">Banner / Header</h4>
                     <div 
                         className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-video cursor-pointer group"

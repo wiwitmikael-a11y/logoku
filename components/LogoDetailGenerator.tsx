@@ -141,7 +141,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
         <div className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
             <h3 className="text-xl font-bold">Logo Utama (Ikon)</h3>
             <div
-              className="relative bg-white p-4 rounded-lg flex justify-center items-center aspect-square group"
+              className="relative bg-white p-4 rounded-lg flex justify-center items-center aspect-square group animate-image-appear"
               onClick={() => !isEditing && openModal(finalLogoUrl)}
             >
               <img 
@@ -157,22 +157,22 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
             </div>
 
             {variations ? (
-                <div ref={variationsRef}>
+                <div ref={variationsRef} className="animate-content-fade-in">
                     <h4 className="font-bold mb-4">Paket Logo Lengkap:</h4>
                     <div className="grid grid-cols-2 gap-4 text-center">
-                        <div>
+                        <div className="animate-image-appear">
                             <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.stacked)}>
                                 <img src={variations.stacked} alt="Logo Versi Tumpuk" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
                             </div>
                             <p className="text-sm mt-2 text-gray-400">Versi Tumpuk</p>
                         </div>
-                         <div>
+                         <div className="animate-image-appear" style={{animationDelay: '100ms'}}>
                             <div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.horizontal)}>
                                 <img src={variations.horizontal} alt="Logo Versi Datar" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
                             </div>
                             <p className="text-sm mt-2 text-gray-400">Versi Datar</p>
                         </div>
-                         <div className="col-span-2">
+                         <div className="col-span-2 animate-image-appear" style={{animationDelay: '200ms'}}>
                             <div className="bg-white p-2 rounded-lg flex justify-center items-center cursor-pointer group" onClick={() => openModal(variations.monochrome)}>
                                 <img src={variations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/>
                             </div>

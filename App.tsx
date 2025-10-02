@@ -134,12 +134,19 @@ const AiAssistant: React.FC = () => {
         "Apa itu persona brand?",
         "Bedanya logo 'stacked' sama 'horizontal' apa?",
     ];
+    
+    const credits = profile?.credits ?? 0;
+    const mangAiAnimationClass = credits < 5 
+        ? 'animate-mang-ai-tired' 
+        : credits > 20 
+            ? 'animate-mang-ai-happy' 
+            : 'animate-breathing-ai';
 
     return (
         <>
             <div id="ai-assistant-overlay" className={isOpen ? 'visible' : ''} onClick={togglePanel}></div>
             <button id="ai-assistant-fab" onClick={togglePanel} title="Tanya Mang AI">
-                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className="animate-breathing-ai" />
+                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className={mangAiAnimationClass} />
             </button>
             <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>
                 <header className="ai-chat-header flex justify-between items-center">
@@ -314,7 +321,7 @@ const MainApp: React.FC = () => {
     const navigateTo = (state: AppState) => setAppState(state);
 
     // --- Core Navigation & Project Management ---
-    const handleNewProject = useCallback(async () => {
+    const handleNewProject = useCallback(async (templateData?: Partial<BrandInputs>) => {
         if (!session?.user) return;
         const { data, error } = await supabase.from('projects').insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' as ProjectStatus }).select().single();
         if (error) {
@@ -324,7 +331,13 @@ const MainApp: React.FC = () => {
         const newProject: Project = data as any;
         setProjects(prev => [newProject, ...prev]);
         setSelectedProjectId(newProject.id);
-        clearWorkflowState();
+        
+        if (templateData) {
+            saveWorkflowState({ brandInputs: templateData as BrandInputs });
+        } else {
+            clearWorkflowState();
+        }
+
         navigateTo('persona');
     }, [session]);
     

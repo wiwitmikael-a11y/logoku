@@ -188,7 +188,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
             <h3 className="text-lg md:text-xl font-bold">Desain Hasil Generate:</h3>
-          <div className="flex justify-center w-full max-w-2xl">
+          <div className="flex justify-center w-full max-w-2xl animate-image-appear">
             <div 
                 className={`bg-white rounded-lg p-2 flex items-center justify-center shadow-lg ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group ${previewContainerClasses}`}
                 onClick={() => openModal(designs[0])}

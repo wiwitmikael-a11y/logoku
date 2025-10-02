@@ -33,7 +33,7 @@ const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, class
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       className={`bg-gray-800 border rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${className} ${
-        onClick ? 'cursor-pointer' : ''
+        onClick ? 'cursor-pointer active:scale-[0.98] transition-transform duration-100' : ''
       } ${
         isSelected
           ? 'border-indigo-500 ring-2 ring-indigo-500/50'

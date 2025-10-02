@@ -108,6 +108,11 @@
         user-select: text;       /* Standard syntax */
       }
 
+      /* NEW: Keyframe for subtle background pulse */
+      @keyframes bg-pulse {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+      }
 
       /* Layer 1: Slower, more prominent diagonal lines */
       body::before {
@@ -130,7 +135,7 @@
           rgba(99, 102, 241, 0.15) 38px,
           rgba(99, 102, 241, 0.15) 40px
         );
-        animation: bg-pan 45s linear infinite; /* More noticeable speed */
+        animation: bg-pan 45s linear infinite, bg-pulse 10s ease-in-out infinite alternate; /* More noticeable speed */
       }
 
       /* Layer 2: Faster-moving diagonal lines for parallax */
@@ -182,6 +187,22 @@
       .animate-content-fade-in {
         animation: content-fade-in 0.5s ease-out forwards;
       }
+      
+      /* NEW: Keyframe for generated image appearance */
+      @keyframes image-appear {
+        from {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+      }
+      .animate-image-appear {
+        animation: image-appear 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      }
+
 
       /* Keyframes for Mang AI with breathing and bouncy hop effects */
       @keyframes mario-top-breathing-bounce {
@@ -350,6 +371,20 @@
         0% { transform: scale(1); }
         50% { transform: scale(1.04); }
         100% { transform: scale(1); }
+      }
+      
+      /* NEW: Keyframes for Mang AI Moods */
+      @keyframes mang-ai-happy {
+        0% { transform: scale(1) translateY(0) rotate(0deg); }
+        20% { transform: scale(1.05, 0.95) translateY(0); } /* Squish */
+        50% { transform: scale(0.95, 1.05) translateY(-8px) rotate(5deg); } /* Jump */
+        80% { transform: scale(1.05, 0.95) translateY(0) rotate(-5deg); } /* Land */
+        100% { transform: scale(1) translateY(0) rotate(0deg); }
+      }
+      @keyframes mang-ai-tired {
+        0% { transform: scale(1) translateY(0); opacity: 1; }
+        50% { transform: scale(1.01, 0.99) translateY(2px); opacity: 0.8; } /* Slow breathe */
+        100% { transform: scale(1) translateY(0); opacity: 1; }
       }
       
       /* --- DUST EFFECT --- */
@@ -551,6 +586,16 @@
       .animate-breathing-ai {
         animation: mang-ai-breathing 2.5s ease-in-out infinite;
         transform-origin: bottom center;
+      }
+      
+      /* NEW: Mang AI mood animation classes */
+      .animate-mang-ai-happy { 
+        animation: mang-ai-happy 1.5s ease-in-out infinite; 
+        transform-origin: bottom center; 
+      }
+      .animate-mang-ai-tired { 
+        animation: mang-ai-tired 4s ease-in-out infinite; 
+        transform-origin: bottom center; 
       }
       
       /* NEW: Keyframes for Saweria marquee */

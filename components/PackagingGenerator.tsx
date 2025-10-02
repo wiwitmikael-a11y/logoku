@@ -339,7 +339,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
           <div>
             <h3 className="text-lg md:text-xl font-bold mb-2">Hasil Foto Produk 3-in-1:</h3>
           </div>
-          <div className="flex justify-center w-full max-w-lg">
+          <div className="flex justify-center w-full max-w-lg animate-image-appear">
             <div
                 className="bg-white rounded-lg p-2 aspect-[4/3] flex items-center justify-center shadow-lg w-full ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group"
                 onClick={() => openModal(designs[0])}
