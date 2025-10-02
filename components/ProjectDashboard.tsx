@@ -40,6 +40,65 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
     );
 };
 
+// NEW: Dynamic info box component
+const DYNAMIC_INFO_TIPS = [
+    {
+        icon: '🎁',
+        title: 'Bonus Sambutan Gacor!',
+        text: 'Sebagai juragan baru, lo langsung dapet bonus sambutan <span class="font-bold text-yellow-300">20 token</span> di hari pertama! Manfaatin buat eksplorasi sepuasnya, ya!'
+    },
+    {
+        icon: '☀️',
+        title: 'Amunisi Harian Gratis',
+        text: 'Jangan takut kehabisan ide! Setiap hari, Mang AI kasih <span class="font-bold text-yellow-300">5 token gratis</span> buat lo berkarya. Jatahnya di-reset tiap pagi, lho.'
+    },
+    {
+        icon: '💾',
+        title: 'PENTING: Unduh Aset Lo!',
+        text: 'Aplikasi ini nyimpen gambar di browser lo (biar gratis!). Jangan lupa <strong class="text-white">unduh semua aset visual</strong> (logo, gambar, dll) ke perangkat lo biar aman sentosa.'
+    },
+    {
+        icon: '🚀',
+        title: 'Kekuatan Brand Hub',
+        text: 'Project yang udah selesai masuk ke <strong class="text-white">Brand Hub</strong>. Dari sana, lo bisa generate ulang teks iklan atau kalender konten kapan aja tanpa ngulang dari nol.'
+    },
+    {
+        icon: '🤖',
+        title: 'Tanya Mang AI Aja!',
+        text: 'Ada yang bikin bingung? Klik tombol Mang AI yang ngambang di pojok kanan bawah. Dia siap jawab pertanyaan lo soal branding atau fitur aplikasi.'
+    },
+    {
+        icon: '☕',
+        title: 'Dukung Mang AI',
+        text: 'Suka sama aplikasi ini? Traktir Mang AI kopi di <strong class="text-white">Saweria</strong> biar makin semangat ngembangin fitur-fitur baru yang lebih canggih buat lo!'
+    },
+];
+
+const DynamicInfoBox: React.FC = () => {
+    const [currentTipIndex, setCurrentTipIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTipIndex(prevIndex => (prevIndex + 1) % DYNAMIC_INFO_TIPS.length);
+        }, 7000); // Ganti info setiap 7 detik
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const currentTip = DYNAMIC_INFO_TIPS[currentTipIndex];
+
+    return (
+        <div key={currentTipIndex} className="w-full max-w-2xl bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in">
+            <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
+            <div>
+                <h4 className="font-bold text-white">{currentTip.title}</h4>
+                <p className="text-sm text-gray-300" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+            </div>
+        </div>
+    );
+};
+
+
 const DeleteButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
   <button
     onClick={onClick}
@@ -65,6 +124,7 @@ const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onCl
   </button>
 );
 
+// FIX: Removed 'local-complete' status which is deprecated and corrected 'completed' text.
 const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     const statusMap = {
         'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-500/20', dotColor: 'bg-yellow-400', textColor: 'text-yellow-300' },
@@ -84,6 +144,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
+  // FIX: Removed filtering for 'local-complete' projects to fix type error.
   const { inProgressProjects, completedProjects } = useMemo(() => {
     const inProgress = projects.filter(p => p.status === 'in-progress');
     const completed = projects.filter(p => p.status === 'completed');
@@ -106,15 +167,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <p className="text-gray-400 max-w-2xl">Studio branding AI pribadi lo. Mulai project baru untuk membangun identitas brand dari nol, atau lihat dan kelola brand kit yang sudah pernah lo buat.</p>
       </div>
       
-      <div className="w-full max-w-2xl bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-center gap-4 text-left animate-content-fade-in">
-        <div className="flex-shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-        </div>
-        <div>
-          <h4 className="font-bold text-white">Info Fase Pengenalan</h4>
-          <p className="text-sm text-gray-300">Selama masa pengenalan, nikmati bonus sambutan <span className="font-bold text-yellow-300">20 token</span> di hari pertama! Setelah itu, dapatkan <span className="font-bold text-yellow-300">5 token gratis setiap hari</span> untuk terus berkarya. Manfaatin buat eksplorasi sepuasnya ya, Juragan!</p>
-        </div>
-      </div>
+      <DynamicInfoBox />
       
       <Button onClick={onNewProject}>
         + Bikin Project Branding Baru
