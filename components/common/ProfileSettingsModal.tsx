@@ -14,6 +14,14 @@ interface Props {
   onShowContact: () => void;
 }
 
+// NEW: Achievement Definitions
+const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; icon: string; } } = {
+  BRAND_PERTAMA_LAHIR: { name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
+  SANG_KOLEKTOR: { name: 'Sang Kolektor', description: 'Berhasil menyelesaikan 5 project branding.', icon: '🥈' },
+};
+
+const getXpForLevel = (level: number): number => (level - 1) * 750;
+
 const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, onLogout, onDeleteAccount, onShowToS, onShowContact }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +40,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
     };
   }, [show, onClose]);
 
-  if (!show || !user) {
+  if (!show || !user || !profile) {
     return null;
   }
 
@@ -63,6 +71,15 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
     onClose();
   };
 
+  // Gamification data calculation
+  const currentLevel = profile.level ?? 1;
+  const currentXp = profile.xp ?? 0;
+  const xpForCurrentLevel = getXpForLevel(currentLevel);
+  const xpForNextLevel = getXpForLevel(currentLevel + 1);
+  const xpProgress = currentXp - xpForCurrentLevel;
+  const xpNeeded = xpForNextLevel - xpForCurrentLevel;
+  const progressPercentage = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
+
   return (
     <div
       ref={modalRef}
@@ -88,12 +105,43 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
         </div>
 
         <div className="space-y-4 mb-8">
+            {/* --- NEW: Gamification Section --- */}
             <div className="bg-gray-900/50 p-4 rounded-lg">
-                <h3 className="text-sm font-semibold text-indigo-400 mb-1">Status Token Harian</h3>
-                <p className="text-2xl font-bold text-white">{profile?.credits ?? '0'} <span className="text-base font-normal text-gray-300">Token Tersisa</span></p>
-                <p className="text-xs text-gray-400 mt-1">
-                    Bonus <span className="font-semibold text-yellow-300">20 token</span> di hari pertama, lalu <span className="font-semibold text-yellow-300">5 token gratis</span> setiap hari!
-                </p>
+                <h3 className="text-sm font-semibold text-indigo-400 mb-2">Progres Juragan</h3>
+                <div className="flex items-center gap-4">
+                  <div className="bg-yellow-400 text-gray-900 rounded-full w-12 h-12 flex flex-col items-center justify-center font-bold flex-shrink-0">
+                    <span className="text-xs -mb-1">LVL</span>
+                    <span className="text-2xl">{currentLevel}</span>
+                  </div>
+                  <div className="w-full">
+                    <p className="text-xs text-gray-300 mb-1">XP: {currentXp.toLocaleString()} / {xpForNextLevel.toLocaleString()}</p>
+                    <div className="w-full bg-gray-700 rounded-full h-2.5">
+                      <div className="bg-yellow-400 h-2.5 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
+            <div className="bg-gray-900/50 p-4 rounded-lg">
+                <h3 className="text-sm font-semibold text-indigo-400 mb-2">Lencana Kejuraganan</h3>
+                {profile.achievements && profile.achievements.length > 0 ? (
+                  <div className="flex flex-wrap gap-4">
+                    {profile.achievements.map(achId => {
+                      const ach = ACHIEVEMENTS_MAP[achId];
+                      return ach ? (
+                        <div key={achId} className="flex items-center gap-2" title={ach.description}>
+                          <span className="text-3xl">{ach.icon}</span>
+                          <div>
+                            <p className="font-semibold text-white text-sm">{ach.name}</p>
+                            <p className="text-xs text-gray-400">{ach.description}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 italic">Belum ada lencana yang didapat. Terus berkarya, Juragan!</p>
+                )}
             </div>
             
              <div className="bg-gray-900/50 p-4 rounded-lg">

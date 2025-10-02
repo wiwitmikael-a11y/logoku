@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
@@ -6,6 +5,18 @@ import { setMuted, playBGM, stopBGM, unlockAudio, playRandomBGM } from '../servi
 import type { Profile } from '../types';
 
 export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
+
+// NEW: Gamification types
+export interface LevelUpInfo {
+  newLevel: number;
+  tokenReward: number;
+}
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
 
 interface AuthContextType {
   session: Session | null;
@@ -23,16 +34,22 @@ interface AuthContextType {
   handleToggleMute: () => void;
   handleDeleteAccount: () => void;
   deductCredits: (amount: number) => Promise<boolean>;
-  refreshProfile: () => Promise<void>; // Exposed function to refresh profile
+  refreshProfile: () => Promise<void>;
   bgmSelection: BgmSelection;
   handleBgmChange: (selection: BgmSelection) => void;
+  // NEW: Gamification states and functions
+  addXp: (amount: number) => Promise<void>;
+  grantAchievement: (achievementId: string) => Promise<void>;
+  showLevelUpModal: boolean;
+  levelUpInfo: LevelUpInfo | null;
+  setShowLevelUpModal: React.Dispatch<React.SetStateAction<boolean>>;
+  unlockedAchievement: Achievement | null;
+  setUnlockedAchievement: React.Dispatch<React.SetStateAction<Achievement | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to get today's date in 'YYYY-MM-DD' format for WIB (Asia/Jakarta) timezone.
 const getTodaysDateWIB = (): string => {
-  // 'en-CA' locale reliably gives the YYYY-MM-DD format.
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 };
 
@@ -45,27 +62,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authError, setAuthError] = useState<string | null>(null);
   const [isMuted, setIsMutedState] = useState(false);
   const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // State for logout modal
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [bgmSelection, setBgmSelection] = useState<BgmSelection>(
     () => (localStorage.getItem('logoku_bgm_selection') as BgmSelection) || 'Acoustic'
   );
+  
+  // --- NEW: Gamification State ---
+  const [showLevelUpModal, setShowLevelUpModal] = useState(false);
+  const [levelUpInfo, setLevelUpInfo] = useState<LevelUpInfo | null>(null);
+  const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
+
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, credits, last_credit_reset, welcome_bonus_claimed')
+        .select('id, credits, last_credit_reset, welcome_bonus_claimed, xp, level, achievements, total_projects_completed')
         .eq('id', userId)
         .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116: no rows found
+    if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
         setAuthError('Gagal mengambil data profil pengguna.');
         return;
     }
     
-    // --- NEW TOKEN STRATEGY LOGIC ---
-    
-    // Case 1: Brand new user, no profile exists yet.
     if (!data) {
         const WELCOME_BONUS = 20;
         const { data: newProfileData, error: insertError } = await supabase
@@ -74,7 +94,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 id: userId, 
                 credits: WELCOME_BONUS, 
                 last_credit_reset: getTodaysDateWIB(),
-                welcome_bonus_claimed: true 
+                welcome_bonus_claimed: true,
+                xp: 0, level: 1, achievements: [], total_projects_completed: 0 // Initialize gamification fields
             })
             .select()
             .single();
@@ -88,9 +109,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
     }
     
-    const profileData = data as Profile;
+    // Ensure gamification fields have default values if they are null in the DB
+    const profileData: Profile = {
+        ...data,
+        xp: data.xp ?? 0,
+        level: data.level ?? 1,
+        achievements: data.achievements ?? [],
+        total_projects_completed: data.total_projects_completed ?? 0,
+    };
     
-    // Case 2: Existing user who hasn't received the welcome bonus yet (for migration)
     if (!profileData.welcome_bonus_claimed) {
         const WELCOME_BONUS = 20;
         const { data: updatedProfileData, error: updateError } = await supabase
@@ -103,14 +130,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (updateError) {
              console.error("Gagal klaim bonus sambutan:", updateError);
              setAuthError("Gagal klaim bonus sambutan, tapi jangan khawatir, data lama masih aman.");
-             setProfile(profileData); // Fallback to old data
+             setProfile(profileData);
         } else {
             setProfile(updatedProfileData as Profile);
         }
         return;
     }
 
-    // Case 3: Returning user, check for daily reset
     const todayWIB = getTodaysDateWIB();
     if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
@@ -126,10 +152,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setAuthError("Gagal me-reset token harian, tapi jangan khawatir, data lama masih aman.");
             setProfile(profileData);
         } else {
-            setProfile(updatedProfileData as Profile);
+            // Combine updated data with existing gamification data to prevent overwrites
+            setProfile({ ...profileData, ...updatedProfileData } as Profile);
         }
     } else {
-        // No reset needed, just set the profile from DB
         setProfile(profileData);
     }
   }, []);
@@ -245,7 +271,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
     }
 
-    setProfile(data as Profile);
+    setProfile(prev => ({ ...prev!, ...data } as Profile));
     return true;
   };
 
@@ -255,26 +281,82 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, fetchProfile]);
 
+  // --- NEW: Gamification Logic ---
+  const getLevelForXp = (xp: number): number => {
+    return Math.floor(xp / 750) + 1;
+  };
 
-  const value = {
-    session,
-    user,
-    profile,
-    loading,
-    authError,
-    isMuted,
-    showOutOfCreditsModal,
-    showLogoutConfirm,
-    setShowOutOfCreditsModal,
-    setShowLogoutConfirm,
-    handleLogout,
-    executeLogout,
-    handleToggleMute,
-    handleDeleteAccount,
-    deductCredits,
-    refreshProfile,
-    bgmSelection,
-    handleBgmChange,
+  const addXp = useCallback(async (amount: number) => {
+    if (!profile || !user) return;
+
+    const currentXp = profile.xp ?? 0;
+    const currentLevel = profile.level ?? 1;
+    const newXp = currentXp + amount;
+    const newLevel = getLevelForXp(newXp);
+
+    let tokenReward = 0;
+    let updates: Partial<Profile> = { xp: newXp };
+
+    if (newLevel > currentLevel) {
+        tokenReward = (newLevel % 5 === 0) ? 5 : 1; // +5 every 5 levels, +1 otherwise
+        setLevelUpInfo({ newLevel, tokenReward });
+        setShowLevelUpModal(true);
+        updates.level = newLevel;
+        updates.credits = (profile.credits ?? 0) + tokenReward;
+    }
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id)
+        .select()
+        .single();
+    
+    if (error) {
+        setAuthError(`Gagal update XP: ${error.message}`);
+    } else {
+        setProfile(prev => ({ ...prev!, ...data } as Profile));
+    }
+  }, [profile, user]);
+
+  const grantAchievement = useCallback(async (achievementId: string) => {
+      if (!profile || !user || profile.achievements.includes(achievementId)) return;
+      
+      const newAchievements = [...profile.achievements, achievementId];
+      const { data, error } = await supabase
+          .from('profiles')
+          .update({ achievements: newAchievements })
+          .eq('id', user.id)
+          .select()
+          .single();
+
+      if (error) {
+          setAuthError(`Gagal memberikan pencapaian: ${error.message}`);
+      } else {
+          setProfile(prev => ({ ...prev!, ...data } as Profile));
+          // Trigger the achievement toast
+          const achievementDetails = ACHIEVEMENTS_MAP[achievementId];
+          if (achievementDetails) {
+              setUnlockedAchievement(achievementDetails);
+          }
+      }
+  }, [profile, user]);
+
+  const ACHIEVEMENTS_MAP: { [key: string]: Achievement } = {
+    BRAND_PERTAMA_LAHIR: { id: 'BRAND_PERTAMA_LAHIR', name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
+    SANG_KOLEKTOR: { id: 'SANG_KOLEKTOR', name: 'Sang Kolektor', description: 'Berhasil menyelesaikan 5 project branding.', icon: '🥈' },
+  };
+
+
+  const value: AuthContextType = {
+    session, user, profile, loading, authError, isMuted,
+    showOutOfCreditsModal, showLogoutConfirm,
+    setShowOutOfCreditsModal, setShowLogoutConfirm,
+    handleLogout, executeLogout, handleToggleMute, handleDeleteAccount,
+    deductCredits, refreshProfile, bgmSelection, handleBgmChange,
+    // Gamification
+    addXp, grantAchievement, showLevelUpModal, levelUpInfo, setShowLevelUpModal,
+    unlockedAchievement, setUnlockedAchievement,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

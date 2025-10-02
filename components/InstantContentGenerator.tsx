@@ -17,6 +17,7 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
+  addXp: (amount: number) => Promise<void>; // NEW: For gamification
 }
 
 const GENERATION_COST = 2; // 1 for image, 1 for captions
@@ -26,7 +27,7 @@ interface GeneratedContent {
     captions: GeneratedCaption[];
 }
 
-const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
+const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
   const credits = profile?.credits ?? 0;
 
@@ -73,6 +74,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
       }
 
       await deductCredits(GENERATION_COST);
+      await addXp(75); // NEW: Award 75 XP for instant content generation
       
       setGeneratedContent({
           imageUrl: imageResult[0], // Keep as Base64
@@ -87,7 +89,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [projectData, topic, credits, deductCredits, setShowOutOfCreditsModal, addXp]);
 
 
   return (
@@ -95,7 +97,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Generator Konten Instan</h2>
         <p className="text-gray-400">
-          Ubah ide jadi konten siap posting dalam sekejap! Cukup kasih topik, Mang AI bakal bikinin gambar + 3 pilihan caption yang pas sama brand "{projectData.selectedPersona?.nama_persona}" lo.
+          Ubah ide jadi konten siap posting dalam sekejap! Cukup kasih topik, Mang AI bakal bikinin gambar + 3 pilihan caption yang pas sama brand "{projectData.selectedPersona?.nama_persona}" lo. (+75 XP)
         </p>
       </div>
 

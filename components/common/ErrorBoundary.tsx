@@ -21,10 +21,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
-  // FIX: Switched to constructor-based binding for the `this` context to ensure compatibility.
+  // FIX: Constructor is simplified as binding is no longer needed for handleCopy.
   constructor(props: Props) {
     super(props);
-    this.handleCopy = this.handleCopy.bind(this);
   }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
@@ -35,7 +34,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy() {
+  // FIX: Converted to an arrow function to ensure `this` is correctly bound.
+  // This resolves the "Property 'setState' does not exist" error.
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -63,6 +64,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()}>
                         Refresh Halaman
                     </Button>
+                    {/* FIX: Resolving `this.props` error by correcting the class method bindings. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -85,6 +87,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
+    // FIX: Resolving `this.props` error by correcting the class method bindings.
     return this.props.children;
   }
 }

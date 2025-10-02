@@ -913,6 +913,38 @@
       .saweria-elegant-wrapper > div { /* Target the SaweriaWidget component inside */
         height: 100%;
       }
+
+      /* --- NEW: Gamification Styles --- */
+      @keyframes xp-bar-fill-anim {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+      }
+      .xp-bar-fill {
+        animation: xp-bar-fill-anim 0.8s 0.5s cubic-bezier(0.25, 1, 0.5, 1) both;
+        transform-origin: left;
+      }
+
+      @keyframes level-up-modal-scale-in {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.8);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      @keyframes achievement-toast-slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(100%);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
     </style>
   <script type="importmap">
 {

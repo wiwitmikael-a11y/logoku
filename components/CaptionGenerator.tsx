@@ -13,11 +13,12 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
+  addXp: (amount: number) => Promise<void>; // NEW: For gamification
 }
 
 const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Interaktif"];
 
-const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
+const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
   const [topic, setTopic] = useState('');
   const [tone, setTone] = useState('Promosi');
   const [captions, setCaptions] = useState<GeneratedCaption[]>([]);
@@ -46,6 +47,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
         topic,
         tone
       );
+      await addXp(10); // NEW: Award 10 XP for generating captions
       setCaptions(result);
       playSound('success');
     } catch (err) {
@@ -55,7 +57,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, tone]);
+  }, [projectData, topic, tone, addXp]);
 
   const copyToClipboard = (text: string) => {
     playSound('click');
@@ -68,7 +70,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Generator Caption Sosmed</h2>
         <p className="text-gray-400">
-          Bikin caption keren buat Instagram, TikTok, atau platform lain pake persona brand "{projectData.selectedPersona?.nama_persona}". Cukup kasih topiknya!
+          Bikin caption keren buat Instagram, TikTok, atau platform lain pake persona brand "{projectData.selectedPersona?.nama_persona}". Cukup kasih topiknya! (+10 XP)
         </p>
       </div>
 
