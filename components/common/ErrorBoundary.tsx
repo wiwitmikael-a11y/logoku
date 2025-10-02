@@ -25,8 +25,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error };
   }
 
-  // FIX: Using an arrow function for the lifecycle hook ensures `this` context is correctly bound, and corrects a typo (`errorinfo` -> `errorInfo`).
-  public componentDidCatch = (error: Error, errorInfo: ErrorInfo) => {
+  // FIX: Converted back to a standard lifecycle method. React binds `this` correctly for lifecycle methods.
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
@@ -39,8 +39,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: Using an arrow function for the render method. While unconventional for lifecycle methods, this resolves `this` context issues reported by the compiler.
-  public render = (): React.ReactNode => {
+  // FIX: Converted back to a standard lifecycle method. React binds `this` correctly for `render`.
+  // The previous arrow function implementation was unconventional and likely caused type inference issues for `this`.
+  public render(): React.ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

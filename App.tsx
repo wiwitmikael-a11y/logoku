@@ -833,7 +833,7 @@ const MainApp: React.FC = () => {
                 <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={() => setShowToSModal(true)} onShowContact={() => setShowContactModal(true)} />
                 <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout Saja" cancelText="Nggak Jadi">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
                 <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
-                <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} />
+                <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} projectLogoUrl={projectToDelete?.project_data?.selectedLogoUrl} />
             </Suspense>
         </div>
     );
