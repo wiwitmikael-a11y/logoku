@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateSocialAds } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -76,7 +77,7 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   return (
     <div className="flex flex-col gap-8 items-center">
       <div className="text-center">
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Teks Iklan Sosmed</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Teks Iklan Sosmed</h2>
         <p className="text-gray-400 max-w-3xl">
           Saatnya ngiklan di tempat yang pas! Biar Mang AI racik beberapa pilihan teks iklan untuk Instagram dan TikTok yang ciamik, lengkap dengan hashtag yang relevan.
         </p>
@@ -122,11 +123,11 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
           <div className="self-center mt-4 relative">
             {showNextStepNudge && (
                 <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
-                    Teks iklan siap! Lanjut?
+                    Langkah terakhir! Ayo selesaikan.
                 </CalloutPopup>
             )}
             <Button onClick={handleContinue} disabled={!adsData}>
-              Lanjut ke Desain Kemasan &rarr;
+              Selesai & Lihat Brand Kit Lengkap &rarr;
             </Button>
           </div>
         </div>

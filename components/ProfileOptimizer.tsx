@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateSocialProfiles } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -76,7 +77,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
   return (
     <div className="flex flex-col gap-8 items-center">
       <div className="text-center">
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 6: Pengoptimal Profil Sosmed & Marketplace</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Optimasi Profil Sosmed & Marketplace</h2>
         <p className="text-gray-400 max-w-3xl">
           Profil yang menjual itu kunci! Biar Mang AI yang bikinin bio Instagram, bio TikTok, dan deskripsi toko buat Shopee/Tokopedia yang ciamik dan sesuai persona brand lo.
         </p>
@@ -135,7 +136,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
                 </CalloutPopup>
             )}
             <Button onClick={handleContinue} disabled={!profileData}>
-              Lanjut ke Iklan Sosmed &rarr;
+              Lanjut ke Desain Kemasan &rarr;
             </Button>
           </div>
         </div>

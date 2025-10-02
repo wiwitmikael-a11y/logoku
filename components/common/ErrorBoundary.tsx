@@ -25,12 +25,12 @@ class ErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error };
   }
 
-  // FIX: Converted to a standard lifecycle method. React binds `this` automatically for lifecycle methods.
+  // FIX: Converted back to a standard class method for a lifecycle hook. React handles the 'this' context correctly.
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Kept as an arrow function, which is correct for event handlers to bind `this` and resolve `setState` errors.
+  // FIX: Kept as an arrow function, which is the standard pattern for event handlers to correctly bind `this`.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
@@ -39,7 +39,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: Converted to a standard render method. React binds `this` automatically, resolving errors where 'this.props' was not being correctly inferred.
+  // FIX: Converted back to a standard class method for the render lifecycle hook. This resolves errors with `this.props` and `this.state`.
   public render(): React.ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };

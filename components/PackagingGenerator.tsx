@@ -281,7 +281,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 8: Foto Produk & Kemasan 3-in-1</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 6: Foto Produk & Kemasan 3-in-1</h2>
         <p className="text-gray-400">Level up! Mang AI bakal bikinin 1 foto produk profesional yang isinya 3 variasi kemasan atau penyajian sekaligus. Hemat token, hasil maksimal! Pilih skenario yang paling pas buat produk lo.</p>
       </div>
 

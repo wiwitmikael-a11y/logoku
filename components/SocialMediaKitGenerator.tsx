@@ -84,7 +84,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onG
   return (
     <div className="flex flex-col gap-8 items-center">
       <div className="text-center">
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Social Media Kit Muka Depan</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 4: Social Media Kit Muka Depan</h2>
         <p className="text-gray-400 max-w-3xl">
           Tampilan profil itu penting! Biar Mang AI bikinin foto profil dan banner/header yang serasi buat halaman Facebook, X, atau YouTube lo, lengkap dengan logo, warna brand, dan slogan.
         </p>

@@ -213,7 +213,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
             </CalloutPopup>
         )}
         <Button onClick={handleContinue} disabled={!variations}>
-            Logo Beres, Lanjut ke Konten &rarr;
+            Lanjut ke Social Media Kit &rarr;
         </Button>
       </div>
 

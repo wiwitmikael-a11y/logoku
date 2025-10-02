@@ -55,7 +55,7 @@ const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGene
 const SyncProgressScreen = React.lazy(() => import('./components/SyncProgressScreen'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'content_calendar' | 'social_kit' | 'profiles' | 'social_ads' | 'packaging' | 'print_media' | 'summary' | 'caption' | 'instant_content' | 'sync_progress';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content' | 'sync_progress';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // --- NEW: AI Assistant Component ---
@@ -250,7 +250,7 @@ const MainApp: React.FC = () => {
     const previousAppState = useRef<AppState>(appState);
     const previousSession = useRef<typeof session>(session);
 
-    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'content_calendar', 'social_kit', 'profiles', 'social_ads', 'packaging', 'print_media'];
+    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'social_kit', 'profiles', 'packaging', 'print_media', 'content_calendar', 'social_ads'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
     
@@ -359,19 +359,18 @@ const MainApp: React.FC = () => {
         setSelectedProjectId(projectId);
         saveWorkflowState(project.project_data);
         
-        // Go to Brand Hub only for fully synced, completed projects.
         if (project.status === 'completed') {
             navigateTo('summary');
         } else {
-            // Determine where to resume the wizard for in-progress projects
+            // Determine where to resume the wizard for in-progress projects (NEW FLOW)
             let nextState: AppState = 'persona';
             const data = project.project_data;
-            if (data.printMediaAssets) nextState = 'print_media';
+            if (data.socialAds) nextState = 'social_ads';
+            else if (data.contentCalendar) nextState = 'content_calendar';
+            else if (data.printMediaAssets) nextState = 'print_media';
             else if (data.selectedPackagingUrl) nextState = 'packaging';
-            else if (data.socialAds) nextState = 'social_ads';
             else if (data.socialProfiles) nextState = 'profiles';
             else if (data.socialMediaKit) nextState = 'social_kit';
-            else if (data.contentCalendar) nextState = 'content_calendar';
             else if (data.logoVariations) nextState = 'logo_detail';
             else if (data.selectedPersona) nextState = 'logo';
             navigateTo(nextState);
@@ -434,7 +433,7 @@ const MainApp: React.FC = () => {
         showToast("Progres tersimpan sementara di browser!");
     }, [showToast]);
 
-    // --- NEW A-Z WIZARD STEP HANDLERS (REWORKED) ---
+    // --- REWORKED WIZARD STEP HANDLERS (NEW FLOW) ---
     const handlePersonaComplete = useCallback((data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         const updatedData: Partial<ProjectData> = { brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan };
         saveLocalCheckpoint(updatedData);
@@ -450,43 +449,44 @@ const MainApp: React.FC = () => {
     const handleLogoDetailComplete = useCallback((data: { finalLogoUrl: string; variations: LogoVariations }) => {
         const updatedData = { selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations };
         saveLocalCheckpoint(updatedData);
-        navigateTo('content_calendar');
+        navigateTo('social_kit'); // 1. To Social Kit
     }, [saveLocalCheckpoint]);
-
-    const handleContentCalendarComplete = useCallback((data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
-        const updatedData = { contentCalendar: data.calendar, searchSources: data.sources };
-        saveLocalCheckpoint(updatedData);
-        navigateTo('social_kit');
-    }, [saveLocalCheckpoint]);
-
+    
     const handleSocialKitComplete = useCallback((data: { assets: SocialMediaKitAssets }) => {
         const updatedData = { socialMediaKit: data.assets };
         saveLocalCheckpoint(updatedData);
-        navigateTo('profiles');
+        navigateTo('profiles'); // 2. To Profiles
     }, [saveLocalCheckpoint]);
 
     const handleProfilesComplete = useCallback((data: { profiles: SocialProfileData }) => {
         const updatedData = { socialProfiles: data.profiles };
         saveLocalCheckpoint(updatedData);
-        navigateTo('social_ads');
-    }, [saveLocalCheckpoint]);
-
-    const handleSocialAdsComplete = useCallback((data: { adsData: SocialAdsData }) => {
-        const updatedData = { socialAds: data.adsData };
-        saveLocalCheckpoint(updatedData);
-        navigateTo('packaging');
+        navigateTo('packaging'); // 3. To Packaging
     }, [saveLocalCheckpoint]);
 
     const handlePackagingComplete = useCallback((data: { packagingUrl: string }) => {
         const updatedData = { selectedPackagingUrl: data.packagingUrl };
         saveLocalCheckpoint(updatedData);
-        navigateTo('print_media');
+        navigateTo('print_media'); // 4. To Print Media
     }, [saveLocalCheckpoint]);
 
-    const handlePrintMediaComplete = async (data: { assets: PrintMediaAssets }) => {
+    const handlePrintMediaComplete = useCallback((data: { assets: PrintMediaAssets }) => {
+        const updatedData = { printMediaAssets: data.assets };
+        saveLocalCheckpoint(updatedData);
+        navigateTo('content_calendar'); // 5. To Content Calendar
+    }, [saveLocalCheckpoint]);
+    
+    const handleContentCalendarComplete = useCallback((data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
+        const updatedData = { contentCalendar: data.calendar, searchSources: data.sources };
+        saveLocalCheckpoint(updatedData);
+        navigateTo('social_ads'); // 6. To Social Ads
+    }, [saveLocalCheckpoint]);
+
+    // NEW FINAL STEP
+    const handleSocialAdsComplete = async (data: { adsData: SocialAdsData }) => {
         if (!session?.user || !selectedProjectId) return;
         const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, printMediaAssets: data.assets };
+        const updatedData = { ...currentState, socialAds: data.adsData };
         
         const { data: dbData, error } = await supabase
             .from('projects')
@@ -506,9 +506,9 @@ const MainApp: React.FC = () => {
         showToast("Project disimpan lokal, siap disinkronkan!");
     };
 
+
     // --- Project Synchronization ---
     const handleRequestSyncProject = useCallback((projectId: number) => {
-        // Instead of navigating, show the pro feature modal
         setShowProSyncModal(true);
         playSound('error');
     }, []);
@@ -670,12 +670,12 @@ const MainApp: React.FC = () => {
                 if (workflowData?.selectedLogoUrl && workflowData.logoPrompt && workflowData.brandInputs) {
                     return <LogoDetailGenerator baseLogoUrl={workflowData.selectedLogoUrl} basePrompt={workflowData.logoPrompt} businessName={workflowData.brandInputs.businessName} onComplete={handleLogoDetailComplete} {...commonErrorProps} />;
                 } break;
-            case 'content_calendar': return <ContentCalendarGenerator projectData={workflowData || {}} onComplete={handleContentCalendarComplete} {...commonErrorProps} />;
             case 'social_kit': return <SocialMediaKitGenerator projectData={workflowData || {}} onComplete={handleSocialKitComplete} {...commonErrorProps} />;
             case 'profiles': return <ProfileOptimizer projectData={workflowData || {}} onComplete={handleProfilesComplete} {...commonErrorProps} />;
-            case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
             case 'packaging': return <PackagingGenerator projectData={workflowData || {}} onComplete={handlePackagingComplete} {...commonErrorProps} />;
             case 'print_media': return <PrintMediaGenerator projectData={workflowData || {}} onComplete={handlePrintMediaComplete} {...commonErrorProps} />;
+            case 'content_calendar': return <ContentCalendarGenerator projectData={workflowData || {}} onComplete={handleContentCalendarComplete} {...commonErrorProps} />;
+            case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
             
             case 'sync_progress':
                 const projectToSync = projects.find(p => p.id === selectedProjectId);

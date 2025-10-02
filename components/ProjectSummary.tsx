@@ -44,7 +44,7 @@ const BrandHubSidebar: React.FC = () => {
                                 <a href={`#${item.id}`} className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 rounded-md hover:bg-gray-700/50 hover:text-white transition-colors">
                                     <span>{item.icon}</span>
                                     <span>{item.name}</span>
-                                a>
+                                </a>
                             </li>
                         ))}
                     </ul>

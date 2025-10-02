@@ -14,7 +14,7 @@ import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
   projectData: Partial<ProjectData>;
-  onComplete: (data: { assets: PrintMediaAssets }) => Promise<void>;
+  onComplete: (data: { assets: PrintMediaAssets }) => void;
   onGoToDashboard: () => void;
 }
 
@@ -30,7 +30,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
   const [generatedAssets, setGeneratedAssets] = useState<PrintMediaAssets>({});
   
   const [isLoading, setIsLoading] = useState(false);
-  const [isFinalizing, setIsFinalizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
@@ -97,7 +96,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
 - **Style:** The overall aesthetic should be professional, modern, and incorporate the brand's style: ${style}.
 - **Critical Instruction:** ${textInstruction}`;
       } else if (activeTab === 'roll_banner') {
-          prompt = `Take the provided logo image. Create a visually stunning and highly functional flat graphic design TEMPLATE for a vertical roll-up banner with a **1:3 aspect ratio (tall and narrow)**. Do NOT create a realistic 3D mockup. The design must be a 2D, print-ready file.
+          prompt = `Take the provided logo image. Create a visually stunning and highly functional flat graphic design TEMPLATE for a vertical roll-up banner with a **1:3 aspect ratio (tall and narrow)**. Do NOT create a mockup, create the final print-ready file.
 - **Visual Hierarchy:** Place the logo at the top-center, leaving adequate 'headroom' above it as the primary focal point.
 - **Color Palette:** Use the brand's color palette (${colors}) to create elegant, abstract shapes or vertical bands of color along the sides, framing the main content area.
 - **Functional Layout:** The central vertical column of the banner must be a clean, solid, light color from the palette. This large empty space is the primary placeholder for the user to add a headline, bullet points, and contact information. The layout should guide the viewer's eye from top to bottom.
@@ -128,10 +127,8 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
     }
   }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, activeTab]);
 
-  const handleFinalize = async () => {
-    setIsFinalizing(true);
-    await onComplete({ assets: generatedAssets });
-    // The parent component will navigate away, so no need to set isFinalizing back to false
+  const handleContinue = () => {
+    onComplete({ assets: generatedAssets });
   };
 
   const handleTabClick = (tab: MediaTab) => {
@@ -148,7 +145,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Studio Media Cetak Mang AI</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Studio Media Cetak Mang AI</h2>
         <p className="text-gray-400">
           Saatnya bikin amunisi promosi! Pilih jenis media, dan Mang AI bakal bikinin template desain siap cetak buat lo. Lo tinggal tambahin tulisan pake aplikasi lain.
         </p>
@@ -204,11 +201,11 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       <div className="self-center mt-4 relative">
         {showNextStepNudge && (
             <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
-                Satu langkah lagi!
+                Mantap! Lanjut ke konten?
             </CalloutPopup>
         )}
-        <Button onClick={handleFinalize} disabled={Object.keys(generatedAssets).length === 0 || isFinalizing} isLoading={isFinalizing}>
-          Selesai & Lihat Brand Kit Lengkap
+        <Button onClick={handleContinue} disabled={Object.keys(generatedAssets).length === 0}>
+          Lanjut ke Kalender Konten &rarr;
         </Button>
       </div>
       
