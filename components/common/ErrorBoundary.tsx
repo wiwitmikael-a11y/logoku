@@ -3,7 +3,7 @@
 import React, { ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
 
 interface Props {
   children: ReactNode;
@@ -23,6 +23,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
+  // FIX: Removed constructor. The handleCopy method is now an arrow function, which automatically binds `this`.
+  // This is the modern, standard approach in React and resolves the type errors where `this.props` and `this.setState` were not found.
+
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
@@ -31,10 +34,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted `handleCopy` to a class property arrow function.
-  // This ensures `this` is correctly bound to the component instance, resolving errors
-  // with accessing `this.setState` and `this.props` throughout the component.
-  // This modern approach is safer than constructor binding and resolves the cascading type errors.
   public handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());

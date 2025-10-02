@@ -7,7 +7,7 @@ interface Props {
   onConfirm: () => void;
 }
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
 
 const BrandingTipModal: React.FC<Props> = ({ show, onConfirm }) => {
   const modalRef = useRef<HTMLDivElement>(null);

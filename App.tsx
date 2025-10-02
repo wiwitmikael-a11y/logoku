@@ -58,7 +58,7 @@ const AchievementToast = React.lazy(() => import('./components/gamification/Achi
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content';
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
 
 // --- NEW: AI Assistant Component ---
 const AiAssistant: React.FC = () => {
@@ -114,7 +114,7 @@ const AiAssistant: React.FC = () => {
                 chatRef.current = ai.chats.create({
                     model: 'gemini-2.5-flash',
                     config: {
-                         systemInstruction: "You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'desain.fun' application. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.",
+                         systemInstruction: "You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'desain.fun' application. Your goal is to make branding feel fun and easy. You are an expert in branding, design, and marketing for small businesses. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.",
                     },
                 });
             }
@@ -227,9 +227,9 @@ const MainApp: React.FC = () => {
         levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement
     } = useAuth();
     
-    const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('logoku_app_state') as AppState) || 'dashboard');
+    const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(() => {
-        const id = sessionStorage.getItem('logoku_project_id');
+        const id = sessionStorage.getItem('desainfun_project_id');
         return id ? parseInt(id, 10) : null;
     });
 
@@ -271,14 +271,14 @@ const MainApp: React.FC = () => {
     useEffect(() => {
         if (session) {
             if (appState === 'dashboard') {
-                sessionStorage.removeItem('logoku_app_state');
-                sessionStorage.removeItem('logoku_project_id');
+                sessionStorage.removeItem('desainfun_app_state');
+                sessionStorage.removeItem('desainfun_project_id');
             } else {
-                sessionStorage.setItem('logoku_app_state', appState);
+                sessionStorage.setItem('desainfun_app_state', appState);
                 if (selectedProjectId !== null) {
-                    sessionStorage.setItem('logoku_project_id', selectedProjectId.toString());
+                    sessionStorage.setItem('desainfun_project_id', selectedProjectId.toString());
                 } else {
-                     sessionStorage.removeItem('logoku_project_id');
+                     sessionStorage.removeItem('desainfun_project_id');
                 }
             }
         }
@@ -676,8 +676,8 @@ const MainApp: React.FC = () => {
     // --- Other Handlers ---
     const executeLogout = async () => {
         clearWorkflowState();
-        sessionStorage.removeItem('logoku_app_state');
-        sessionStorage.removeItem('logoku_project_id');
+        sessionStorage.removeItem('desainfun_app_state');
+        sessionStorage.removeItem('desainfun_project_id');
         await authExecuteLogout();
         setAppState('dashboard');
         setSelectedProjectId(null);

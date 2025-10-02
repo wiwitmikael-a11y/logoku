@@ -9,7 +9,7 @@ interface Props {
   onSuccess: () => void;
 }
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
 
 const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   const [isDragging, setIsDragging] = useState(false);

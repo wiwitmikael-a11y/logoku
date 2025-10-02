@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [bgmSelection, setBgmSelection] = useState<BgmSelection>(
-    () => (localStorage.getItem('logoku_bgm_selection') as BgmSelection) || 'Acoustic'
+    () => (localStorage.getItem('desainfun_bgm_selection') as BgmSelection) || 'Acoustic'
   );
   
   // --- NEW: Gamification State ---
@@ -199,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [fetchProfile]);
   
   useEffect(() => {
-    localStorage.setItem('logoku_bgm_selection', bgmSelection);
+    localStorage.setItem('desainfun_bgm_selection', bgmSelection);
   }, [bgmSelection]);
 
   useEffect(() => {

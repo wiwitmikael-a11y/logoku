@@ -1,6 +1,6 @@
 import type { ProjectData } from '../types';
 
-const WORKFLOW_STATE_KEY = 'logoku_workflow_state';
+const WORKFLOW_STATE_KEY = 'desainfun_workflow_state';
 
 /**
  * Saves the current workflow state to sessionStorage.

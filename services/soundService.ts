@@ -1,4 +1,4 @@
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/desainfun-assets@main/';
 
 // We'll keep track of audio elements to manage them.
 const audioCache: { [key: string]: HTMLAudioElement } = {};
@@ -31,8 +31,8 @@ const soundUrls = {
 };
 
 const bgmUrls = {
-  welcome: `${GITHUB_ASSETS_URL}jingle_logoku.mp3?v=2`,
-  Jingle: `${GITHUB_ASSETS_URL}jingle_logoku.mp3?v=2`,
+  welcome: `${GITHUB_ASSETS_URL}jingle_desainfun.mp3?v=2`,
+  Jingle: `${GITHUB_ASSETS_URL}jingle_desainfun.mp3?v=2`,
   Acoustic: `${GITHUB_ASSETS_URL}bgm_Acoustic.mp3`,
   Uplifting: `${GITHUB_ASSETS_URL}bgm_Uplifting.mp3`,
   LoFi: `${GITHUB_ASSETS_URL}bgm_LoFi.mp3`,
