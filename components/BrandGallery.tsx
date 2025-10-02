@@ -10,12 +10,12 @@ import ErrorMessage from './common/ErrorMessage';
 import Toast from './common/Toast';
 
 interface Props {
-    onGoToDashboard: () => void;
+    onClose: () => void;
 }
 
 const PAGE_SIZE = 12;
 
-const BrandGallery: React.FC<Props> = ({ onGoToDashboard }) => {
+const BrandGallery: React.FC<Props> = ({ onClose }) => {
     const { user, addXp } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -132,7 +132,6 @@ const BrandGallery: React.FC<Props> = ({ onGoToDashboard }) => {
     return (
         <div className="flex flex-col gap-8 items-center text-center">
             <div>
-                <h2 className="text-2xl md:text-3xl font-extrabold text-indigo-400 mb-2">Pameran Brand Juragan</h2>
                 <p className="text-gray-400 max-w-3xl mx-auto">
                     Lihat hasil karya para juragan dari seluruh Indonesia! Kasih 'Menyala!' 🔥 untuk mengapresiasi karya mereka dan dapatkan +1 XP.
                 </p>
@@ -146,14 +145,11 @@ const BrandGallery: React.FC<Props> = ({ onGoToDashboard }) => {
                     <LoadingMessage />
                 </div>
             ) : error ? (
-                <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />
+                <ErrorMessage message={error} onGoToDashboard={onClose} />
             ) : projects.length === 0 ? (
                 <div className="min-h-[40vh] flex flex-col items-center justify-center text-gray-500">
                     <p className="text-lg font-semibold">Pameran Masih Sepi, Nih!</p>
                     <p>Belum ada brand yang dipamerin. Jadilah yang pertama menyelesaikan project dan tampil di sini!</p>
-                    <Button onClick={onGoToDashboard} variant="secondary" className="mt-6">
-                        &larr; Kembali ke Dashboard
-                    </Button>
                 </div>
             ) : (
                 <>
@@ -186,9 +182,7 @@ const BrandGallery: React.FC<Props> = ({ onGoToDashboard }) => {
                                                     className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors ${isOwnProject ? 'cursor-not-allowed text-gray-600' : 'hover:bg-orange-500/10'}`}
                                                     title={isOwnProject ? "Nggak bisa nge-like project sendiri" : "Kasih Menyala!"}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${userHasLiked ? 'text-orange-500' : 'text-gray-400'}`} viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fillRule="evenodd" d="M11.275 2.016a.75.75 0 01.543 1.326 12.75 12.75 0 01-2.502 3.948.75.75 0 01-1.206-.822 11.25 11.25 0 002.165-3.452zM8.75 5.25a.75.75 0 01.822 1.206 12.75 12.75 0 01-3.948 2.502.75.75 0 01-1.326-.543 11.25 11.25 0 003.452-2.165zM5.25 8.75a.75.75 0 011.206.822 12.75 12.75 0 01-2.502 3.948.75.75 0 01-1.326-.543 11.25 11.25 0 002.165-3.452zM12 11.25a.75.75 0 01.75.75 3.75 3.75 0 11-7.5 0 .75.75 0 01.75-.75h6z" clipRule="evenodd" />
-                                                    </svg>
+                                                    <span className={`text-xl transition-all duration-200 filter ${userHasLiked ? 'grayscale-0' : 'grayscale'}`}>🔥</span>
                                                     <span className="font-semibold text-sm text-gray-300">{project.like_count || 0}</span>
                                                 </button>
                                             </div>

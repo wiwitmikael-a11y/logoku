@@ -55,10 +55,10 @@ const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGene
 const HeaderStats = React.lazy(() => import('./components/gamification/HeaderStats'));
 const LevelUpModal = React.lazy(() => import('./components/gamification/LevelUpModal'));
 const AchievementToast = React.lazy(() => import('./components/gamification/AchievementToast'));
-const BrandGallery = React.lazy(() => import('./components/BrandGallery'));
+const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content' | 'brand_gallery';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // --- NEW: AI Assistant Component ---
@@ -266,6 +266,7 @@ const MainApp: React.FC = () => {
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
+    const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
     
     // Dropdowns visibility
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -372,7 +373,7 @@ const MainApp: React.FC = () => {
     }, []);
 
     const handleRequestReturnToDashboard = () => {
-        if (appState === 'dashboard' || appState === 'brand_gallery') {
+        if (appState === 'dashboard') {
             setIsUserMenuOpen(false);
             handleReturnToDashboard();
             return;
@@ -736,7 +737,6 @@ const MainApp: React.FC = () => {
             case 'print_media': return <PrintMediaGenerator projectData={workflowData || {}} onComplete={handlePrintMediaComplete} {...commonErrorProps} />;
             case 'content_calendar': return <ContentCalendarGenerator projectData={workflowData || {}} onComplete={handleContentCalendarComplete} {...commonErrorProps} />;
             case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
-            case 'brand_gallery': return <BrandGallery onGoToDashboard={handleReturnToDashboard} />;
             
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);
@@ -768,6 +768,7 @@ const MainApp: React.FC = () => {
                     showWelcomeBanner={showWelcomeBanner} 
                     onWelcomeBannerClose={() => setShowWelcomeBanner(false)} 
                     onDeleteProject={handleRequestDeleteProject}
+                    onShowBrandGallery={() => setShowBrandGalleryModal(true)}
                 />;
         }
         handleReturnToDashboard();
@@ -807,9 +808,6 @@ const MainApp: React.FC = () => {
                             <span>desain<span className="text-white">.fun</span></span>
                         </h1>
                         <div className="hidden sm:flex items-center gap-4 border-l border-gray-700 pl-4">
-                            <button onClick={() => navigateTo('brand_gallery')} className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">
-                                Pameran Brand
-                            </button>
                             <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={() => setShowContactModal(true)}>
                                 by @rangga.p.h
                             </div>
@@ -851,7 +849,6 @@ const MainApp: React.FC = () => {
                                 <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in">
                                     {/* Menu Items */}
                                     <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Dashboard</button>
-                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); navigateTo('brand_gallery'); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors sm:hidden">Pameran Brand</button>
                                     <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Tentang Aplikasi</button>
                                     <div className="border-t border-gray-700 my-1"></div>
                                     <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Pengaturan Akun</button>
@@ -891,6 +888,7 @@ const MainApp: React.FC = () => {
             <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
             {/* Modals */}
             <Suspense fallback={null}>
+                <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
                 <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
                 <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
                 <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />

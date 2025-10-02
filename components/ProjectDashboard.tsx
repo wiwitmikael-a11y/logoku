@@ -3,10 +3,12 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import type { Project, BrandInputs } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../services/supabaseClient';
 import Button from './common/Button';
 import Card from './common/Card';
 import InFeedAd from './common/InFeedAd';
 import SaweriaWidget from './common/SaweriaWidget';
+import LoadingMessage from './common/LoadingMessage';
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -15,6 +17,7 @@ interface ProjectDashboardProps {
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
   onDeleteProject: (projectId: number) => void;
+  onShowBrandGallery: () => void;
 }
 
 const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
@@ -98,6 +101,63 @@ const DynamicInfoBox: React.FC = () => {
     );
 };
 
+// NEW: Component for the gallery preview
+const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGallery }) => {
+    const [topProjects, setTopProjects] = useState<Project[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTopProjects = async () => {
+            setIsLoading(true);
+            const { data, error } = await supabase
+                .from('projects')
+                .select('id, project_data, like_count')
+                .eq('status', 'completed')
+                .order('like_count', { ascending: false })
+                .limit(3);
+            
+            if (error) {
+                console.error("Failed to fetch top projects:", error);
+            } else {
+                setTopProjects(data as Project[]);
+            }
+            setIsLoading(false);
+        };
+        fetchTopProjects();
+    }, []);
+
+    return (
+        <div className="w-full text-center mt-12">
+            <h3 className="text-lg md:text-xl font-bold mb-4">Pameran Brand Ter-Menyala 🔥</h3>
+            <div 
+                className="group relative bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:border-indigo-500/50 transition-colors cursor-pointer"
+                onClick={onShowGallery}
+            >
+                {isLoading ? (
+                    <div className="h-24 flex items-center justify-center"><LoadingMessage /></div>
+                ) : topProjects.length === 0 ? (
+                    <p className="text-gray-500">Belum ada brand yang dipamerkan. Jadilah yang pertama!</p>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        {topProjects.map((project, index) => (
+                            <div key={project.id} className="flex flex-col items-center gap-2">
+                                <div className="bg-white p-2 rounded-lg w-24 h-24 flex items-center justify-center">
+                                    <img src={project.project_data.selectedLogoUrl} alt={`Logo for ${project.project_data.brandInputs.businessName}`} className="max-w-full max-h-full object-contain" />
+                                </div>
+                                <p className="text-sm font-semibold text-white truncate w-24">{project.project_data.brandInputs.businessName}</p>
+                                <p className="text-xs text-orange-400 font-bold">{project.like_count || 0} Menyala 🔥</p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                    <p className="font-bold text-white text-lg">Lihat Semua Pameran &rarr;</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const DeleteButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
   <button
@@ -139,7 +199,7 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
 };
 
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject, onShowBrandGallery }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
@@ -281,6 +341,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       
       {/* --- AD & SUPPORT PLACEMENT --- */}
       <div className="w-full max-w-4xl mt-12 space-y-8">
+          <BrandGalleryPreview onShowGallery={onShowBrandGallery} />
           <div className="saweria-elegant-wrapper">
             <SaweriaWidget />
           </div>
