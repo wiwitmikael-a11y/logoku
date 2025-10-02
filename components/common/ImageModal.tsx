@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useRef } from 'react';
 
 interface ImageModalProps {
@@ -82,7 +83,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) =
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
                 files: [file],
-                title: `Desain dari logo.ku`,
+                title: `Desain dari desain.fun`,
                 text: `Lihat ${altText} yang aku buat pakai Mang AI!`,
             });
         } else {
@@ -92,8 +93,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) =
         console.error('Gagal share file, mencoba share URL:', error);
         try {
             await navigator.share({
-                title: `Desain dari logo.ku`,
-                text: `Lihat ${altText} yang aku buat pakai Mang AI! Cek di logo.ku!`,
+                title: `Desain dari desain.fun`,
+                text: `Lihat ${altText} yang aku buat pakai Mang AI! Cek di desain.fun!`,
                 url: window.location.href,
             });
         } catch (shareError) {

@@ -63,10 +63,10 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
           className="w-24 mb-4 animate-breathing-ai"
           style={{ imageRendering: 'pixelated' }}
         />
-        <h2 id="about-modal-title" className="text-2xl font-bold text-indigo-400 mb-4 text-center">Tentang logo.ku (Versi Awal)</h2>
+        <h2 id="about-modal-title" className="text-2xl font-bold text-indigo-400 mb-4 text-center">Tentang desain.fun (Versi Awal)</h2>
         <div className="text-gray-300 text-sm text-left space-y-3 mb-8">
             <p>
-                <strong className="text-white">logo.ku</strong> adalah studio branding AI yang lahir dari sebuah mimpi: ngebantu para pejuang UMKM di Indonesia biar <strong className="text-yellow-400">gacor dan naik kelas</strong>.
+                <strong className="text-white">desain.fun</strong> adalah studio branding AI yang lahir dari sebuah mimpi: ngebantu para pejuang UMKM di Indonesia biar <strong className="text-yellow-400">gacor dan naik kelas</strong>.
             </p>
             <p>
                 Aplikasi ini masih anget-angetnya, Juragan! Ibaratnya, ini <strong className="text-white">versi 0.1</strong>. Mang AI masih semangat-semangatnya belajar dan nambah fitur.

@@ -114,7 +114,7 @@ const AiAssistant: React.FC = () => {
                 chatRef.current = ai.chats.create({
                     model: 'gemini-2.5-flash',
                     config: {
-                         systemInstruction: "You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'logo.ku' application. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.",
+                         systemInstruction: "You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'desain.fun' application. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.",
                     },
                 });
             }
@@ -771,7 +771,7 @@ const MainApp: React.FC = () => {
                     {/* Header Left */}
                     <div className="flex items-baseline gap-3">
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleReturnToDashboard}>
-                            <span>logo<span className="text-white">.ku</span></span>
+                            <span>desain<span className="text-white">.fun</span></span>
                         </h1>
                         <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={() => setShowContactModal(true)}>
                             by @rangga.p.h

@@ -1,4 +1,4 @@
-
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
@@ -23,13 +23,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
-  // FIX: Using constructor binding for `handleCopy` to ensure `this` context is correctly bound,
-  // resolving issues with accessing `this.setState` and `this.props`.
-  constructor(props: Props) {
-    super(props);
-    this.handleCopy = this.handleCopy.bind(this);
-  }
-
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
@@ -38,7 +31,11 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  public handleCopy() {
+  // FIX: Converted `handleCopy` to a class property arrow function.
+  // This ensures `this` is correctly bound to the component instance, resolving errors
+  // with accessing `this.setState` and `this.props` throughout the component.
+  // This modern approach is safer than constructor binding and resolves the cascading type errors.
+  public handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });

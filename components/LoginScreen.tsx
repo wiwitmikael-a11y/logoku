@@ -26,7 +26,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
         {/* Wrapper to align logo and text box */}
         <div className="inline-flex flex-col items-stretch mb-8">
           <h1 className="text-5xl font-bold tracking-tighter text-indigo-400 mb-3">
-            logo<span className="text-white">.ku</span>
+            desain<span className="text-white">.fun</span>
           </h1>
           
           <div className="bg-gray-700/50 py-2 px-4 rounded-lg">

@@ -55,7 +55,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
         </header>
 
         <main className="p-6 overflow-y-auto text-gray-300 text-sm space-y-4">
-            <p>Selamat datang di logo.ku ("Aplikasi", "Layanan")! Dengan mengakses atau menggunakan Aplikasi kami, Anda ("Pengguna") setuju untuk terikat oleh Ketentuan Layanan ini.</p>
+            <p>Selamat datang di desain.fun ("Aplikasi", "Layanan")! Dengan mengakses atau menggunakan Aplikasi kami, Anda ("Pengguna") setuju untuk terikat oleh Ketentuan Layanan ini.</p>
 
             <div className="space-y-2">
                 <h3 className="font-bold text-white text-base">1. Akun dan Privasi Data</h3>
@@ -84,7 +84,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
 
             <div className="space-y-2">
                 <h3 className="font-bold text-white text-base">4. Batasan Tanggung Jawab</h3>
-                <p>Sejauh diizinkan oleh hukum yang berlaku, <strong className="text-yellow-400">logo.ku dan para pengembangnya tidak akan bertanggung jawab</strong> atas segala kerugian, kerusakan, atau klaim (termasuk biaya pengacara) yang timbul dari atau sehubungan dengan penggunaan Anda atas Konten yang Dihasilkan. Ini termasuk klaim pelanggaran merek dagang, pelanggaran hak cipta, atau persaingan tidak sehat yang diajukan oleh pihak ketiga.</p>
+                <p>Sejauh diizinkan oleh hukum yang berlaku, <strong className="text-yellow-400">desain.fun dan para pengembangnya tidak akan bertanggung jawab</strong> atas segala kerugian, kerusakan, atau klaim (termasuk biaya pengacara) yang timbul dari atau sehubungan dengan penggunaan Anda atas Konten yang Dihasilkan. Ini termasuk klaim pelanggaran merek dagang, pelanggaran hak cipta, atau persaingan tidak sehat yang diajukan oleh pihak ketiga.</p>
             </div>
             
             <div className="space-y-2">
@@ -105,7 +105,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
 
             <div className="space-y-2">
                 <h3 className="font-bold text-white text-base">7. Ganti Rugi (Indemnifikasi)</h3>
-                <p>Anda setuju untuk membela, mengganti rugi, dan membebaskan logo.ku dan para pengembangnya dari segala klaim, kerusakan, kewajiban, kerugian, dan pengeluaran yang timbul dari penggunaan Konten yang Dihasilkan oleh Anda yang melanggar hak pihak ketiga atau melanggar Ketentuan Layanan ini.</p>
+                <p>Anda setuju untuk membela, mengganti rugi, dan membebaskan desain.fun dan para pengembangnya dari segala klaim, kerusakan, kewajiban, kerugian, dan pengeluaran yang timbul dari penggunaan Konten yang Dihasilkan oleh Anda yang melanggar hak pihak ketiga atau melanggar Ketentuan Layanan ini.</p>
             </div>
 
              <div className="space-y-2">
