@@ -159,11 +159,7 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
             aria-valuemax={100}
             aria-valuenow={Math.round((sliderLeft / getTrackBounds().maxSliderLeft) * 100) || 0}
           >
-             {projectLogoUrl ? (
-                <img ref={paperRef} src={projectLogoUrl} alt={`Logo untuk ${projectNameToDelete}`} className="w-9 h-9 object-contain bg-white p-1 rounded-md" />
-             ) : (
-                <img ref={paperRef} src="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/paper-stack-icon.png" alt="Project" className="w-7 h-7" />
-             )}
+             <img ref={paperRef} src="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/paper-stack-icon.png" alt="Hapus Project" className="w-7 h-7" />
           </div>
 
           <span className={`text-center w-full font-semibold transition-opacity duration-300 ${(isDragging || isSolved) ? 'opacity-0' : 'opacity-100 text-gray-400'}`}>

@@ -637,6 +637,16 @@
       }
       
       /* --- NEW: AI Assistant Styles --- */
+      @keyframes fab-pulse-ring {
+        0% {
+          transform: scale(1);
+          opacity: 0.6;
+        }
+        100% {
+          transform: scale(1.6);
+          opacity: 0;
+        }
+      }
       #ai-assistant-fab {
         position: fixed;
         bottom: 80px; /* Adjusted for ad banner */
@@ -646,12 +656,24 @@
         height: 64px;
         background-color: #4f46e5; /* indigo-600 */
         border: 2px solid #a5b4fc; /* indigo-300 */
+        border-radius: 9999px; /* Make it a circle */
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
         cursor: pointer;
         transition: all 0.3s ease-in-out;
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+      #ai-assistant-fab::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 9999px;
+        background: transparent;
+        border: 2px solid #a5b4fc; /* indigo-300 */
+        z-index: -1;
+        animation: fab-pulse-ring 2s ease-out infinite;
       }
       #ai-assistant-fab:hover {
         transform: scale(1.1);
@@ -880,23 +902,16 @@
           height: 100%;
       }
 
-      @keyframes saweria-glow {
-        0%, 100% { opacity: 0.2; transform: scale(1); filter: blur(12px); }
-        50% { opacity: 0.7; transform: scale(1.03); filter: blur(20px); }
-      }
-      .saweria-glowing-wrapper {
+      /* UPDATED: Elegant border for Saweria widget */
+      .saweria-elegant-wrapper {
         position: relative;
-        z-index: 0;
+        padding: 2px;
+        border-radius: 0.875rem; /* 14px */
+        background: linear-gradient(135deg, #fcd34d, #f59e0b); /* amber-300 to amber-500 */
+        box-shadow: 0 4px 15px rgba(252, 211, 77, 0.1);
       }
-      .saweria-glowing-wrapper::before {
-          content: '';
-          position: absolute;
-          inset: -3px;
-          border-radius: 1rem; /* rounded-xl + 3px */
-          z-index: -1;
-          background: #f59e0b; /* amber-500 */
-          opacity: 0;
-          animation: saweria-glow 5s ease-in-out infinite;
+      .saweria-elegant-wrapper > div { /* Target the SaweriaWidget component inside */
+        height: 100%;
       }
     </style>
   <script type="importmap">

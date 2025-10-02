@@ -283,7 +283,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       
       {/* --- AD & SUPPORT PLACEMENT --- */}
       <div className="w-full max-w-4xl mt-12 space-y-8">
-          <div className="saweria-glowing-wrapper">
+          <div className="saweria-elegant-wrapper">
             <SaweriaWidget />
           </div>
           <InFeedAd />
