@@ -1,13 +1,13 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Switched to explicit imports for React class component features to resolve type errors where `this.props` and `this.setState` were not recognized.
-import React, { Component, ErrorInfo, ReactNode, CSSProperties } from 'react';
+// FIX: Reverted to a standard default import for React. The namespace import was causing type resolution issues, leading to errors where `this.props` and `this.setState` were not recognized on the class component instance.
+import React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 interface Props {
-  children: ReactNode;
+  children: React.ReactNode;
   onReset?: () => void;
 }
 
@@ -17,7 +17,7 @@ interface State {
   isCopied?: boolean;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
     error: undefined,
@@ -29,7 +29,7 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error, isCopied: false };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
@@ -41,9 +41,9 @@ class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  render(): ReactNode {
+  render(): React.ReactNode {
     if (this.state.hasError) {
-      const imgStyle: CSSProperties = { imageRendering: 'pixelated' };
+      const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
             <img 

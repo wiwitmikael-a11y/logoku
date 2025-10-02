@@ -18,6 +18,19 @@ const MANG_AI_ACCOUNT_NAME = "Mang AI";
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 const MANG_AI_AVATAR = `${GITHUB_ASSETS_URL}Mang_AI.png`;
 
+// Static welcome thread from Mang AI, acts like a pinned post from the database
+const MANG_AI_WELCOME_THREAD: ForumThread = {
+  id: '0', // Special ID to prevent reply/fetch logic
+  created_at: new Date('2024-09-12T10:00:00Z').toISOString(),
+  user_id: 'mang-ai-official',
+  title: 'Selamat Datang di Forum Juragan! ☕ Sokin, Ngobrol di Sini!',
+  content: `Wih, mantap! Selamat datang di markasnya para juragan kreatif se-Indonesia!\n\nIni Forum Juragan, tempat kita bisa:\n- Pamerin hasil karya dari desain.fun\n- Nanya-nanya soal branding, marketing, atau fitur aplikasi\n- Saling kasih masukan biar bisnis makin gacor\n- Ngobrol santai bareng sesama pejuang UMKM\n\nJangan malu-malu, ya! Coba kenalan dulu, ceritain bisnis lo, atau langsung aja bikin topik baru. Mang AI tungguin, nih!`,
+  profiles: {
+    full_name: MANG_AI_ACCOUNT_NAME,
+    avatar_url: MANG_AI_AVATAR,
+  },
+  posts: []
+};
 
 const Forum: React.FC = () => {
     const { user, profile } = useAuth();
@@ -49,15 +62,46 @@ const Forum: React.FC = () => {
         setIsLoadingThreads(true);
         setError(null);
         try {
-            const { data, error } = await supabase
+            // Step 1: Fetch threads without the join
+            const { data: threadsData, error: threadsError } = await supabase
                 .from('threads')
-                .select('id, title, created_at, content, user_id, profiles(full_name, avatar_url)')
+                .select('id, title, created_at, content, user_id')
                 .order('created_at', { ascending: false })
                 .limit(THREADS_PAGE_SIZE);
-            if (error) throw error;
-            setThreads(data as any);
+
+            if (threadsError) throw threadsError;
+            if (!threadsData) {
+                setThreads([MANG_AI_WELCOME_THREAD]);
+                return;
+            }
+            
+            // Step 2: Get unique user IDs
+            const userIds = [...new Set(threadsData.map(t => t.user_id))];
+            let profilesMap = new Map();
+
+            if (userIds.length > 0) {
+                // Step 3: Fetch profiles for those IDs
+                const { data: profilesData, error: profilesError } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, avatar_url')
+                    .in('id', userIds);
+
+                if (profilesError) throw profilesError;
+                profilesMap = new Map(profilesData.map(p => [p.id, p]));
+            }
+            
+            // Step 4: Combine threads with their profiles
+            const combinedData = threadsData.map(thread => ({
+                ...thread,
+                profiles: profilesMap.get(thread.user_id) || null
+            }));
+
+            // Set final state with the welcome thread prepended
+            setThreads([MANG_AI_WELCOME_THREAD, ...combinedData]);
+
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Gagal memuat topik forum.');
+            setThreads([MANG_AI_WELCOME_THREAD]); // Show welcome thread even on error
         } finally {
             setIsLoadingThreads(false);
         }
@@ -70,14 +114,41 @@ const Forum: React.FC = () => {
     const fetchPosts = async (threadId: string) => {
         setIsLoadingPosts(true);
         try {
-            const { data, error } = await supabase
+            // Step 1: Fetch posts
+            const { data: postsData, error: postsError } = await supabase
                 .from('posts')
-                .select('*, profiles(full_name, avatar_url)')
+                .select('id, created_at, user_id, thread_id, content')
                 .eq('thread_id', threadId)
                 .order('created_at', { ascending: true })
                 .limit(POSTS_PAGE_SIZE);
-            if (error) throw error;
-            setPosts(data as any);
+
+            if (postsError) throw postsError;
+            if (!postsData) {
+                setPosts([]);
+                return;
+            }
+
+            // Step 2: Get unique user IDs
+            const userIds = [...new Set(postsData.map(p => p.user_id))];
+            let profilesMap = new Map();
+            
+            if (userIds.length > 0) {
+                 // Step 3: Fetch profiles
+                const { data: profilesData, error: profilesError } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, avatar_url')
+                    .in('id', userIds);
+                if (profilesError) throw profilesError;
+                profilesMap = new Map(profilesData.map(p => [p.id, p]));
+            }
+
+            // Step 4: Combine posts with profiles
+            const combinedPosts = postsData.map(post => ({
+                ...post,
+                profiles: profilesMap.get(post.user_id) || null
+            }));
+            
+            setPosts(combinedPosts);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Gagal memuat balasan.');
         } finally {
@@ -165,8 +236,8 @@ const Forum: React.FC = () => {
                     </Card>
                 )}
 
-                {isLoadingThreads ? <LoadingMessage /> : error ? <ErrorMessage message={error}/> : (
-                    threads.length === 0 && !showNewThreadForm ? (
+                {isLoadingThreads ? <LoadingMessage /> : error && threads.length <= 1 ? <ErrorMessage message={error}/> : (
+                    threads.length <= 1 && !showNewThreadForm ? ( // Check if only the welcome thread exists
                         <div className="text-center p-4 bg-gray-800/50 rounded-lg">
                             <p className="text-gray-400 text-sm">Forumnya masih sepi, Mang! Sokin, bikin postingan pertama!</p>
                              <Button size="small" onClick={() => setShowNewThreadForm(true)} className="mt-4">Bikin Topik Pertama</Button>
