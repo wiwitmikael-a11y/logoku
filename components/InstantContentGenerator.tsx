@@ -17,7 +17,7 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
-  addXp: (amount: number) => Promise<void>; // NEW: For gamification
+  addXp: (amount: number) => Promise<void>;
 }
 
 const GENERATION_COST = 2; // 1 for image, 1 for captions

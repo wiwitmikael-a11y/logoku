@@ -116,7 +116,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
                   <div className="w-full">
                     <p className="text-xs text-gray-300 mb-1">XP: {currentXp.toLocaleString()} / {xpForNextLevel.toLocaleString()}</p>
                     <div className="w-full bg-gray-700 rounded-full h-2.5">
-                      <div className="bg-yellow-400 h-2.5 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+                      <div className="bg-yellow-400 h-2.5 rounded-full xp-bar-fill" style={{ width: `${progressPercentage}%` }}></div>
                     </div>
                   </div>
                 </div>

@@ -53,6 +53,11 @@ const getTodaysDateWIB = (): string => {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 };
 
+// NEW: Achievement definitions
+const ACHIEVEMENTS_MAP: { [key: string]: Achievement } = {
+  BRAND_PERTAMA_LAHIR: { id: 'BRAND_PERTAMA_LAHIR', name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
+  SANG_KOLEKTOR: { id: 'SANG_KOLEKTOR', name: 'Sang Kolektor', description: 'Berhasil menyelesaikan 5 project branding.', icon: '🥈' },
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -76,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, credits, last_credit_reset, welcome_bonus_claimed, xp, level, achievements, total_projects_completed')
+        .select('*')
         .eq('id', userId)
         .single();
 
@@ -341,12 +346,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
       }
   }, [profile, user]);
-
-  const ACHIEVEMENTS_MAP: { [key: string]: Achievement } = {
-    BRAND_PERTAMA_LAHIR: { id: 'BRAND_PERTAMA_LAHIR', name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
-    SANG_KOLEKTOR: { id: 'SANG_KOLEKTOR', name: 'Sang Kolektor', description: 'Berhasil menyelesaikan 5 project branding.', icon: '🥈' },
-  };
-
 
   const value: AuthContextType = {
     session, user, profile, loading, authError, isMuted,

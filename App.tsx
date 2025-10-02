@@ -51,6 +51,11 @@ const SocialAdsGenerator = React.lazy(() => import('./components/SocialAdsGenera
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
 const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
 
+// NEW: Import gamification components
+const HeaderStats = React.lazy(() => import('./components/gamification/HeaderStats'));
+const LevelUpModal = React.lazy(() => import('./components/gamification/LevelUpModal'));
+const AchievementToast = React.lazy(() => import('./components/gamification/AchievementToast'));
+
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -218,7 +223,8 @@ const MainApp: React.FC = () => {
         handleLogout, executeLogout: authExecuteLogout,
         handleDeleteAccount, handleToggleMute, isMuted, 
         authError, refreshProfile, bgmSelection, handleBgmChange,
-        deductCredits
+        deductCredits, addXp, grantAchievement, showLevelUpModal,
+        levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement
     } = useAuth();
     
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('logoku_app_state') as AppState) || 'dashboard');
@@ -491,28 +497,43 @@ const MainApp: React.FC = () => {
         navigateTo('social_ads'); // 6. To Social Ads
     }, [saveLocalCheckpoint]);
 
-    // NEW FINAL STEP: Save everything to DB, no more 'local-complete' status.
+    // NEW FINAL STEP with GAMIFICATION
     const handleSocialAdsComplete = async (data: { adsData: SocialAdsData }) => {
-        if (!session?.user || !selectedProjectId) return;
+        if (!session?.user || !selectedProjectId || !profile) return;
         const currentState = loadWorkflowState() || {};
         const finalProjectData = { ...currentState, socialAds: data.adsData };
         
-        const { data: dbData, error } = await supabase
+        // 1. Update project data and status
+        const { data: dbData, error: projectError } = await supabase
             .from('projects')
             .update({ project_data: finalProjectData, status: 'completed' as ProjectStatus })
             .eq('id', selectedProjectId)
             .select()
             .single();
             
-        if (error) {
-            setGeneralError(`Gagal menyimpan finalisasi project: ${error.message}`);
+        if (projectError) {
+            setGeneralError(`Gagal menyimpan finalisasi project: ${projectError.message}`);
             return;
         }
+
+        // 2. Handle Gamification
+        const newTotalCompleted = (profile.total_projects_completed ?? 0) + 1;
+        await supabase.from('profiles').update({ total_projects_completed: newTotalCompleted }).eq('id', user.id);
         
+        await addXp(500); // Award XP for completing a project
+
+        if (newTotalCompleted === 1) {
+            await grantAchievement('BRAND_PERTAMA_LAHIR');
+        } else if (newTotalCompleted === 5) {
+            await grantAchievement('SANG_KOLEKTOR');
+        }
+
+        // 3. Update local state and UI
+        await refreshProfile(); // Ensure local profile state is synced
         const updatedProject: Project = dbData as any;
         setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
         handleReturnToDashboard();
-        showToast("Mantap! Project lo berhasil disimpan.");
+        showToast("Mantap! Project lo berhasil diselesaikan.");
     };
 
     // --- [BRAND HUB] Centralized Asset Regeneration Logic ---
@@ -699,12 +720,13 @@ const MainApp: React.FC = () => {
                         onRegenerateSocialAds={() => handleRegenerateSocialAds(projectToShow.id)}
                         onRegeneratePackaging={() => handleRegeneratePackaging(projectToShow.id)}
                         onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(projectToShow.id, type)}
+                        addXp={addXp}
                     />;
                 } break;
             case 'caption':
-                if (workflowData && selectedProjectId) { return <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonErrorProps} />; } break;
+                if (workflowData && selectedProjectId) { return <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonErrorProps} />; } break;
             case 'instant_content':
-                if (workflowData && selectedProjectId) { return <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonErrorProps} />; } break;
+                if (workflowData && selectedProjectId) { return <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonErrorProps} />; } break;
             case 'dashboard': default:
                 return <ProjectDashboard 
                     projects={projects} 
@@ -748,13 +770,15 @@ const MainApp: React.FC = () => {
                         </div>
                     </div>
                     {/* Header Right */}
-                    <div className="flex items-center gap-4 relative">
+                    <div className="flex items-center gap-2 md:gap-4 relative">
                         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI peeking" className="animate-header-ai-peek w-12 h-12" />
+                        {/* Gamification Stats */}
+                         <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
                         {/* Token Info */}
                         <div className="relative" ref={tokenInfoRef}>
                             <div onClick={() => setIsTokenInfoOpen(p => !p)} className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/70 transition-colors" title="Info token">
                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
-                                <span className="font-bold text-sm text-white">Sisa Token: {profile?.credits ?? 0}</span>
+                                <span className="font-bold text-sm text-white">{profile?.credits ?? 0}</span>
                             </div>
                              {isTokenInfoOpen && (
                                 <div className="absolute top-full right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in">
@@ -821,6 +845,9 @@ const MainApp: React.FC = () => {
                 <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout Saja" cancelText="Nggak Jadi">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
                 <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
                 <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} projectLogoUrl={projectToDelete?.project_data?.selectedLogoUrl} />
+                 {/* Gamification Modals */}
+                <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
+                <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
             </Suspense>
         </div>
     );

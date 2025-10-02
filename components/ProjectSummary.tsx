@@ -21,6 +21,7 @@ interface Props {
   onRegenerateSocialAds: () => Promise<void>;
   onRegeneratePackaging: () => Promise<void>;
   onRegeneratePrintMedia: (mediaType: 'banner' | 'roll_banner') => Promise<void>;
+  addXp: (amount: number) => Promise<void>; // NEW: For gamification
 }
 
 const BrandHubSidebar: React.FC = () => {

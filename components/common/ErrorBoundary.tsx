@@ -1,3 +1,4 @@
+
 import React, { ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
 
@@ -21,11 +22,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
-  // FIX: Constructor is simplified as binding is no longer needed for handleCopy.
-  constructor(props: Props) {
-    super(props);
-  }
-
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
@@ -34,15 +30,15 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted to an arrow function to ensure `this` is correctly bound.
-  // This resolves the "Property 'setState' does not exist" error.
-  private handleCopy = () => {
+  // FIX: Converted to a class field arrow function to automatically bind `this`.
+  // This resolves all errors related to `this.setState` and `this.props` not being found.
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
-  }
+  };
 
   public render(): React.ReactNode {
     if (this.state.hasError) {
@@ -64,7 +60,6 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()}>
                         Refresh Halaman
                     </Button>
-                    {/* FIX: Resolving `this.props` error by correcting the class method bindings. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -87,7 +82,6 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: Resolving `this.props` error by correcting the class method bindings.
     return this.props.children;
   }
 }

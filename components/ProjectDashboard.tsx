@@ -124,7 +124,6 @@ const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onCl
   </button>
 );
 
-// FIX: Removed 'local-complete' status which is deprecated and corrected 'completed' text.
 const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     const statusMap = {
         'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-500/20', dotColor: 'bg-yellow-400', textColor: 'text-yellow-300' },
@@ -144,7 +143,6 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
-  // FIX: Removed filtering for 'local-complete' projects to fix type error.
   const { inProgressProjects, completedProjects } = useMemo(() => {
     const inProgress = projects.filter(p => p.status === 'in-progress');
     const completed = projects.filter(p => p.status === 'completed');

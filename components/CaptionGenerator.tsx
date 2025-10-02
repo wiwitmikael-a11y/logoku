@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
+import { useAuth } from '../contexts/AuthContext';
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -13,12 +14,15 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
-  addXp: (amount: number) => Promise<void>; // NEW: For gamification
+  addXp: (amount: number) => Promise<void>;
 }
 
 const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Interaktif"];
 
 const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
+  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const credits = profile?.credits ?? 0;
+  
   const [topic, setTopic] = useState('');
   const [tone, setTone] = useState('Promosi');
   const [captions, setCaptions] = useState<GeneratedCaption[]>([]);
@@ -35,12 +39,18 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
   const handleSubmit = useCallback(async () => {
     if (!topic || !projectData.brandInputs || !projectData.selectedPersona) return;
 
+    if (credits < 1) {
+      setShowOutOfCreditsModal(true);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setCaptions([]);
     playSound('start');
 
     try {
+      await deductCredits(1);
       const result = await generateCaptions(
         projectData.brandInputs.businessName,
         projectData.selectedPersona,
@@ -57,7 +67,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, tone, addXp]);
+  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const copyToClipboard = (text: string) => {
     playSound('click');
@@ -99,8 +109,8 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
       </div>
       
        <div className="flex items-center gap-4">
-          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!topic.trim()}>
-            Buatin Captionnya, Mang!
+          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!topic.trim() || credits < 1}>
+            Buatin Captionnya, Mang! (1 Token)
           </Button>
            <Button onClick={onBack} variant="secondary">
             &larr; Kembali ke Ringkasan

@@ -8,11 +8,11 @@ export interface Profile {
   id: string; // Corresponds to Supabase user ID
   credits: number;
   last_credit_reset: string; // Date string in 'YYYY-MM-DD' format
-  welcome_bonus_claimed: boolean; // NEW: To track one-time welcome bonus
-  xp: number; // NEW: Experience points for gamification
-  level: number; // NEW: User level for gamification
-  achievements: string[]; // NEW: Array of achieved achievement IDs
-  total_projects_completed: number; // NEW: Counter for completed projects
+  welcome_bonus_claimed: boolean;
+  xp: number;
+  level: number;
+  achievements: string[];
+  total_projects_completed: number;
 }
 
 export interface BrandInputs {
