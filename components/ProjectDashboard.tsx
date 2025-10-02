@@ -101,7 +101,39 @@ const DynamicInfoBox: React.FC = () => {
     );
 };
 
-// NEW: Component for the gallery preview
+const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = ({ project, rank, delay }) => {
+    const { brandInputs, selectedLogoUrl } = project.project_data;
+    
+    const rankClasses = {
+        1: 'row-start-1 md:row-start-auto md:col-start-2 z-10 scale-110 transform',
+        2: 'md:mt-12',
+        3: 'md:mt-12',
+    };
+    
+    const glowClasses = {
+        1: 'shadow-[0_0_20px_theme(colors.yellow.400)] border-yellow-400',
+        2: 'shadow-[0_0_15px_theme(colors.slate.400)] border-slate-400',
+        3: 'shadow-[0_0_15px_#A0522D] border-[#A0522D]', // Bronze-like color
+    }
+
+    return (
+        <div 
+            className={`flex flex-col items-center gap-2 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`}
+            style={{ animation: `gallery-card-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}
+        >
+            <div className={`relative w-28 h-28 p-2 rounded-xl bg-white/10 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
+                <img src={selectedLogoUrl} alt={`Logo for ${brandInputs.businessName}`} className="max-w-full max-h-full object-contain mx-auto" />
+                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-gray-900 border-2 flex items-center justify-center text-lg font-bold" style={{ borderColor: (glowClasses[rank as keyof typeof glowClasses] || '').split(' ')[1].replace('border-', '') }}>
+                    {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
+                </div>
+            </div>
+            <p className="text-sm font-semibold text-white truncate w-28 text-center">{brandInputs.businessName}</p>
+            <p className="text-xs text-orange-400 font-bold">{project.like_count || 0} Menyala 🔥</p>
+        </div>
+    );
+};
+
+
 const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGallery }) => {
     const [topProjects, setTopProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -119,39 +151,44 @@ const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGa
             if (error) {
                 console.error("Failed to fetch top projects:", error);
             } else {
-                setTopProjects(data as Project[]);
+                // Ensure we have a defined order, even if less than 3 projects exist
+                const sorted = data.sort((a, b) => (b.like_count || 0) - (a.like_count || 0));
+                setTopProjects(sorted as Project[]);
             }
             setIsLoading(false);
         };
         fetchTopProjects();
     }, []);
+    
+    const [first, second, third] = topProjects;
+    const podiumProjects = [second, first, third].filter(Boolean); // Center-first order
 
     return (
         <div className="w-full text-center mt-12">
-            <h3 className="text-lg md:text-xl font-bold mb-4">Pameran Brand Ter-Menyala 🔥</h3>
+            <h3 className="text-lg md:text-xl font-bold mb-4 text-white">Podium Juara Pameran Brand 🏆</h3>
             <div 
-                className="group relative bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:border-indigo-500/50 transition-colors cursor-pointer"
+                className="group relative bg-gray-900/50 border border-gray-700 rounded-xl p-6 hover:border-indigo-500/50 transition-colors cursor-pointer overflow-hidden"
                 onClick={onShowGallery}
+                style={{
+                    backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(79, 70, 229, 0.3) 0%, transparent 60%)'
+                }}
             >
                 {isLoading ? (
-                    <div className="h-24 flex items-center justify-center"><LoadingMessage /></div>
+                    <div className="h-40 flex items-center justify-center"><LoadingMessage /></div>
                 ) : topProjects.length === 0 ? (
-                    <p className="text-gray-500">Belum ada brand yang dipamerkan. Jadilah yang pertama!</p>
+                    <div className="h-40 flex flex-col items-center justify-center">
+                        <p className="text-gray-400 text-lg">Panggung Masih Kosong!</p>
+                        <p className="text-gray-500 mt-1">Jadilah yang pertama menyelesaikan project dan rebut podium juara.</p>
+                    </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        {topProjects.map((project, index) => (
-                            <div key={project.id} className="flex flex-col items-center gap-2">
-                                <div className="bg-white p-2 rounded-lg w-24 h-24 flex items-center justify-center">
-                                    <img src={project.project_data.selectedLogoUrl} alt={`Logo for ${project.project_data.brandInputs.businessName}`} className="max-w-full max-h-full object-contain" />
-                                </div>
-                                <p className="text-sm font-semibold text-white truncate w-24">{project.project_data.brandInputs.businessName}</p>
-                                <p className="text-xs text-orange-400 font-bold">{project.like_count || 0} Menyala 🔥</p>
-                            </div>
-                        ))}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-y-8 gap-x-4 items-end min-h-[160px]">
+                        {second && <PodiumCard project={second} rank={2} delay={0.2} />}
+                        {first && <PodiumCard project={first} rank={1} delay={0} />}
+                        {third && <PodiumCard project={third} rank={3} delay={0.4} />}
                     </div>
                 )}
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
-                    <p className="font-bold text-white text-lg">Lihat Semua Pameran &rarr;</p>
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl">
+                    <p className="font-bold text-white text-lg animate-pulse">Lihat Semua Pameran &rarr;</p>
                 </div>
             </div>
         </div>
@@ -253,26 +290,31 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       if (!data.selectedPersona) return "Memulai: Persona Brand";
       if (!data.selectedLogoUrl) return "Progres: Desain Logo";
       if (!data.logoVariations) return "Progres: Finalisasi Logo";
-      return "Lanjutkan project...";
+      if (!data.socialMediaKit) return "Progres: Social Media Kit";
+      if (!data.socialProfiles) return "Progres: Optimasi Profil";
+      if (!data.selectedPackagingUrl) return "Progres: Desain Kemasan";
+      if (!data.printMediaAssets) return "Progres: Media Cetak";
+      if (!data.contentCalendar) return "Progres: Kalender Konten";
+      return "Progres: Iklan Sosmed";
   }
 
   const templates = [
     {
       name: '☕ Coffee Shop Kekinian',
       description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.',
-      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/template_kopi.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/IMG_3049.jpeg',
       data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkrong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' }
     },
     {
       name: '🌶️ Warung Seblak Viral',
       description: 'Template untuk bisnis seblak pedas yang menyasar target pasar remaja dan Gen Z.',
-      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/template_seblak.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/IMG_3050.jpeg',
       data: { businessName: 'Seblak [Isi Sendiri]', businessCategory: 'Makanan', businessDetail: 'Seblak prasmanan dengan aneka topping pedas level dewa', targetAudience: 'Remaja usia 15-22', valueProposition: 'Seblak paling komplit dan pedasnya nampol, bikin ketagihan.', competitors: 'Seblak Jeletet, Seblak Bloom' }
     },
     {
       name: '👕 Distro Indie',
       description: 'Template untuk brand fashion streetwear dengan desain orisinal dan eksklusif.',
-      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/template_distro.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/IMG_3051.jpeg',
       data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' }
     }
   ];
