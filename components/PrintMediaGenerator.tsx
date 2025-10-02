@@ -104,6 +104,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
 - **Critical Instruction:** ${textInstruction}`;
       }
       
+      // FIX: The uploadImageFromBase64 function is deprecated. Using the base64 result directly.
       const logoBase64 = await fetchImageAsBase64(logoToUseUrl);
       const results = await generatePrintMedia(prompt, logoBase64);
       

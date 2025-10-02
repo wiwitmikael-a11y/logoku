@@ -1,5 +1,3 @@
-// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -256,6 +254,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
     playSound('start');
 
     try {
+      // FIX: The uploadImageFromBase64 function is deprecated. Using the base64 result directly.
       const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
       const results = await generatePackagingDesign(prompt, logoBase64);
       await deductCredits(GENERATION_COST);

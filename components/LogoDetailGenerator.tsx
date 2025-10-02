@@ -57,6 +57,8 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     setShowNextStepNudge(false);
     playSound('start');
     try {
+      // FIX: The uploadImageFromBase64 function is deprecated. The new flow uses base64 strings directly.
+      // The finalLogoUrl is already a Base64 string from the previous step
       const generatedVariations = await generateLogoVariations(finalLogoUrl, businessName);
       await deductCredits(VARIATION_COST);
       
@@ -86,6 +88,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     setError(null);
     playSound('start');
     try {
+      // FIX: The uploadImageFromBase64 function is deprecated. The new flow uses base64 strings directly.
       const base64Data = finalLogoUrl.split(',')[1];
       const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/png';
       

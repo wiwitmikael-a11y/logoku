@@ -21,17 +21,23 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
+  // FIX: Added constructor to explicitly bind `this` for the handleCopy method.
+  // This resolves potential `this` context issues that cause errors like "property 'setState' does not exist".
+  constructor(props: Props) {
+    super(props);
+    this.handleCopy = this.handleCopy.bind(this);
+  }
+
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
-  // FIX: Converted back to a standard lifecycle method. React binds `this` correctly for lifecycle methods.
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // An arrow function is the standard pattern for event handlers to correctly bind `this`.
-  private handleCopy = () => {
+  // FIX: Converted from an arrow function to a standard class method. `this` is now bound in the constructor.
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -39,8 +45,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: Converted back to a standard lifecycle method. React binds `this` correctly for `render`.
-  // The previous arrow function implementation was unconventional and likely caused type inference issues for `this`.
   public render(): React.ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };

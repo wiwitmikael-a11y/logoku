@@ -1,5 +1,3 @@
-// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
-
 import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -189,6 +187,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
     playSound('start');
 
     try {
+      // FIX: The uploadImageFromBase64 function is deprecated. Using the base64 result directly.
       const results = await generateLogoOptions(prompt, 1);
       await deductCredits(INITIAL_LOGO_COST);
       setLogos(results);

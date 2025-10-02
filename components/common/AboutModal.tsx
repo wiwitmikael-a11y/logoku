@@ -72,7 +72,7 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
                 Aplikasi ini masih anget-angetnya, Juragan! Ibaratnya, ini <strong className="text-white">versi 0.1</strong>. Mang AI masih semangat-semangatnya belajar dan nambah fitur.
             </p>
              <p className="p-3 bg-red-900/40 border border-red-700/50 rounded-lg">
-                <strong className="text-red-300">PENTING BANGET:</strong> Karena masih versi awal, kadang ada aja error aneh. Jadi, Mang AI saranin banget, <strong className="text-white">setiap aset (logo, gambar, dll) yang udah lo generate, langsung di-save atau di-screenshot ya!</strong> Developer nggak nanggung kalo ada data yang ilang di tengah jalan. Oke, Juragan?
+                <strong className="text-red-300">PENTING BANGET:</strong> Aplikasi ini menyimpan data teks project lo, tapi <strong className="text-white">TIDAK MENYIMPAN FILE GAMBAR DI CLOUD.</strong> Jadi, Mang AI saranin banget, <strong className="text-white">setiap aset (logo, gambar, dll) yang udah lo generate, langsung diunduh ya!</strong> Developer nggak nanggung kalo ada data yang ilang. Oke, Juragan?
             </p>
             <div className="pt-3 border-t border-gray-700 space-y-3">
                  <h3 className="font-bold text-indigo-300">Keuntungan Lo Jadi Tim Awal:</h3>
@@ -80,8 +80,8 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
                      <li>Lo bisa nikmatin semua fitur ini <strong className="text-white">GRATIS</strong> dan kasih masukan langsung ke developer buat ngebentuk masa depan aplikasi ini.</li>
                      <li>Lo jadi bagian dari sejarah perjalanan Mang AI dari awal!</li>
                  </ul>
-                 <h3 className="font-bold text-indigo-300">Spill Dikit Fitur Pro Nanti:</h3>
-                 <p>Nantinya bakal ada <strong className="text-white">Paket Pro</strong> buat para juragan sultan, isinya: sinkronisasi project antar perangkat, token tanpa batas, akses ke model AI yang lebih canggih, dan hapus akun mandiri. Ditunggu ya!</p>
+                 <h3 className="font-bold text-indigo-300">Rencana ke Depan:</h3>
+                 <p>Mang AI punya banyak mimpi, termasuk fitur Pro dengan penyimpanan cloud, kolaborasi tim, dan akses ke model AI yang lebih canggih. Ditunggu ya!</p>
             </div>
         </div>
         <Button onClick={handleClose}>

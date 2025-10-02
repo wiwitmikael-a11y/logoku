@@ -75,7 +75,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
       await deductCredits(GENERATION_COST);
       
       setGeneratedContent({
-          imageUrl: imageResult[0],
+          imageUrl: imageResult[0], // Keep as Base64
           captions: captionsResult,
       });
 

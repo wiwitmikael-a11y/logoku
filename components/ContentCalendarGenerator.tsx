@@ -91,6 +91,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
         const { ide_konten } = calendar[index];
         const { kata_kunci } = projectData.selectedPersona;
 
+        // FIX: The uploadImageFromBase64 function is deprecated. Using the base64 result directly.
         const imageResults = await generateSocialMediaPostImage(ide_konten, kata_kunci);
         const imageBase64 = imageResults[0];
         

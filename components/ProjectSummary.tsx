@@ -84,6 +84,20 @@ const ProjectSummary: React.FC<Props> = (props) => {
           </p>
       </div>
 
+       <div className="w-full max-w-4xl mx-auto bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-4 flex items-start gap-4 text-left mb-8">
+            <div className="flex-shrink-0 pt-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+            </div>
+            <div>
+                <h4 className="font-bold text-yellow-300">PENTING: Unduh Aset Visual Lo!</h4>
+                <p className="text-sm text-yellow-200 mt-1">
+                    Aplikasi ini menyimpan data teks project lo, tapi <strong className="text-white">tidak menyimpan file gambar secara permanen di cloud</strong>. Segera unduh semua aset visual (logo, banner, dll) ke perangkat lo. Klik pada gambar untuk melihat, lalu gunakan tombol unduh.
+                </p>
+            </div>
+        </div>
+
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         <BrandHubSidebar />
 

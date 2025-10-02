@@ -134,7 +134,7 @@ export interface ProjectData {
 }
 
 // This represents a project row fetched from the Supabase 'projects' table
-export type ProjectStatus = 'in-progress' | 'local-complete' | 'completed';
+export type ProjectStatus = 'in-progress' | 'completed';
 
 export interface Project {
   id: number; // The database primary key

@@ -15,7 +15,6 @@ interface ProjectDashboardProps {
   showWelcomeBanner: boolean;
   onWelcomeBannerClose: () => void;
   onDeleteProject: (projectId: number) => void;
-  onSyncProject: (projectId: number) => void;
 }
 
 const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
@@ -69,8 +68,7 @@ const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onCl
 const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     const statusMap = {
         'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-500/20', dotColor: 'bg-yellow-400', textColor: 'text-yellow-300' },
-        'local-complete': { text: 'Siap Sinkronisasi', color: 'bg-blue-500/20', dotColor: 'bg-blue-400', textColor: 'text-blue-300' },
-        'completed': { text: 'Tersinkron', color: 'bg-green-500/20', dotColor: 'bg-green-400', textColor: 'text-green-300' },
+        'completed': { text: 'Selesai', color: 'bg-green-500/20', dotColor: 'bg-green-400', textColor: 'text-green-300' },
     };
     const { text, color, dotColor, textColor } = statusMap[status] || { text: 'Unknown', color: 'bg-gray-500/20', dotColor: 'bg-gray-400', textColor: 'text-gray-300' };
     return (
@@ -82,15 +80,14 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
 };
 
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject, onSyncProject }) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject }) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
 
-  const { inProgressProjects, localCompleteProjects, completedProjects } = useMemo(() => {
+  const { inProgressProjects, completedProjects } = useMemo(() => {
     const inProgress = projects.filter(p => p.status === 'in-progress');
-    const localComplete = projects.filter(p => p.status === 'local-complete');
     const completed = projects.filter(p => p.status === 'completed');
-    return { inProgressProjects: inProgress, localCompleteProjects: localComplete, completedProjects: completed };
+    return { inProgressProjects: inProgress, completedProjects: completed };
   }, [projects]);
   
   const getProgressDescription = (project: Project): string => {
@@ -109,18 +106,13 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         <p className="text-gray-400 max-w-2xl">Studio branding AI pribadi lo. Mulai project baru untuk membangun identitas brand dari nol, atau lihat dan kelola brand kit yang sudah pernah lo buat.</p>
       </div>
       
-      <div className="w-full max-w-2xl bg-blue-900/50 border border-blue-700/50 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in">
-        <div className="flex-shrink-0 pt-1">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+      <div className="w-full max-w-2xl bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-center gap-4 text-left animate-content-fade-in">
+        <div className="flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
         </div>
         <div>
-          <h4 className="font-bold text-white">Penting: Cara Kerja Penyimpanan</h4>
-          <p className="text-sm text-gray-300 mt-1">
-            Daftar project di dashboard ini <strong className="text-white">tersinkronisasi</strong> antar perangkat. Namun, progres pengerjaan di dalam wizard (misal: milih logo, ngisi form) <strong className="text-white">disimpan secara lokal</strong> di masing-masing browser.
-          </p>
-           <p className="text-sm text-yellow-300 mt-2 font-semibold">
-            Untuk mencegah data tertimpa, hindari mengerjakan SATU PROJECT YANG SAMA di dua perangkat berbeda secara bersamaan.
-          </p>
+          <h4 className="font-bold text-white">Info Fase Pengenalan</h4>
+          <p className="text-sm text-gray-300">Selama masa pengenalan, nikmati bonus sambutan <span className="font-bold text-yellow-300">20 token</span> di hari pertama! Setelah itu, dapatkan <span className="font-bold text-yellow-300">5 token gratis setiap hari</span> untuk terus berkarya. Manfaatin buat eksplorasi sepuasnya ya, Juragan!</p>
         </div>
       </div>
       
@@ -159,49 +151,9 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
         </div>
       )}
 
-      {localCompleteProjects.length > 0 && (
-        <div className="w-full text-left mt-8">
-            <h3 className="text-lg md:text-xl font-bold mb-4">Lokal Selesai (Siap Sinkronisasi):</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {localCompleteProjects.map(project => (
-                <div key={project.id} className="relative group">
-                <Card 
-                    title={
-                        <div>
-                            <StatusBadge status={project.status} />
-                            <span className="block mt-2 truncate pr-2">{project.project_data.brandInputs.businessName}</span>
-                        </div>
-                    }
-                    onClick={() => onSelectProject(project.id)}
-                >
-                    <div className="space-y-3 pr-12">
-                      <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
-                      <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
-                          <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
-                          <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
-                      </div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-700">
-                       <Button 
-                          onClick={(e) => { e.stopPropagation(); onSyncProject(project.id); }}
-                          size="small"
-                          className="w-full"
-                      >
-                          Sinkronkan ke Cloud
-                      </Button>
-                    </div>
-                </Card>
-                 <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
-                 <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
-                </div>
-            ))}
-            </div>
-        </div>
-      )}
-
       {completedProjects.length > 0 && (
         <div className="w-full text-left mt-8">
-          <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai (Tersinkron):</h3>
+          <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {completedProjects.map(project => (
                  <div key={project.id} className="relative group">

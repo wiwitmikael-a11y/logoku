@@ -5,7 +5,6 @@ import { GoogleGenAI, Chat } from "@google/genai";
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound, playBGM, stopBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import { uploadImageFromBase64 } from './services/storageService';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 
@@ -44,7 +43,6 @@ const ProfileSettingsModal = React.lazy(() => import('./components/common/Profil
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
 const DeleteProjectSliderModal = React.lazy(() => import('./components/common/DeleteProjectSliderModal'));
 const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
-const ProFeatureModal = React.lazy(() => import('./components/common/ProFeatureModal')); // NEW
 // NEW: Import all generator components for the wizard
 const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
 const SocialMediaKitGenerator = React.lazy(() => import('./components/SocialMediaKitGenerator'));
@@ -52,10 +50,9 @@ const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'
 const SocialAdsGenerator = React.lazy(() => import('./components/SocialAdsGenerator'));
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
 const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
-const SyncProgressScreen = React.lazy(() => import('./components/SyncProgressScreen'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content' | 'sync_progress';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // --- NEW: AI Assistant Component ---
@@ -235,7 +232,6 @@ const MainApp: React.FC = () => {
     const [showCaptcha, setShowCaptcha] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [showProSyncModal, setShowProSyncModal] = useState(false); // NEW
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
@@ -482,15 +478,15 @@ const MainApp: React.FC = () => {
         navigateTo('social_ads'); // 6. To Social Ads
     }, [saveLocalCheckpoint]);
 
-    // NEW FINAL STEP
+    // NEW FINAL STEP: Save everything to DB, no more 'local-complete' status.
     const handleSocialAdsComplete = async (data: { adsData: SocialAdsData }) => {
         if (!session?.user || !selectedProjectId) return;
         const currentState = loadWorkflowState() || {};
-        const updatedData = { ...currentState, socialAds: data.adsData };
+        const finalProjectData = { ...currentState, socialAds: data.adsData };
         
         const { data: dbData, error } = await supabase
             .from('projects')
-            .update({ project_data: updatedData, status: 'local-complete' as ProjectStatus })
+            .update({ project_data: finalProjectData, status: 'completed' as ProjectStatus })
             .eq('id', selectedProjectId)
             .select()
             .single();
@@ -503,15 +499,8 @@ const MainApp: React.FC = () => {
         const updatedProject: Project = dbData as any;
         setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
         handleReturnToDashboard();
-        showToast("Project disimpan lokal, siap disinkronkan!");
+        showToast("Mantap! Project lo berhasil disimpan.");
     };
-
-
-    // --- Project Synchronization ---
-    const handleRequestSyncProject = useCallback((projectId: number) => {
-        setShowProSyncModal(true);
-        playSound('error');
-    }, []);
 
     // --- [BRAND HUB] Centralized Asset Regeneration Logic ---
     const handleRegenerateTextAsset = async <T,>(
@@ -536,9 +525,10 @@ const MainApp: React.FC = () => {
             setGeneralError(msg);
         }
     };
-
+    
+    // REWORKED: Now works with Base64 instead of uploading
     const handleRegenerateVisualAsset = async (
-        projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<string | string[]>, successMessage: string, assetName: string
+        projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<string>, successMessage: string
     ) => {
         setGeneralError(null);
         if (!user || (profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; }
@@ -547,10 +537,9 @@ const MainApp: React.FC = () => {
 
         try {
             const resultBase64 = await generationFunc();
-            const publicUrl = await uploadImageFromBase64(Array.isArray(resultBase64) ? resultBase64[0] : resultBase64, user.id, projectId, `${assetName}-regen`);
             await deductCredits(cost);
 
-            const updatedProjectData = { ...project.project_data, [assetKey]: publicUrl };
+            const updatedProjectData = { ...project.project_data, [assetKey]: resultBase64 };
             const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
             if (error) throw error;
 
@@ -561,6 +550,7 @@ const MainApp: React.FC = () => {
             setGeneralError(msg);
         }
     };
+
 
     // --- REGENERATION HANDLER IMPLEMENTATIONS ---
     const handleRegenerateContentCalendar = async (projectId: number) => {
@@ -578,6 +568,8 @@ const MainApp: React.FC = () => {
         if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return;
         handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs, p.project_data.selectedPersona, p.project_data.selectedSlogan), "Teks iklan baru berhasil dibuat!");
     };
+    
+    // REWORKED: Now works with Base64
     const handleRegenerateSocialKit = async (projectId: number) => {
         setGeneralError(null);
         if (!user || (profile?.credits ?? 0) < 2) { setShowOutOfCreditsModal(true); return; }
@@ -586,13 +578,9 @@ const MainApp: React.FC = () => {
 
         try {
             const assets = await geminiService.generateSocialMediaKitAssets(project.project_data as any);
-            const [profilePicUrl, bannerUrl] = await Promise.all([
-                uploadImageFromBase64(assets.profilePictureUrl, user.id, projectId, 'social-kit-pfp-regen'),
-                uploadImageFromBase64(assets.bannerUrl, user.id, projectId, 'social-kit-banner-regen')
-            ]);
             await deductCredits(2);
 
-            const updatedProjectData = { ...project.project_data, socialMediaKit: { profilePictureUrl: profilePicUrl, bannerUrl: bannerUrl } };
+            const updatedProjectData = { ...project.project_data, socialMediaKit: assets };
             const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
             if (error) throw error;
 
@@ -607,11 +595,12 @@ const MainApp: React.FC = () => {
         if (!p || !p.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return;
         const { brandInputs, selectedPersona, selectedLogoUrl } = p.project_data;
         const prompt = `Take the provided logo image. Create a realistic, high-quality product mockup of a generic product box for "${brandInputs.businessDetail}". Place the logo prominently. The brand is "${brandInputs.businessName}". The style is ${selectedPersona.kata_kunci.join(', ')}, modern, and clean. This is a commercial product photo.`;
+        
         handleRegenerateVisualAsset(projectId, 'selectedPackagingUrl', 1, async () => {
             const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
             const result = await geminiService.generatePackagingDesign(prompt, logoBase64);
             return result[0];
-        }, "Desain kemasan baru berhasil dibuat!", 'packaging');
+        }, "Desain kemasan baru berhasil dibuat!");
     };
     const handleRegeneratePrintMedia = async (projectId: number, mediaType: 'banner' | 'roll_banner') => {
         const p = projects.find(p => p.id === projectId);
@@ -627,23 +616,28 @@ const MainApp: React.FC = () => {
             prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner (9:16 aspect ratio). Do NOT create a realistic 3D mockup. Use the brand's color palette: ${colors}. The design should be stylish, modern, incorporating the style: ${style}. Place the logo prominently. CRITICAL: DO NOT generate any text.`;
         }
         
-        handleRegenerateVisualAsset(projectId, 'printMediaAssets', 1, async () => {
-             const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
-             const resultBase64 = await geminiService.generatePrintMedia(prompt, logoBase64);
-             const publicUrl = await uploadImageFromBase64(resultBase64[0], p.user_id, p.id, `print-${mediaType}-regen`);
+        try {
+            setGeneralError(null);
+            if (!user || (profile?.credits ?? 0) < 1) { setShowOutOfCreditsModal(true); return; }
+            const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
+            const resultBase64 = (await geminiService.generatePrintMedia(prompt, logoBase64))[0];
+            await deductCredits(1);
+            
+            const currentAssets = p.project_data.printMediaAssets || {};
+            const updatedAssets = mediaType === 'banner' ? { ...currentAssets, bannerUrl: resultBase64 } : { ...currentAssets, rollBannerUrl: resultBase64 };
+            const updatedProjectData = { ...p.project_data, printMediaAssets: updatedAssets };
              
-             const currentAssets = p.project_data.printMediaAssets || {};
-             const updatedAssets = mediaType === 'banner' ? { ...currentAssets, bannerUrl: publicUrl } : { ...currentAssets, rollBannerUrl: publicUrl };
-             const updatedProjectData = { ...p.project_data, printMediaAssets: updatedAssets };
+            const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
+            if (error) throw error;
              
-             const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
-             if (error) throw error;
-             
-             setProjects(prev => prev.map(proj => proj.id === projectId ? (data as Project) : proj));
-             showToast(`Template ${mediaType === 'banner' ? 'spanduk' : 'roll banner'} baru berhasil dibuat!`);
-             return []; // Return empty as we handled the update manually
-        }, '', ''); // Messages and asset name are handled manually inside
+            setProjects(prev => prev.map(proj => proj.id === projectId ? (data as Project) : proj));
+            showToast(`Template ${mediaType === 'banner' ? 'spanduk' : 'roll banner'} baru berhasil dibuat!`);
+        } catch (err) {
+             const msg = err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.';
+            setGeneralError(msg);
+        }
     };
+
 
     // --- Other Handlers ---
     const executeLogout = async () => {
@@ -677,24 +671,6 @@ const MainApp: React.FC = () => {
             case 'content_calendar': return <ContentCalendarGenerator projectData={workflowData || {}} onComplete={handleContentCalendarComplete} {...commonErrorProps} />;
             case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
             
-            case 'sync_progress':
-                const projectToSync = projects.find(p => p.id === selectedProjectId);
-                if (projectToSync) {
-                    return <SyncProgressScreen 
-                        project={projectToSync}
-                        onSyncComplete={async () => {
-                            await fetchProjects();
-                            handleReturnToDashboard();
-                            showToast("Project berhasil disinkronkan!");
-                        }}
-                        onSyncError={async (error) => {
-                            setGeneralError(`Gagal sinkronisasi: ${error.message}`);
-                            await fetchProjects();
-                            handleReturnToDashboard();
-                        }}
-                    />;
-                } break;
-
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);
                 if (projectToShow) {
@@ -723,8 +699,7 @@ const MainApp: React.FC = () => {
                     onSelectProject={handleSelectProject} 
                     showWelcomeBanner={showWelcomeBanner} 
                     onWelcomeBannerClose={() => setShowWelcomeBanner(false)} 
-                    onDeleteProject={handleRequestDeleteProject} 
-                    onSyncProject={handleRequestSyncProject}
+                    onDeleteProject={handleRequestDeleteProject}
                 />;
         }
         handleReturnToDashboard();
@@ -829,7 +804,6 @@ const MainApp: React.FC = () => {
                 <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
                 <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
                 <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
-                <ProFeatureModal show={showProSyncModal} onClose={() => setShowProSyncModal(false)} />
                 <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={() => setShowToSModal(true)} onShowContact={() => setShowContactModal(true)} />
                 <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout Saja" cancelText="Nggak Jadi">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
                 <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>

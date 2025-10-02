@@ -97,9 +97,8 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete, onGoTo
     playSound('start');
 
     try {
-      // FIX: Fetch the logo as base64 and pass it to the service function.
+      // FIX: The uploadImageFromBase64 function is deprecated. Using the base64 result directly.
       const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
-      // FIX: Correctly call generateMerchandiseMockup with both prompt and logoBase64 arguments.
       const results = await generateMerchandiseMockup(prompt, logoBase64);
       
       await deductCredits(GENERATION_COST);
