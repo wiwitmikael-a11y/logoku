@@ -760,6 +760,99 @@
           opacity: 1;
           pointer-events: auto;
       }
+
+      /* --- NEW: Dashboard Living UI Effects --- */
+      @keyframes scan-line {
+        from { background-position-y: 0px; }
+        to { background-position-y: 48px; }
+      }
+      .info-box-stream {
+          position: relative;
+          overflow: hidden;
+          z-index: 0; /* ensure stacking context */
+      }
+      .info-box-stream::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: -1;
+          background-image: repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 22px,
+              rgba(165, 180, 252, 0.05) 23px,
+              rgba(165, 180, 252, 0.05) 24px
+          );
+          background-size: 100% 48px;
+          animation: scan-line 2s linear infinite;
+          opacity: 0.7;
+      }
+      
+      @keyframes rotate-border {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .card-in-progress-wrapper {
+          position: relative;
+          padding: 2px;
+          overflow: hidden;
+          border-radius: 0.875rem; /* 14px, slightly bigger than card's rounded-xl */
+          z-index: 0;
+      }
+      .card-in-progress-wrapper::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          z-index: -1;
+          background: conic-gradient(
+              from 90deg at 50% 50%,
+              #a5b4fc, /* indigo-300 */
+              #fcd34d, /* amber-300 */
+              #6ee7b7, /* emerald-300 */
+              #93c5fd, /* blue-300 */
+              #a5b4fc
+          );
+          animation: rotate-border 6s linear infinite;
+      }
+      .card-in-progress-wrapper > div { /* Target the Card component inside */
+          height: 100%;
+      }
+      
+      .card-completed-wrapper {
+        position: relative;
+        padding: 2px;
+        border-radius: 0.875rem; /* 14px */
+        background-color: #374151; /* gray-700 */
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234b5563' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+      .card-completed-wrapper > div { /* Target the Card component inside */
+          height: 100%;
+      }
+
+      @keyframes saweria-glow {
+        0%, 100% { opacity: 0.2; transform: scale(1); filter: blur(12px); }
+        50% { opacity: 0.7; transform: scale(1.03); filter: blur(20px); }
+      }
+      .saweria-glowing-wrapper {
+        position: relative;
+        z-index: 0;
+      }
+      .saweria-glowing-wrapper::before {
+          content: '';
+          position: absolute;
+          inset: -3px;
+          border-radius: 1rem; /* rounded-xl + 3px */
+          z-index: -1;
+          background: #f59e0b; /* amber-500 */
+          opacity: 0;
+          animation: saweria-glow 5s ease-in-out infinite;
+      }
     </style>
   <script type="importmap">
 {

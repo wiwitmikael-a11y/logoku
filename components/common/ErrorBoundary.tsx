@@ -21,6 +21,13 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
+  // FIX: An explicit constructor is added to ensure `this.props` is initialized correctly.
+  // Some build environments might fail to do this implicitly, causing `this.props` and `this.setState`
+  // to be undefined throughout the component. Calling `super(props)` fixes this.
+  constructor(props: Props) {
+    super(props);
+  }
+
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }

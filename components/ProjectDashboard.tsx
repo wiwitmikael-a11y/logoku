@@ -88,7 +88,7 @@ const DynamicInfoBox: React.FC = () => {
     const currentTip = DYNAMIC_INFO_TIPS[currentTipIndex];
 
     return (
-        <div key={currentTipIndex} className="w-full max-w-2xl bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in">
+        <div key={currentTipIndex} className="w-full max-w-2xl bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in info-box-stream">
             <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
             <div>
                 <h4 className="font-bold text-white">{currentTip.title}</h4>
@@ -178,7 +178,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
           <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {inProgressProjects.map(project => (
-                <div key={project.id} className="relative group">
+                <div key={project.id} className="card-in-progress-wrapper">
                     <Card 
                       title={
                         <div>
@@ -209,7 +209,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
           <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {completedProjects.map(project => (
-                 <div key={project.id} className="relative group">
+                 <div key={project.id} className="card-completed-wrapper">
                     <Card 
                       title={
                         <div>
@@ -245,7 +245,9 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProj
       
       {/* --- AD & SUPPORT PLACEMENT --- */}
       <div className="w-full max-w-4xl mt-12 space-y-8">
-          <SaweriaWidget />
+          <div className="saweria-glowing-wrapper">
+            <SaweriaWidget />
+          </div>
           <InFeedAd />
       </div>
     </div>
