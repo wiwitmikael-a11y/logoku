@@ -15,6 +15,8 @@ export interface Profile {
   total_projects_completed: number;
   last_daily_xp_claim: string; // NEW: Date string for daily XP
   completed_first_steps: string[]; // NEW: Array of wizard steps completed for the first time
+  full_name?: string; // Add optional fields from profiles for joins
+  avatar_url?: string;
 }
 
 export interface BrandInputs {
@@ -149,4 +151,25 @@ export interface Project {
   project_data: ProjectData; // All the branding data is nested here
   status: ProjectStatus; 
   like_count: number; // NEW: For gallery upvotes
+}
+
+// --- NEW: Forum Types ---
+export interface ForumPost {
+  id: string;
+  created_at: string;
+  user_id: string;
+  thread_id: string;
+  content: string;
+  profiles: Pick<Profile, 'full_name' | 'avatar_url'> | null;
+}
+
+export interface ForumThread {
+  id: string;
+  created_at: string;
+  user_id: string;
+  title: string;
+  content: string;
+  profiles: Pick<Profile, 'full_name' | 'avatar_url'> | null;
+  posts: ForumPost[]; // replies
+  reply_count?: number; // Optional, can be fetched via RPC
 }

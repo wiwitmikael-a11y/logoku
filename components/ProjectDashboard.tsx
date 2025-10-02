@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import type { Project, BrandInputs } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
@@ -9,6 +9,8 @@ import Card from './common/Card';
 import InFeedAd from './common/InFeedAd';
 import SaweriaWidget from './common/SaweriaWidget';
 import LoadingMessage from './common/LoadingMessage';
+
+const Forum = React.lazy(() => import('./Forum'));
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -20,6 +22,7 @@ interface ProjectDashboardProps {
   onShowBrandGallery: () => void;
 }
 
+// Welcome Banner and other sub-components remain unchanged...
 const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
     const [isVisible, setIsVisible] = useState(true);
 
@@ -43,7 +46,6 @@ const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ us
     );
 };
 
-// NEW: Dynamic info box component
 const DYNAMIC_INFO_TIPS = [
     {
         icon: '🎁',
@@ -235,7 +237,6 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     );
 };
 
-// NEW: Dynamic Template Card Component
 interface TemplateCardProps {
   template: {
     name: string;
@@ -274,161 +275,194 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => {
   );
 };
 
+const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
+    const { inProgressProjects, completedProjects } = useMemo(() => {
+        const inProgress = projects.filter(p => p.status === 'in-progress');
+        const completed = projects.filter(p => p.status === 'completed');
+        return { inProgressProjects: inProgress, completedProjects: completed };
+    }, [projects]);
+  
+    const getProgressDescription = (project: Project): string => {
+        const data = project.project_data;
+        if (!data.selectedPersona) return "Memulai: Persona Brand";
+        if (!data.selectedLogoUrl) return "Progres: Desain Logo";
+        if (!data.logoVariations) return "Progres: Finalisasi Logo";
+        if (!data.socialMediaKit) return "Progres: Social Media Kit";
+        if (!data.socialProfiles) return "Progres: Optimasi Profil";
+        if (!data.selectedPackagingUrl) return "Progres: Desain Kemasan";
+        if (!data.printMediaAssets) return "Progres: Media Cetak";
+        if (!data.contentCalendar) return "Progres: Kalender Konten";
+        return "Progres: Iklan Sosmed";
+    }
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, showWelcomeBanner, onWelcomeBannerClose, onDeleteProject, onShowBrandGallery }) => {
+    const templates = [
+        {
+        name: '☕ Coffee Shop Kekinian',
+        description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.',
+        imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/IMG_3049.jpeg',
+        data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkrong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' }
+        },
+        {
+        name: '🌶️ Warung Seblak Viral',
+        description: 'Template untuk bisnis seblak pedas yang menyasar target pasar remaja dan Gen Z.',
+        imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/IMG_3050.jpeg',
+        data: { businessName: 'Seblak [Isi Sendiri]', businessCategory: 'Makanan', businessDetail: 'Seblak prasmanan dengan aneka topping pedas level dewa', targetAudience: 'Remaja usia 15-22', valueProposition: 'Seblak paling komplit dan pedasnya nampol, bikin ketagihan.', competitors: 'Seblak Jeletet, Seblak Bloom' }
+        },
+        {
+        name: '👕 Distro Indie',
+        description: 'Template untuk brand fashion streetwear dengan desain orisinal dan eksklusif.',
+        imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/IMG_3051.jpeg',
+        data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' }
+        }
+    ];
+
+    return (
+        <div className="flex flex-col gap-8 items-center text-center">
+            <DynamicInfoBox />
+            
+            <Button onClick={() => onNewProject()}>
+                + Bikin Project Branding Baru
+            </Button>
+            
+            <div className="w-full text-center mt-6">
+                <div className="relative inline-block my-2">
+                <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gray-600"></div>
+                <span className="relative bg-gray-900 px-4 text-gray-400 text-sm">Atau pake...</span>
+                </div>
+                <h3 className="text-lg md:text-xl font-bold mb-4 mt-2">Jalan Pintas Juragan 🚀</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">
+                {templates.map(template => (
+                    <TemplateCard 
+                        key={template.name}
+                        template={template}
+                        onClick={onNewProject}
+                    />
+                ))}
+                </div>
+            </div>
+
+
+            {inProgressProjects.length > 0 && (
+                <div className="w-full text-left mt-8">
+                <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {inProgressProjects.map(project => (
+                        <div key={project.id} className="card-in-progress-wrapper">
+                            <Card 
+                            title={
+                                <div>
+                                    <StatusBadge status={project.status} />
+                                    <span className="block mt-2 truncate pr-2">{project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}</span>
+                                </div>
+                            }
+                            onClick={() => onSelectProject(project.id)}
+                            >
+                            <div className="pr-12">
+                                <p className="text-sm text-gray-400 min-h-[40px] italic">
+                                    {getProgressDescription(project)}
+                                </p>
+                                <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
+                                    <p className="text-xs text-gray-500">Klik untuk lanjut...</p>
+                                </div>
+                            </div>
+                            </Card>
+                            <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
+                        </div>
+                    ))}
+                </div>
+                </div>
+            )}
+
+            {completedProjects.length > 0 && (
+                <div className="w-full text-left mt-8">
+                <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {completedProjects.map(project => (
+                        <div key={project.id} className="card-completed-wrapper">
+                            <Card 
+                            title={
+                                <div>
+                                    <StatusBadge status={project.status} />
+                                    <span className="block mt-2 truncate pr-2">{project.project_data.brandInputs.businessName}</span>
+                                </div>
+                            }
+                            onClick={() => onSelectProject(project.id)}
+                            >
+                            <div className="space-y-3 pr-12">
+                                <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
+                                <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
+                                    <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
+                                    <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
+                                </div>
+                                <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            </div>
+                            </Card>
+                            <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
+                            <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
+                        </div>
+                    ))}
+                </div>
+                </div>
+            )}
+
+            {projects.length === 0 && (
+                <div className="mt-8 text-center text-gray-500">
+                    <p>Lo belom punya project nih.</p>
+                    <p>Klik tombol di atas buat bikin brand pertama lo!</p>
+                </div>
+            )}
+            
+            <div className="w-full max-w-4xl mt-12 space-y-8">
+                <BrandGalleryPreview onShowGallery={onShowBrandGallery} />
+                <div className="saweria-elegant-wrapper">
+                    <SaweriaWidget />
+                </div>
+                <InFeedAd />
+            </div>
+        </div>
+    );
+};
+
+
+const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
-
-  const { inProgressProjects, completedProjects } = useMemo(() => {
-    const inProgress = projects.filter(p => p.status === 'in-progress');
-    const completed = projects.filter(p => p.status === 'completed');
-    return { inProgressProjects: inProgress, completedProjects: completed };
-  }, [projects]);
-  
-  const getProgressDescription = (project: Project): string => {
-      const data = project.project_data;
-      if (!data.selectedPersona) return "Memulai: Persona Brand";
-      if (!data.selectedLogoUrl) return "Progres: Desain Logo";
-      if (!data.logoVariations) return "Progres: Finalisasi Logo";
-      if (!data.socialMediaKit) return "Progres: Social Media Kit";
-      if (!data.socialProfiles) return "Progres: Optimasi Profil";
-      if (!data.selectedPackagingUrl) return "Progres: Desain Kemasan";
-      if (!data.printMediaAssets) return "Progres: Media Cetak";
-      if (!data.contentCalendar) return "Progres: Kalender Konten";
-      return "Progres: Iklan Sosmed";
-  }
-
-  const templates = [
-    {
-      name: '☕ Coffee Shop Kekinian',
-      description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.',
-      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/IMG_3049.jpeg',
-      data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkrong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' }
-    },
-    {
-      name: '🌶️ Warung Seblak Viral',
-      description: 'Template untuk bisnis seblak pedas yang menyasar target pasar remaja dan Gen Z.',
-      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/IMG_3050.jpeg',
-      data: { businessName: 'Seblak [Isi Sendiri]', businessCategory: 'Makanan', businessDetail: 'Seblak prasmanan dengan aneka topping pedas level dewa', targetAudience: 'Remaja usia 15-22', valueProposition: 'Seblak paling komplit dan pedasnya nampol, bikin ketagihan.', competitors: 'Seblak Jeletet, Seblak Bloom' }
-    },
-    {
-      name: '👕 Distro Indie',
-      description: 'Template untuk brand fashion streetwear dengan desain orisinal dan eksklusif.',
-      imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/IMG_3051.jpeg',
-      data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' }
-    }
-  ];
+  const [activeTab, setActiveTab] = useState<'projects' | 'forum'>('projects');
 
   return (
-    <div className="flex flex-col gap-8 items-center text-center">
-      {showWelcomeBanner && <WelcomeBanner userName={userName} onClose={onWelcomeBannerClose} />}
-      <div>
+    <div className="flex flex-col gap-8">
+      {props.showWelcomeBanner && <WelcomeBanner userName={userName} onClose={props.onWelcomeBannerClose} />}
+      <div className="text-center">
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Selamat Datang, {userName}!</h2>
-        <p className="text-gray-400 max-w-2xl">Studio branding AI pribadi lo. Mulai project baru untuk membangun identitas brand dari nol, atau lihat dan kelola brand kit yang sudah pernah lo buat.</p>
-      </div>
-      
-      <DynamicInfoBox />
-      
-      <Button onClick={() => onNewProject()}>
-        + Bikin Project Branding Baru
-      </Button>
-      
-      <div className="w-full text-center mt-6">
-        <div className="relative inline-block my-2">
-          <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gray-600"></div>
-          <span className="relative bg-gray-900 px-4 text-gray-400 text-sm">Atau pake...</span>
-        </div>
-        <h3 className="text-lg md:text-xl font-bold mb-4 mt-2">Jalan Pintas Juragan 🚀</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">
-          {templates.map(template => (
-            <TemplateCard 
-                key={template.name}
-                template={template}
-                onClick={onNewProject}
-            />
-          ))}
-        </div>
+        <p className="text-gray-400 max-w-2xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain di forum.</p>
       </div>
 
-
-      {inProgressProjects.length > 0 && (
-        <div className="w-full text-left mt-8">
-          <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {inProgressProjects.map(project => (
-                <div key={project.id} className="card-in-progress-wrapper">
-                    <Card 
-                      title={
-                        <div>
-                            <StatusBadge status={project.status} />
-                            <span className="block mt-2 truncate pr-2">{project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}</span>
-                        </div>
-                      }
-                      onClick={() => onSelectProject(project.id)}
-                    >
-                      <div className="pr-12">
-                          <p className="text-sm text-gray-400 min-h-[40px] italic">
-                            {getProgressDescription(project)}
-                          </p>
-                          <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
-                              <p className="text-xs text-gray-500">Klik untuk lanjut...</p>
-                          </div>
-                      </div>
-                    </Card>
-                    <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
-                </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {completedProjects.length > 0 && (
-        <div className="w-full text-left mt-8">
-          <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {completedProjects.map(project => (
-                 <div key={project.id} className="card-completed-wrapper">
-                    <Card 
-                      title={
-                        <div>
-                            <StatusBadge status={project.status} />
-                            <span className="block mt-2 truncate pr-2">{project.project_data.brandInputs.businessName}</span>
-                        </div>
-                      }
-                      onClick={() => onSelectProject(project.id)}
-                    >
-                      <div className="space-y-3 pr-12">
-                          <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
-                          <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
-                            <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
-                            <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
-                          </div>
-                          <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                      </div>
-                    </Card>
-                    <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
-                    <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
-                </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {projects.length === 0 && (
-          <div className="mt-8 text-center text-gray-500">
-              <p>Lo belom punya project nih.</p>
-              <p>Klik tombol di atas buat bikin brand pertama lo!</p>
-          </div>
-      )}
-      
-      {/* --- AD & SUPPORT PLACEMENT --- */}
-      <div className="w-full max-w-4xl mt-12 space-y-8">
-          <BrandGalleryPreview onShowGallery={onShowBrandGallery} />
-          <div className="saweria-elegant-wrapper">
-            <SaweriaWidget />
-          </div>
-          <InFeedAd />
+      {/* NEW: Tab Navigation */}
+      <div className="flex justify-center border-b border-gray-700">
+        <button 
+          onClick={() => setActiveTab('projects')}
+          className={`px-6 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
+        >
+          🚀 Project Saya
+        </button>
+        <button 
+          onClick={() => setActiveTab('forum')}
+          className={`px-6 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
+        >
+          ☕ Forum Juragan
+        </button>
       </div>
+      
+      {/* Content based on active tab */}
+      <div className="mt-4">
+        {activeTab === 'projects' && <ProjectContent {...props} />}
+        {activeTab === 'forum' && (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
+            <Forum />
+          </Suspense>
+        )}
+      </div>
+
     </div>
   );
 };
