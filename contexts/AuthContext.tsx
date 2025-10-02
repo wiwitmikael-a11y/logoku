@@ -80,7 +80,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
 
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (user: User) => {
+    const userId = user.id;
     const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -98,13 +99,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: newProfileData, error: insertError } = await supabase
             .from('profiles')
             .insert({ 
-                id: userId, 
+                id: userId,
+                full_name: user.user_metadata.full_name,
+                avatar_url: user.user_metadata.avatar_url,
                 credits: WELCOME_BONUS, 
                 last_credit_reset: getTodaysDateWIB(),
                 welcome_bonus_claimed: true,
-                xp: 0, level: 1, achievements: [], total_projects_completed: 0, // Initialize gamification fields
-                last_daily_xp_claim: getTodaysDateWIB(), // Initialize daily XP claim date
-                completed_first_steps: [], // Initialize completed steps
+                xp: 0, level: 1, achievements: [], total_projects_completed: 0,
+                last_daily_xp_claim: getTodaysDateWIB(),
+                completed_first_steps: [],
             })
             .select()
             .single();
@@ -118,7 +121,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
     }
     
-    // Ensure gamification fields have default values if they are null in the DB
     const profileData: Profile = {
         ...data,
         xp: data.xp ?? 0,
@@ -129,25 +131,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         completed_first_steps: data.completed_first_steps ?? [],
     };
     
-    if (!profileData.welcome_bonus_claimed) {
-        const WELCOME_BONUS = 20;
-        const { data: updatedProfileData, error: updateError } = await supabase
-            .from('profiles')
-            .update({ credits: WELCOME_BONUS, welcome_bonus_claimed: true, last_credit_reset: getTodaysDateWIB() })
-            .eq('id', userId)
-            .select()
-            .single();
-        
-        if (updateError) {
-             console.error("Gagal klaim bonus sambutan:", updateError);
-             setAuthError("Gagal klaim bonus sambutan, tapi jangan khawatir, data lama masih aman.");
-             setProfile(profileData);
-        } else {
-            setProfile(updatedProfileData as Profile);
-        }
-        return;
-    }
-
     const todayWIB = getTodaysDateWIB();
     let updates: Partial<Profile> = {};
     let shouldUpdate = false;
@@ -160,11 +143,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         shouldUpdate = true;
     }
     
-    // NEW: Daily XP Claim Logic
+    // Daily XP Claim Logic
     if (profileData.last_daily_xp_claim !== todayWIB) {
         const DAILY_XP = 10;
         updates.xp = (profileData.xp ?? 0) + DAILY_XP;
         updates.last_daily_xp_claim = todayWIB;
+        shouldUpdate = true;
+    }
+    
+    // Sync profile name and avatar from provider
+    if (profileData.full_name !== user.user_metadata.full_name || profileData.avatar_url !== user.user_metadata.avatar_url) {
+        updates.full_name = user.user_metadata.full_name;
+        updates.avatar_url = user.user_metadata.avatar_url;
         shouldUpdate = true;
     }
 
@@ -177,9 +167,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
         
         if (updateError) {
-            console.error("Gagal melakukan update harian (token/XP):", updateError);
-            setAuthError("Gagal melakukan update harian, tapi jangan khawatir, data lama masih aman.");
-            setProfile(profileData); // Use old data on failure
+            console.error("Gagal melakukan update harian/profil:", updateError);
+            setAuthError("Gagal sinkronisasi data profil, tapi jangan khawatir, data lama masih aman.");
+            setProfile(profileData);
         } else {
             setProfile({ ...profileData, ...updatedProfileData } as Profile);
         }
@@ -195,7 +185,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user);
       }
       setLoading(false);
     }).catch(error => {
@@ -209,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         if (event === 'SIGNED_IN' && session?.user) {
-             fetchProfile(session.user.id);
+             fetchProfile(session.user);
         } else if (event === 'SIGNED_OUT') {
             setProfile(null);
         }
@@ -305,7 +295,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user);
     }
   }, [user, fetchProfile]);
 

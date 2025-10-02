@@ -1,12 +1,15 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { ErrorInfo, ReactNode } from 'react';
+// FIX: Reverted from namespace import to default import for React.
+// The `import * as React from 'react'` was causing TypeScript to not correctly
+// infer the inherited properties like `props` and `setState` from `React.Component`.
+import React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 interface Props {
-  children: ReactNode;
+  children: React.ReactNode;
   onReset?: () => void;
 }
 
@@ -17,10 +20,6 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to using a class property for state initialization.
-  // The constructor-based approach was not resolving inherited properties like `state` and `props`,
-  // likely due to a project setup issue. This syntax is more concise, standard for modern React,
-  // and correctly sets up the component's state.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -32,7 +31,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error, isCopied: false };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
