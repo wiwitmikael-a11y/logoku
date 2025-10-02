@@ -17,15 +17,18 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Removed public access modifiers from class members.
-  // The explicit 'public' keyword is not conventional in React components and may have
-  // been causing issues with the TypeScript compiler or build toolchain, leading to it
-  // not recognizing that this class extends React.Component and has access to `this.props` and `this.setState`.
-  state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Converted state initialization to a constructor to ensure proper
+  // component instantiation and `this` context for older toolchains or configurations
+  // that might not fully support class property initializers. This resolves issues where
+  // `this.props` and `this.setState` were not being recognized.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+  }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Also reset isCopied state on a new error for safety.

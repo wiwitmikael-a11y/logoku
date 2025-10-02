@@ -1,3 +1,5 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React, { useEffect, useRef } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
 import Button from './Button';
@@ -63,25 +65,29 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
           className="w-24 mb-4 animate-breathing-ai"
           style={{ imageRendering: 'pixelated' }}
         />
-        <h2 id="about-modal-title" className="text-2xl font-bold text-indigo-400 mb-4 text-center">Tentang desain.fun (Versi Awal)</h2>
-        <div className="text-gray-300 text-sm text-left space-y-3 mb-8">
+        <h2 id="about-modal-title" className="text-2xl font-bold text-indigo-400 mb-4 text-center">Tentang desain.fun</h2>
+        <div className="text-gray-300 text-sm text-left space-y-4 mb-8">
             <p>
-                <strong className="text-white">desain.fun</strong> adalah studio branding AI yang lahir dari sebuah mimpi: ngebantu para pejuang UMKM di Indonesia biar <strong className="text-yellow-400">gacor dan naik kelas</strong>.
+                <strong className="text-white">desain.fun</strong> adalah studio branding AI yang lahir dari sebuah mimpi: ngebantu para pejuang UMKM di Indonesia biar <strong className="text-yellow-400">gacor dan naik kelas</strong>. Ini bukan cuma aplikasi, tapi partner setia lo!
             </p>
-            <p>
-                Aplikasi ini masih anget-angetnya, Juragan! Ibaratnya, ini <strong className="text-white">versi 0.1</strong>. Mang AI masih semangat-semangatnya belajar dan nambah fitur.
-            </p>
+            
+            <div className="pt-3 border-t border-gray-700 space-y-3">
+                 <h3 className="font-bold text-indigo-300">Fitur Andalan Mang AI:</h3>
+                 <ul className="list-disc list-inside space-y-2">
+                     <li><strong className="text-white">Studio Branding Lengkap:</strong> Dari persona, logo, social media kit, kalender konten, sampe desain kemasan, semua diracik Mang AI.</li>
+                     <li><strong className="text-white">Arena Kreativitas 'Pameran Brand':</strong> Pamerin hasil karyamu, intip karya juragan lain, dan kasih 'Menyala!' 🔥 buat dapet XP.</li>
+                     <li><strong className="text-white">Gamifikasi Seru:</strong> Naik level, kumpulin XP, dan dapetin lencana 'Kejuraganan' sambil ngasah skill branding lo.</li>
+                     <li><strong className="text-white">Asisten Pribadi Mang AI:</strong> Bingung? Tanya aja langsung ke Mang AI lewat tombol di pojok kanan bawah.</li>
+                 </ul>
+            </div>
+
              <p className="p-3 bg-red-900/40 border border-red-700/50 rounded-lg">
                 <strong className="text-red-300">PENTING BANGET:</strong> Aplikasi ini menyimpan data teks project lo, tapi <strong className="text-white">TIDAK MENYIMPAN FILE GAMBAR DI CLOUD.</strong> Jadi, Mang AI saranin banget, <strong className="text-white">setiap aset (logo, gambar, dll) yang udah lo generate, langsung diunduh ya!</strong> Developer nggak nanggung kalo ada data yang ilang. Oke, Juragan?
             </p>
+            
             <div className="pt-3 border-t border-gray-700 space-y-3">
-                 <h3 className="font-bold text-indigo-300">Keuntungan Lo Jadi Tim Awal:</h3>
-                 <ul className="list-disc list-inside space-y-1">
-                     <li>Lo bisa nikmatin semua fitur ini <strong className="text-white">GRATIS</strong> dan kasih masukan langsung ke developer buat ngebentuk masa depan aplikasi ini.</li>
-                     <li>Lo jadi bagian dari sejarah perjalanan Mang AI dari awal!</li>
-                 </ul>
                  <h3 className="font-bold text-indigo-300">Rencana ke Depan:</h3>
-                 <p>Mang AI punya banyak mimpi, termasuk fitur Pro dengan penyimpanan cloud, kolaborasi tim, dan akses ke model AI yang lebih canggih. Ditunggu ya!</p>
+                 <p>Mang AI punya banyak mimpi, termasuk fitur Pro dengan penyimpanan cloud permanen, kolaborasi tim, dan akses ke model AI yang lebih canggih. Ditunggu ya!</p>
             </div>
         </div>
         <Button onClick={handleClose}>
