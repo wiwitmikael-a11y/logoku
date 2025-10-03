@@ -83,8 +83,8 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
                 setLikedProjects(new Set(likesData.map(l => l.project_id)));
             }
 
-        } catch (err) {
-            const msg = err instanceof Error ? `Gagal memuat pameran: ${err.message}` : 'Terjadi kesalahan tidak diketahui.';
+        } catch (err: any) {
+            const msg = `Gagal memuat pameran: ${err.message || 'Terjadi kesalahan tidak diketahui.'}`;
             setError(msg);
         } finally {
             setIsLoading(false);
@@ -141,8 +141,8 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
                 // The +1 XP for the project owner must be handled on the backend via a trigger for security.
                 await addXp(1);
             }
-        } catch (err) {
-            const msg = err instanceof Error ? `Gagal update 'Menyala!': ${err.message}` : 'Gagal update.';
+        } catch (err: any) {
+            const msg = `Gagal update 'Menyala!': ${err.message || 'Gagal update.'}`;
             setError(msg);
             // Revert optimistic update on error
             setProjects(originalProjects);

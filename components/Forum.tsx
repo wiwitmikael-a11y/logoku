@@ -157,8 +157,8 @@ const Forum: React.FC = () => {
             setThreads(prev => pageNum === 0 ? formattedData : [...prev, ...formattedData]);
             setHasMoreThreads(formattedData.length === THREADS_PAGE_SIZE);
 
-        } catch (err) {
-            setError(err instanceof Error ? `Gagal memuat topik: ${err.message}` : 'Terjadi kesalahan tidak diketahui.');
+        } catch (err: any) {
+            setError(`Gagal memuat topik: ${err.message || 'Terjadi kesalahan tidak diketahui.'}`);
         } finally {
             setIsLoadingThreads(false);
             setIsLoadingMoreThreads(false);
@@ -185,8 +185,8 @@ const Forum: React.FC = () => {
             if (postsError) throw postsError;
             setPosts(data as ForumPost[]);
 
-        } catch(err) {
-            setError(err instanceof Error ? `Gagal memuat balasan: ${err.message}` : 'Terjadi kesalahan tidak diketahui.');
+        } catch(err: any) {
+            setError(`Gagal memuat balasan: ${err.message || 'Terjadi kesalahan tidak diketahui.'}`);
         } finally {
             setIsLoadingPosts(false);
         }
@@ -269,8 +269,8 @@ const Forum: React.FC = () => {
             setNewThreadContent('');
             setView('list'); // Go back to list, which will trigger a refetch
 
-        } catch (err) {
-            setError(err instanceof Error ? `Gagal bikin topik: ${err.message}` : 'Terjadi kesalahan.');
+        } catch (err: any) {
+            setError(`Gagal bikin topik: ${err.message || 'Terjadi kesalahan.'}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -292,8 +292,8 @@ const Forum: React.FC = () => {
             setNewPostContent('');
             // No need for optimistic update, realtime listener will handle it.
 
-        } catch (err) {
-            setError(err instanceof Error ? `Gagal bales: ${err.message}` : 'Terjadi kesalahan.');
+        } catch (err: any) {
+            setError(`Gagal bales: ${err.message || 'Terjadi kesalahan.'}`);
         } finally {
             setIsSubmitting(false);
         }
