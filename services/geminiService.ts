@@ -500,6 +500,77 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
         throw handleApiError(error, "Content Calendar");
     }
 };
+
+// --- NEW: Forum AI Functions ---
+export const generateAiForumThread = async (): Promise<{ title: string; content: string }> => {
+    const ai = getAiClient();
+    const prompt = `You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your task is to create a new, engaging, and valuable discussion topic for the "WarKop Juragan" forum. The topic should be highly relevant to the challenges and opportunities faced by Indonesian UMKM.
+
+    Choose one of these formats:
+    1.  **A "Tanya Juragan" question:** Ask a thought-provoking question to the community (e.g., "Gimana cara kalian ngatasin customer yang nawar sadis?").
+    2.  **A "Tips & Trik" post:** Share a short, actionable tip about branding, marketing, or social media (e.g., "3 Jurus Foto Produk Modal HP Biar Keliatan Profesional").
+    3.  **A "Studi Kasus" discussion:** Bring up a recent trend or a success story and ask the community for their opinion (e.g., "Viralnya 'Cromboloni', pelajaran apa yang bisa kita ambil buat bisnis kita?").
+
+    The tone must be encouraging, helpful, and use some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. Make the content concise and easy to read.
+
+    Return a single JSON object with two keys:
+    - "title": A catchy and interesting title for the thread.
+    - "content": The main body of the post, written in your persona.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING },
+                        content: { type: Type.STRING },
+                    },
+                    required: ['title', 'content']
+                }
+            },
+        });
+        return safeJsonParse<{ title: string; content: string }>(response.text, 'generateAiForumThread');
+    } catch (error) {
+        throw handleApiError(error, "AI Forum Thread");
+    }
+};
+
+export const generateForumReply = async (threadTitle: string, threadContent: string, postsHistory: string): Promise<string> => {
+    const ai = getAiClient();
+    const prompt = `You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM), participating in a forum discussion. Your goal is to provide a helpful, encouraging, and relevant reply.
+
+    **Your Persona:**
+    - Knowledgeable but humble.
+    - Use casual Indonesian slang ('juragan', 'sokin', 'gacor', 'keren').
+    - Always positive and supportive.
+    - Keep replies concise (2-3 short paragraphs max).
+    - NEVER repeat what others have said. Add new value, ask a clarifying question, or offer a different perspective.
+
+    **Discussion Context:**
+    - **Original Thread Title:** "${threadTitle}"
+    - **Original Post:** "${threadContent}"
+    - **Previous Replies (in order):**
+    ${postsHistory || "Belum ada balasan."}
+
+    **Your Task:**
+    Based on the entire context, write a new reply. Make sure your reply is a direct continuation of the conversation. Do not greet or introduce yourself. Just reply naturally.`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        return response.text.trim();
+    } catch (error) {
+        throw handleApiError(error, "AI Forum Reply");
+    }
+};
+
+
 // --- REWRITTEN Image Generation Functions (Flash Preview ONLY) ---
 
 export const generateLogoOptions = async (prompt: string, count: number = 4): Promise<string[]> => {
