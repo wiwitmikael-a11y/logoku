@@ -72,6 +72,8 @@ const AiAssistant: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fabImageRef = useRef<HTMLImageElement>(null);
+    const [isFabVisible, setIsFabVisible] = useState(true);
+    const lastScrollY = useRef(0);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,6 +95,27 @@ const AiAssistant: React.FC = () => {
             textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`; // Set new height up to max
         }
     }, [input]);
+    
+    // Hide/Show FAB on scroll
+    useEffect(() => {
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            if (Math.abs(currentScrollY - lastScrollY.current) < 10) return;
+
+            if (currentScrollY > lastScrollY.current && currentScrollY > 10) {
+                // Scrolling down
+                setIsFabVisible(false);
+            } else {
+                // Scrolling up or at the very top
+                setIsFabVisible(true);
+            }
+            lastScrollY.current = currentScrollY;
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const togglePanel = () => {
         setIsOpen(prev => {
@@ -168,7 +191,7 @@ const AiAssistant: React.FC = () => {
     return (
         <>
             <div id="ai-assistant-overlay" className={isOpen ? 'visible' : ''} onClick={togglePanel}></div>
-            <button id="ai-assistant-fab" onClick={togglePanel} title="Tanya Mang AI" className="animate-fab-bounce">
+            <button id="ai-assistant-fab" onClick={togglePanel} title="Tanya Mang AI" className={`animate-fab-bounce ${!isFabVisible ? 'fab-hidden' : ''}`}>
                 <img ref={fabImageRef} src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className={mangAiAnimationClass} />
             </button>
             <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>

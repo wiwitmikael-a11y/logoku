@@ -698,6 +698,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Add smooth transition */
+      }
+      #ai-assistant-fab.fab-hidden {
+        transform: translateY(calc(100% + 90px)); /* Hide by moving it down */
       }
       #ai-assistant-fab::after {
         content: '';
