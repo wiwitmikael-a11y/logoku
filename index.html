@@ -1192,6 +1192,7 @@
         border-radius: 1rem; /* Matches the inner card's rounded-2xl */
         overflow: hidden;
         isolation: isolate; /* Creates a stacking context cleanly */
+        pointer-events: none; /* FIX: Make the wrapper itself ignore clicks */
       }
       /* NEW: Modifier for fully rounded elements */
       .rgb-laser-wrapper.rounded-full {
@@ -1217,6 +1218,7 @@
       }
       .rgb-laser-wrapper > * { /* UPDATED: Target any direct child */
         height: 100%;
+        pointer-events: auto; /* FIX: Re-enable clicks for the content inside */
       }
       
       /* --- NEW: FOLDER TAB STYLES --- */
