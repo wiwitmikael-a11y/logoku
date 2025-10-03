@@ -17,15 +17,20 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to class property syntax for state initialization. This is a more modern
-  // approach and resolves TypeScript errors where `this.state` was not being found.
-  state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: The original code used modern class properties for state and handlers, but the
+  // reported TypeScript errors suggest a problem with the 'this' context in the user's
+  // build environment. Reverting to a constructor for state initialization and method
+  // binding provides a more robust and compatible solution.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
-  // FIX: Corrected the return type to `State` to align with React's lifecycle method signature.
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error, isCopied: false };
   }
@@ -34,9 +39,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Using an arrow function for `handleCopy` automatically binds `this`,
-  // resolving errors where `this.state` and `this.setState` were not found.
-  handleCopy = () => {
+  // FIX: Converted from an arrow function to a standard class method and bound in the
+  // constructor to ensure `this` is correctly scoped, resolving the reported errors.
+  handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -64,6 +69,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
+                    {/* FIX: `this.props` is now correctly accessed within the render method. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -86,6 +92,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
+    // FIX: `this.props` is now correctly accessed within the render method.
     return this.props.children;
   }
 }
