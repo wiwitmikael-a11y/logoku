@@ -14,7 +14,11 @@ const SLOGAN_GEN_COST = 1;
 const MOODBOARD_GEN_COST = 3;
 const XP_REWARD = 15;
 
-const QuickTools: React.FC = () => {
+interface QuickToolsProps {
+  onShowSotosop: () => void;
+}
+
+const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotosop }) => {
     const { profile, deductCredits, addXp, setShowOutOfCreditsModal } = useAuth();
     const credits = profile?.credits ?? 0;
     
@@ -94,7 +98,11 @@ const QuickTools: React.FC = () => {
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
     }, [moodboardKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
 
-    const handleToolChange = (tool: 'name' | 'slogan' | 'moodboard') => {
+    const handleToolChange = (tool: 'name' | 'slogan' | 'moodboard' | 'sotosop') => {
+        if (tool === 'sotosop') {
+            onShowSotosop();
+            return;
+        }
         setActiveTool(tool); setError(null); setResults(null); setDisplayedItems([]); setMoodboardResult(null);
     }
 
@@ -120,6 +128,7 @@ const QuickTools: React.FC = () => {
                                 <button onClick={() => handleToolChange('name')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'name' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>NAME GEN</button>
                                 <button onClick={() => handleToolChange('slogan')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'slogan' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SLOGAN GEN</button>
                                 <button onClick={() => handleToolChange('moodboard')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'moodboard' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>MOODBOARD</button>
+                                <button onClick={() => handleToolChange('sotosop')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors text-text-muted hover:bg-splash/10`}>SOTOSOP</button>
                             </div>
                             
                             <div className="flex-grow space-y-4">

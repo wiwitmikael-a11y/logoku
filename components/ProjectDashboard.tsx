@@ -21,6 +21,7 @@ interface ProjectDashboardProps {
   onSelectProject: (projectId: number) => void;
   onDeleteProject: (projectId: number) => void;
   onShowBrandGallery: () => void;
+  onShowSotosop: () => void;
 }
 
 const DYNAMIC_INFO_TIPS = [
@@ -154,7 +155,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => (
   </div>
 );
 
-const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotosop'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
@@ -288,7 +289,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
       <div className="mt-4">
         {activeTab === 'projects' && <ProjectContent {...props} />}
         {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
-        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools /></Suspense>)}
+        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools onShowSotosop={props.onShowSotosop} /></Suspense>)}
         {activeTab === 'juragan' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
       </div>
     </div>
