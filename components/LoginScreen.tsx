@@ -25,7 +25,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
         </div>
 
         <div className="inline-flex flex-col items-center mb-6">
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter text-primary mb-2">
+          <h1 style={{fontFamily: 'var(--font-display)'}} className="text-6xl md:text-7xl font-extrabold tracking-wider text-primary mb-2">
             desain<span className="text-text-header">.fun</span>
           </h1>
           <p className="font-semibold text-text-muted">Studio Branding AI untuk UMKM Juara</p>
@@ -41,7 +41,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
             disabled={!isCaptchaSolved}
             title={!isCaptchaSolved ? "Selesaikan puzzle captcha dulu!" : "Masuk dengan akun Google"}
             size="large"
-            variant="accent"
+            variant="splash"
           >
             <svg className="w-5 h-5" aria-hidden="true" focusable="false" viewBox="0 0 48 48">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>

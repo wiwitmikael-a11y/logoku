@@ -32,7 +32,9 @@ const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, class
     <div
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      className={`bg-surface border rounded-xl shadow-sm overflow-hidden transition-all duration-300 ${className} ${
+      className={`bg-surface border rounded-xl shadow-sm overflow-hidden transition-all duration-300 ${className} 
+      dark:border-t-splash/50
+      ${
         onClick ? 'cursor-pointer active:scale-[0.99]' : ''
       } ${
         isSelected

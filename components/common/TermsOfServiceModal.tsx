@@ -31,7 +31,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
     >
       <div className="relative max-w-2xl w-full bg-surface rounded-2xl shadow-xl flex flex-col max-h-[85vh]">
         <header className="p-6 border-b border-border-main flex-shrink-0">
-             <h2 id="tos-title" className="text-2xl font-bold text-primary"> Ketentuan Layanan (Terms of Service) </h2>
+             <h2 id="tos-title" className="text-4xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)'}}> Ketentuan Layanan (Terms of Service) </h2>
             <p className="text-sm text-text-muted">Terakhir diperbarui: 12 September 2025</p>
         </header>
 
@@ -47,7 +47,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
             </div>
              <div className="space-y-2">
                 <h3 className="font-bold text-text-header text-base">3. Kepemilikan Konten dan Tanggung Jawab Pengguna</h3>
-                <p>Anda memegang hak untuk menggunakan Konten yang Dihasilkan untuk keperluan pribadi maupun komersial. Namun, Anda, sebagai pengguna, memikul tanggung jawab penuh atas penggunaan tersebut. Sebelum menggunakan logo untuk tujuan komersial, Anda <strong className="text-accent">WAJIB</strong> melakukan uji tuntas (due diligence) Anda sendiri, termasuk:</p>
+                <p>Anda memegang hak untuk menggunakan Konten yang Dihasilkan untuk keperluan pribadi maupun komersial. Namun, Anda, sebagai pengguna, memikul tanggung jawab penuh atas penggunaan tersebut. Sebelum menggunakan logo untuk tujuan komersial, Anda <strong className="text-splash">WAJIB</strong> melakukan uji tuntas (due diligence) Anda sendiri, termasuk:</p>
                 <ul className="list-disc list-inside pl-4 space-y-1">
                     <li> Melakukan pencarian merek dagang di <a href="https://pdki-indonesia.dgip.go.id/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">database resmi pemerintah (PDKI)</a>. </li>
                     <li>Memastikan desain tidak melanggar hak cipta yang ada.</li>
@@ -55,7 +55,7 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
             </div>
             <div className="space-y-2">
                 <h3 className="font-bold text-text-header text-base">4. Batasan Tanggung Jawab</h3>
-                <p>Sejauh diizinkan oleh hukum, <strong className="text-accent">desain.fun dan pengembangnya tidak akan bertanggung jawab</strong> atas segala kerugian atau klaim (termasuk biaya hukum) yang timbul dari penggunaan Anda atas Konten yang Dihasilkan, termasuk klaim pelanggaran merek dagang atau hak cipta oleh pihak ketiga.</p>
+                <p>Sejauh diizinkan oleh hukum, <strong className="text-splash">desain.fun dan pengembangnya tidak akan bertanggung jawab</strong> atas segala kerugian atau klaim (termasuk biaya hukum) yang timbul dari penggunaan Anda atas Konten yang Dihasilkan, termasuk klaim pelanggaran merek dagang atau hak cipta oleh pihak ketiga.</p>
             </div>
             <div className="space-y-2">
                 <h3 className="font-bold text-text-header text-base">5. Sistem Token</h3>

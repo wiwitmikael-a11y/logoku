@@ -24,12 +24,12 @@ interface ProjectDashboardProps {
 }
 
 const DYNAMIC_INFO_TIPS = [
-    { icon: '🎁', title: 'Bonus Sambutan Gacor!', text: 'Sebagai juragan baru, lo langsung dapet bonus sambutan <span class="font-bold text-orange-600">20 token</span> di hari pertama! Manfaatin buat eksplorasi sepuasnya, ya!' },
-    { icon: '☀️', title: 'Jatah Harian Anti Rugi', text: 'Tiap pagi, kalo token lo kurang dari 5, Mang AI bakal <strong class="text-slate-800">isi ulang sampe jadi 5</strong>, gratis! Kalo sisa token lo banyak (misal 12), jumlahnya <strong class="text-slate-800">nggak akan direset</strong>. Aman!' },
-    { icon: '💾', title: 'PENTING: Unduh Aset Lo!', text: 'Aplikasi ini nyimpen gambar di browser lo (biar gratis!). Jangan lupa <strong class="text-slate-800">unduh semua aset visual</strong> (logo, gambar, dll) ke perangkat lo biar aman sentosa.' },
-    { icon: '🚀', title: 'Kekuatan Brand Hub', text: 'Project yang udah selesai masuk ke <strong class="text-slate-800">Brand Hub</strong>. Dari sana, lo bisa generate ulang teks iklan atau kalender konten kapan aja tanpa ngulang dari nol.' },
+    { icon: '🎁', title: 'Bonus Sambutan Gacor!', text: 'Sebagai juragan baru, lo langsung dapet bonus sambutan <span class="font-bold text-splash">20 token</span> di hari pertama! Manfaatin buat eksplorasi sepuasnya, ya!' },
+    { icon: '☀️', title: 'Jatah Harian Anti Rugi', text: 'Tiap pagi, kalo token lo kurang dari 5, Mang AI bakal <strong class="text-text-header">isi ulang sampe jadi 5</strong>, gratis! Kalo sisa token lo banyak (misal 12), jumlahnya <strong class="text-text-header">nggak akan direset</strong>. Aman!' },
+    { icon: '💾', title: 'PENTING: Unduh Aset Lo!', text: 'Aplikasi ini nyimpen gambar di browser lo (biar gratis!). Jangan lupa <strong class="text-text-header">unduh semua aset visual</strong> (logo, gambar, dll) ke perangkat lo biar aman sentosa.' },
+    { icon: '🚀', title: 'Kekuatan Brand Hub', text: 'Project yang udah selesai masuk ke <strong class="text-text-header">Brand Hub</strong>. Dari sana, lo bisa generate ulang teks iklan atau kalender konten kapan aja tanpa ngulang dari nol.' },
     { icon: '🤖', title: 'Tanya Mang AI Aja!', text: 'Ada yang bikin bingung? Klik tombol Mang AI yang ngambang di pojok kanan bawah. Dia siap jawab pertanyaan lo soal branding atau fitur aplikasi.' },
-    { icon: '☕', title: 'Dukung Mang AI', text: 'Suka sama aplikasi ini? Traktir Mang AI kopi di <strong class="text-slate-800">Saweria</strong> biar makin semangat ngembangin fitur-fitur baru yang lebih canggih buat lo!' },
+    { icon: '☕', title: 'Dukung Mang AI', text: 'Suka sama aplikasi ini? Traktir Mang AI kopi di <strong class="text-text-header">Saweria</strong> biar makin semangat ngembangin fitur-fitur baru yang lebih canggih buat lo!' },
 ];
 
 const DynamicInfoBox: React.FC = () => {
@@ -42,11 +42,11 @@ const DynamicInfoBox: React.FC = () => {
     const currentTip = DYNAMIC_INFO_TIPS[currentTipIndex];
 
     return (
-        <div key={currentTipIndex} className="w-full max-w-3xl bg-white border border-sky-200 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-sm">
+        <div key={currentTipIndex} className="w-full max-w-3xl bg-surface border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-sm">
             <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
             <div>
-                <h4 className="font-bold text-sky-600">{currentTip.title}</h4>
-                <p className="text-sm text-slate-600" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+                <h4 className="font-bold text-primary">{currentTip.title}</h4>
+                <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
             </div>
         </div>
     );
@@ -60,14 +60,14 @@ const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = 
 
     return (
         <div className={`flex flex-col items-center gap-2 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`} style={{ animation: `item-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}>
-            <div className={`relative w-28 h-28 p-2 rounded-xl bg-white/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
+            <div className={`relative w-28 h-28 p-2 rounded-xl bg-surface/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
                 <img src={selectedLogoUrl} alt={`Logo for ${brandInputs.businessName}`} className="max-w-full max-h-full object-contain mx-auto" />
-                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-slate-800 border-2 flex items-center justify-center text-lg font-bold" style={{ borderColor: rankColor }}>
+                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-surface border-2 flex items-center justify-center text-lg font-bold" style={{ borderColor: rankColor }}>
                     {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
                 </div>
             </div>
-            <p className="text-sm font-semibold text-white truncate w-28 text-center">{brandInputs.businessName}</p>
-            <p className="text-xs text-orange-400 font-bold">{project.like_count || 0} Menyala 🔥</p>
+            <p className="text-sm font-semibold text-text-header truncate w-28 text-center">{brandInputs.businessName}</p>
+            <p className="text-xs text-splash font-bold">{project.like_count || 0} Menyala 🔥</p>
         </div>
     );
 };
@@ -91,13 +91,13 @@ const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGa
 
     return (
         <div className="w-full text-center mt-12">
-            <h3 className="text-xl md:text-2xl font-bold mb-4 text-white">Podium Juara Pameran Brand 🏆</h3>
-            <div className="group relative bg-slate-800/70 border border-slate-700 rounded-xl p-6 hover:border-sky-500/50 transition-colors cursor-pointer overflow-hidden" onClick={onShowGallery} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.2) 0%, transparent 60%)' }}>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-header">Podium Juara Pameran Brand 🏆</h2>
+            <div className="group relative bg-surface/80 backdrop-blur-sm border border-border-main rounded-xl p-6 hover:border-primary/50 transition-colors cursor-pointer overflow-hidden" onClick={onShowGallery} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.1) 0%, transparent 60%)' }}>
                 {isLoading ? (<div className="h-40 flex items-center justify-center"><LoadingMessage /></div>) : 
                 topProjects.length === 0 ? (
                     <div className="h-40 flex flex-col items-center justify-center">
-                        <p className="text-slate-400 text-lg">Panggung Masih Kosong!</p>
-                        <p className="text-slate-500 mt-1">Jadilah yang pertama menyelesaikan project dan rebut podium juara.</p>
+                        <p className="text-text-body text-lg">Panggung Masih Kosong!</p>
+                        <p className="text-text-muted mt-1">Jadilah yang pertama menyelesaikan project dan rebut podium juara.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-y-8 gap-x-4 items-end min-h-[160px]">
@@ -119,15 +119,15 @@ const DeleteButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ on
 );
 
 const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
-  <button onClick={onClick} className="absolute top-3 right-3 z-10 p-1.5 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors" title="Lihat & Edit Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg></button>
+  <button onClick={onClick} className="absolute top-3 right-3 z-10 p-1.5 rounded-full text-slate-400 hover:bg-background hover:text-text-body transition-colors" title="Lihat & Edit Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg></button>
 );
 
 const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     const statusMap = {
-        'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-100', dotColor: 'bg-yellow-400', textColor: 'text-yellow-800' },
-        'completed': { text: 'Selesai', color: 'bg-green-100', dotColor: 'bg-green-400', textColor: 'text-green-800' },
+        'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-400/20', dotColor: 'bg-yellow-400', textColor: 'text-yellow-300' },
+        'completed': { text: 'Selesai', color: 'bg-green-400/20', dotColor: 'bg-green-400', textColor: 'text-green-300' },
     };
-    const { text, color, dotColor, textColor } = statusMap[status] || { text: 'Unknown', color: 'bg-slate-100', dotColor: 'bg-slate-400', textColor: 'text-slate-800' };
+    const { text, color, dotColor, textColor } = statusMap[status] || { text: 'Unknown', color: 'bg-slate-400/20', dotColor: 'bg-slate-400', textColor: 'text-slate-300' };
     return (
         <div className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-full items-center gap-1.5 ${color} flex-shrink-0`}>
             <span className={`h-2 w-2 rounded-full ${dotColor}`}></span>
@@ -145,16 +145,17 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => (
   <div onClick={() => onClick(template.data)} className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg transition-transform duration-300 hover:scale-105">
     <img src={template.imageUrl} alt={template.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-    <div className="absolute bottom-0 left-0 p-4 text-white"><h4 className="text-lg font-bold">{template.name}</h4></div>
+    <div className="absolute bottom-0 left-0 p-4 text-white"><h4 className="text-lg font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4></div>
     <div className="absolute bottom-0 left-0 w-full p-4 bg-black/70 backdrop-blur-sm text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
-      <h4 className="text-lg font-bold">{template.name}</h4>
+      <h4 className="text-lg font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4>
       <p className="text-xs mt-1 mb-3 text-slate-300">{template.description}</p>
-      <p className="text-sm font-semibold text-sky-400">Gunakan Template &rarr;</p>
+      <p className="text-sm font-semibold text-splash">Gunakan Template &rarr;</p>
     </div>
   </div>
 );
 
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject }) => {
+// FIX: Corrected component signature to accept `ProjectDashboardProps`, include `onShowBrandGallery` in destructuring, and use it correctly.
+const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
@@ -191,27 +192,27 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery'>
         <div className="flex flex-col gap-8 items-center text-center">
             <DynamicInfoBox />
             <div className="relative">
-                <Button onClick={() => onNewProject()} size="large">+ Bikin Project Branding Baru</Button>
+                <Button onClick={() => onNewProject()} size="large" variant="splash">+ Bikin Project Branding Baru</Button>
                 {showOnboarding && (<div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="cursor-pointer"><CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-bounce">Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup></div>)}
             </div>
             
             <div className="w-full text-center mt-6">
-                <h3 className="text-xl md:text-2xl font-bold mb-4 mt-2 text-slate-800">Atau Pake Jalan Pintas 🚀</h3>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 mt-2 text-text-header">Atau Pake Jalan Pintas 🚀</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">{templates.map(t => (<TemplateCard key={t.name} template={t} onClick={onNewProject} />))}</div>
             </div>
 
-            <div className="w-full border-t border-slate-200 my-8"></div>
+            <div className="w-full border-t border-border-main my-8"></div>
 
             {inProgressProjects.length > 0 && (
                 <div className="w-full text-left">
-                <h3 className="text-xl md:text-2xl font-bold mb-4 text-slate-800">Project yang Sedang Dikerjakan:</h3>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-header">Project yang Sedang Dikerjakan:</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {inProgressProjects.map(project => (
                         <div key={project.id} className="relative group">
                             <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-2">{project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}</span></>} onClick={() => onSelectProject(project.id)}>
                               <div className="pr-12">
-                                <p className="text-sm text-slate-500 min-h-[40px] italic">{getProgressDescription(project)}</p>
-                                <div className="mt-4 pt-4 border-t border-slate-200"><p className="text-xs text-slate-400">Klik untuk lanjut...</p></div>
+                                <p className="text-sm text-text-muted min-h-[40px] italic">{getProgressDescription(project)}</p>
+                                <div className="mt-4 pt-4 border-t border-border-main"><p className="text-xs text-text-muted">Klik untuk lanjut...</p></div>
                               </div>
                             </Card>
                             <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
@@ -223,18 +224,18 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery'>
 
             {completedProjects.length > 0 && (
                 <div className="w-full text-left mt-8">
-                <h3 className="text-xl md:text-2xl font-bold mb-4 text-slate-800">Project Selesai:</h3>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-header">Project Selesai:</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {completedProjects.map(project => (
                         <div key={project.id} className="relative group">
                             <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-2">{project.project_data.brandInputs.businessName}</span></>} onClick={() => onSelectProject(project.id)}>
                               <div className="space-y-3 pr-12">
-                                <p className="text-sm text-sky-600 italic">"{project.project_data.selectedSlogan}"</p>
-                                <div className="flex items-center gap-4 pt-2 border-t border-slate-200">
-                                    <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1 border" loading="lazy" />
-                                    <p className="text-sm text-slate-700"><span className="font-semibold text-slate-800">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
+                                <p className="text-sm text-primary italic">"{project.project_data.selectedSlogan}"</p>
+                                <div className="flex items-center gap-4 pt-2 border-t border-border-main">
+                                    <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-surface p-1 border" loading="lazy" />
+                                    <p className="text-sm text-text-body"><span className="font-semibold text-text-header">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
                                 </div>
-                                <p className="text-xs text-slate-400 pt-2 border-t border-slate-200">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                <p className="text-xs text-text-muted pt-2 border-t border-border-main">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                               </div>
                             </Card>
                             <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
@@ -245,13 +246,13 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery'>
                 </div>
             )}
 
-            {projects.length === 0 && (<div className="mt-8 text-center text-slate-500"><p>Lo belom punya project nih. Klik tombol di atas buat bikin brand pertama lo!</p></div>)}
+            {projects.length === 0 && (<div className="mt-8 text-center text-text-muted"><p>Lo belom punya project nih. Klik tombol di atas buat bikin brand pertama lo!</p></div>)}
             
-            <div className="w-full border-t border-slate-200 my-8"></div>
-            <div className="w-full max-w-4xl space-y-8 bg-slate-800 p-8 rounded-2xl">
-                <BrandGalleryPreview onShowGallery={() => {}} />
-            </div>
+            <div className="w-full border-t border-border-main my-8"></div>
             <div className="w-full max-w-4xl space-y-8">
+                <BrandGalleryPreview onShowGallery={onShowBrandGallery} />
+            </div>
+            <div className="w-full max-w-4xl space-y-8 mt-8">
                 <SaweriaWidget />
                 <InFeedAd />
             </div>
@@ -274,15 +275,15 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Selamat Datang, {userName}!</h2>
-        <p className="text-slate-600 max-w-3xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain di WarKop Juragan.</p>
+        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Selamat Datang, {userName}!</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain di WarKop Juragan.</p>
       </div>
 
-      <div className="flex justify-center border-b border-slate-200">
-        <button onClick={() => setActiveTab('projects')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>🚀 Project Saya</button>
-        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>☕ WarKop Juragan</button>
-        <button onClick={() => setActiveTab('tools')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>💡 Warung Ide</button>
-        <button onClick={() => setActiveTab('juragan')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'juragan' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>🏆 Pusat Juragan</button>
+      <div className="flex justify-center border-b border-border-main">
+        <button onClick={() => setActiveTab('projects')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-body'}`}>🚀 Project Saya</button>
+        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-body'}`}>☕ WarKop Juragan</button>
+        <button onClick={() => setActiveTab('tools')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-body'}`}>💡 Warung Ide</button>
+        <button onClick={() => setActiveTab('juragan')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'juragan' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-body'}`}>🏆 Pusat Juragan</button>
       </div>
       
       <div className="mt-4">

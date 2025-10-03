@@ -40,10 +40,10 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI character" className="w-24 mb-4 animate-breathing-ai" style={{ imageRendering: 'pixelated' }} />
-        <h2 id="about-modal-title" className="text-2xl font-bold text-primary mb-4 text-center">Tentang desain.fun</h2>
+        <h2 id="about-modal-title" className="text-4xl font-bold text-primary mb-4 text-center">Tentang desain.fun</h2>
         <div className="text-text-body text-sm text-left space-y-4 mb-8">
             <p>
-                <strong className="text-text-header">desain.fun</strong> adalah studio branding AI yang lahir dari sebuah mimpi: ngebantu para pejuang UMKM di Indonesia biar <strong className="text-accent">gacor dan naik kelas</strong>. Ini bukan cuma aplikasi, tapi partner setia lo!
+                <strong className="text-text-header">desain.fun</strong> adalah studio branding AI yang lahir dari sebuah mimpi: ngebantu para pejuang UMKM di Indonesia biar <strong className="text-splash">gacor dan naik kelas</strong>. Ini bukan cuma aplikasi, tapi partner setia lo!
             </p>
             <div className="pt-3 border-t border-border-main space-y-3">
                  <h3 className="font-bold text-primary">Fitur Andalan Mang AI:</h3>
@@ -54,8 +54,8 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
                      <li><strong className="text-text-header">Asisten Pribadi Mang AI:</strong> Bingung? Tanya aja langsung ke Mang AI lewat tombol di pojok kanan bawah.</li>
                  </ul>
             </div>
-             <p className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300">
-                <strong className="text-red-200">PENTING BANGET:</strong> Aplikasi ini menyimpan data teks project lo, tapi <strong className="text-text-inverse bg-red-400/80 px-1 rounded">TIDAK MENYIMPAN FILE GAMBAR DI CLOUD.</strong> Jadi, Mang AI saranin banget, <strong className="text-text-inverse bg-red-400/80 px-1 rounded">setiap aset (logo, gambar, dll) yang udah lo generate, langsung diunduh ya!</strong> Developer nggak nanggung kalo ada data yang ilang. Oke, Juragan?
+             <p className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+                <strong className="text-red-300">PENTING BANGET:</strong> Aplikasi ini menyimpan data teks project lo, tapi <strong className="text-text-inverse bg-red-500/80 px-1 rounded">TIDAK MENYIMPAN FILE GAMBAR DI CLOUD.</strong> Jadi, Mang AI saranin banget, <strong className="text-text-inverse bg-red-500/80 px-1 rounded">setiap aset (logo, gambar, dll) yang udah lo generate, langsung diunduh ya!</strong> Developer nggak nanggung kalo ada data yang ilang. Oke, Juragan?
             </p>
             <div className="pt-3 border-t border-border-main space-y-3">
                  <h3 className="font-bold text-primary">Rencana ke Depan:</h3>

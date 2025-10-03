@@ -30,7 +30,7 @@ const AchievementToast: React.FC<AchievementToastProps> = ({ achievement, onClos
       <div className="bg-surface/80 backdrop-blur-md border border-border-main rounded-xl shadow-2xl p-4 flex items-center gap-4">
         <div className="text-5xl flex-shrink-0">{achievement.icon}</div>
         <div>
-            <p className="text-xs text-accent font-semibold">Pencapaian Terbuka!</p>
+            <p className="text-xs text-splash font-semibold">Pencapaian Terbuka!</p>
             <p className="font-bold text-text-header">{achievement.name}</p>
             <p className="text-xs text-text-body">{achievement.description}</p>
         </div>

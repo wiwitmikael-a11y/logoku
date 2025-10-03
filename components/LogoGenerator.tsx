@@ -227,21 +227,21 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   return (
     <div className="flex flex-col gap-10">
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah 2: Desain Logo Lo</h2>
-        <p className="text-slate-600 max-w-3xl mx-auto">Pilih gaya yang pas sama brand lo, atau edit promptnya sesukamu. Mang AI akan membuatkan logo utama (ikon) tanpa teks, yang nanti bisa dikasih nama di langkah selanjutnya.</p>
+        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Langkah 2: Desain Logo Lo</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">Pilih gaya yang pas sama brand lo, atau edit promptnya sesukamu. Mang AI akan membuatkan logo utama (ikon) tanpa teks, yang nanti bisa dikasih nama di langkah selanjutnya.</p>
       </div>
 
       <Card title="Konfigurasi Logo" className="p-4 sm:p-6">
         <div className="flex flex-col gap-6 relative">
             <div>
-                <label className="block mb-2 text-sm font-medium text-slate-600">Pilih Gaya Logo:</label>
+                <label className="block mb-2 text-sm font-medium text-text-muted">Pilih Gaya Logo:</label>
                 <div className="flex flex-wrap gap-3">
                   {logoStyles.map(style => (
                     <button
                       key={style.id}
                       onClick={() => { playSound('select'); setSelectedStyleId(style.id); }}
                       onMouseEnter={() => playSound('hover')}
-                      className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${selectedStyleId === style.id ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                      className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${selectedStyleId === style.id ? 'bg-primary text-white' : 'bg-background text-text-body hover:bg-border-main'}`}
                     >
                       {style.name}
                     </button>
@@ -253,22 +253,22 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
             )}
 
             {selectedStyleInfo && (
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col sm:flex-row items-start gap-4 animate-content-fade-in">
-                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-md flex-shrink-0 bg-white p-1 border border-slate-200">
+                <div className="bg-background p-4 rounded-lg border border-border-main flex flex-col sm:flex-row items-start gap-4 animate-content-fade-in">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-md flex-shrink-0 bg-surface p-1 border border-border-main">
                       <img src={selectedStyleInfo.imageUrl} alt={`Contoh gaya ${selectedStyleInfo.name}`} className="w-full h-full object-contain" loading="lazy" />
                     </div>
                     <div>
-                        <h4 className="font-bold text-sky-600">Gaya: {selectedStyleInfo.name}</h4>
-                        <p className="text-slate-600 mt-1 text-sm">{selectedStyleInfo.description}</p>
+                        <h4 className="font-bold text-primary">{selectedStyleInfo.name}</h4>
+                        <p className="text-text-muted mt-1 text-sm">{selectedStyleInfo.description}</p>
                     </div>
                 </div>
             )}
 
             <Textarea label="Prompt Deskripsi Logo (Bisa Diedit)" name="logoPrompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="cth: Kepala singa megah, gaya geometris, warna emas dan hitam..." rows={5}/>
             
-            <div className="pt-4 border-t border-slate-200">
+            <div className="pt-4 border-t border-border-main">
               <Button onClick={handleSubmit} isLoading={isLoading} disabled={!prompt.trim() || credits < INITIAL_LOGO_COST}>Spill 1 Logo-nya, Mang AI! ({INITIAL_LOGO_COST} Token)</Button>
-               <p className="text-xs text-slate-500 mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
+               <p className="text-xs text-text-muted mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
             </div>
         </div>
       </Card>
@@ -276,23 +276,23 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
       
       {logos.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-4 text-left max-w-2xl mx-auto">
-            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
+        <div className="bg-orange-400/10 border border-orange-400/20 rounded-lg p-4 flex items-start gap-4 text-left max-w-2xl mx-auto">
+            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
             <div>
-                <h4 className="font-bold text-orange-600">Peringatan Penyimpanan Lokal!</h4>
-                <p className="text-sm text-orange-800 mt-1">Logo ini hanya disimpan sementara di browser. Segera pilih dan lanjutkan untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
+                <h4 className="font-bold text-orange-300">Peringatan Penyimpanan Lokal!</h4>
+                <p className="text-sm text-orange-300/80 mt-1">Logo ini hanya disimpan sementara di browser. Segera pilih dan lanjutkan untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
             </div>
         </div>
       )}
 
       {logos.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
-            <h3 className="text-xl md:text-2xl font-bold text-center text-slate-800">Pilih Logo Jagoan Lo:</h3>
+            <h2 className="text-3xl md:text-4xl font-bold text-center text-text-header">Pilih Logo Jagoan Lo:</h2>
           <div className={`grid gap-4 w-full ${logos.length === 1 ? 'max-w-xs' : 'grid-cols-2 max-w-xl'}`}>
               {logos.map((logo, index) => (
                 <div key={index} className="animate-item-appear" style={{ animationDelay: `${index * 100}ms` }}>
                     <div 
-                        className={`bg-white rounded-lg p-2 aspect-square flex items-center justify-center shadow-md cursor-pointer group transition-all duration-200 border-2 ${selectedLogoBase64 === logo ? 'border-sky-500 ring-4 ring-sky-500/20' : 'border-transparent hover:border-slate-300'}`}
+                        className={`bg-surface rounded-lg p-2 aspect-square flex items-center justify-center shadow-md cursor-pointer group transition-all duration-200 border-2 ${selectedLogoBase64 === logo ? 'border-primary ring-4 ring-primary/20' : 'border-transparent hover:border-border-light'}`}
                         onClick={() => { playSound('select'); setSelectedLogoBase64(logo); }}
                     >
                         <img src={logo} alt={`Generated logo option ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />

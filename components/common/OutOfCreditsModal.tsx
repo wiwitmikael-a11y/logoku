@@ -35,13 +35,13 @@ const OutOfCreditsModal: React.FC<Props> = ({ show, onClose }) => {
     >
       <div className="relative max-w-md w-full bg-surface rounded-2xl shadow-xl p-8 text-center flex flex-col items-center">
           <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-28 mb-4 filter grayscale" style={{ imageRendering: 'pixelated' }} />
-          <h2 id="credits-modal-title" className="text-2xl font-bold text-accent mb-2">Waduh, Amunisi Mang AI Abis!</h2>
+          <h2 id="credits-modal-title" className="text-3xl font-bold text-splash mb-2" style={{ fontFamily: 'var(--font-display)'}}>Amunisi Mang AI Abis!</h2>
           <p className="text-text-body mb-6"> Token lo udah abis, Juragan. Tenang, besok kalo token lo masih di bawah 5, Mang AI bakal <strong className="text-text-header">isiin lagi sampe jadi 5</strong>. Sampai ketemu besok, ya! </p>
           <div className="flex flex-col gap-4 items-center w-full">
-              <Button onClick={handleClose} variant="accent"> Oke, Mang, Besok Lagi </Button>
+              <Button onClick={handleClose} variant="splash"> Oke, Mang, Besok Lagi </Button>
               <div className="w-full text-center p-3 bg-background rounded-lg">
                    <p className="text-xs text-text-muted mb-2">Butuh token tanpa batas & gak mau nunggu?</p>
-                   <Button variant="secondary" size="small" disabled={true} title="Segera Hadir!" className="!border-accent/50 !text-accent hover:!bg-accent/10 disabled:opacity-60 disabled:cursor-not-allowed"> Upgrade ke Paket Pro (Segera Hadir) </Button>
+                   <Button variant="secondary" size="small" disabled={true} title="Segera Hadir!" className="!border-splash/50 !text-splash hover:!bg-splash/10 disabled:opacity-60 disabled:cursor-not-allowed"> Upgrade ke Paket Pro (Segera Hadir) </Button>
               </div>
           </div>
       </div>

@@ -169,8 +169,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   return (
     <div className="flex flex-col gap-10">
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah 1: Fondasi Brand Lo</h2>
-        <p className="text-slate-600 max-w-3xl mx-auto">Ceritain bisnismu. Mang AI akan meracik 3 pilihan persona, lengkap dengan target pasar, gaya bicara, palet warna, dan beberapa opsi slogan yang paling pas.</p>
+        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Langkah 1: Fondasi Brand Lo</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">Ceritain bisnismu. Mang AI akan meracik 3 pilihan persona, lengkap dengan target pasar, gaya bicara, palet warna, dan beberapa opsi slogan yang paling pas.</p>
       </div>
 
       <Card title="Detail Bisnis" className="p-4 sm:p-6">
@@ -186,8 +186,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                   <label htmlFor="businessCategory" className="block mb-1.5 text-sm font-medium text-slate-600">Kategori Bisnis</label>
-                   <select id="businessCategory" name="businessCategory" value={formState.businessCategory} onChange={handleChange} className="w-full px-3 py-2 text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors">
+                   <label htmlFor="businessCategory" className="block mb-1.5 text-sm font-medium text-text-muted">Kategori Bisnis</label>
+                   <select id="businessCategory" name="businessCategory" value={formState.businessCategory} onChange={handleChange} className="w-full px-3 py-2 text-text-body bg-surface border border-border-main rounded-lg focus:outline-none focus:ring-2 focus:ring-splash/50 focus:border-splash transition-colors">
                       {businessCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                    </select>
               </div>
@@ -196,8 +196,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                   <label htmlFor="targetAudienceCat" className="block mb-1.5 text-sm font-medium text-slate-600">Target Pasar</label>
-                   <select id="targetAudienceCat" name="targetAudienceCat" value={formState.targetAudienceCat} onChange={handleChange} className="w-full px-3 py-2 text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors">
+                   <label htmlFor="targetAudienceCat" className="block mb-1.5 text-sm font-medium text-text-muted">Target Pasar</label>
+                   <select id="targetAudienceCat" name="targetAudienceCat" value={formState.targetAudienceCat} onChange={handleChange} className="w-full px-3 py-2 text-text-body bg-surface border border-border-main rounded-lg focus:outline-none focus:ring-2 focus:ring-splash/50 focus:border-splash transition-colors">
                       {targetAudienceCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                    </select>
               </div>
@@ -207,7 +207,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
           <Textarea label="Yang Bikin Beda (Value Proposition)" name="valueProposition" value={formState.valueProposition} onChange={handleChange} placeholder="cth: Organik, murah, mewah" rows={3} />
           <Textarea label="Sebutin 1-2 Kompetitor" name="competitors" value={formState.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
           
-          <div className="flex items-center gap-4 pt-4 border-t border-slate-200">
+          <div className="flex items-center gap-4 pt-4 border-t border-border-main">
             <Button type="submit" isLoading={isLoadingPersona}>Racik Persona Sekarang!</Button>
              {personas.length > 0 && !isLoadingPersona && (
               <Button variant="secondary" onClick={() => handleGeneratePersona()} isLoading={isLoadingPersona}>Racik Ulang Persona</Button>
@@ -220,7 +220,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
 
       {personas.length > 0 && (
         <div ref={personasRef} className="flex flex-col gap-6 scroll-mt-24">
-          <h3 className="text-xl md:text-2xl font-bold text-center text-slate-800">Pilih Persona Brand Lo:</h3>
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-text-header">Pilih Persona Brand Lo:</h2>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {personas.map((persona, index) => (
               <Card 
@@ -229,27 +229,27 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
                 onClick={() => handleSelectPersona(index)}
                 isSelected={selectedPersonaIndex === index}
               >
-                <p className="text-slate-600 mb-4 h-24 overflow-auto selectable-text">{persona.deskripsi_singkat}</p>
+                <p className="text-text-muted mb-4 h-24 overflow-auto selectable-text">{persona.deskripsi_singkat}</p>
                 {selectedPersonaIndex === index && (
-                    <div className="flex flex-col gap-4 mt-4 pt-4 border-t border-slate-200 animate-content-fade-in">
+                    <div className="flex flex-col gap-4 mt-4 pt-4 border-t border-border-main animate-content-fade-in">
                         <div>
-                            <h4 className="font-semibold text-slate-800 mb-2">Avatar Pelanggan:</h4>
+                            <h4 className="font-semibold text-text-header mb-2">Avatar Pelanggan:</h4>
                             {persona.customer_avatars.map((avatar, i) => (
-                                <div key={i} className="text-xs p-2 bg-slate-100 rounded-md mb-2 selectable-text text-slate-700">
+                                <div key={i} className="text-xs p-2 bg-background rounded-md mb-2 selectable-text text-text-body">
                                     <strong>{avatar.nama_avatar}:</strong> {avatar.deskripsi_demografis}. Aktif di {avatar.media_sosial.join(', ')}.
                                 </div>
                             ))}
                         </div>
                         <div className="selectable-text">
-                            <h4 className="font-semibold text-slate-800 mb-2">Gaya Bicara:</h4>
-                            <p className="text-xs text-slate-600"><strong>Gunakan:</strong> {persona.brand_voice.kata_yang_digunakan.join(', ')}</p>
-                            <p className="text-xs text-slate-600"><strong>Hindari:</strong> {persona.brand_voice.kata_yang_dihindari.join(', ')}</p>
+                            <h4 className="font-semibold text-text-header mb-2">Gaya Bicara:</h4>
+                            <p className="text-xs text-text-muted"><strong>Gunakan:</strong> {persona.brand_voice.kata_yang_digunakan.join(', ')}</p>
+                            <p className="text-xs text-text-muted"><strong>Hindari:</strong> {persona.brand_voice.kata_yang_dihindari.join(', ')}</p>
                         </div>
                         <div>
-                           <h4 className="font-semibold text-slate-800 mb-2">Palet Warna:</h4>
+                           <h4 className="font-semibold text-text-header mb-2">Palet Warna:</h4>
                            <div className="flex items-center gap-3">
                             {persona.palet_warna_hex.map((hex, i) => (
-                                <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-300" style={{ backgroundColor: hex }}></div>
+                                <div key={i} className="w-8 h-8 rounded-full border-2 border-border-main" style={{ backgroundColor: hex }}></div>
                             ))}
                            </div>
                         </div>
@@ -263,19 +263,19 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
 
       {selectedPersonaIndex !== null && (
         <Card title="Langkah 1.5: Pilih Slogan" className="p-4 sm:p-6" ref={slogansRef}>
-            <p className="text-slate-600 mb-4">Persona "{personas[selectedPersonaIndex].nama_persona}" udah kepilih. Sekarang, ayo kita buat beberapa pilihan slogan yang pas.</p>
+            <p className="text-text-muted mb-4">Persona "{personas[selectedPersonaIndex].nama_persona}" udah kepilih. Sekarang, ayo kita buat beberapa pilihan slogan yang pas.</p>
             {slogans.length === 0 ? (
                 <Button onClick={handleGenerateSlogans} isLoading={isLoadingSlogan}>Bikinin Slogan Dong!</Button>
             ) : (
               <div className="flex flex-col gap-4">
-                  <h4 className="font-semibold mb-2 text-slate-800">Pilih Slogan Andalan Lo:</h4>
+                  <h4 className="font-semibold mb-2 text-text-header">Pilih Slogan Andalan Lo:</h4>
                   <div className="flex flex-wrap gap-3">
                       {slogans.map((slogan, index) => (
                           <button
                               key={index}
                               onClick={() => { playSound('select'); setSelectedSlogan(slogan); }}
                               onMouseEnter={() => playSound('hover')}
-                              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 selectable-text ${selectedSlogan === slogan ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 selectable-text ${selectedSlogan === slogan ? 'bg-primary text-white' : 'bg-background text-text-body hover:bg-border-main'}`}
                           >
                               {slogan}
                           </button>

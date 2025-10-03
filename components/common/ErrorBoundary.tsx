@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Changed import from `* as React` to the standard `import React` to fix type resolution issues with class components.
-import React from 'react';
+// FIX: Changed React import to `* as React` to correctly resolve types for class components in this environment. The previous import style was causing type errors for `this.props` and `this.state`.
+import * as React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';

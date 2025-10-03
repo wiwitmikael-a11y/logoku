@@ -37,13 +37,13 @@ const LevelUpModal: React.FC<Props> = ({ show, onClose, levelUpInfo }) => {
       tabIndex={-1}
     >
         <style>{animation}</style>
-      <div className="relative top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-md w-full bg-surface border border-accent/50 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center" style={{ animation: 'level-up-modal-scale-in 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards' }}>
+      <div className="relative top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-md w-full bg-surface border border-splash/50 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center" style={{ animation: 'level-up-modal-scale-in 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards' }}>
         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI celebrating" className="w-28 mb-4 animate-mang-ai-happy" style={{ imageRendering: 'pixelated' }} />
-        <h2 id="levelup-modal-title" className="text-3xl font-bold text-accent mb-2">NAIK LEVEL!</h2>
+        <h2 id="levelup-modal-title" className="text-4xl font-bold text-splash mb-2" style={{ fontFamily: 'var(--font-display)' }}>NAIK LEVEL!</h2>
         <p className="text-text-body text-lg"> Selamat, Juragan! Lo sekarang mencapai <strong className="text-text-header">Level {levelUpInfo.newLevel}</strong>. </p>
-        {newTitle && <p className="mt-1 text-xl text-accent" style={{fontFamily: 'var(--font-hand)'}}>Pangkat baru: "{newTitle}"</p>}
-        <p className="mt-6 bg-accent/10 border border-accent/20 p-4 rounded-lg text-text-body"> Sebagai hadiah, lo dapet tambahan <strong className="text-xl text-accent">{levelUpInfo.tokenReward} Token</strong> gratis! </p>
-        <div className="mt-8"> <Button onClick={handleClose} variant="accent"> Mantap, Lanjut Berkarya! </Button> </div>
+        {newTitle && <p className="mt-1 text-xl text-splash" style={{fontFamily: 'var(--font-hand)'}}>Pangkat baru: "{newTitle}"</p>}
+        <p className="mt-6 bg-splash/10 border border-splash/20 p-4 rounded-lg text-text-body"> Sebagai hadiah, lo dapet tambahan <strong className="text-xl text-splash">{levelUpInfo.tokenReward} Token</strong> gratis! </p>
+        <div className="mt-8"> <Button onClick={handleClose} variant="splash"> Mantap, Lanjut Berkarya! </Button> </div>
       </div>
     </div>
   );

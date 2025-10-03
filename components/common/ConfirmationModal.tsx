@@ -60,7 +60,7 @@ const ConfirmationModal: React.FC<Props> = ({
           className="w-24 mb-4"
           style={{ imageRendering: 'pixelated' }}
         />
-        <h2 id="confirmation-modal-title" className="text-2xl font-bold text-accent mb-2 text-center">{title}</h2>
+        <h2 id="confirmation-modal-title" className="text-2xl font-bold text-splash mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>{title}</h2>
         <div className="text-text-body my-4 text-center text-sm">
           {children}
         </div>
@@ -68,7 +68,7 @@ const ConfirmationModal: React.FC<Props> = ({
           <Button onClick={onClose} variant="secondary" disabled={isConfirmLoading}>
             {cancelText}
           </Button>
-          <Button onClick={onConfirm} isLoading={isConfirmLoading} variant="accent">
+          <Button onClick={onConfirm} isLoading={isConfirmLoading} variant="splash">
             {confirmText}
           </Button>
         </div>

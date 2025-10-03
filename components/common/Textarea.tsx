@@ -35,7 +35,7 @@ const Textarea: React.FC<TextareaProps> = ({ label, name, className, ...props })
         {...props}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
-        className="w-full px-3 py-2 text-text-body bg-surface border border-border-main rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+        className="w-full px-3 py-2 text-text-body bg-surface border border-border-main rounded-lg focus:outline-none focus:ring-2 focus:ring-splash/50 focus:border-splash transition-colors"
       />
     </div>
   );
