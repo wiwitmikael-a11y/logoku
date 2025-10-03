@@ -1185,6 +1185,40 @@
       .blinking-cursor {
         animation: text-blink 1s step-end infinite;
       }
+
+      /* NEW: Keyframes for RGB laser border effect */
+      @keyframes animate-rgb-laser-border {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      /* NEW: Wrapper class for the RGB effect */
+      .rgb-laser-wrapper {
+        position: relative;
+        padding: 2px; /* This creates the border thickness */
+        border-radius: 1rem; /* Matches the inner card's rounded-2xl */
+        overflow: hidden;
+        z-index: 0; /* Stacking context */
+      }
+      .rgb-laser-wrapper::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        z-index: -1; /* Behind the main content */
+        background: conic-gradient(
+          from 90deg at 50% 50%,
+          #ff00ff, /* Magenta */
+          #00ffff, /* Cyan */
+          #ffff00, /* Yellow */
+          #ff00ff  /* Back to Magenta for smooth loop */
+        );
+        animation: animate-rgb-laser-border 4s linear infinite;
+      }
+      .rgb-laser-wrapper > div { /* Target the inner modal content */
+        height: 100%;
+      }
     </style>
   <script type="importmap">
 {
