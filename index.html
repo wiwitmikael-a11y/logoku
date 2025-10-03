@@ -1,140 +1,206 @@
+<!-- © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved. -->
 <!DOCTYPE html>
 <html lang="id" data-theme="dark">
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>desain.fun - Studio Branding AI</title>
-    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/desainfun_logo_icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>desain.fun - Studio Branding AI untuk UMKM Kreatif</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Ubah ide jadi brand juara! desain.fun adalah studio branding AI untuk UMKM: buat logo, persona brand, social media kit, dan konten sosmed dalam hitungan menit." />
+    <meta name="keywords" content="logo generator, branding AI, UMKM, bisnis kecil, desain logo, persona brand, konten sosmed, Mang AI, desain.fun, AI logo maker, generator logo, buat logo online, social media kit" />
+    <meta name="author" content="Rangga.P.H (Atharrazka Core)" />
+    <meta name="theme-color" content="#c026d3" />
+    <link rel="canonical" href="https://desain.fun" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://desain.fun" />
+    <meta property="og:title" content="desain.fun - Studio Branding AI untuk UMKM Kreatif" />
+    <meta property="og:description" content="Ubah ide jadi brand juara! desain.fun adalah studio branding AI untuk UMKM: buat logo, persona brand, social media kit, dan konten sosmed dalam hitungan menit." />
+    <meta property="og:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/desainfun-og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="desain.fun" />
+    <meta property="og:locale" content="id_ID" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://desain.fun" />
+    <meta property="twitter:title" content="desain.fun - Studio Branding AI untuk UMKM Kreatif" />
+    <meta property="twitter:description" content="Ubah ide jadi brand juara! desain.fun adalah studio branding AI untuk UMKM: buat logo, persona brand, social media kit, dan konten sosmed dalam hitungan menit." />
+    <meta property="twitter:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/desainfun-og.png" />
+    <meta name="twitter:creator" content="@rangga_p_h" />
+
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon.ico" type="image/x-icon" />
+    <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700&family=Ga+Maamli&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --font-body: 'Poppins', sans-serif;
-            --font-display: 'Bebas Neue', sans-serif;
-            --font-hand: 'Ga Maamli', sans-serif;
-            --c-text-header: #FFFFFF;
-            --c-text-body: #A1A1AA;
-            --c-text-muted: #71717A;
-            --c-primary: #38BDF8;
-            --c-primary-hover: #0EA5E9;
-            --c-splash: #D946EF;
-            --c-splash-hover: #C026D3;
-            --c-accent: #F59E0B;
-            --c-accent-hover: #D97706;
-            --c-background: #0D0D0F;
-            --c-surface: #16161A;
-            --c-surface-content: #1E1E22;
-            --c-border-main: #3F3F46;
-            --c-border-light: #52525B;
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      darkMode: 'class', // atau 'media'
+      theme: {
+        extend: {
+          colors: {
+            'primary': 'rgb(var(--c-primary) / <alpha-value>)',
+            'primary-hover': 'rgb(var(--c-primary-hover) / <alpha-value>)',
+            'accent': 'rgb(var(--c-accent) / <alpha-value>)',
+            'accent-hover': 'rgb(var(--c-accent-hover) / <alpha-value>)',
+            'splash': 'rgb(var(--c-splash) / <alpha-value>)',
+            'splash-hover': 'rgb(var(--c-splash-hover) / <alpha-value>)',
+            'background': 'rgb(var(--c-bg) / <alpha-value>)',
+            'surface': 'rgb(var(--c-surface) / <alpha-value>)',
+            'surface-content': 'rgb(var(--c-surface-content) / <alpha-value>)',
+            'text-header': 'rgb(var(--c-text-header) / <alpha-value>)',
+            'text-body': 'rgb(var(--c-text-body) / <alpha-value>)',
+            'text-muted': 'rgb(var(--c-text-muted) / <alpha-value>)',
+            'border-main': 'rgb(var(--c-border) / <alpha-value>)',
+            'border-light': 'rgb(var(--c-border-light) / <alpha-value>)',
+          }
         }
-
-        html[data-theme="light"] {
-            --c-text-header: #18181B;
-            --c-text-body: #3F3F46;
-            --c-text-muted: #71717A;
-            --c-background: #F4F4F5;
-            --c-surface: #FFFFFF;
-            --c-surface-content: #FFFFFF;
-            --c-border-main: #E4E4E7;
-            --c-border-light: #D4D4D8;
-        }
-
-        body {
-            font-family: var(--font-body);
-            background-color: var(--c-background);
-            background-image: radial-gradient(circle at 10% 10%, var(--c-primary) -10%, transparent 25%), radial-gradient(circle at 90% 80%, var(--c-splash) -10%, transparent 25%);
-            color: var(--c-text-body);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        
-        #root {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-
-        .selectable-text { user-select: text; }
-
-        .btn-splash-hover::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.3s ease, height 0.3s ease;
-            z-index: 0;
-        }
-        .btn-splash-hover:hover::before {
-            width: 200%;
-            height: 200%;
-        }
-        
-        /* Marquee Animation */
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-        }
-        .animate-marquee { display: flex; animation: marquee 30s linear infinite; }
-        .marquee-group { display: flex; align-items: center; flex-shrink: 0; }
-
-        /* AI Animations */
-        @keyframes bouncing-ai { 0%, 100% { transform: translateY(0) rotate(0deg); } 20% { transform: translateY(-15px) rotate(-10deg); } 40% { transform: translateY(0) rotate(10deg); } 60% { transform: translateY(-7px) rotate(-5deg); } 80% { transform: translateY(0) rotate(5deg); } }
-        .animate-bouncing-ai { animation: bouncing-ai 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite; }
-        @keyframes breathing-ai { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.03) translateY(-4px); } }
-        .animate-breathing-ai { animation: breathing-ai 3s ease-in-out infinite; }
-        
-        /* Content Animations */
-        @keyframes content-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-content-fade-in { animation: content-fade-in 0.4s ease-out forwards; }
-        @keyframes item-appear { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        .animate-item-appear { animation: item-appear 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; opacity: 0; animation-fill-mode: forwards; }
-        @keyframes gallery-card-appear { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-gallery-card-appear { animation: gallery-card-appear 0.5s ease-out; }
-
-        /* Police Line Accent */
-        .policeline-accent {
-            background-image: repeating-linear-gradient(
-                -45deg,
-                var(--c-accent),
-                var(--c-accent) 10px,
-                var(--c-text-header) 10px,
-                var(--c-text-header) 20px
-            );
-        }
-
-        /* Arcade Machine Styles */
-        .arcade-machine { background: #2a2a2e; border: 4px solid #1a1a1c; border-radius: 20px 20px 10px 10px; box-shadow: inset 0 0 15px rgba(0,0,0,0.7), 0 10px 15px rgba(0,0,0,0.5); }
-        .arcade-screen { background: #000; border-radius: 10px; box-shadow: inset 0 0 10px #000; }
-        .arcade-screen-content::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 2; }
-        .arcade-screen-content::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 80%); animation: flicker 0.15s infinite; pointer-events: none; z-index: 2; }
-        .arcade-control-panel { background: #1e1e22; border-top: 2px solid #333; }
-        .splatter-bg { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10 10 C 20 20, 40 20, 50 10 C 60 0, 80 0, 90 10 C 100 20, 100 40, 90 50 C 80 60, 60 60, 50 50 C 40 40, 20 40, 10 50 C 0 60, 0 80, 10 90 C 20 100, 40 100, 50 90 C 60 80, 80 80, 90 90 C 100 100, 100 100, 100 100 L 0 100 L 0 0 Z" fill="rgba(217, 70, 239, 0.05)"/></svg>'); background-repeat: no-repeat; background-position: 90% 10%; background-size: 50%; }
-        .splatter-monitor-frame { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M10 10 C 20 20, 40 20, 50 10 C 60 0, 80 0, 90 10 C 100 20, 100 40, 90 50 C 80 60, 60 60, 50 50 C 40 40, 20 40, 10 50 C 0 60, 0 80, 10 90 C 20 100, 40 100, 50 90 C 60 80, 80 80, 90 90 C 100 100, 100 100, 100 100 L 0 100 L 0 0 Z" fill="rgba(217, 70, 239, 0.2)"/></svg>'); background-repeat: no-repeat; background-position: 10% 90%; background-size: 40%; }
-        @keyframes flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.9; } }
-    </style>
-    <script type="importmap">
-    {
-      "imports": {
-        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.22.0",
-        "react": "https://aistudiocdn.com/react@^19.2.0",
-        "react/": "https://aistudiocdn.com/react@^19.2.0/",
-        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-        "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.58.0",
-        "jszip": "https://aistudiocdn.com/jszip@^3.10.1"
       }
     }
+  </script>
+    <!-- Publisher ID AdSense kamu sudah terpasang -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6110736010099308"
+     crossorigin="anonymous"></script>
+    <style>
+      /* --- THEME DEFINITIONS --- */
+      [data-theme="dark"] {
+        --c-primary: 56 189 248;       /* sky-400 */
+        --c-primary-hover: 125 211 252; /* sky-300 */
+        --c-accent: 251 146 60;      /* orange-400 */
+        --c-accent-hover: 252 164 79;  /* orange-300 */
+        --c-splash: 192 38 211;       /* fuchsia-600 */
+        --c-splash-hover: 217 70 239;   /* fuchsia-500 */
+        --c-text-header: 241 245 249; /* slate-100 */
+        --c-text-body: 161 161 170;   /* zinc-400 */
+        --c-text-muted: 113 113 122;   /* zinc-500 */
+        --c-bg: 13 13 15;             /* near-black */
+        --c-surface: 22 22 26;        /* slightly lighter black */
+        --c-surface-content: 28 28 34; /* even lighter black for content cards */
+        --c-border: 42 42 48;         /* zinc-800 adjusted */
+        --c-border-light: 63 63 70;   /* zinc-700 */
+        --c-bg-inverse: 241 245 249;   /* slate-100 */
+        --c-text-inverse: 13 13 15;   /* near-black */
+      }
+      [data-theme="light"] {
+        --c-primary: 2 132 199;        /* cyan-600 */
+        --c-primary-hover: 14 165 233;  /* sky-500 */
+        --c-accent: 249 115 22;      /* orange-500 */
+        --c-accent-hover: 251 146 60;  /* orange-400 */
+        --c-splash: 192 38 211;       /* fuchsia-600 */
+        --c-splash-hover: 217 70 239;   /* fuchsia-500 */
+        --c-text-header: 15 23 42;    /* slate-900 */
+        --c-text-body: 51 65 85;      /* slate-700 */
+        --c-text-muted: 100 116 139;  /* slate-500 */
+        --c-bg: 241 245 249;          /* slate-100 */
+        --c-surface: 255 255 255;      /* white */
+        --c-surface-content: 255 255 255; /* white */
+        --c-border: 226 232 240;      /* slate-200 */
+        --c-border-light: 241 245 249;/* slate-100 */
+        --c-bg-inverse: 13 13 15;     /* near-black */
+        --c-text-inverse: 241 245 249;  /* slate-100 */
+      }
+      :root {
+        --font-display: 'Bebas Neue', cursive;
+        --font-hand: 'Caveat', cursive;
+      }
+      
+      /* --- GLOBAL STYLES --- */
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: rgb(var(--c-bg));
+        color: rgb(var(--c-text-body));
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transition: background-color 0.3s, color 0.3s;
+        background-image: 
+          radial-gradient(ellipse at 50% 0%, rgba(192, 38, 211, 0.1) 0%, transparent 50%),
+          url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Cg fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.04"%3E%3Cpath opacity=".5" d="M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9z"/%3E%3Cpath d="M6 5V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5v-9H0v-1h5V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5h9V0h1v5z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+      }
+      
+      section[id] { scroll-margin-top: 100px; }
+      h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.05em; }
+      .selectable-text { user-select: text; }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: rgb(var(--c-bg)); }
+      ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+      [data-theme="light"] ::-webkit-scrollbar-track { background: rgb(var(--c-surface)); }
+      [data-theme="light"] ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+      [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      
+      /* --- ANIMATIONS & EFFECTS --- */
+      @keyframes content-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-content-fade-in { animation: content-fade-in 0.5s ease-out forwards; }
+      
+      @keyframes item-appear { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+      .animate-item-appear { animation: item-appear 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+      
+      @keyframes gallery-card-appear { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-gallery-card-appear { animation: gallery-card-appear 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
+
+      @keyframes mang-ai-breathing { 0%, 100% { transform: scale(1) translateY(0); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); } 50% { transform: scale(1.04) translateY(-2px); filter: drop-shadow(0 8px 10px rgba(0,0,0,0.4)); } }
+      .animate-breathing-ai { animation: mang-ai-breathing 2.5s ease-in-out infinite; transform-origin: bottom center; }
+
+      @keyframes mang-ai-bouncing { 0% { transform: translateY(20%) scale(0.8); opacity: 0; } 20% { transform: translateY(0) scale(1.1, 0.9); opacity: 1; } 40% { transform: translateY(-30%) scale(0.95, 1.05); } 60% { transform: translateY(0) scale(1.05, 0.95); } 80% { transform: translateY(-15%) scale(1); } 100% { transform: translateY(0) scale(1); } }
+      .animate-bouncing-ai::before { content: ''; position: absolute; bottom: -2px; left: 50%; width: 70%; height: 8px; background: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 70%); z-index: -1; animation: shadow-for-bouncing-ai 1.2s ease-in-out infinite; }
+      @keyframes shadow-for-bouncing-ai { 0% { transform: translateX(-50%) scale(0.5); opacity: 0; } 20% { transform: translateX(-50%) scale(1.1); opacity: 0.2; } 40% { transform: translateX(-50%) scale(0.6); opacity: 0.1; } 60% { transform: translateX(-50%) scale(1.05); opacity: 0.18; } 80% { transform: translateX(-50%) scale(0.8); opacity: 0.15; } 100% { transform: translateX(-50%) scale(1); opacity: 0.2; } }
+      .animate-bouncing-ai { animation: mang-ai-bouncing 1.2s ease-in-out infinite; transform-origin: bottom center; image-rendering: pixelated; }
+
+      /* --- UI/UX STYLES --- */
+      .blinking-cursor { animation: blink 1s step-end infinite; }
+      @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
+      
+      /* --- ARCADE QUICK TOOLS STYLES --- */
+      .arcade-wrapper { perspective: 1000px; }
+      .arcade-cabinet { width: 100%; max-width: 600px; margin: 2rem auto; transform: rotateX(15deg) rotateY(0deg); transform-style: preserve-3d; transition: transform 0.5s ease; }
+      .arcade-cabinet:hover { transform: rotateX(5deg) rotateY(0deg) scale(1.02); }
+      .arcade-top { background: #1a1a1e; padding: 0.5rem 1rem; border-top-left-radius: 1rem; border-top-right-radius: 1rem; border: 2px solid rgb(var(--c-border)); border-bottom: none; }
+      .arcade-title { font-family: var(--font-display); color: rgb(var(--c-splash)); text-shadow: 0 0 5px rgb(var(--c-splash)), 0 0 10px rgb(var(--c-splash)); font-size: 2rem; text-align: center; }
+      .arcade-monitor-frame { background: #111; padding: 1.5rem 1rem; border-left: 2px solid rgb(var(--c-border)); border-right: 2px solid rgb(var(--c-border)); box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+      .crt-screen { background: #080a0c; color: #fff; font-family: 'Courier New', Courier, monospace; position: relative; overflow: hidden; border: 4px solid #333; min-height: 500px; }
+      .crt-screen::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 2; }
+      .control-panel { background: #1a1a1e; padding: 1.5rem; border-bottom-left-radius: 1rem; border-bottom-right-radius: 1rem; display: flex; justify-content: space-between; align-items: center; border: 2px solid rgb(var(--c-border)); border-top: none; }
+      .joystick-base { width: 60px; height: 60px; background: #222; border-radius: 50%; position: relative; border: 2px solid #444; }
+      .joystick-stick { position: absolute; width: 10px; height: 40px; background: #555; bottom: 50%; left: 50%; transform: translateX(-50%); }
+      .joystick-ball { width: 30px; height: 30px; background: rgb(var(--c-splash)); border-radius: 50%; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); }
+      .arcade-buttons { display: flex; gap: 1rem; }
+      .arcade-button { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #000; }
+      .arcade-button.red { background: #ef4444; } .arcade-button.blue { background: #3b82f6; } .arcade-button.yellow { background: #eab308; }
+
+      img { pointer-events: none; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.44.4",
+    "jszip": "https://esm.sh/jszip@3.10.1"
+  }
+}
+</script>
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    { "@context": "https://schema.org", "@type": "SoftwareApplication", "name": "desain.fun", "applicationCategory": "BusinessApplication", "description": "Aplikasi branding AI untuk UMKM dan bisnis kecil. Hasilkan logo, persona brand, dan konten media sosial unik dalam hitungan menit.", "author": { "@type": "Person", "name": "Rangga.P.H" }, "offers": { "@type": "Offer", "price": "0", "priceCurrency": "IDR" } }
     </script>
 </head>
-<body class="bg-background">
+  <body>
     <div id="root"></div>
+    <script> document.addEventListener('contextmenu', event => event.preventDefault()); </script>
     <script type="module" src="/index.tsx"></script>
-</body>
+  </body>
 </html>
