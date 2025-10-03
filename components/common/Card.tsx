@@ -41,7 +41,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(({ title, children, onC
       } ${
         isSelected
           ? 'border-primary ring-4 ring-primary/30'
-          : 'border-border-main hover:border-primary/50 hover:-translate-y-1'
+          : 'border-border-main hover:border-splash/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-splash/20'
       }`}
     >
       <div className="p-4 sm:p-5">

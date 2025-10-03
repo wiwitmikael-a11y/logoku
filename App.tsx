@@ -59,9 +59,8 @@ const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModa
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
+const AiAssistant: React.FC<{ appState: AppState, isOpen: boolean, onToggle: (isOpen: boolean) => void }> = ({ appState, isOpen, onToggle }) => {
     const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -127,14 +126,14 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
 
     return (
         <>
-            <div id="ai-assistant-overlay" className={isOpen ? 'visible' : ''} onClick={() => setIsOpen(false)}></div>
-            <button id="ai-assistant-fab" onClick={() => setIsOpen(p => !p)} title="Tanya Mang AI" className={`${!isFabVisible ? 'fab-hidden' : ''}`}>
+            <div id="ai-assistant-overlay" className={isOpen ? 'visible' : ''} onClick={() => onToggle(false)}></div>
+            <button id="ai-assistant-fab" onClick={() => onToggle(!isOpen)} title="Tanya Mang AI" className={`${!isFabVisible ? 'fab-hidden' : ''}`}>
                 <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className="animate-breathing-ai" />
             </button>
             <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>
                 <header className="p-4 border-b border-border-main flex justify-between items-center flex-shrink-0">
                     <h3 className="text-lg font-bold text-primary">Tanya Mang AI</h3>
-                    <button onClick={() => setIsOpen(false)} title="Tutup" className="p-2 text-text-muted rounded-full hover:bg-background hover:text-text-header">
+                    <button onClick={() => onToggle(false)} title="Tutup" className="p-2 text-text-muted rounded-full hover:bg-background hover:text-text-header">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </header>
@@ -200,6 +199,7 @@ const MainApp: React.FC = () => {
     const [generalError, setGeneralError] = useState<string | null>(null);
     const [toast, setToast] = useState({ message: '', show: false });
     
+    const [isAssistantOpen, setAssistantOpen] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
     const [showAboutModal, setShowAboutModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
@@ -378,9 +378,11 @@ const MainApp: React.FC = () => {
     if (!session) return ( <> <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} onShowToS={() => setShowToSModal(true)} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} /> </Suspense> </> );
     
     return (
-        <div className="min-h-screen bg-background text-text-body">
+      <>
+        <div className={`min-h-screen bg-background text-text-body transition-all duration-300 ${isAssistantOpen ? 'blur-sm' : ''}`}>
             <header className="py-3 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300">
-                <div className="max-w-7xl mx-auto flex justify-between items-center">
+                <div className="absolute top-0 left-0 w-full h-1.5 accent-stripes"></div>
+                <div className="max-w-7xl mx-auto flex justify-between items-center relative pt-1.5">
                     <h1 className="text-3xl md:text-4xl font-extrabold tracking-wider cursor-pointer transition-transform hover:scale-105" onClick={handleReturnToDashboard} style={{fontFamily: 'var(--font-display)'}}>
                         <span className="text-primary">desain</span><span className="text-text-header">.fun</span>
                     </h1>
@@ -427,23 +429,24 @@ const MainApp: React.FC = () => {
             </main>
              <footer className="text-center py-6 px-4 text-sm text-text-muted border-t border-border-main">Powered by Atharrazka Core. Built for UMKM Indonesia.</footer>
             <AdBanner />
-            <AiAssistant appState={appState} />
             <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
-            {/* Modals */}
-            <Suspense fallback={null}>
-                <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
-                <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
-                <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
-                <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
-                <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
-                <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={() => setShowToSModal(true)} onShowContact={() => setShowContactModal(true)} />
-                <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout" cancelText="Batal">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
-                <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
-                <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} projectLogoUrl={projectToDelete?.project_data?.selectedLogoUrl} />
-                <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
-                <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
-            </Suspense>
         </div>
+        {/* Modals and overlays that should not be blurred */}
+        <AiAssistant appState={appState} isOpen={isAssistantOpen} onToggle={setAssistantOpen} />
+        <Suspense fallback={null}>
+            <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
+            <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
+            <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
+            <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
+            <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
+            <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={() => setShowToSModal(true)} onShowContact={() => setShowContactModal(true)} />
+            <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout" cancelText="Batal">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
+            <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
+            <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} projectLogoUrl={projectToDelete?.project_data?.selectedLogoUrl} />
+            <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
+            <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
+        </Suspense>
+      </>
     );
 };
 

@@ -74,7 +74,7 @@ const WarKopInfoBox: React.FC = () => {
     }, []);
     const currentTip = WARUNG_INFO_TIPS[currentTipIndex];
     return (
-        <div key={currentTipIndex} className="w-full bg-surface/5 border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in info-box-stream mb-8">
+        <div key={currentTipIndex} className="w-full bg-surface/80 border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in mb-8">
             <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
             <div>
                 <h4 className="font-bold text-text-header">{currentTip.title}</h4>
