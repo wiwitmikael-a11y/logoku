@@ -280,26 +280,6 @@
         100% { transform: translateX(5vw) scale(-1, 1) translateY(0); }
       }
       
-      /* UPDATED: More frequent peeking for Header Mang AI */
-      @keyframes header-ai-peeking {
-        0%, 70% { 
-          transform: translateX(30px) translateY(5px) scaleX(-1); /* Posisi tersembunyi */
-          opacity: 0;
-        }
-        75% {
-          transform: translateX(-45px) translateY(5px) scaleX(-1); /* Nongol lebih jauh ke kiri */
-          opacity: 1;
-        }
-        95% {
-          transform: translateX(-45px) translateY(5px) scaleX(-1); /* Tahan sebentar */
-          opacity: 1;
-        }
-        100% {
-          transform: translateX(30px) translateY(5px) scaleX(-1); /* Sembunyi lagi */
-          opacity: 0;
-        }
-      }
-      
       /* NEW: Keyframes for Login Screen Mang AI */
       @keyframes login-ai-antics {
         /* --- Start on left, facing right --- */
@@ -579,17 +559,6 @@
       }
       .animate-mario-bottom-breathing::after {
         animation: dust-for-bottom-mario 6s linear infinite;
-      }
-
-      .animate-header-ai-peek {
-        position: absolute;
-        left: 0;
-        bottom: -10px;
-        animation: header-ai-peeking 10s linear infinite;
-        image-rendering: pixelated;
-        will-change: transform, opacity;
-        pointer-events: none;
-        z-index: -1;
       }
       
       .animate-breathing-ai {
