@@ -79,76 +79,78 @@ const QuickTools: React.FC = () => {
                 </p>
             </div>
 
-            <div className="arcade-cabinet">
-                <div className="arcade-top">
-                    <h2 className="arcade-title">Warung Ide</h2>
-                </div>
-                <div className="arcade-monitor-frame">
-                    <div className="crt-screen p-6 flex flex-col gap-4 overflow-y-auto">
-                        <h3 className="text-2xl text-yellow-400 font-bold animate-pulse text-center font-mono">NAME GENERATOR v1.0</h3>
-                        
-                        <div className="flex-grow space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-cyan-400 font-bold text-sm block">PRODUCT/SERVICE:</label>
-                                <input 
-                                    value={category}
-                                    onChange={(e) => setCategory(e.target.value)}
-                                    placeholder="e.g., Kopi Susu Gula Aren"
-                                    required
-                                    className="w-full font-mono bg-black/50 border-2 border-cyan-400/50 rounded-none p-2 text-white focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-cyan-400 font-bold text-sm block">KEYWORDS (OPTIONAL):</label>
-                                <input 
-                                    value={keywords}
-                                    onChange={(e) => setKeywords(e.target.value)}
-                                    placeholder="e.g., senja, santai, modern"
-                                    className="w-full font-mono bg-black/50 border-2 border-cyan-400/50 rounded-none p-2 text-white focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
-                                />
-                            </div>
-
-                            <button onClick={handleGenerate} disabled={!category || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
-                                {isLoading ? 'LOADING...' : `START GAME (${GENERATION_COST} TOKEN)`}
-                            </button>
-                        </div>
-
-                        <div className="flex-grow min-h-[200px] border-t-2 border-cyan-400/30 pt-4 overflow-y-auto">
-                            {isLoading && (
-                                <div className="text-center text-yellow-400">
-                                    <p>MANG AI IS THINKING<span className="blinking-cursor">...</span></p>
-                                </div>
-                            )}
-                            {error && <p className="text-red-500 font-bold animate-pulse">ERROR: {error}</p>}
+            <div className="arcade-wrapper">
+                <div className="arcade-cabinet">
+                    <div className="arcade-top">
+                        <h2 className="arcade-title">Warung Ide</h2>
+                    </div>
+                    <div className="arcade-monitor-frame">
+                        <div className="crt-screen p-6 flex flex-col gap-4 overflow-y-auto">
+                            <h3 className="text-2xl text-yellow-400 font-bold animate-pulse text-center font-mono">NAME GENERATOR v1.0</h3>
                             
-                            {displayedNames.length > 0 && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-                                    {displayedNames.map((name, index) => (
-                                        <div key={index} className="flex items-center gap-2 animate-content-fade-in">
-                                            <span className="text-cyan-400 font-bold">&gt;</span>
-                                            <span className="text-white flex-grow selectable-text">{name}</span>
-                                            <CopyButton textToCopy={name} className="!bg-black/50 !text-cyan-400 hover:!bg-cyan-900/50" />
-                                        </div>
-                                    ))}
+                            <div className="flex-grow space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-cyan-400 font-bold text-sm block">PRODUCT/SERVICE:</label>
+                                    <input 
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        placeholder="e.g., Kopi Susu Gula Aren"
+                                        required
+                                        className="w-full font-mono bg-black/50 border-2 border-cyan-400/50 rounded-none p-2 text-white focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                                    />
                                 </div>
-                            )}
-                        </div>
-                        <div className="text-center text-xs text-cyan-400/50">
-                            <p>MANG AI SYSTEMS - READY PLAYER ONE - +{XP_REWARD} XP</p>
+                                <div className="space-y-2">
+                                    <label className="text-cyan-400 font-bold text-sm block">KEYWORDS (OPTIONAL):</label>
+                                    <input 
+                                        value={keywords}
+                                        onChange={(e) => setKeywords(e.target.value)}
+                                        placeholder="e.g., senja, santai, modern"
+                                        className="w-full font-mono bg-black/50 border-2 border-cyan-400/50 rounded-none p-2 text-white focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                                    />
+                                </div>
+
+                                <button onClick={handleGenerate} disabled={!category || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+                                    {isLoading ? 'LOADING...' : `START GAME (${GENERATION_COST} TOKEN)`}
+                                </button>
+                            </div>
+
+                            <div className="flex-grow min-h-[200px] border-t-2 border-cyan-400/30 pt-4 overflow-y-auto">
+                                {isLoading && (
+                                    <div className="text-center text-yellow-400">
+                                        <p>MANG AI IS THINKING<span className="blinking-cursor">...</span></p>
+                                    </div>
+                                )}
+                                {error && <p className="text-red-500 font-bold animate-pulse">ERROR: {error}</p>}
+                                
+                                {displayedNames.length > 0 && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                                        {displayedNames.map((name, index) => (
+                                            <div key={index} className="flex items-center gap-2 animate-content-fade-in">
+                                                <span className="text-cyan-400 font-bold">&gt;</span>
+                                                <span className="text-white flex-grow selectable-text">{name}</span>
+                                                <CopyButton textToCopy={name} className="!bg-black/50 !text-cyan-400 hover:!bg-cyan-900/50" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="text-center text-xs text-cyan-400/50">
+                                <p>MANG AI SYSTEMS - READY PLAYER ONE - +{XP_REWARD} XP</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div className="control-panel">
-                    <div className="joystick">
-                        <div className="joystick-base"></div>
-                        <div className="joystick-stick">
-                            <div className="joystick-ball"></div>
+                    <div className="control-panel">
+                        <div className="joystick">
+                            <div className="joystick-base"></div>
+                            <div className="joystick-stick">
+                                <div className="joystick-ball"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div className="arcade-buttons">
-                        <div className="arcade-button red"></div>
-                        <div className="arcade-button blue"></div>
-                        <div className="arcade-button yellow"></div>
+                        <div className="arcade-buttons">
+                            <div className="arcade-button red"></div>
+                            <div className="arcade-button blue"></div>
+                            <div className="arcade-button yellow"></div>
+                        </div>
                     </div>
                 </div>
             </div>

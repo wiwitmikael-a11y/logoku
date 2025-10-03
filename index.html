@@ -996,7 +996,7 @@
       @keyframes text-blink {
         50% { opacity: 0; }
       }
-       /* --- NEW: Arcade Cabinet Styles --- */
+       /* --- REWORKED: Arcade Cabinet Styles --- */
       @keyframes neon-pulse {
         0%, 100% { box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff; }
         50% { box-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 40px #0ff; }
@@ -1009,38 +1009,51 @@
         20%, 24%, 55% { text-shadow: none; opacity: 0.8; }
       }
 
-      .arcade-cabinet {
+      .arcade-wrapper { /* NEW: The main body of the cabinet */
         position: relative;
         width: 100%;
-        max-width: 500px; /* Control max size */
-        margin: 0 auto;
-        background-color: #1a1a2e; /* Dark blue-ish black */
-        border: 2px solid #2a2a3e;
-        border-radius: 20px 20px 10px 10px;
-        box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.4);
-        padding: 15px;
-        padding-bottom: 0;
+        max-width: 550px;
+        margin: 2rem auto;
+        background-color: #1a1a2e;
+        clip-path: polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
+        padding: 0 40px; /* Space for the side neon */
+        padding-top: 2px;
       }
-      /* Side neon lines */
-      .arcade-cabinet::before, .arcade-cabinet::after {
+      /* NEW: Side neon on the wrapper */
+      .arcade-wrapper::before, .arcade-wrapper::after {
         content: '';
         position: absolute;
         top: 0;
         bottom: 0;
         width: 15px;
-        background: linear-gradient(to bottom, #1a1a2e, #2a2a3e 10%, #0ff 40%, #0ff 60%, #2a2a3e 90%, #1a1a2e);
+        background: linear-gradient(to bottom, transparent, #0ff 20%, #0ff 80%, transparent);
         box-shadow: 0 0 5px #0ff;
         animation: neon-pulse 3s infinite alternate;
       }
-      .arcade-cabinet::before { left: 0; border-radius: 20px 0 0 10px; }
-      .arcade-cabinet::after { right: 0; border-radius: 0 20px 10px 0; }
+      .arcade-wrapper::before { left: 15px; }
+      .arcade-wrapper::after { right: 15px; }
+      
+      .arcade-cabinet {
+        position: relative;
+        width: 100%;
+        background-color: #2a2a3e; /* Mid-tone for front panel */
+        border: 2px solid #3f3f5e;
+        border-top: none;
+        border-bottom: none;
+        box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.4);
+        padding: 15px;
+        padding-bottom: 0;
+      }
 
       .arcade-top {
+        position: relative;
+        width: calc(100% + 70px); /* Overhang the wrapper */
+        left: -35px;
         background-color: #0d0d1a;
         padding: 15px;
         margin-bottom: 15px;
         border: 2px solid #2a2a3e;
-        border-radius: 10px;
+        border-radius: 10px 10px 0 0;
         box-shadow: inset 0 0 10px rgba(255,0,222,0.3);
         text-align: center;
       }
@@ -1052,7 +1065,6 @@
         animation: neon-text-flicker 4s infinite;
       }
 
-      /* Replaces old .arcade-monitor style */
       .arcade-monitor-frame {
         background-color: #0d0d1a;
         padding: 20px;
