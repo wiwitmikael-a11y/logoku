@@ -145,7 +145,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
       {error && <div className="mt-4"><ErrorMessage message={error} onGoToDashboard={onGoToDashboard} /></div>}
 
       <div className="self-center mt-6 relative">
-        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max animate-fade-in">Paket logo beres! Lanjut?</CalloutPopup>)}
+        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Paket logo beres! Lanjut?</CalloutPopup>)}
         <Button onClick={handleContinue} disabled={!variations} size="large">Lanjut ke Social Media Kit &rarr;</Button>
       </div>
 

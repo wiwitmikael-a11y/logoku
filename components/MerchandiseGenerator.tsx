@@ -116,7 +116,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete, onGoTo
       )}
 
       <div className="self-center mt-4 relative">
-        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-1 w-max animate-fade-in">Satu langkah lagi!</CalloutPopup>)}
+        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Satu langkah lagi!</CalloutPopup>)}
         <Button onClick={handleFinalize} disabled={!selectedDesignBase64 || isLoading} isLoading={isLoading} size="large">Selesai & Lihat Brand Kit Lengkap &rarr;</Button>
       </div>
       

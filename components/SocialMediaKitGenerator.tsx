@@ -118,7 +118,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onG
           </div>
 
           <div className="self-center mt-4 relative">
-            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-1 w-max animate-fade-in">Cakep! Klik buat lanjut.</CalloutPopup>)}
+            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Cakep! Klik buat lanjut.</CalloutPopup>)}
             <Button onClick={handleContinue} size="large">Lanjut ke Optimasi Profil &rarr;</Button>
           </div>
         </div>

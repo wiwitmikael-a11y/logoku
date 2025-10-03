@@ -155,7 +155,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       )}
 
       <div className="self-center mt-4 relative">
-        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-1 w-max animate-fade-in">Mantap! Lanjut ke konten?</CalloutPopup>)}
+        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Mantap! Lanjut ke konten?</CalloutPopup>)}
         <Button onClick={handleContinue} disabled={Object.keys(generatedAssets).length === 0} size="large">Lanjut ke Kalender Konten &rarr;</Button>
       </div>
       

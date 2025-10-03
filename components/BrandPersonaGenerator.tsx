@@ -289,7 +289,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
       {(selectedPersonaIndex !== null && selectedSlogan) && (
         <div className="self-center mt-4 relative">
             {showNextStepNudge && (
-              <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max animate-fade-in">Sip! Klik di sini buat lanjut.</CalloutPopup>
+              <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Sip! Klik di sini buat lanjut.</CalloutPopup>
             )}
             <Button onClick={handleContinue} size="large">Mantap, Lanjut Bikin Logo &rarr;</Button>
         </div>

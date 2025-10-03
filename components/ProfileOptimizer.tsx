@@ -89,7 +89,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
                 </div>
                 <div className="relative pt-2">
                     <p className="text-sm text-text-body whitespace-pre-wrap selectable-text">{profileData.instagramBio}</p>
-                    <CopyButton textToCopy={profileData.instagramBio} className="absolute top-2 right-0" />
+                    <CopyButton textToCopy={profileData.instagramBio} className="absolute top-2 right-2" />
                 </div>
               </div>
             </Card>
@@ -114,7 +114,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
           </div>
           
           <div className="self-center mt-4 relative">
-            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-1 w-max animate-fade-in">Profil siap! Lanjut, Juragan?</CalloutPopup>)}
+            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Profil siap! Lanjut, Juragan?</CalloutPopup>)}
             <Button onClick={handleContinue} disabled={!profileData} size="large">Lanjut ke Desain Kemasan &rarr;</Button>
           </div>
         </div>

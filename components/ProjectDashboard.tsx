@@ -182,7 +182,7 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
     }
 
     const templates = [
-        { name: '☕ Coffee Shop Kekinian', description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_kopi.jpeg', data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkrong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' } },
+        { name: '☕ Coffee Shop Kekinian', description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_kopi.jpeg', data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' } },
         { name: '🌶️ Warung Seblak Viral', description: 'Template untuk bisnis seblak pedas yang menyasar target pasar remaja dan Gen Z.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_seblak.jpeg', data: { businessName: 'Seblak [Isi Sendiri]', businessCategory: 'Makanan', businessDetail: 'Seblak prasmanan dengan aneka topping pedas level dewa', targetAudience: 'Remaja usia 15-22', valueProposition: 'Seblak paling komplit dan pedasnya nampol, bikin ketagihan.', competitors: 'Seblak Jeletet, Seblak Bloom' } },
         { name: '👕 Distro Indie', description: 'Template untuk brand fashion streetwear dengan desain orisinal dan eksklusif.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_distro.jpeg', data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' } }
     ];
@@ -192,7 +192,7 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
             <DynamicInfoBox />
             <div className="relative">
                 <Button onClick={() => onNewProject()} size="large" variant="splash">+ Bikin Project Branding Baru</Button>
-                {showOnboarding && (<div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="cursor-pointer"><CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max animate-bounce">Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup></div>)}
+                {showOnboarding && (<div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="cursor-pointer"><CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-bounce">Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup></div>)}
             </div>
             
             <div className="w-full text-center mt-6">

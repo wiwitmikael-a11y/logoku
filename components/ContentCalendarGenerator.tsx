@@ -167,7 +167,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
           )}
 
           <div className="self-center mt-4 relative">
-             {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-1 w-max animate-fade-in">Ide konten siap! Lanjut, bro?</CalloutPopup>)}
+             {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Ide konten siap! Lanjut, bro?</CalloutPopup>)}
             <Button onClick={handleContinue} size="large">Lanjut ke Iklan Sosmed &rarr;</Button>
           </div>
         </div>

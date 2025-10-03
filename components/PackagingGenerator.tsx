@@ -189,7 +189,7 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
             </div>
           </div>
           <div className="self-center relative">
-            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-1 w-max animate-fade-in">Foto produk siap!</CalloutPopup>)}
+            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Foto produk siap!</CalloutPopup>)}
             <Button onClick={handleContinue} disabled={!selectedDesignBase64} size="large">Lanjut ke Media Cetak &rarr;</Button>
           </div>
         </div>

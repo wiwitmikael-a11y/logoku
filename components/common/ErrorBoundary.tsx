@@ -17,12 +17,18 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // Fix: Using a class property to initialize state. This modern syntax correctly binds 'this' and avoids the need for a constructor.
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Refactored to use a constructor for state initialization and method binding.
+  // This classic pattern ensures the `this` context is correctly bound, resolving
+  // TypeScript errors where `this.props` and `this.setState` were not found on the component instance.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error: error };
@@ -32,8 +38,7 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // Fix: The 'handleCopy' method is an arrow function to ensure 'this' is correctly bound to the component instance. This makes `this.setState` available and fixes the error.
-  private handleCopy = () => {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -61,7 +66,6 @@ class ErrorBoundary extends Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
-                    {/* Fix: Accessing `this.props` is correct within the render method. The errors were likely due to incorrect `this` context in other methods, which has now been resolved. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -84,7 +88,6 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // Fix: `this.props.children` is correctly accessed within the render method.
     return this.props.children;
   }
 }

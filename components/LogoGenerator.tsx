@@ -305,7 +305,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
                 <Button onClick={handleGenerateMore} variant="secondary" isLoading={isGeneratingMore} disabled={isGeneratingMore || credits < ADDITIONAL_LOGO_COST}>Kasih 3 Pilihan Lain! ({ADDITIONAL_LOGO_COST} Token)</Button>
              )}
             <div className="relative">
-                {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max animate-fade-in">Mantap! Klik di sini buat lanjut.</CalloutPopup>)}
+                {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Mantap! Klik di sini buat lanjut.</CalloutPopup>)}
                 <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64} size="large">Pilih & Finalisasi Logo &rarr;</Button>
             </div>
           </div>
