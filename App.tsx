@@ -50,6 +50,7 @@ const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'
 const SocialAdsGenerator = React.lazy(() => import('./components/SocialAdsGenerator'));
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
 const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
+const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGenerator'));
 
 // NEW: Import gamification components
 const HeaderStats = React.lazy(() => import('./components/gamification/HeaderStats'));
@@ -58,7 +59,7 @@ const AchievementToast = React.lazy(() => import('./components/gamification/Achi
 const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
 
 
-type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'summary' | 'caption' | 'instant_content';
+type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // --- NEW: AI Assistant Component ---
@@ -301,7 +302,7 @@ const MainApp: React.FC = () => {
     const previousAppState = useRef<AppState>(appState);
     const previousSession = useRef<typeof session>(session);
 
-    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'social_kit', 'profiles', 'packaging', 'print_media', 'content_calendar', 'social_ads'];
+    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'social_kit', 'profiles', 'packaging', 'print_media', 'content_calendar', 'social_ads', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
     
@@ -438,8 +439,12 @@ const MainApp: React.FC = () => {
                                     if (data.printMediaAssets) {
                                         if (data.contentCalendar) {
                                             if (data.socialAds) {
-                                                // This case means it's complete but status is wrong. Go to summary.
-                                                nextState = 'summary'; 
+                                                if (data.merchandiseUrl) {
+                                                    // This case means it's complete but status is wrong. Go to summary.
+                                                    nextState = 'summary'; 
+                                                } else {
+                                                    nextState = 'merchandise';
+                                                }
                                             } else {
                                                 nextState = 'social_ads';
                                             }
@@ -595,15 +600,22 @@ const MainApp: React.FC = () => {
         await grantFirstStepXp('content_calendar');
         navigateTo('social_ads'); // 6. To Social Ads
     }, [saveLocalCheckpoint, grantFirstStepXp]);
+    
+    const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => {
+        const updatedData = { socialAds: data.adsData };
+        saveLocalCheckpoint(updatedData);
+        await grantFirstStepXp('social_ads');
+        navigateTo('merchandise'); // 7. To Merchandise
+    }, [saveLocalCheckpoint, grantFirstStepXp]);
 
     // NEW FINAL STEP with GAMIFICATION
-    const handleSocialAdsComplete = async (data: { adsData: SocialAdsData }) => {
+    const handleMerchandiseComplete = async (merchandiseUrl: string) => {
         if (!session?.user || !selectedProjectId || !profile) return;
         const currentState = loadWorkflowState() || {};
-        const finalProjectData = { ...currentState, socialAds: data.adsData };
+        const finalProjectData = { ...currentState, merchandiseUrl };
         
         // 0. Grant XP for the final step
-        await grantFirstStepXp('social_ads');
+        await grantFirstStepXp('merchandise');
 
         // 1. Update project data and status
         const { data: dbData, error: projectError } = await supabase
@@ -775,6 +787,19 @@ const MainApp: React.FC = () => {
             setGeneralError(msg);
         }
     };
+    
+    const handleRegenerateMerchandise = async (projectId: number) => {
+        const p = projects.find(p => p.id === projectId);
+        if (!p || !p.project_data.selectedLogoUrl) return;
+        const { selectedLogoUrl } = p.project_data;
+        const prompt = 'Take the provided logo image. Create a realistic mockup of a plain colored t-shirt on a clean, neutral background. The t-shirt prominently features the logo. The photo is high-quality, commercial-style, showing the texture of the fabric.';
+        
+        handleRegenerateVisualAsset(projectId, 'merchandiseUrl', 1, async () => {
+            const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
+            const result = await geminiService.generateMerchandiseMockup(prompt, logoBase64);
+            return result[0];
+        }, "Mockup merchandise baru berhasil dibuat!");
+    };
 
 
     // --- Other Handlers ---
@@ -808,6 +833,7 @@ const MainApp: React.FC = () => {
             case 'print_media': return <PrintMediaGenerator projectData={workflowData || {}} onComplete={handlePrintMediaComplete} {...commonErrorProps} />;
             case 'content_calendar': return <ContentCalendarGenerator projectData={workflowData || {}} onComplete={handleContentCalendarComplete} {...commonErrorProps} />;
             case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonErrorProps} />;
+            case 'merchandise': return <MerchandiseGenerator projectData={workflowData || {}} onComplete={handleMerchandiseComplete} {...commonErrorProps} />;
             
             case 'summary':
                 const projectToShow = projects.find(p => p.id === selectedProjectId);
@@ -824,6 +850,7 @@ const MainApp: React.FC = () => {
                         onRegenerateSocialAds={() => handleRegenerateSocialAds(projectToShow.id)}
                         onRegeneratePackaging={() => handleRegeneratePackaging(projectToShow.id)}
                         onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(projectToShow.id, type)}
+                        onRegenerateMerchandise={() => handleRegenerateMerchandise(projectToShow.id)}
                         addXp={addXp}
                         onShareToForum={() => handleShareToForum(projectToShow)}
                     />;

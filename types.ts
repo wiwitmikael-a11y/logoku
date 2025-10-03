@@ -139,6 +139,7 @@ export interface ProjectData {
 
   selectedPackagingUrl?: string;
   printMediaAssets?: PrintMediaAssets;
+  merchandiseUrl?: string;
 }
 
 // This represents a project row fetched from the Supabase 'projects' table

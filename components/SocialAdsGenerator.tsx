@@ -79,7 +79,7 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
       <div className="text-center">
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Teks Iklan Sosmed</h2>
         <p className="text-gray-400 max-w-3xl">
-          Saatnya beriklan! Di langkah terakhir ini, Mang AI akan meracik beberapa pilihan teks iklan (ad copy) untuk Instagram dan TikTok, lengkap dengan hashtag yang relevan untuk menjangkau audiens.
+          Saatnya beriklan! Di langkah ini, Mang AI akan meracik beberapa pilihan teks iklan (ad copy) untuk Instagram dan TikTok, lengkap dengan hashtag yang relevan untuk menjangkau audiens.
         </p>
       </div>
 
@@ -123,11 +123,11 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
           <div className="self-center mt-4 relative">
             {showNextStepNudge && (
                 <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
-                    Langkah terakhir! Ayo selesaikan.
+                    Teks iklan siap! Lanjut?
                 </CalloutPopup>
             )}
             <Button onClick={handleContinue} disabled={!adsData}>
-              Selesai & Lihat Brand Kit Lengkap &rarr;
+              Lanjut ke Mockup Merchandise &rarr;
             </Button>
           </div>
         </div>

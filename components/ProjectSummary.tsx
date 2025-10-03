@@ -24,6 +24,7 @@ interface Props {
   onRegenerateSocialAds: () => Promise<void>;
   onRegeneratePackaging: () => Promise<void>;
   onRegeneratePrintMedia: (mediaType: 'banner' | 'roll_banner') => Promise<void>;
+  onRegenerateMerchandise: () => Promise<void>;
   addXp: (amount: number) => Promise<void>; // NEW: For gamification
   onShareToForum: (project: Project) => void;
 }
@@ -62,7 +63,7 @@ const BrandHubSidebar: React.FC = () => {
 
 const ProjectSummary: React.FC<Props> = (props) => {
   const { project, onStartNew, onGoToCaptionGenerator, onGoToInstantContent, onDeleteProject, onShareToForum } = props;
-  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, printMediaAssets } = project.project_data;
+  const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, printMediaAssets, merchandiseUrl } = project.project_data;
   
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState<string | null>(null);
@@ -232,24 +233,37 @@ const ProjectSummary: React.FC<Props> = (props) => {
                         </div>
                     </Card>
                     
-                    <Card title="🎨 Aset Media Cetak">
-                        <div className="space-y-4">
-                            <div>
-                                <h5 className="font-semibold text-gray-200 mb-2 text-sm">Spanduk (Horizontal 3:1)</h5>
-                                {regenerating === 'banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
-                                    printMediaAssets?.bannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.bannerUrl!)}><img src={printMediaAssets.bannerUrl} alt="Spanduk" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
-                                )}
-                                <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('banner', () => props.onRegeneratePrintMedia('banner'))} isLoading={regenerating === 'banner'}>{printMediaAssets?.bannerUrl ? 'Ulang' : 'Generate'} (1 Token)</Button></div>
-                            </div>
-                            <div className="pt-4 border-t border-gray-700">
-                                <h5 className="font-semibold text-gray-200 mb-2 text-sm">Roll Banner (Vertikal 1:3)</h5>
-                                 {regenerating === 'roll_banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
-                                    printMediaAssets?.rollBannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.rollBannerUrl!)}><img src={printMediaAssets.rollBannerUrl} alt="Roll Banner" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
-                                )}
-                                <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('roll_banner', () => props.onRegeneratePrintMedia('roll_banner'))} isLoading={regenerating === 'roll_banner'}>{printMediaAssets?.rollBannerUrl ? 'Ulang' : 'Generate'} (1 Token)</Button></div>
-                            </div>
+                     <Card title="🎨 Mockup Merchandise">
+                        {regenerating === 'merchandise' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : (
+                            merchandiseUrl ? (
+                              <div className="bg-white rounded-lg p-2 flex items-center justify-center aspect-square cursor-pointer group" onClick={() => openModal(merchandiseUrl)}><img src={merchandiseUrl} alt="Merchandise" className="max-h-48 object-contain group-hover:scale-105" loading="lazy"/></div>
+                            ) : <p className="text-sm text-gray-500 italic">Aset ini belum dibuat.</p>
+                        )}
+                        <div className="mt-4 pt-4 border-t border-gray-700">
+                            <Button size="small" variant="secondary" onClick={() => handleRegenerate('merchandise', props.onRegenerateMerchandise)} isLoading={regenerating === 'merchandise'}>{merchandiseUrl ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button>
                         </div>
                     </Card>
+
+                    <div className="md:col-span-2">
+                        <Card title="🎨 Aset Media Cetak">
+                            <div className="space-y-4">
+                                <div>
+                                    <h5 className="font-semibold text-gray-200 mb-2 text-sm">Spanduk (Horizontal 3:1)</h5>
+                                    {regenerating === 'banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
+                                        printMediaAssets?.bannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.bannerUrl!)}><img src={printMediaAssets.bannerUrl} alt="Spanduk" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
+                                    )}
+                                    <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('banner', () => props.onRegeneratePrintMedia('banner'))} isLoading={regenerating === 'banner'}>{printMediaAssets?.bannerUrl ? 'Ulang' : 'Generate'} (1 Token)</Button></div>
+                                </div>
+                                <div className="pt-4 border-t border-gray-700">
+                                    <h5 className="font-semibold text-gray-200 mb-2 text-sm">Roll Banner (Vertikal 1:3)</h5>
+                                     {regenerating === 'roll_banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
+                                        printMediaAssets?.rollBannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.rollBannerUrl!)}><img src={printMediaAssets.rollBannerUrl} alt="Roll Banner" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
+                                    )}
+                                    <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('roll_banner', () => props.onRegeneratePrintMedia('roll_banner'))} isLoading={regenerating === 'roll_banner'}>{printMediaAssets?.rollBannerUrl ? 'Ulang' : 'Generate'} (1 Token)</Button></div>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
                 </div>
             </section>
 
