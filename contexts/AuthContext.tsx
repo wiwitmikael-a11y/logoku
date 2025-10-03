@@ -1,3 +1,5 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
@@ -135,22 +137,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let updates: Partial<Profile> = {};
     let shouldUpdate = false;
 
-    // Daily Credit Reset Logic
+    // --- REWORKED: Daily Credit Reset Logic ---
     if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
-        // FIX: Welcome bonus was being reset to 5 on the second day.
-        // This new logic gives a "grace period" for the welcome bonus.
+        // Simplified Logic: On any day after signup, reset credits to the daily amount.
+        // This removes the complex and potentially buggy "grace period" logic.
+        // New users are protected on their signup day because last_credit_reset will match todayWIB,
+        // so this block won't execute on their first day.
+        updates.credits = DAILY_TOKENS;
+        updates.last_credit_reset = todayWIB;
+        
+        // For data consistency, we still flip the welcome bonus flag if it was set,
+        // although it's no longer used in this daily check.
         if (profileData.welcome_bonus_claimed) {
-            // This is the first daily check after signup. The user still has their welcome bonus active.
-            // We do NOT reset their credits. We just update the reset date and flip the flag.
-            // This ensures they get to keep their 20 tokens for at least one full day.
             updates.welcome_bonus_claimed = false;
-            updates.last_credit_reset = todayWIB;
-        } else {
-            // This is a regular user, or a new user on their 3rd day or later.
-            // Perform the standard daily reset to 5 tokens.
-            updates.credits = DAILY_TOKENS;
-            updates.last_credit_reset = todayWIB;
         }
         shouldUpdate = true;
     }
