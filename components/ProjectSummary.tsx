@@ -25,6 +25,7 @@ interface Props {
   onRegeneratePackaging: () => Promise<void>;
   onRegeneratePrintMedia: (mediaType: 'banner' | 'roll_banner') => Promise<void>;
   addXp: (amount: number) => Promise<void>; // NEW: For gamification
+  onShareToForum: (project: Project) => void;
 }
 
 const BrandHubSidebar: React.FC = () => {
@@ -60,7 +61,7 @@ const BrandHubSidebar: React.FC = () => {
 
 
 const ProjectSummary: React.FC<Props> = (props) => {
-  const { project, onStartNew, onGoToCaptionGenerator, onGoToInstantContent, onDeleteProject } = props;
+  const { project, onStartNew, onGoToCaptionGenerator, onGoToInstantContent, onDeleteProject, onShareToForum } = props;
   const { brandInputs, selectedPersona, selectedSlogan, selectedLogoUrl, logoVariations, contentCalendar, socialMediaKit, socialProfiles, socialAds, selectedPackagingUrl, printMediaAssets } = project.project_data;
   
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
@@ -275,6 +276,7 @@ const ProjectSummary: React.FC<Props> = (props) => {
           <h3 className="text-xl font-bold">Gimana Selanjutnya?</h3>
           <div className="flex flex-wrap justify-center gap-4">
             <Button onClick={onStartNew}>Bikin Project Baru Lagi</Button>
+            <Button variant="secondary" onClick={() => onShareToForum(project)}>Minta Masukan di Forum</Button>
             <Button variant="secondary" onClick={() => onDeleteProject(project.id)} className="!border-red-500/50 !text-red-300 hover:!bg-red-500/20">Hapus Project Ini</Button>
           </div>
       </div>

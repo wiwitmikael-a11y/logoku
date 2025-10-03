@@ -9,6 +9,7 @@ import Button from './common/Button';
 import Textarea from './common/Textarea';
 import Card from './common/Card';
 import ErrorMessage from './common/ErrorMessage';
+import CopyButton from './common/CopyButton';
 
 interface Props {
   projectData: Partial<ProjectData>;
@@ -69,18 +70,12 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     }
   }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal]);
 
-  const copyToClipboard = (text: string) => {
-    playSound('click');
-    navigator.clipboard.writeText(text);
-    // TODO: Add a small notification "Copied!"
-  };
-
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Generator Caption Sosmed</h2>
         <p className="text-gray-400">
-          Bikin caption keren buat Instagram, TikTok, atau platform lain pake persona brand "{projectData.selectedPersona?.nama_persona}". Cukup kasih topiknya! (+10 XP)
+          Butuh caption dadakan? Cukup kasih topiknya, dan Mang AI akan meracik 3 pilihan caption yang sesuai dengan persona brand "{projectData.selectedPersona?.nama_persona}". (+10 XP)
         </p>
       </div>
 
@@ -129,16 +124,11 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
                  <div className="space-y-4">
                     <div className="relative">
                          <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10 selectable-text">{item.caption}</p>
-                         <button 
-                            onClick={() => copyToClipboard(item.caption)} 
-                            title="Salin caption" 
-                            className="absolute top-0 right-0 p-1 text-gray-400 hover:text-indigo-400 transition-colors"
-                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" /><path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h6a2 2 0 00-2-2H5z" /></svg>
-                        </button>
+                         <CopyButton textToCopy={item.caption} className="absolute top-2 right-2"/>
                     </div>
-                    <div className="border-t border-gray-700 pt-3">
-                        <p className="text-indigo-300 text-xs break-words selectable-text">{item.hashtags.join(' ')}</p>
+                    <div className="border-t border-gray-700 pt-3 relative">
+                        <p className="text-indigo-300 text-xs break-words selectable-text pr-10">{item.hashtags.join(' ')}</p>
+                        <CopyButton textToCopy={item.hashtags.join(' ')} className="absolute top-2 right-2"/>
                     </div>
                  </div>
               </Card>

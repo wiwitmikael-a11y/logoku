@@ -97,7 +97,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Generator Konten Instan</h2>
         <p className="text-gray-400">
-          Ubah ide jadi konten siap posting dalam sekejap! Cukup kasih topik, Mang AI bakal bikinin gambar + 3 pilihan caption yang pas sama brand "{projectData.selectedPersona?.nama_persona}" lo. (+75 XP)
+          Ubah ide jadi 1 paket konten siap posting (1 gambar + 3 caption) dalam sekejap! Cukup kasih topik, dan Mang AI akan meracik semuanya sesuai brand "{projectData.selectedPersona?.nama_persona}" lo. (+75 XP)
         </p>
       </div>
 

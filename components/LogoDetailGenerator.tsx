@@ -120,7 +120,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, basePrompt, busines
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 3: Finalisasi & Paket Logo</h2>
-        <p className="text-gray-400">Logo pilihan lo udah siap. Sekarang lo bisa bikin paket logo lengkap (versi tumpuk, datar, monokrom) atau kasih revisi minor pakai Mang AI.</p>
+        <p className="text-gray-400">Logo utama (ikon) sudah jadi. Sekarang lo bisa langsung membuat paket logo lengkap (versi tumpuk, datar, & monokrom) atau memberikan revisi minor pada logo utama menggunakan AI.</p>
       </div>
 
       <div className="bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-4 flex items-start gap-4 text-left">

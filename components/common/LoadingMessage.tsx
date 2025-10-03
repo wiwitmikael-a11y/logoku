@@ -3,14 +3,14 @@ import Spinner from './Spinner';
 
 const loadingMessages = [
     "Sabar, Mang AI lagi ngopi item dulu...",
-    "Mang AI lagi sebat dulu, biar idenya encer...",
+    "Lagi corat-coret di buku sketsa...", // NEW
     "Tunggu bentar, lagi ngeracik ide cemerlang...",
     "Lagi manasin mesin kreativitas, nih...",
     "Mang AI lagi meditasi, nyari inspirasi ilahi...",
-    "Bentar ya, lagi konsultasi sama suhu branding...",
+    "Lagi interview target pasar...", // NEW
     "Lagi nyeduh Indomie, biar gak panik...",
     "Tahan... Mang AI lagi milih font yang estetik...",
-    "Lagi nyari wangsit di server...",
+    "Lagi riset tren di TikTok...", // NEW
     "Don't panic, Mang AI-nya lagi gak nge-lag kok...",
     "Lagi proses, jangan diganggu, nanti ngambek...",
     "Mengumpulkan niat... eh, data maksudnya...",

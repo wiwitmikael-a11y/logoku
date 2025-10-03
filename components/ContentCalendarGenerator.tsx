@@ -119,7 +119,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 8: Rencana Konten Sosmed</h2>
-        <p className="text-gray-400">Stop bingung mau posting apa. Biar Mang AI yang bikinin draf kalender konten seminggu, lengkap sama ide, caption, hashtag, dan referensi tren terbaru dari Google. Sekarang, lo juga bisa langsung bikin visualnya!</p>
+        <p className="text-gray-400">Stop bingung mau posting apa. Mang AI akan meriset tren terbaru di Google untuk membuatkan draf kalender konten selama 7 hari, lengkap dengan ide, caption, dan hashtag yang relevan.</p>
       </div>
 
       <div className="self-center">

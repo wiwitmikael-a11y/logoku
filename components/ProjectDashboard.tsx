@@ -9,6 +9,7 @@ import Card from './common/Card';
 import InFeedAd from './common/InFeedAd';
 import SaweriaWidget from './common/SaweriaWidget';
 import LoadingMessage from './common/LoadingMessage';
+import CalloutPopup from './common/CalloutPopup'; // Import for onboarding
 
 const Forum = React.lazy(() => import('./Forum'));
 const QuickTools = React.lazy(() => import('./QuickTools')); // NEW: Lazy load QuickTools
@@ -277,6 +278,16 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => {
 };
 
 const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
+    const { profile } = useAuth();
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    
+    useEffect(() => {
+        // Show onboarding if it's a new user with no projects, and they haven't seen it this session
+        if (profile?.total_projects_completed === 0 && projects.length === 0 && !sessionStorage.getItem('onboardingDismissed')) {
+            setShowOnboarding(true);
+        }
+    }, [profile, projects]);
+
     const { inProgressProjects, completedProjects } = useMemo(() => {
         const inProgress = projects.filter(p => p.status === 'in-progress');
         const completed = projects.filter(p => p.status === 'completed');
@@ -316,14 +327,28 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
         data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' }
         }
     ];
+    
+    const handleDismissOnboarding = () => {
+        setShowOnboarding(false);
+        sessionStorage.setItem('onboardingDismissed', 'true');
+    };
 
     return (
         <div className="flex flex-col gap-8 items-center text-center">
             <DynamicInfoBox />
             
-            <Button onClick={() => onNewProject()}>
-                + Bikin Project Branding Baru
-            </Button>
+            <div className="relative">
+                <Button onClick={() => onNewProject()}>
+                    + Bikin Project Branding Baru
+                </Button>
+                 {showOnboarding && (
+                    <div onClick={handleDismissOnboarding} className="cursor-pointer">
+                        <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-bounce">
+                            Sokin, Juragan! Klik di sini buat mulai!
+                        </CalloutPopup>
+                    </div>
+                )}
+            </div>
             
             <div className="w-full text-center mt-6">
                 <div className="relative inline-block my-2">
@@ -429,6 +454,14 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
   const [activeTab, setActiveTab] = useState<'projects' | 'forum' | 'tools'>('projects');
+  
+  useEffect(() => {
+    const openForumTab = sessionStorage.getItem('openForumTab');
+    if (openForumTab) {
+        setActiveTab('forum');
+        sessionStorage.removeItem('openForumTab');
+    }
+  }, []);
 
   return (
     <div className="flex flex-col gap-8">

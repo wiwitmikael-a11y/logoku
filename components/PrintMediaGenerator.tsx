@@ -145,9 +145,9 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Studio Media Cetak Mang AI</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Studio Media Cetak</h2>
         <p className="text-gray-400">
-          Saatnya bikin amunisi promosi! Pilih jenis media, dan Mang AI bakal bikinin template desain siap cetak buat lo. Lo tinggal tambahin tulisan pake aplikasi lain.
+          Saatnya bikin amunisi promosi offline! Di sini, Mang AI akan membuatkan template desain (bukan mockup) yang siap cetak. Lo tinggal tambahin tulisan sendiri nanti.
         </p>
       </div>
       
@@ -171,7 +171,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       {designs.length > 0 && (
         <div className="bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-4 flex items-start gap-4 text-left">
             <div className="flex-shrink-0 pt-1">
-                <svg xmlns="http://www.w.org/2000/svg" className="h-6 w-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
             </div>

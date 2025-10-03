@@ -247,7 +247,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 2: Desain Logo Lo</h2>
-        <p className="text-gray-400">Pilih gaya yang pas sama brand lo. Mang AI bakal kasih 1 pilihan dulu biar hemat. Lo juga bisa edit prompt-nya kalo mau.</p>
+        <p className="text-gray-400">Pilih gaya yang pas sama brand lo, atau edit promptnya sesukamu. Mang AI akan membuatkan logo utama (ikon) tanpa teks, yang nanti bisa dikasih nama di langkah selanjutnya.</p>
       </div>
 
       <div className="flex flex-col gap-4 relative">

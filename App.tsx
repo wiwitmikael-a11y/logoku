@@ -347,7 +347,12 @@ const MainApp: React.FC = () => {
 
     // --- Core Navigation & Project Management ---
     const handleNewProject = useCallback(async (templateData?: Partial<BrandInputs>) => {
-        if (!session?.user) return;
+        if (!session?.user || !profile) return;
+         // Onboarding: Trigger step 2 if this is the very first project
+        if (profile.total_projects_completed === 0 && projects.length === 0) {
+            sessionStorage.setItem('onboardingStep2', 'true');
+        }
+
         const { data, error } = await supabase.from('projects').insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' as ProjectStatus }).select().single();
         if (error) {
             setGeneralError(`Gagal memulai project baru: ${error.message}`);
@@ -364,7 +369,7 @@ const MainApp: React.FC = () => {
         }
 
         navigateTo('persona');
-    }, [session]);
+    }, [session, profile, projects]);
     
     const handleReturnToDashboard = useCallback(() => {
         clearWorkflowState();
@@ -489,6 +494,18 @@ const MainApp: React.FC = () => {
         }
         setShowDeleteConfirm(false);
         setProjectToDelete(null);
+    };
+
+    // --- NEW: Forum Integration ---
+    const handleShareToForum = (project: Project) => {
+        const { brandInputs } = project.project_data;
+        const forumPreload = {
+            title: `Minta masukan dong buat brand baruku: "${brandInputs.businessName}"`,
+            content: `Halo Juragan semua!\n\nAku baru aja selesai ngeracik brand baru pakai Mang AI, namanya "${brandInputs.businessName}". Ini brand yang bergerak di bidang ${brandInputs.industry}.\n\nKira-kira ada masukan nggak soal logo, nama, atau apa aja biar makin gacor?\n\nMakasih sebelumnya!`
+        };
+        sessionStorage.setItem('forumPreload', JSON.stringify(forumPreload));
+        sessionStorage.setItem('openForumTab', 'true');
+        handleReturnToDashboard();
     };
     
     // --- Centralized Local Checkpoint Saver ---
@@ -785,6 +802,7 @@ const MainApp: React.FC = () => {
                         onRegeneratePackaging={() => handleRegeneratePackaging(projectToShow.id)}
                         onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(projectToShow.id, type)}
                         addXp={addXp}
+                        onShareToForum={() => handleShareToForum(projectToShow)}
                     />;
                 } break;
             case 'caption':

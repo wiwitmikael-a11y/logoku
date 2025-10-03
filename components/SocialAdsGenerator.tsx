@@ -79,7 +79,7 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
       <div className="text-center">
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Teks Iklan Sosmed</h2>
         <p className="text-gray-400 max-w-3xl">
-          Saatnya ngiklan di tempat yang pas! Biar Mang AI racik beberapa pilihan teks iklan untuk Instagram dan TikTok yang ciamik, lengkap dengan hashtag yang relevan.
+          Saatnya beriklan! Di langkah terakhir ini, Mang AI akan meracik beberapa pilihan teks iklan (ad copy) untuk Instagram dan TikTok, lengkap dengan hashtag yang relevan untuk menjangkau audiens.
         </p>
       </div>
 

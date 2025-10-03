@@ -42,11 +42,20 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   const [isLoadingSlogan, setIsLoadingSlogan] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false); // State for the nudge
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const personasRef = useRef<HTMLDivElement>(null);
   const slogansRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
+    // Onboarding: check if step 2 should be shown
+    const onboardingFlag = sessionStorage.getItem('onboardingStep2');
+    if (onboardingFlag) {
+        setShowOnboarding(true);
+        sessionStorage.removeItem('onboardingStep2');
+    }
+
     // Load persisted state and parse it into the local form state
     const persistedState = loadWorkflowState();
     if (persistedState?.brandInputs) {
@@ -200,10 +209,17 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 1: Fondasi Brand Lo</h2>
-        <p className="text-gray-400">Ceritain bisnismu. Mang AI akan meracik persona, target avatar, gaya bicara, sampai slogan yang paling pas.</p>
+        <p className="text-gray-400">Ceritain bisnismu. Mang AI akan meracik 3 pilihan persona, lengkap dengan target pasar, gaya bicara, palet warna, dan beberapa opsi slogan yang paling pas.</p>
       </div>
 
-      <form onSubmit={handleGeneratePersona} className="flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+      <form ref={formRef} onSubmit={handleGeneratePersona} className="relative flex flex-col gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+        {showOnboarding && (
+             <div onClick={() => setShowOnboarding(false)} className="cursor-pointer">
+                <CalloutPopup className="absolute -top-14 left-1/2 -translate-x-1/2 w-max animate-bounce">
+                    Isi detailnya, biar Mang AI bisa ngeracik!
+                </CalloutPopup>
+            </div>
+        )}
         <Input label="Nama Bisnis" name="businessName" value={formState.businessName} onChange={handleChange} placeholder="cth: Kopi Senja" />
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
