@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ImageModalProps {
   imageUrl: string;
@@ -7,6 +8,7 @@ interface ImageModalProps {
 }
 
 const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) => {
+  const { openImageEditor } = useAuth();
   const [scale, setScale] = useState(1);
   const modalRef = useRef<HTMLDivElement>(null);
   const canShare = typeof navigator !== 'undefined' && !!navigator.share;
@@ -49,6 +51,11 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) =
       console.error('Download error:', error);
       alert('Waduh, gagal mengunduh gambar. Coba lagi, ya.');
     }
+  };
+  
+  const handleEdit = () => {
+    openImageEditor(imageUrl);
+    onClose();
   };
 
   const handleShare = async () => {
@@ -112,6 +119,9 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, altText, onClose }) =
                 </button>
                 <button onClick={handleZoomOut} title="Perkecil" className="p-2 text-white hover:bg-black/20 rounded-full transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" /></svg>
+                </button>
+                <button onClick={handleEdit} title="Edit Gambar" className="p-2 text-white hover:bg-black/20 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg>
                 </button>
                 {canShare && (
                   <button onClick={handleShare} title="Bagikan" className="p-2 text-white hover:bg-black/20 rounded-full transition-colors">

@@ -49,6 +49,10 @@ interface AuthContextType {
   setShowLevelUpModal: React.Dispatch<React.SetStateAction<boolean>>;
   unlockedAchievement: Achievement | null;
   setUnlockedAchievement: React.Dispatch<React.SetStateAction<Achievement | null>>;
+  // NEW: Image Editor State
+  imageEditorState: { isOpen: boolean; imageUrl: string | null };
+  openImageEditor: (url: string) => void;
+  closeImageEditor: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,6 +85,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState<LevelUpInfo | null>(null);
   const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
+  
+  // --- NEW: Image Editor State ---
+  const [imageEditorState, setImageEditorState] = useState<{ isOpen: boolean; imageUrl: string | null }>({ isOpen: false, imageUrl: null });
+  const openImageEditor = (url: string) => setImageEditorState({ isOpen: true, imageUrl: url });
+  const closeImageEditor = () => setImageEditorState({ isOpen: false, imageUrl: null });
 
 
   const fetchProfile = useCallback(async (user: User) => {
@@ -435,6 +444,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Gamification
     addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal,
     unlockedAchievement, setUnlockedAchievement,
+    // Image Editor
+    imageEditorState, openImageEditor, closeImageEditor,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
