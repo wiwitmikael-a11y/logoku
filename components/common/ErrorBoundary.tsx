@@ -1,8 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Switched to a standard React import and explicit `React.Component` extension. This resolves type resolution issues where `this.props` and `this.setState` were not recognized on the class component instance.
-// Fix: Changed React import to `import * as React from 'react'` to ensure proper type resolution for class components, addressing errors where `this.props` and `this.setState` were not found.
-import * as React from 'react';
+// FIX: Changed React import from `import * as React` to `import React` to ensure proper type resolution for class components, addressing errors where `this.props` and `this.setState` were not found.
+import React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';

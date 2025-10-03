@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import type { ForumThread, ForumPost } from '../types';
@@ -83,8 +83,6 @@ const WarKopInfoBox: React.FC = () => {
     );
 };
 
-// --- Sub-components for different views ---
-
 const ThreadListSkeleton: React.FC = () => (
     <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -115,7 +113,7 @@ const getOfficialDisplayData = (profile: { full_name?: string | null, avatar_url
 const Forum: React.FC = () => {
     const { user, profile } = useAuth();
     const [view, setView] = useState<ForumView>('list');
-    const [threads, setThreads] = useState<ForumThread[]>([MANG_AI_WELCOME_THREAD]);
+    const [threads, setThreads] = useState<ForumThread[]>([]);
     const [selectedThread, setSelectedThread] = useState<ForumThread | null>(null);
     const [posts, setPosts] = useState<ForumPost[]>([]);
     
@@ -129,6 +127,12 @@ const Forum: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [cooldown, setCooldown] = useState(0);
 
+    // Pagination State
+    const [threadsPage, setThreadsPage] = useState(0);
+    const [isLoadingMoreThreads, setIsLoadingMoreThreads] = useState(false);
+    const [hasMoreThreads, setHasMoreThreads] = useState(true);
+
+
     useEffect(() => {
         if (cooldown > 0) {
             const timer = setTimeout(() => setCooldown(prev => prev - 1), 1000);
@@ -136,45 +140,57 @@ const Forum: React.FC = () => {
         }
     }, [cooldown]);
 
-    const fetchThreads = useCallback(async () => {
-        setIsLoadingThreads(true);
+    const fetchThreads = useCallback(async (pageNum: number) => {
+        if (pageNum === 0) setIsLoadingThreads(true);
+        else setIsLoadingMoreThreads(true);
         setError(null);
+
+        const from = pageNum * THREADS_PAGE_SIZE;
+        const to = from + THREADS_PAGE_SIZE - 1;
+
         try {
             const { data, error: threadsError } = await supabase
                 .from('threads')
-                .select(`
-                    id, title, created_at, content, user_id,
-                    profiles (full_name, avatar_url),
-                    posts ( count )
-                `)
+                .select(`id, title, created_at, content, user_id, profiles (full_name, avatar_url), posts ( count )`)
                 .order('created_at', { ascending: false })
-                .limit(THREADS_PAGE_SIZE);
+                .range(from, to);
 
             if (threadsError) throw threadsError;
             
-            const processedThreads = data.map((t: any) => {
-                // Supabase returns 'posts' as an array with a single count object: [{ count: N }]
-                // We extract the count and replace the 'posts' array to match our ForumThread type.
-                const { posts, ...restOfThread } = t;
-                return {
-                    ...restOfThread,
-                    posts: [], // Satisfy the ForumPost[] type, we don't need the full posts here.
-                    reply_count: posts[0]?.count ?? 0,
-                };
-            });
+            const processedThreads = data.map((t: any) => ({
+                ...t,
+                posts: [],
+                reply_count: t.posts[0]?.count ?? 0,
+            }));
+            
+            if (pageNum === 0) {
+                setThreads([MANG_AI_WELCOME_THREAD, ...processedThreads]);
+            } else {
+                setThreads(prev => [...prev, ...processedThreads]);
+            }
 
-            setThreads([MANG_AI_WELCOME_THREAD, ...processedThreads]);
+            if (data.length < THREADS_PAGE_SIZE) {
+                setHasMoreThreads(false);
+            }
+
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Gagal memuat topik forum.');
-            setThreads([MANG_AI_WELCOME_THREAD]);
+            if (pageNum === 0) setThreads([MANG_AI_WELCOME_THREAD]);
         } finally {
             setIsLoadingThreads(false);
+            setIsLoadingMoreThreads(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchThreads();
+        fetchThreads(0);
     }, [fetchThreads]);
+    
+    const handleLoadMore = () => {
+        const nextPage = threadsPage + 1;
+        setThreadsPage(nextPage);
+        fetchThreads(nextPage);
+    };
 
     const handleSelectThread = useCallback((thread: ForumThread) => {
         setSelectedThread(thread);
@@ -226,7 +242,10 @@ const Forum: React.FC = () => {
             
             setNewThreadTitle('');
             setNewThreadContent('');
-            await fetchThreads();
+            // Reset and refetch threads from page 0
+            setThreadsPage(0);
+            setHasMoreThreads(true);
+            await fetchThreads(0);
             setView('list');
             setCooldown(POST_COOLDOWN_SECONDS);
         } catch (err) {
@@ -255,7 +274,6 @@ const Forum: React.FC = () => {
         }
     };
     
-    // --- Render Logic ---
     if (view === 'new_thread') {
         return (
             <div className="animate-content-fade-in">
@@ -286,7 +304,6 @@ const Forum: React.FC = () => {
                 </nav>
 
                 <div className="bg-gray-800/50 rounded-lg p-4 md:p-6 flex flex-col min-h-[60vh]">
-                     {/* Original Post */}
                     <div className="pb-4 mb-4 border-b border-gray-700">
                         <h1 className="text-xl md:text-2xl font-bold text-indigo-400 mb-3">{selectedThread.title}</h1>
                         <div className={`flex items-start gap-4 ${opAuthor.isOfficial ? 'bg-amber-900/20 p-4 rounded-lg' : ''}`}>
@@ -299,7 +316,6 @@ const Forum: React.FC = () => {
                         </div>
                     </div>
                     
-                    {/* Replies */}
                     <div className="flex-grow overflow-y-auto pr-2 space-y-4">
                         {isLoadingPosts ? <LoadingMessage /> : error ? <ErrorMessage message={error} /> : posts.map(post => {
                             const postAuthor = getOfficialDisplayData(post.profiles);
@@ -335,7 +351,6 @@ const Forum: React.FC = () => {
         );
     }
 
-    // Default view: Thread List
     return (
         <div className="max-w-7xl mx-auto animate-content-fade-in">
             <WarKopInfoBox />
@@ -366,15 +381,23 @@ const Forum: React.FC = () => {
                                 <p className="font-bold text-lg text-white">{thread.reply_count ?? 0}</p>
                                 <p className="text-xs text-gray-500">Balasan</p>
                             </div>
-                            {/* In a real forum, we'd fetch last post info, but for now we simplify */}
                              <div className="text-right flex-shrink-0 w-28 hidden md:block">
-                                {/* <p className="text-sm text-white truncate">oleh Fulan</p> */}
                                 <p className="text-xs text-gray-400">Aktivitas Terbaru</p>
                                 <p className="text-xs text-gray-400">{formatRelativeTime(thread.created_at)}</p>
                             </div>
                         </div>
                     );
                 })}
+            </div>
+            <div className="mt-6 text-center">
+                {hasMoreThreads && !isLoadingThreads && (
+                    <Button onClick={handleLoadMore} isLoading={isLoadingMoreThreads}>
+                        Muat Lebih Banyak Topik
+                    </Button>
+                )}
+                {!hasMoreThreads && threads.length > 1 && (
+                    <p className="text-sm text-gray-500">Udah mentok, Juragan. Semua obrolan udah dimuat.</p>
+                )}
             </div>
         </div>
     );
