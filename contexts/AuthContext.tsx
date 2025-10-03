@@ -43,7 +43,7 @@ interface AuthContextType {
   // NEW: Gamification states and functions
   addXp: (amount: number) => Promise<void>;
   grantAchievement: (achievementId: string) => Promise<void>;
-  grantFirstStepXp: (stepName: string) => Promise<void>;
+  grantFirstTimeCompletionBonus: (stepName: string) => Promise<void>; // Renamed for clarity
   showLevelUpModal: boolean;
   levelUpInfo: LevelUpInfo | null;
   setShowLevelUpModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -98,8 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     if (!data) {
-        // NEW USER: Set welcome bonus directly at creation. This is the only place it's handled.
-        const WELCOME_BONUS = 20;
+        // NEW USER: Set welcome bonus directly at creation.
+        const WELCOME_BONUS = 20; // FIX: Corrected welcome bonus to 20
         const { data: newProfileData, error: insertError } = await supabase
             .from('profiles')
             .insert({ 
@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 avatar_url: user.user_metadata.avatar_url,
                 credits: WELCOME_BONUS, 
                 last_credit_reset: getTodaysDateWIB(),
-                welcome_bonus_claimed: true, // This flag is now just for historical/analytics purposes.
+                welcome_bonus_claimed: true,
                 xp: 0, level: 1, achievements: [], total_projects_completed: 0,
                 last_daily_xp_claim: getTodaysDateWIB(),
                 completed_first_steps: [],
@@ -139,16 +139,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let updates: Partial<Profile> = {};
     let shouldUpdate = false;
 
-    // --- REWORKED DAILY TOKEN LOGIC: TOP-UP SYSTEM ---
+    // --- Daily Token Top-up System ---
     if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
-        // This is now a "top-up" system.
-        // If the user has fewer than 5 tokens, refill them to 5.
-        // If they have 5 or more (e.g., from bonuses), their balance is untouched, preserving their savings.
         if (profileData.credits < DAILY_TOKENS) {
             updates.credits = DAILY_TOKENS;
         }
-        // Always update the reset date to prevent this block from running again today.
         updates.last_credit_reset = todayWIB;
         shouldUpdate = true;
     }
@@ -280,7 +276,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // NEW: Centralized function for adding bonus credits
   const addCredits = useCallback(async (amount: number, reason: string) => {
     if (!profile || !user || amount <= 0) return;
     
@@ -348,14 +343,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newXp = currentXp + amount;
     const newLevel = getLevelForXp(newXp);
 
-    let tokenReward = 0;
     let updates: Partial<Profile> = { xp: newXp };
 
     if (newLevel > currentLevel) {
-        tokenReward = (newLevel % 5 === 0) ? 5 : 1; // +5 every 5 levels, +1 otherwise
+        const tokenReward = (newLevel % 5 === 0) ? 5 : 1;
         setLevelUpInfo({ newLevel, tokenReward });
         setShowLevelUpModal(true);
-        // Bonus tokens are now added directly to the current balance
         updates.credits = (profile.credits ?? 0) + tokenReward;
     }
 
@@ -388,7 +381,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setAuthError(`Gagal memberikan pencapaian: ${error.message}`);
       } else {
           setProfile(prev => ({ ...prev!, ...data } as Profile));
-          // Trigger the achievement toast
           const achievementDetails = ACHIEVEMENTS_MAP[achievementId];
           if (achievementDetails) {
               setUnlockedAchievement(achievementDetails);
@@ -396,24 +388,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
   }, [profile, user]);
   
-  const grantFirstStepXp = useCallback(async (stepName: string) => {
+  // REWORKED: This now gives XP and REFUNDS 1 token to make first-time steps free.
+  const grantFirstTimeCompletionBonus = useCallback(async (stepName: string) => {
       if (!profile || !user || profile.completed_first_steps.includes(stepName)) return;
 
       const newCompletedSteps = [...profile.completed_first_steps, stepName];
-      const { error: updateError } = await supabase
+      const newXp = (profile.xp ?? 0) + 25;
+      const newCredits = (profile.credits ?? 0) + 1; // Refund 1 token
+
+      const { data: updatedProfile, error: updateError } = await supabase
           .from('profiles')
-          .update({ completed_first_steps: newCompletedSteps })
-          .eq('id', user.id);
+          .update({ 
+              completed_first_steps: newCompletedSteps,
+              xp: newXp,
+              credits: newCredits
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
           
       if (updateError) {
-          setAuthError(`Gagal menandai langkah selesai: ${updateError.message}`);
+          setAuthError(`Gagal memberikan bonus langkah: ${updateError.message}`);
       } else {
-          // Add XP after successfully updating the DB
-          await addXp(25);
-          // Manually update local profile to reflect change immediately
-          setProfile(prev => prev ? ({ ...prev, completed_first_steps: newCompletedSteps }) : null);
+          // Check for level up after successful update
+          const oldLevel = profile.level ?? 1;
+          const newLevel = getLevelForXp(newXp);
+          if (newLevel > oldLevel) {
+              const tokenReward = (newLevel % 5 === 0) ? 5 : 1;
+              setLevelUpInfo({ newLevel, tokenReward });
+              setShowLevelUpModal(true);
+              // Add level-up reward tokens
+              await addCredits(tokenReward, 'Level Up Bonus');
+          } else {
+              setProfile(updatedProfile as Profile);
+          }
       }
-  }, [profile, user, addXp]);
+  }, [profile, user, addCredits]);
+
 
   const value: AuthContextType = {
     session, user, profile, loading, authError, isMuted,
@@ -422,7 +433,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleLogout, executeLogout, handleToggleMute, handleDeleteAccount,
     deductCredits, addCredits, refreshProfile, bgmSelection, handleBgmChange,
     // Gamification
-    addXp, grantAchievement, grantFirstStepXp, showLevelUpModal, levelUpInfo, setShowLevelUpModal,
+    addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal,
     unlockedAchievement, setUnlockedAchievement,
   };
 

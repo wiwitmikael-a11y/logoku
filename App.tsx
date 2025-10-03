@@ -186,7 +186,7 @@ const App: React.FC = () => {
 };
 
 const MainApp: React.FC = () => {
-    const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstStepXp, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits } = useAuth();
+    const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits } = useAuth();
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -343,23 +343,34 @@ const MainApp: React.FC = () => {
     
     const saveLocalCheckpoint = useCallback((updatedData: Partial<ProjectData>) => { const currentState = loadWorkflowState() || {}; const combinedData = { ...currentState, ...updatedData }; saveWorkflowState(combinedData); showToast("Progres tersimpan sementara!"); }, [showToast]);
 
-    const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => { saveLocalCheckpoint({ brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan }); await grantFirstStepXp('persona'); navigateTo('logo'); }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => { saveLocalCheckpoint({ selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt }); await grantFirstStepXp('logo'); navigateTo('logo_detail'); }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => { saveLocalCheckpoint({ selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations }); await grantFirstStepXp('logo_detail'); navigateTo('social_kit'); }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => { saveLocalCheckpoint({ socialMediaKit: data.assets }); await grantFirstStepXp('social_kit'); navigateTo('profiles'); }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleProfilesComplete = useCallback(async (data: { profiles: SocialProfileData }) => { saveLocalCheckpoint({ socialProfiles: data.profiles }); await grantFirstStepXp('profiles'); navigateTo('packaging'); }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handlePackagingComplete = useCallback(async (data: { packagingUrl: string }) => { saveLocalCheckpoint({ selectedPackagingUrl: data.packagingUrl }); await grantFirstStepXp('packaging'); navigateTo('print_media'); }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets }) => { saveLocalCheckpoint({ printMediaAssets: data.assets }); await grantFirstStepXp('print_media'); navigateTo('content_calendar'); }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleContentCalendarComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => { saveLocalCheckpoint({ contentCalendar: data.calendar, searchSources: data.sources }); await grantFirstStepXp('content_calendar'); navigateTo('social_ads'); }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => { saveLocalCheckpoint({ socialAds: data.adsData }); await grantFirstStepXp('social_ads'); navigateTo('merchandise'); }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
+        saveLocalCheckpoint({ brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan });
+        // --- FIX: Immediately save core data to Supabase to prevent progress loss ---
+        if (session?.user && selectedProjectId) {
+            const currentData = loadWorkflowState();
+            const { error: updateError } = await supabase.from('projects').update({ project_data: currentData }).eq('id', selectedProjectId);
+            if (updateError) { setGeneralError(`Gagal menyimpan progres awal: ${updateError.message}`); return; }
+            await fetchProjects(); // Refresh project list to show the new name
+        }
+        await grantFirstTimeCompletionBonus('persona'); 
+        navigateTo('logo');
+    }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus, session, selectedProjectId]);
+    const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => { saveLocalCheckpoint({ selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt }); await grantFirstTimeCompletionBonus('logo'); navigateTo('logo_detail'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
+    const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => { saveLocalCheckpoint({ selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations }); await grantFirstTimeCompletionBonus('logo_detail'); navigateTo('social_kit'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
+    const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => { saveLocalCheckpoint({ socialMediaKit: data.assets }); await grantFirstTimeCompletionBonus('social_kit'); navigateTo('profiles'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
+    const handleProfilesComplete = useCallback(async (data: { profiles: SocialProfileData }) => { saveLocalCheckpoint({ socialProfiles: data.profiles }); await grantFirstTimeCompletionBonus('profiles'); navigateTo('packaging'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
+    const handlePackagingComplete = useCallback(async (data: { packagingUrl: string }) => { saveLocalCheckpoint({ selectedPackagingUrl: data.packagingUrl }); await grantFirstTimeCompletionBonus('packaging'); navigateTo('print_media'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
+    const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets }) => { saveLocalCheckpoint({ printMediaAssets: data.assets }); await grantFirstTimeCompletionBonus('print_media'); navigateTo('content_calendar'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
+    const handleContentCalendarComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => { saveLocalCheckpoint({ contentCalendar: data.calendar, searchSources: data.sources }); await grantFirstTimeCompletionBonus('content_calendar'); navigateTo('social_ads'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
+    const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => { saveLocalCheckpoint({ socialAds: data.adsData }); await grantFirstTimeCompletionBonus('social_ads'); navigateTo('merchandise'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
     const handleMerchandiseComplete = useCallback(async (merchandiseUrl: string) => {
         if (!session?.user || !selectedProjectId || !profile) return; const currentState = loadWorkflowState() || {}; const finalProjectData = { ...currentState, merchandiseUrl };
-        await grantFirstStepXp('merchandise'); const { data: dbData, error: projectError } = await supabase.from('projects').update({ project_data: finalProjectData, status: 'completed' as ProjectStatus }).eq('id', selectedProjectId).select().single();
+        await grantFirstTimeCompletionBonus('merchandise'); const { data: dbData, error: projectError } = await supabase.from('projects').update({ project_data: finalProjectData, status: 'completed' as ProjectStatus }).eq('id', selectedProjectId).select().single();
         if (projectError) { setGeneralError(`Gagal menyimpan finalisasi project: ${projectError.message}`); return; } const newTotalCompleted = (profile.total_projects_completed ?? 0) + 1;
         await supabase.from('profiles').update({ total_projects_completed: newTotalCompleted }).eq('id', user.id); await addXp(500);
         if (newTotalCompleted === 1) await grantAchievement('BRAND_PERTAMA_LAHIR'); else if (newTotalCompleted === 5) await grantAchievement('SANG_KOLEKTOR'); else if (newTotalCompleted === 10) await grantAchievement('SULTAN_KONTEN');
         await refreshProfile(); const updatedProject: Project = dbData as any; setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p)); handleReturnToDashboard(); showToast("Mantap! Project lo berhasil diselesaikan.");
-    }, [session, user, selectedProjectId, profile, grantFirstStepXp, addXp, grantAchievement, refreshProfile, handleReturnToDashboard, showToast]);
+    }, [session, user, selectedProjectId, profile, grantFirstTimeCompletionBonus, addXp, grantAchievement, refreshProfile, handleReturnToDashboard, showToast]);
 
     const handleRegenerateTextAsset = useCallback(async <T,>(projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<T>, successMessage: string) => {
         setGeneralError(null); if ((profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
