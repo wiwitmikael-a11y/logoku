@@ -62,7 +62,7 @@ const OutOfCreditsModal: React.FC<Props> = ({ show, onClose }) => {
         />
         <h2 id="credits-modal-title" className="text-2xl font-bold text-yellow-400 mb-2">Waduh, Amunisi Mang AI Abis!</h2>
         <p className="text-gray-300 mb-6">
-          Jatah <span className="font-bold text-white">5 token harian</span> lo udah abis, bro. Coba lagi besok ya, jatahnya bakal diisi ulang otomatis!
+          Token lo udah abis, Juragan. Tenang, besok kalo token lo masih di bawah 5, Mang AI bakal <strong className="text-white">isiin lagi sampe jadi 5</strong>. Sampai ketemu besok, ya!
         </p>
         <div className="flex flex-col gap-4 items-center">
             <Button onClick={handleClose}>

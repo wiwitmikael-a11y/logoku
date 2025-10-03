@@ -1,8 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Corrected React import to resolve type errors with 'this.props' and 'this.setState'.
-// The namespace import was not working correctly with the project's TypeScript configuration.
-import React from 'react';
+// Fix: Use namespace import for React to correctly type class components. The default import was
+// causing TypeScript to not recognize `this.props` and `this.setState` on the class instance.
+import * as React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';

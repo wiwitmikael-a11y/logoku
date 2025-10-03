@@ -895,10 +895,10 @@ const MainApp: React.FC = () => {
                                 <span className="font-bold text-sm text-white">{profile?.credits ?? 0}</span>
                             </div>
                              {isTokenInfoOpen && (
-                                <div className="absolute top-full right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in">
-                                    <p className="font-bold text-white mb-1">Info Token Harian</p>
+                                <div className="absolute top-full right-0 mt-2 w-72 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in">
+                                    <p className="font-bold text-white mb-1">Aturan Token Harian (Anti Rugi!)</p>
                                     <p className="text-gray-300">
-                                        <span className="text-yellow-300">Bonus 20 token</span> di hari pertama, lalu dapatkan <span className="text-yellow-300">5 token gratis</span> setiap hari untuk terus berkarya!
+                                        Dapet <span className="text-yellow-300">20 token</span> pas daftar. Tiap hari, kalo token lo di bawah 5, Mang AI bakal <span className="text-yellow-300">isiin lagi sampe jadi 5</span>. Bonus & sisa token lo aman, nggak bakal hangus!
                                     </p>
                                 </div>
                             )}

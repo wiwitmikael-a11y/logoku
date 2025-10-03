@@ -56,8 +56,8 @@ const DYNAMIC_INFO_TIPS = [
     },
     {
         icon: '☀️',
-        title: 'Amunisi Harian Gratis',
-        text: 'Jangan takut kehabisan ide! Setiap hari, Mang AI kasih <span class="font-bold text-yellow-300">5 token gratis</span> buat lo berkarya. Jatahnya di-reset tiap pagi, lho.'
+        title: 'Jatah Harian Anti Rugi',
+        text: 'Tiap pagi, kalo token lo kurang dari 5, Mang AI bakal <strong class="text-white">isi ulang sampe jadi 5</strong>, gratis! Kalo sisa token lo banyak (misal 12), jumlahnya <strong class="text-white">nggak akan direset</strong>. Aman!'
     },
     {
         icon: '💾',
