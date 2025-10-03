@@ -1185,13 +1185,12 @@
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
       }
-      /* --- FIX: DEFINITIVE FIX FOR HEADER BUTTONS --- */
+      /* --- FIX: DEFINITIVE FIX FOR HEADER BUTTONS (Z-INDEX METHOD) --- */
       .rgb-laser-wrapper {
         position: relative;
         padding: 2px;
         border-radius: 1rem;
         overflow: hidden;
-        pointer-events: none; /* Crucial: Let mouse events pass through the wrapper itself. */
       }
       .rgb-laser-wrapper.rounded-full {
         border-radius: 9999px;
@@ -1203,7 +1202,7 @@
         left: -50%;
         width: 200%;
         height: 200%;
-        z-index: 0; /* Place on the base layer of this context */
+        z-index: -1; /* CRUCIAL: Places the gradient BEHIND the wrapper's content. */
         background: conic-gradient(
           from 90deg at 50% 50%,
           #ff00ff, /* Magenta */
@@ -1212,13 +1211,11 @@
           #ff00ff  /* Back to Magenta for smooth loop */
         );
         animation: animate-rgb-laser-border 4s linear infinite;
-        pointer-events: none; /* Make the visual effect unclickable */
       }
       .rgb-laser-wrapper > * {
-        position: relative; /* Create stacking context for content */
-        z-index: 1; /* Place content ON TOP of the ::before pseudo-element */
+        /* The content inside the wrapper now sits on top of the ::before pseudo-element naturally. */
+        /* The child element (e.g., the div with bg-gray-800) provides the background that the laser wraps around. */
         height: 100%;
-        pointer-events: auto; /* Crucial: Re-enable mouse events for the content inside. */
       }
       
       /* --- NEW: FOLDER TAB STYLES --- */
