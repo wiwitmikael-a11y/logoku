@@ -570,6 +570,52 @@ export const generateForumReply = async (threadTitle: string, threadContent: str
     }
 };
 
+export const moderateContent = async (text: string): Promise<{ isAppropriate: boolean; reason: string }> => {
+  const ai = getAiClient();
+  const prompt = `You are a strict but fair content moderator for an Indonesian online forum called "WarKop Juragan", a community for small business owners (UMKM). Your task is to analyze the following user-submitted text and determine if it is appropriate.
+
+  The text is INAPPROPRIATE if it contains any of the following:
+  - Profanity, swearing, or harsh curse words (kata-kata kasar).
+  - Hate speech, racism, or attacks on any group or individual.
+  - Spam, advertising, or promotional links that are not relevant to the discussion.
+  - Personal information (phone numbers, addresses).
+  - Dangerous or illegal content.
+
+  Analyze this text: "${text}"
+
+  Return your verdict as a JSON object.`;
+
+  try {
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    isAppropriate: { 
+                        type: Type.BOOLEAN,
+                        description: 'True if the content is clean and appropriate, false otherwise.'
+                    },
+                    reason: { 
+                        type: Type.STRING,
+                        description: 'If inappropriate, provide a brief, polite reason in Indonesian for the user. If appropriate, return "Konten aman.".'
+                    },
+                },
+                required: ['isAppropriate', 'reason']
+            }
+        },
+    });
+    
+    return safeJsonParse<{ isAppropriate: boolean; reason: string }>(response.text, 'moderateContent');
+  } catch (error) {
+    // If moderation fails, let it pass but log the error. We don't want to block users if the filter itself is down.
+    console.error("Content moderation API call failed:", error);
+    return { isAppropriate: true, reason: 'Gagal memverifikasi konten, untuk sementara diloloskan.' };
+  }
+};
+
 
 // --- REWRITTEN Image Generation Functions (Flash Preview ONLY) ---
 

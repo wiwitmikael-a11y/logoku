@@ -10,6 +10,7 @@ import LoadingMessage from './common/LoadingMessage';
 import ErrorMessage from './common/ErrorMessage';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
+import { moderateContent } from '../services/geminiService';
 
 const THREADS_PAGE_SIZE = 10;
 const POSTS_PAGE_SIZE = 50;
@@ -259,6 +260,11 @@ const Forum: React.FC = () => {
         setIsSubmitting(true);
         setError(null);
         try {
+            const moderationResult = await moderateContent(newThreadContent);
+            if (!moderationResult.isAppropriate) {
+                throw new Error(moderationResult.reason);
+            }
+
             const { data, error: insertError } = await supabase
                 .from('threads')
                 .insert({ user_id: user.id, title: newThreadTitle, content: newThreadContent })
@@ -284,6 +290,11 @@ const Forum: React.FC = () => {
         setIsSubmitting(true);
         setError(null);
         try {
+            const moderationResult = await moderateContent(newPostContent);
+            if (!moderationResult.isAppropriate) {
+                throw new Error(moderationResult.reason);
+            }
+
             const { error: insertError } = await supabase
                 .from('posts')
                 .insert({ user_id: user.id, thread_id: selectedThread.id, content: newPostContent });
