@@ -904,7 +904,7 @@ const MainApp: React.FC = () => {
                     {/* Header Left */}
                     <div className="flex items-center gap-4">
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer" onClick={handleReturnToDashboard}>
-                            <span>desain<span className="text-white">.fun</span></span>
+                            <span>des<span className="ai-highlight">ai</span>n<span className="text-white">.fun</span></span>
                         </h1>
                         <div className="hidden sm:flex items-center gap-4 border-l border-gray-700 pl-4">
                             <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={() => setShowContactModal(true)}>
@@ -917,9 +917,11 @@ const MainApp: React.FC = () => {
                         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI peeking" className="animate-header-ai-peek w-12 h-12" />
                         {/* Token Info */}
                         <div className="relative" ref={tokenInfoRef}>
-                            <div onClick={() => setIsTokenInfoOpen(p => !p)} className="flex items-center gap-2 bg-gray-800/50 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/70 transition-colors" title="Info token">
-                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
-                                <span className="font-bold text-sm text-white">{profile?.credits ?? 0}</span>
+                            <div className="rgb-laser-wrapper rounded-full">
+                                <div onClick={() => setIsTokenInfoOpen(p => !p)} className="flex items-center gap-2 bg-gray-800 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700 transition-colors" title="Info token">
+                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                                    <span className="font-bold text-sm text-white">{profile?.credits ?? 0}</span>
+                                </div>
                             </div>
                              {isTokenInfoOpen && (
                                 <div className="absolute top-full right-0 mt-2 w-72 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in">
@@ -932,18 +934,20 @@ const MainApp: React.FC = () => {
                         </div>
                          {/* User Menu */}
                         <div className="relative" ref={userMenuRef}>
-                            <button
-                                onClick={() => setIsUserMenuOpen(p => !p)}
-                                title="User Menu"
-                                className={`flex items-center gap-2 rounded-full shadow-md transition-all duration-300 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 ${tierClass} p-0.5`}
-                              >
-                                <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
-                                <img
-                                  src={session.user.user_metadata.avatar_url}
-                                  alt={session.user.user_metadata.full_name}
-                                  className="w-9 h-9 rounded-full border-2 border-gray-900/50 flex-shrink-0"
-                                />
-                            </button>
+                            <div className="rgb-laser-wrapper rounded-full">
+                                <button
+                                    onClick={() => setIsUserMenuOpen(p => !p)}
+                                    title="User Menu"
+                                    className={`flex items-center gap-2 rounded-full shadow-md transition-all duration-300 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 ${tierClass} p-0.5`}
+                                  >
+                                    <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
+                                    <img
+                                      src={session.user.user_metadata.avatar_url}
+                                      alt={session.user.user_metadata.full_name}
+                                      className="w-9 h-9 rounded-full border-2 border-gray-900/50 flex-shrink-0"
+                                    />
+                                </button>
+                            </div>
                             {isUserMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in">
                                     {/* Menu Items */}

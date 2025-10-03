@@ -1193,6 +1193,10 @@
         overflow: hidden;
         z-index: 0; /* Stacking context */
       }
+      /* NEW: Modifier for fully rounded elements */
+      .rgb-laser-wrapper.rounded-full {
+        border-radius: 9999px;
+      }
       .rgb-laser-wrapper::before {
         content: '';
         position: absolute;
@@ -1210,7 +1214,7 @@
         );
         animation: animate-rgb-laser-border 4s linear infinite;
       }
-      .rgb-laser-wrapper > div { /* Target the inner modal content */
+      .rgb-laser-wrapper > * { /* UPDATED: Target any direct child */
         height: 100%;
       }
       
@@ -1271,6 +1275,14 @@
         padding: 0 0.75rem;
         font-size: 1.25rem;
         color: #a5b4fc; /* indigo-300 */
+      }
+      
+      /* --- NEW: AI HIGHLIGHT FOR LOGO --- */
+      .ai-highlight {
+        background: linear-gradient(to right, #a5b4fc, #ffffff); /* indigo-300 to white */
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
       }
     </style>
   <script type="importmap">

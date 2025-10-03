@@ -1,7 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Changed to use `React.Component` directly to resolve issues where `setState` and `props` were not found on the class instance.
-// FIX: Using `import * as React from 'react'` to ensure correct type resolution from the 'react' module, which resolves the 'props' and 'setState' not found errors.
+// FIX: Use `import * as React from 'react'` to ensure correct type resolution for React class components, which resolves issues where `props` and `setState` are not found.
 import * as React from 'react';
 import Button from './Button';
 
@@ -18,6 +17,7 @@ interface State {
   isCopied?: boolean;
 }
 
+// FIX: Extend `React.Component` to make this a proper class component. This provides access to `this.props` and `this.setState`, fixing the errors.
 class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,

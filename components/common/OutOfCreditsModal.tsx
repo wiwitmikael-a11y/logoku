@@ -54,7 +54,7 @@ const OutOfCreditsModal: React.FC<Props> = ({ show, onClose }) => {
       tabIndex={-1}
     >
       <div className="rgb-laser-wrapper max-w-md w-full">
-        <div className="relative bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center">
+        <div className="relative bg-gray-800 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center">
           <img
             src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
             alt="Mang AI character looking tired"
