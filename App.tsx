@@ -903,21 +903,9 @@ const MainApp: React.FC = () => {
                 <div className="max-w-7xl mx-auto flex justify-between items-center relative">
                     {/* Header Left */}
                     <div className="flex items-center gap-4">
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tighter text-indigo-400 cursor-pointer flex items-center gap-1" onClick={handleReturnToDashboard}>
-                            <span>des<span className="ai-highlight">ai</span>n</span>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block -mt-1">
-                                <defs>
-                                    <linearGradient id="goldGradient" x1="50%" y1="0%" x2="50%" y2="100%">
-                                        <stop offset="0%" stopColor="#FDE047" />
-                                        <stop offset="100%" stopColor="#F59E0B" />
-                                    </linearGradient>
-                                    <filter id="sparkGlow" x="-50%" y="-50%" width="200%" height="200%">
-                                        <feDropShadow dx="0" dy="0" stdDeviation="1.5" floodColor="#FBBF24" />
-                                    </filter>
-                                </defs>
-                                <path d="M12 2L14.09 9.91L22 12L14.09 14.09L12 22L9.91 14.09L2 12L9.91 9.91L12 2Z" fill="url(#goldGradient)" filter="url(#sparkGlow)"/>
-                            </svg>
-                            <span className="text-white">fun</span>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tighter cursor-pointer" onClick={handleReturnToDashboard}>
+                            <span className="text-indigo-400">des<span className="ai-highlight">ai</span>n</span>
+                            <span className="text-white">.fun</span>
                         </h1>
                         <div className="hidden sm:flex items-center gap-4 border-l border-gray-700 pl-4">
                             <div className="font-handwritten text-lg md:text-2xl text-indigo-300 cursor-pointer hover:text-white transition-colors" onClick={() => setShowContactModal(true)}>
@@ -929,59 +917,58 @@ const MainApp: React.FC = () => {
                     <div className="flex items-center gap-2 md:gap-4 relative">
                         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI peeking" className="animate-header-ai-peek w-12 h-12" />
                         
-                        {/* Unified Token/User Button */}
+                        {/* Token Info */}
                         <div className="rgb-laser-wrapper rounded-full">
-                            <div className="flex items-center bg-gray-800 rounded-full p-1 gap-1">
-                                {/* Token Info */}
-                                <div className="relative" ref={tokenInfoRef}>
-                                    <div onClick={() => setIsTokenInfoOpen(p => !p)} className="flex items-center gap-2 px-3 py-1 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/50 transition-colors" title="Info token">
-                                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
-                                        <span className="font-bold text-sm text-white">{profile?.credits ?? 0}</span>
+                            <div className="relative bg-gray-800 rounded-full" ref={tokenInfoRef}>
+                                <div onClick={() => setIsTokenInfoOpen(p => !p)} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-yellow-400 cursor-pointer hover:bg-gray-700/50 transition-colors" title="Info token">
+                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                                    <span className="font-bold text-sm text-white">{profile?.credits ?? 0}</span>
+                                </div>
+                                {isTokenInfoOpen && (
+                                    <div className="absolute top-full right-0 mt-2 w-72 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in">
+                                        <p className="font-bold text-white mb-1">Aturan Token Harian (Anti Rugi!)</p>
+                                        <p className="text-gray-300">
+                                            Dapet <span className="text-yellow-300">20 token</span> pas daftar. Tiap hari, kalo token lo di bawah 5, Mang AI bakal <span className="text-yellow-300">isiin lagi sampe jadi 5</span>. Bonus & sisa token lo aman, nggak bakal hangus!
+                                        </p>
                                     </div>
-                                    {isTokenInfoOpen && (
-                                        <div className="absolute top-full right-0 mt-2 w-72 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in">
-                                            <p className="font-bold text-white mb-1">Aturan Token Harian (Anti Rugi!)</p>
-                                            <p className="text-gray-300">
-                                                Dapet <span className="text-yellow-300">20 token</span> pas daftar. Tiap hari, kalo token lo di bawah 5, Mang AI bakal <span className="text-yellow-300">isiin lagi sampe jadi 5</span>. Bonus & sisa token lo aman, nggak bakal hangus!
-                                            </p>
+                                )}
+                            </div>
+                        </div>
+                         {/* User Menu */}
+                        <div className="rgb-laser-wrapper rounded-full">
+                            <div className="relative" ref={userMenuRef}>
+                                <button
+                                    onClick={() => setIsUserMenuOpen(p => !p)}
+                                    title="User Menu"
+                                    className={`flex items-center gap-2 rounded-full shadow-md transition-all duration-300 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 ${tierClass} bg-gray-800 p-0.5`}
+                                  >
+                                    <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
+                                    <img
+                                      src={session.user.user_metadata.avatar_url}
+                                      alt={session.user.user_metadata.full_name}
+                                      className="w-9 h-9 rounded-full border-2 border-gray-900/50 flex-shrink-0"
+                                    />
+                                </button>
+                                {isUserMenuOpen && (
+                                    <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in">
+                                        {/* Menu Items */}
+                                        <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Dashboard</button>
+                                        <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Tentang Aplikasi</button>
+                                        <div className="border-t border-gray-700 my-1"></div>
+                                        <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Pengaturan Akun</button>
+                                        <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Traktir Kopi</a>
+                                        <div className="border-t border-gray-700 my-1"></div>
+                                        <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilih Musik</div>
+                                        <div className="px-2 pb-2">
+                                            <select aria-label="Pilih musik latar" value={bgmSelection} onChange={(e) => handleBgmChange(e.target.value as BgmSelection)} className="w-full text-left px-2 py-1.5 text-sm text-gray-200 bg-gray-700/50 border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                                <option value="Mute">Bisukan BGM</option><option value="Random">Acak</option><option value="Jingle">Jingle</option><option value="Acoustic">Akustik</option><option value="Uplifting">Semangat</option><option value="LoFi">Lo-Fi</option><option value="Bamboo">Bambu</option><option value="Ethnic">Etnik</option><option value="Cozy">Santai</option>
+                                            </select>
                                         </div>
-                                    )}
-                                </div>
-                                 {/* User Menu */}
-                                <div className="relative" ref={userMenuRef}>
-                                    <button
-                                        onClick={() => setIsUserMenuOpen(p => !p)}
-                                        title="User Menu"
-                                        className={`flex items-center gap-2 rounded-full shadow-md transition-all duration-300 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 ${tierClass} p-0.5`}
-                                      >
-                                        <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
-                                        <img
-                                          src={session.user.user_metadata.avatar_url}
-                                          alt={session.user.user_metadata.full_name}
-                                          className="w-9 h-9 rounded-full border-2 border-gray-900/50 flex-shrink-0"
-                                        />
-                                    </button>
-                                    {isUserMenuOpen && (
-                                        <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in">
-                                            {/* Menu Items */}
-                                            <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Dashboard</button>
-                                            <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Tentang Aplikasi</button>
-                                            <div className="border-t border-gray-700 my-1"></div>
-                                            <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Pengaturan Akun</button>
-                                            <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Traktir Kopi</a>
-                                            <div className="border-t border-gray-700 my-1"></div>
-                                            <div className="px-4 pt-1 pb-1 text-xs text-gray-400">Pilih Musik</div>
-                                            <div className="px-2 pb-2">
-                                                <select aria-label="Pilih musik latar" value={bgmSelection} onChange={(e) => handleBgmChange(e.target.value as BgmSelection)} className="w-full text-left px-2 py-1.5 text-sm text-gray-200 bg-gray-700/50 border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                                                    <option value="Mute">Bisukan BGM</option><option value="Random">Acak</option><option value="Jingle">Jingle</option><option value="Acoustic">Akustik</option><option value="Uplifting">Semangat</option><option value="LoFi">Lo-Fi</option><option value="Bamboo">Bambu</option><option value="Ethnic">Etnik</option><option value="Cozy">Santai</option>
-                                                </select>
-                                            </div>
-                                            <button onClick={() => { handleToggleMute(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">{isMuted ? 'Suara Aktif' : 'Bisukan'}</button>
-                                            <div className="border-t border-gray-700 my-1"></div>
-                                            <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Logout</button>
-                                        </div>
-                                    )}
-                                </div>
+                                        <button onClick={() => { handleToggleMute(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">{isMuted ? 'Suara Aktif' : 'Bisukan'}</button>
+                                        <div className="border-t border-gray-700 my-1"></div>
+                                        <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Logout</button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
