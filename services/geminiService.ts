@@ -210,7 +210,7 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image-preview',
+            model: 'gemini-2.5-flash-image',
             contents: {
                 parts: [
                     { inlineData: { data: base64Data, mimeType } },
@@ -344,6 +344,39 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
         return safeJsonParse<string[]>(response.text, 'generateSlogans');
     } catch (error) {
         throw handleApiError(error, "Slogan");
+    }
+};
+
+export const generateQuickSlogans = async (businessName: string, keywords: string): Promise<string[]> => {
+    const ai = getAiClient();
+    const prompt = `Act as a creative branding expert for Indonesian small businesses (UMKM). Generate 10 short, catchy, and memorable slogans.
+
+    Business Details:
+    - Business Name: ${businessName}
+    - Keywords/Vibe (optional): ${keywords || 'tidak ada'}
+
+    The slogans should be a mix of:
+    - Indonesian and English.
+    - Modern, punchy, and easy to remember.
+    - Suitable for social media and marketing.
+
+    Return a single JSON array of 10 strings.`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                }
+            },
+        });
+        return safeJsonParse<string[]>(response.text, 'generateQuickSlogans');
+    } catch (error) {
+        throw handleApiError(error, "Slogan Generator");
     }
 };
 
@@ -487,7 +520,7 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
     const ai = getAiClient();
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image-preview',
+            model: 'gemini-2.5-flash-image',
             contents: {
                 parts: [
                     { inlineData: { data: base64ImageData, mimeType } },
@@ -565,7 +598,7 @@ const generateImageWithLogo = async (logoBase64: string, instructionPrompt: stri
         const textPart = { text: instructionPrompt };
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image-preview',
+            model: 'gemini-2.5-flash-image',
             contents: { parts: [imagePart, textPart] },
             config: {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],

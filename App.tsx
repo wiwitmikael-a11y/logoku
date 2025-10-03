@@ -397,17 +397,48 @@ const MainApp: React.FC = () => {
         if (project.status === 'completed') {
             navigateTo('summary');
         } else {
-            // Determine where to resume the wizard for in-progress projects (NEW FLOW)
-            let nextState: AppState = 'persona';
+            // Reworked Logic: Find the first incomplete step and navigate there.
             const data = project.project_data;
-            if (data.socialAds) nextState = 'social_ads';
-            else if (data.contentCalendar) nextState = 'content_calendar';
-            else if (data.printMediaAssets) nextState = 'print_media';
-            else if (data.selectedPackagingUrl) nextState = 'packaging';
-            else if (data.socialProfiles) nextState = 'profiles';
-            else if (data.socialMediaKit) nextState = 'social_kit';
-            else if (data.logoVariations) nextState = 'logo_detail';
-            else if (data.selectedPersona) nextState = 'logo';
+            let nextState: AppState = 'persona';
+
+            if (data.selectedPersona) {
+                if (data.selectedLogoUrl) {
+                    if (data.logoVariations) {
+                        if (data.socialMediaKit) {
+                            if (data.socialProfiles) {
+                                if (data.selectedPackagingUrl) {
+                                    if (data.printMediaAssets) {
+                                        if (data.contentCalendar) {
+                                            if (data.socialAds) {
+                                                // This case means it's complete but status is wrong. Go to summary.
+                                                nextState = 'summary'; 
+                                            } else {
+                                                nextState = 'social_ads';
+                                            }
+                                        } else {
+                                            nextState = 'content_calendar';
+                                        }
+                                    } else {
+                                        nextState = 'print_media';
+                                    }
+                                } else {
+                                    nextState = 'packaging';
+                                }
+                            } else {
+                                nextState = 'profiles';
+                            }
+                        } else {
+                            nextState = 'social_kit';
+                        }
+                    } else {
+                        nextState = 'logo_detail';
+                    }
+                } else {
+                    nextState = 'logo';
+                }
+            } else {
+                nextState = 'persona';
+            }
             navigateTo(nextState);
         }
     }, [projects]);

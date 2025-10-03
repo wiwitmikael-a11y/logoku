@@ -160,10 +160,6 @@ const Forum: React.FC = () => {
             const processedThreads = data.map((t: any) => ({
                 ...t,
                 posts: [],
-                // FIX: Add optional chaining on `t.posts` itself.
-                // Supabase returns the count as `posts: [{ count: N }]`.
-                // If the relationship fails for some reason, `t.posts` could be null,
-                // causing a crash on `t.posts[0]`. This change makes it safer.
                 reply_count: t.posts?.[0]?.count ?? 0,
             }));
             
