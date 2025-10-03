@@ -151,7 +151,7 @@ const Forum: React.FC = () => {
         try {
             const { data, error: threadsError } = await supabase
                 .from('threads')
-                .select(`id, title, created_at, content, user_id, profiles (full_name, avatar_url), posts ( count )`)
+                .select(`id, title, created_at, content, user_id, profiles (full_name, avatar_url), reply_count:posts(count)`)
                 .order('created_at', { ascending: false })
                 .range(from, to);
 
@@ -160,7 +160,7 @@ const Forum: React.FC = () => {
             const processedThreads = data.map((t: any) => ({
                 ...t,
                 posts: [],
-                reply_count: t.posts?.[0]?.count ?? 0,
+                reply_count: t.reply_count?.[0]?.count ?? 0,
             }));
             
             if (pageNum === 0) {
@@ -358,7 +358,7 @@ const Forum: React.FC = () => {
                 <h1 className="text-2xl font-bold">Obrolan WarKop</h1>
                 <Button onClick={() => setView('new_thread')}>+ Topik Baru</Button>
             </div>
-            {error && <ErrorMessage message={error} onGoToDashboard={fetchThreads} />}
+            {error && <ErrorMessage message={error} onGoToDashboard={() => fetchThreads(0)} />}
             <div className="bg-gray-800/50 rounded-lg">
                 {isLoadingThreads ? <ThreadListSkeleton /> : threads.map(thread => {
                     const author = getOfficialDisplayData(thread.profiles);

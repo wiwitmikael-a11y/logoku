@@ -138,8 +138,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Daily Credit Reset Logic
     if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
-        updates.credits = DAILY_TOKENS;
-        updates.last_credit_reset = todayWIB;
+        // FIX: Welcome bonus was being reset to 5 on the second day.
+        // This new logic gives a "grace period" for the welcome bonus.
+        if (profileData.welcome_bonus_claimed) {
+            // This is the first daily check after signup. The user still has their welcome bonus active.
+            // We do NOT reset their credits. We just update the reset date and flip the flag.
+            // This ensures they get to keep their 20 tokens for at least one full day.
+            updates.welcome_bonus_claimed = false;
+            updates.last_credit_reset = todayWIB;
+        } else {
+            // This is a regular user, or a new user on their 3rd day or later.
+            // Perform the standard daily reset to 5 tokens.
+            updates.credits = DAILY_TOKENS;
+            updates.last_credit_reset = todayWIB;
+        }
         shouldUpdate = true;
     }
     

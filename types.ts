@@ -142,7 +142,8 @@ export interface ProjectData {
 }
 
 // This represents a project row fetched from the Supabase 'projects' table
-export type ProjectStatus = 'in-progress' | 'completed';
+// FIX: Add 'local-complete' to the ProjectStatus type to resolve the TypeScript error.
+export type ProjectStatus = 'in-progress' | 'completed' | 'local-complete';
 
 export interface Project {
   id: number; // The database primary key
