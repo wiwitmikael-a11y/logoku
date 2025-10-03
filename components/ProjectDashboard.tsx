@@ -11,6 +11,7 @@ import SaweriaWidget from './common/SaweriaWidget';
 import LoadingMessage from './common/LoadingMessage';
 
 const Forum = React.lazy(() => import('./Forum'));
+const QuickTools = React.lazy(() => import('./QuickTools')); // NEW: Lazy load QuickTools
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -427,7 +428,7 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
-  const [activeTab, setActiveTab] = useState<'projects' | 'forum'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'forum' | 'tools'>('projects');
 
   return (
     <div className="flex flex-col gap-8">
@@ -441,15 +442,21 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
       <div className="flex justify-center border-b border-gray-700">
         <button 
           onClick={() => setActiveTab('projects')}
-          className={`px-6 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
+          className={`px-4 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
         >
           🚀 Project Saya
         </button>
         <button 
           onClick={() => setActiveTab('forum')}
-          className={`px-6 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
+          className={`px-4 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
         >
           ☕ WarKop Juragan
+        </button>
+        <button 
+          onClick={() => setActiveTab('tools')}
+          className={`px-4 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
+        >
+          💡 Warung Ide
         </button>
       </div>
       
@@ -459,6 +466,11 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
         {activeTab === 'forum' && (
           <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
             <Forum />
+          </Suspense>
+        )}
+        {activeTab === 'tools' && (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
+            <QuickTools />
           </Suspense>
         )}
       </div>

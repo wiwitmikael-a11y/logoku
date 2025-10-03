@@ -1,9 +1,9 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Changed React import to the standard default import 'import React from 'react''.
-// The previous 'import * as React' was causing issues with type resolution for class components,
-// leading to errors where 'this.props' and 'this.setState' were not found.
-import React from 'react';
+// FIX: To resolve TypeScript errors where `this.props` and `this.setState` were not found,
+// explicitly import `Component` from 'react' and extend it directly. This ensures
+// the class is correctly recognized as a React Component.
+import React, { Component } from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -19,7 +19,7 @@ interface State {
   isCopied?: boolean;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
+class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: undefined,

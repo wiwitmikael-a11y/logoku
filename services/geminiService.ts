@@ -346,6 +346,42 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
         throw handleApiError(error, "Slogan");
     }
 };
+
+// NEW: For Quick Tools
+export const generateBusinessNames = async (category: string, keywords: string): Promise<string[]> => {
+    const ai = getAiClient();
+    const prompt = `Act as a creative branding expert for Indonesian small businesses (UMKM). Generate 15 unique, catchy, and modern business name ideas.
+
+    Business Details:
+    - Product/Service: ${category}
+    - Keywords/Vibe (optional): ${keywords || 'tidak ada'}
+
+    The names should be a mix of:
+    - Indonesian words (modern, slang, or traditional).
+    - English words that are easy for Indonesians to pronounce.
+    - Creative combinations of both.
+    - Avoid generic names. Aim for names that are memorable and brandable.
+
+    Return a single JSON array of 15 strings.`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                }
+            },
+        });
+        return safeJsonParse<string[]>(response.text, 'generateBusinessNames');
+    } catch (error) {
+        throw handleApiError(error, "Business Name Generator");
+    }
+};
+
 export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string): Promise<GeneratedCaption[]> => {
     const ai = getAiClient();
     const prompt = `Create 3 social media captions for a business named "${businessName}".
