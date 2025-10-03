@@ -394,7 +394,7 @@ const MainApp: React.FC = () => {
                                 <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full border-2 border-border-main" />
                             </button>
                             {isUserMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-60 bg-surface/80 backdrop-blur-lg border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in">
+                                <div className="absolute right-0 mt-2 w-60 bg-surface backdrop-blur-lg border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in">
                                     <div className="px-4 py-3 border-b border-border-main">
                                         <p className="font-bold text-sm text-text-header truncate">{profile?.full_name}</p>
                                         <p className="text-xs text-text-muted flex items-center gap-1.5 mt-1">
@@ -403,10 +403,11 @@ const MainApp: React.FC = () => {
                                         </p>
                                     </div>
                                     <a onClick={handleRequestReturnToDashboard} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors">Dashboard</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
+                                    <div className="border-t border-border-main my-1"></div>
                                     <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</a>
                                     <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Traktir Kopi</a>
                                     <div className="border-t border-border-main my-1"></div>
-                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
                                     <a onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">Logout</a>
                                 </div>
                             )}
