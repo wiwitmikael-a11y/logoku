@@ -985,6 +985,59 @@
           transform: translateY(0);
         }
       }
+      
+      /* --- NEW: Arcade UI Styles --- */
+      @keyframes crt-flicker {
+        0%, 100% { opacity: 1; }
+        49.5% { opacity: 1; }
+        50% { opacity: 0.8; }
+        50.5% { opacity: 1; }
+      }
+      @keyframes text-blink {
+        50% { opacity: 0; }
+      }
+      .arcade-monitor {
+        /* Ganti URL ini dengan URL gambar PNG skin lo nanti */
+        background-image: url('https://i.ibb.co/LQrL6x3/arcade-frame-manga.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        padding: 12% 15%; /* Sesuaikan padding ini agar pas dengan frame PNG lo */
+        min-height: 600px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .crt-screen {
+        width: 100%;
+        height: 100%;
+        background-color: #0d0d1a;
+        border-radius: 2%;
+        font-family: monospace;
+        color: #4ade80; /* green-400 */
+        box-shadow: 0 0 25px rgba(34, 211, 238, 0.4), inset 0 0 15px rgba(34, 211, 238, 0.3);
+        position: relative;
+        overflow: hidden;
+        animation: crt-flicker 0.15s infinite;
+        transform: perspective(300px) rotateX(2deg); /* Sedikit efek 3D */
+      }
+      .crt-screen::after {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(to bottom, rgba(24, 24, 32, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                    linear-gradient(to right, rgba(50, 50, 60, 0.1), rgba(0, 0, 0, 0.15));
+        z-index: 2;
+        background-size: 100% 4px, 3px 100%;
+        pointer-events: none;
+      }
+      .blinking-cursor {
+        animation: text-blink 1s step-end infinite;
+      }
     </style>
   <script type="importmap">
 {
@@ -1004,7 +1057,6 @@
       "@type": "SoftwareApplication",
       "name": "desain.fun",
       "applicationCategory": "BusinessApplication",
-      "operatingSystem": "WEB",
       "description": "Aplikasi branding AI untuk UMKM dan bisnis kecil. Hasilkan logo, persona brand, dan konten media sosial unik dalam hitungan menit.",
       "author": {
         "@type": "Person",
