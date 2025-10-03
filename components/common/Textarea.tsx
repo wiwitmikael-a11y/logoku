@@ -41,4 +41,4 @@ const Textarea: React.FC<TextareaProps> = ({ label, name, className, ...props })
   );
 };
 
-export default Textarea;
+export default React.memo(Textarea);

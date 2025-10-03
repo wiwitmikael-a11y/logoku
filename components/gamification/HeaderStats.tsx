@@ -36,4 +36,4 @@ const HeaderStats: React.FC<HeaderStatsProps> = ({ profile }) => {
   );
 };
 
-export default HeaderStats;
+export default React.memo(HeaderStats);

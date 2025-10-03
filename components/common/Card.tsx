@@ -54,4 +54,4 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(({ title, children, onC
 
 Card.displayName = 'Card';
 
-export default Card;
+export default React.memo(Card);

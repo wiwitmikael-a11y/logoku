@@ -76,4 +76,4 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
   );
 };
 
-export default Button;
+export default React.memo(Button);

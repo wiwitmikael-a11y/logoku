@@ -1,0 +1,22 @@
+{
+  "short_name": "desain.fun",
+  "name": "desain.fun - Studio Branding AI",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/android-chrome-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1c1c20",
+  "background_color": "#0a0a0c"
+}

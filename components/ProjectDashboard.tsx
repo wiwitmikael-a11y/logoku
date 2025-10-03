@@ -143,7 +143,7 @@ interface TemplateCardProps {
 
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => (
   <div onClick={() => onClick(template.data)} className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg shadow-black/30 transition-transform duration-300 hover:scale-105">
-    <img src={template.imageUrl} alt={template.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+    <img src={template.imageUrl} alt={template.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" loading="lazy" />
     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
     <div className="absolute bottom-0 left-0 p-4 text-white"><h4 className="text-xl font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4></div>
     <div className="absolute bottom-0 left-0 w-full p-4 bg-black/70 backdrop-blur-sm text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
