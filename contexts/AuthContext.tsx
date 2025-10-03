@@ -36,6 +36,7 @@ interface AuthContextType {
   handleToggleMute: () => void;
   handleDeleteAccount: () => void;
   deductCredits: (amount: number) => Promise<boolean>;
+  addCredits: (amount: number, reason: string) => Promise<void>; // NEW: Centralized bonus token function
   refreshProfile: () => Promise<void>;
   bgmSelection: BgmSelection;
   handleBgmChange: (selection: BgmSelection) => void;
@@ -97,6 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     if (!data) {
+        // NEW USER: Set welcome bonus directly at creation. This is the only place it's handled.
         const WELCOME_BONUS = 20;
         const { data: newProfileData, error: insertError } = await supabase
             .from('profiles')
@@ -106,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 avatar_url: user.user_metadata.avatar_url,
                 credits: WELCOME_BONUS, 
                 last_credit_reset: getTodaysDateWIB(),
-                welcome_bonus_claimed: true,
+                welcome_bonus_claimed: true, // This flag is now just for historical/analytics purposes.
                 xp: 0, level: 1, achievements: [], total_projects_completed: 0,
                 last_daily_xp_claim: getTodaysDateWIB(),
                 completed_first_steps: [],
@@ -137,21 +139,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let updates: Partial<Profile> = {};
     let shouldUpdate = false;
 
-    // --- REWORKED: Daily Credit Reset Logic ---
+    // --- REWORKED DAILY TOKEN LOGIC: TOP-UP SYSTEM ---
     if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
-        // Simplified Logic: On any day after signup, reset credits to the daily amount.
-        // This removes the complex and potentially buggy "grace period" logic.
-        // New users are protected on their signup day because last_credit_reset will match todayWIB,
-        // so this block won't execute on their first day.
-        updates.credits = DAILY_TOKENS;
-        updates.last_credit_reset = todayWIB;
-        
-        // For data consistency, we still flip the welcome bonus flag if it was set,
-        // although it's no longer used in this daily check.
-        if (profileData.welcome_bonus_claimed) {
-            updates.welcome_bonus_claimed = false;
+        // This is now a "top-up" system.
+        // If the user has fewer than 5 tokens, refill them to 5.
+        // If they have 5 or more (e.g., from bonuses), their balance is untouched, preserving their savings.
+        if (profileData.credits < DAILY_TOKENS) {
+            updates.credits = DAILY_TOKENS;
         }
+        // Always update the reset date to prevent this block from running again today.
+        updates.last_credit_reset = todayWIB;
         shouldUpdate = true;
     }
     
@@ -281,6 +279,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         alert("Fitur hapus akun akan segera tersedia. Untuk saat ini, silakan hubungi developer jika Anda ingin menghapus akun Anda.");
     }
   };
+  
+  // NEW: Centralized function for adding bonus credits
+  const addCredits = useCallback(async (amount: number, reason: string) => {
+    if (!profile || !user || amount <= 0) return;
+    
+    console.log(`Adding ${amount} credits for: ${reason}`);
+    
+    const newCredits = (profile.credits ?? 0) + amount;
+    const { data, error } = await supabase
+        .from('profiles')
+        .update({ credits: newCredits })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+    if (error) {
+        setAuthError(`Gagal menambah token bonus: ${error.message}`);
+    } else {
+        setProfile(prev => ({ ...prev!, ...data } as Profile));
+    }
+  }, [profile, user]);
 
   const deductCredits = async (amount: number): Promise<boolean> => {
     if (!profile || !user) {
@@ -316,7 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, fetchProfile]);
 
-  // --- NEW: Gamification Logic ---
+  // --- Gamification Logic ---
   const getLevelForXp = (xp: number): number => {
     return Math.floor(xp / 750) + 1;
   };
@@ -336,7 +355,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         tokenReward = (newLevel % 5 === 0) ? 5 : 1; // +5 every 5 levels, +1 otherwise
         setLevelUpInfo({ newLevel, tokenReward });
         setShowLevelUpModal(true);
-        updates.level = newLevel;
+        // Bonus tokens are now added directly to the current balance
         updates.credits = (profile.credits ?? 0) + tokenReward;
     }
 
@@ -401,7 +420,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     showOutOfCreditsModal, showLogoutConfirm,
     setShowOutOfCreditsModal, setShowLogoutConfirm,
     handleLogout, executeLogout, handleToggleMute, handleDeleteAccount,
-    deductCredits, refreshProfile, bgmSelection, handleBgmChange,
+    deductCredits, addCredits, refreshProfile, bgmSelection, handleBgmChange,
     // Gamification
     addXp, grantAchievement, grantFirstStepXp, showLevelUpModal, levelUpInfo, setShowLevelUpModal,
     unlockedAchievement, setUnlockedAchievement,

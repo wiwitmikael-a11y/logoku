@@ -1,10 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Changed namespace import `import * as React` to a default import `import React`.
-// The namespace import was causing issues with recognizing the class component's `this.props` and `this.setState`,
-// likely due to project-wide tsconfig settings that favor default imports for React.
-// FIX: Corrected import to use named `Component` for robust type resolution.
-import React, { Component } from 'react';
+// FIX: Corrected React import to resolve type errors with 'this.props' and 'this.setState'.
+// The namespace import was not working correctly with the project's TypeScript configuration.
+import React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -20,8 +18,7 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: Changed `React.Component` to `Component` to match the named import, which resolves issues with `this.props` and `this.setState` not being found.
-class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
     error: undefined,
