@@ -6,11 +6,11 @@ import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import type { ProjectData, PrintMediaAssets } from '../types';
 import Button from './common/Button';
-import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
 import { fetchImageAsBase64 } from '../utils/imageUtils';
+import Card from './common/Card';
 
 interface Props {
   projectData: Partial<ProjectData>;
@@ -35,24 +35,13 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const openModal = (url: string) => setModalImageUrl(url);
-  const closeModal = () => setModalImageUrl(null);
-
   useEffect(() => {
-    if (designs.length > 0 && resultsRef.current) {
-        resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (designs.length > 0 && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [designs]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (credits < GENERATION_COST) {
-        setShowOutOfCreditsModal(true);
-        playSound('error');
-        return;
-    }
-
+    if (credits < GENERATION_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }
     setIsLoading(true);
     setError(null);
     setDesigns([]);
@@ -60,7 +49,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
     playSound('start');
 
     const { brandInputs, selectedPersona, selectedLogoUrl, logoVariations } = projectData;
-
     if (!brandInputs || !selectedPersona || !selectedLogoUrl) {
         setError("Data project (logo/persona) tidak lengkap.");
         setIsLoading(false);
@@ -72,7 +60,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       let prompt = '';
       const colors = selectedPersona.palet_warna_hex.join(', ');
       const style = selectedPersona.kata_kunci.join(', ');
-      
       let logoToUseUrl = selectedLogoUrl;
       let promptContainsText = false;
 
@@ -84,9 +71,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
           promptContainsText = true;
       }
       
-      const textInstruction = promptContainsText 
-        ? "The provided logo already has text, so DO NOT generate any additional text." 
-        : "DO NOT generate any text, letters, or words.";
+      const textInstruction = promptContainsText ? "The provided logo already has text, so DO NOT generate any additional text." : "DO NOT generate any text, letters, or words.";
 
       if (activeTab === 'banner') {
           prompt = `Take the provided logo image. Create a visually stunning and highly functional flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk, 3:1 aspect ratio). Do NOT create a realistic 3D mockup. The design must be a 2D, print-ready file.
@@ -110,88 +95,59 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       await deductCredits(GENERATION_COST);
       setDesigns(results);
       
-      if (activeTab === 'roll_banner') {
-        setGeneratedAssets(prev => ({ ...prev, rollBannerUrl: results[0] }));
-      } else if (activeTab === 'banner') {
-        setGeneratedAssets(prev => ({ ...prev, bannerUrl: results[0] }));
-      }
+      if (activeTab === 'roll_banner') setGeneratedAssets(prev => ({ ...prev, rollBannerUrl: results[0] }));
+      else if (activeTab === 'banner') setGeneratedAssets(prev => ({ ...prev, bannerUrl: results[0] }));
 
       setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       playSound('error');
     } finally {
       setIsLoading(false);
     }
   }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, activeTab]);
 
-  const handleContinue = () => {
-    onComplete({ assets: generatedAssets });
-  };
-
-  const handleTabClick = (tab: MediaTab) => {
-      playSound('select');
-      setActiveTab(tab);
-      setShowNextStepNudge(false);
-      setDesigns([]);
-  }
-  
-  const previewContainerClasses = activeTab === 'banner' 
-    ? 'w-full aspect-[3/1]' 
-    : 'w-full max-w-[240px] aspect-[1/3] mx-auto';
+  const handleContinue = () => { onComplete({ assets: generatedAssets }); };
+  const handleTabClick = (tab: MediaTab) => { playSound('select'); setActiveTab(tab); setShowNextStepNudge(false); setDesigns([]); }
+  const previewContainerClasses = activeTab === 'banner' ? 'w-full aspect-[3/1]' : 'w-full max-w-[200px] aspect-[1/3] mx-auto';
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 7: Studio Media Cetak</h2>
-        <p className="text-gray-400">
-          Saatnya bikin amunisi promosi offline! Di sini, Mang AI akan membuatkan template desain (bukan mockup) yang siap cetak. Lo tinggal tambahin tulisan sendiri nanti.
-        </p>
+      <div className="text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah 7: Studio Media Cetak</h2>
+        <p className="text-slate-600 max-w-3xl mx-auto">Saatnya bikin amunisi promosi offline! Di sini, Mang AI akan membuatkan template desain (bukan mockup) yang siap cetak. Lo tinggal tambahin tulisan sendiri nanti.</p>
       </div>
       
-      <div className="flex flex-wrap border-b border-gray-700">
-          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Spanduk (Horizontal 3:1)</button>
-          <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}>Roll Banner (Vertikal 1:3)</button>
+      <div className="flex flex-wrap border-b border-slate-200">
+          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>Spanduk (Horizontal 3:1)</button>
+          <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>Roll Banner (Vertikal 1:3)</button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <div className="p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-            <h3 className="text-lg font-bold text-indigo-300 mb-2">Desain Template untuk {activeTab === 'roll_banner' ? 'Roll Banner' : 'Spanduk'}</h3>
-            <p className="text-sm text-gray-400 mb-4">Mang AI akan membuatkan desain visual menggunakan logo dan palet warna brand-mu. Desain ini akan memiliki area kosong yang bisa kamu isi dengan tulisan sendiri menggunakan software editing gambar.</p>
-             <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>
-                {`Bikinin Template Desain! (${GENERATION_COST} Token)`}
-            </Button>
-        </div>
-      </form>
+      <Card title={`Desain Template untuk ${activeTab === 'roll_banner' ? 'Roll Banner' : 'Spanduk'}`}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <p className="text-sm text-slate-600">Mang AI akan membuatkan desain visual menggunakan logo dan palet warna brand-mu. Desain ini akan memiliki area kosong yang bisa kamu isi dengan tulisan sendiri menggunakan software editing gambar.</p>
+             <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>{`Bikinin Template Desain! (${GENERATION_COST} Token)`}</Button>
+        </form>
+      </Card>
       
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {designs.length > 0 && (
-        <div className="bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-4 flex items-start gap-4 text-left">
-            <div className="flex-shrink-0 pt-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-            </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-4 text-left">
+            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
             <div>
-                <h4 className="font-bold text-yellow-300">Peringatan Penyimpanan Lokal!</h4>
-                <p className="text-sm text-yellow-200 mt-1">
-                    Aset visual ini hanya disimpan sementara di browser. Segera selesaikan dan finalisasi untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong>
-                </p>
+                <h4 className="font-bold text-orange-600">Peringatan Penyimpanan Lokal!</h4>
+                <p className="text-sm text-orange-800 mt-1">Aset visual ini hanya disimpan sementara di browser. Segera selesaikan dan finalisasi untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
             </div>
         </div>
       )}
 
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
-            <h3 className="text-lg md:text-xl font-bold">Desain Hasil Generate:</h3>
-          <div className="flex justify-center w-full max-w-2xl animate-image-appear">
-            <div 
-                className={`bg-white rounded-lg p-2 flex items-center justify-center shadow-lg ring-2 ring-offset-2 ring-offset-gray-800 ring-indigo-500 cursor-pointer group ${previewContainerClasses}`}
-                onClick={() => openModal(designs[0])}
-              >
+            <h3 className="text-xl font-bold text-slate-800">Desain Hasil Generate:</h3>
+          <div className="flex justify-center w-full max-w-3xl animate-item-appear">
+            <div className={`bg-white rounded-lg p-2 flex items-center justify-center shadow-lg border-2 border-sky-500 ring-4 ring-sky-500/20 cursor-pointer group ${previewContainerClasses}`} onClick={() => setModalImageUrl(designs[0])}>
                 <img src={designs[0]} alt={`Generated mockup for ${activeTab}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
               </div>
           </div>
@@ -199,23 +155,11 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       )}
 
       <div className="self-center mt-4 relative">
-        {showNextStepNudge && (
-            <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
-                Mantap! Lanjut ke konten?
-            </CalloutPopup>
-        )}
-        <Button onClick={handleContinue} disabled={Object.keys(generatedAssets).length === 0}>
-          Lanjut ke Kalender Konten &rarr;
-        </Button>
+        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">Mantap! Lanjut ke konten?</CalloutPopup>)}
+        <Button onClick={handleContinue} disabled={Object.keys(generatedAssets).length === 0} size="large">Lanjut ke Kalender Konten &rarr;</Button>
       </div>
       
-      {modalImageUrl && (
-        <ImageModal 
-          imageUrl={modalImageUrl}
-          altText={`Desain Media Cetak untuk ${projectData.brandInputs?.businessName}`}
-          onClose={closeModal}
-        />
-      )}
+      {modalImageUrl && (<ImageModal imageUrl={modalImageUrl} altText={`Desain Media Cetak untuk ${projectData.brandInputs?.businessName}`} onClose={() => setModalImageUrl(null)} />)}
     </div>
   );
 };

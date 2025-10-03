@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateSocialAds } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -30,20 +28,13 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (adsData && resultsRef.current) {
-        resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (adsData && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [adsData]);
 
   const handleSubmit = useCallback(async () => {
     const { brandInputs, selectedPersona, selectedSlogan } = projectData;
     if (!brandInputs || !selectedPersona || !selectedSlogan) return;
-
-    if (credits < GENERATION_COST) {
-        setShowOutOfCreditsModal(true);
-        playSound('error');
-        return;
-    }
+    if (credits < GENERATION_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }
 
     setIsLoading(true);
     setError(null);
@@ -58,34 +49,25 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
       setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       playSound('error');
     } finally {
       setIsLoading(false);
     }
   }, [projectData, credits, deductCredits, setShowOutOfCreditsModal]);
   
-  const handleContinue = () => {
-    if (adsData) {
-      onComplete({ adsData });
-    }
-  };
+  const handleContinue = () => { if (adsData) onComplete({ adsData }); };
   
   const businessHandle = projectData.brandInputs?.businessName.toLowerCase().replace(/\s/g, '') || 'bisniskeren';
 
   return (
     <div className="flex flex-col gap-8 items-center">
       <div className="text-center">
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 9: Teks Iklan Sosmed</h2>
-        <p className="text-gray-400 max-w-3xl">
-          Saatnya beriklan! Di langkah ini, Mang AI akan meracik beberapa pilihan teks iklan (ad copy) untuk Instagram dan TikTok, lengkap dengan hashtag yang relevan untuk menjangkau audiens.
-        </p>
+        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah 9: Teks Iklan Sosmed</h2>
+        <p className="text-slate-600 max-w-3xl mx-auto">Saatnya beriklan! Di langkah ini, Mang AI akan meracik beberapa pilihan teks iklan (ad copy) untuk Instagram dan TikTok, lengkap dengan hashtag yang relevan untuk menjangkau audiens.</p>
       </div>
 
-      <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST}>
-        Buatin Teks Iklannya Dong! ({GENERATION_COST} Token)
-      </Button>
+      <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST} size="large">Buatin Teks Iklannya Dong! ({GENERATION_COST} Token)</Button>
 
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
@@ -93,42 +75,32 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
         <div ref={resultsRef} className="w-full max-w-6xl flex flex-col items-center gap-8 mt-4 scroll-mt-24">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             {adsData.map((ad, index) => (
-                <Card key={index} title={`Opsi Iklan untuk ${ad.platform}`}>
+                <Card key={index} title={`Opsi Iklan untuk ${ad.platform}`} className="animate-item-appear" style={{animationDelay: `${index*100}ms`}}>
                     <div className="space-y-4">
-                        {/* Ad Preview */}
-                        <div className="bg-gray-900/50 p-4 rounded-lg">
+                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                              <div className="flex items-center gap-3 mb-3">
-                                <img src={projectData.socialMediaKit?.profilePictureUrl} alt="logo" className="w-10 h-10 rounded-full bg-white p-0.5" />
+                                <img src={projectData.socialMediaKit?.profilePictureUrl} alt="logo" className="w-10 h-10 rounded-full bg-white p-0.5 border" />
                                 <div>
-                                    <p className="font-bold text-white text-sm">{businessHandle}</p>
-                                    <p className="text-xs text-gray-400">Sponsored</p>
+                                    <p className="font-bold text-slate-800 text-sm">{businessHandle}</p>
+                                    <p className="text-xs text-slate-500">Sponsored</p>
                                 </div>
                             </div>
                             <div className="relative">
-                                <p className="text-sm text-gray-300 whitespace-pre-wrap selectable-text">{ad.adCopy}</p>
+                                <p className="text-sm text-slate-700 whitespace-pre-wrap selectable-text">{ad.adCopy}</p>
                                 <CopyButton textToCopy={ad.adCopy} className="absolute top-0 right-0" />
                             </div>
                         </div>
-                        
-                        {/* Keywords */}
-                         <div className="relative">
-                            <p className="text-indigo-300 text-xs break-words selectable-text">{ad.hashtags.join(' ')}</p>
+                         <div className="relative pt-2">
+                            <p className="text-sky-600 text-xs break-words selectable-text">{ad.hashtags.join(' ')}</p>
                             <CopyButton textToCopy={ad.hashtags.join(' ')} className="absolute top-0 right-0" />
                         </div>
                     </div>
                 </Card>
             ))}
           </div>
-
           <div className="self-center mt-4 relative">
-            {showNextStepNudge && (
-                <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
-                    Teks iklan siap! Lanjut?
-                </CalloutPopup>
-            )}
-            <Button onClick={handleContinue} disabled={!adsData}>
-              Lanjut ke Mockup Merchandise &rarr;
-            </Button>
+            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">Teks iklan siap! Lanjut?</CalloutPopup>)}
+            <Button onClick={handleContinue} disabled={!adsData} size="large">Lanjut ke Mockup Merchandise &rarr;</Button>
           </div>
         </div>
       )}

@@ -16,16 +16,19 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: Refactored the class component to use modern syntax (class properties for state
-// and arrow functions for methods). This resolves TypeScript errors where `this.state`
-// and `this.props` were not being recognized, likely due to an incomplete implementation
-// of the constructor-based approach. This is a more robust and common pattern.
+// FIX: Switched from class property state initialization to using a constructor.
+// This resolves TypeScript errors where `this.state`, `this.props`, and `this.setState`
+// were not being recognized on the component instance, which can happen with certain
+// build configurations that don't fully support class field syntax.
 class ErrorBoundary extends React.Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+  }
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error, isCopied: false };

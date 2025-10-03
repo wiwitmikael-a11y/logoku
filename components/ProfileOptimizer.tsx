@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateSocialProfiles } from '../services/geminiService';
 import { playSound } from '../services/soundService';
@@ -39,11 +37,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
     const { brandInputs, selectedPersona } = projectData;
     if (!brandInputs || !selectedPersona) return;
 
-    if (credits < GENERATION_COST) {
-        setShowOutOfCreditsModal(true);
-        playSound('error');
-        return;
-    }
+    if (credits < GENERATION_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }
 
     setIsLoading(true);
     setError(null);
@@ -58,8 +52,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
       setShowNextStepNudge(true);
       playSound('success');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       playSound('error');
     } finally {
       setIsLoading(false);
@@ -77,67 +70,52 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
   return (
     <div className="flex flex-col gap-8 items-center">
       <div className="text-center">
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 5: Optimasi Profil Sosmed & Marketplace</h2>
-        <p className="text-gray-400 max-w-3xl">
-          Profil yang menjual itu kunci! Di sini, Mang AI akan membuatkan bio Instagram, bio TikTok, dan deskripsi toko untuk Shopee/Tokopedia yang ciamik dan sesuai persona brand lo.
-        </p>
+        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah 5: Optimasi Profil Sosmed & Marketplace</h2>
+        <p className="text-slate-600 max-w-3xl mx-auto">Profil yang menjual itu kunci! Biar Mang AI yang bikinin bio Instagram, bio TikTok, dan deskripsi toko buat Shopee/Tokopedia yang ciamik dan sesuai persona brand lo.</p>
       </div>
 
-      <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST}>
-        Buatin Profilnya, Mang AI! ({GENERATION_COST} Token)
-      </Button>
+      <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST} size="large">Buatin Profilnya, Mang AI! ({GENERATION_COST} Token)</Button>
 
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {profileData && (
         <div ref={resultsRef} className="w-full max-w-5xl flex flex-col items-center gap-8 mt-4 scroll-mt-24">
           <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Instagram Bio */}
-            <Card title="Bio Instagram">
-              <div className="bg-gray-900/50 p-4 rounded-lg space-y-2">
+            <Card title="Bio Instagram" className="animate-item-appear">
+              <div className="bg-slate-50 p-4 rounded-lg space-y-2 border border-slate-200">
                 <div className="flex items-center gap-3">
-                    <img src={projectData.socialMediaKit?.profilePictureUrl} alt="logo" className="w-12 h-12 rounded-full bg-white p-0.5" />
-                    <div>
-                        <p className="font-bold text-white text-sm">{businessHandle}</p>
-                    </div>
+                    <img src={projectData.socialMediaKit?.profilePictureUrl} alt="logo" className="w-12 h-12 rounded-full bg-white p-0.5 border" />
+                    <div><p className="font-bold text-slate-800 text-sm">{businessHandle}</p></div>
                 </div>
-                <div className="relative">
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap selectable-text">{profileData.instagramBio}</p>
-                    <CopyButton textToCopy={profileData.instagramBio} className="absolute top-0 right-0" />
+                <div className="relative pt-2">
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap selectable-text">{profileData.instagramBio}</p>
+                    <CopyButton textToCopy={profileData.instagramBio} className="absolute top-2 right-0" />
                 </div>
               </div>
             </Card>
 
-            {/* TikTok Bio */}
-            <Card title="Bio TikTok">
-              <div className="bg-gray-900/50 p-4 rounded-lg text-center">
-                <img src={projectData.socialMediaKit?.profilePictureUrl} alt="logo" className="w-16 h-16 rounded-full bg-white p-1 mx-auto" />
-                <p className="font-bold text-white mt-2">@{businessHandle}</p>
+            <Card title="Bio TikTok" className="animate-item-appear" style={{animationDelay: '100ms'}}>
+              <div className="bg-slate-50 p-4 rounded-lg text-center border border-slate-200">
+                <img src={projectData.socialMediaKit?.profilePictureUrl} alt="logo" className="w-16 h-16 rounded-full bg-white p-1 mx-auto border" />
+                <p className="font-bold text-slate-800 mt-2">@{businessHandle}</p>
                 <div className="relative mt-2">
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap selectable-text">{profileData.tiktokBio}</p>
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap selectable-text">{profileData.tiktokBio}</p>
                     <CopyButton textToCopy={profileData.tiktokBio} className="absolute top-0 right-0" />
                 </div>
               </div>
             </Card>
 
-            {/* Marketplace Description */}
-            <Card title="Deskripsi Toko Marketplace">
-                <div className="relative">
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap max-h-48 overflow-auto selectable-text">{profileData.marketplaceDescription}</p>
-                    <CopyButton textToCopy={profileData.marketplaceDescription} className="absolute top-0 right-0" />
+            <Card title="Deskripsi Toko Marketplace" className="animate-item-appear" style={{animationDelay: '200ms'}}>
+                <div className="relative bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap max-h-48 overflow-auto selectable-text">{profileData.marketplaceDescription}</p>
+                    <CopyButton textToCopy={profileData.marketplaceDescription} className="absolute top-2 right-2" />
                 </div>
             </Card>
           </div>
           
           <div className="self-center mt-4 relative">
-            {showNextStepNudge && (
-                <CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">
-                    Profil siap! Lanjut, Juragan?
-                </CalloutPopup>
-            )}
-            <Button onClick={handleContinue} disabled={!profileData}>
-              Lanjut ke Desain Kemasan &rarr;
-            </Button>
+            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">Profil siap! Lanjut, Juragan?</CalloutPopup>)}
+            <Button onClick={handleContinue} disabled={!profileData} size="large">Lanjut ke Desain Kemasan &rarr;</Button>
           </div>
         </div>
       )}

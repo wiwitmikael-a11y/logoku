@@ -32,18 +32,12 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (captions.length > 0 && resultsRef.current) {
-        resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (captions.length > 0 && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [captions]);
 
   const handleSubmit = useCallback(async () => {
     if (!topic || !projectData.brandInputs || !projectData.selectedPersona) return;
-
-    if (credits < 1) {
-      setShowOutOfCreditsModal(true);
-      return;
-    }
+    if (credits < 1) { setShowOutOfCreditsModal(true); return; }
 
     setIsLoading(true);
     setError(null);
@@ -52,18 +46,12 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
 
     try {
       await deductCredits(1);
-      const result = await generateCaptions(
-        projectData.brandInputs.businessName,
-        projectData.selectedPersona,
-        topic,
-        tone
-      );
-      await addXp(10); // NEW: Award 10 XP for generating captions
+      const result = await generateCaptions(projectData.brandInputs.businessName, projectData.selectedPersona, topic, tone);
+      await addXp(10);
       setCaptions(result);
       playSound('success');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan.';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       playSound('error');
     } finally {
       setIsLoading(false);
@@ -72,63 +60,44 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
-      <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Generator Caption Sosmed</h2>
-        <p className="text-gray-400">
-          Butuh caption dadakan? Cukup kasih topiknya, dan Mang AI akan meracik 3 pilihan caption yang sesuai dengan persona brand "{projectData.selectedPersona?.nama_persona}". (+10 XP)
-        </p>
+      <div className="text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Generator Caption Sosmed</h2>
+        <p className="text-slate-600 max-w-3xl mx-auto">Butuh caption dadakan? Cukup kasih topiknya, dan Mang AI akan meracik 3 pilihan caption yang sesuai dengan persona brand "{projectData.selectedPersona?.nama_persona}". (+10 XP)</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-        <Textarea
-          label="Topik Postingan"
-          name="topic"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder="cth: Lagi ada promo beli 1 gratis 1 untuk semua minuman kopi."
-          rows={4}
-          className="md:col-span-2"
-        />
-        <div className="flex flex-col gap-2">
-            <label htmlFor="tone" className="block text-sm font-medium text-gray-300">Nada Bicara</label>
-            <select
-                id="tone"
-                name="tone"
-                value={tone}
-                onChange={(e) => setTone(e.target.value)}
-                className="w-full px-4 py-2 text-gray-200 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-            >
-                {toneOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
+      <Card title="Konfigurasi Caption" className="p-4 sm:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Textarea label="Topik Postingan" name="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="cth: Lagi ada promo beli 1 gratis 1 untuk semua minuman kopi." rows={4} className="md:col-span-2"/>
+          <div className="flex flex-col gap-2">
+              <label htmlFor="tone" className="block text-sm font-medium text-slate-600">Nada Bicara</label>
+              <select id="tone" name="tone" value={tone} onChange={(e) => setTone(e.target.value)} className="w-full px-3 py-2 text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors">
+                  {toneOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+          </div>
         </div>
-      </div>
+      </Card>
       
        <div className="flex items-center gap-4">
-          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!topic.trim() || credits < 1}>
-            Buatin Captionnya, Mang! (1 Token)
-          </Button>
-           <Button onClick={onBack} variant="secondary">
-            &larr; Kembali ke Ringkasan
-          </Button>
+          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!topic.trim() || credits < 1}>Buatin Captionnya, Mang! (1 Token)</Button>
+           <Button onClick={onBack} variant="secondary">&larr; Kembali ke Brand Hub</Button>
         </div>
-
 
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {captions.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 mt-4 scroll-mt-24">
-          <h3 className="text-lg md:text-xl font-bold">Pilihan Caption Buat Lo:</h3>
+          <h3 className="text-xl font-bold text-center text-slate-800">Pilihan Caption Buat Lo:</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {captions.map((item, index) => (
-              <Card key={index} title={`Opsi ${index + 1}`}>
+              <Card key={index} title={`Opsi ${index + 1}`} className="animate-item-appear" style={{animationDelay: `${index*100}ms`}}>
                  <div className="space-y-4">
                     <div className="relative">
-                         <p className="text-gray-300 whitespace-pre-wrap text-sm pr-10 selectable-text">{item.caption}</p>
-                         <CopyButton textToCopy={item.caption} className="absolute top-2 right-2"/>
+                         <p className="text-slate-600 whitespace-pre-wrap text-sm pr-10 selectable-text">{item.caption}</p>
+                         <CopyButton textToCopy={item.caption} className="absolute top-0 right-0"/>
                     </div>
-                    <div className="border-t border-gray-700 pt-3 relative">
-                        <p className="text-indigo-300 text-xs break-words selectable-text pr-10">{item.hashtags.join(' ')}</p>
-                        <CopyButton textToCopy={item.hashtags.join(' ')} className="absolute top-2 right-2"/>
+                    <div className="border-t border-slate-200 pt-3 relative">
+                        <p className="text-sky-600 text-xs break-words selectable-text pr-10">{item.hashtags.join(' ')}</p>
+                        <CopyButton textToCopy={item.hashtags.join(' ')} className="absolute top-0 right-0"/>
                     </div>
                  </div>
               </Card>

@@ -9,7 +9,7 @@ import Card from './common/Card';
 import InFeedAd from './common/InFeedAd';
 import SaweriaWidget from './common/SaweriaWidget';
 import LoadingMessage from './common/LoadingMessage';
-import CalloutPopup from './common/CalloutPopup'; // Import for onboarding
+import CalloutPopup from './common/CalloutPopup';
 
 const Forum = React.lazy(() => import('./Forum'));
 const QuickTools = React.lazy(() => import('./QuickTools'));
@@ -19,88 +19,34 @@ interface ProjectDashboardProps {
   projects: Project[];
   onNewProject: (templateData?: Partial<BrandInputs>) => void;
   onSelectProject: (projectId: number) => void;
-  showWelcomeBanner: boolean;
-  onWelcomeBannerClose: () => void;
   onDeleteProject: (projectId: number) => void;
   onShowBrandGallery: () => void;
 }
 
-// Welcome Banner and other sub-components remain unchanged...
-const WelcomeBanner: React.FC<{ userName: string, onClose: () => void }> = ({ userName, onClose }) => {
-    const [isVisible, setIsVisible] = useState(true);
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(false);
-            setTimeout(onClose, 500); 
-        }, 4000);
-
-        return () => clearTimeout(timer);
-    }, [onClose]);
-
-    return (
-        <div className={`
-            bg-indigo-900/50 border border-indigo-700 rounded-lg p-4 mb-8 text-center
-            transition-all duration-500 ease-in-out
-            ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-5'}
-        `}>
-            <p className="text-indigo-200">Login berhasil! Selamat datang kembali, {userName}.</p>
-        </div>
-    );
-};
-
 const DYNAMIC_INFO_TIPS = [
-    {
-        icon: '🎁',
-        title: 'Bonus Sambutan Gacor!',
-        text: 'Sebagai juragan baru, lo langsung dapet bonus sambutan <span class="font-bold text-yellow-300">20 token</span> di hari pertama! Manfaatin buat eksplorasi sepuasnya, ya!'
-    },
-    {
-        icon: '☀️',
-        title: 'Jatah Harian Anti Rugi',
-        text: 'Tiap pagi, kalo token lo kurang dari 5, Mang AI bakal <strong class="text-white">isi ulang sampe jadi 5</strong>, gratis! Kalo sisa token lo banyak (misal 12), jumlahnya <strong class="text-white">nggak akan direset</strong>. Aman!'
-    },
-    {
-        icon: '💾',
-        title: 'PENTING: Unduh Aset Lo!',
-        text: 'Aplikasi ini nyimpen gambar di browser lo (biar gratis!). Jangan lupa <strong class="text-white">unduh semua aset visual</strong> (logo, gambar, dll) ke perangkat lo biar aman sentosa.'
-    },
-    {
-        icon: '🚀',
-        title: 'Kekuatan Brand Hub',
-        text: 'Project yang udah selesai masuk ke <strong class="text-white">Brand Hub</strong>. Dari sana, lo bisa generate ulang teks iklan atau kalender konten kapan aja tanpa ngulang dari nol.'
-    },
-    {
-        icon: '🤖',
-        title: 'Tanya Mang AI Aja!',
-        text: 'Ada yang bikin bingung? Klik tombol Mang AI yang ngambang di pojok kanan bawah. Dia siap jawab pertanyaan lo soal branding atau fitur aplikasi.'
-    },
-    {
-        icon: '☕',
-        title: 'Dukung Mang AI',
-        text: 'Suka sama aplikasi ini? Traktir Mang AI kopi di <strong class="text-white">Saweria</strong> biar makin semangat ngembangin fitur-fitur baru yang lebih canggih buat lo!'
-    },
+    { icon: '🎁', title: 'Bonus Sambutan Gacor!', text: 'Sebagai juragan baru, lo langsung dapet bonus sambutan <span class="font-bold text-orange-600">20 token</span> di hari pertama! Manfaatin buat eksplorasi sepuasnya, ya!' },
+    { icon: '☀️', title: 'Jatah Harian Anti Rugi', text: 'Tiap pagi, kalo token lo kurang dari 5, Mang AI bakal <strong class="text-slate-800">isi ulang sampe jadi 5</strong>, gratis! Kalo sisa token lo banyak (misal 12), jumlahnya <strong class="text-slate-800">nggak akan direset</strong>. Aman!' },
+    { icon: '💾', title: 'PENTING: Unduh Aset Lo!', text: 'Aplikasi ini nyimpen gambar di browser lo (biar gratis!). Jangan lupa <strong class="text-slate-800">unduh semua aset visual</strong> (logo, gambar, dll) ke perangkat lo biar aman sentosa.' },
+    { icon: '🚀', title: 'Kekuatan Brand Hub', text: 'Project yang udah selesai masuk ke <strong class="text-slate-800">Brand Hub</strong>. Dari sana, lo bisa generate ulang teks iklan atau kalender konten kapan aja tanpa ngulang dari nol.' },
+    { icon: '🤖', title: 'Tanya Mang AI Aja!', text: 'Ada yang bikin bingung? Klik tombol Mang AI yang ngambang di pojok kanan bawah. Dia siap jawab pertanyaan lo soal branding atau fitur aplikasi.' },
+    { icon: '☕', title: 'Dukung Mang AI', text: 'Suka sama aplikasi ini? Traktir Mang AI kopi di <strong class="text-slate-800">Saweria</strong> biar makin semangat ngembangin fitur-fitur baru yang lebih canggih buat lo!' },
 ];
 
 const DynamicInfoBox: React.FC = () => {
     const [currentTipIndex, setCurrentTipIndex] = useState(0);
-
     useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentTipIndex(prevIndex => (prevIndex + 1) % DYNAMIC_INFO_TIPS.length);
-        }, 7000); // Ganti info setiap 7 detik
-
+        const interval = setInterval(() => { setCurrentTipIndex(prev => (prev + 1) % DYNAMIC_INFO_TIPS.length); }, 7000);
         return () => clearInterval(interval);
     }, []);
 
     const currentTip = DYNAMIC_INFO_TIPS[currentTipIndex];
 
     return (
-        <div key={currentTipIndex} className="w-full max-w-2xl bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in info-box-stream">
+        <div key={currentTipIndex} className="w-full max-w-3xl bg-white border border-sky-200 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-sm">
             <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
             <div>
-                <h4 className="font-bold text-white">{currentTip.title}</h4>
-                <p className="text-sm text-gray-300" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+                <h4 className="font-bold text-sky-600">{currentTip.title}</h4>
+                <p className="text-sm text-slate-600" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
             </div>
         </div>
     );
@@ -108,27 +54,15 @@ const DynamicInfoBox: React.FC = () => {
 
 const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = ({ project, rank, delay }) => {
     const { brandInputs, selectedLogoUrl } = project.project_data;
-    
-    const rankClasses = {
-        1: 'row-start-1 md:row-start-auto md:col-start-2 z-10 scale-110 transform',
-        2: 'md:mt-12',
-        3: 'md:mt-12',
-    };
-    
-    const glowClasses = {
-        1: 'shadow-[0_0_20px_theme(colors.yellow.400)] border-yellow-400',
-        2: 'shadow-[0_0_15px_theme(colors.slate.400)] border-slate-400',
-        3: 'shadow-[0_0_15px_#A0522D] border-[#A0522D]', // Bronze-like color
-    }
+    const rankClasses = { 1: 'row-start-1 md:row-start-auto md:col-start-2 z-10 scale-110 transform', 2: 'md:mt-12', 3: 'md:mt-12' };
+    const glowClasses = { 1: 'shadow-[0_0_20px_theme(colors.yellow.400)] border-yellow-400', 2: 'shadow-[0_0_15px_theme(colors.slate.400)] border-slate-400', 3: 'shadow-[0_0_15px_#A0522D] border-[#A0522D]' }
+    const rankColor = (glowClasses[rank as keyof typeof glowClasses] || '').split(' ')[1].replace('border-', '');
 
     return (
-        <div 
-            className={`flex flex-col items-center gap-2 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`}
-            style={{ animation: `gallery-card-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}
-        >
-            <div className={`relative w-28 h-28 p-2 rounded-xl bg-white/10 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
+        <div className={`flex flex-col items-center gap-2 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`} style={{ animation: `item-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}>
+            <div className={`relative w-28 h-28 p-2 rounded-xl bg-white/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
                 <img src={selectedLogoUrl} alt={`Logo for ${brandInputs.businessName}`} className="max-w-full max-h-full object-contain mx-auto" />
-                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-gray-900 border-2 flex items-center justify-center text-lg font-bold" style={{ borderColor: (glowClasses[rank as keyof typeof glowClasses] || '').split(' ')[1].replace('border-', '') }}>
+                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-slate-800 border-2 flex items-center justify-center text-lg font-bold" style={{ borderColor: rankColor }}>
                     {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
                 </div>
             </div>
@@ -138,7 +72,6 @@ const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = 
     );
 };
 
-
 const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGallery }) => {
     const [topProjects, setTopProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -146,44 +79,25 @@ const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGa
     useEffect(() => {
         const fetchTopProjects = async () => {
             setIsLoading(true);
-            const { data, error } = await supabase
-                .from('projects')
-                .select('id, project_data, like_count')
-                .eq('status', 'completed')
-                .order('like_count', { ascending: false })
-                .limit(3);
-            
-            if (error) {
-                console.error("Failed to fetch top projects:", error);
-            } else {
-                // Ensure we have a defined order, even if less than 3 projects exist
-                const sorted = data.sort((a, b) => (b.like_count || 0) - (a.like_count || 0));
-                setTopProjects(sorted as Project[]);
-            }
+            const { data, error } = await supabase.from('projects').select('id, project_data, like_count').eq('status', 'completed').order('like_count', { ascending: false }).limit(3);
+            if (error) console.error("Failed to fetch top projects:", error);
+            else setTopProjects(data.sort((a, b) => (b.like_count || 0) - (a.like_count || 0)) as Project[]);
             setIsLoading(false);
         };
         fetchTopProjects();
     }, []);
     
     const [first, second, third] = topProjects;
-    const podiumProjects = [second, first, third].filter(Boolean); // Center-first order
 
     return (
         <div className="w-full text-center mt-12">
-            <h3 className="text-lg md:text-xl font-bold mb-4 text-white">Podium Juara Pameran Brand 🏆</h3>
-            <div 
-                className="group relative bg-gray-900/50 border border-gray-700 rounded-xl p-6 hover:border-indigo-500/50 transition-colors cursor-pointer overflow-hidden"
-                onClick={onShowGallery}
-                style={{
-                    backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(79, 70, 229, 0.3) 0%, transparent 60%)'
-                }}
-            >
-                {isLoading ? (
-                    <div className="h-40 flex items-center justify-center"><LoadingMessage /></div>
-                ) : topProjects.length === 0 ? (
+            <h3 className="text-xl md:text-2xl font-bold mb-4 text-white">Podium Juara Pameran Brand 🏆</h3>
+            <div className="group relative bg-slate-800/70 border border-slate-700 rounded-xl p-6 hover:border-sky-500/50 transition-colors cursor-pointer overflow-hidden" onClick={onShowGallery} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.2) 0%, transparent 60%)' }}>
+                {isLoading ? (<div className="h-40 flex items-center justify-center"><LoadingMessage /></div>) : 
+                topProjects.length === 0 ? (
                     <div className="h-40 flex flex-col items-center justify-center">
-                        <p className="text-gray-400 text-lg">Panggung Masih Kosong!</p>
-                        <p className="text-gray-500 mt-1">Jadilah yang pertama menyelesaikan project dan rebut podium juara.</p>
+                        <p className="text-slate-400 text-lg">Panggung Masih Kosong!</p>
+                        <p className="text-slate-500 mt-1">Jadilah yang pertama menyelesaikan project dan rebut podium juara.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-y-8 gap-x-4 items-end min-h-[160px]">
@@ -200,38 +114,20 @@ const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGa
     );
 };
 
-
 const DeleteButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="absolute top-3 right-12 z-10 p-1.5 rounded-full text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-colors"
-    title="Hapus Project"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm4 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
-    </svg>
-  </button>
+  <button onClick={onClick} className="absolute top-3 right-12 z-10 p-1.5 rounded-full text-slate-400 hover:bg-red-500/20 hover:text-red-400 transition-colors" title="Hapus Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm4 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" /></svg></button>
 );
 
 const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="absolute top-3 right-3 z-10 p-1.5 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white transition-colors"
-    title="Lihat & Edit Project"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-      <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
-    </svg>
-  </button>
+  <button onClick={onClick} className="absolute top-3 right-3 z-10 p-1.5 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors" title="Lihat & Edit Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg></button>
 );
 
 const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     const statusMap = {
-        'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-500/20', dotColor: 'bg-yellow-400', textColor: 'text-yellow-300' },
-        'completed': { text: 'Selesai', color: 'bg-green-500/20', dotColor: 'bg-green-400', textColor: 'text-green-300' },
+        'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-100', dotColor: 'bg-yellow-400', textColor: 'text-yellow-800' },
+        'completed': { text: 'Selesai', color: 'bg-green-100', dotColor: 'bg-green-400', textColor: 'text-green-800' },
     };
-    const { text, color, dotColor, textColor } = statusMap[status] || { text: 'Unknown', color: 'bg-gray-500/20', dotColor: 'bg-gray-400', textColor: 'text-gray-300' };
+    const { text, color, dotColor, textColor } = statusMap[status] || { text: 'Unknown', color: 'bg-slate-100', dotColor: 'bg-slate-400', textColor: 'text-slate-800' };
     return (
         <div className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-full items-center gap-1.5 ${color} flex-shrink-0`}>
             <span className={`h-2 w-2 rounded-full ${dotColor}`}></span>
@@ -241,52 +137,29 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
 };
 
 interface TemplateCardProps {
-  template: {
-    name: string;
-    description: string;
-    imageUrl: string;
-    data: Partial<BrandInputs>;
-  };
+  template: { name: string; description: string; imageUrl: string; data: Partial<BrandInputs>; };
   onClick: (data: Partial<BrandInputs>) => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => {
-  return (
-    <div
-      onClick={() => onClick(template.data)}
-      className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg transition-transform duration-300 hover:scale-105"
-    >
-      <img
-        src={template.imageUrl}
-        alt={template.name}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-      
-      {/* Default Visible Content */}
-      <div className="absolute bottom-0 left-0 p-4 text-white">
-        <h4 className="text-lg font-bold">{template.name}</h4>
-      </div>
-
-      {/* Hover Content */}
-      <div className="absolute bottom-0 left-0 w-full p-4 bg-black/70 backdrop-blur-sm text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
-        <h4 className="text-lg font-bold">{template.name}</h4>
-        <p className="text-xs mt-1 mb-3 text-gray-300">{template.description}</p>
-        <p className="text-sm font-semibold text-indigo-400">Gunakan Template &rarr;</p>
-      </div>
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => (
+  <div onClick={() => onClick(template.data)} className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg transition-transform duration-300 hover:scale-105">
+    <img src={template.imageUrl} alt={template.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+    <div className="absolute bottom-0 left-0 p-4 text-white"><h4 className="text-lg font-bold">{template.name}</h4></div>
+    <div className="absolute bottom-0 left-0 w-full p-4 bg-black/70 backdrop-blur-sm text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
+      <h4 className="text-lg font-bold">{template.name}</h4>
+      <p className="text-xs mt-1 mb-3 text-slate-300">{template.description}</p>
+      <p className="text-sm font-semibold text-sky-400">Gunakan Template &rarr;</p>
     </div>
-  );
-};
+  </div>
+);
 
-const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
     useEffect(() => {
-        // Show onboarding if it's a new user with no projects, and they haven't seen it this session
-        if (profile?.total_projects_completed === 0 && projects.length === 0 && !sessionStorage.getItem('onboardingDismissed')) {
-            setShowOnboarding(true);
-        }
+        if (profile?.total_projects_completed === 0 && projects.length === 0 && !sessionStorage.getItem('onboardingDismissed')) setShowOnboarding(true);
     }, [profile, projects]);
 
     const { inProgressProjects, completedProjects } = useMemo(() => {
@@ -309,86 +182,37 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
     }
 
     const templates = [
-        {
-        name: '☕ Coffee Shop Kekinian',
-        description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.',
-        imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_kopi.jpeg',
-        data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkrong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' }
-        },
-        {
-        name: '🌶️ Warung Seblak Viral',
-        description: 'Template untuk bisnis seblak pedas yang menyasar target pasar remaja dan Gen Z.',
-        imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_seblak.jpeg',
-        data: { businessName: 'Seblak [Isi Sendiri]', businessCategory: 'Makanan', businessDetail: 'Seblak prasmanan dengan aneka topping pedas level dewa', targetAudience: 'Remaja usia 15-22', valueProposition: 'Seblak paling komplit dan pedasnya nampol, bikin ketagihan.', competitors: 'Seblak Jeletet, Seblak Bloom' }
-        },
-        {
-        name: '👕 Distro Indie',
-        description: 'Template untuk brand fashion streetwear dengan desain orisinal dan eksklusif.',
-        imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_distro.jpeg',
-        data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' }
-        }
+        { name: '☕ Coffee Shop Kekinian', description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_kopi.jpeg', data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkrong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' } },
+        { name: '🌶️ Warung Seblak Viral', description: 'Template untuk bisnis seblak pedas yang menyasar target pasar remaja dan Gen Z.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_seblak.jpeg', data: { businessName: 'Seblak [Isi Sendiri]', businessCategory: 'Makanan', businessDetail: 'Seblak prasmanan dengan aneka topping pedas level dewa', targetAudience: 'Remaja usia 15-22', valueProposition: 'Seblak paling komplit dan pedasnya nampol, bikin ketagihan.', competitors: 'Seblak Jeletet, Seblak Bloom' } },
+        { name: '👕 Distro Indie', description: 'Template untuk brand fashion streetwear dengan desain orisinal dan eksklusif.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_distro.jpeg', data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' } }
     ];
     
-    const handleDismissOnboarding = () => {
-        setShowOnboarding(false);
-        sessionStorage.setItem('onboardingDismissed', 'true');
-    };
-
     return (
         <div className="flex flex-col gap-8 items-center text-center">
             <DynamicInfoBox />
-            
             <div className="relative">
-                <Button onClick={() => onNewProject()}>
-                    + Bikin Project Branding Baru
-                </Button>
-                 {showOnboarding && (
-                    <div onClick={handleDismissOnboarding} className="cursor-pointer">
-                        <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-bounce">
-                            Sokin, Juragan! Klik di sini buat mulai!
-                        </CalloutPopup>
-                    </div>
-                )}
+                <Button onClick={() => onNewProject()} size="large">+ Bikin Project Branding Baru</Button>
+                {showOnboarding && (<div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="cursor-pointer"><CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-bounce">Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup></div>)}
             </div>
             
             <div className="w-full text-center mt-6">
-                <h3 className="text-lg md:text-xl font-bold mb-4 mt-2">Atau Pake Jalan Pintas 🚀</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">
-                {templates.map(template => (
-                    <TemplateCard 
-                        key={template.name}
-                        template={template}
-                        onClick={onNewProject}
-                    />
-                ))}
-                </div>
+                <h3 className="text-xl md:text-2xl font-bold mb-4 mt-2 text-slate-800">Atau Pake Jalan Pintas 🚀</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">{templates.map(t => (<TemplateCard key={t.name} template={t} onClick={onNewProject} />))}</div>
             </div>
 
-            <div className="fancy-divider my-8"></div>
+            <div className="w-full border-t border-slate-200 my-8"></div>
 
             {inProgressProjects.length > 0 && (
                 <div className="w-full text-left">
-                <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
+                <h3 className="text-xl md:text-2xl font-bold mb-4 text-slate-800">Project yang Sedang Dikerjakan:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {inProgressProjects.map(project => (
-                        <div key={project.id} className="card-in-progress-wrapper">
-                            <Card 
-                            title={
-                                <div>
-                                    <StatusBadge status={project.status} />
-                                    <span className="block mt-2 truncate pr-2">{project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}</span>
-                                </div>
-                            }
-                            onClick={() => onSelectProject(project.id)}
-                            >
-                            <div className="pr-12">
-                                <p className="text-sm text-gray-400 min-h-[40px] italic">
-                                    {getProgressDescription(project)}
-                                </p>
-                                <div className="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
-                                    <p className="text-xs text-gray-500">Klik untuk lanjut...</p>
-                                </div>
-                            </div>
+                        <div key={project.id} className="relative group">
+                            <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-2">{project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}</span></>} onClick={() => onSelectProject(project.id)}>
+                              <div className="pr-12">
+                                <p className="text-sm text-slate-500 min-h-[40px] italic">{getProgressDescription(project)}</p>
+                                <div className="mt-4 pt-4 border-t border-slate-200"><p className="text-xs text-slate-400">Klik untuk lanjut...</p></div>
+                              </div>
                             </Card>
                             <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
                         </div>
@@ -399,27 +223,19 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
 
             {completedProjects.length > 0 && (
                 <div className="w-full text-left mt-8">
-                <h3 className="text-lg md:text-xl font-bold mb-4">Project Selesai:</h3>
+                <h3 className="text-xl md:text-2xl font-bold mb-4 text-slate-800">Project Selesai:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {completedProjects.map(project => (
-                        <div key={project.id} className="card-completed-wrapper">
-                            <Card 
-                            title={
-                                <div>
-                                    <StatusBadge status={project.status} />
-                                    <span className="block mt-2 truncate pr-2">{project.project_data.brandInputs.businessName}</span>
+                        <div key={project.id} className="relative group">
+                            <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-2">{project.project_data.brandInputs.businessName}</span></>} onClick={() => onSelectProject(project.id)}>
+                              <div className="space-y-3 pr-12">
+                                <p className="text-sm text-sky-600 italic">"{project.project_data.selectedSlogan}"</p>
+                                <div className="flex items-center gap-4 pt-2 border-t border-slate-200">
+                                    <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1 border" loading="lazy" />
+                                    <p className="text-sm text-slate-700"><span className="font-semibold text-slate-800">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
                                 </div>
-                            }
-                            onClick={() => onSelectProject(project.id)}
-                            >
-                            <div className="space-y-3 pr-12">
-                                <p className="text-sm text-indigo-300 italic">"{project.project_data.selectedSlogan}"</p>
-                                <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
-                                    <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-white p-1" loading="lazy" />
-                                    <p className="text-sm text-gray-300"><span className="font-semibold text-gray-200">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
-                                </div>
-                                <p className="text-xs text-gray-500 pt-2 border-t border-gray-700">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                            </div>
+                                <p className="text-xs text-slate-400 pt-2 border-t border-slate-200">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                              </div>
                             </Card>
                             <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
                             <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
@@ -429,26 +245,19 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
                 </div>
             )}
 
-            {projects.length === 0 && (
-                <div className="mt-8 text-center text-gray-500">
-                    <p>Lo belom punya project nih.</p>
-                    <p>Klik tombol di atas buat bikin brand pertama lo!</p>
-                </div>
-            )}
+            {projects.length === 0 && (<div className="mt-8 text-center text-slate-500"><p>Lo belom punya project nih. Klik tombol di atas buat bikin brand pertama lo!</p></div>)}
             
-            <div className="fancy-divider my-8"></div>
-            
+            <div className="w-full border-t border-slate-200 my-8"></div>
+            <div className="w-full max-w-4xl space-y-8 bg-slate-800 p-8 rounded-2xl">
+                <BrandGalleryPreview onShowGallery={() => {}} />
+            </div>
             <div className="w-full max-w-4xl space-y-8">
-                <BrandGalleryPreview onShowGallery={onShowBrandGallery} />
-                <div className="saweria-elegant-wrapper">
-                    <SaweriaWidget />
-                </div>
+                <SaweriaWidget />
                 <InFeedAd />
             </div>
         </div>
     );
 };
-
 
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
@@ -456,8 +265,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const [activeTab, setActiveTab] = useState<'projects' | 'forum' | 'tools' | 'juragan'>('projects');
   
   useEffect(() => {
-    const openForumTab = sessionStorage.getItem('openForumTab');
-    if (openForumTab) {
+    if (sessionStorage.getItem('openForumTab')) {
         setActiveTab('forum');
         sessionStorage.removeItem('openForumTab');
     }
@@ -465,60 +273,24 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
 
   return (
     <div className="flex flex-col gap-8">
-      {props.showWelcomeBanner && <WelcomeBanner userName={userName} onClose={props.onWelcomeBannerClose} />}
       <div className="text-center">
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Selamat Datang, {userName}!</h2>
-        <p className="text-gray-400 max-w-2xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain di WarKop Juragan.</p>
+        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Selamat Datang, {userName}!</h2>
+        <p className="text-slate-600 max-w-3xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain di WarKop Juragan.</p>
       </div>
 
-      {/* NEW: Tab Navigation */}
-      <div className="folder-tab-container justify-center">
-        <button 
-          onClick={() => setActiveTab('projects')}
-          className={`folder-tab ${activeTab === 'projects' ? 'active' : ''}`}
-        >
-          🚀 Project Saya
-        </button>
-        <button 
-          onClick={() => setActiveTab('forum')}
-          className={`folder-tab ${activeTab === 'forum' ? 'active' : ''}`}
-        >
-          ☕ WarKop Juragan
-        </button>
-        <button 
-          onClick={() => setActiveTab('tools')}
-          className={`folder-tab ${activeTab === 'tools' ? 'active' : ''}`}
-        >
-          💡 Warung Ide
-        </button>
-        <button 
-          onClick={() => setActiveTab('juragan')}
-          className={`folder-tab ${activeTab === 'juragan' ? 'active' : ''}`}
-        >
-          🏆 Pusat Juragan
-        </button>
+      <div className="flex justify-center border-b border-slate-200">
+        <button onClick={() => setActiveTab('projects')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>🚀 Project Saya</button>
+        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>☕ WarKop Juragan</button>
+        <button onClick={() => setActiveTab('tools')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>💡 Warung Ide</button>
+        <button onClick={() => setActiveTab('juragan')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'juragan' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>🏆 Pusat Juragan</button>
       </div>
       
-      {/* Content based on active tab */}
       <div className="mt-4">
         {activeTab === 'projects' && <ProjectContent {...props} />}
-        {activeTab === 'forum' && (
-          <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
-            <Forum />
-          </Suspense>
-        )}
-        {activeTab === 'tools' && (
-          <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
-            <QuickTools onNewProject={props.onNewProject} />
-          </Suspense>
-        )}
-        {activeTab === 'juragan' && (
-          <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
-            <PusatJuragan />
-          </Suspense>
-        )}
+        {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
+        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools /></Suspense>)}
+        {activeTab === 'juragan' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
       </div>
-
     </div>
   );
 };

@@ -9,6 +9,7 @@ import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import ErrorMessage from './common/ErrorMessage';
 import CalloutPopup from './common/CalloutPopup';
+import Card from './common/Card';
 
 const LegalDisclaimerModal = React.lazy(() => import('./common/LegalDisclaimerModal'));
 
@@ -129,7 +130,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState('');
-  const [logos, setLogos] = useState<string[]>([]); // Will now hold Base64 strings
+  const [logos, setLogos] = useState<string[]>([]);
   const [selectedLogoBase64, setSelectedLogoBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
@@ -141,31 +142,23 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   const [showTip, setShowTip] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const openModal = (url: string) => setModalImageUrl(url);
-  const closeModal = () => setModalImageUrl(null);
-  
   useEffect(() => {
     const selectedStyle = logoStyles.find(s => s.id === selectedStyleId);
     if (selectedStyle) {
         const newPrompt = selectedStyle.promptTemplate
             .replace(/\{\{businessName\}\}/g, businessName)
-            .replace(/\{\{personaDescription\}\}/g, persona.deskripsi_singkat.toLowerCase())
             .replace(/\{\{personaKeywords\}\}/g, persona.kata_kunci.join(', '));
         setPrompt(newPrompt);
     }
   }, [selectedStyleId, persona, businessName]);
   
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowTip(true);
-    }, 4000);
+    const timer = setTimeout(() => setShowTip(true), 4000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (logos.length > 0 && resultsRef.current) {
-      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (logos.length > 0 && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [logos]);
   
    useEffect(() => {
@@ -179,12 +172,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
 
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
-
-    if (credits < INITIAL_LOGO_COST) {
-        setShowOutOfCreditsModal(true);
-        playSound('error');
-        return;
-    }
+    if (credits < INITIAL_LOGO_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }
     if (!prompt.trim()) return;
 
     setIsLoading(true);
@@ -195,14 +183,12 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
     playSound('start');
 
     try {
-      // FIX: The uploadImageFromBase64 function is deprecated. Using the base64 result directly.
       const results = await generateLogoOptions(prompt, 1);
       await deductCredits(INITIAL_LOGO_COST);
       setLogos(results);
       playSound('success');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       playSound('error');
     } finally {
       setIsLoading(false);
@@ -210,11 +196,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   }, [prompt, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleGenerateMore = useCallback(async () => {
-    if (credits < ADDITIONAL_LOGO_COST) {
-        setShowOutOfCreditsModal(true);
-        playSound('error');
-        return;
-    }
+    if (credits < ADDITIONAL_LOGO_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }
     if (!prompt.trim()) return;
 
     setIsGeneratingMore(true);
@@ -227,8 +209,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
       setLogos(prev => [...prev, ...results]);
       playSound('success');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang nggak diketahui.';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       playSound('error');
     } finally {
       setIsGeneratingMore(false);
@@ -244,152 +225,95 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   const selectedStyleInfo = logoStyles.find(s => s.id === selectedStyleId);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h2 className="text-xl md:text-2xl font-bold text-indigo-400 mb-2">Langkah 2: Desain Logo Lo</h2>
-        <p className="text-gray-400">Pilih gaya yang pas sama brand lo, atau edit promptnya sesukamu. Mang AI akan membuatkan logo utama (ikon) tanpa teks, yang nanti bisa dikasih nama di langkah selanjutnya.</p>
+    <div className="flex flex-col gap-10">
+      <div className="text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah 2: Desain Logo Lo</h2>
+        <p className="text-slate-600 max-w-3xl mx-auto">Pilih gaya yang pas sama brand lo, atau edit promptnya sesukamu. Mang AI akan membuatkan logo utama (ikon) tanpa teks, yang nanti bisa dikasih nama di langkah selanjutnya.</p>
       </div>
 
-      <div className="flex flex-col gap-4 relative">
-        <label className="block text-sm font-medium text-gray-300">Pilih Gaya Logo:</label>
-        <div className="flex flex-wrap gap-3">
-          {logoStyles.map(style => (
-            <button
-              key={style.id}
-              onClick={() => {
-                  playSound('select');
-                  setSelectedStyleId(style.id);
-              }}
-              onMouseEnter={() => playSound('hover')}
-              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
-                selectedStyleId === style.id 
-                  ? 'bg-indigo-600 text-white' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              {style.name}
-            </button>
-          ))}
-        </div>
-        {showTip && (
-            <CalloutPopup className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-max animate-content-fade-in">
-                Bro, buat F&B, gaya 'Maskot' atau 'Rustic' biasanya paling nampol, lho!
-            </CalloutPopup>
-        )}
-      </div>
-
-      {selectedStyleInfo && (
-        <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 flex flex-col sm:flex-row items-start gap-4">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-md flex-shrink-0 bg-white p-1">
-              <img 
-                  src={selectedStyleInfo.imageUrl} 
-                  alt={`Contoh gaya ${selectedStyleInfo.name}`} 
-                  className="w-full h-full object-contain"
-                  loading="lazy"
-              />
-            </div>
+      <Card title="Konfigurasi Logo" className="p-4 sm:p-6">
+        <div className="flex flex-col gap-6 relative">
             <div>
-                <h4 className="font-bold text-indigo-400">Gaya: {selectedStyleInfo.name}</h4>
-                <p className="text-gray-400 mt-1 text-sm">{selectedStyleInfo.description}</p>
+                <label className="block mb-2 text-sm font-medium text-slate-600">Pilih Gaya Logo:</label>
+                <div className="flex flex-wrap gap-3">
+                  {logoStyles.map(style => (
+                    <button
+                      key={style.id}
+                      onClick={() => { playSound('select'); setSelectedStyleId(style.id); }}
+                      onMouseEnter={() => playSound('hover')}
+                      className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${selectedStyleId === style.id ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    >
+                      {style.name}
+                    </button>
+                  ))}
+                </div>
+            </div>
+            {showTip && (
+                <CalloutPopup className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-max animate-content-fade-in">Bro, buat F&B, gaya 'Maskot' atau 'Rustic' biasanya paling nampol, lho!</CalloutPopup>
+            )}
+
+            {selectedStyleInfo && (
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col sm:flex-row items-start gap-4 animate-content-fade-in">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-md flex-shrink-0 bg-white p-1 border border-slate-200">
+                      <img src={selectedStyleInfo.imageUrl} alt={`Contoh gaya ${selectedStyleInfo.name}`} className="w-full h-full object-contain" loading="lazy" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-sky-600">Gaya: {selectedStyleInfo.name}</h4>
+                        <p className="text-slate-600 mt-1 text-sm">{selectedStyleInfo.description}</p>
+                    </div>
+                </div>
+            )}
+
+            <Textarea label="Prompt Deskripsi Logo (Bisa Diedit)" name="logoPrompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="cth: Kepala singa megah, gaya geometris, warna emas dan hitam..." rows={5}/>
+            
+            <div className="pt-4 border-t border-slate-200">
+              <Button onClick={handleSubmit} isLoading={isLoading} disabled={!prompt.trim() || credits < INITIAL_LOGO_COST}>Spill 1 Logo-nya, Mang AI! ({INITIAL_LOGO_COST} Token)</Button>
+               <p className="text-xs text-slate-500 mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
             </div>
         </div>
-      )}
-
-      <div className="flex flex-col gap-4">
-        <Textarea
-          label="Prompt Deskripsi Logo (Bisa Diedit)"
-          name="logoPrompt"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="cth: Kepala singa megah, gaya geometris, warna emas dan hitam..."
-          rows={5}
-        />
-        <div className="self-start">
-          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!prompt.trim() || credits < INITIAL_LOGO_COST}>
-            Spill 1 Logo-nya, Mang AI! ({INITIAL_LOGO_COST} Token)
-          </Button>
-           <p className="text-xs text-gray-500 mt-2">Logo dibuat oleh AI. Lakukan pengecekan merek dagang sebelum dipakai untuk komersial.</p>
-        </div>
-      </div>
+      </Card>
 
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
-
+      
       {logos.length > 0 && (
-        <div className="bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-4 flex items-start gap-4 text-left max-w-xl mx-auto">
-            <div className="flex-shrink-0 pt-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-            </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-4 text-left max-w-2xl mx-auto">
+            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
             <div>
-                <h4 className="font-bold text-yellow-300">Peringatan Penyimpanan Lokal!</h4>
-                <p className="text-sm text-yellow-200 mt-1">
-                    Logo ini hanya disimpan sementara di browser. Segera pilih dan lanjutkan untuk menyimpan progres lo. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong>
-                </p>
+                <h4 className="font-bold text-orange-600">Peringatan Penyimpanan Lokal!</h4>
+                <p className="text-sm text-orange-800 mt-1">Logo ini hanya disimpan sementara di browser. Segera pilih dan lanjutkan untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
             </div>
         </div>
       )}
 
       {logos.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
-            <div>
-              <h3 className="text-lg md:text-2xl font-bold mb-2">Pilih Logo Jagoan Lo:</h3>
-            </div>
+            <h3 className="text-xl md:text-2xl font-bold text-center text-slate-800">Pilih Logo Jagoan Lo:</h3>
           <div className={`grid gap-4 w-full ${logos.length === 1 ? 'max-w-xs' : 'grid-cols-2 max-w-xl'}`}>
               {logos.map((logo, index) => (
-                <div 
-                    key={index}
-                    className="animate-image-appear"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                >
+                <div key={index} className="animate-item-appear" style={{ animationDelay: `${index * 100}ms` }}>
                     <div 
-                        className={`bg-white rounded-lg p-2 aspect-square flex items-center justify-center shadow-lg cursor-pointer group transition-all duration-200 ${selectedLogoBase64 === logo ? 'ring-4 ring-offset-2 ring-offset-gray-800 ring-indigo-500' : 'opacity-80 hover:opacity-100'}`}
-                        onClick={() => {
-                            playSound('select');
-                            setSelectedLogoBase64(logo);
-                        }}
+                        className={`bg-white rounded-lg p-2 aspect-square flex items-center justify-center shadow-md cursor-pointer group transition-all duration-200 border-2 ${selectedLogoBase64 === logo ? 'border-sky-500 ring-4 ring-sky-500/20' : 'border-transparent hover:border-slate-300'}`}
+                        onClick={() => { playSound('select'); setSelectedLogoBase64(logo); }}
                     >
                         <img src={logo} alt={`Generated logo option ${index + 1}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
                     </div>
                 </div>
               ))}
           </div>
-           <div className="self-center flex items-center gap-4">
+           <div className="self-center flex flex-col sm:flex-row items-center gap-4">
              {logos.length < 4 && (
-                <Button onClick={handleGenerateMore} variant="secondary" isLoading={isGeneratingMore} disabled={isGeneratingMore || credits < ADDITIONAL_LOGO_COST}>
-                    Kasih 3 Pilihan Lain! ({ADDITIONAL_LOGO_COST} Token)
-                </Button>
+                <Button onClick={handleGenerateMore} variant="secondary" isLoading={isGeneratingMore} disabled={isGeneratingMore || credits < ADDITIONAL_LOGO_COST}>Kasih 3 Pilihan Lain! ({ADDITIONAL_LOGO_COST} Token)</Button>
              )}
             <div className="relative">
-                {showNextStepNudge && (
-                  <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-fade-in">
-                    Mantap! Klik di sini buat lanjut.
-                  </CalloutPopup>
-                )}
-                <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64}>
-                  Pilih & Finalisasi Logo &rarr;
-                </Button>
+                {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-fade-in">Mantap! Klik di sini buat lanjut.</CalloutPopup>)}
+                <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64} size="large">Pilih & Finalisasi Logo &rarr;</Button>
             </div>
           </div>
         </div>
       )}
 
-      {modalImageUrl && (
-        <ImageModal 
-          imageUrl={modalImageUrl}
-          altText={`Logo untuk ${businessName}`}
-          onClose={closeModal}
-        />
-      )}
-
-      <Suspense fallback={null}>
-        {showDisclaimer && (
-            <LegalDisclaimerModal 
-                onClose={() => setShowDisclaimer(false)}
-                onConfirm={handleContinue}
-            />
-        )}
-      </Suspense>
+      {modalImageUrl && (<ImageModal imageUrl={modalImageUrl} altText={`Logo untuk ${businessName}`} onClose={() => setModalImageUrl(null)} />)}
+      <Suspense fallback={null}>{showDisclaimer && (<LegalDisclaimerModal onClose={() => setShowDisclaimer(false)} onConfirm={handleContinue}/>)}</Suspense>
     </div>
   );
 };
