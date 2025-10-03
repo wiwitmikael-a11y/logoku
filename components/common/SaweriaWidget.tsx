@@ -6,31 +6,31 @@ const SaweriaWidget: React.FC = () => {
 
   return (
     <div className="w-full p-6 bg-surface border border-border-main rounded-xl text-center shadow-sm">
-      <h3 className="text-3xl font-bold text-splash mb-4" style={{fontFamily: 'var(--font-hand)'}}>Dukungan dari Juragan Baik Hati!</h3>
+      <h3 className="text-4xl font-bold text-splash mb-4" style={{fontFamily: 'var(--font-hand)'}}>Dukungan dari Juragan Baik Hati!</h3>
       <p className="text-text-muted mb-6 max-w-2xl mx-auto text-sm"> Setiap traktiran kopi jadi bahan bakar buat Mang AI biar makin pinter. Makasih banyak, ya! Sehat dan lancar terus rezekinya! </p>
       
       <div className="w-full h-12 bg-background rounded-lg overflow-hidden relative border border-border-main">
-        <div className="absolute top-0 left-0 h-full flex items-center" style={{animation: 'marquee 40s linear infinite', width: '200%'}}>
-          <div className="w-1/2 flex items-center justify-around">
-            {supporters.map((s, i) => (
-              <p key={i} className="text-sm mx-6 flex-shrink-0">
-                <span className="font-bold text-splash">{s.name}</span>
-                <span className="text-text-muted"> traktir </span>
-                <span className="font-semibold text-text-header">{s.amount}!</span>
-                <span className="ml-2">{s.emoji}</span>
-              </p>
-            ))}
-          </div>
-           <div className="w-1/2 flex items-center justify-around">
-            {supporters.map((s, i) => (
-              <p key={`dup-${i}`} className="text-sm mx-6 flex-shrink-0">
-                <span className="font-bold text-splash">{s.name}</span>
-                <span className="text-text-muted"> traktir </span>
-                <span className="font-semibold text-text-header">{s.amount}!</span>
-                <span className="ml-2">{s.emoji}</span>
-              </p>
-            ))}
-          </div>
+        <div className="animate-marquee">
+            <div className="marquee-group">
+                {supporters.map((s, i) => (
+                  <p key={i} className="text-sm mx-6 flex-shrink-0">
+                    <span className="font-bold text-splash">{s.name}</span>
+                    <span className="text-text-muted"> traktir </span>
+                    <span className="font-semibold text-text-header">{s.amount}!</span>
+                    <span className="ml-2">{s.emoji}</span>
+                  </p>
+                ))}
+            </div>
+            <div className="marquee-group">
+                {supporters.map((s, i) => (
+                  <p key={`dup-${i}`} className="text-sm mx-6 flex-shrink-0">
+                    <span className="font-bold text-splash">{s.name}</span>
+                    <span className="text-text-muted"> traktir </span>
+                    <span className="font-semibold text-text-header">{s.amount}!</span>
+                    <span className="ml-2">{s.emoji}</span>
+                  </p>
+                ))}
+            </div>
         </div>
       </div>
 

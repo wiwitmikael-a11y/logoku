@@ -44,6 +44,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
     tailwind.config = {
+      darkMode: 'class', // atau 'media'
       theme: {
         extend: {
           colors: {
@@ -92,13 +93,13 @@
       [data-theme="dark"] {
         --c-primary: 56 189 248; /* sky-400 */
         --c-primary-hover: 125 211 252; /* sky-300 */
-        --c-accent: 249 115 22; /* orange-500 */
-        --c-accent-hover: 251 146 60; /* orange-400 */
+        --c-accent: 251 146 60; /* orange-400 */
+        --c-accent-hover: 252 164 79; /* orange-300 */
         --c-splash: 232 121 249; /* fuchsia-400 */
         --c-splash-hover: 240 171 252; /* fuchsia-300 */
-        --c-text-header: 226 232 240; /* slate-200 */
-        --c-text-body: 203 213 225; /* slate-300 */
-        --c-text-muted: 148 163 184; /* slate-400 */
+        --c-text-header: 241 245 249; /* slate-100 */
+        --c-text-body: 148 163 184; /* slate-400 */
+        --c-text-muted: 100 116 139; /* slate-500 */
         --c-bg: 15 23 42; /* slate-900 */
         --c-surface: 30 41 59; /* slate-800 */
         --c-border: 51 65 85; /* slate-700 */
@@ -121,7 +122,7 @@
       }
       
       section[id] { scroll-margin-top: 100px; }
-      h2 { font-family: var(--font-display); letter-spacing: 0.05em; }
+      h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.05em; }
       .selectable-text { user-select: text; }
 
       /* Custom scrollbar */
@@ -129,6 +130,9 @@
       ::-webkit-scrollbar-track { background: rgb(var(--c-bg)); }
       ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
       ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+      [data-theme="dark"] ::-webkit-scrollbar-track { background: rgb(var(--c-surface)); }
+      [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #475569; }
+      [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #64748b; }
       
       /* --- ANIMATIONS & EFFECTS --- */
       @keyframes content-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -137,6 +141,9 @@
       @keyframes item-appear { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
       .animate-item-appear { animation: item-appear 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
       
+      @keyframes gallery-card-appear { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-gallery-card-appear { animation: gallery-card-appear 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
+
       @keyframes mang-ai-breathing { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.04) translateY(-2px); } }
       .animate-breathing-ai { animation: mang-ai-breathing 2.5s ease-in-out infinite; transform-origin: bottom center; }
 
@@ -176,6 +183,11 @@
       
       #ai-assistant-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 39; opacity: 0; pointer-events: none; transition: opacity 0.4s ease-in-out; }
       #ai-assistant-overlay.visible { opacity: 1; pointer-events: auto; }
+
+      /* Marquee Animation for Saweria Widget */
+      @keyframes marquee { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }
+      .animate-marquee { display: flex; animation: marquee 40s linear infinite; }
+      .marquee-group { flex-shrink: 0; display: flex; justify-content: space-around; min-width: 100%; }
 
       img { pointer-events: none; }
     </style>

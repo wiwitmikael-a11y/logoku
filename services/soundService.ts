@@ -90,7 +90,7 @@ export const playSound = (soundName: SoundName): void => {
     const sound = getAudio(soundUrls[soundName]);
     // Reduce volume specifically for the bounce sound
     if (soundName === 'bounce') {
-      sound.volume = 0.02; // Drastically reduced volume for the loading bounce
+      sound.volume = 0.1; // Reduced volume for the loading bounce
     } else {
       sound.volume = 0.5;
     }
@@ -109,7 +109,7 @@ export const playBGM = (bgmName: BgmName): void => {
     }
     currentBGM = getAudio(bgmUrls[bgmName], true);
     // Set a consistent, subtle volume for ALL background music.
-    currentBGM.volume = 0.15;
+    currentBGM.volume = 0.1;
     currentBGM.play().catch(() => {});
 };
 
@@ -131,7 +131,7 @@ const playNextRandomTrack = () => {
         currentBGM.onended = null;
     }
     currentBGM = getAudio(bgmUrls[nextTrack], false); // Don't loop, we use onended
-    currentBGM.volume = 0.15;
+    currentBGM.volume = 0.1;
     currentBGM.play().catch(() => {});
     currentBGM.onended = playNextRandomTrack;
 }

@@ -379,9 +379,9 @@ const MainApp: React.FC = () => {
     
     return (
         <div className="min-h-screen bg-background text-text-body">
-            <header className="py-4 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300">
+            <header className="py-3 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <h1 className="text-2xl md:text-3xl font-extrabold tracking-tighter cursor-pointer" onClick={handleReturnToDashboard}>
+                    <h1 className="text-2xl md:text-3xl font-extrabold tracking-wider cursor-pointer" onClick={handleReturnToDashboard} style={{fontFamily: 'var(--font-display)'}}>
                         <span className="text-primary">desain</span><span className="text-text-header">.fun</span>
                     </h1>
                     <div className="flex items-center gap-2 sm:gap-4">
@@ -393,10 +393,10 @@ const MainApp: React.FC = () => {
                             </button>
                             {isUserMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-56 bg-surface border border-border-main rounded-lg shadow-lg py-1 z-30 animate-content-fade-in">
-                                    <div className="px-4 py-2 border-b border-border-main">
+                                    <div className="px-4 py-3 border-b border-border-main">
                                         <p className="font-bold text-sm text-text-header truncate">{profile?.full_name}</p>
                                         <p className="text-xs text-text-muted flex items-center gap-1.5 mt-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                                             <span className="font-bold">{profile?.credits ?? 0}</span> Token
                                         </p>
                                     </div>

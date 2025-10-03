@@ -1,12 +1,12 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import * as React from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 interface Props {
-  children: React.ReactNode;
+  children: ReactNode;
   onReset?: () => void;
 }
 
@@ -16,7 +16,7 @@ interface State {
   isCopied?: boolean;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
+class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: undefined, isCopied: false };
@@ -26,7 +26,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error, isCopied: false };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
@@ -38,7 +38,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   };
 
-  render(): React.ReactNode {
+  render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

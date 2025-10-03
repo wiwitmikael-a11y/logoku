@@ -40,7 +40,6 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(({ title, children, onC
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       className={`bg-surface border rounded-xl shadow-sm overflow-hidden transition-all duration-300 ${className} 
-      dark:border-t-splash/50
       ${
         onClick ? 'cursor-pointer active:scale-[0.99]' : ''
       } ${
@@ -49,8 +48,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(({ title, children, onC
           : 'border-border-main hover:border-border-light hover:shadow-md'
       }`}
     >
-      <div className="p-5">
-        <h3 className="text-lg font-bold text-text-header mb-4">{title}</h3>
+      <div className="p-4 sm:p-5">
+        <h3 className="text-xl font-bold text-text-header mb-4">{title}</h3>
         <div>{children}</div>
       </div>
     </div>
