@@ -13,29 +13,14 @@ const LegalDisclaimerModal: React.FC<Props> = ({ onClose, onConfirm }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
+    const handleKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handleKeyDown);
     modalRef.current?.focus();
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  const handleConfirm = () => {
-    if (isChecked) {
-      onConfirm();
-    }
-  };
-
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
+  const handleConfirm = () => { if (isChecked) onConfirm(); };
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => { if (e.target === e.currentTarget) onClose(); };
 
   return (
     <div
@@ -47,48 +32,21 @@ const LegalDisclaimerModal: React.FC<Props> = ({ onClose, onConfirm }) => {
       aria-labelledby="disclaimer-title"
       tabIndex={-1}
     >
-      <div className="relative max-w-lg w-full bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center">
-        <img
-            src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-            alt="Mang AI character"
-            className="w-24 mb-4"
-            style={{ imageRendering: 'pixelated' }}
-        />
-        <h2 id="disclaimer-title" className="text-2xl font-bold text-sky-600 mb-4 text-center">
-            Penting! Sebelum Pakai Logo Ini
-        </h2>
-        <div className="text-slate-600 text-sm space-y-3 mb-6 text-left max-w-md">
-            <p>
-                Logo ini dibuat oleh Kecerdasan Buatan (AI) dan <strong className="text-slate-800">TIDAK DIJAMIN 100% UNIK</strong>. Ada kemungkinan kecil logo ini mirip dengan desain lain yang sudah ada.
-            </p>
-            <p>
-                <strong className="text-slate-800">ANDA BERTANGGUNG JAWAB PENUH</strong> untuk melakukan pengecekan merek dagang (trademark) di <a href="https://pdki-indonesia.dgip.go.id/" target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline font-semibold">database resmi pemerintah (PDKI)</a> sebelum menggunakannya untuk tujuan komersial.
-            </p>
-            <p>
-                Kami tidak bertanggung jawab atas segala sengketa hukum yang mungkin timbul di masa depan akibat penggunaan logo ini.
-            </p>
+      <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-xl p-8 flex flex-col items-center">
+        <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 mb-4" style={{ imageRendering: 'pixelated' }} />
+        <h2 id="disclaimer-title" className="text-2xl font-bold text-primary mb-4 text-center"> Penting! Sebelum Pakai Logo Ini </h2>
+        <div className="text-text-body text-sm space-y-3 mb-6 text-left max-w-md">
+            <p> Logo ini dibuat oleh Kecerdasan Buatan (AI) dan <strong className="text-text-header">TIDAK DIJAMIN 100% UNIK</strong>. Ada kemungkinan kecil logo ini mirip dengan desain lain yang sudah ada. </p>
+            <p> <strong className="text-text-header">ANDA BERTANGGUNG JAWAB PENUH</strong> untuk melakukan pengecekan merek dagang (trademark) di <a href="https://pdki-indonesia.dgip.go.id/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">database resmi pemerintah (PDKI)</a> sebelum menggunakannya untuk tujuan komersial. </p>
+            <p> Kami tidak bertanggung jawab atas segala sengketa hukum yang mungkin timbul di masa depan akibat penggunaan logo ini. </p>
         </div>
-
-        <div className="flex items-start space-x-3 bg-slate-100 p-4 rounded-lg w-full max-w-md mb-6">
-            <input
-                type="checkbox"
-                id="disclaimer-agree"
-                checked={isChecked}
-                onChange={() => setIsChecked(!isChecked)}
-                className="h-5 w-5 mt-0.5 flex-shrink-0 rounded bg-white border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
-            />
-            <label htmlFor="disclaimer-agree" className="text-sm text-slate-700">
-                Saya mengerti dan setuju dengan ketentuan ini, dan akan melakukan pengecekan sendiri sebelum menggunakan logo ini untuk bisnis.
-            </label>
+        <div className="flex items-start space-x-3 bg-background p-4 rounded-lg w-full max-w-md mb-6">
+            <input type="checkbox" id="disclaimer-agree" checked={isChecked} onChange={() => setIsChecked(!isChecked)} className="h-5 w-5 mt-0.5 flex-shrink-0 rounded bg-surface border-border-main text-primary focus:ring-primary cursor-pointer" />
+            <label htmlFor="disclaimer-agree" className="text-sm text-text-body"> Saya mengerti dan setuju dengan ketentuan ini, dan akan melakukan pengecekan sendiri sebelum menggunakan logo ini untuk bisnis. </label>
         </div>
-
         <div className="flex gap-4">
-            <Button onClick={onClose} variant="secondary">
-                Batal
-            </Button>
-            <Button onClick={handleConfirm} disabled={!isChecked}>
-                Setuju & Lanjutkan
-            </Button>
+            <Button onClick={onClose} variant="secondary"> Batal </Button>
+            <Button onClick={handleConfirm} disabled={!isChecked}> Setuju & Lanjutkan </Button>
         </div>
       </div>
     </div>

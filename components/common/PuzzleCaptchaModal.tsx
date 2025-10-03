@@ -27,18 +27,12 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   }, []);
 
   const resetSlider = useCallback(() => {
-    if (sliderRef.current) {
-      sliderRef.current.style.transition = 'left 0.3s ease-out';
-      setSliderLeft(0);
-    }
+    if (sliderRef.current) { sliderRef.current.style.transition = 'left 0.3s ease-out'; setSliderLeft(0); }
   }, []);
 
   const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (isSolved) return;
-    if (!jinglePlayedRef.current) {
-        playBGM('welcome');
-        jinglePlayedRef.current = true;
-    }
+    if (!jinglePlayedRef.current) { playBGM('welcome'); jinglePlayedRef.current = true; }
     if (sliderRef.current) sliderRef.current.style.transition = 'none';
     setIsDragging(true);
   }, [isSolved]);
@@ -55,45 +49,28 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   const handleTouchDragMove = useCallback((e: TouchEvent) => e.touches[0] && handleDragMove(e.touches[0].clientX), [handleDragMove]);
 
   const handleDragEnd = useCallback(() => {
-    if (!isDragging) return;
-    setIsDragging(false);
+    if (!isDragging) return; setIsDragging(false);
     const { maxSliderLeft } = getTrackBounds();
     if (sliderLeft >= maxSliderLeft - 5) {
-      playSound('puzzle_drop');
-      setSliderLeft(maxSliderLeft);
-      setIsSolved(true);
+      playSound('puzzle_drop'); setSliderLeft(maxSliderLeft); setIsSolved(true);
       setTimeout(() => setShowBrandingTip(true), 500); 
-    } else {
-      playSound('puzzle_fail');
-      resetSlider();
-    }
+    } else { playSound('puzzle_fail'); resetSlider(); }
   }, [isDragging, sliderLeft, getTrackBounds, resetSlider]);
   
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseDragMove);
-      window.addEventListener('mouseup', handleDragEnd);
-      window.addEventListener('touchmove', handleTouchDragMove);
-      window.addEventListener('touchend', handleDragEnd);
+      window.addEventListener('mousemove', handleMouseDragMove); window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchmove', handleTouchDragMove); window.addEventListener('touchend', handleDragEnd);
     }
     return () => {
-      window.removeEventListener('mousemove', handleMouseDragMove);
-      window.removeEventListener('mouseup', handleDragEnd);
-      window.removeEventListener('touchmove', handleTouchDragMove);
-      window.removeEventListener('touchend', handleDragEnd);
+      window.removeEventListener('mousemove', handleMouseDragMove); window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleTouchDragMove); window.removeEventListener('touchend', handleDragEnd);
     };
   }, [isDragging, handleMouseDragMove, handleTouchDragMove, handleDragEnd]);
 
   useEffect(() => {
     if (show) modalRef.current?.focus();
-    else {
-      setTimeout(() => {
-          setIsSolved(false);
-          setShowBrandingTip(false);
-          resetSlider();
-          jinglePlayedRef.current = false;
-      }, 300);
-    }
+    else { setTimeout(() => { setIsSolved(false); setShowBrandingTip(false); resetSlider(); jinglePlayedRef.current = false; }, 300); }
   }, [show, resetSlider]);
 
   if (!show) return null;
@@ -108,57 +85,22 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
         aria-labelledby="captcha-title"
         tabIndex={-1}
       >
-        <div className={`relative max-w-sm w-full bg-white border rounded-2xl shadow-xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-400 ring-4 ring-green-400/20' : 'border-slate-200'} ${showBrandingTip ? 'filter blur-sm' : ''}`}>
-          <img
-              src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-              alt="Mang AI character"
-              className="w-24 mb-4 animate-breathing-ai"
-              style={{ imageRendering: 'pixelated' }}
-          />
-          <h2 id="captcha-title" className="text-xl font-bold text-sky-600 mb-2">Eits, Tahan Dulu, Juragan!</h2>
-          <p className="text-slate-600 mb-8 text-center text-sm">Buktikan kalo lo pejuang UMKM sejati dengan geser slider ini sampe mentok!</p>
+        <div className={`relative max-w-sm w-full bg-surface border rounded-2xl shadow-xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-400 ring-4 ring-green-400/20' : 'border-border-main'} ${showBrandingTip ? 'filter blur-sm' : ''}`}>
+          <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 mb-4 animate-breathing-ai" style={{ imageRendering: 'pixelated' }} />
+          <h2 id="captcha-title" className="text-xl font-bold text-primary mb-2">Eits, Tahan Dulu, Juragan!</h2>
+          <p className="text-text-body mb-8 text-center text-sm">Buktikan kalo lo pejuang UMKM sejati dengan geser slider ini sampe mentok!</p>
 
-          <div 
-            ref={trackRef}
-            className="w-full h-14 bg-slate-100 border border-slate-200 rounded-full flex items-center p-2 relative"
-          >
-            <div 
-              className="absolute left-0 top-0 h-full bg-sky-200 rounded-full"
-              style={{ width: `${sliderLeft + 40}px` }}
-            />
-
-            <div
-              ref={sliderRef}
-              onMouseDown={handleDragStart}
-              onTouchStart={handleDragStart}
-              className={`w-10 h-10 bg-sky-500 rounded-full absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none shadow-md ${isSolved ? '!bg-green-500' : ''}`}
-              style={{ left: `${sliderLeft}px` }}
-              aria-label="Geser untuk verifikasi"
-              role="slider"
-            >
-              {isSolved ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-              )}
+          <div ref={trackRef} className="w-full h-14 bg-background border border-border-main rounded-full flex items-center p-2 relative">
+            <div className="absolute left-0 top-0 h-full bg-primary/20 rounded-full" style={{ width: `${sliderLeft + 40}px` }} />
+            <div ref={sliderRef} onMouseDown={handleDragStart} onTouchStart={handleDragStart} className={`w-10 h-10 bg-primary rounded-full absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none shadow-md ${isSolved ? '!bg-green-500' : ''}`} style={{ left: `${sliderLeft}px` }} aria-label="Geser untuk verifikasi" role="slider">
+              {isSolved ? <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg> : <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
             </div>
-
-            <span className={`text-center w-full font-semibold transition-opacity duration-300 ${isDragging || isSolved ? 'opacity-0' : 'opacity-100 text-slate-500'}`}>
-              Geser ke Kanan
-            </span>
+            <span className={`text-center w-full font-semibold transition-opacity duration-300 ${isDragging || isSolved ? 'opacity-0' : 'opacity-100 text-text-muted'}`}> Geser ke Kanan </span>
           </div>
-          
-          {isSolved && !showBrandingTip && (
-              <p className="text-green-600 font-bold animate-pulse mt-6">Mantap! Lanjut, Juragan!</p>
-          )}
+          {isSolved && !showBrandingTip && <p className="text-green-600 font-bold animate-pulse mt-6">Mantap! Lanjut, Juragan!</p>}
         </div>
       </div>
-      <Suspense fallback={null}>
-        <BrandingTipModal
-            show={showBrandingTip}
-            onConfirm={onSuccess}
-        />
-      </Suspense>
+      <Suspense fallback={null}> <BrandingTipModal show={showBrandingTip} onConfirm={onSuccess} /> </Suspense>
     </>
   );
 };

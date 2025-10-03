@@ -13,7 +13,7 @@ const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-a
 
 const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowToS }) => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-background text-text-body transition-colors duration-300">
       <div className="max-w-xl w-full">
         <div className="relative h-40 mb-4">
             <img
@@ -25,13 +25,13 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
         </div>
 
         <div className="inline-flex flex-col items-center mb-6">
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter text-sky-500 mb-2">
-            desain<span className="text-slate-800">.fun</span>
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter text-primary mb-2">
+            desain<span className="text-text-header">.fun</span>
           </h1>
-          <p className="font-semibold text-slate-500">Studio Branding AI untuk UMKM Juara</p>
+          <p className="font-semibold text-text-muted">Studio Branding AI untuk UMKM Juara</p>
         </div>
 
-        <p className="text-slate-600 mb-8 max-w-lg mx-auto">
+        <p className="text-text-body mb-8 max-w-lg mx-auto">
           Lupakan pusingnya mikirin desain. Mang AI hadir sebagai partner setia lo! Dalam hitungan menit, kita bakal sulap ide lo jadi <strong>paket branding lengkap</strong>: dari logo, persona, social media kit, sampai konten siap posting.
         </p>
         
@@ -54,16 +54,16 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
           </Button>
         </div>
         
-        <p className="text-xs text-slate-500 mt-4">
+        <p className="text-xs text-text-muted mt-4">
           Dengan masuk, lo setuju sama{' '}
           <button 
             onClick={isCaptchaSolved ? onShowToS : undefined} 
             disabled={!isCaptchaSolved}
-            className="text-sky-600 hover:underline focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+            className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
           >
             Ketentuan Layanan
           </button>.
-           {!isCaptchaSolved && <span className="block text-orange-500 font-semibold text-sm mt-2">Selesaikan puzzle di atas dulu, Juragan!</span>}
+           {!isCaptchaSolved && <span className="block text-accent font-semibold text-sm mt-2">Selesaikan puzzle di atas dulu, Juragan!</span>}
         </p>
       </div>
     </div>

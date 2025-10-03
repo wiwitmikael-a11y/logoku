@@ -14,8 +14,8 @@ const ApiKeyErrorScreen = () => {
     };
 
     return (
-    <div className="fixed inset-0 bg-slate-100 z-50 flex items-center justify-center p-4 text-center">
-        <div className="max-w-md bg-white border border-red-300 p-8 rounded-lg shadow-lg flex flex-col items-center gap-4">
+    <div className="fixed inset-0 bg-background z-50 flex items-center justify-center p-4 text-center transition-colors duration-300">
+        <div className="max-w-md bg-surface border border-red-300 p-8 rounded-lg shadow-lg flex flex-col items-center gap-4">
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking confused"
@@ -24,12 +24,12 @@ const ApiKeyErrorScreen = () => {
             />
             <div>
                 <h2 className="text-2xl font-bold text-red-600 mb-2">Kesalahan Konfigurasi API Key</h2>
-                <p className="text-slate-600">Waduh, API Key Google Gemini (`VITE_API_KEY`) nggak ketemu, bro!</p>
-                <p className="text-slate-500 mt-4 text-sm bg-slate-100 p-3 rounded-md">
-                    Untuk aplikasi frontend yang di-deploy di Vercel, semua environment variable <strong className="text-slate-700">wajib diawali dengan `VITE_`</strong> agar bisa diakses. Pastikan kamu sudah mengatur `VITE_API_KEY` di settingan Vercel.
+                <p className="text-text-body">Waduh, API Key Google Gemini (`VITE_API_KEY`) nggak ketemu, bro!</p>
+                <p className="text-text-muted mt-4 text-sm bg-background p-3 rounded-md">
+                    Untuk aplikasi frontend yang di-deploy di Vercel, semua environment variable <strong className="text-text-header">wajib diawali dengan `VITE_`</strong> agar bisa diakses. Pastikan kamu sudah mengatur `VITE_API_KEY` di settingan Vercel.
                 </p>
             </div>
-            <Button onClick={handleCopy} variant="secondary" size="small" className="mt-4 !border-red-300 !text-red-600 hover:!bg-red-50">
+            <Button onClick={handleCopy} variant="secondary" size="small" className="mt-4 !border-red-300 !text-red-600 hover:!bg-red-500/10">
                 {isCopied ? 'Info Tersalin!' : 'Salin Info Error'}
             </Button>
         </div>

@@ -44,9 +44,9 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
   const baseClasses = "relative inline-flex items-center justify-center gap-2 font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed transition-all duration-200 ease-in-out";
   
   const variantClasses = {
-    primary: "text-white bg-sky-500 shadow-sm hover:bg-sky-600 focus:ring-sky-500 disabled:bg-sky-500/50",
-    secondary: "text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 focus:ring-sky-500 disabled:bg-slate-50 disabled:text-slate-400",
-    accent: "text-white bg-orange-500 shadow-sm hover:bg-orange-600 focus:ring-orange-500 disabled:bg-orange-500/50",
+    primary: "text-white bg-primary shadow-sm hover:bg-primary-hover focus:ring-primary disabled:bg-primary/50",
+    secondary: "text-text-body bg-surface border border-border-main hover:bg-background focus:ring-primary disabled:bg-background disabled:text-text-muted",
+    accent: "text-white bg-accent shadow-sm hover:bg-accent-hover focus:ring-accent disabled:bg-accent/50",
   };
   
   const sizeClasses = {

@@ -18,7 +18,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, onGoToDashboard })
     };
 
     return (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex flex-col sm:flex-row items-start gap-4">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 flex flex-col sm:flex-row items-start gap-4">
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking confused"
@@ -26,14 +26,14 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, onGoToDashboard })
                 style={{ imageRendering: 'pixelated' }}
             />
             <div className="flex-1">
-                <h4 className="font-bold text-red-600 text-lg mb-1">Waduh, Ada Masalah!</h4>
-                <p className="text-red-800 text-sm selectable-text">{message}</p>
+                <h4 className="font-bold text-red-500 text-lg mb-1">Waduh, Ada Masalah!</h4>
+                <p className="text-red-400 text-sm selectable-text">{message}</p>
                 <div className="flex items-center gap-4 mt-4">
                     <Button 
                         onClick={handleCopy} 
                         variant="secondary" 
                         size="small" 
-                        className="!border-red-300 !text-red-700 hover:!bg-red-100"
+                        className="!border-red-500/30 !text-red-400 hover:!bg-red-500/10"
                     >
                         {isCopied ? 'Tersalin!' : 'Salin Detail Error'}
                     </Button>

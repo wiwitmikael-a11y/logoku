@@ -13,35 +13,15 @@ const BrandingTipModal: React.FC<Props> = ({ show, onConfirm }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onConfirm();
-      }
-    };
-    if (show) {
-      document.addEventListener('keydown', handleKeyDown);
-      modalRef.current?.focus();
-    }
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    const handleKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onConfirm(); };
+    if (show) { document.addEventListener('keydown', handleKeyDown); modalRef.current?.focus(); }
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [show, onConfirm]);
 
-  if (!show) {
-    return null;
-  }
+  if (!show) return null;
 
-  const handleConfirm = async () => {
-      await unlockAudio();
-      playSound('click');
-      onConfirm();
-  };
-  
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
-          handleConfirm();
-      }
-  }
+  const handleConfirm = async () => { await unlockAudio(); playSound('click'); onConfirm(); };
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => { if (e.target === e.currentTarget) handleConfirm(); }
 
   return (
     <div
@@ -53,28 +33,15 @@ const BrandingTipModal: React.FC<Props> = ({ show, onConfirm }) => {
       aria-labelledby="tip-modal-title"
       tabIndex={-1}
     >
-      <div className="relative max-w-lg w-full bg-white rounded-2xl shadow-xl p-8 text-center flex flex-col items-center">
-        <img
-          src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-          alt="Mang AI character with a lightbulb idea"
-          className="w-24 mb-4"
-          style={{ imageRendering: 'pixelated' }}
-        />
-        <h2 id="tip-modal-title" className="text-2xl font-bold text-sky-600 mb-4">Eh, Juragan, Tau Gak Sih?</h2>
-        <div className="text-slate-600 text-left space-y-3 mb-8">
-            <p>
-                Di lautan UMKM Indonesia yang ramenya kayak pasar malem, banyak banget kan yang jualannya mirip-mirip? Nah, di sinilah <strong className="text-orange-500">branding yang konsisten</strong> jadi jagoannya!
-            </p>
-            <p>
-                Branding itu bukan cuma soal logo cakep, tapi soal <strong className="text-slate-800">'rasa' dan 'cerita'</strong> yang lo kasih ke pelanggan. Kalo brand lo konsisten—dari warna, gaya bahasa, sampe cara lo ngelayanin—pelanggan jadi gampang inget, percaya, dan akhirnya balik lagi.
-            </p>
-            <p>
-                Ini yang bikin "Kopi Senja" lo beda dari ribuan kopi senja lainnya. Siap bikin brand lo jadi juara? Ayo kita mulai!
-            </p>
+      <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-xl p-8 text-center flex flex-col items-center">
+        <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 mb-4" style={{ imageRendering: 'pixelated' }} />
+        <h2 id="tip-modal-title" className="text-2xl font-bold text-primary mb-4">Eh, Juragan, Tau Gak Sih?</h2>
+        <div className="text-text-body text-left space-y-3 mb-8">
+            <p> Di lautan UMKM Indonesia yang ramenya kayak pasar malem, banyak banget kan yang jualannya mirip-mirip? Nah, di sinilah <strong className="text-accent">branding yang konsisten</strong> jadi jagoannya! </p>
+            <p> Branding itu bukan cuma soal logo cakep, tapi soal <strong className="text-text-header">'rasa' dan 'cerita'</strong> yang lo kasih ke pelanggan. Kalo brand lo konsisten—dari warna, gaya bahasa, sampe cara lo ngelayanin—pelanggan jadi gampang inget, percaya, dan akhirnya balik lagi. </p>
+            <p> Ini yang bikin "Kopi Senja" lo beda dari ribuan kopi senja lainnya. Siap bikin brand lo jadi juara? Ayo kita mulai! </p>
         </div>
-        <Button onClick={handleConfirm}>
-            Ngerti, Mang! Lanjut!
-        </Button>
+        <Button onClick={handleConfirm}> Ngerti, Mang! Lanjut! </Button>
       </div>
     </div>
   );

@@ -28,28 +28,20 @@ const ConfirmationModal: React.FC<Props> = ({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
+      if (event.key === 'Escape') onClose();
     };
     if (show) {
       modalRef.current?.focus();
       document.addEventListener('keydown', handleKeyDown);
     }
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [show, onClose]);
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
-  if (!show) {
-    return null;
-  }
+  if (!show) return null;
 
   return (
     <div
@@ -61,15 +53,15 @@ const ConfirmationModal: React.FC<Props> = ({
       aria-labelledby="confirmation-modal-title"
       tabIndex={-1}
     >
-      <div className="relative max-w-md w-full bg-white border border-slate-200 rounded-2xl shadow-xl p-8 flex flex-col items-center">
+      <div className="relative max-w-md w-full bg-surface border border-border-main rounded-2xl shadow-xl p-8 flex flex-col items-center">
         <img
           src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
           alt="Mang AI character with a thinking pose"
           className="w-24 mb-4"
           style={{ imageRendering: 'pixelated' }}
         />
-        <h2 id="confirmation-modal-title" className="text-2xl font-bold text-orange-500 mb-2 text-center">{title}</h2>
-        <div className="text-slate-600 my-4 text-center text-sm">
+        <h2 id="confirmation-modal-title" className="text-2xl font-bold text-accent mb-2 text-center">{title}</h2>
+        <div className="text-text-body my-4 text-center text-sm">
           {children}
         </div>
         <div className="flex gap-4 mt-6">

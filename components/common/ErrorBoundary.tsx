@@ -1,6 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import * as React from 'react';
+// FIX: Changed import from `* as React` to the standard `import React` to fix type resolution issues with class components.
+import React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -16,18 +17,10 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: Switched from class property state initialization to using a constructor.
-// This resolves TypeScript errors where `this.state`, `this.props`, and `this.setState`
-// were not being recognized on the component instance, which can happen with certain
-// build configurations that don't fully support class field syntax.
 class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
+    this.state = { hasError: false, error: undefined, isCopied: false };
   }
 
   static getDerivedStateFromError(error: Error): State {
@@ -50,7 +43,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking very concerned"
@@ -58,8 +51,8 @@ class ErrorBoundary extends React.Component<Props, State> {
                 style={imgStyle}
             />
             <div className="flex-1">
-                <h1 className="font-bold text-red-600 text-2xl mb-2">Waduh, Aplikasinya Error!</h1>
-                <p className="text-red-800 mb-4">
+                <h1 className="font-bold text-red-500 text-2xl mb-2">Waduh, Aplikasinya Error!</h1>
+                <p className="text-red-300 mb-4">
                     Mang AI pusing, ada yang rusak di dalam aplikasi. Coba refresh halaman ini. Kalau masih error, mungkin Mang AI lagi istirahat dulu.
                 </p>
                 <div className="flex flex-wrap justify-center items-center gap-4">
@@ -73,12 +66,12 @@ class ErrorBoundary extends React.Component<Props, State> {
                     )}
                 </div>
                 {this.state.error && (
-                    <details className="mt-6 text-left text-xs text-slate-500">
+                    <details className="mt-6 text-left text-xs text-text-muted">
                         <summary className="cursor-pointer">Detail Error (untuk developer)</summary>
-                        <pre className="mt-2 p-2 bg-slate-100 rounded overflow-auto selectable-text">
+                        <pre className="mt-2 p-2 bg-background rounded overflow-auto selectable-text">
                             {this.state.error.toString()}
                         </pre>
-                        <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-sky-700 bg-transparent border border-sky-300 hover:bg-sky-50">
+                        <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-primary bg-transparent border border-primary/30 hover:bg-primary/10">
                             {this.state.isCopied ? 'Tersalin!' : 'Salin Detail'}
                         </button>
                     </details>

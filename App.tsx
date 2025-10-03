@@ -43,7 +43,6 @@ const ProfileSettingsModal = React.lazy(() => import('./components/common/Profil
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
 const DeleteProjectSliderModal = React.lazy(() => import('./components/common/DeleteProjectSliderModal'));
 const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
-// NEW: Import all generator components for the wizard
 const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
 const SocialMediaKitGenerator = React.lazy(() => import('./components/SocialMediaKitGenerator'));
 const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'));
@@ -51,8 +50,6 @@ const SocialAdsGenerator = React.lazy(() => import('./components/SocialAdsGenera
 const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
 const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
 const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGenerator'));
-
-// NEW: Import gamification components
 const HeaderStats = React.lazy(() => import('./components/gamification/HeaderStats'));
 const LevelUpModal = React.lazy(() => import('./components/gamification/LevelUpModal'));
 const AchievementToast = React.lazy(() => import('./components/gamification/AchievementToast'));
@@ -62,7 +59,6 @@ const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModa
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-// --- NEW: AI Assistant Component ---
 const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
     const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
@@ -75,48 +71,28 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
     const [isFabVisible, setIsFabVisible] = useState(true);
     const lastScrollY = useRef(0);
     
-    const defaultPromptStarters = [
-        "Gimana cara bikin variasi logo?",
-        "Kasih ide bio Instagram buat jualan kopi.",
-        "Apa itu persona brand?",
-        "Bedanya logo 'stacked' sama 'horizontal' apa?",
-    ];
+    const defaultPromptStarters = [ "Gimana cara bikin variasi logo?", "Kasih ide bio Instagram buat jualan kopi.", "Apa itu persona brand?", "Bedanya logo 'stacked' sama 'horizontal' apa?", ];
     const [promptStarters, setPromptStarters] = useState(defaultPromptStarters);
 
-    // Contextual Prompts Effect
     useEffect(() => {
         let contextualPrompts = defaultPromptStarters;
-        if (appState === 'persona') {
-            contextualPrompts = [ "Mang, 'value proposition' itu maksudnya apa sih?", "Bantuin isi target pasar buat jualan seblak dong!", "Apa bedanya target audience sama customer avatar?", "Kasih contoh kompetitor buat bisnis fashion." ];
-        } else if (appState === 'logo' || appState === 'logo_detail') {
-            contextualPrompts = [ "Apa bedanya logo maskot sama emblem?", "Kasih tips milih gaya logo buat F&B dong!", "Jelasin soal 'negative space' di logo.", "Gimana cara bikin logo yang timeless?" ];
-        }
+        if (appState === 'persona') contextualPrompts = [ "Mang, 'value proposition' itu maksudnya apa sih?", "Bantuin isi target pasar buat jualan seblak dong!", "Apa bedanya target audience sama customer avatar?", "Kasih contoh kompetitor buat bisnis fashion." ];
+        else if (appState === 'logo' || appState === 'logo_detail') contextualPrompts = [ "Apa bedanya logo maskot sama emblem?", "Kasih tips milih gaya logo buat F&B dong!", "Jelasin soal 'negative space' di logo.", "Gimana cara bikin logo yang timeless?" ];
         setPromptStarters(contextualPrompts);
     }, [appState]);
 
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
+    const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     useEffect(scrollToBottom, [messages, isLoading]);
     
     useEffect(() => {
-        if(isOpen && messages.length === 0) {
-             setMessages([{ role: 'model', text: "Sore, Juragan! Mang AI siap bantu. Ada yang bisa dibantuin soal branding atau fitur di aplikasi ini?" }]);
-        }
+        if(isOpen && messages.length === 0) setMessages([{ role: 'model', text: "Sore, Juragan! Mang AI siap bantu. Ada yang bisa dibantuin soal branding atau fitur di aplikasi ini?" }]);
     }, [isOpen, messages.length]);
 
-    // Auto-resize textarea
     useEffect(() => {
         const textarea = textareaRef.current;
-        if (textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
-        }
+        if (textarea) { textarea.style.height = 'auto'; textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`; }
     }, [input]);
     
-    // Hide/Show FAB on scroll
     useEffect(() => {
         const handleScroll = () => {
             const currentScrollY = window.scrollY;
@@ -132,38 +108,21 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
         e?.preventDefault();
         const messageText = (prompt || input).trim();
         if (!messageText || isLoading) return;
-        
-        if ((profile?.credits ?? 0) < 1) {
-            setShowOutOfCreditsModal(true);
-            return;
-        }
-
-        setIsLoading(true);
-        setInput('');
-        setMessages(prev => [...prev, { role: 'user', text: messageText }]);
-
+        if ((profile?.credits ?? 0) < 1) { setShowOutOfCreditsModal(true); return; }
+        setIsLoading(true); setInput(''); setMessages(prev => [...prev, { role: 'user', text: messageText }]);
         try {
             if (!chatRef.current) {
                 const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_API_KEY});
-                chatRef.current = ai.chats.create({
-                    model: 'gemini-2.5-flash',
-                    config: {
-                         systemInstruction: "You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'desain.fun' application. Your goal is to make branding feel fun and easy. You are an expert in branding, design, and marketing for small businesses. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.",
-                    },
-                });
+                chatRef.current = ai.chats.create({ model: 'gemini-2.5-flash', config: { systemInstruction: "You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'desain.fun' application. Your goal is to make branding feel fun and easy. You are an expert in branding, design, and marketing for small businesses. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.", }, });
             }
-            
             const response = await chatRef.current.sendMessage({ message: messageText });
             await deductCredits(1);
             setMessages(prev => [...prev, { role: 'model', text: response.text }]);
-            
         } catch (error) {
             console.error("AI Assistant Error:", error);
             const errorMessage = error instanceof Error ? error.message : "Waduh, Mang AI lagi pusing, nih. Coba tanya lagi nanti ya.";
             setMessages(prev => [...prev, { role: 'model', text: `Error: ${errorMessage}` }]);
-        } finally {
-            setIsLoading(false);
-        }
+        } finally { setIsLoading(false); }
     };
 
     return (
@@ -173,9 +132,9 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
                 <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className="animate-breathing-ai" />
             </button>
             <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>
-                <header className="p-4 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
-                    <h3 className="text-lg font-bold text-sky-600">Tanya Mang AI</h3>
-                    <button onClick={() => setIsOpen(false)} title="Tutup" className="p-2 text-slate-500 rounded-full hover:bg-slate-100 hover:text-slate-800">
+                <header className="p-4 border-b border-border-main flex justify-between items-center flex-shrink-0">
+                    <h3 className="text-lg font-bold text-primary">Tanya Mang AI</h3>
+                    <button onClick={() => setIsOpen(false)} title="Tutup" className="p-2 text-text-muted rounded-full hover:bg-background hover:text-text-header">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </header>
@@ -183,14 +142,12 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
                     {messages.map((msg, index) => (
                         <div key={index} className={`chat-bubble max-w-[85%] py-2 px-4 rounded-2xl ${msg.role === 'user' ? 'user self-end rounded-br-lg' : 'model self-start rounded-bl-lg'}`} dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br />') }} />
                     ))}
-                    {isLoading && (
-                        <div className="chat-bubble model self-start rounded-bl-lg"><LoadingMessage /></div>
-                    )}
+                    {isLoading && <div className="chat-bubble model self-start rounded-bl-lg"><LoadingMessage /></div>}
                      {messages.length === 1 && !isLoading && (
                         <div className="flex flex-col gap-2 items-start animate-content-fade-in">
-                            <p className="text-sm text-slate-500 mb-1">Contoh pertanyaan:</p>
+                            <p className="text-sm text-text-muted mb-1">Contoh pertanyaan:</p>
                             {promptStarters.map(prompt => (
-                                <button key={prompt} onClick={() => handleSendMessage(undefined, prompt)} className="bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-sm text-left hover:bg-slate-200 transition-colors">
+                                <button key={prompt} onClick={() => handleSendMessage(undefined, prompt)} className="bg-background border border-border-main text-text-body px-3 py-1.5 rounded-lg text-sm text-left hover:bg-border-main transition-colors">
                                     {prompt}
                                 </button>
                             ))}
@@ -198,18 +155,10 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
                     )}
                     <div ref={messagesEndRef} />
                 </div>
-                <form className="p-4 border-t border-slate-200 flex-shrink-0" onSubmit={handleSendMessage}>
+                <form className="p-4 border-t border-border-main flex-shrink-0" onSubmit={handleSendMessage}>
                     <div className="relative">
-                        <textarea
-                            ref={textareaRef}
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder="Ketik pertanyaan di sini..."
-                            rows={1}
-                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                            className="w-full resize-none rounded-xl border border-slate-300 bg-slate-100 p-3 pr-12 text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        />
-                        <button type="submit" disabled={!input.trim() || isLoading} title="Kirim (1 Token)" className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center bg-sky-500 text-white rounded-lg hover:bg-sky-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors">
+                        <textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ketik pertanyaan di sini..." rows={1} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }} className="w-full resize-none rounded-xl border border-border-main bg-background p-3 pr-12 text-text-body focus:outline-none focus:ring-2 focus:ring-primary" />
+                        <button type="submit" disabled={!input.trim() || isLoading} title="Kirim (1 Token)" className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center bg-primary text-white rounded-lg hover:bg-primary-hover disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.428A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                         </button>
                     </div>
@@ -219,31 +168,28 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
     );
 };
 
+const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> = ({ theme, onToggle }) => (
+    <button onClick={onToggle} title="Ganti Tema" className="p-2 rounded-full text-text-muted hover:bg-background hover:text-text-header transition-colors">
+        <div className="w-6 h-6 relative">
+            {/* Sun */}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`absolute inset-0 transition-all duration-300 ${theme === 'dark' ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
+            {/* Moon */}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`absolute inset-0 transition-all duration-300 ${theme === 'light' ? 'opacity-0 scale-50 -rotate-90' : 'opacity-100 scale-100 rotate-0'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>
+        </div>
+    </button>
+);
+
+
 const App: React.FC = () => {
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
     if (!import.meta.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
-
-    return (
-        <AuthProvider>
-            <MainApp />
-        </AuthProvider>
-    );
+    return ( <AuthProvider> <MainApp /> </AuthProvider> );
 };
 
 const MainApp: React.FC = () => {
-    const { 
-        session, user, profile, loading: authLoading, 
-        showOutOfCreditsModal, setShowOutOfCreditsModal,
-        showLogoutConfirm, setShowLogoutConfirm,
-        handleLogout, executeLogout: authExecuteLogout,
-        handleDeleteAccount,
-        authError, refreshProfile,
-        addXp, grantAchievement, grantFirstStepXp, showLevelUpModal,
-        levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement,
-// FIX: Added 'deductCredits' to the destructuring assignment from the useAuth hook.
-        deductCredits
-    } = useAuth();
+    const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstStepXp, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits } = useAuth();
     
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'light');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(() => {
         const id = sessionStorage.getItem('desainfun_project_id');
@@ -254,11 +200,10 @@ const MainApp: React.FC = () => {
     const [generalError, setGeneralError] = useState<string | null>(null);
     const [toast, setToast] = useState({ message: '', show: false });
     
-    // Modals visibility
     const [showContactModal, setShowContactModal] = useState(false);
     const [showAboutModal, setShowAboutModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
-    const [showCaptcha, setShowCaptcha] = useState(true); // Show by default
+    const [showCaptcha, setShowCaptcha] = useState(true);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -274,37 +219,29 @@ const MainApp: React.FC = () => {
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
     
-    const showToast = useCallback((message: string) => {
-        setToast({ message, show: true });
-    }, []);
+    const showToast = useCallback((message: string) => { setToast({ message, show: true }); }, []);
+
+    // --- Theme Management ---
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('desainfun_theme', theme);
+    }, [theme]);
+    const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
     // --- Effects for State Persistence & Initial Load ---
     useEffect(() => {
         if (session) {
-            if (appState === 'dashboard') {
-                sessionStorage.removeItem('desainfun_app_state');
-                sessionStorage.removeItem('desainfun_project_id');
-            } else {
-                sessionStorage.setItem('desainfun_app_state', appState);
-                if (selectedProjectId !== null) sessionStorage.setItem('desainfun_project_id', selectedProjectId.toString());
-                else sessionStorage.removeItem('desainfun_project_id');
-            }
+            if (appState === 'dashboard') { sessionStorage.removeItem('desainfun_app_state'); sessionStorage.removeItem('desainfun_project_id'); }
+            else { sessionStorage.setItem('desainfun_app_state', appState); if (selectedProjectId !== null) sessionStorage.setItem('desainfun_project_id', selectedProjectId.toString()); else sessionStorage.removeItem('desainfun_project_id'); }
         }
     }, [appState, selectedProjectId, session]);
     
-    useEffect(() => {
-        if (!authLoading && session) fetchProjects();
-    }, [session, authLoading]);
+    useEffect(() => { if (!authLoading && session) fetchProjects(); }, [session, authLoading]);
+    
+    useEffect(() => { if (!session && !authLoading) setShowCaptcha(true); else setShowCaptcha(false); }, [session, authLoading]);
     
     useEffect(() => {
-        if (!session && !authLoading) setShowCaptcha(true);
-        else setShowCaptcha(false);
-    }, [session, authLoading]);
-    
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false);
-        };
+        const handleClickOutside = (event: MouseEvent) => { if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false); };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
@@ -312,352 +249,111 @@ const MainApp: React.FC = () => {
     const fetchProjects = async () => {
         if (!session?.user) return;
         const { data, error } = await supabase.from('projects').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false });
-        if (error) {
-            setGeneralError(`Gagal mengambil data project: ${error.message}`);
-            setProjects([]);
-        } else {
-            setProjects(data as Project[]);
-        }
+        if (error) { setGeneralError(`Gagal mengambil data project: ${error.message}`); setProjects([]); }
+        else { setProjects(data as Project[]); }
     };
 
     useEffect(() => {
-        if (previousAppState.current !== appState) {
-            playSound('transition');
-            window.scrollTo(0, 0);
-        }
+        if (previousAppState.current !== appState) { playSound('transition'); window.scrollTo(0, 0); }
         previousAppState.current = appState;
     }, [appState]);
 
     const navigateTo = (state: AppState) => setAppState(state);
 
-    // --- Core Navigation & Project Management ---
     const handleNewProject = useCallback(async (templateData?: Partial<BrandInputs>) => {
         if (!session?.user || !profile) return;
-        if (profile.total_projects_completed === 0 && projects.length === 0) {
-            sessionStorage.setItem('onboardingStep2', 'true');
-        }
+        if (profile.total_projects_completed === 0 && projects.length === 0) sessionStorage.setItem('onboardingStep2', 'true');
         const { data, error } = await supabase.from('projects').insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' as ProjectStatus }).select().single();
-        if (error) {
-            setGeneralError(`Gagal memulai project baru: ${error.message}`);
-            return;
-        }
+        if (error) { setGeneralError(`Gagal memulai project baru: ${error.message}`); return; }
         const newProject: Project = data as any;
-        setProjects(prev => [newProject, ...prev]);
-        setSelectedProjectId(newProject.id);
-        
-        if (templateData) saveWorkflowState({ brandInputs: templateData as BrandInputs });
-        else clearWorkflowState();
-
+        setProjects(prev => [newProject, ...prev]); setSelectedProjectId(newProject.id);
+        if (templateData) saveWorkflowState({ brandInputs: templateData as BrandInputs }); else clearWorkflowState();
         navigateTo('persona');
     }, [session, profile, projects]);
     
-    const handleReturnToDashboard = useCallback(() => {
-        clearWorkflowState();
-        setSelectedProjectId(null);
-        navigateTo('dashboard');
-    }, []);
-
-    const handleRequestReturnToDashboard = () => {
-        if (appState === 'dashboard') {
-            setIsUserMenuOpen(false);
-            handleReturnToDashboard();
-            return;
-        }
-        setShowDashboardConfirm(true);
-        setIsUserMenuOpen(false);
-    };
-
-    const confirmAndReturnToDashboard = () => {
-        handleReturnToDashboard();
-        setShowDashboardConfirm(false);
-    };
+    const handleReturnToDashboard = useCallback(() => { clearWorkflowState(); setSelectedProjectId(null); navigateTo('dashboard'); }, []);
+    const handleRequestReturnToDashboard = () => { if (appState === 'dashboard') { setIsUserMenuOpen(false); handleReturnToDashboard(); return; } setShowDashboardConfirm(true); setIsUserMenuOpen(false); };
+    const confirmAndReturnToDashboard = () => { handleReturnToDashboard(); setShowDashboardConfirm(false); };
 
     const handleSelectProject = useCallback((projectId: number) => {
-        const project = projects.find(p => p.id === projectId);
-        if (!project) return;
-        
-        setSelectedProjectId(projectId);
-        saveWorkflowState(project.project_data);
-        
-        if (project.status === 'completed') {
-            navigateTo('summary');
-        } else {
-            const data = project.project_data;
-            let nextState: AppState = 'persona';
-            if (data.selectedPersona) {
-                if (data.selectedLogoUrl) {
-                    if (data.logoVariations) {
-                        if (data.socialMediaKit) {
-                            if (data.socialProfiles) {
-                                if (data.selectedPackagingUrl) {
-                                    if (data.printMediaAssets) {
-                                        if (data.contentCalendar) {
-                                            if (data.socialAds) {
-                                                nextState = data.merchandiseUrl ? 'summary' : 'merchandise';
-                                            } else { nextState = 'social_ads'; }
-                                        } else { nextState = 'content_calendar'; }
-                                    } else { nextState = 'print_media'; }
-                                } else { nextState = 'packaging'; }
-                            } else { nextState = 'profiles'; }
-                        } else { nextState = 'social_kit'; }
-                    } else { nextState = 'logo_detail'; }
-                } else { nextState = 'logo'; }
-            }
+        const project = projects.find(p => p.id === projectId); if (!project) return;
+        setSelectedProjectId(projectId); saveWorkflowState(project.project_data);
+        if (project.status === 'completed') { navigateTo('summary'); }
+        else {
+            const data = project.project_data; let nextState: AppState = 'persona';
+            if (data.selectedPersona) if (data.selectedLogoUrl) if (data.logoVariations) if (data.socialMediaKit) if (data.socialProfiles) if (data.selectedPackagingUrl) if (data.printMediaAssets) if (data.contentCalendar) if (data.socialAds) nextState = data.merchandiseUrl ? 'summary' : 'merchandise'; else nextState = 'social_ads'; else nextState = 'content_calendar'; else nextState = 'print_media'; else nextState = 'packaging'; else nextState = 'profiles'; else nextState = 'social_kit'; else nextState = 'logo_detail'; else nextState = 'logo';
             navigateTo(nextState);
         }
     }, [projects]);
 
-    const handleGoToCaptionGenerator = useCallback((projectId: number) => {
-        const project = projects.find(p => p.id === projectId);
-        if (project) {
-            saveWorkflowState(project.project_data);
-            setSelectedProjectId(project.id);
-            navigateTo('caption');
-        }
-    }, [projects]);
-    
-    const handleGoToInstantContent = useCallback((projectId: number) => {
-        const project = projects.find(p => p.id === projectId);
-        if (project) {
-            saveWorkflowState(project.project_data);
-            setSelectedProjectId(project.id);
-            navigateTo('instant_content');
-        }
-    }, [projects]);
+    const handleGoToCaptionGenerator = useCallback((projectId: number) => { const project = projects.find(p => p.id === projectId); if (project) { saveWorkflowState(project.project_data); setSelectedProjectId(project.id); navigateTo('caption'); } }, [projects]);
+    const handleGoToInstantContent = useCallback((projectId: number) => { const project = projects.find(p => p.id === projectId); if (project) { saveWorkflowState(project.project_data); setSelectedProjectId(project.id); navigateTo('instant_content'); } }, [projects]);
 
-    // --- Project Deletion Handlers ---
-    const handleRequestDeleteProject = useCallback((projectId: number) => {
-        const project = projects.find(p => p.id === projectId);
-        if (project) {
-            setProjectToDelete(project);
-            setShowDeleteConfirm(true);
-        }
-    }, [projects]);
-
-    const handleCancelDelete = () => {
-        setShowDeleteConfirm(false);
-        setProjectToDelete(null);
-    };
-
+    const handleRequestDeleteProject = useCallback((projectId: number) => { const project = projects.find(p => p.id === projectId); if (project) { setProjectToDelete(project); setShowDeleteConfirm(true); } }, [projects]);
+    const handleCancelDelete = () => { setShowDeleteConfirm(false); setProjectToDelete(null); };
     const handleConfirmDelete = async () => {
-        if (!projectToDelete || !user) return;
-        setIsDeleting(true);
+        if (!projectToDelete || !user) return; setIsDeleting(true);
         const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
         setIsDeleting(false);
-        if (error) {
-            setGeneralError(`Gagal menghapus project: ${error.message}`);
-        } else {
-            setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
-            if (selectedProjectId === projectToDelete.id) handleReturnToDashboard();
-            playSound('success');
-        }
-        setShowDeleteConfirm(false);
-        setProjectToDelete(null);
+        if (error) { setGeneralError(`Gagal menghapus project: ${error.message}`); }
+        else { setProjects(prev => prev.filter(p => p.id !== projectToDelete.id)); if (selectedProjectId === projectToDelete.id) handleReturnToDashboard(); playSound('success'); }
+        setShowDeleteConfirm(false); setProjectToDelete(null);
     };
 
     const handleShareToForum = (project: Project) => {
         const { brandInputs } = project.project_data;
-        const forumPreload = {
-            title: `Minta masukan dong buat brand baruku: "${brandInputs.businessName}"`,
-            content: `Halo Juragan semua!\n\nAku baru aja selesai ngeracik brand baru pakai Mang AI, namanya "${brandInputs.businessName}". Ini brand yang bergerak di bidang ${brandInputs.industry}.\n\nKira-kira ada masukan nggak soal logo, nama, atau apa aja biar makin gacor?\n\nMakasih sebelumnya!`
-        };
-        sessionStorage.setItem('forumPreload', JSON.stringify(forumPreload));
-        sessionStorage.setItem('openForumTab', 'true');
-        handleReturnToDashboard();
+        const forumPreload = { title: `Minta masukan dong buat brand baruku: "${brandInputs.businessName}"`, content: `Halo Juragan semua!\n\nAku baru aja selesai ngeracik brand baru pakai Mang AI, namanya "${brandInputs.businessName}". Ini brand yang bergerak di bidang ${brandInputs.industry}.\n\nKira-kira ada masukan nggak soal logo, nama, atau apa aja biar makin gacor?\n\nMakasih sebelumnya!` };
+        sessionStorage.setItem('forumPreload', JSON.stringify(forumPreload)); sessionStorage.setItem('openForumTab', 'true'); handleReturnToDashboard();
     };
     
-    const saveLocalCheckpoint = useCallback((updatedData: Partial<ProjectData>) => {
-        const currentState = loadWorkflowState() || {};
-        const combinedData = { ...currentState, ...updatedData };
-        saveWorkflowState(combinedData);
-        showToast("Progres tersimpan sementara!");
-    }, [showToast]);
+    const saveLocalCheckpoint = useCallback((updatedData: Partial<ProjectData>) => { const currentState = loadWorkflowState() || {}; const combinedData = { ...currentState, ...updatedData }; saveWorkflowState(combinedData); showToast("Progres tersimpan sementara!"); }, [showToast]);
 
-    // --- WIZARD STEP HANDLERS ---
-    const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
-        saveLocalCheckpoint({ brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan });
-        await grantFirstStepXp('persona');
-        navigateTo('logo');
-    }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => {
-        saveLocalCheckpoint({ selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt });
-        await grantFirstStepXp('logo');
-        navigateTo('logo_detail');
-    }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => {
-        saveLocalCheckpoint({ selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations });
-        await grantFirstStepXp('logo_detail');
-        navigateTo('social_kit');
-    }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => {
-        saveLocalCheckpoint({ socialMediaKit: data.assets });
-        await grantFirstStepXp('social_kit');
-        navigateTo('profiles');
-    }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleProfilesComplete = useCallback(async (data: { profiles: SocialProfileData }) => {
-        saveLocalCheckpoint({ socialProfiles: data.profiles });
-        await grantFirstStepXp('profiles');
-        navigateTo('packaging');
-    }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handlePackagingComplete = useCallback(async (data: { packagingUrl: string }) => {
-        saveLocalCheckpoint({ selectedPackagingUrl: data.packagingUrl });
-        await grantFirstStepXp('packaging');
-        navigateTo('print_media');
-    }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets }) => {
-        saveLocalCheckpoint({ printMediaAssets: data.assets });
-        await grantFirstStepXp('print_media');
-        navigateTo('content_calendar');
-    }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleContentCalendarComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => {
-        saveLocalCheckpoint({ contentCalendar: data.calendar, searchSources: data.sources });
-        await grantFirstStepXp('content_calendar');
-        navigateTo('social_ads');
-    }, [saveLocalCheckpoint, grantFirstStepXp]);
-    const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => {
-        saveLocalCheckpoint({ socialAds: data.adsData });
-        await grantFirstStepXp('social_ads');
-        navigateTo('merchandise');
-    }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => { saveLocalCheckpoint({ brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan }); await grantFirstStepXp('persona'); navigateTo('logo'); }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => { saveLocalCheckpoint({ selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt }); await grantFirstStepXp('logo'); navigateTo('logo_detail'); }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => { saveLocalCheckpoint({ selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations }); await grantFirstStepXp('logo_detail'); navigateTo('social_kit'); }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => { saveLocalCheckpoint({ socialMediaKit: data.assets }); await grantFirstStepXp('social_kit'); navigateTo('profiles'); }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handleProfilesComplete = useCallback(async (data: { profiles: SocialProfileData }) => { saveLocalCheckpoint({ socialProfiles: data.profiles }); await grantFirstStepXp('profiles'); navigateTo('packaging'); }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handlePackagingComplete = useCallback(async (data: { packagingUrl: string }) => { saveLocalCheckpoint({ selectedPackagingUrl: data.packagingUrl }); await grantFirstStepXp('packaging'); navigateTo('print_media'); }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets }) => { saveLocalCheckpoint({ printMediaAssets: data.assets }); await grantFirstStepXp('print_media'); navigateTo('content_calendar'); }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handleContentCalendarComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => { saveLocalCheckpoint({ contentCalendar: data.calendar, searchSources: data.sources }); await grantFirstStepXp('content_calendar'); navigateTo('social_ads'); }, [saveLocalCheckpoint, grantFirstStepXp]);
+    const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => { saveLocalCheckpoint({ socialAds: data.adsData }); await grantFirstStepXp('social_ads'); navigateTo('merchandise'); }, [saveLocalCheckpoint, grantFirstStepXp]);
     const handleMerchandiseComplete = async (merchandiseUrl: string) => {
-        if (!session?.user || !selectedProjectId || !profile) return;
-        const currentState = loadWorkflowState() || {};
-        const finalProjectData = { ...currentState, merchandiseUrl };
-        await grantFirstStepXp('merchandise');
-        const { data: dbData, error: projectError } = await supabase.from('projects').update({ project_data: finalProjectData, status: 'completed' as ProjectStatus }).eq('id', selectedProjectId).select().single();
-        if (projectError) { setGeneralError(`Gagal menyimpan finalisasi project: ${projectError.message}`); return; }
-        const newTotalCompleted = (profile.total_projects_completed ?? 0) + 1;
-        await supabase.from('profiles').update({ total_projects_completed: newTotalCompleted }).eq('id', user.id);
-        await addXp(500);
-        if (newTotalCompleted === 1) await grantAchievement('BRAND_PERTAMA_LAHIR');
-        else if (newTotalCompleted === 5) await grantAchievement('SANG_KOLEKTOR');
-        else if (newTotalCompleted === 10) await grantAchievement('SULTAN_KONTEN');
-        await refreshProfile();
-        const updatedProject: Project = dbData as any;
-        setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-        handleReturnToDashboard();
-        showToast("Mantap! Project lo berhasil diselesaikan.");
+        if (!session?.user || !selectedProjectId || !profile) return; const currentState = loadWorkflowState() || {}; const finalProjectData = { ...currentState, merchandiseUrl };
+        await grantFirstStepXp('merchandise'); const { data: dbData, error: projectError } = await supabase.from('projects').update({ project_data: finalProjectData, status: 'completed' as ProjectStatus }).eq('id', selectedProjectId).select().single();
+        if (projectError) { setGeneralError(`Gagal menyimpan finalisasi project: ${projectError.message}`); return; } const newTotalCompleted = (profile.total_projects_completed ?? 0) + 1;
+        await supabase.from('profiles').update({ total_projects_completed: newTotalCompleted }).eq('id', user.id); await addXp(500);
+        if (newTotalCompleted === 1) await grantAchievement('BRAND_PERTAMA_LAHIR'); else if (newTotalCompleted === 5) await grantAchievement('SANG_KOLEKTOR'); else if (newTotalCompleted === 10) await grantAchievement('SULTAN_KONTEN');
+        await refreshProfile(); const updatedProject: Project = dbData as any; setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p)); handleReturnToDashboard(); showToast("Mantap! Project lo berhasil diselesaikan.");
     };
 
-    // --- Asset Regeneration Logic ---
     const handleRegenerateTextAsset = async <T,>(projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<T>, successMessage: string) => {
-        setGeneralError(null);
-        if ((profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; }
-        const project = projects.find(p => p.id === projectId);
-        if (!project) return;
-        try {
-            const result = await generationFunc();
-            await deductCredits(cost);
-            const updatedProjectData = { ...project.project_data, [assetKey]: result };
-            const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
-            if (error) throw error;
-            setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p));
-            showToast(successMessage);
-        } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
+        setGeneralError(null); if ((profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
+        try { const result = await generationFunc(); await deductCredits(cost); const updatedProjectData = { ...project.project_data, [assetKey]: result }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast(successMessage); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
     };
     const handleRegenerateVisualAsset = async (projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<string>, successMessage: string) => {
-        setGeneralError(null);
-        if (!user || (profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; }
-        const project = projects.find(p => p.id === projectId);
-        if (!project) return;
-        try {
-            const resultBase64 = await generationFunc();
-            await deductCredits(cost);
-            const updatedProjectData = { ...project.project_data, [assetKey]: resultBase64 };
-            const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
-            if (error) throw error;
-            setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p));
-            showToast(successMessage);
-        } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
+        setGeneralError(null); if (!user || (profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
+        try { const resultBase64 = await generationFunc(); await deductCredits(cost); const updatedProjectData = { ...project.project_data, [assetKey]: resultBase64 }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast(successMessage); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
     };
-    const handleRegenerateContentCalendar = async (projectId: number) => {
-        const p = projects.find(p => p.id === projectId);
-        if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return;
-        handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs.businessName, p.project_data.selectedPersona).then(res => res.calendar), "Kalender konten baru berhasil dibuat!");
-    };
-    const handleRegenerateProfiles = async (projectId: number) => {
-        const p = projects.find(p => p.id === projectId);
-        if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return;
-        handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p.project_data.brandInputs, p.project_data.selectedPersona), "Profil sosmed baru berhasil dibuat!");
-    };
-    const handleRegenerateSocialAds = async (projectId: number) => {
-        const p = projects.find(p => p.id === projectId);
-        if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return;
-        handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs, p.project_data.selectedPersona, p.project_data.selectedSlogan), "Teks iklan baru berhasil dibuat!");
-    };
+    const handleRegenerateContentCalendar = async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs.businessName, p.project_data.selectedPersona).then(res => res.calendar), "Kalender konten baru berhasil dibuat!"); };
+    const handleRegenerateProfiles = async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p.project_data.brandInputs, p.project_data.selectedPersona), "Profil sosmed baru berhasil dibuat!"); };
+    const handleRegenerateSocialAds = async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return; handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs, p.project_data.selectedPersona, p.project_data.selectedSlogan), "Teks iklan baru berhasil dibuat!"); };
     const handleRegenerateSocialKit = async (projectId: number) => {
-        setGeneralError(null);
-        if (!user || (profile?.credits ?? 0) < 2) { setShowOutOfCreditsModal(true); return; }
-        const project = projects.find(p => p.id === projectId);
-        if (!project || !project.project_data.selectedLogoUrl) return;
-        try {
-            const assets = await geminiService.generateSocialMediaKitAssets(project.project_data as any);
-            await deductCredits(2);
-            const updatedProjectData = { ...project.project_data, socialMediaKit: assets };
-            const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
-            if (error) throw error;
-            setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p));
-            showToast("Social media kit baru berhasil dibuat!");
-        } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Gagal membuat social media kit.'); }
+        setGeneralError(null); if (!user || (profile?.credits ?? 0) < 2) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project || !project.project_data.selectedLogoUrl) return;
+        try { const assets = await geminiService.generateSocialMediaKitAssets(project.project_data as any); await deductCredits(2); const updatedProjectData = { ...project.project_data, socialMediaKit: assets }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast("Social media kit baru berhasil dibuat!"); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Gagal membuat social media kit.'); }
     };
-    const handleRegeneratePackaging = async (projectId: number) => {
-        const p = projects.find(p => p.id === projectId);
-        if (!p || !p.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return;
-        const { brandInputs, selectedPersona, selectedLogoUrl } = p.project_data;
-        const prompt = `Take the provided logo image. Create a realistic, high-quality product mockup of a generic product box for "${brandInputs.businessDetail}". Place the logo prominently. The brand is "${brandInputs.businessName}". The style is ${selectedPersona.kata_kunci.join(', ')}, modern, and clean. This is a commercial product photo.`;
-        handleRegenerateVisualAsset(projectId, 'selectedPackagingUrl', 1, async () => {
-            const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
-            return (await geminiService.generatePackagingDesign(prompt, logoBase64))[0];
-        }, "Desain kemasan baru berhasil dibuat!");
-    };
+    const handleRegeneratePackaging = async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return; const { brandInputs, selectedPersona, selectedLogoUrl } = p.project_data; const prompt = `Take the provided logo image. Create a realistic, high-quality product mockup of a generic product box for "${brandInputs.businessDetail}". Place the logo prominently. The brand is "${brandInputs.businessName}". The style is ${selectedPersona.kata_kunci.join(', ')}, modern, and clean. This is a commercial product photo.`; handleRegenerateVisualAsset(projectId, 'selectedPackagingUrl', 1, async () => { const logoBase64 = await fetchImageAsBase64(selectedLogoUrl); return (await geminiService.generatePackagingDesign(prompt, logoBase64))[0]; }, "Desain kemasan baru berhasil dibuat!"); };
     const handleRegeneratePrintMedia = async (projectId: number, mediaType: 'banner' | 'roll_banner') => {
-        const p = projects.find(p => p.id === projectId);
-        if (!p || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return;
-        const { selectedPersona, selectedLogoUrl } = p.project_data;
-        let prompt = '';
-        const colors = selectedPersona.palet_warna_hex.join(', ');
-        const style = selectedPersona.kata_kunci.join(', ');
-        if (mediaType === 'banner') {
-            prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk, 3:1 aspect ratio). Do NOT create a realistic 3D mockup. Use the brand's color palette: ${colors}. The design should be bold, incorporating the style: ${style}. Place the logo prominently. CRITICAL: DO NOT generate any text.`;
-        } else {
-            prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner (9:16 aspect ratio). Do NOT create a realistic 3D mockup. Use the brand's color palette: ${colors}. The design should be stylish, modern, incorporating the style: ${style}. Place the logo prominently. CRITICAL: DO NOT generate any text.`;
-        }
-        try {
-            setGeneralError(null);
-            if (!user || (profile?.credits ?? 0) < 1) { setShowOutOfCreditsModal(true); return; }
-            const logoBase64 = await fetchImageAsBase64(selectedLogoUrl);
-            const resultBase64 = (await geminiService.generatePrintMedia(prompt, logoBase64))[0];
-            await deductCredits(1);
-            const currentAssets = p.project_data.printMediaAssets || {};
-            const updatedAssets = mediaType === 'banner' ? { ...currentAssets, bannerUrl: resultBase64 } : { ...currentAssets, rollBannerUrl: resultBase64 };
-            const updatedProjectData = { ...p.project_data, printMediaAssets: updatedAssets };
-            const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single();
-            if (error) throw error;
-            setProjects(prev => prev.map(proj => proj.id === projectId ? (data as Project) : proj));
-            showToast(`Template ${mediaType === 'banner' ? 'spanduk' : 'roll banner'} baru berhasil dibuat!`);
-        } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
+        const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return; const { selectedPersona, selectedLogoUrl } = p.project_data; let prompt = ''; const colors = selectedPersona.palet_warna_hex.join(', '); const style = selectedPersona.kata_kunci.join(', ');
+        if (mediaType === 'banner') prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk, 3:1 aspect ratio). Do NOT create a realistic 3D mockup. Use the brand's color palette: ${colors}. The design should be bold, incorporating the style: ${style}. Place the logo prominently. CRITICAL: DO NOT generate any text.`;
+        else prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner (9:16 aspect ratio). Do NOT create a realistic 3D mockup. Use the brand's color palette: ${colors}. The design should be stylish, modern, incorporating the style: ${style}. Place the logo prominently. CRITICAL: DO NOT generate any text.`;
+        try { setGeneralError(null); if (!user || (profile?.credits ?? 0) < 1) { setShowOutOfCreditsModal(true); return; } const logoBase64 = await fetchImageAsBase64(selectedLogoUrl); const resultBase64 = (await geminiService.generatePrintMedia(prompt, logoBase64))[0]; await deductCredits(1); const currentAssets = p.project_data.printMediaAssets || {}; const updatedAssets = mediaType === 'banner' ? { ...currentAssets, bannerUrl: resultBase64 } : { ...currentAssets, rollBannerUrl: resultBase64 }; const updatedProjectData = { ...p.project_data, printMediaAssets: updatedAssets }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(proj => proj.id === projectId ? (data as Project) : proj)); showToast(`Template ${mediaType === 'banner' ? 'spanduk' : 'roll banner'} baru berhasil dibuat!`); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
     };
-    const handleRegenerateMerchandise = async (projectId: number) => {
-        const p = projects.find(p => p.id === projectId);
-        if (!p || !p.project_data.selectedLogoUrl) return;
-        const prompt = 'Take the provided logo image. Create a realistic mockup of a plain colored t-shirt on a clean, neutral background. The t-shirt prominently features the logo. The photo is high-quality, commercial-style, showing the texture of the fabric.';
-        handleRegenerateVisualAsset(projectId, 'merchandiseUrl', 1, async () => {
-            const logoBase64 = await fetchImageAsBase64(p.project_data.selectedLogoUrl);
-            return (await geminiService.generateMerchandiseMockup(prompt, logoBase64))[0];
-        }, "Mockup merchandise baru berhasil dibuat!");
-    };
+    const handleRegenerateMerchandise = async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.selectedLogoUrl) return; const prompt = 'Take the provided logo image. Create a realistic mockup of a plain colored t-shirt on a clean, neutral background. The t-shirt prominently features the logo. The photo is high-quality, commercial-style, showing the texture of the fabric.'; handleRegenerateVisualAsset(projectId, 'merchandiseUrl', 1, async () => { const logoBase64 = await fetchImageAsBase64(p.project_data.selectedLogoUrl); return (await geminiService.generateMerchandiseMockup(prompt, logoBase64))[0]; }, "Mockup merchandise baru berhasil dibuat!"); };
 
-    const executeLogout = async () => {
-        clearWorkflowState();
-        sessionStorage.clear();
-        await authExecuteLogout();
-        setAppState('dashboard');
-        setSelectedProjectId(null);
-    };
+    const executeLogout = async () => { clearWorkflowState(); sessionStorage.clear(); await authExecuteLogout(); setAppState('dashboard'); setSelectedProjectId(null); };
 
     const renderContent = () => {
-        const workflowData = loadWorkflowState();
-        const commonProps = { onGoToDashboard: handleReturnToDashboard };
+        const workflowData = loadWorkflowState(); const commonProps = { onGoToDashboard: handleReturnToDashboard };
         switch (appState) {
             case 'persona': return <BrandPersonaGenerator onComplete={handlePersonaComplete} {...commonProps} />;
             case 'logo': return workflowData?.selectedPersona && workflowData.brandInputs ? <LogoGenerator persona={workflowData.selectedPersona} businessName={workflowData.brandInputs.businessName} onComplete={handleLogoComplete} {...commonProps} /> : null;
@@ -669,60 +365,47 @@ const MainApp: React.FC = () => {
             case 'content_calendar': return <ContentCalendarGenerator projectData={workflowData || {}} onComplete={handleContentCalendarComplete} {...commonProps} />;
             case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonProps} />;
             case 'merchandise': return <MerchandiseGenerator projectData={workflowData || {}} onComplete={handleMerchandiseComplete} {...commonProps} />;
-            case 'summary':
-                const project = projects.find(p => p.id === selectedProjectId);
-                return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} addXp={addXp} onShareToForum={() => handleShareToForum(project)} /> : null;
+            case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} addXp={addXp} onShareToForum={() => handleShareToForum(project)} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
-            case 'dashboard':
-            default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} />;
         }
-        handleReturnToDashboard();
-        return <AuthLoadingScreen />;
+        handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
     
     if (authLoading) return <AuthLoadingScreen />;
     
-    if (!session) {
-        return (
-            <>
-                <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} onShowToS={() => setShowToSModal(true)} />
-                <Suspense fallback={null}>
-                    <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} />
-                    <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
-                </Suspense>
-            </>
-        );
-    }
+    if (!session) return ( <> <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} onShowToS={() => setShowToSModal(true)} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} /> </Suspense> </> );
     
     return (
-        <div className="min-h-screen">
-            <header className="py-4 px-4 sm:px-6 lg:px-8 bg-white/80 backdrop-blur-lg sticky top-0 z-20 border-b border-slate-200">
+        <div className="min-h-screen bg-background text-text-body">
+            <header className="py-4 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <h1 className="text-2xl md:text-3xl font-extrabold tracking-tighter cursor-pointer" onClick={handleReturnToDashboard}>
-                        <span className="text-sky-500">desain</span><span className="text-slate-800">.fun</span>
+                        <span className="text-primary">desain</span><span className="text-text-header">.fun</span>
                     </h1>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <ThemeToggle theme={theme} onToggle={toggleTheme} />
                         <div ref={userMenuRef} className="relative">
-                            <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-2 bg-slate-100 hover:bg-slate-200 transition-colors">
+                            <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-2 bg-background hover:bg-border-main transition-colors">
                                 <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
                                 <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full" />
                             </button>
                             {isUserMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-30 animate-content-fade-in">
-                                    <div className="px-4 py-2 border-b border-slate-200">
-                                        <p className="font-bold text-sm text-slate-800 truncate">{profile?.full_name}</p>
-                                        <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
+                                <div className="absolute right-0 mt-2 w-56 bg-surface border border-border-main rounded-lg shadow-lg py-1 z-30 animate-content-fade-in">
+                                    <div className="px-4 py-2 border-b border-border-main">
+                                        <p className="font-bold text-sm text-text-header truncate">{profile?.full_name}</p>
+                                        <p className="text-xs text-text-muted flex items-center gap-1.5 mt-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                                             <span className="font-bold">{profile?.credits ?? 0}</span> Token
                                         </p>
                                     </div>
-                                    <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 flex items-center gap-3 transition-colors">Dashboard</button>
-                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors">Tentang Aplikasi</button>
-                                    <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors">Traktir Kopi</a>
-                                    <div className="border-t border-slate-200 my-1"></div>
-                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors">Pengaturan & Lencana</button>
-                                    <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">Logout</button>
+                                    <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors">Dashboard</button>
+                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</button>
+                                    <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Traktir Kopi</a>
+                                    <div className="border-t border-border-main my-1"></div>
+                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</button>
+                                    <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">Logout</button>
                                 </div>
                             )}
                         </div>
@@ -742,7 +425,7 @@ const MainApp: React.FC = () => {
                     )}
                 </div>
             </main>
-             <footer className="text-center py-6 px-4 text-sm text-slate-500 border-t border-slate-200">Powered by Atharrazka Core. Built for UMKM Indonesia.</footer>
+             <footer className="text-center py-6 px-4 text-sm text-text-muted border-t border-border-main">Powered by Atharrazka Core. Built for UMKM Indonesia.</footer>
             <AdBanner />
             <AiAssistant appState={appState} />
             <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />

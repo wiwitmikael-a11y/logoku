@@ -27,7 +27,7 @@ const Input: React.FC<InputProps> = ({ label, name, className, ...props }) => {
 
   return (
     <div className={className}>
-      <label htmlFor={name} className="block mb-1.5 text-sm font-medium text-slate-600">
+      <label htmlFor={name} className="block mb-1.5 text-sm font-medium text-text-muted">
         {label}
       </label>
       <input
@@ -36,7 +36,7 @@ const Input: React.FC<InputProps> = ({ label, name, className, ...props }) => {
         {...props}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
-        className="w-full px-3 py-2 text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors"
+        className="w-full px-3 py-2 text-text-body bg-surface border border-border-main rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
       />
     </div>
   );
