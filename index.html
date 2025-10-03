@@ -1191,7 +1191,7 @@
         padding: 2px; /* This creates the border thickness */
         border-radius: 1rem; /* Matches the inner card's rounded-2xl */
         overflow: hidden;
-        z-index: 0; /* Stacking context */
+        isolation: isolate; /* Creates a stacking context cleanly */
       }
       /* NEW: Modifier for fully rounded elements */
       .rgb-laser-wrapper.rounded-full {

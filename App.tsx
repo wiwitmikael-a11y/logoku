@@ -925,7 +925,7 @@ const MainApp: React.FC = () => {
                                     <span className="font-bold text-sm text-white">{profile?.credits ?? 0}</span>
                                 </button>
                                 {isTokenInfoOpen && (
-                                    <div className="absolute top-full right-0 mt-2 w-72 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-20 text-xs animate-content-fade-in">
+                                    <div className="absolute top-full right-0 mt-2 w-72 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-3 z-30 text-xs animate-content-fade-in">
                                         <p className="font-bold text-white mb-1">Aturan Token Harian (Anti Rugi!)</p>
                                         <p className="text-gray-300">
                                             Dapet <span className="text-yellow-300">20 token</span> pas daftar. Tiap hari, kalo token lo di bawah 5, Mang AI bakal <span className="text-yellow-300">isiin lagi sampe jadi 5</span>. Bonus & sisa token lo aman, nggak bakal hangus!
@@ -950,7 +950,7 @@ const MainApp: React.FC = () => {
                                     />
                                 </button>
                                 {isUserMenuOpen && (
-                                    <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-20 animate-content-fade-in">
+                                    <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg py-1 z-30 animate-content-fade-in">
                                         <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Dashboard</button>
                                         <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-3 transition-colors">Tentang Aplikasi</button>
                                         <div className="border-t border-gray-700 my-1"></div>
