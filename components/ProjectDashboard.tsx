@@ -42,7 +42,7 @@ const DynamicInfoBox: React.FC = () => {
     const currentTip = DYNAMIC_INFO_TIPS[currentTipIndex];
 
     return (
-        <div key={currentTipIndex} className="w-full max-w-3xl bg-surface border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-sm">
+        <div key={currentTipIndex} className="w-full max-w-3xl bg-surface border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-lg shadow-black/20">
             <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
             <div>
                 <h4 className="font-bold text-primary">{currentTip.title}</h4>
@@ -91,8 +91,8 @@ const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGa
 
     return (
         <div className="w-full text-center mt-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-header">Podium Juara Pameran Brand 🏆</h2>
-            <div className="group relative bg-surface/80 backdrop-blur-sm border border-border-main rounded-xl p-6 hover:border-primary/50 transition-colors cursor-pointer overflow-hidden" onClick={onShowGallery} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.1) 0%, transparent 60%)' }}>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Podium Juara Pameran Brand 🏆</h2>
+            <div className="group relative bg-surface/80 backdrop-blur-sm border border-border-main rounded-xl p-6 hover:border-primary/50 transition-colors cursor-pointer overflow-hidden shadow-lg shadow-black/20" onClick={onShowGallery} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.05) 0%, transparent 60%)' }}>
                 {isLoading ? (<div className="h-40 flex items-center justify-center"><LoadingMessage /></div>) : 
                 topProjects.length === 0 ? (
                     <div className="h-40 flex flex-col items-center justify-center">
@@ -106,8 +106,8 @@ const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGa
                         {third && <PodiumCard project={third} rank={3} delay={0.4} />}
                     </div>
                 )}
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl">
-                    <p className="font-bold text-white text-lg animate-pulse">Lihat Semua Pameran &rarr;</p>
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl">
+                    <p className="font-bold text-white text-lg animate-pulse" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.1em'}}>Lihat Semua Pameran &rarr;</p>
                 </div>
             </div>
         </div>
@@ -115,11 +115,11 @@ const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGa
 };
 
 const DeleteButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
-  <button onClick={onClick} className="absolute top-3 right-12 z-10 p-1.5 rounded-full text-slate-400 hover:bg-red-500/20 hover:text-red-400 transition-colors" title="Hapus Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm4 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" /></svg></button>
+  <button onClick={onClick} className="absolute top-3 right-12 z-10 p-1.5 rounded-full text-text-muted hover:bg-red-500/20 hover:text-red-400 transition-colors" title="Hapus Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm4 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" /></svg></button>
 );
 
 const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
-  <button onClick={onClick} className="absolute top-3 right-3 z-10 p-1.5 rounded-full text-slate-400 hover:bg-background hover:text-text-body transition-colors" title="Lihat & Edit Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg></button>
+  <button onClick={onClick} className="absolute top-3 right-3 z-10 p-1.5 rounded-full text-text-muted hover:bg-background hover:text-text-body transition-colors" title="Lihat & Edit Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg></button>
 );
 
 const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
@@ -142,19 +142,18 @@ interface TemplateCardProps {
 }
 
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => (
-  <div onClick={() => onClick(template.data)} className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg transition-transform duration-300 hover:scale-105">
+  <div onClick={() => onClick(template.data)} className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg shadow-black/30 transition-transform duration-300 hover:scale-105">
     <img src={template.imageUrl} alt={template.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-    <div className="absolute bottom-0 left-0 p-4 text-white"><h4 className="text-lg font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4></div>
+    <div className="absolute bottom-0 left-0 p-4 text-white"><h4 className="text-xl font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4></div>
     <div className="absolute bottom-0 left-0 w-full p-4 bg-black/70 backdrop-blur-sm text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
-      <h4 className="text-lg font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4>
+      <h4 className="text-xl font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4>
       <p className="text-xs mt-1 mb-3 text-slate-300">{template.description}</p>
       <p className="text-sm font-semibold text-splash">Gunakan Template &rarr;</p>
     </div>
   </div>
 );
 
-// FIX: Corrected component signature to accept `ProjectDashboardProps`, include `onShowBrandGallery` in destructuring, and use it correctly.
 const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -197,7 +196,7 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
             </div>
             
             <div className="w-full text-center mt-6">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 mt-2 text-text-header">Atau Pake Jalan Pintas 🚀</h2>
+                <h2 className="text-4xl md:text-5xl font-bold mb-4 mt-2 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Atau Pake Jalan Pintas 🚀</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">{templates.map(t => (<TemplateCard key={t.name} template={t} onClick={onNewProject} />))}</div>
             </div>
 
@@ -205,11 +204,11 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
 
             {inProgressProjects.length > 0 && (
                 <div className="w-full text-left">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-header">Project yang Sedang Dikerjakan:</h2>
+                <h2 className="text-4xl md:text-5xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project yang Sedang Dikerjakan:</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {inProgressProjects.map(project => (
                         <div key={project.id} className="relative group">
-                            <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-2">{project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}</span></>} onClick={() => onSelectProject(project.id)}>
+                            <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-20">{project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}</span></>} onClick={() => onSelectProject(project.id)}>
                               <div className="pr-12">
                                 <p className="text-sm text-text-muted min-h-[40px] italic">{getProgressDescription(project)}</p>
                                 <div className="mt-4 pt-4 border-t border-border-main"><p className="text-xs text-text-muted">Klik untuk lanjut...</p></div>
@@ -224,15 +223,15 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
 
             {completedProjects.length > 0 && (
                 <div className="w-full text-left mt-8">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-header">Project Selesai:</h2>
+                <h2 className="text-4xl md:text-5xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project Selesai (Brand Hub):</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {completedProjects.map(project => (
                         <div key={project.id} className="relative group">
-                            <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-2">{project.project_data.brandInputs.businessName}</span></>} onClick={() => onSelectProject(project.id)}>
+                            <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-20">{project.project_data.brandInputs.businessName}</span></>} onClick={() => onSelectProject(project.id)}>
                               <div className="space-y-3 pr-12">
                                 <p className="text-sm text-primary italic">"{project.project_data.selectedSlogan}"</p>
                                 <div className="flex items-center gap-4 pt-2 border-t border-border-main">
-                                    <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-surface p-1 border" loading="lazy" />
+                                    <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-surface p-1 border border-border-light" loading="lazy" />
                                     <p className="text-sm text-text-body"><span className="font-semibold text-text-header">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
                                 </div>
                                 <p className="text-xs text-text-muted pt-2 border-t border-border-main">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
@@ -262,7 +261,7 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
 
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
-  const userName = session?.user?.user_metadata?.full_name || 'Bro';
+  const userName = session?.user?.user_metadata?.full_name?.split(' ')[0] || 'Juragan';
   const [activeTab, setActiveTab] = useState<'projects' | 'forum' | 'tools' | 'juragan'>('projects');
   
   useEffect(() => {
@@ -275,15 +274,15 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Selamat Datang, {userName}!</h2>
+        <h2 className="text-5xl md:text-6xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Selamat Datang, {userName}!</h2>
         <p className="text-text-muted max-w-3xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain di WarKop Juragan.</p>
       </div>
 
       <div className="flex justify-center border-b border-border-main">
-        <button onClick={() => setActiveTab('projects')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-body'}`}>🚀 Project Saya</button>
-        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-body'}`}>☕ WarKop Juragan</button>
-        <button onClick={() => setActiveTab('tools')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-body'}`}>💡 Warung Ide</button>
-        <button onClick={() => setActiveTab('juragan')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'juragan' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-body'}`}>🏆 Pusat Juragan</button>
+        <button onClick={() => setActiveTab('projects')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>🚀 Project Saya</button>
+        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>☕ WarKop Juragan</button>
+        <button onClick={() => setActiveTab('tools')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>💡 Warung Ide</button>
+        <button onClick={() => setActiveTab('juragan')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'juragan' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>🏆 Pusat Juragan</button>
       </div>
       
       <div className="mt-4">

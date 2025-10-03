@@ -17,20 +17,23 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, error: undefined, isCopied: false };
+  // FIX: Using state as a class property instead of in the constructor. This is a more modern syntax
+  // and can sometimes resolve issues with how 'this' is interpreted by TypeScript tooling.
+  public state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
+
+  public static getDerivedStateFromError(error: Error): Partial<State> {
+    return { hasError: true, error: error };
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, isCopied: false };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  handleCopy = () => {
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -38,7 +41,7 @@ class ErrorBoundary extends Component<Props, State> {
     }
   };
 
-  render(): ReactNode {
+  public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
@@ -46,11 +49,11 @@ class ErrorBoundary extends Component<Props, State> {
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking very concerned"
-                className="w-24 h-24 object-contain filter grayscale opacity-80"
+                className="w-24 h-24 object-contain"
                 style={imgStyle}
             />
             <div className="flex-1">
-                <h1 className="font-bold text-red-500 text-2xl mb-2">Waduh, Aplikasinya Error!</h1>
+                <h1 className="font-bold text-red-400 text-2xl mb-2">Waduh, Aplikasinya Error!</h1>
                 <p className="text-red-300 mb-4">
                     Mang AI pusing, ada yang rusak di dalam aplikasi. Coba refresh halaman ini. Kalau masih error, mungkin Mang AI lagi istirahat dulu.
                 </p>

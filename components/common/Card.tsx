@@ -9,13 +9,9 @@ interface CardProps {
   onClick?: () => void;
   isSelected?: boolean;
   className?: string;
-  // FIX: Added style prop to allow passing inline styles for animations.
   style?: React.CSSProperties;
 }
 
-// FIX: Converted component to use React.forwardRef to accept `ref` and `style` props.
-// This resolves TypeScript errors where these props were passed for scrolling and animations
-// but not defined in the original component signature.
 const Card = React.forwardRef<HTMLDivElement, CardProps>(({ title, children, onClick, isSelected, className, style }, ref) => {
   
   const handleClick = async () => {
@@ -39,17 +35,17 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(({ title, children, onC
       style={style}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      className={`bg-surface border rounded-xl shadow-sm overflow-hidden transition-all duration-300 ${className} 
+      className={`bg-surface border rounded-xl shadow-lg shadow-black/20 overflow-hidden transition-all duration-300 ${className} 
       ${
         onClick ? 'cursor-pointer active:scale-[0.99]' : ''
       } ${
         isSelected
-          ? 'border-primary ring-2 ring-primary/30'
-          : 'border-border-main hover:border-border-light hover:shadow-md'
+          ? 'border-primary ring-4 ring-primary/30'
+          : 'border-border-main hover:border-primary/50 hover:-translate-y-1'
       }`}
     >
       <div className="p-4 sm:p-5">
-        <h3 className="text-xl font-bold text-text-header mb-4">{title}</h3>
+        <h3 className="text-2xl font-bold text-text-header mb-4" style={{ fontFamily: 'var(--font-display)' }}>{title}</h3>
         <div>{children}</div>
       </div>
     </div>

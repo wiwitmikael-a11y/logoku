@@ -22,7 +22,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, onGoToDashboard })
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking confused"
-                className="w-16 h-16 object-contain filter grayscale opacity-80 flex-shrink-0"
+                className="w-16 h-16 object-contain flex-shrink-0"
                 style={{ imageRendering: 'pixelated' }}
             />
             <div className="flex-1">

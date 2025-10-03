@@ -40,7 +40,7 @@ const LoadingMessage: React.FC = () => {
     return (
         <div className="flex items-center justify-center">
             <Spinner />
-            <span className="text-primary">{message}</span>
+            <span className="text-splash">{message}</span>
         </div>
     );
 };

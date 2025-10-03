@@ -19,7 +19,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
             <img
             src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
             alt="Mang AI character"
-            className="w-40 h-40 absolute bottom-0 left-1/2 -translate-x-1/2 animate-breathing-ai"
+            className="w-40 h-40 absolute bottom-0 left-1/2 -translate-x-1/2 animate-breathing-ai drop-shadow-lg"
             style={{ imageRendering: 'pixelated' }}
             />
         </div>
@@ -32,7 +32,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
         </div>
 
         <p className="text-text-body mb-8 max-w-lg mx-auto">
-          Lupakan pusingnya mikirin desain. Mang AI hadir sebagai partner setia lo! Dalam hitungan menit, kita bakal sulap ide lo jadi <strong>paket branding lengkap</strong>: dari logo, persona, social media kit, sampai konten siap posting.
+          Lupakan pusingnya mikirin desain. Mang AI hadir sebagai partner setia lo! Dalam hitungan menit, kita bakal sulap ide lo jadi <strong className="text-text-header">paket branding lengkap</strong>: dari logo, persona, social media kit, sampai konten siap posting.
         </p>
         
         <div className="flex flex-col items-center gap-4">

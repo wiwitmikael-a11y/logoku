@@ -41,16 +41,14 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
     playSound('hover');
   }
   
-  const baseClasses = "relative inline-flex items-center justify-center gap-2 font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed transition-all duration-200 ease-in-out overflow-hidden";
+  const baseClasses = "relative inline-flex items-center justify-center gap-2 font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed transition-all duration-200 ease-in-out overflow-hidden transform hover:-translate-y-0.5 active:translate-y-0";
   
   const variantClasses = {
-    primary: "text-white bg-primary shadow-sm hover:bg-primary-hover focus:ring-primary disabled:bg-primary/50",
-    secondary: "text-text-body bg-surface border border-border-main hover:bg-background focus:ring-primary disabled:bg-background disabled:text-text-muted",
-    accent: "text-white bg-accent shadow-sm hover:bg-accent-hover focus:ring-accent disabled:bg-accent/50",
-    splash: "text-white bg-splash shadow-sm hover:bg-splash-hover focus:ring-splash disabled:bg-splash/50 btn-splash-hover z-0",
+    primary: "text-white bg-primary shadow-lg shadow-sky-500/20 hover:bg-primary-hover focus:ring-primary disabled:bg-primary/50",
+    secondary: "text-text-body bg-surface border border-border-main hover:bg-background hover:border-border-light focus:ring-primary disabled:bg-background disabled:text-text-muted",
+    accent: "text-white bg-accent shadow-lg shadow-orange-500/20 hover:bg-accent-hover focus:ring-accent disabled:bg-accent/50",
+    splash: "text-white bg-splash shadow-lg shadow-fuchsia-500/30 hover:bg-splash-hover focus:ring-splash disabled:bg-splash/50 btn-splash-hover z-0",
   };
-
-  const currentVariant = variant === 'accent' ? 'splash' : variant;
   
   const sizeClasses = {
     small: "px-4 py-2 text-sm",
@@ -64,7 +62,7 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       disabled={isLoading || props.disabled}
-      className={`${baseClasses} ${variantClasses[currentVariant]} ${sizeClasses[size]} ${props.className || ''}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${props.className || ''}`}
     >
       {isLoading && (
         <img

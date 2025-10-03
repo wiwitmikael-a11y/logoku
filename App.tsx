@@ -147,7 +147,7 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
                         <div className="flex flex-col gap-2 items-start animate-content-fade-in">
                             <p className="text-sm text-text-muted mb-1">Contoh pertanyaan:</p>
                             {promptStarters.map(prompt => (
-                                <button key={prompt} onClick={() => handleSendMessage(undefined, prompt)} className="bg-background border border-border-main text-text-body px-3 py-1.5 rounded-lg text-sm text-left hover:bg-border-main transition-colors">
+                                <button key={prompt} onClick={() => handleSendMessage(undefined, prompt)} className="bg-background border border-border-main text-text-body px-3 py-1.5 rounded-lg text-sm text-left hover:bg-border-light transition-colors">
                                     {prompt}
                                 </button>
                             ))}
@@ -169,7 +169,7 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
 };
 
 const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> = ({ theme, onToggle }) => (
-    <button onClick={onToggle} title="Ganti Tema" className="p-2 rounded-full text-text-muted hover:bg-background hover:text-text-header transition-colors">
+    <button onClick={onToggle} title="Ganti Tema" className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
         <div className="w-6 h-6 relative">
             {/* Sun */}
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`absolute inset-0 transition-all duration-300 ${theme === 'dark' ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
@@ -189,7 +189,7 @@ const App: React.FC = () => {
 const MainApp: React.FC = () => {
     const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstStepXp, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits } = useAuth();
     
-    const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'light');
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(() => {
         const id = sessionStorage.getItem('desainfun_project_id');
@@ -381,31 +381,31 @@ const MainApp: React.FC = () => {
         <div className="min-h-screen bg-background text-text-body">
             <header className="py-3 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <h1 className="text-2xl md:text-3xl font-extrabold tracking-wider cursor-pointer" onClick={handleReturnToDashboard} style={{fontFamily: 'var(--font-display)'}}>
+                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-wider cursor-pointer transition-transform hover:scale-105" onClick={handleReturnToDashboard} style={{fontFamily: 'var(--font-display)'}}>
                         <span className="text-primary">desain</span><span className="text-text-header">.fun</span>
                     </h1>
-                    <div className="flex items-center gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <ThemeToggle theme={theme} onToggle={toggleTheme} />
                         <div ref={userMenuRef} className="relative">
-                            <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-2 bg-background hover:bg-border-main transition-colors">
+                            <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-3 bg-background hover:bg-border-light transition-colors border border-transparent hover:border-border-main">
                                 <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
-                                <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full" />
+                                <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full border-2 border-border-main" />
                             </button>
                             {isUserMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-56 bg-surface border border-border-main rounded-lg shadow-lg py-1 z-30 animate-content-fade-in">
+                                <div className="absolute right-0 mt-2 w-60 bg-surface/80 backdrop-blur-lg border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in">
                                     <div className="px-4 py-3 border-b border-border-main">
                                         <p className="font-bold text-sm text-text-header truncate">{profile?.full_name}</p>
                                         <p className="text-xs text-text-muted flex items-center gap-1.5 mt-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
-                                            <span className="font-bold">{profile?.credits ?? 0}</span> Token
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                                            <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span> <span className="text-text-muted">Token</span>
                                         </p>
                                     </div>
-                                    <button onClick={handleRequestReturnToDashboard} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors">Dashboard</button>
-                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</button>
+                                    <a onClick={handleRequestReturnToDashboard} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors">Dashboard</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</a>
                                     <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Traktir Kopi</a>
                                     <div className="border-t border-border-main my-1"></div>
-                                    <button onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</button>
-                                    <button onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">Logout</button>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
+                                    <a onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">Logout</a>
                                 </div>
                             )}
                         </div>

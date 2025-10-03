@@ -54,8 +54,8 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
                      <li><strong className="text-text-header">Asisten Pribadi Mang AI:</strong> Bingung? Tanya aja langsung ke Mang AI lewat tombol di pojok kanan bawah.</li>
                  </ul>
             </div>
-             <p className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
-                <strong className="text-red-300">PENTING BANGET:</strong> Aplikasi ini menyimpan data teks project lo, tapi <strong className="text-white bg-red-500/80 px-1 rounded">TIDAK MENYIMPAN FILE GAMBAR DI CLOUD.</strong> Jadi, Mang AI saranin banget, <strong className="text-white bg-red-500/80 px-1 rounded">setiap aset (logo, gambar, dll) yang udah lo generate, langsung diunduh ya!</strong> Developer nggak nanggung kalo ada data yang ilang. Oke, Juragan?
+             <p className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300">
+                <strong className="text-red-200">PENTING BANGET:</strong> Aplikasi ini menyimpan data teks project lo, tapi <strong className="text-white bg-red-500/80 px-1 rounded">TIDAK MENYIMPAN FILE GAMBAR DI CLOUD.</strong> Jadi, Mang AI saranin banget, <strong className="text-white bg-red-500/80 px-1 rounded">setiap aset (logo, gambar, dll) yang udah lo generate, langsung diunduh ya!</strong> Developer nggak nanggung kalo ada data yang ilang. Oke, Juragan?
             </p>
             <div className="pt-3 border-t border-border-main space-y-3">
                  <h3 className="font-bold text-primary text-lg" style={{fontFamily: 'var(--font-display)'}}>Rencana ke Depan:</h3>

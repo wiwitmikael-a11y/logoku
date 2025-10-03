@@ -2,10 +2,9 @@ import React from 'react';
 
 const SaweriaWidget: React.FC = () => {
   const supporters = [ { name: 'Juragan Kopi Sachet', amount: 'Rp 10.000', emoji: '✨' }, { name: 'Sultan Skincare', amount: 'Rp 50.000', emoji: '🔥' }, { name: 'Ratu Frozen Food', amount: 'Rp 25.000', emoji: '🧊' }, { name: 'CEO Keripik Level 30', amount: 'Rp 15.000', emoji: '🌶️' }, { name: 'Owner Distro Keren', amount: 'Rp 30.000', emoji: '👕' }, { name: 'Bos Ayam Geprek', amount: 'Rp 20.000', emoji: '🍗' }, ];
-  const displaySupporters = [...supporters, ...supporters];
 
   return (
-    <div className="w-full p-6 bg-surface border border-border-main rounded-xl text-center shadow-sm">
+    <div className="w-full p-6 bg-surface border border-border-main rounded-xl text-center shadow-lg shadow-black/20">
       <h3 className="text-4xl font-bold text-splash mb-4" style={{fontFamily: 'var(--font-hand)'}}>Dukungan dari Juragan Baik Hati!</h3>
       <p className="text-text-muted mb-6 max-w-2xl mx-auto text-sm"> Setiap traktiran kopi jadi bahan bakar buat Mang AI biar makin pinter. Makasih banyak, ya! Sehat dan lancar terus rezekinya! </p>
       

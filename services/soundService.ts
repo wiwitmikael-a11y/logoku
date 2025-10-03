@@ -90,7 +90,7 @@ export const playSound = (soundName: SoundName): void => {
     const sound = getAudio(soundUrls[soundName]);
     // Reduce volume specifically for the bounce sound
     if (soundName === 'bounce') {
-      sound.volume = 0.1; // Reduced volume for the loading bounce
+      sound.volume = 0.2; // Reduced volume for the loading bounce
     } else {
       sound.volume = 0.5;
     }
