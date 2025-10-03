@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Use `import * as React from 'react'` to ensure correct type resolution for React class components, which resolves issues where `props` and `setState` are not found.
+// Use `import * as React from 'react'` to ensure correct type resolution for React class components.
 import * as React from 'react';
 import Button from './Button';
 
@@ -17,7 +17,8 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: Extend `React.Component` to make this a proper class component. This provides access to `this.props` and `this.setState`, fixing the errors.
+// FIX: The class was not extending `React.Component`, which is necessary for a class component.
+// This provides access to `this.props` and `this.setState`, fixing the errors.
 class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
@@ -37,9 +38,7 @@ class ErrorBoundary extends React.Component<Props, State> {
   handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
-      // FIX: `setState` must be called on `this` in a class component.
       this.setState({ isCopied: true });
-      // FIX: `setState` must be called on `this` in a class component.
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
@@ -64,9 +63,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()}>
                         Refresh Halaman
                     </Button>
-                    {/* FIX: `props` must be accessed via `this.props` in a class component. */}
                     {this.props.onReset && (
-                        // FIX: `props` must be accessed via `this.props` in a class component.
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
                         </Button>
@@ -88,7 +85,6 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: `props` must be accessed via `this.props` in a class component.
     return this.props.children;
   }
 }

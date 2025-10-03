@@ -338,7 +338,7 @@ const Forum: React.FC = () => {
                                 );
                             })}
                              
-                             {user && selectedThread.id !== '0' && (
+                             {user && (
                                 <div className="mt-6 pt-6 border-t border-indigo-700/50">
                                     <h3 className="font-bold text-lg mb-2 text-white">Kasih Balasan</h3>
                                     <Textarea label="" name="newPostContent" value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder="Ketik balasanmu di sini..." rows={4} />
