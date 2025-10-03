@@ -11,7 +11,7 @@ import ErrorMessage from './common/ErrorMessage';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
 
-const THREADS_PAGE_SIZE = 20;
+const THREADS_PAGE_SIZE = 10;
 const POSTS_PAGE_SIZE = 50;
 const POST_COOLDOWN_SECONDS = 30; // Cooldown in seconds
 
@@ -111,7 +111,7 @@ const getOfficialDisplayData = (profile: { full_name?: string | null, avatar_url
 
 // --- Main Forum Component ---
 const Forum: React.FC = () => {
-    const { user, profile } = useAuth();
+    const { user, profile, addXp } = useAuth();
     const [view, setView] = useState<ForumView>('list');
     const [threads, setThreads] = useState<ForumThread[]>([]);
     const [selectedThread, setSelectedThread] = useState<ForumThread | null>(null);
@@ -132,6 +132,86 @@ const Forum: React.FC = () => {
     const [isLoadingMoreThreads, setIsLoadingMoreThreads] = useState(false);
     const [hasMoreThreads, setHasMoreThreads] = useState(true);
 
+    const fetchThreads = useCallback(async (pageNum: number) => {
+        if (pageNum === 0) setIsLoadingThreads(true);
+        else setIsLoadingMoreThreads(true);
+        setError(null);
+        
+        const from = pageNum * THREADS_PAGE_SIZE;
+        const to = from + THREADS_PAGE_SIZE - 1;
+
+        try {
+            const { data, error: rpcError, count } = await supabase
+                .rpc('get_threads_with_reply_count', {}, { count: 'exact' })
+                .order('last_activity', { ascending: false })
+                .range(from, to);
+
+            if (rpcError) throw rpcError;
+
+            // Map profiles data correctly
+            const formattedData = data.map((d: any) => ({
+                ...d,
+                profiles: d.profiles_data
+            }));
+            
+            setThreads(prev => pageNum === 0 ? formattedData : [...prev, ...formattedData]);
+            setHasMoreThreads(formattedData.length === THREADS_PAGE_SIZE);
+
+        } catch (err) {
+            setError(err instanceof Error ? `Gagal memuat topik: ${err.message}` : 'Terjadi kesalahan tidak diketahui.');
+        } finally {
+            setIsLoadingThreads(false);
+            setIsLoadingMoreThreads(false);
+        }
+    }, []);
+    
+    const handleLoadMoreThreads = () => {
+        const nextPage = threadsPage + 1;
+        setThreadsPage(nextPage);
+        fetchThreads(nextPage);
+    };
+
+    const fetchPosts = useCallback(async (threadId: string) => {
+        setIsLoadingPosts(true);
+        setPosts([]);
+        try {
+            const { data, error: postsError } = await supabase
+                .from('posts')
+                .select('*, profiles(full_name, avatar_url)')
+                .eq('thread_id', threadId)
+                .order('created_at', { ascending: true })
+                .limit(POSTS_PAGE_SIZE);
+
+            if (postsError) throw postsError;
+            setPosts(data as ForumPost[]);
+
+        } catch(err) {
+            setError(err instanceof Error ? `Gagal memuat balasan: ${err.message}` : 'Terjadi kesalahan tidak diketahui.');
+        } finally {
+            setIsLoadingPosts(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (view === 'list') {
+            fetchThreads(0);
+        }
+        if (view === 'thread' && selectedThread && selectedThread.id !== '0') {
+            fetchPosts(selectedThread.id);
+        }
+        if (view === 'new_thread') {
+            const preload = sessionStorage.getItem('forumPreload');
+            if (preload) {
+                try {
+                    const { title, content } = JSON.parse(preload);
+                    setNewThreadTitle(title);
+                    setNewThreadContent(content);
+                } catch (e) { console.error("Failed to parse forum preload data"); }
+                sessionStorage.removeItem('forumPreload');
+            }
+        }
+    }, [view, selectedThread, fetchThreads, fetchPosts]);
+
 
     useEffect(() => {
         if (cooldown > 0) {
@@ -140,30 +220,129 @@ const Forum: React.FC = () => {
         }
     }, [cooldown]);
 
-    // This is a placeholder implementation to fix compilation errors
-    // due to the original file being truncated.
+    const handleCreateThread = async () => {
+        if (!user || !profile || !newThreadTitle.trim() || !newThreadContent.trim()) return;
+        setIsSubmitting(true);
+        setError(null);
+        try {
+            const { data, error: insertError } = await supabase
+                .from('threads')
+                .insert({ user_id: user.id, title: newThreadTitle, content: newThreadContent })
+                .select()
+                .single();
+            if (insertError) throw insertError;
+            
+            await addXp(20); // +20 XP for new thread
+            setCooldown(POST_COOLDOWN_SECONDS);
+            setNewThreadTitle('');
+            setNewThreadContent('');
+            setView('list'); // Go back to list, which will trigger a refetch
+
+        } catch (err) {
+            setError(err instanceof Error ? `Gagal bikin topik: ${err.message}` : 'Terjadi kesalahan.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
+    const handleCreatePost = async () => {
+        if (!user || !profile || !selectedThread || !newPostContent.trim()) return;
+        setIsSubmitting(true);
+        setError(null);
+        try {
+            const { data, error: insertError } = await supabase
+                .from('posts')
+                .insert({ user_id: user.id, thread_id: selectedThread.id, content: newPostContent })
+                .select()
+                .single();
+            if (insertError) throw insertError;
+
+            await addXp(5); // +5 XP for reply
+            setCooldown(POST_COOLDOWN_SECONDS);
+
+            // Optimistic UI update
+            const newPost: ForumPost = { ...data, profiles: { full_name: profile.full_name || '', avatar_url: profile.avatar_url || '' }};
+            setPosts(prev => [...prev, newPost]);
+            setNewPostContent('');
+
+        } catch (err) {
+            setError(err instanceof Error ? `Gagal bales: ${err.message}` : 'Terjadi kesalahan.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const renderView = () => {
         switch (view) {
             case 'thread':
+                if (!selectedThread) return <LoadingMessage />;
+                const threadAuthor = getOfficialDisplayData(selectedThread.profiles);
                 return (
-                    <div>
-                        <Button onClick={() => setView('list')}>&larr; Kembali ke Daftar Topik</Button>
-                        <Card title={selectedThread?.title || 'Loading...'}>
-                            {isLoadingPosts ? <LoadingMessage /> : <p>No posts yet.</p>}
+                    <div className="space-y-4">
+                        <Button onClick={() => setView('list')} variant="secondary" size="small">&larr; Kembali ke Daftar Topik</Button>
+                        <Card title={selectedThread.title}>
+                            <div className="border-b border-gray-700 pb-4 mb-4">
+                                <div className="flex items-start gap-3">
+                                    <img src={threadAuthor.avatar} alt="avatar" className="w-10 h-10 rounded-full" />
+                                    <div>
+                                        <p className={`font-bold ${threadAuthor.isOfficial ? 'text-indigo-400' : 'text-white'}`}>{threadAuthor.name}</p>
+                                        <p className="text-xs text-gray-500">{formatRelativeTime(selectedThread.created_at)}</p>
+                                    </div>
+                                </div>
+                                <p className="mt-3 text-gray-300 whitespace-pre-wrap selectable-text">{selectedThread.content}</p>
+                            </div>
+
+                            {isLoadingPosts ? <LoadingMessage /> : posts.map(post => {
+                                const postAuthor = getOfficialDisplayData(post.profiles);
+                                return (
+                                    <div key={post.id} className="flex items-start gap-3 py-3 border-b border-gray-800 last:border-b-0">
+                                        <img src={postAuthor.avatar} alt="avatar" className="w-8 h-8 rounded-full" />
+                                        <div className="flex-grow">
+                                            <div className="flex items-baseline gap-2">
+                                                <p className={`font-semibold text-sm ${postAuthor.isOfficial ? 'text-indigo-400' : 'text-white'}`}>{postAuthor.name}</p>
+                                                <p className="text-xs text-gray-500">{formatRelativeTime(post.created_at)}</p>
+                                            </div>
+                                            <p className="mt-1 text-sm text-gray-300 whitespace-pre-wrap selectable-text">{post.content}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                             {user && (
+                                <div className="mt-6 pt-6 border-t border-indigo-700/50">
+                                    <h3 className="font-bold text-lg mb-2 text-white">Kasih Balasan</h3>
+                                    <Textarea label="" name="newPostContent" value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder="Ketik balasanmu di sini..." rows={4} />
+                                    <div className="mt-3 flex items-center gap-4">
+                                        <Button onClick={handleCreatePost} isLoading={isSubmitting} disabled={cooldown > 0 || !newPostContent.trim() || isSubmitting}>
+                                            {cooldown > 0 ? `Tunggu ${cooldown} detik lagi...` : 'Kirim Balasan'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </Card>
                     </div>
                 );
             case 'new_thread':
                 return (
                      <div>
-                        <Button onClick={() => setView('list')}>&larr; Batal</Button>
+                        <Button onClick={() => setView('list')} variant="secondary" size="small">&larr; Batal</Button>
                         <Card title="Bikin Topik Baru">
-                           <p>New thread form will be here.</p>
+                           <div className="space-y-4">
+                                <Input label="Judul Topik" name="newThreadTitle" value={newThreadTitle} onChange={(e) => setNewThreadTitle(e.target.value)} placeholder="Judul yang menarik perhatian..." />
+                                <Textarea label="Isi Topik" name="newThreadContent" value={newThreadContent} onChange={(e) => setNewThreadContent(e.target.value)} placeholder="Ceritain unek-unek atau pertanyaan lo di sini..." rows={8} />
+                                <div className="flex items-center gap-4">
+                                    <Button onClick={handleCreateThread} isLoading={isSubmitting} disabled={cooldown > 0 || !newThreadTitle.trim() || !newThreadContent.trim() || isSubmitting}>
+                                        {cooldown > 0 ? `Tunggu ${cooldown} detik lagi...` : 'Posting Topik!'}
+                                    </Button>
+                                    {cooldown > 0 && <p className="text-sm text-gray-400">Harap tunggu untuk posting lagi.</p>}
+                                </div>
+                           </div>
                         </Card>
                     </div>
                 );
             case 'list':
             default:
+                const allThreads = [MANG_AI_WELCOME_THREAD, ...threads];
                 return (
                     <div>
                         <WarKopInfoBox />
@@ -173,26 +352,37 @@ const Forum: React.FC = () => {
                                 + Bikin Topik Baru
                             </Button>
                         </div>
-                        {isLoadingThreads ? <ThreadListSkeleton /> : (
+                        {isLoadingThreads && threads.length === 0 ? <ThreadListSkeleton /> : (
                             <div className="space-y-2">
-                                {/* Welcome thread is manually added */}
-                                <div
-                                    className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-700/50"
-                                    onClick={() => { setSelectedThread(MANG_AI_WELCOME_THREAD); setView('thread'); }}
-                                >
-                                    <img src={MANG_AI_WELCOME_THREAD.profiles?.avatar_url || ''} alt="avatar" className="w-10 h-10 rounded-full flex-shrink-0" />
-                                    <div className="flex-grow">
-                                        <p className="font-bold text-indigo-300">{MANG_AI_WELCOME_THREAD.title}</p>
-                                        <p className="text-xs text-gray-400">
-                                            oleh <span className="font-semibold">{MANG_AI_WELCOME_THREAD.profiles?.full_name}</span> • {formatRelativeTime(MANG_AI_WELCOME_THREAD.created_at)}
-                                        </p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="font-bold text-white">{MANG_AI_WELCOME_THREAD.reply_count || 0}</p>
-                                        <p className="text-xs text-gray-500">Balasan</p>
-                                    </div>
-                                </div>
-                                <p className="text-center text-gray-500 text-sm">No other threads yet.</p>
+                                {allThreads.map(thread => {
+                                    const author = getOfficialDisplayData(thread.profiles);
+                                    return(
+                                        <div
+                                            key={thread.id}
+                                            className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-colors"
+                                            onClick={() => { setSelectedThread(thread); setView('thread'); }}
+                                        >
+                                            <img src={author.avatar} alt="avatar" className="w-10 h-10 rounded-full flex-shrink-0" />
+                                            <div className="flex-grow overflow-hidden">
+                                                <p className={`font-bold truncate ${author.isOfficial ? 'text-indigo-300' : 'text-white'}`}>{thread.title}</p>
+                                                <p className="text-xs text-gray-400">
+                                                    oleh <span className={`font-semibold ${author.isOfficial ? 'text-indigo-300' : ''}`}>{author.name}</span> • {formatRelativeTime(thread.created_at)}
+                                                </p>
+                                            </div>
+                                            <div className="text-center flex-shrink-0 w-16">
+                                                <p className="font-bold text-white">{thread.reply_count || 0}</p>
+                                                <p className="text-xs text-gray-500">Balasan</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        {hasMoreThreads && (
+                            <div className="text-center mt-6">
+                                <Button onClick={handleLoadMoreThreads} isLoading={isLoadingMoreThreads} variant="secondary">
+                                    Muat Lebih Banyak
+                                </Button>
                             </div>
                         )}
                     </div>
@@ -202,7 +392,7 @@ const Forum: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {error && <ErrorMessage message={error} onGoToDashboard={() => setView('list')} />}
+            {error && <ErrorMessage message={error} onGoToDashboard={() => { setError(null); setView('list'); }} />}
             {renderView()}
         </div>
     );
