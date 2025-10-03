@@ -73,7 +73,7 @@ const PusatJuragan: React.FC = () => {
              <div className="text-center">
                 <h2 className="text-4xl md:text-5xl font-bold text-splash mb-2" style={{fontFamily: 'var(--font-display)'}}>Pusat Juragan</h2>
                 <p className="text-text-muted">
-                    Ini markas lo buat jadi juragan sejati! Selesain misi, koleksi lencana, dan rebut posisi puncak di papan peringkat.
+                    Ini markas lo buat jadi juragan sejati! Selesaikan misi harian untuk dapat bonus XP, koleksi semua lencana pencapaian, dan rebut posisi puncak di papan peringkat juragan se-Indonesia.
                 </p>
             </div>
 

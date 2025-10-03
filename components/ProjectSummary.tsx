@@ -140,9 +140,10 @@ const ProjectSummary: React.FC<Props> = (props) => {
           <p className="text-text-muted max-w-3xl mx-auto">Selamat! Ini pusat kendali brand lo. Aset inti (Strategi & Logo) sudah dipatenkan. Lo bisa generate ulang aset turunan kapan aja.</p>
       </div>
 
-       <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 bg-surface border border-border-main rounded-lg p-4 mb-8 shadow-sm">
-            <h4 className="font-bold text-lg text-text-header">Aksi Cepat:</h4>
-            <Button onClick={handleDownloadAll} isLoading={isZipping}>Unduh Semua Aset (.zip)</Button>
+       <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center gap-4 bg-surface border border-border-main rounded-lg p-6 mb-8 shadow-sm text-center">
+            <h4 className="font-bold text-lg text-text-header">Amankan Karyamu!</h4>
+            <p className="text-sm text-text-muted max-w-lg">Ini adalah pusat kendali brand-mu. Data teks tersimpan permanen, tapi aset visual (gambar) hanya sementara. <strong className="text-splash">Segera unduh semua asetmu dalam format .zip untuk disimpan selamanya!</strong></p>
+            <Button onClick={handleDownloadAll} isLoading={isZipping} variant="accent" className="mt-2">Unduh Semua Aset (.zip)</Button>
         </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">

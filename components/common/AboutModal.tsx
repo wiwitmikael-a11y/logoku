@@ -48,15 +48,19 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
             <div className="pt-3 border-t border-border-main space-y-3">
                  <h3 className="font-bold text-primary text-lg" style={{fontFamily: 'var(--font-display)'}}>Fitur Andalan Mang AI:</h3>
                  <ul className="list-disc list-inside space-y-2">
-                     <li><strong className="text-text-header">Studio Branding Lengkap:</strong> Dari persona, logo, social media kit, kalender konten, sampe desain kemasan, semua diracik Mang AI.</li>
-                     <li><strong className="text-text-header">Arena Kreativitas 'Pameran Brand':</strong> Pamerin hasil karyamu, intip karya juragan lain, dan kasih 'Menyala!' 🔥 buat dapet XP.</li>
-                     <li><strong className="text-text-header">Gamifikasi Seru:</strong> Naik level, kumpulin XP, dan dapetin lencana 'Kejuraganan' sambil ngasah skill branding lo.</li>
-                     <li><strong className="text-text-header">Asisten Pribadi Mang AI:</strong> Bingung? Tanya aja langsung ke Mang AI lewat tombol di pojok kanan bawah.</li>
+                     <li><strong className="text-text-header">Studio Branding Lengkap:</strong> Alur kerja terpandu untuk meracik persona, logo, kit sosmed, kalender konten, hingga desain kemasan.</li>
+                     <li><strong className="text-text-header">WarKop Juragan:</strong> Forum komunitas untuk pamer karya, minta masukan, dan ngobrol santai bareng sesama pejuang UMKM.</li>
+                     <li><strong className="text-text-header">Pusat Juragan & Gamifikasi:</strong> Naikkan level, selesaikan misi harian, kumpulkan lencana, dan rebut posisi puncak di papan peringkat.</li>
+                     <li><strong className="text-text-header">Warung Ide:</strong> Butuh inspirasi cepat? Gunakan generator nama bisnis dan slogan instan.</li>
+                     <li><strong className="text-text-header">Asisten Pribadi Mang AI:</strong> Bingung? Tanya apa aja soal branding atau fitur aplikasi ke Mang AI.</li>
                  </ul>
             </div>
-             <p className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300">
-                <strong className="text-red-200">PENTING BANGET:</strong> Aplikasi ini menyimpan data teks project lo, tapi <strong className="text-white bg-red-500/80 px-1 rounded">TIDAK MENYIMPAN FILE GAMBAR DI CLOUD.</strong> Jadi, Mang AI saranin banget, <strong className="text-white bg-red-500/80 px-1 rounded">setiap aset (logo, gambar, dll) yang udah lo generate, langsung diunduh ya!</strong> Developer nggak nanggung kalo ada data yang ilang. Oke, Juragan?
-            </p>
+             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300">
+                <h4 className="font-bold text-red-200 text-base mb-2">KEBIJAKAN PENYIMPANAN (WAJIB BACA!)</h4>
+                <p>Untuk menjaga layanan ini tetap gratis, <strong className="text-white">semua aset visual (logo, gambar, mockup) HANYA disimpan sementara di browser Anda.</strong></p>
+                <p className="mt-2">Data teks (seperti persona dan caption) disimpan permanen di akunmu. Tapi, file gambar akan <strong className="text-white">HILANG</strong> jika kamu membersihkan cache browser atau berganti perangkat.</p>
+                <p className="mt-2 font-semibold text-red-200">SOLUSI: Setelah project selesai, buka Brand Hub dan gunakan tombol <strong className="text-white bg-red-500/80 px-1 rounded">'Unduh Semua Aset (.zip)'</strong> untuk mengamankan semua karyamu di komputermu.</p>
+            </div>
             <div className="pt-3 border-t border-border-main space-y-3">
                  <h3 className="font-bold text-primary text-lg" style={{fontFamily: 'var(--font-display)'}}>Rencana ke Depan:</h3>
                  <p>Mang AI punya banyak mimpi, termasuk fitur Pro dengan penyimpanan cloud permanen, kolaborasi tim, dan akses ke model AI yang lebih canggih. Ditunggu ya!</p>

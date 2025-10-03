@@ -39,7 +39,7 @@ const BrandingTipModal: React.FC<Props> = ({ show, onConfirm }) => {
         <div className="text-text-body text-left space-y-3 mb-8">
             <p> Di lautan UMKM Indonesia yang ramenya kayak pasar malem, banyak banget kan yang jualannya mirip-mirip? Nah, di sinilah <strong className="text-splash">branding yang konsisten</strong> jadi jagoannya! </p>
             <p> Branding itu bukan cuma soal logo cakep, tapi soal <strong className="text-text-header">'rasa' dan 'cerita'</strong> yang lo kasih ke pelanggan. Kalo brand lo konsisten—dari warna, gaya bahasa, sampe cara lo ngelayanin—pelanggan jadi gampang inget, percaya, dan akhirnya balik lagi. </p>
-            <p> Ini yang bikin "Kopi Senja" lo beda dari ribuan kopi senja lainnya. Siap bikin brand lo jadi juara? Ayo kita mulai! </p>
+            <p> Ini yang bikin "Kopi Senja" lo beda dari ribuan kopi senja lainnya. Siap bikin brand lo jadi juara? <strong className="block mt-2 text-splash">Sebagai pemanasan, project branding pertamamu dari A sampai Z di sini gratis, lho!</strong> Ayo kita mulai! </p>
         </div>
         <Button onClick={handleConfirm}> Ngerti, Mang! Lanjut! </Button>
       </div>

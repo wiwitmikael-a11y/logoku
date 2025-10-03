@@ -45,9 +45,9 @@ const MANG_AI_AVATAR = `${GITHUB_ASSETS_URL}Mang_AI.png`;
 const WARUNG_INFO_TIPS = [
     { icon: '💡', title: 'Aturan Main di WarKop', text: 'Biar nongkrongnya asik, kita jaga bareng-bareng ya. Dilarang SARA, no spam, saling support, dan jangan jualan di lapak orang lain. Oke, Juragan?' },
     { icon: '⭐', title: 'Nambah XP Sambil Ngobrol', text: 'Setiap lo bikin topik baru atau ngasih balasan yang berbobot, Mang AI bakal kasih bonus <span class="font-bold text-splash">XP</span> buat naikin level kejuraganan lo!' },
-    { icon: '🔥', title: 'Jangan Lupa Mampir Pameran!', text: 'Udah liat <strong class="text-text-header">Pameran Brand</strong> belum? Kasih \'Menyala!\' ke karya juragan lain buat nambah XP dan saling semangatin. Karyamu juga bisa dipamerin di sana lho!' },
-    { icon: '💾', title: 'PENTING: Amankan Aset Lo!', text: 'Mang AI mau ngingetin lagi, semua aset visual (logo, gambar, dll) itu disimpen sementara di browser. <strong class="text-text-header">Jangan lupa diunduh</strong> biar nggak ilang ya!' },
-    { icon: '🤖', title: 'Mang AI Siap Dengerin', text: 'Kalau ada ide, kritik, atau nemu yang aneh-aneh di aplikasi, langsung aja bikin topik baru. Masukan dari lo berharga banget buat Mang AI.' },
+    { icon: '🏆', title: 'Cek Peringkat di Pusat Juragan!', text: "Penasaran sama level & lencana lo? Cek 'Pusat Juragan' di menu utama buat liat progres, misi harian, dan posisi lo di papan peringkat juragan se-Indonesia!" },
+    { icon: '🔥', title: 'Mampir ke Pameran Brand', text: 'Udah liat <strong class="text-text-header">Pameran Brand</strong> belum? Kasih \'Menyala!\' ke karya juragan lain buat nambah XP dan saling semangatin. Karyamu juga bisa dipamerin di sana lho!' },
+    { icon: '💾', title: 'WAJIB: Amankan Aset Visualmu!', text: 'Mang AI mau ngingetin lagi: semua aset visual (logo, gambar) itu disimpen sementara di browser. <strong class="text-text-header">Jangan lupa diunduh dari Brand Hub</strong> biar nggak ilang ya!' },
 ];
 
 const MANG_AI_WELCOME_THREAD: ForumThread = {

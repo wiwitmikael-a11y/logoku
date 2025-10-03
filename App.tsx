@@ -70,7 +70,7 @@ const AiAssistant: React.FC<{ appState: AppState, isOpen: boolean, onToggle: (is
     const [isFabVisible, setIsFabVisible] = useState(true);
     const lastScrollY = useRef(0);
     
-    const defaultPromptStarters = [ "Gimana cara bikin variasi logo?", "Kasih ide bio Instagram buat jualan kopi.", "Apa itu persona brand?", "Bedanya logo 'stacked' sama 'horizontal' apa?", ];
+    const defaultPromptStarters = [ "Berapa token gratis yang saya dapat?", "Project pertama bayar gak?", "Gimana cara nyimpen logo saya?", "Apa itu persona brand?", ];
     const [promptStarters, setPromptStarters] = useState(defaultPromptStarters);
 
     useEffect(() => {

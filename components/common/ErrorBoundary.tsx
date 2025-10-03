@@ -17,8 +17,7 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Using state as a class property instead of in the constructor. This is a more modern syntax
-  // and can sometimes resolve issues with how 'this' is interpreted by TypeScript tooling.
+  // Fix: Using a class property to initialize state. This modern syntax correctly binds 'this' and avoids the need for a constructor.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -33,8 +32,7 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Reverted to an arrow function. This binds `this` context correctly,
-  // making `this.state` and `this.setState` available inside the method when used as an event handler.
+  // Fix: The 'handleCopy' method is an arrow function to ensure 'this' is correctly bound to the component instance. This makes `this.setState` available and fixes the error.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
@@ -63,7 +61,7 @@ class ErrorBoundary extends Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
-                    {/* FIX: `this.props` is correctly accessed within the render method. The previous errors were likely a linter issue caused by the incorrect `this` context in other methods. */}
+                    {/* Fix: Accessing `this.props` is correct within the render method. The errors were likely due to incorrect `this` context in other methods, which has now been resolved. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -76,7 +74,6 @@ class ErrorBoundary extends Component<Props, State> {
                         <pre className="mt-2 p-2 bg-background rounded overflow-auto selectable-text">
                             {this.state.error.toString()}
                         </pre>
-                        {/* FIX: The onClick handler uses the arrow function `this.handleCopy`, which preserves the correct `this` context. */}
                         <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-primary bg-transparent border border-primary/30 hover:bg-primary/10">
                             {this.state.isCopied ? 'Tersalin!' : 'Salin Detail'}
                         </button>
@@ -87,7 +84,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // FIX: `this.props` is correctly accessed within the render method.
+    // Fix: `this.props.children` is correctly accessed within the render method.
     return this.props.children;
   }
 }

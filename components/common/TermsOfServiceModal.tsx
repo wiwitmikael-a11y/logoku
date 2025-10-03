@@ -58,15 +58,19 @@ const TermsOfServiceModal: React.FC<Props> = ({ show, onClose }) => {
                 <p>Sejauh diizinkan oleh hukum, <strong className="text-splash">desain.fun dan pengembangnya tidak akan bertanggung jawab</strong> atas segala kerugian atau klaim (termasuk biaya hukum) yang timbul dari penggunaan Anda atas Konten yang Dihasilkan, termasuk klaim pelanggaran merek dagang atau hak cipta oleh pihak ketiga.</p>
             </div>
             <div className="space-y-2">
-                <h3 className="font-bold text-text-header text-base">5. Sistem Token</h3>
-                <p>Layanan ini menggunakan sistem token. Setiap pengguna diberikan sejumlah token gratis setiap hari. Kami berhak mengubah jumlah token atau biaya per generasi di masa mendatang.</p>
+                <h3 className="font-bold text-text-header text-base">5. Sistem Token dan Kebijakan Gratis</h3>
+                <p>Layanan ini menggunakan sistem token. Pengguna baru akan mendapatkan bonus sambutan. Jika token harian pengguna kurang dari batas minimum, token akan diisi ulang secara otomatis setiap hari. Alur kerja pembuatan brand pertama (dari persona hingga merchandise) tidak akan mengurangi total token Anda; setiap token yang digunakan akan dikembalikan. Kami berhak mengubah jumlah bonus, isi ulang harian, dan biaya token di masa mendatang.</p>
             </div>
              <div className="space-y-2">
-                <h3 className="font-bold text-text-header text-base">6. Ganti Rugi (Indemnifikasi)</h3>
+                <h3 className="font-bold text-text-header text-base">6. Penyimpanan Data dan Aset Visual</h3>
+                <p>Aplikasi ini menyimpan data tekstual (seperti detail bisnis, persona, caption) yang terkait dengan akun Anda. Namun, untuk menjaga agar layanan ini tetap dapat diakses secara gratis, <strong className="text-splash">semua aset visual yang dihasilkan AI (logo, gambar, mockup) TIDAK disimpan secara permanen di server kami.</strong> Aset-aset ini hanya tersimpan sementara di sesi browser Anda. Anda bertanggung jawab penuh untuk mengunduh dan menyimpan semua aset visual ke perangkat Anda sendiri. Kami tidak bertanggung jawab atas kehilangan aset visual karena cache browser yang dibersihkan, pergantian perangkat, atau sebab lainnya.</p>
+            </div>
+             <div className="space-y-2">
+                <h3 className="font-bold text-text-header text-base">7. Ganti Rugi (Indemnifikasi)</h3>
                 <p>Anda setuju untuk mengganti rugi dan membebaskan desain.fun dari segala klaim atau kerusakan yang timbul dari penggunaan Konten yang Dihasilkan oleh Anda yang melanggar hak pihak ketiga atau melanggar Ketentuan Layanan ini.</p>
             </div>
              <div className="space-y-2">
-                <h3 className="font-bold text-text-header text-base">7. Perubahan dan Penghentian Layanan</h3>
+                <h3 className="font-bold text-text-header text-base">8. Perubahan dan Penghentian Layanan</h3>
                 <p>Kami berhak untuk mengubah atau menghentikan Layanan (atau bagian apa pun darinya) kapan saja dengan atau tanpa pemberitahuan. Kami juga berhak menangguhkan akun pengguna yang melanggar Ketentuan ini.</p>
             </div>
             <p className="pt-4 border-t border-border-main">Dengan melanjutkan, Anda mengakui bahwa Anda telah membaca, memahami, dan menyetujui Ketentuan Layanan ini.</p>
