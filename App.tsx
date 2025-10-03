@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { GoogleGenAI, Chat } from "@google/genai";
 import { supabase, supabaseError } from './services/supabaseClient';
-import { playSound, playBGM, stopBGM } from './services/soundService';
+import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus } from './types';
-import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
@@ -173,7 +173,7 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
                 <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className="animate-breathing-ai" />
             </button>
             <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>
-                <header className="p-4 border-b border-slate-200 flex justify-between items-center">
+                <header className="p-4 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
                     <h3 className="text-lg font-bold text-sky-600">Tanya Mang AI</h3>
                     <button onClick={() => setIsOpen(false)} title="Tutup" className="p-2 text-slate-500 rounded-full hover:bg-slate-100 hover:text-slate-800">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -198,7 +198,7 @@ const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
                     )}
                     <div ref={messagesEndRef} />
                 </div>
-                <form className="p-4 border-t border-slate-200" onSubmit={handleSendMessage}>
+                <form className="p-4 border-t border-slate-200 flex-shrink-0" onSubmit={handleSendMessage}>
                     <div className="relative">
                         <textarea
                             ref={textareaRef}
@@ -236,10 +236,12 @@ const MainApp: React.FC = () => {
         showOutOfCreditsModal, setShowOutOfCreditsModal,
         showLogoutConfirm, setShowLogoutConfirm,
         handleLogout, executeLogout: authExecuteLogout,
-        handleDeleteAccount, handleToggleMute, isMuted, 
-        authError, refreshProfile, bgmSelection, handleBgmChange,
-        deductCredits, addXp, grantAchievement, grantFirstStepXp, showLevelUpModal,
-        levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement
+        handleDeleteAccount,
+        authError, refreshProfile,
+        addXp, grantAchievement, grantFirstStepXp, showLevelUpModal,
+        levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement,
+// FIX: Added 'deductCredits' to the destructuring assignment from the useAuth hook.
+        deductCredits
     } = useAuth();
     
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -251,13 +253,12 @@ const MainApp: React.FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [generalError, setGeneralError] = useState<string | null>(null);
     const [toast, setToast] = useState({ message: '', show: false });
-    const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
     
     // Modals visibility
     const [showContactModal, setShowContactModal] = useState(false);
     const [showAboutModal, setShowAboutModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
-    const [showCaptcha, setShowCaptcha] = useState(false);
+    const [showCaptcha, setShowCaptcha] = useState(true); // Show by default
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -268,7 +269,6 @@ const MainApp: React.FC = () => {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
     const previousAppState = useRef<AppState>(appState);
-    const previousSession = useRef<typeof session>(session);
 
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'social_kit', 'profiles', 'packaging', 'print_media', 'content_calendar', 'social_ads', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
@@ -293,15 +293,12 @@ const MainApp: React.FC = () => {
     }, [appState, selectedProjectId, session]);
     
     useEffect(() => {
-        if (!authLoading && session) {
-            if (!previousSession.current && session) setShowWelcomeBanner(true);
-            fetchProjects();
-        }
-        previousSession.current = session;
+        if (!authLoading && session) fetchProjects();
     }, [session, authLoading]);
     
     useEffect(() => {
         if (!session && !authLoading) setShowCaptcha(true);
+        else setShowCaptcha(false);
     }, [session, authLoading]);
     
     useEffect(() => {
@@ -678,7 +675,7 @@ const MainApp: React.FC = () => {
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'dashboard':
-            default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} showWelcomeBanner={showWelcomeBanner} onWelcomeBannerClose={() => setShowWelcomeBanner(false)} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} />;
+            default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} />;
         }
         handleReturnToDashboard();
         return <AuthLoadingScreen />;
