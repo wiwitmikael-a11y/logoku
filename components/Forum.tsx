@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
-import * as geminiService from '../services/geminiService';
 import type { ForumThread, ForumPost } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -126,7 +125,6 @@ const Forum: React.FC = () => {
     const [newThreadContent, setNewThreadContent] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isAiReplying, setIsAiReplying] = useState(false); // NEW: AI state
     const [cooldown, setCooldown] = useState(0);
 
     // Pagination State
@@ -214,6 +212,37 @@ const Forum: React.FC = () => {
         }
     }, [view, selectedThread, fetchThreads, fetchPosts]);
 
+    // Realtime listener for new posts
+    useEffect(() => {
+        if (view !== 'thread' || !selectedThread || selectedThread.id === '0') return;
+
+        const channel = supabase.channel(`posts:${selectedThread.id}`)
+            .on('postgres_changes', { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'posts', 
+                filter: `thread_id=eq.${selectedThread.id}` 
+            }, async (payload) => {
+                // Fetch the full post with profile data
+                const { data, error } = await supabase
+                    .from('posts')
+                    .select('*, profiles(full_name, avatar_url)')
+                    .eq('id', payload.new.id)
+                    .single();
+                
+                if (error) {
+                    console.error("Error fetching new post with profile:", error);
+                } else if (data) {
+                    setPosts(prev => [...prev, data as ForumPost]);
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [view, selectedThread]);
+
 
     useEffect(() => {
         if (cooldown > 0) {
@@ -221,26 +250,6 @@ const Forum: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [cooldown]);
-
-    const handleGenerateAiThread = async () => {
-        if (!user) return;
-        setIsSubmitting(true);
-        setError(null);
-        try {
-            const { title, content } = await geminiService.generateAiForumThread();
-            const { error: insertError } = await supabase
-                .from('threads')
-                .insert({ user_id: 'mang-ai-official', title, content });
-
-            if (insertError) throw insertError;
-            await addXp(5); // Small XP for prompting AI
-            fetchThreads(0); // Refresh list
-        } catch (err) {
-            setError(err instanceof Error ? `Gagal dapet ide dari Mang AI: ${err.message}` : 'Terjadi kesalahan.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
 
     const handleCreateThread = async () => {
         if (!user || !profile || !newThreadTitle.trim() || !newThreadContent.trim()) return;
@@ -272,64 +281,21 @@ const Forum: React.FC = () => {
         setIsSubmitting(true);
         setError(null);
         try {
-            const { data, error: insertError } = await supabase
+            const { error: insertError } = await supabase
                 .from('posts')
-                .insert({ user_id: user.id, thread_id: selectedThread.id, content: newPostContent })
-                .select()
-                .single();
+                .insert({ user_id: user.id, thread_id: selectedThread.id, content: newPostContent });
+
             if (insertError) throw insertError;
 
             await addXp(5); // +5 XP for reply
             setCooldown(POST_COOLDOWN_SECONDS);
-
-            // Optimistic UI update
-            const newPost: ForumPost = { ...data, profiles: { full_name: profile.full_name || '', avatar_url: profile.avatar_url || '' }};
-            setPosts(prev => [...prev, newPost]);
             setNewPostContent('');
-            
-            // Trigger Mang AI's reply
-            triggerAiReply([...posts, newPost]);
+            // No need for optimistic update, realtime listener will handle it.
 
         } catch (err) {
             setError(err instanceof Error ? `Gagal bales: ${err.message}` : 'Terjadi kesalahan.');
         } finally {
             setIsSubmitting(false);
-        }
-    };
-
-    const triggerAiReply = async (currentPosts: ForumPost[]) => {
-        if (!selectedThread) return;
-        
-        setIsAiReplying(true);
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 3000 + 4000)); // Wait 4-7 seconds
-
-        try {
-            const postsHistory = currentPosts
-                .map(p => `${p.profiles?.full_name || 'Juragan'}: "${p.content}"`)
-                .join('\n');
-            
-            const aiReplyContent = await geminiService.generateForumReply(
-                selectedThread.title,
-                selectedThread.content,
-                postsHistory
-            );
-
-            const { data: aiPostData, error: aiInsertError } = await supabase
-                .from('posts')
-                .insert({ user_id: 'mang-ai-official', thread_id: selectedThread.id, content: aiReplyContent })
-                .select()
-                .single();
-
-            if (aiInsertError) throw aiInsertError;
-
-            const newAiPost: ForumPost = { ...aiPostData, profiles: { full_name: MANG_AI_ACCOUNT_NAME, avatar_url: MANG_AI_AVATAR }};
-            setPosts(prev => [...prev, newAiPost]);
-
-        } catch(err) {
-            console.error("Mang AI reply error:", err);
-            // Don't show error to user, just fail silently
-        } finally {
-            setIsAiReplying(false);
         }
     };
 
@@ -369,19 +335,12 @@ const Forum: React.FC = () => {
                                 );
                             })}
                              
-                             {isAiReplying && (
-                                <div className="flex items-center gap-3 py-3 animate-pulse">
-                                    <img src={MANG_AI_AVATAR} alt="avatar" className="w-8 h-8 rounded-full" />
-                                    <p className="text-sm text-gray-500 italic">Mang AI lagi ngetik...</p>
-                                </div>
-                             )}
-
                              {user && selectedThread.id !== '0' && (
                                 <div className="mt-6 pt-6 border-t border-indigo-700/50">
                                     <h3 className="font-bold text-lg mb-2 text-white">Kasih Balasan</h3>
                                     <Textarea label="" name="newPostContent" value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder="Ketik balasanmu di sini..." rows={4} />
                                     <div className="mt-3 flex items-center gap-4">
-                                        <Button onClick={handleCreatePost} isLoading={isSubmitting} disabled={cooldown > 0 || !newPostContent.trim() || isSubmitting || isAiReplying}>
+                                        <Button onClick={handleCreatePost} isLoading={isSubmitting} disabled={cooldown > 0 || !newPostContent.trim() || isSubmitting}>
                                             {cooldown > 0 ? `Tunggu ${cooldown} detik lagi...` : 'Kirim Balasan'}
                                         </Button>
                                     </div>
@@ -416,12 +375,12 @@ const Forum: React.FC = () => {
                         <WarKopInfoBox />
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl md:text-2xl font-bold text-white">Diskusi Terbaru</h2>
-                            <div className="flex gap-2">
-                                <Button onClick={() => user ? handleGenerateAiThread() : alert('Login dulu, Juragan!')} variant="secondary" size="small" isLoading={isSubmitting} disabled={isSubmitting}>💡 Ide dari Mang AI</Button>
-                                <Button onClick={() => user ? setView('new_thread') : alert('Login dulu, Juragan!')}>
-                                    + Bikin Topik
-                                </Button>
-                            </div>
+                            <Button onClick={() => user ? setView('new_thread') : alert('Login dulu, Juragan!')}>
+                                + Bikin Topik
+                            </Button>
+                        </div>
+                         <div className="text-xs text-gray-400 mb-4 p-2 bg-gray-800/50 rounded-md text-center">
+                            💡 Mang AI sekarang bakal ngasih ide topik baru & nimbrung di obrolan secara otomatis, lho! Pantengin terus ya.
                         </div>
                         {isLoadingThreads && threads.length === 0 ? <ThreadListSkeleton /> : (
                             <div className="space-y-2">
