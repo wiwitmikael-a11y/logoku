@@ -1,8 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Reverted to default import for React to correctly resolve Component types.
-// The namespace import was causing issues with type inference for props and state.
-import React from 'react';
+// FIX: Changed to explicitly import `Component` from React to resolve issues where `setState` and `props` were not found on the class instance.
+import React, { Component } from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -18,7 +17,7 @@ interface State {
   isCopied?: boolean;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
+class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: undefined,
