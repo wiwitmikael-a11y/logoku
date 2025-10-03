@@ -141,17 +141,22 @@ const Forum: React.FC = () => {
         const to = from + THREADS_PAGE_SIZE - 1;
 
         try {
-            const { data, error: rpcError, count } = await supabase
-                .rpc('get_threads_with_reply_count', {}, { count: 'exact' })
-                .order('last_activity', { ascending: false })
+            // WORKAROUND: The RPC function 'get_threads_with_reply_count' is missing in the database.
+            // Using a direct query with a foreign table count as a fallback.
+            // This restores reply counts but sorting is by creation date, not last activity.
+            // To restore full functionality, the user must create the SQL function.
+            const { data, error: threadsError } = await supabase
+                .from('threads')
+                .select('*, profiles!inner(full_name, avatar_url), posts(count)')
+                .order('created_at', { ascending: false })
                 .range(from, to);
 
-            if (rpcError) throw rpcError;
+            if (threadsError) throw threadsError;
 
-            // Map profiles data correctly
+            // The data structure is slightly different from the RPC.
             const formattedData = data.map((d: any) => ({
                 ...d,
-                profiles: d.profiles_data
+                reply_count: d.posts[0]?.count || 0,
             }));
             
             setThreads(prev => pageNum === 0 ? formattedData : [...prev, ...formattedData]);

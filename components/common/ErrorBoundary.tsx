@@ -1,8 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Changed to a namespace import to resolve type errors where properties
-// from React.Component (like `setState` and `props`) were not being recognized.
-import * as React from 'react';
+// FIX: Reverted to default import for React to correctly resolve Component types.
+// The namespace import was causing issues with type inference for props and state.
+import React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
