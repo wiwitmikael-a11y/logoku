@@ -1,4 +1,4 @@
-
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
@@ -104,7 +104,6 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
 - **Critical Instruction:** ${textInstruction}`;
       }
       
-      // FIX: The uploadImageFromBase64 function is deprecated. Using the base64 result directly.
       const logoBase64 = await fetchImageAsBase64(logoToUseUrl);
       const results = await generatePrintMedia(prompt, logoBase64);
       

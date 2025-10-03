@@ -7,6 +7,9 @@ import Card from './common/Card';
 import ImageModal from './common/ImageModal';
 import CopyButton from './common/CopyButton';
 import LoadingMessage from './common/LoadingMessage';
+import * as geminiService from '../services/geminiService';
+import { useAuth } from '../contexts/AuthContext';
+import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 interface Props {
   project: Project;
@@ -68,8 +71,14 @@ const ProjectSummary: React.FC<Props> = (props) => {
 
   const handleRegenerate = async (assetKey: string, regenFunc: () => Promise<void>) => {
     setRegenerating(assetKey);
-    await regenFunc();
-    setRegenerating(null);
+    try {
+        await regenFunc();
+    } catch(e) {
+        // Error is handled inside the regen function itself via a generalError state
+        console.error(`Regeneration failed for ${assetKey}`, e);
+    } finally {
+        setRegenerating(null);
+    }
   };
   
   const businessHandle = brandInputs.businessName.toLowerCase().replace(/\s/g, '');
@@ -132,14 +141,14 @@ const ProjectSummary: React.FC<Props> = (props) => {
 
             <section id="logo" className="md:col-span-2">
                 <Card title="⭐ Paket Logo (Master)">
-                    {logoVariations && (
+                    {logoVariations ? (
                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                            <div><h5 className="font-semibold text-gray-200 mb-2 text-sm">Logo Utama</h5><div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(selectedLogoUrl)}><img src={selectedLogoUrl} alt="Logo Utama" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
                            <div><h5 className="font-semibold text-gray-200 mb-2 text-sm">Versi Tumpuk</h5><div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(logoVariations.stacked)}><img src={logoVariations.stacked} alt="Logo Tumpuk" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
                            <div><h5 className="font-semibold text-gray-200 mb-2 text-sm">Versi Datar</h5><div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(logoVariations.horizontal)}><img src={logoVariations.horizontal} alt="Logo Datar" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
                            <div><h5 className="font-semibold text-gray-200 mb-2 text-sm">Versi Monokrom</h5><div className="bg-white p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => openModal(logoVariations.monochrome)}><img src={logoVariations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
                        </div>
-                    )}
+                    ) : <p className="text-sm text-gray-500 italic">Aset ini belum dibuat.</p>}
                 </Card>
             </section>
             
@@ -225,14 +234,14 @@ const ProjectSummary: React.FC<Props> = (props) => {
                     <Card title="🎨 Aset Media Cetak">
                         <div className="space-y-4">
                             <div>
-                                <h5 className="font-semibold text-gray-200 mb-2 text-sm">Spanduk (Horizontal)</h5>
+                                <h5 className="font-semibold text-gray-200 mb-2 text-sm">Spanduk (Horizontal 3:1)</h5>
                                 {regenerating === 'banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
                                     printMediaAssets?.bannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.bannerUrl!)}><img src={printMediaAssets.bannerUrl} alt="Spanduk" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
                                 )}
                                 <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('banner', () => props.onRegeneratePrintMedia('banner'))} isLoading={regenerating === 'banner'}>{printMediaAssets?.bannerUrl ? 'Ulang' : 'Generate'} (1 Token)</Button></div>
                             </div>
                             <div className="pt-4 border-t border-gray-700">
-                                <h5 className="font-semibold text-gray-200 mb-2 text-sm">Roll Banner (Vertikal)</h5>
+                                <h5 className="font-semibold text-gray-200 mb-2 text-sm">Roll Banner (Vertikal 1:3)</h5>
                                  {regenerating === 'roll_banner' ? <div className="h-24 flex items-center justify-center"><LoadingMessage/></div> : (
                                     printMediaAssets?.rollBannerUrl ? <div className="bg-white p-2 rounded-lg cursor-pointer group" onClick={() => openModal(printMediaAssets.rollBannerUrl!)}><img src={printMediaAssets.rollBannerUrl} alt="Roll Banner" className="w-full object-contain"/></div> : <p className="text-xs text-gray-500 italic">Belum dibuat.</p>
                                 )}
