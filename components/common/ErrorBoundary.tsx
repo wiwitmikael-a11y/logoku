@@ -1,6 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Changed React import from `import * as React` to `import React` to ensure proper type resolution for class components, addressing errors where `this.props` and `this.setState` were not found.
+// FIX: Changed React import to the standard default import 'import React from 'react''.
+// The previous 'import * as React' was causing issues with type resolution for class components,
+// leading to errors where 'this.props' and 'this.setState' were not found.
 import React from 'react';
 import Button from './Button';
 

@@ -1,3 +1,5 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React from 'react';
 import Button from './common/Button';
 
@@ -37,13 +39,9 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
         </div>
 
         <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-          Siap bikin brand lo naik kelas, Juragan? Lupakan pusingnya mikirin logo, bingung mau posting apa, atau bayar mahal agensi. Mang AI hadir sebagai partner setia lo! Cuma butuh beberapa menit, kita bakal sulap ide lo jadi logo profesional, persona brand yang kuat, sampe rentetan konten sosmed siap pakai. Ini bukan sekadar aplikasi, ini studio branding di saku lo. Hemat waktu, hemat biaya, saatnya bisnis lo jadi juara!
+          Siap bikin brand lo naik kelas, Juragan? Lupakan pusingnya mikirin desain atau bayar mahal agensi. Mang AI hadir sebagai partner setia lo! Dalam hitungan menit, kita bakal sulap ide lo jadi <strong>paket branding lengkap</strong>: dari logo, persona, social media kit, desain kemasan, sampe konten siap posting. Nggak cuma itu, lo bisa pamerin karya di <strong>Pameran Brand</strong>, ngobrol santai di <strong>WarKop Juragan</strong>, dan naikin level kejuraganan lo sambil ngumpulin XP. Ini studio branding, pusat komunitas, dan game di saku lo. Hemat waktu, hemat biaya, saatnya bisnis lo jadi juara!
         </p>
         
-        <div className="bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-3 mb-8 max-w-sm mx-auto text-sm text-yellow-200">
-          <p><strong className="font-bold">Info Penting:</strong> Aplikasi ini masih dalam tahap <em>gacor</em>-in, jadi kalo ada yang aneh-aneh dikit, maklum ya! Mang AI lagi semangat-semangatnya belajar, nih. Sokin, kita mulai petualangannya!</p>
-        </div>
-
         <div className="flex flex-col items-center gap-4">
           <Button 
             onClick={onGoogleLogin} 
@@ -62,7 +60,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
           </Button>
         </div>
         
-        <p className="text-xs text-gray-500 mt-8">
+        <p className="text-xs text-gray-500 mt-3 mb-8">
           Dengan masuk, lo setuju sama{' '}
           <button 
             onClick={isCaptchaSolved ? onShowToS : undefined} 
@@ -74,6 +72,11 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
           kami.
            {!isCaptchaSolved && <span className="block text-yellow-400 text-[11px] mt-1">Selesaikan puzzle di atas dulu, Juragan!</span>}
         </p>
+
+        <div className="bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-3 max-w-sm mx-auto text-sm text-yellow-200">
+          <p><strong className="font-bold">Info Penting:</strong> Aplikasi ini masih dalam tahap <em>gacor</em>-in, jadi kalo ada yang aneh-aneh dikit, maklum ya! Mang AI lagi semangat-semangatnya belajar, nih. Sokin, kita mulai petualangannya!</p>
+        </div>
+        
       </div>
     </div>
   );
