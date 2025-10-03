@@ -1,13 +1,12 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Reverted the React import from a namespace import (`* as React`) back to the standard default and named import style. The namespace import was causing TypeScript to not recognize `this.props` and `this.state` on the class component.
-import React, { Component, ErrorInfo, CSSProperties, ReactNode } from 'react';
+import * as React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 interface Props {
-  children: ReactNode;
+  children: React.ReactNode;
   onReset?: () => void;
 }
 
@@ -17,7 +16,7 @@ interface State {
   isCopied?: boolean;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: undefined, isCopied: false };
@@ -27,7 +26,7 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error, isCopied: false };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
@@ -39,9 +38,9 @@ class ErrorBoundary extends Component<Props, State> {
     }
   };
 
-  render(): ReactNode {
+  render(): React.ReactNode {
     if (this.state.hasError) {
-      const imgStyle: CSSProperties = { imageRendering: 'pixelated' };
+      const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
             <img 

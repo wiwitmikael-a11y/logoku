@@ -44,9 +44,9 @@ const MANG_AI_AVATAR = `${GITHUB_ASSETS_URL}Mang_AI.png`;
 
 const WARUNG_INFO_TIPS = [
     { icon: '💡', title: 'Aturan Main di WarKop', text: 'Biar nongkrongnya asik, kita jaga bareng-bareng ya. Dilarang SARA, no spam, saling support, dan jangan jualan di lapak orang lain. Oke, Juragan?' },
-    { icon: '⭐', title: 'Nambah XP Sambil Ngobrol', text: 'Setiap lo bikin topik baru atau ngasih balasan yang berbobot, Mang AI bakal kasih bonus <span class="font-bold text-yellow-300">XP</span> buat naikin level kejuraganan lo!' },
-    { icon: '🔥', title: 'Jangan Lupa Mampir Pameran!', text: 'Udah liat <strong class="text-white">Pameran Brand</strong> belum? Kasih \'Menyala!\' ke karya juragan lain buat nambah XP dan saling semangatin. Karyamu juga bisa dipamerin di sana lho!' },
-    { icon: '💾', title: 'PENTING: Amankan Aset Lo!', text: 'Mang AI mau ngingetin lagi, semua aset visual (logo, gambar, dll) itu disimpen sementara di browser. <strong class="text-white">Jangan lupa diunduh</strong> biar nggak ilang ya!' },
+    { icon: '⭐', title: 'Nambah XP Sambil Ngobrol', text: 'Setiap lo bikin topik baru atau ngasih balasan yang berbobot, Mang AI bakal kasih bonus <span class="font-bold text-splash">XP</span> buat naikin level kejuraganan lo!' },
+    { icon: '🔥', title: 'Jangan Lupa Mampir Pameran!', text: 'Udah liat <strong class="text-text-header">Pameran Brand</strong> belum? Kasih \'Menyala!\' ke karya juragan lain buat nambah XP dan saling semangatin. Karyamu juga bisa dipamerin di sana lho!' },
+    { icon: '💾', title: 'PENTING: Amankan Aset Lo!', text: 'Mang AI mau ngingetin lagi, semua aset visual (logo, gambar, dll) itu disimpen sementara di browser. <strong class="text-text-header">Jangan lupa diunduh</strong> biar nggak ilang ya!' },
     { icon: '🤖', title: 'Mang AI Siap Dengerin', text: 'Kalau ada ide, kritik, atau nemu yang aneh-aneh di aplikasi, langsung aja bikin topik baru. Masukan dari lo berharga banget buat Mang AI.' },
 ];
 
@@ -74,11 +74,11 @@ const WarKopInfoBox: React.FC = () => {
     }, []);
     const currentTip = WARUNG_INFO_TIPS[currentTipIndex];
     return (
-        <div key={currentTipIndex} className="w-full bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in info-box-stream mb-8">
+        <div key={currentTipIndex} className="w-full bg-surface/5 border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in info-box-stream mb-8">
             <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
             <div>
-                <h4 className="font-bold text-white">{currentTip.title}</h4>
-                <p className="text-sm text-gray-300" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+                <h4 className="font-bold text-text-header">{currentTip.title}</h4>
+                <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
             </div>
         </div>
     );
@@ -87,14 +87,14 @@ const WarKopInfoBox: React.FC = () => {
 const ThreadListSkeleton: React.FC = () => (
     <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-lg animate-pulse">
-                <div className="w-10 h-10 rounded-full bg-gray-700 flex-shrink-0"></div>
+            <div key={i} className="flex items-center gap-4 p-4 bg-surface rounded-lg animate-pulse">
+                <div className="w-10 h-10 rounded-full bg-background flex-shrink-0"></div>
                 <div className="flex-grow">
-                    <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-700 rounded w-1/2 mt-2"></div>
+                    <div className="h-4 bg-background rounded w-3/4"></div>
+                    <div className="h-3 bg-background rounded w-1/2 mt-2"></div>
                 </div>
-                <div className="w-16 h-8 bg-gray-700 rounded-md"></div>
-                <div className="w-24 h-8 bg-gray-700 rounded-md hidden sm:block"></div>
+                <div className="w-16 h-8 bg-background rounded-md"></div>
+                <div className="w-24 h-8 bg-background rounded-md hidden sm:block"></div>
             </div>
         ))}
     </div>
@@ -142,8 +142,6 @@ const Forum: React.FC = () => {
         const to = from + THREADS_PAGE_SIZE - 1;
 
         try {
-            // Using the RPC function is more efficient and handles joins/counts on the DB side.
-            // This also enables sorting by the last activity in the thread.
             const { data, error: rpcError } = await supabase
                 .rpc('get_threads_with_reply_count')
                 .order('last_activity', { ascending: false })
@@ -151,8 +149,6 @@ const Forum: React.FC = () => {
 
             if (rpcError) throw rpcError;
 
-            // The RPC returns 'profiles_data' as a JSONB object. We map it to 'profiles'
-            // to match the component's expected prop structure.
             const formattedData = data.map((d: any) => ({
                 ...d,
                 profiles: d.profiles_data,
@@ -179,15 +175,42 @@ const Forum: React.FC = () => {
         setIsLoadingPosts(true);
         setPosts([]);
         try {
-            const { data, error: postsError } = await supabase
+            if (threadId === '0') {
+                setPosts([]);
+                setIsLoadingPosts(false);
+                return;
+            }
+
+            const { data: postsData, error: postsError } = await supabase
                 .from('posts')
-                .select('*, profiles(full_name, avatar_url)')
+                .select('*')
                 .eq('thread_id', threadId)
                 .order('created_at', { ascending: true })
                 .limit(POSTS_PAGE_SIZE);
 
             if (postsError) throw postsError;
-            setPosts(data as ForumPost[]);
+
+            if (postsData && postsData.length > 0) {
+                const userIds = [...new Set(postsData.map(p => p.user_id))];
+                
+                const { data: profilesData, error: profilesError } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, avatar_url')
+                    .in('id', userIds);
+
+                if (profilesError) throw profilesError;
+
+                const profilesMap = new Map(profilesData.map(p => [p.id, { full_name: p.full_name, avatar_url: p.avatar_url }]));
+                
+                const combinedData = postsData.map(post => ({
+                    ...post,
+                    profiles: profilesMap.get(post.user_id) || null
+                }));
+
+                setPosts(combinedData as ForumPost[]);
+            } else {
+                setPosts([]);
+            }
 
         } catch(err: any) {
             setError(`Gagal memuat balasan: ${err.message || 'Terjadi kesalahan tidak diketahui.'}`);
@@ -200,7 +223,7 @@ const Forum: React.FC = () => {
         if (view === 'list') {
             fetchThreads(0);
         }
-        if (view === 'thread' && selectedThread && selectedThread.id !== '0') {
+        if (view === 'thread' && selectedThread) {
             fetchPosts(selectedThread.id);
         }
         if (view === 'new_thread') {
@@ -227,17 +250,21 @@ const Forum: React.FC = () => {
                 table: 'posts', 
                 filter: `thread_id=eq.${selectedThread.id}` 
             }, async (payload) => {
-                // Fetch the full post with profile data
-                const { data, error } = await supabase
-                    .from('posts')
-                    .select('*, profiles(full_name, avatar_url)')
-                    .eq('id', payload.new.id)
+                const newPost = payload.new;
+                
+                const { data: profileData, error } = await supabase
+                    .from('profiles')
+                    .select('full_name, avatar_url')
+                    .eq('id', newPost.user_id)
                     .single();
                 
                 if (error) {
-                    console.error("Error fetching new post with profile:", error);
-                } else if (data) {
-                    setPosts(prev => [...prev, data as ForumPost]);
+                    console.error("Error fetching profile for new post:", error);
+                    const postWithNullProfile = { ...newPost, profiles: null };
+                    setPosts(prev => [...prev, postWithNullProfile as ForumPost]);
+                } else {
+                    const postWithProfile = { ...newPost, profiles: profileData };
+                    setPosts(prev => [...prev, postWithProfile as ForumPost]);
                 }
             })
             .subscribe();
@@ -276,7 +303,7 @@ const Forum: React.FC = () => {
             setCooldown(POST_COOLDOWN_SECONDS);
             setNewThreadTitle('');
             setNewThreadContent('');
-            setView('list'); // Go back to list, which will trigger a refetch
+            setView('list');
 
         } catch (err: any) {
             setError(`Gagal bikin topik: ${err.message || 'Terjadi kesalahan.'}`);
@@ -304,7 +331,6 @@ const Forum: React.FC = () => {
             await addXp(5); // +5 XP for reply
             setCooldown(POST_COOLDOWN_SECONDS);
             setNewPostContent('');
-            // No need for optimistic update, realtime listener will handle it.
 
         } catch (err: any) {
             setError(`Gagal bales: ${err.message || 'Terjadi kesalahan.'}`);
@@ -322,36 +348,36 @@ const Forum: React.FC = () => {
                     <div className="space-y-4">
                         <Button onClick={() => setView('list')} variant="secondary" size="small">&larr; Kembali ke Daftar Topik</Button>
                         <Card title={selectedThread.title}>
-                            <div className="border-b border-gray-700 pb-4 mb-4">
+                            <div className="border-b border-border-main pb-4 mb-4">
                                 <div className="flex items-start gap-3">
                                     <img src={threadAuthor.avatar} alt="avatar" className="w-10 h-10 rounded-full" />
                                     <div>
-                                        <p className={`font-bold ${threadAuthor.isOfficial ? 'text-indigo-400' : 'text-white'}`}>{threadAuthor.name}</p>
-                                        <p className="text-xs text-gray-500">{formatRelativeTime(selectedThread.created_at)}</p>
+                                        <p className={`font-bold ${threadAuthor.isOfficial ? 'text-primary' : 'text-text-header'}`}>{threadAuthor.name}</p>
+                                        <p className="text-xs text-text-muted">{formatRelativeTime(selectedThread.created_at)}</p>
                                     </div>
                                 </div>
-                                <p className="mt-3 text-gray-300 whitespace-pre-wrap selectable-text">{selectedThread.content}</p>
+                                <p className="mt-3 text-text-body whitespace-pre-wrap selectable-text">{selectedThread.content}</p>
                             </div>
 
                             {isLoadingPosts ? <LoadingMessage /> : posts.map(post => {
                                 const postAuthor = getOfficialDisplayData(post.profiles);
                                 return (
-                                    <div key={post.id} className="flex items-start gap-3 py-3 border-b border-gray-800 last:border-b-0">
+                                    <div key={post.id} className="flex items-start gap-3 py-3 border-b border-border-light last:border-b-0">
                                         <img src={postAuthor.avatar} alt="avatar" className="w-8 h-8 rounded-full" />
                                         <div className="flex-grow">
                                             <div className="flex items-baseline gap-2">
-                                                <p className={`font-semibold text-sm ${postAuthor.isOfficial ? 'text-indigo-400' : 'text-white'}`}>{postAuthor.name}</p>
-                                                <p className="text-xs text-gray-500">{formatRelativeTime(post.created_at)}</p>
+                                                <p className={`font-semibold text-sm ${postAuthor.isOfficial ? 'text-primary' : 'text-text-header'}`}>{postAuthor.name}</p>
+                                                <p className="text-xs text-text-muted">{formatRelativeTime(post.created_at)}</p>
                                             </div>
-                                            <p className="mt-1 text-sm text-gray-300 whitespace-pre-wrap selectable-text">{post.content}</p>
+                                            <p className="mt-1 text-sm text-text-body whitespace-pre-wrap selectable-text">{post.content}</p>
                                         </div>
                                     </div>
                                 );
                             })}
                              
                              {user && selectedThread.id !== '0' && (
-                                <div className="mt-6 pt-6 border-t border-indigo-700/50">
-                                    <h3 className="font-bold text-lg mb-2 text-white">Kasih Balasan</h3>
+                                <div className="mt-6 pt-6 border-t border-splash/20">
+                                    <h3 className="font-bold text-lg mb-2 text-text-header">Kasih Balasan</h3>
                                     <Textarea label="" name="newPostContent" value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder="Ketik balasanmu di sini..." rows={4} />
                                     <div className="mt-3 flex items-center gap-4">
                                         <Button onClick={handleCreatePost} isLoading={isSubmitting} disabled={cooldown > 0 || !newPostContent.trim() || isSubmitting}>
@@ -361,8 +387,8 @@ const Forum: React.FC = () => {
                                 </div>
                             )}
                              {user && selectedThread.id === '0' && (
-                                <div className="mt-6 pt-6 border-t border-indigo-700/50 text-center">
-                                    <p className="text-sm text-gray-400">Ini adalah postingan sambutan dari Mang AI. Yuk, bikin topik baru atau balas obrolan lain!</p>
+                                <div className="mt-6 pt-6 border-t border-splash/20 text-center">
+                                    <p className="text-sm text-text-muted">Ini adalah postingan sambutan dari Mang AI. Yuk, bikin topik baru atau balas obrolan lain!</p>
                                 </div>
                             )}
                         </Card>
@@ -380,7 +406,7 @@ const Forum: React.FC = () => {
                                     <Button onClick={handleCreateThread} isLoading={isSubmitting} disabled={cooldown > 0 || !newThreadTitle.trim() || !newThreadContent.trim() || isSubmitting}>
                                         {cooldown > 0 ? `Tunggu ${cooldown} detik lagi...` : 'Posting Topik!'}
                                     </Button>
-                                    {cooldown > 0 && <p className="text-sm text-gray-400">Harap tunggu untuk posting lagi.</p>}
+                                    {cooldown > 0 && <p className="text-sm text-text-muted">Harap tunggu untuk posting lagi.</p>}
                                 </div>
                            </div>
                         </Card>
@@ -393,12 +419,12 @@ const Forum: React.FC = () => {
                     <div>
                         <WarKopInfoBox />
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl md:text-2xl font-bold text-white">Diskusi Terbaru</h2>
-                            <Button onClick={() => user ? setView('new_thread') : alert('Login dulu, Juragan!')}>
+                            <h2 className="text-xl md:text-2xl font-bold text-text-header">Diskusi Terbaru</h2>
+                            <Button onClick={() => user ? setView('new_thread') : alert('Login dulu, Juragan!')} variant="splash">
                                 + Bikin Topik
                             </Button>
                         </div>
-                         <div className="text-xs text-gray-400 mb-4 p-2 bg-gray-800/50 rounded-md text-center">
+                         <div className="text-xs text-text-muted mb-4 p-2 bg-surface rounded-md text-center border border-border-main">
                             💡 Mang AI sekarang bakal ngasih ide topik baru & nimbrung di obrolan secara otomatis, lho! Pantengin terus ya.
                         </div>
                         {isLoadingThreads && threads.length === 0 ? <ThreadListSkeleton /> : (
@@ -408,19 +434,19 @@ const Forum: React.FC = () => {
                                     return(
                                         <div
                                             key={thread.id}
-                                            className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-colors"
+                                            className="flex items-center gap-4 p-4 bg-surface rounded-lg cursor-pointer hover:bg-background transition-colors border border-border-main"
                                             onClick={() => { setSelectedThread(thread); setView('thread'); }}
                                         >
                                             <img src={author.avatar} alt="avatar" className="w-10 h-10 rounded-full flex-shrink-0" />
                                             <div className="flex-grow overflow-hidden">
-                                                <p className={`font-bold truncate ${author.isOfficial ? 'text-indigo-300' : 'text-white'}`}>{thread.title}</p>
-                                                <p className="text-xs text-gray-400">
-                                                    oleh <span className={`font-semibold ${author.isOfficial ? 'text-indigo-300' : ''}`}>{author.name}</span> • {formatRelativeTime(thread.created_at)}
+                                                <p className={`font-bold truncate ${author.isOfficial ? 'text-primary' : 'text-text-header'}`}>{thread.title}</p>
+                                                <p className="text-xs text-text-muted">
+                                                    oleh <span className={`font-semibold ${author.isOfficial ? 'text-primary' : ''}`}>{author.name}</span> • {formatRelativeTime(thread.created_at)}
                                                 </p>
                                             </div>
                                             <div className="text-center flex-shrink-0 w-16">
-                                                <p className="font-bold text-white">{thread.reply_count || 0}</p>
-                                                <p className="text-xs text-gray-500">Balasan</p>
+                                                <p className="font-bold text-text-header">{thread.reply_count || 0}</p>
+                                                <p className="text-xs text-text-muted">Balasan</p>
                                             </div>
                                         </div>
                                     );
