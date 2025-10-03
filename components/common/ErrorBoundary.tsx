@@ -1,9 +1,10 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Reverted the React import to the default import.
-// The namespace import (`import * as React`) can cause issues with `this.props`
-// and `this.setState` not being correctly inferred on the class component instance.
-import React from 'react';
+// FIX: Changed import to namespace import `import * as React`.
+// The default import `import React from 'react'` was not working correctly with this class component,
+// likely due to tsconfig settings (e.g., esModuleInterop: false), causing `this.props` and `this.setState`
+// to be unrecognized. The namespace import is more robust in such scenarios.
+import * as React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
