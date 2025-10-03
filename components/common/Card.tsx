@@ -9,9 +9,14 @@ interface CardProps {
   onClick?: () => void;
   isSelected?: boolean;
   className?: string;
+  // FIX: Added style prop to allow passing inline styles for animations.
+  style?: React.CSSProperties;
 }
 
-const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, className }) => {
+// FIX: Converted component to use React.forwardRef to accept `ref` and `style` props.
+// This resolves TypeScript errors where these props were passed for scrolling and animations
+// but not defined in the original component signature.
+const Card = React.forwardRef<HTMLDivElement, CardProps>(({ title, children, onClick, isSelected, className, style }, ref) => {
   
   const handleClick = async () => {
     if (onClick) {
@@ -30,6 +35,8 @@ const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, class
 
   return (
     <div
+      ref={ref}
+      style={style}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       className={`bg-surface border rounded-xl shadow-sm overflow-hidden transition-all duration-300 ${className} 
@@ -48,6 +55,8 @@ const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, class
       </div>
     </div>
   );
-};
+});
+
+Card.displayName = 'Card';
 
 export default Card;
