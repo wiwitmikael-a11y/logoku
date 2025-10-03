@@ -7,8 +7,8 @@ import LoadingMessage from './LoadingMessage';
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   isLoading?: boolean;
-  variant?: 'primary' | 'secondary';
-  size?: 'normal' | 'small';
+  variant?: 'primary' | 'secondary' | 'accent';
+  size?: 'normal' | 'small' | 'large';
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -17,21 +17,13 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
   
   useEffect(() => {
     if (!isLoading) return;
-
-    // The 'mang-ai-bouncing' animation is 1.2s long.
-    // It has two distinct "landings" at 20% (240ms) and 60% (720ms).
-    // We'll play a sound at these specific times in the animation loop.
     let timeoutIds: number[] = [];
-    
     const playBounceSounds = () => {
       timeoutIds.push(window.setTimeout(() => playSound('bounce'), 240));
       timeoutIds.push(window.setTimeout(() => playSound('bounce'), 720));
     };
-
-    playBounceSounds(); // Play for the first cycle immediately
-    const intervalId = setInterval(playBounceSounds, 1200); // Schedule for subsequent cycles
-
-    // Cleanup function: runs when isLoading becomes false or the component unmounts.
+    playBounceSounds();
+    const intervalId = setInterval(playBounceSounds, 1200);
     return () => {
       clearInterval(intervalId);
       timeoutIds.forEach(clearTimeout);
@@ -39,27 +31,29 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
   }, [isLoading]);
 
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Make it async to wait for audio context to resume
     await unlockAudio();
-    
     playSound('click');
-    if (onClick) {
-      onClick(e);
-    }
+    if (onClick) onClick(e);
   };
 
   const handleMouseEnter = async () => {
-    await unlockAudio(); // Also unlock on hover
+    await unlockAudio();
     playSound('hover');
   }
   
-  const baseClasses = "relative inline-flex items-center justify-center gap-2 font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 disabled:cursor-not-allowed transition-all duration-300 ease-in-out";
-  const primaryClasses = "text-white bg-indigo-600 shadow-lg hover:bg-indigo-700 disabled:bg-indigo-900/50";
-  const secondaryClasses = "text-indigo-300 bg-transparent border border-indigo-500 hover:bg-indigo-500/20 disabled:border-indigo-800/50 disabled:text-gray-500";
+  const baseClasses = "relative inline-flex items-center justify-center gap-2 font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed transition-all duration-200 ease-in-out";
   
-  const variantClasses = variant === 'primary' ? primaryClasses : secondaryClasses;
-  const sizeClasses = size === 'normal' ? "px-6 py-3" : "px-4 py-2 text-sm";
-
+  const variantClasses = {
+    primary: "text-white bg-sky-500 shadow-sm hover:bg-sky-600 focus:ring-sky-500 disabled:bg-sky-500/50",
+    secondary: "text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 focus:ring-sky-500 disabled:bg-slate-50 disabled:text-slate-400",
+    accent: "text-white bg-orange-500 shadow-sm hover:bg-orange-600 focus:ring-orange-500 disabled:bg-orange-500/50",
+  };
+  
+  const sizeClasses = {
+    small: "px-4 py-2 text-sm",
+    normal: "px-5 py-2.5",
+    large: "px-6 py-3 text-base"
+  };
 
   return (
     <button
@@ -67,9 +61,9 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       disabled={isLoading || props.disabled}
-      className={`${baseClasses} ${variantClasses} ${sizeClasses}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${props.className || ''}`}
     >
-      {isLoading && variant === 'primary' && (
+      {isLoading && (
         <img
           src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
           alt="Mang AI working..."

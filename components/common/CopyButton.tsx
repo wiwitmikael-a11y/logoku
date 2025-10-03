@@ -11,7 +11,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy, className, title })
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card clicks, etc.
+    e.stopPropagation();
     navigator.clipboard.writeText(textToCopy);
     playSound('select');
     setIsCopied(true);
@@ -25,7 +25,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy, className, title })
       <button
         onClick={handleCopy}
         title={isCopied ? "Teks tersalin!" : (title || "Salin teks")}
-        className={`p-2 transition-colors bg-gray-800/50 hover:bg-gray-700/50 rounded-full ${isCopied ? 'text-green-400' : 'text-gray-400 hover:text-indigo-400'}`}
+        className={`p-1.5 transition-colors bg-white/50 hover:bg-slate-100/80 rounded-full ${isCopied ? 'text-green-500' : 'text-slate-400 hover:text-sky-600'}`}
       >
         {isCopied ? (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -38,11 +38,6 @@ const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy, className, title })
           </svg>
         )}
       </button>
-      {isCopied && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-semibold text-white bg-black/70 rounded-md whitespace-nowrap animate-fade-in">
-          Tersalin!
-        </div>
-      )}
     </div>
   );
 };

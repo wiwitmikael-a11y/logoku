@@ -31,12 +31,12 @@ const AchievementToast: React.FC<AchievementToastProps> = ({ achievement, onClos
       role="status"
       aria-live="assertive"
     >
-      <div className="bg-gray-800/80 backdrop-blur-md border border-yellow-500 rounded-xl shadow-2xl p-4 flex items-center gap-4">
+      <div className="bg-white/80 backdrop-blur-md border border-slate-200 rounded-xl shadow-2xl p-4 flex items-center gap-4">
         <div className="text-5xl flex-shrink-0">{achievement.icon}</div>
         <div>
-            <p className="text-xs text-yellow-400 font-semibold">Pencapaian Terbuka!</p>
-            <p className="font-bold text-white">{achievement.name}</p>
-            <p className="text-xs text-gray-300">{achievement.description}</p>
+            <p className="text-xs text-orange-500 font-semibold">Pencapaian Terbuka!</p>
+            <p className="font-bold text-slate-800">{achievement.name}</p>
+            <p className="text-xs text-slate-600">{achievement.description}</p>
         </div>
       </div>
     </div>

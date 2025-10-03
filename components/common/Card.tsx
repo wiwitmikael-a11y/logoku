@@ -22,7 +22,7 @@ const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, class
   };
   
   const handleMouseEnter = async () => {
-    if (onClick) { // Only play hover sound on clickable cards
+    if (onClick) {
       await unlockAudio();
       playSound('hover');
     }
@@ -32,16 +32,16 @@ const Card: React.FC<CardProps> = ({ title, children, onClick, isSelected, class
     <div
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      className={`bg-gray-800 border rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${className} ${
-        onClick ? 'cursor-pointer active:scale-[0.98] transition-transform duration-100' : ''
+      className={`bg-white border rounded-xl shadow-sm overflow-hidden transition-all duration-200 ${className} ${
+        onClick ? 'cursor-pointer active:scale-[0.99]' : ''
       } ${
         isSelected
-          ? 'border-indigo-500 ring-2 ring-indigo-500/50'
-          : 'border-gray-700 hover:border-indigo-500/50'
+          ? 'border-sky-500 ring-2 ring-sky-500/30'
+          : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
       }`}
     >
       <div className="p-5">
-        <h3 className="text-lg font-bold text-indigo-400 mb-3">{title}</h3>
+        <h3 className="text-lg font-bold text-slate-800 mb-4">{title}</h3>
         <div>{children}</div>
       </div>
     </div>

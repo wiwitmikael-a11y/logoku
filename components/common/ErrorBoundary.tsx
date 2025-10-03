@@ -1,6 +1,5 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// Use `import * as React from 'react'` to ensure correct type resolution for React class components.
 import * as React from 'react';
 import Button from './Button';
 
@@ -17,16 +16,19 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: The `ErrorBoundary` class was not extending `React.Component`, which is necessary for it to be a valid class component. This provides access to `this.props` and `this.setState`, fixing the errors.
 class ErrorBoundary extends React.Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Converted to use a constructor for state and method binding to ensure 'this' context is correct.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
-    // Also reset isCopied state on a new error for safety.
     return { hasError: true, error, isCopied: false };
   }
 
@@ -34,7 +36,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  handleCopy = () => {
+  handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -46,7 +48,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
-        <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking very concerned"
@@ -54,12 +56,12 @@ class ErrorBoundary extends React.Component<Props, State> {
                 style={imgStyle}
             />
             <div className="flex-1">
-                <h1 className="font-bold text-red-400 text-2xl mb-2">Waduh, Aplikasinya Error!</h1>
-                <p className="text-red-200 mb-4">
+                <h1 className="font-bold text-red-600 text-2xl mb-2">Waduh, Aplikasinya Error!</h1>
+                <p className="text-red-800 mb-4">
                     Mang AI pusing, ada yang rusak di dalam aplikasi. Coba refresh halaman ini. Kalau masih error, mungkin Mang AI lagi istirahat dulu.
                 </p>
                 <div className="flex flex-wrap justify-center items-center gap-4">
-                    <Button onClick={() => window.location.reload()}>
+                    <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
                     {this.props.onReset && (
@@ -69,12 +71,12 @@ class ErrorBoundary extends React.Component<Props, State> {
                     )}
                 </div>
                 {this.state.error && (
-                    <details className="mt-6 text-left text-xs text-gray-400">
+                    <details className="mt-6 text-left text-xs text-slate-500">
                         <summary className="cursor-pointer">Detail Error (untuk developer)</summary>
-                        <pre className="mt-2 p-2 bg-gray-800 rounded overflow-auto selectable-text">
+                        <pre className="mt-2 p-2 bg-slate-100 rounded overflow-auto selectable-text">
                             {this.state.error.toString()}
                         </pre>
-                        <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-indigo-300 bg-transparent border border-indigo-500 hover:bg-indigo-500/20">
+                        <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-sky-700 bg-transparent border border-sky-300 hover:bg-sky-50">
                             {this.state.isCopied ? 'Tersalin!' : 'Salin Detail'}
                         </button>
                     </details>

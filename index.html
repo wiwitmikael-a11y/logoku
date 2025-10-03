@@ -4,20 +4,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>desain.fun - Studio Logo & Branding Mang AI</title>
+    <title>desain.fun - Studio Branding AI untuk UMKM Kreatif</title>
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Aplikasi Mang AI buat bantu UMKM dan bisnis kecil bikin logo, persona brand, dan konten sosmed unik dalam hitungan menit." />
-    <meta name="keywords" content="logo generator, branding AI, UMKM, bisnis kecil, desain logo, persona brand, konten sosmed, Mang AI, desain.fun, AI logo maker, generator logo, buat logo online" />
+    <meta name="description" content="Ubah ide jadi brand juara! desain.fun adalah studio branding AI untuk UMKM: buat logo, persona brand, social media kit, dan konten sosmed dalam hitungan menit." />
+    <meta name="keywords" content="logo generator, branding AI, UMKM, bisnis kecil, desain logo, persona brand, konten sosmed, Mang AI, desain.fun, AI logo maker, generator logo, buat logo online, social media kit" />
     <meta name="author" content="Rangga.P.H (Atharrazka Core)" />
-    <meta name="theme-color" content="#4f46e5" />
+    <meta name="theme-color" content="#0ea5e9" />
     <link rel="canonical" href="https://desain.fun" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://desain.fun" />
-    <meta property="og:title" content="desain.fun - Studio Logo & Branding Mang AI" />
-    <meta property="og:description" content="Aplikasi Mang AI buat bantu UMKM dan bisnis kecil bikin logo, persona brand, dan konten sosmed unik dalam hitungan menit." />
+    <meta property="og:title" content="desain.fun - Studio Branding AI untuk UMKM Kreatif" />
+    <meta property="og:description" content="Ubah ide jadi brand juara! desain.fun adalah studio branding AI untuk UMKM: buat logo, persona brand, social media kit, dan konten sosmed dalam hitungan menit." />
     <meta property="og:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/desainfun-og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -27,8 +27,8 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://desain.fun" />
-    <meta property="twitter:title" content="desain.fun - Studio Logo & Branding Mang AI" />
-    <meta property="twitter:description" content="Aplikasi Mang AI buat bantu UMKM dan bisnis kecil bikin logo, persona brand, dan konten sosmed unik dalam hitungan menit." />
+    <meta property="twitter:title" content="desain.fun - Studio Branding AI untuk UMKM Kreatif" />
+    <meta property="twitter:description" content="Ubah ide jadi brand juara! desain.fun adalah studio branding AI untuk UMKM: buat logo, persona brand, social media kit, dan konten sosmed dalam hitungan menit." />
     <meta property="twitter:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/desainfun-og.png" />
     <meta name="twitter:creator" content="@rangga_p_h" />
 
@@ -39,1220 +39,155 @@
     <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          screens: {
-            'sm': '640px',
-            'md': '768px',
-            'lg': '1024px',
-            'xl': '1280px',
-            '2xl': '1536px',
-          },
-        }
-      }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Publisher ID AdSense kamu sudah terpasang -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6110736010099308"
      crossorigin="anonymous"></script>
     <style>
-      /* Custom scrollbar for a more polished look */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #1a202c; /* A dark gray that matches the theme */
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #4a5568; /* A lighter gray */
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #718096; /* Even lighter on hover */
-      }
-      .font-handwritten {
-        font-family: 'Caveat', cursive;
-      }
-      /* Disable selection and context menu on long press */
-      body {
-        -webkit-user-select: none; /* Safari */
-        -moz-user-select: none; /* Firefox */
-        -ms-user-select: none; /* IE 10+ */
-        user-select: none; /* Standard syntax */
-        -webkit-touch-callout: none; /* iOS Safari */
-        
-        background-color: #111827; /* Tailwind gray-900 */
-        position: relative;
-        z-index: 0;
-        overflow-x: hidden; /* Prevent horizontal scrolling and force mobile layout */
-        /* The SVG circuit background has been removed. */
+      :root {
+        --c-primary: 14 165 233; /* sky-500 */
+        --c-primary-hover: 56 189 248; /* sky-400 */
+        --c-accent: 249 115 22; /* orange-500 */
+        --c-accent-hover: 251 146 60; /* orange-400 */
+        --c-text-base: 51 65 85; /* slate-700 */
+        --c-text-muted: 100 116 139; /* slate-500 */
+        --c-bg: 241 245 249; /* slate-100 */
+        --c-surface: 255 255 255; /* white */
+        --c-border: 226 232 240; /* slate-200 */
+
+        --font-sans: 'Plus Jakarta Sans', sans-serif;
+        --font-hand: 'Caveat', cursive;
       }
       
-      /* NEW: Smooth scrolling for Brand Hub */
       html {
         scroll-behavior: smooth;
       }
 
-      /* NEW: Offset for sticky header when scrolling to anchors */
+      body {
+        font-family: var(--font-sans);
+        background-color: rgb(var(--c-bg));
+        color: rgb(var(--c-text-base));
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e2e8f0' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+      
       section[id] {
         scroll-margin-top: 100px;
       }
       
-      /* NEW: Allow text selection on specific elements */
       .selectable-text {
-        -webkit-user-select: text; /* For Safari */
-        -moz-user-select: text;    /* For Firefox */
-        -ms-user-select: text;     /* For IE */
-        user-select: text;       /* Standard syntax */
+        user-select: text;
       }
 
-      /* Layer 1: Slower, more prominent diagonal lines */
-      body::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        background-image: repeating-linear-gradient(
-          -45deg,
-          transparent,
-          transparent 30px,
-          rgba(99, 102, 241, 0.25) 30px,
-          rgba(99, 102, 241, 0.25) 32px,
-          transparent 32px,
-          transparent 34px,
-          rgba(99, 102, 241, 0.2) 34px,
-          rgba(99, 102, 241, 0.2) 36px,
-          transparent 36px,
-          transparent 38px,
-          rgba(99, 102, 241, 0.15) 38px,
-          rgba(99, 102, 241, 0.15) 40px
-        );
-        animation: bg-pan 35s linear infinite; /* UPDATED: Smoother, more noticeable panning */
-      }
-
-      /* Layer 2: Faster-moving diagonal lines for parallax */
-      body::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: -2;
-        background-image: repeating-linear-gradient(
-          -45deg,
-          transparent,
-          transparent 60px,
-          rgba(165, 180, 252, 0.08) 60px, /* more visible */
-          rgba(165, 180, 252, 0.08) 61px
-        );
-        animation: bg-pan-fast 30s linear infinite; /* Faster speed */
-      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: rgb(var(--c-bg)); }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       
-      @keyframes bg-pan {
-        0% {
-          background-position: 0% 0%;
-        }
-        100% {
-          background-position: 200% 200%;
-        }
-      }
-
-      /* Keyframe for the fast-moving secondary lines */
-      @keyframes bg-pan-fast {
-        0% {
-          background-position: 0% 0%;
-        }
-        100% {
-          background-position: 200% 200%;
-        }
-      }
-      
-      /* NEW: Keyframe for screen transitions */
+      /* --- ANIMATIONS --- */
       @keyframes content-fade-in {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
       .animate-content-fade-in {
         animation: content-fade-in 0.5s ease-out forwards;
       }
       
-      /* NEW: Keyframe for generated image appearance */
-      @keyframes image-appear {
-        from {
-            opacity: 0;
-            transform: scale(0.95) translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
+      @keyframes item-appear {
+        from { opacity: 0; transform: scale(0.95) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
       }
-      .animate-image-appear {
-        animation: image-appear 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-      }
-
-      /* NEW: Keyframe for gallery cards */
-      @keyframes gallery-card-appear {
-        from {
-            opacity: 0;
-            transform: scale(0.9) translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
-      }
-      .animate-gallery-card-appear {
-          animation: gallery-card-appear 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-      }
-
-
-      /* Keyframes for Mang AI with breathing and bouncy hop effects */
-      @keyframes mario-top-breathing-bounce {
-        /* --- Going Left to Right --- */
-        0%   { transform: translateX(-180px) scale(-1, 1); }
-        /* Idle breathe */
-        5%   { transform: translateX(-180px) scale(-1.02, 0.98); }
-        10%  { transform: translateX(-180px) scale(-1, 1); }
-        
-        /* Hop 1 */
-        15%  { transform: translateX(-120px) scale(-1, 1) translateY(-20px); }
-        20%  { transform: translateX(-60px) scale(-1.1, 0.9) translateY(0); }
-        22%  { transform: translateX(-60px) scale(-1, 1) translateY(0); }
-        
-        /* Hop 2 */
-        27%  { transform: translateX(0px) scale(-1, 1) translateY(-20px); }
-        32%  { transform: translateX(60px) scale(-1.1, 0.9) translateY(0); }
-        34%  { transform: translateX(60px) scale(-1, 1) translateY(0); }
-
-        /* Hop 3 to edge */
-        39%  { transform: translateX(120px) scale(-1, 1) translateY(-20px); }
-        44%  { transform: translateX(180px) scale(-1.1, 0.9) translateY(0); }
-        
-        /* Turn around & breathe */
-        50%  { transform: translateX(180px) scale(1, 1); }
-        55%  { transform: translateX(180px) scale(1.02, 0.98); }
-        60%  { transform: translateX(180px) scale(1, 1); }
-        
-        /* --- Going Right to Left (faster return) --- */
-        /* Hop 1 */
-        68%  { transform: translateX(90px) scale(1, 1) translateY(-25px); }
-        76%  { transform: translateX(0px) scale(1.1, 0.9) translateY(0); }
-        78%  { transform: translateX(0px) scale(1, 1) translateY(0); }
-
-        /* Hop 2 to edge */
-        86%  { transform: translateX(-90px) scale(1, 1) translateY(-25px); }
-        94%  { transform: translateX(-180px) scale(1.1, 0.9) translateY(0); }
-
-        100% { transform: translateX(-180px) scale(-1, 1); }
-      }
-
-      /* OPTIMIZED: Uses transform instead of 'left' for better performance */
-      @keyframes mario-bottom-breathing-bounce {
-        /* --- Going Left to Right --- */
-        0%   { transform: translateX(5vw) scale(-1, 1) translateY(0); }
-        /* Idle breathe */
-        10%  { transform: translateX(5vw) scale(-1.03, 0.97) translateY(1px); }
-        20%  { transform: translateX(5vw) scale(-1, 1) translateY(0); }
-        
-        /* Big Jump Across */
-        30%  { transform: translateX(50vw) scale(-1, 1) translateY(-130px); }
-        40%  { transform: translateX(calc(95vw - 128px)) scale(-1.2, 0.8) translateY(0); } /* Land hard */
-        45%  { transform: translateX(calc(95vw - 128px)) scale(-1, 1) translateY(0); } /* Settle */
-
-        /* Turn around & breathe */
-        50%  { transform: translateX(calc(95vw - 128px)) scale(1, 1) translateY(0); }
-        60%  { transform: translateX(calc(95vw - 128px)) scale(1.03, 0.97) translateY(1px); }
-        70%  { transform: translateX(calc(95vw - 128px)) scale(1, 1) translateY(0); }
-        
-        /* --- Going Right to Left --- */
-        /* Big Jump Back */
-        80%  { transform: translateX(50vw) scale(1, 1) translateY(-130px); }
-        90%  { transform: translateX(5vw) scale(1.2, 0.8) translateY(0); } /* Land hard */
-        95%  { transform: translateX(5vw) scale(1, 1) translateY(0); } /* Settle */
-        
-        100% { transform: translateX(5vw) scale(-1, 1) translateY(0); }
+      .animate-item-appear {
+        animation: item-appear 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
       }
       
-      /* NEW: Keyframes for Login Screen Mang AI */
-      @keyframes login-ai-antics {
-        /* --- Start on left, facing right --- */
-        0%   { transform: translateX(calc(-50% - 160px)) scaleX(-1); }
-        /* Hop 1 */
-        10%  { transform: translateX(calc(-50% - 100px)) scaleX(-1) translateY(-25px); }
-        15%  { transform: translateX(calc(-50% - 40px)) scale(-1.1, 0.9) translateY(0); }
-        17%  { transform: translateX(calc(-50% - 40px)) scaleX(-1) translateY(0); }
-        
-        /* Hop 2 */
-        27%  { transform: translateX(calc(-50% + 20px)) scaleX(-1) translateY(-25px); }
-        32%  { transform: translateX(calc(-50% + 80px)) scale(-1.1, 0.9) translateY(0); }
-        34%  { transform: translateX(calc(-50% + 80px)) scaleX(-1) translateY(0); }
-        
-        /* Hop to right edge */
-        44%  { transform: translateX(calc(-50% + 120px)) scaleX(-1) translateY(-20px); }
-        49%  { transform: translateX(calc(-50% + 160px)) scale(-1.1, 0.9) translateY(0); }
-        
-        /* --- Pause on right, turn around --- */
-        50%  { transform: translateX(calc(-50% + 160px)) scaleX(1); }
-        60%  { transform: translateX(calc(-50% + 160px)) scaleX(1); }
-
-        /* --- Go back left --- */
-        /* Hop 1 */
-        70%  { transform: translateX(calc(-50% + 100px)) scaleX(1) translateY(-25px); }
-        75%  { transform: translateX(calc(-50% + 40px)) scale(1.1, 0.9) translateY(0); }
-        77%  { transform: translateX(calc(-50% + 40px)) scaleX(1) translateY(0); }
-
-        /* Big Hop to left edge */
-        87%  { transform: translateX(calc(-50% - 60px)) scaleX(1) translateY(-30px); }
-        95%  { transform: translateX(calc(-50% - 160px)) scale(1.2, 0.8) translateY(0); }
-
-        100% { transform: translateX(calc(-50% - 160px)) scaleX(-1); }
-      }
-
-      /* NEW: Keyframes for Mang AI tripping on error screens */
-      @keyframes mang-ai-tripped {
-        0% { transform: translateY(0) rotate(0deg); }
-        20% { transform: translateY(-20px) rotate(-15deg); } /* Lari */
-        40% { transform: translateY(0) rotate(15deg) scale(1.1, 0.9); } /* Tersandung */
-        50% { transform: translateY(-10px) rotate(-10deg); } /* Coba berdiri */
-        60% { transform: translateY(0) rotate(5deg); } /* Jatuh lagi dikit */
-        70% { transform: translateY(0) rotate(0deg) scale(0.95, 1.05); } /* Berdiri, goyang */
-        80%, 100% { transform: translateY(0) rotate(0deg); } /* Diam panik */
-      }
-
-
-      /* Keyframes for Mang AI bouncing on buttons */
-      @keyframes mang-ai-bouncing {
-        0% {
-          transform: translateY(20%) scale(0.8);
-          opacity: 0;
-        }
-        20% {
-          transform: translateY(0) scale(1.1, 0.9); /* Land */
-          opacity: 1;
-          animation-timing-function: cubic-bezier(0.280, 0.840, 0.420, 1);
-        }
-        40% {
-          transform: translateY(-30%) scale(0.95, 1.05); /* Jump up */
-          animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
-        }
-        60% {
-          transform: translateY(0) scale(1.05, 0.95); /* Land again */
-          animation-timing-function: cubic-bezier(0.280, 0.840, 0.420, 1);
-        }
-        80% {
-          transform: translateY(-15%) scale(1); /* Smaller jump */
-           animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
-        }
-        100% {
-          transform: translateY(0) scale(1); /* Settle */
-        }
-      }
-
-      /* NEW: Keyframes for simple breathing animation */
       @keyframes mang-ai-breathing {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.04); }
-        100% { transform: scale(1); }
+        0% { transform: scale(1) translateY(0); }
+        50% { transform: scale(1.04) translateY(-2px); }
+        100% { transform: scale(1) translateY(0); }
       }
-      
-      /* NEW: Keyframes for Mang AI Moods */
-      @keyframes mang-ai-happy {
-        0% { transform: scale(1) translateY(0) rotate(0deg); }
-        20% { transform: scale(1.05, 0.95) translateY(0); } /* Squish */
-        50% { transform: scale(0.95, 1.05) translateY(-8px) rotate(5deg); } /* Jump */
-        80% { transform: scale(1.05, 0.95) translateY(0) rotate(-5deg); } /* Land */
-        100% { transform: scale(1) translateY(0) rotate(0deg); }
-      }
-      @keyframes mang-ai-tired {
-        0% { transform: scale(1) translateY(0); opacity: 1; }
-        50% { transform: scale(1.01, 0.99) translateY(2px); opacity: 0.8; } /* Slow breathe */
-        100% { transform: scale(1) translateY(0); opacity: 1; }
-      }
-      
-      /* --- DUST EFFECT --- */
-      @keyframes dust-for-top-mario {
-        0%, 20.1%, 32.1%, 44.1%, 76.1%, 94.1%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
-        20% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        24% { transform: translateX(-50%) scale(2); opacity: 0; }
-        32% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        36% { transform: translateX(-50%) scale(2); opacity: 0; }
-        44% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        48% { transform: translateX(-50%) scale(2); opacity: 0; }
-        76% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        80% { transform: translateX(-50%) scale(2); opacity: 0; }
-        94% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        99% { transform: translateX(-50%) scale(2); opacity: 0; }
-      }
-      @keyframes dust-for-bottom-mario {
-        0%, 40.1%, 90.1%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
-        40% { transform: translateX(-50%) scale(1.2); opacity: 0.8; }
-        48% { transform: translateX(-50%) scale(2.5); opacity: 0; }
-        90% { transform: translateX(-50%) scale(1.2); opacity: 0.8; }
-        98% { transform: translateX(-50%) scale(2.5); opacity: 0; }
-      }
-      @keyframes dust-for-bouncing-ai {
-        0%, 19%, 30%, 59%, 70%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
-        20% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        29.9% { transform: translateX(-50%) scale(1.8); opacity: 0; }
-        60% { transform: translateX(-50%) scale(0.7); opacity: 0.7; }
-        69.9% { transform: translateX(-50%) scale(1.6); opacity: 0; }
-      }
-      @keyframes dust-for-login-ai {
-        0%, 15.1%, 32.1%, 49.1%, 75.1%, 95.1%, 100% { transform: translateX(-50%) scale(0); opacity: 0; }
-        15% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        19% { transform: translateX(-50%) scale(1.8); opacity: 0; }
-        32% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        36% { transform: translateX(-50%) scale(1.8); opacity: 0; }
-        49% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        53% { transform: translateX(-50%) scale(1.8); opacity: 0; }
-        75% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-        79% { transform: translateX(-50%) scale(1.8); opacity: 0; }
-        95% { transform: translateX(-50%) scale(1.2); opacity: 0.8; }
-        99% { transform: translateX(-50%) scale(2.5); opacity: 0; }
+      .animate-breathing-ai {
+        animation: mang-ai-breathing 2.5s ease-in-out infinite;
+        transform-origin: bottom center;
       }
 
-      /* --- NEW: SHADOW EFFECT KEYFRAMES --- */
-      @keyframes shadow-for-top-mario {
-        0%, 10%, 50%, 60%, 100% { transform: translateX(-50%) scale(1); opacity: 0.25; }
-        15%  { transform: translateX(-50%) scale(0.6); opacity: 0.15; }
-        20%  { transform: translateX(-50%) scale(1.2); opacity: 0.3; }
-        22%  { transform: translateX(-50%) scale(1); opacity: 0.25; }
-        27%  { transform: translateX(-50%) scale(0.6); opacity: 0.15; }
-        32%  { transform: translateX(-50%) scale(1.2); opacity: 0.3; }
-        34%  { transform: translateX(-50%) scale(1); opacity: 0.25; }
-        39%  { transform: translateX(-50%) scale(0.6); opacity: 0.15; }
-        44%  { transform: translateX(-50%) scale(1.2); opacity: 0.3; }
-        46%  { transform: translateX(-50%) scale(1); opacity: 0.25; }
-        68%  { transform: translateX(-50%) scale(0.5); opacity: 0.1; }
-        76%  { transform: translateX(-50%) scale(1.3); opacity: 0.35; }
-        78%  { transform: translateX(-50%) scale(1); opacity: 0.25; }
-        86%  { transform: translateX(-50%) scale(0.5); opacity: 0.1; }
-        94%  { transform: translateX(-50%) scale(1.3); opacity: 0.35; }
-        96%  { transform: translateX(-50%) scale(1); opacity: 0.25; }
+      @keyframes mang-ai-bouncing {
+        0% { transform: translateY(20%) scale(0.8); opacity: 0; }
+        20% { transform: translateY(0) scale(1.1, 0.9); opacity: 1; }
+        40% { transform: translateY(-30%) scale(0.95, 1.05); }
+        60% { transform: translateY(0) scale(1.05, 0.95); }
+        80% { transform: translateY(-15%) scale(1); }
+        100% { transform: translateY(0) scale(1); }
       }
-      @keyframes shadow-for-bottom-mario {
-        0%, 20%, 50%, 70%, 100% { transform: translateX(-50%) scale(1); opacity: 0.25; }
-        30%  { transform: translateX(-50%) scale(0.3); opacity: 0.1; }
-        40%  { transform: translateX(-50%) scale(1.4); opacity: 0.35; }
-        45%  { transform: translateX(-50%) scale(1); opacity: 0.25; }
-        80%  { transform: translateX(-50%) scale(0.3); opacity: 0.1; }
-        90%  { transform: translateX(-50%) scale(1.4); opacity: 0.35; }
-        95%  { transform: translateX(-50%) scale(1); opacity: 0.25; }
+      .animate-bouncing-ai::before {
+        content: '';
+        position: absolute;
+        bottom: -2px; left: 50%; width: 70%; height: 8px;
+        background: radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, transparent 70%);
+        z-index: -1;
+        animation: shadow-for-bouncing-ai 1.2s ease-in-out infinite;
       }
       @keyframes shadow-for-bouncing-ai {
         0%   { transform: translateX(-50%) scale(0.5); opacity: 0; }
-        20%  { transform: translateX(-50%) scale(1.1); opacity: 0.25; }
-        40%  { transform: translateX(-50%) scale(0.6); opacity: 0.15; }
-        60%  { transform: translateX(-50%) scale(1.05); opacity: 0.25; }
-        80%  { transform: translateX(-50%) scale(0.8); opacity: 0.2; }
-        100% { transform: translateX(-50%) scale(1); opacity: 0.25; }
+        20%  { transform: translateX(-50%) scale(1.1); opacity: 0.2; }
+        40%  { transform: translateX(-50%) scale(0.6); opacity: 0.1; }
+        60%  { transform: translateX(-50%) scale(1.05); opacity: 0.18; }
+        80%  { transform: translateX(-50%) scale(0.8); opacity: 0.15; }
+        100% { transform: translateX(-50%) scale(1); opacity: 0.2; }
       }
-      @keyframes shadow-for-login-ai {
-        0%, 100% { transform: translateX(-50%) scale(1.1); opacity: 0.3; }
-        10% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
-        15% { transform: translateX(-50%) scale(1.2); opacity: 0.35; }
-        27% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
-        32% { transform: translateX(-50%) scale(1.2); opacity: 0.35; }
-        44% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
-        49% { transform: translateX(-50%) scale(1.2); opacity: 0.35; }
-        50%, 60% { transform: translateX(-50%) scale(1); opacity: 0.25; }
-        70% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
-        75% { transform: translateX(-50%) scale(1.2); opacity: 0.35; }
-        87% { transform: translateX(-50%) scale(0.6); opacity: 0.1; }
-        95% { transform: translateX(-50%) scale(1.4); opacity: 0.4; }
-      }
-
-      /* Base style for the new shadow pseudo-element */
-      .animate-mario-top-breathing::before,
-      .animate-mario-bottom-breathing::before,
-      .animate-bouncing-ai::before,
-      .animate-login-ai::before {
-        content: '';
-        position: absolute;
-        bottom: -5px;
-        left: 50%;
-        width: 70%;
-        height: 12px;
-        background: radial-gradient(ellipse at center, rgba(20, 20, 20, 0.35) 0%, rgba(20, 20, 20, 0) 70%);
-        z-index: -2;
-        transform-origin: center bottom;
-      }
-
-      /* Base style for the existing dust pseudo-element */
-      .animate-mario-top-breathing::after,
-      .animate-mario-bottom-breathing::after,
-      .animate-bouncing-ai::after,
-      .animate-login-ai::after {
-        content: '';
-        position: absolute;
-        bottom: -5px;
-        left: 50%;
-        transform-origin: center bottom;
-        width: 80%;
-        height: 50%;
-        background-image: url('https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/bouncy.png');
-        background-size: contain;
-        background-position: center bottom;
-        background-repeat: no-repeat;
-        opacity: 0;
-        pointer-events: none;
-        image-rendering: pixelated;
-        z-index: -1; /* Placed above the shadow */
-      }
-      
-      .animate-login-ai {
-        animation: login-ai-antics 7s linear infinite;
-        transform-origin: bottom center;
-      }
-      .animate-login-ai::before {
-        animation: shadow-for-login-ai 7s linear infinite;
-      }
-      .animate-login-ai::after {
-        animation: dust-for-login-ai 7s linear infinite;
-      }
-      
-      .animate-tripped-ai {
-        animation: mang-ai-tripped 1.5s ease-in-out infinite;
-        transform-origin: bottom center;
-      }
-
       .animate-bouncing-ai {
         animation: mang-ai-bouncing 1.2s ease-in-out infinite;
         transform-origin: bottom center;
         image-rendering: pixelated;
       }
-      .animate-bouncing-ai::before {
-        animation: shadow-for-bouncing-ai 1.2s ease-in-out infinite;
-      }
-      .animate-bouncing-ai::after {
-        animation: dust-for-bouncing-ai 1.2s ease-in-out infinite;
-      }
       
-      .animate-mario-top-breathing {
-        animation: mario-top-breathing-bounce 8s linear infinite;
-      }
-      .animate-mario-top-breathing::before {
-         animation: shadow-for-top-mario 8s linear infinite;
-      }
-      .animate-mario-top-breathing::after {
-         animation: dust-for-top-mario 8s linear infinite;
-      }
-
-      .animate-mario-bottom-breathing {
-        animation: mario-bottom-breathing-bounce 6s linear infinite;
-        position: fixed;
-        left: 0; /* Set a base position for transform to work on */
-        bottom: 0;
-        pointer-events: none;
-        z-index: 20;
-        will-change: transform; /* Hint for browser performance */
-      }
-       .animate-mario-bottom-breathing::before {
-        animation: shadow-for-bottom-mario 6s linear infinite;
-      }
-      .animate-mario-bottom-breathing::after {
-        animation: dust-for-bottom-mario 6s linear infinite;
-      }
-      
-      .animate-breathing-ai {
-        animation: mang-ai-breathing 2.5s ease-in-out infinite;
-        transform-origin: bottom center;
-      }
-      
-      /* NEW: Mang AI mood animation classes */
-      .animate-mang-ai-happy { 
-        animation: mang-ai-happy 1.5s ease-in-out infinite; 
-        transform-origin: bottom center; 
-      }
-      .animate-mang-ai-tired { 
-        animation: mang-ai-tired 4s ease-in-out infinite; 
-        transform-origin: bottom center; 
-      }
-      
-      /* NEW: Keyframes for Saweria marquee */
-      @keyframes marquee {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-50%); }
-      }
-      .animate-marquee {
-        animation: marquee 40s linear infinite;
-        white-space: nowrap;
-      }
-      
-      /* NEW: Keyframes for delete confirmation animation */
-      @keyframes paper-throw {
-        0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
-        20% { transform: translate(15px, -30px) rotate(15deg) scale(1.1); }
-        100% { transform: translate(30px, 40px) rotate(90deg) scale(0.2); opacity: 0; }
-      }
-      .animate-paper-throw {
-        animation: paper-throw 0.5s ease-in forwards;
-      }
-      @keyframes trash-shake {
-        0%, 100% { transform: translateX(0) rotate(0); }
-        20% { transform: translateX(-3px) rotate(-5deg); }
-        40% { transform: translateX(3px) rotate(5deg); }
-        60% { transform: translateX(-3px) rotate(-5deg); }
-        80% { transform: translateX(3px) rotate(5deg); }
-      }
-      .animate-trash-shake {
-        animation: trash-shake 0.4s ease-in-out;
-      }
-       @keyframes slider-success-glow {
-        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-        100% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-      }
-
-      img {
-        pointer-events: none; /* Disables mouse events on images, preventing drag-and-drop saving */
-      }
-      
-      /* --- NEW: AI Assistant Styles --- */
-      /* NEW: Keyframe for FAB subtle bounce */
-      @keyframes fab-bounce {
-        0%, 100% { transform: translateY(0) scale(1.1); }
-        50% { transform: translateY(-4px) scale(1.1); }
-      }
-      .animate-fab-bounce {
-        animation: fab-bounce 4s ease-in-out infinite;
-      }
-
-      /* NEW: Keyframe for FAB greeting animation */
-      @keyframes mang-ai-greet {
-          0% { transform: scale(1) rotate(0); }
-          30% { transform: scale(1.25) rotate(-15deg); }
-          60% { transform: scale(0.9) rotate(8deg); }
-          100% { transform: scale(1) rotate(0); }
-      }
-      .animate-mang-ai-greet {
-          animation: mang-ai-greet 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-      }
-      
-      @keyframes fab-pulse-ring {
-        0% {
-          transform: scale(1);
-          opacity: 0.6;
-        }
-        100% {
-          transform: scale(1.6);
-          opacity: 0;
-        }
-      }
+      /* --- AI ASSISTANT --- */
       #ai-assistant-fab {
         position: fixed;
-        bottom: 80px; /* Adjusted for ad banner */
+        bottom: 80px;
         right: 1.5rem;
-        z-index: 30; /* Above content, below modals */
-        width: 64px;
-        height: 64px;
-        background-color: #4f46e5; /* indigo-600 */
-        border: 2px solid #a5b4fc; /* indigo-300 */
-        border-radius: 9999px; /* Make it a circle */
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
-        cursor: pointer;
-        transition: all 0.3s ease-in-out;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Add smooth transition */
-      }
-      #ai-assistant-fab.fab-hidden {
-        transform: translateY(calc(100% + 90px)); /* Hide by moving it down */
-      }
-      #ai-assistant-fab::after {
-        content: '';
-        position: absolute;
-        width: 100%;
-        height: 100%;
+        z-index: 30;
+        width: 64px; height: 64px;
+        background-color: rgb(var(--c-accent));
         border-radius: 9999px;
-        background: transparent;
-        border: 2px solid #a5b4fc; /* indigo-300 */
-        z-index: -1;
-        animation: fab-pulse-ring 2s ease-out infinite;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
       }
-      #ai-assistant-fab:hover {
-        transform: scale(1.1);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-      }
-      #ai-assistant-fab img {
-        width: 56px;
-        height: 56px;
-        image-rendering: pixelated;
-        pointer-events: none;
-      }
+      #ai-assistant-fab.fab-hidden { transform: translateY(calc(100% + 90px)); }
+      #ai-assistant-fab:hover { transform: scale(1.1); }
+      #ai-assistant-fab img { width: 56px; height: 56px; image-rendering: pixelated; }
 
       .ai-assistant-panel {
-        position: fixed;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        max-width: 420px;
-        z-index: 40; /* Above FAB, below modals */
-        background-color: #1f2937; /* gray-800 */
-        border-left: 1px solid #374151; /* gray-700 */
-        box-shadow: -10px 0 20px rgba(0,0,0,0.3);
-        display: flex;
-        flex-direction: column;
+        position: fixed; top: 0; right: 0; bottom: 0;
+        width: 100%; max-width: 420px; z-index: 40;
+        background-color: var(--c-surface);
+        border-left: 1px solid var(--c-border);
+        box-shadow: -10px 0 20px rgba(0,0,0,0.1);
+        display: flex; flex-direction: column;
         transform: translateX(100%);
         transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
       }
-      .ai-assistant-panel.open {
-        transform: translateX(0);
-      }
-
-      .ai-chat-header {
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid #374151; /* gray-700 */
-        flex-shrink: 0;
-      }
-
-      .ai-chat-messages {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .chat-bubble {
-        max-width: 85%;
-        padding: 0.75rem 1rem;
-        border-radius: 1rem;
-        line-height: 1.5;
-        word-wrap: break-word;
-      }
-      .chat-bubble.user {
-        background-color: #4f46e5; /* indigo-600 */
-        color: white;
-        align-self: flex-end;
-        border-bottom-right-radius: 0.25rem;
-      }
-      .chat-bubble.model {
-        background-color: #374151; /* gray-700 */
-        color: #d1d5db; /* gray-300 */
-        align-self: flex-start;
-        border-bottom-left-radius: 0.25rem;
-      }
-      .chat-bubble.model strong {
-        color: #a5b4fc; /* indigo-300 */
-      }
-      .chat-bubble.model code {
-        background-color: #111827; /* gray-900 */
-        padding: 0.125rem 0.25rem;
-        border-radius: 0.25rem;
-        font-family: monospace;
-        font-size: 0.875em;
-      }
-
-      .ai-prompt-starter {
-          background-color: #374151; /* gray-700 */
-          border: 1px solid #4b5563; /* gray-600 */
-          color: #d1d5db; /* gray-300 */
-          padding: 0.5rem 0.75rem;
-          border-radius: 0.5rem;
-          font-size: 0.875rem;
-          cursor: pointer;
-          transition: background-color 0.2s;
-          text-align: left;
-      }
-      .ai-prompt-starter:hover {
-          background-color: #4b5563; /* gray-600 */
-      }
-
-      .ai-chat-input-form {
-        padding: 1.5rem;
-        border-top: 1px solid #374151; /* gray-700 */
-        background-color: #1f2937; /* gray-800 */
-        flex-shrink: 0;
-      }
-      .ai-chat-input-wrapper {
-        position: relative;
-      }
-      .ai-chat-input-wrapper textarea {
-        width: 100%;
-        padding: 0.75rem 3.5rem 0.75rem 1rem;
-        border-radius: 0.75rem;
-        background-color: #374151;
-        color: white;
-        border: 1px solid #4b5563;
-        resize: none;
-        font-size: 1rem;
-        line-height: 1.5;
-        max-height: 120px;
-      }
-      .ai-chat-input-wrapper textarea:focus {
-        outline: none;
-        border-color: #6366f1; /* indigo-500 */
-        box-shadow: 0 0 0 2px #4338ca; /* indigo-800 */
-      }
-      .ai-chat-input-wrapper button {
-        position: absolute;
-        right: 0.5rem;
-        top: 50%;
-        transform: translateY(-50%);
-        background-color: #4f46e5;
-        color: white;
-        width: 36px;
-        height: 36px;
-        border-radius: 0.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.2s;
-      }
-      .ai-chat-input-wrapper button:hover {
-        background-color: #4338ca;
-      }
-      .ai-chat-input-wrapper button:disabled {
-        background-color: #374151;
-        cursor: not-allowed;
-      }
+      .ai-assistant-panel.open { transform: translateX(0); }
+      .chat-bubble.user { background-color: rgb(var(--c-primary)); color: white; }
+      .chat-bubble.model { background-color: rgb(var(--c-bg)); color: rgb(var(--c-text-base)); }
+      
       #ai-assistant-overlay {
-          position: fixed;
-          inset: 0;
-          background-color: rgba(0,0,0,0.5);
-          z-index: 39; /* Just below the panel */
-          opacity: 0;
-          pointer-events: none;
+          position: fixed; inset: 0;
+          background-color: rgba(0,0,0,0.4);
+          backdrop-filter: blur(4px);
+          z-index: 39;
+          opacity: 0; pointer-events: none;
           transition: opacity 0.4s ease-in-out;
       }
-      #ai-assistant-overlay.visible {
-          opacity: 1;
-          pointer-events: auto;
-      }
+      #ai-assistant-overlay.visible { opacity: 1; pointer-events: auto; }
 
-      /* --- NEW: Dashboard Living UI Effects --- */
-      @keyframes scan-line {
-        from { background-position-y: 0px; }
-        to { background-position-y: 48px; }
-      }
-      .info-box-stream {
-          position: relative;
-          overflow: hidden;
-          z-index: 0; /* ensure stacking context */
-      }
-      .info-box-stream::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: -1;
-          background-image: repeating-linear-gradient(
-              0deg,
-              transparent,
-              transparent 22px,
-              rgba(165, 180, 252, 0.05) 23px,
-              rgba(165, 180, 252, 0.05) 24px
-          );
-          background-size: 100% 48px;
-          animation: scan-line 2s linear infinite;
-          opacity: 0.7;
-      }
-      
-      @keyframes rotate-border {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      .card-in-progress-wrapper {
-          position: relative;
-          padding: 2px;
-          overflow: hidden;
-          border-radius: 0.875rem; /* 14px, slightly bigger than card's rounded-xl */
-          z-index: 0;
-      }
-      .card-in-progress-wrapper::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          z-index: -1;
-          background: conic-gradient(
-              from 90deg at 50% 50%,
-              #a5b4fc, /* indigo-300 */
-              #fcd34d, /* amber-300 */
-              #6ee7b7, /* emerald-300 */
-              #93c5fd, /* blue-300 */
-              #a5b4fc
-          );
-          animation: rotate-border 6s linear infinite;
-      }
-      .card-in-progress-wrapper > div { /* Target the Card component inside */
-          height: 100%;
-      }
-      
-      .card-completed-wrapper {
-        position: relative;
-        padding: 2px;
-        border-radius: 0.875rem; /* 14px */
-        background-color: #374151; /* gray-700 */
-        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234b5563' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-      }
-      .card-completed-wrapper > div { /* Target the Card component inside */
-          height: 100%;
-      }
-
-      /* UPDATED: Elegant border for Saweria widget */
-      .saweria-elegant-wrapper {
-        position: relative;
-        padding: 2px;
-        border-radius: 0.875rem; /* 14px */
-        background: linear-gradient(135deg, #fcd34d, #f59e0b); /* amber-300 to amber-500 */
-        box-shadow: 0 4px 15px rgba(252, 211, 77, 0.1);
-      }
-      .saweria-elegant-wrapper > div { /* Target the SaweriaWidget component inside */
-        height: 100%;
-      }
-
-      /* --- NEW: Gamification Styles --- */
-      @keyframes xp-bar-fill-anim {
-        from { transform: scaleX(0); }
-        to { transform: scaleX(1); }
-      }
-      .xp-bar-fill {
-        animation: xp-bar-fill-anim 0.8s 0.5s cubic-bezier(0.25, 1, 0.5, 1) both;
-        transform-origin: left;
-      }
-      /* --- NEW: User Profile Tier Styles --- */
-      .user-tier-bronze { background-color: #2d3748; } /* gray-800 */
-      .user-tier-silver { background: linear-gradient(145deg, #4a5568, #718096); } /* gray-600 to gray-500 */
-      .user-tier-gold { background: linear-gradient(145deg, #b7791f, #f6e05e); } /* yellow-700 to yellow-300 */
-      .user-tier-amethyst { background: linear-gradient(145deg, #6b46c1, #b794f4); } /* purple-700 to purple-300 */
-
-      @keyframes level-up-modal-scale-in {
-        from {
-          opacity: 0;
-          transform: translate(-50%, -50%) scale(0.8);
-        }
-        to {
-          opacity: 1;
-          transform: translate(-50%, -50%) scale(1);
-        }
-      }
-
-      @keyframes achievement-toast-slide-in {
-        from {
-          opacity: 0;
-          transform: translateY(100%);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      
-      /* --- NEW: Arcade UI Styles --- */
-      @keyframes crt-flicker {
-        0%, 100% { opacity: 1; }
-        49.5% { opacity: 1; }
-        50% { opacity: 0.8; }
-        50.5% { opacity: 1; }
-      }
-      @keyframes text-blink {
-        50% { opacity: 0; }
-      }
-       /* --- REWORKED: Arcade Cabinet Styles --- */
-      @keyframes neon-pulse {
-        0%, 100% { box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff; }
-        50% { box-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 40px #0ff; }
-      }
-      @keyframes neon-text-flicker {
-        0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-          text-shadow: 0 0 5px #f0f, 0 0 10px #f0f, 0 0 20px #f0f, 0 0 40px #ff00de, 0 0 70px #ff00de;
-          opacity: 1;
-        }
-        20%, 24%, 55% { text-shadow: none; opacity: 0.8; }
-      }
-
-      .arcade-wrapper { /* NEW: The main body of the cabinet */
-        position: relative;
-        width: 100%;
-        max-width: 550px;
-        margin: 2rem auto;
-        background-color: #1a1a2e;
-        clip-path: polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
-        padding: 0 40px; /* Space for the side neon */
-        padding-top: 2px;
-      }
-      /* NEW: Side neon on the wrapper */
-      .arcade-wrapper::before, .arcade-wrapper::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 15px;
-        background: linear-gradient(to bottom, transparent, #0ff 20%, #0ff 80%, transparent);
-        box-shadow: 0 0 5px #0ff;
-        animation: neon-pulse 3s infinite alternate;
-      }
-      .arcade-wrapper::before { left: 15px; }
-      .arcade-wrapper::after { right: 15px; }
-      
-      .arcade-cabinet {
-        position: relative;
-        width: 100%;
-        background-color: #2a2a3e; /* Mid-tone for front panel */
-        border: 2px solid #3f3f5e;
-        border-top: none;
-        border-bottom: none;
-        box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.4);
-        padding: 15px;
-        padding-bottom: 0;
-      }
-
-      .arcade-top {
-        position: relative;
-        width: calc(100% + 70px); /* Overhang the wrapper */
-        left: -35px;
-        background-color: #0d0d1a;
-        padding: 15px;
-        margin-bottom: 15px;
-        border: 2px solid #2a2a3e;
-        border-radius: 10px 10px 0 0;
-        box-shadow: inset 0 0 10px rgba(255,0,222,0.3);
-        text-align: center;
-      }
-      .arcade-title {
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 2rem;
-        font-weight: bold;
-        color: #f0f;
-        animation: neon-text-flicker 4s infinite;
-      }
-
-      .arcade-monitor-frame {
-        background-color: #0d0d1a;
-        padding: 20px;
-        border: 2px solid #2a2a3e;
-        border-radius: 15px;
-        box-shadow: inset 0 0 15px rgba(0,0,0,0.7);
-        min-height: 450px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .control-panel {
-        margin-top: 15px;
-        padding: 30px 20px;
-        background: #1e1e3f;
-        border-top: 2px solid #3a3a5e;
-        border-radius: 0 0 8px 8px;
-        transform: perspective(200px) rotateX(15deg);
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-      }
-      
-      .joystick {
-        position: relative;
-        width: 80px;
-        height: 80px;
-      }
-      .joystick-base {
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at 30% 30%, #444, #111);
-        border-radius: 50%;
-        border: 2px solid #000;
-        box-shadow: inset 0 0 10px #000;
-      }
-      .joystick-stick {
-        position: absolute;
-        bottom: 35px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 10px;
-        height: 50px;
-        background: linear-gradient(to right, #ccc, #777, #ccc);
-        border-radius: 5px;
-        box-shadow: 0 0 5px #000;
-      }
-      .joystick-ball {
-        position: absolute;
-        top: -15px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 30px;
-        height: 30px;
-        background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b);
-        border-radius: 50%;
-        box-shadow: inset -2px -2px 5px rgba(0,0,0,0.5), 2px 2px 5px rgba(255,255,255,0.3);
-      }
-      
-      .arcade-buttons {
-        display: flex;
-        gap: 20px;
-      }
-      .arcade-button {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        border: 2px solid #000;
-        cursor: pointer;
-        box-shadow: inset -3px -3px 8px rgba(0,0,0,0.6), 
-                    3px 3px 8px rgba(255,255,255,0.1),
-                    0 5px 10px rgba(0,0,0,0.5);
-        transition: all 0.1s ease-in-out;
-      }
-      .arcade-button:active {
-        transform: translateY(2px) scale(0.95);
-        box-shadow: inset -1px -1px 4px rgba(0,0,0,0.6), 
-                    1px 1px 4px rgba(255,255,255,0.1),
-                    0 2px 5px rgba(0,0,0,0.5);
-      }
-      .arcade-button.red { background: radial-gradient(circle at 30% 30%, #ff8c8c, #e74c3c); }
-      .arcade-button.blue { background: radial-gradient(circle at 30% 30%, #8cb6ff, #3498db); }
-      .arcade-button.yellow { background: radial-gradient(circle at 30% 30%, #fff78c, #f1c40f); }
-
-      .crt-screen {
-        width: 100%;
-        height: 100%;
-        background-color: #0d0d1a;
-        border-radius: 2%;
-        font-family: monospace;
-        color: #4ade80; /* green-400 */
-        box-shadow: 0 0 25px rgba(34, 211, 238, 0.4), inset 0 0 15px rgba(34, 211, 238, 0.3);
-        position: relative;
-        overflow: hidden;
-        animation: crt-flicker 0.15s infinite;
-        transform: perspective(300px) rotateX(2deg); /* Sedikit efek 3D */
-      }
-      .crt-screen::after {
-        content: " ";
-        display: block;
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        background: linear-gradient(to bottom, rgba(24, 24, 32, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                    linear-gradient(to right, rgba(50, 50, 60, 0.1), rgba(0, 0, 0, 0.15));
-        z-index: 2;
-        background-size: 100% 4px, 3px 100%;
-        pointer-events: none;
-      }
-      .blinking-cursor {
-        animation: text-blink 1s step-end infinite;
-      }
-
-      /* --- NEW: Keyframes for RGB laser border effect --- */
-      @keyframes animate-rgb-laser-border {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      /* --- FIX: DEFINITIVE FIX FOR HEADER BUTTONS (Z-INDEX METHOD) --- */
-      .rgb-laser-wrapper {
-        position: relative;
-        padding: 2px;
-        border-radius: 1rem;
-        overflow: hidden;
-      }
-      .rgb-laser-wrapper.rounded-full {
-        border-radius: 9999px;
-      }
-      .rgb-laser-wrapper::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        z-index: -1; /* CRUCIAL: Places the gradient BEHIND the wrapper's content. */
-        background: conic-gradient(
-          from 90deg at 50% 50%,
-          #ff00ff, /* Magenta */
-          #00ffff, /* Cyan */
-          #ffff00, /* Yellow */
-          #ff00ff  /* Back to Magenta for smooth loop */
-        );
-        animation: animate-rgb-laser-border 4s linear infinite;
-      }
-      .rgb-laser-wrapper > * {
-        /* The content inside the wrapper now sits on top of the ::before pseudo-element naturally. */
-        /* The child element (e.g., the div with bg-gray-800) provides the background that the laser wraps around. */
-        height: 100%;
-      }
-      
-      /* --- NEW: FOLDER TAB STYLES --- */
-      .folder-tab-container {
-        display: flex;
-        padding: 0 1rem;
-        border-bottom: 2px solid #374151; /* gray-700 */
-        position: relative;
-      }
-      .folder-tab {
-        padding: 0.75rem 1rem;
-        font-weight: 600;
-        font-size: 0.875rem; /* text-sm */
-        border: 2px solid transparent;
-        border-bottom: none;
-        color: #9ca3af; /* gray-400 */
-        background-color: transparent;
-        cursor: pointer;
-        position: relative;
-        bottom: -2px; /* Align with bottom border */
-        transition: all 0.2s ease-in-out;
-        clip-path: polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
-      }
-      @media (min-width: 640px) { /* sm breakpoint */
-        .folder-tab {
-          padding: 0.75rem 1.5rem;
-          font-size: 1rem; /* text-base */
-        }
-      }
-      .folder-tab:hover {
-        background-color: #374151; /* gray-700 */
-        color: #fff;
-      }
-      .folder-tab.active {
-        background-color: #4f46e5; /* indigo-600 */
-        border-color: #374151; /* gray-700 */
-        color: #fff;
-        border-radius: 8px 8px 0 0;
-        box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
-      }
-
-      /* --- NEW: FANCY DIVIDER --- */
-      .fancy-divider {
-        position: relative;
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(to right, transparent, rgba(79, 70, 229, 0.5), transparent);
-        margin: 3rem 0;
-      }
-      .fancy-divider::before {
-        content: '✨';
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #111827; /* Body background */
-        padding: 0 0.75rem;
-        font-size: 1.25rem;
-        color: #a5b4fc; /* indigo-300 */
-      }
-      
-      /* --- NEW: AI HIGHLIGHT FOR LOGO --- */
-      .ai-highlight {
-        background: linear-gradient(to right, #a5b4fc, #ffffff); /* indigo-300 to white */
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 700;
-      }
+      img { pointer-events: none; }
     </style>
   <script type="importmap">
 {
@@ -1286,10 +221,9 @@
     }
     </script>
 </head>
-  <body class="text-white font-sans">
+  <body>
     <div id="root"></div>
     <script>
-      // Disable right-click context menu globally
       document.addEventListener('contextmenu', event => event.preventDefault());
     </script>
     <script type="module" src="/index.tsx"></script>

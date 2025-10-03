@@ -14,11 +14,11 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, onGoToDashboard })
     const handleCopy = () => {
         navigator.clipboard.writeText(message);
         setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+        setTimeout(() => setIsCopied(false), 2000);
     };
 
     return (
-        <div className="bg-red-900/50 border border-red-700 rounded-lg p-6 flex flex-col sm:flex-row items-start gap-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex flex-col sm:flex-row items-start gap-4">
             <img 
                 src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
                 alt="Mang AI looking confused"
@@ -26,14 +26,14 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, onGoToDashboard })
                 style={{ imageRendering: 'pixelated' }}
             />
             <div className="flex-1">
-                <h4 className="font-bold text-red-400 text-lg mb-1">Waduh, Ada Masalah!</h4>
-                <p className="text-red-200 text-sm selectable-text">{message}</p>
+                <h4 className="font-bold text-red-600 text-lg mb-1">Waduh, Ada Masalah!</h4>
+                <p className="text-red-800 text-sm selectable-text">{message}</p>
                 <div className="flex items-center gap-4 mt-4">
                     <Button 
                         onClick={handleCopy} 
                         variant="secondary" 
                         size="small" 
-                        className="!border-red-500/50 !text-red-300 hover:!bg-red-500/20"
+                        className="!border-red-300 !text-red-700 hover:!bg-red-100"
                     >
                         {isCopied ? 'Tersalin!' : 'Salin Detail Error'}
                     </Button>

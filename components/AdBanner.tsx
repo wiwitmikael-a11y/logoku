@@ -1,19 +1,11 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { AD_PUBLISHER_ID, AD_SLOT_ID_BANNER } from '../services/adsenseConfig';
 
-/**
- * AdBanner "Pintar" yang seimbang antara UX dan Monetisasi.
- * - Hanya muncul jika iklan berhasil dimuat, menghindari kotak kosong.
- * - Secara dinamis menyesuaikan layout konten utama agar tidak tumpang tindih.
- * - Menggunakan MutationObserver untuk deteksi iklan yang andal.
- */
 const AdBanner: React.FC = () => {
   const adPushed = useRef(false);
   const adInsRef = useRef<HTMLModElement>(null);
   const [isAdVisible, setIsAdVisible] = useState(false);
 
-  // Effect untuk mendorong iklan dan menyiapkan observer
   useEffect(() => {
     if (!AD_SLOT_ID_BANNER || adPushed.current || !adInsRef.current) {
       return;
@@ -21,28 +13,25 @@ const AdBanner: React.FC = () => {
 
     const insElement = adInsRef.current;
     
-    // Observer untuk mendeteksi kapan AdSense memodifikasi tag <ins>
     const observer = new MutationObserver(() => {
-        // Cek apakah iframe (iklan) sudah ditambahkan atau statusnya 'unfilled'
         const adLoaded = insElement.querySelector('iframe') !== null;
         const adUnfilled = insElement.getAttribute('data-ad-status') === 'unfilled';
 
         if (adLoaded) {
           setIsAdVisible(true);
-          observer.disconnect(); // Berhenti mengamati setelah iklan dimuat
+          observer.disconnect();
         } else if (adUnfilled) {
           setIsAdVisible(false);
-          observer.disconnect(); // Berhenti mengamati jika tidak ada iklan
+          observer.disconnect();
         }
     });
 
     observer.observe(insElement, {
-      childList: true, // Amati penambahan/penghapusan anak (misal: iframe)
-      attributes: true, // Amati perubahan atribut
-      attributeFilter: ['data-ad-status'], // Fokus pada atribut status dari AdSense
+      childList: true,
+      attributes: true,
+      attributeFilter: ['data-ad-status'],
     });
 
-    // Dorong iklan ke Google setelah jeda singkat untuk memastikan DOM siap
     const timeoutId = setTimeout(() => {
         try {
             ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
@@ -53,27 +42,22 @@ const AdBanner: React.FC = () => {
         }
     }, 100);
     
-    // Cleanup
     return () => {
       clearTimeout(timeoutId);
       observer.disconnect();
     };
   }, []);
 
-  // Effect untuk menyesuaikan padding konten utama berdasarkan visibilitas iklan
   useEffect(() => {
     const mainContent = document.getElementById('main-content');
     if (!mainContent) return;
 
     if (isAdVisible) {
-      // Tinggi banner iklan 50px + 24px padding asli = 74px
-      mainContent.style.paddingBottom = '74px';
+      mainContent.style.paddingBottom = '74px'; // 50px ad height + 24px padding
     } else {
-      // Kembalikan ke padding asli jika tidak ada iklan
-      mainContent.style.paddingBottom = '24px';
+      mainContent.style.paddingBottom = '24px'; // Original padding
     }
     
-    // Cleanup saat komponen dibongkar
     return () => {
         if(mainContent) {
             mainContent.style.paddingBottom = '24px';
@@ -81,7 +65,6 @@ const AdBanner: React.FC = () => {
     };
   }, [isAdVisible]);
 
-  // Jangan render apapun jika slot ID tidak ada
   if (!AD_SLOT_ID_BANNER) {
     return null;
   }
@@ -89,7 +72,7 @@ const AdBanner: React.FC = () => {
   return (
     <div 
       className={`
-        fixed bottom-0 left-0 w-full bg-gray-900/90 backdrop-blur-sm border-t border-gray-800 z-20 
+        fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-sm border-t border-slate-200 z-20 
         flex justify-center items-center transition-all duration-300 ease-in-out
         ${isAdVisible ? 'h-[50px] opacity-100' : 'h-0 opacity-0 pointer-events-none'}
       `}
@@ -105,7 +88,7 @@ const AdBanner: React.FC = () => {
             data-ad-slot={AD_SLOT_ID_BANNER}>
         </ins>
         {isAdVisible && (
-            <span className="text-[10px] text-gray-600 absolute top-0 left-2 bg-gray-900 px-1 rounded-b-sm">Advertisement</span>
+            <span className="text-[10px] text-slate-400 absolute top-0 left-2 bg-white/80 px-1 rounded-b-sm">Advertisement</span>
         )}
       </div>
     </div>

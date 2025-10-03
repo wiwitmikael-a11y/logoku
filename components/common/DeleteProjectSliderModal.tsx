@@ -23,7 +23,24 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
   const modalRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
   const trashRef = useRef<SVGSVGElement>(null);
-  const trackGlowRef = useRef<HTMLDivElement>(null);
+
+  // Keyframes defined here for component-specific animations
+  const keyframes = `
+      @keyframes paper-throw {
+        0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+        20% { transform: translate(15px, -30px) rotate(15deg) scale(1.1); }
+        100% { transform: translate(30px, 40px) rotate(90deg) scale(0.2); opacity: 0; }
+      }
+      .animate-paper-throw { animation: paper-throw 0.5s ease-in forwards; }
+      @keyframes trash-shake {
+        0%, 100% { transform: translateX(0) rotate(0); }
+        20% { transform: translateX(-3px) rotate(-5deg); }
+        40% { transform: translateX(3px) rotate(5deg); }
+        60% { transform: translateX(-3px) rotate(-5deg); }
+        80% { transform: translateX(3px) rotate(5deg); }
+      }
+      .animate-trash-shake { animation: trash-shake 0.4s ease-in-out; }
+  `;
 
   const getTrackBounds = useCallback(() => {
     if (!trackRef.current || !sliderRef.current) return { maxSliderLeft: 0 };
@@ -38,9 +55,8 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
       setSliderLeft(0);
     }
     setIsSolved(false);
-    if(paperRef.current) {
-        paperRef.current.classList.remove('animate-paper-throw');
-    }
+    if(paperRef.current) paperRef.current.classList.remove('animate-paper-throw');
+    if(trashRef.current) trashRef.current.classList.remove('animate-trash-shake');
   }, []);
 
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -51,11 +67,9 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
 
   const handleDragMove = useCallback((clientX: number) => {
     if (!isDragging || !trackRef.current || !sliderRef.current) return;
-    
     const trackRect = trackRef.current.getBoundingClientRect();
     const newLeft = clientX - trackRect.left - (sliderRef.current.clientWidth / 2);
     const { maxSliderLeft } = getTrackBounds();
-
     const clampedLeft = Math.max(0, Math.min(newLeft, maxSliderLeft));
     setSliderLeft(clampedLeft);
   }, [isDragging, getTrackBounds]);
@@ -66,21 +80,14 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
   const handleDragEnd = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
-
     const { maxSliderLeft } = getTrackBounds();
-
     if (sliderLeft >= maxSliderLeft - 10) {
       playSound('puzzle_drop');
       setSliderLeft(maxSliderLeft);
       setIsSolved(true);
-      
       paperRef.current?.classList.add('animate-paper-throw');
       trashRef.current?.classList.add('animate-trash-shake');
-      trackGlowRef.current?.classList.add('animate-slider-success-glow');
-
-      setTimeout(() => {
-        onConfirm();
-      }, 500);
+      setTimeout(() => onConfirm(), 500);
     } else {
       playSound('puzzle_fail');
       resetSlider();
@@ -108,9 +115,7 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
   }, [show, resetSlider]);
   
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget && !isConfirmLoading) {
-          onClose();
-      }
+      if (e.target === e.currentTarget && !isConfirmLoading) onClose();
   }
 
   if (!show) return null;
@@ -118,33 +123,33 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-content-fade-in"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in"
       onClick={handleOverlayClick}
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="delete-modal-title"
       tabIndex={-1}
     >
-      <div className={`relative max-w-md w-full bg-gray-800 border rounded-2xl shadow-2xl p-8 flex flex-col items-center transition-colors duration-300 ${isSolved ? 'border-red-500' : 'border-gray-700'}`}>
+      <style>{keyframes}</style>
+      <div className={`relative max-w-md w-full bg-white border rounded-2xl shadow-xl p-8 flex flex-col items-center transition-colors duration-300 ${isSolved ? 'border-red-300' : 'border-slate-200'}`}>
         <img
           src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
           alt="Mang AI character with a thinking pose"
           className="w-24 mb-4"
           style={{ imageRendering: 'pixelated' }}
         />
-        <h2 id="delete-modal-title" className="text-2xl font-bold text-red-400 mb-2">Hapus Project Ini?</h2>
-        <p className="text-gray-300 mb-2 text-center">
-          Lo mau ngebuang project <strong className="text-white">"{projectNameToDelete}"</strong>?
+        <h2 id="delete-modal-title" className="text-2xl font-bold text-red-600 mb-2">Hapus Project Ini?</h2>
+        <p className="text-slate-600 mb-2 text-center">
+          Lo mau ngebuang project <strong className="text-slate-800">"{projectNameToDelete}"</strong>?
         </p>
-         <p className="text-xs text-gray-500 mb-8 text-center">Awas, tindakan ini bakal ngapus semua data secara permanen dan gak bisa dibalikin lagi.</p>
+         <p className="text-xs text-slate-500 mb-8 text-center">Awas, tindakan ini bakal ngapus semua data secara permanen dan gak bisa dibalikin lagi.</p>
 
         <div 
           ref={trackRef}
-          className="w-full h-16 bg-gray-900/50 rounded-full flex items-center p-2 relative border border-gray-700"
+          className="w-full h-16 bg-slate-200 rounded-full flex items-center p-2 relative border border-slate-300"
         >
           <div
-            ref={trackGlowRef}
-            className="absolute left-0 top-0 h-full bg-red-800/50 rounded-full"
+            className="absolute left-0 top-0 h-full bg-red-200 rounded-full"
             style={{ width: `${sliderLeft + 50}px` }}
           />
           
@@ -168,18 +173,18 @@ const DeleteProjectSliderModal: React.FC<Props> = ({ show, onClose, onConfirm, p
              </div>
           </div>
 
-          <span className={`text-center w-full font-semibold transition-opacity duration-300 ${(isDragging || isSolved) ? 'opacity-0' : 'opacity-100 text-gray-400'}`}>
-            Geser untuk Hapus Permanen
+          <span className={`text-center w-full font-semibold transition-opacity duration-300 ${(isDragging || isSolved) ? 'opacity-0' : 'opacity-100 text-slate-500'}`}>
+            Geser untuk Hapus
           </span>
           
-           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
              <svg ref={trashRef} xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm4 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
            </div>
         </div>
         
-        {isConfirmLoading && !isSolved && <p className="text-yellow-400 text-sm mt-4">Menghapus...</p>}
+        {isConfirmLoading && !isSolved && <p className="text-orange-600 text-sm mt-4">Menghapus...</p>}
 
         <div className="mt-8">
             <Button onClick={onClose} variant="secondary" disabled={isConfirmLoading}>

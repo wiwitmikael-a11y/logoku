@@ -54,29 +54,29 @@ const ConfirmationModal: React.FC<Props> = ({
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-content-fade-in"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in"
       onClick={handleOverlayClick}
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"
       tabIndex={-1}
     >
-      <div className="relative max-w-md w-full bg-gray-800 border border-yellow-700 rounded-2xl shadow-2xl p-8 flex flex-col items-center">
+      <div className="relative max-w-md w-full bg-white border border-slate-200 rounded-2xl shadow-xl p-8 flex flex-col items-center">
         <img
           src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
           alt="Mang AI character with a thinking pose"
           className="w-24 mb-4"
           style={{ imageRendering: 'pixelated' }}
         />
-        <h2 id="confirmation-modal-title" className="text-2xl font-bold text-yellow-400 mb-2 text-center">{title}</h2>
-        <div className="text-gray-300 my-4 text-center text-sm">
+        <h2 id="confirmation-modal-title" className="text-2xl font-bold text-orange-500 mb-2 text-center">{title}</h2>
+        <div className="text-slate-600 my-4 text-center text-sm">
           {children}
         </div>
         <div className="flex gap-4 mt-6">
           <Button onClick={onClose} variant="secondary" disabled={isConfirmLoading}>
             {cancelText}
           </Button>
-          <Button onClick={onConfirm} isLoading={isConfirmLoading}>
+          <Button onClick={onConfirm} isLoading={isConfirmLoading} variant="accent">
             {confirmText}
           </Button>
         </div>

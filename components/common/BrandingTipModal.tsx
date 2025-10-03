@@ -15,7 +15,7 @@ const BrandingTipModal: React.FC<Props> = ({ show, onConfirm }) => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onConfirm(); // Allow closing with Esc
+        onConfirm();
       }
     };
     if (show) {
@@ -46,27 +46,27 @@ const BrandingTipModal: React.FC<Props> = ({ show, onConfirm }) => {
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-content-fade-in"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in"
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="tip-modal-title"
       tabIndex={-1}
     >
-      <div className="relative max-w-lg w-full bg-gray-800/80 backdrop-blur-md border border-indigo-700 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center">
+      <div className="relative max-w-lg w-full bg-white rounded-2xl shadow-xl p-8 text-center flex flex-col items-center">
         <img
           src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
           alt="Mang AI character with a lightbulb idea"
           className="w-24 mb-4"
           style={{ imageRendering: 'pixelated' }}
         />
-        <h2 id="tip-modal-title" className="text-2xl font-bold text-indigo-400 mb-4">Eh, Juragan, Tau Gak Sih?</h2>
-        <div className="text-gray-300 text-left space-y-3 mb-8">
+        <h2 id="tip-modal-title" className="text-2xl font-bold text-sky-600 mb-4">Eh, Juragan, Tau Gak Sih?</h2>
+        <div className="text-slate-600 text-left space-y-3 mb-8">
             <p>
-                Di lautan UMKM Indonesia yang ramenya kayak pasar malem, banyak banget kan yang jualannya mirip-mirip? Nah, di sinilah <strong className="text-yellow-400">branding yang konsisten</strong> jadi jagoannya!
+                Di lautan UMKM Indonesia yang ramenya kayak pasar malem, banyak banget kan yang jualannya mirip-mirip? Nah, di sinilah <strong className="text-orange-500">branding yang konsisten</strong> jadi jagoannya!
             </p>
             <p>
-                Branding itu bukan cuma soal logo cakep, tapi soal <strong className="text-white">'rasa' dan 'cerita'</strong> yang lo kasih ke pelanggan. Kalo brand lo konsisten—dari warna, gaya bahasa, sampe cara lo ngelayanin—pelanggan jadi gampang inget, percaya, dan akhirnya balik lagi.
+                Branding itu bukan cuma soal logo cakep, tapi soal <strong className="text-slate-800">'rasa' dan 'cerita'</strong> yang lo kasih ke pelanggan. Kalo brand lo konsisten—dari warna, gaya bahasa, sampe cara lo ngelayanin—pelanggan jadi gampang inget, percaya, dan akhirnya balik lagi.
             </p>
             <p>
                 Ini yang bikin "Kopi Senja" lo beda dari ribuan kopi senja lainnya. Siap bikin brand lo jadi juara? Ayo kita mulai!

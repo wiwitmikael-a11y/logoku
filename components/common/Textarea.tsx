@@ -16,7 +16,7 @@ const Textarea: React.FC<TextareaProps> = ({ label, name, className, ...props })
       canPlayTypingSound.current = false;
       setTimeout(() => {
         canPlayTypingSound.current = true;
-      }, 150); // Cooldown of 150ms for typing sound
+      }, 150);
     }
   };
   
@@ -26,7 +26,7 @@ const Textarea: React.FC<TextareaProps> = ({ label, name, className, ...props })
 
   return (
     <div className={className}>
-      <label htmlFor={name} className="block mb-2 text-sm font-medium text-gray-300">
+      <label htmlFor={name} className="block mb-1.5 text-sm font-medium text-slate-600">
         {label}
       </label>
       <textarea
@@ -35,7 +35,7 @@ const Textarea: React.FC<TextareaProps> = ({ label, name, className, ...props })
         {...props}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
-        className="w-full px-4 py-2 text-gray-200 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+        className="w-full px-3 py-2 text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors"
       />
     </div>
   );

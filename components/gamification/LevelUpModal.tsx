@@ -18,7 +18,7 @@ const LevelUpModal: React.FC<Props> = ({ show, onClose, levelUpInfo }) => {
 
   useEffect(() => {
     if (show) {
-      playSound('success'); // Play level up sound
+      playSound('success');
       modalRef.current?.focus();
     }
   }, [show]);
@@ -47,35 +47,52 @@ const LevelUpModal: React.FC<Props> = ({ show, onClose, levelUpInfo }) => {
   };
   const newTitle = levelTiers[levelUpInfo.newLevel];
 
+  // Simple keyframe for this component
+  const animation = `
+    @keyframes level-up-modal-scale-in {
+      from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+    @keyframes mang-ai-happy {
+        0% { transform: scale(1) translateY(0) rotate(0deg); }
+        20% { transform: scale(1.05, 0.95) translateY(0); }
+        50% { transform: scale(0.95, 1.05) translateY(-8px) rotate(5deg); }
+        80% { transform: scale(1.05, 0.95) translateY(0) rotate(-5deg); }
+        100% { transform: scale(1) translateY(0) rotate(0deg); }
+    }
+    .animate-mang-ai-happy { animation: mang-ai-happy 1.5s ease-in-out infinite; transform-origin: bottom center; }
+  `;
+
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="levelup-modal-title"
       tabIndex={-1}
     >
-      <div className="relative max-w-md w-full bg-gray-800/80 backdrop-blur-md border border-yellow-500 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center" style={{ animation: 'level-up-modal-scale-in 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards' }}>
+        <style>{animation}</style>
+      <div className="relative top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-md w-full bg-white border border-orange-300 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center" style={{ animation: 'level-up-modal-scale-in 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards' }}>
         <img
           src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
           alt="Mang AI character celebrating"
           className="w-28 mb-4 animate-mang-ai-happy"
           style={{ imageRendering: 'pixelated' }}
         />
-        <h2 id="levelup-modal-title" className="text-3xl font-bold text-yellow-400 mb-2">NAIK LEVEL!</h2>
-        <p className="text-gray-200 text-lg">
-          Selamat, Juragan! Lo sekarang mencapai <strong className="text-white">Level {levelUpInfo.newLevel}</strong>.
+        <h2 id="levelup-modal-title" className="text-3xl font-bold text-orange-500 mb-2">NAIK LEVEL!</h2>
+        <p className="text-slate-700 text-lg">
+          Selamat, Juragan! Lo sekarang mencapai <strong className="text-slate-900">Level {levelUpInfo.newLevel}</strong>.
         </p>
         {newTitle && (
-            <p className="mt-1 text-xl font-handwritten text-yellow-300">Pangkat baru: "{newTitle}"</p>
+            <p className="mt-1 text-xl text-orange-600" style={{fontFamily: 'var(--font-hand)'}}>Pangkat baru: "{newTitle}"</p>
         )}
-        <p className="mt-6 bg-gray-900/50 p-4 rounded-lg">
-          Sebagai hadiah, lo dapet tambahan <strong className="text-xl text-yellow-300">{levelUpInfo.tokenReward} Token</strong> gratis!
+        <p className="mt-6 bg-orange-50 border border-orange-200 p-4 rounded-lg text-slate-700">
+          Sebagai hadiah, lo dapet tambahan <strong className="text-xl text-orange-600">{levelUpInfo.tokenReward} Token</strong> gratis!
         </p>
         <div className="mt-8">
-            <Button onClick={handleClose}>
+            <Button onClick={handleClose} variant="accent">
                 Mantap, Lanjut Berkarya!
             </Button>
         </div>

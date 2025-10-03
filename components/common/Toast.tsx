@@ -10,17 +10,17 @@ interface ToastProps {
 const Toast: React.FC<ToastProps> = ({ message, show, onClose }) => {
   useEffect(() => {
     if (show) {
-      playSound('success'); // Play a subtle sound on show
+      playSound('success');
       const timer = setTimeout(() => {
         onClose();
-      }, 3000); // Hide after 3 seconds
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [show, onClose]);
 
   return (
     <div
-      className={`fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 ease-in-out ${
+      className={`fixed bottom-24 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 ease-in-out ${
         show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5 pointer-events-none'
       }`}
       role="status"

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { playSound, playBGM } from '../../services/soundService';
 
@@ -23,10 +22,8 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   const jinglePlayedRef = useRef(false);
 
   const getTrackBounds = useCallback(() => {
-    if (!trackRef.current || !sliderRef.current) return { trackWidth: 0, maxSliderLeft: 0 };
-    const trackWidth = trackRef.current.clientWidth;
-    const sliderWidth = sliderRef.current.clientWidth;
-    return { trackWidth, maxSliderLeft: trackWidth - sliderWidth };
+    if (!trackRef.current || !sliderRef.current) return { maxSliderLeft: 0 };
+    return { maxSliderLeft: trackRef.current.clientWidth - sliderRef.current.clientWidth };
   }, []);
 
   const resetSlider = useCallback(() => {
@@ -38,51 +35,34 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
 
   const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (isSolved) return;
-    
     if (!jinglePlayedRef.current) {
         playBGM('welcome');
         jinglePlayedRef.current = true;
     }
-    
     if (sliderRef.current) sliderRef.current.style.transition = 'none';
-
     setIsDragging(true);
   }, [isSolved]);
 
   const handleDragMove = useCallback((clientX: number) => {
     if (!isDragging || !trackRef.current || !sliderRef.current) return;
-    
     const trackRect = trackRef.current.getBoundingClientRect();
     const newLeft = clientX - trackRect.left - (sliderRef.current.clientWidth / 2);
     const { maxSliderLeft } = getTrackBounds();
-
-    const clampedLeft = Math.max(0, Math.min(newLeft, maxSliderLeft));
-    setSliderLeft(clampedLeft);
+    setSliderLeft(Math.max(0, Math.min(newLeft, maxSliderLeft)));
   }, [isDragging, getTrackBounds]);
 
-  const handleMouseDragMove = useCallback((e: MouseEvent) => {
-    handleDragMove(e.clientX);
-  }, [handleDragMove]);
-  
-  const handleTouchDragMove = useCallback((e: TouchEvent) => {
-    if (e.touches[0]) {
-      handleDragMove(e.touches[0].clientX);
-    }
-  }, [handleDragMove]);
+  const handleMouseDragMove = useCallback((e: MouseEvent) => handleDragMove(e.clientX), [handleDragMove]);
+  const handleTouchDragMove = useCallback((e: TouchEvent) => e.touches[0] && handleDragMove(e.touches[0].clientX), [handleDragMove]);
 
   const handleDragEnd = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
-
     const { maxSliderLeft } = getTrackBounds();
-
     if (sliderLeft >= maxSliderLeft - 5) {
       playSound('puzzle_drop');
       setSliderLeft(maxSliderLeft);
       setIsSolved(true);
-      setTimeout(() => {
-        setShowBrandingTip(true);
-      }, 500); 
+      setTimeout(() => setShowBrandingTip(true), 500); 
     } else {
       playSound('puzzle_fail');
       resetSlider();
@@ -96,7 +76,6 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
       window.addEventListener('touchmove', handleTouchDragMove);
       window.addEventListener('touchend', handleDragEnd);
     }
-
     return () => {
       window.removeEventListener('mousemove', handleMouseDragMove);
       window.removeEventListener('mouseup', handleDragEnd);
@@ -106,9 +85,8 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   }, [isDragging, handleMouseDragMove, handleTouchDragMove, handleDragEnd]);
 
   useEffect(() => {
-    if (show) {
-      modalRef.current?.focus();
-    } else {
+    if (show) modalRef.current?.focus();
+    else {
       setTimeout(() => {
           setIsSolved(false);
           setShowBrandingTip(false);
@@ -118,36 +96,34 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
     }
   }, [show, resetSlider]);
 
-  if (!show) {
-    return null;
-  }
+  if (!show) return null;
 
   return (
     <>
       <div
         ref={modalRef}
-        className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-content-fade-in"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in"
         role="dialog"
         aria-modal="true"
         aria-labelledby="captcha-title"
         tabIndex={-1}
       >
-        <div className={`relative max-w-sm w-full bg-gray-800 border rounded-2xl shadow-2xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-500 ring-4 ring-green-500/30' : 'border-gray-700'} ${showBrandingTip ? 'filter blur-sm' : ''}`}>
+        <div className={`relative max-w-sm w-full bg-white border rounded-2xl shadow-xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-400 ring-4 ring-green-400/20' : 'border-slate-200'} ${showBrandingTip ? 'filter blur-sm' : ''}`}>
           <img
               src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
               alt="Mang AI character"
               className="w-24 mb-4 animate-breathing-ai"
               style={{ imageRendering: 'pixelated' }}
           />
-          <h2 id="captcha-title" className="text-xl font-bold text-indigo-400 mb-2">Eits, Tahan Dulu, Juragan!</h2>
-          <p className="text-gray-300 mb-8 text-center text-sm">Sebelum kita mulai ngeracik brand juara, buktikan kalo lo pejuang UMKM sejati dengan geser slider ini sampe mentok!</p>
+          <h2 id="captcha-title" className="text-xl font-bold text-sky-600 mb-2">Eits, Tahan Dulu, Juragan!</h2>
+          <p className="text-slate-600 mb-8 text-center text-sm">Buktikan kalo lo pejuang UMKM sejati dengan geser slider ini sampe mentok!</p>
 
           <div 
             ref={trackRef}
-            className="w-full h-14 bg-gray-900 rounded-full flex items-center p-2 relative"
+            className="w-full h-14 bg-slate-100 border border-slate-200 rounded-full flex items-center p-2 relative"
           >
             <div 
-              className="absolute left-0 top-0 h-full bg-indigo-600/50 rounded-full"
+              className="absolute left-0 top-0 h-full bg-sky-200 rounded-full"
               style={{ width: `${sliderLeft + 40}px` }}
             />
 
@@ -155,7 +131,7 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
               ref={sliderRef}
               onMouseDown={handleDragStart}
               onTouchStart={handleDragStart}
-              className={`w-10 h-10 bg-indigo-600 rounded-full absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none ${isSolved ? '!bg-green-500' : ''}`}
+              className={`w-10 h-10 bg-sky-500 rounded-full absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none shadow-md ${isSolved ? '!bg-green-500' : ''}`}
               style={{ left: `${sliderLeft}px` }}
               aria-label="Geser untuk verifikasi"
               role="slider"
@@ -167,13 +143,13 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
               )}
             </div>
 
-            <span className={`text-center w-full font-semibold transition-opacity duration-300 ${isDragging || isSolved ? 'opacity-0' : 'opacity-100 text-gray-400'}`}>
-              Ayo, geser ke kanan, juragan!
+            <span className={`text-center w-full font-semibold transition-opacity duration-300 ${isDragging || isSolved ? 'opacity-0' : 'opacity-100 text-slate-500'}`}>
+              Geser ke Kanan
             </span>
           </div>
           
           {isSolved && !showBrandingTip && (
-              <p className="text-green-400 font-bold animate-pulse mt-6">Mantap! Ternyata beneran juragan, bukan kaleng-kaleng. Sokin lanjut!</p>
+              <p className="text-green-600 font-bold animate-pulse mt-6">Mantap! Lanjut, Juragan!</p>
           )}
         </div>
       </div>

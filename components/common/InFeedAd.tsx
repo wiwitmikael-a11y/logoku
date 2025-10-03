@@ -1,12 +1,6 @@
-
-
 import React, { useEffect, useRef } from 'react';
 import { AD_PUBLISHER_ID, AD_SLOT_ID_IN_CONTENT } from '../../services/adsenseConfig';
 
-/**
- * Komponen untuk menampilkan iklan Display responsif di dalam feed/konten.
- * Ini lebih andal daripada "In-feed" untuk aplikasi React yang dirender di sisi klien.
- */
 const InFeedAd = () => {
   const adPushed = useRef(false);
 
@@ -24,16 +18,16 @@ const InFeedAd = () => {
   
   if (!AD_SLOT_ID_IN_CONTENT) {
     return (
-        <div className="bg-gray-800 border border-dashed border-gray-600 rounded-xl p-4 text-center text-sm text-gray-400 min-h-[120px] flex flex-col justify-center items-center">
-            <p className="font-semibold text-yellow-400">Slot Iklan Display</p>
+        <div className="bg-slate-100 border border-dashed border-slate-300 rounded-xl p-4 text-center text-sm text-slate-500 min-h-[120px] flex flex-col justify-center items-center">
+            <p className="font-semibold text-orange-500">Slot Iklan Display</p>
             <p>Admin, buat unit iklan "Display" baru di AdSense dan masukkan slot ID-nya di `services/adsenseConfig.ts`</p>
         </div>
     );
   }
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 w-full h-full min-h-[120px] flex flex-col justify-center items-center">
-        <span className="text-[10px] text-gray-500 self-start mb-2">Advertisement</span>
+    <div className="bg-white border border-slate-200 rounded-xl p-4 w-full h-full min-h-[120px] flex flex-col justify-center items-center">
+        <span className="text-[10px] text-slate-400 self-start mb-2">Advertisement</span>
         <ins 
             className="adsbygoogle"
             style={{ display: 'block', width: '100%' }}

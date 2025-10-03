@@ -13,33 +13,26 @@ const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-a
 
 const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowToS }) => {
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 text-center">
-      <div className="max-w-md w-full">
-        {/* Container for the animation. h-40 ensures space for jumping. */}
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+      <div className="max-w-xl w-full">
         <div className="relative h-40 mb-4">
             <img
             src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
             alt="Mang AI character"
-            className="w-40 h-40 absolute bottom-0 left-1/2 animate-login-ai"
+            className="w-40 h-40 absolute bottom-0 left-1/2 -translate-x-1/2 animate-breathing-ai"
             style={{ imageRendering: 'pixelated' }}
             />
         </div>
 
-        {/* Wrapper to align logo and text box */}
-        <div className="inline-flex flex-col items-stretch mb-8">
-          <h1 className="text-5xl font-bold tracking-tighter text-indigo-400 mb-3">
-            desain<span className="text-white">.fun</span>
+        <div className="inline-flex flex-col items-center mb-6">
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter text-sky-500 mb-2">
+            desain<span className="text-slate-800">.fun</span>
           </h1>
-          
-          <div className="bg-gray-700/50 py-2 px-4 rounded-lg">
-              <p className="text-white text-xs font-semibold tracking-wide text-center">
-                  Powered by Atharrazka Core. Built for UMKM Indonesia.
-              </p>
-          </div>
+          <p className="font-semibold text-slate-500">Studio Branding AI untuk UMKM Juara</p>
         </div>
 
-        <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-          Siap bikin brand lo naik kelas, Juragan? Lupakan pusingnya mikirin desain atau bayar mahal agensi. Mang AI hadir sebagai partner setia lo! Dalam hitungan menit, kita bakal sulap ide lo jadi <strong>paket branding lengkap</strong>: dari logo, persona, social media kit, desain kemasan, sampe konten siap posting. Nggak cuma itu, lo bisa pamerin karya di <strong>Pameran Brand</strong>, ngobrol santai di <strong>WarKop Juragan</strong>, dan naikin level kejuraganan lo sambil ngumpulin XP. Ini studio branding, pusat komunitas, dan game di saku lo. Hemat waktu, hemat biaya, saatnya bisnis lo jadi juara!
+        <p className="text-slate-600 mb-8 max-w-lg mx-auto">
+          Lupakan pusingnya mikirin desain. Mang AI hadir sebagai partner setia lo! Dalam hitungan menit, kita bakal sulap ide lo jadi <strong>paket branding lengkap</strong>: dari logo, persona, social media kit, sampai konten siap posting.
         </p>
         
         <div className="flex flex-col items-center gap-4">
@@ -47,8 +40,9 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
             onClick={onGoogleLogin} 
             disabled={!isCaptchaSolved}
             title={!isCaptchaSolved ? "Selesaikan puzzle captcha dulu!" : "Masuk dengan akun Google"}
+            size="large"
+            variant="accent"
           >
-            {/* Google Icon SVG */}
             <svg className="w-5 h-5" aria-hidden="true" focusable="false" viewBox="0 0 48 48">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
               <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
@@ -60,23 +54,17 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
           </Button>
         </div>
         
-        <p className="text-xs text-gray-500 mt-3 mb-8">
+        <p className="text-xs text-slate-500 mt-4">
           Dengan masuk, lo setuju sama{' '}
           <button 
             onClick={isCaptchaSolved ? onShowToS : undefined} 
             disabled={!isCaptchaSolved}
-            className="text-indigo-400 hover:underline focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+            className="text-sky-600 hover:underline focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
           >
             Ketentuan Layanan
-          </button>{' '}
-          kami.
-           {!isCaptchaSolved && <span className="block text-yellow-400 text-[11px] mt-1">Selesaikan puzzle di atas dulu, Juragan!</span>}
+          </button>.
+           {!isCaptchaSolved && <span className="block text-orange-500 font-semibold text-sm mt-2">Selesaikan puzzle di atas dulu, Juragan!</span>}
         </p>
-
-        <div className="bg-yellow-900/40 border border-yellow-700/50 rounded-lg p-3 max-w-sm mx-auto text-sm text-yellow-200">
-          <p><strong className="font-bold">Info Penting:</strong> Aplikasi ini masih dalam tahap <em>gacor</em>-in, jadi kalo ada yang aneh-aneh dikit, maklum ya! Mang AI lagi semangat-semangatnya belajar, nih. Sokin, kita mulai petualangannya!</p>
-        </div>
-        
       </div>
     </div>
   );
