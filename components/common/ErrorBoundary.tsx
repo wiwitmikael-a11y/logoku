@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Reverted to a standard default import for React. The namespace import was causing type resolution issues, leading to errors where `this.props` and `this.setState` were not recognized on the class component instance.
+// FIX: Switched to a standard React import and explicit `React.Component` extension. This resolves type resolution issues where `this.props` and `this.setState` were not recognized on the class component instance.
 import React from 'react';
 import Button from './Button';
 

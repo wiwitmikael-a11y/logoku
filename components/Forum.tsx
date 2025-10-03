@@ -13,24 +13,78 @@ import Textarea from './common/Textarea';
 
 const THREADS_PAGE_SIZE = 15;
 const POSTS_PAGE_SIZE = 20;
+const POST_COOLDOWN_SECONDS = 30; // Cooldown in seconds
 
 const MANG_AI_ACCOUNT_NAME = "Mang AI";
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 const MANG_AI_AVATAR = `${GITHUB_ASSETS_URL}Mang_AI.png`;
 
-// Static welcome thread from Mang AI, acts like a pinned post from the database
+// NEW: Dynamic info box for the forum
+const WARUNG_INFO_TIPS = [
+    {
+        icon: '💡',
+        title: 'Aturan Main di WarKop',
+        text: 'Biar nongkrongnya asik, kita jaga bareng-bareng ya. Dilarang SARA, no spam, saling support, dan jangan jualan di lapak orang lain. Oke, Juragan?'
+    },
+    {
+        icon: '⭐',
+        title: 'Nambah XP Sambil Ngobrol',
+        text: 'Setiap lo bikin topik baru atau ngasih balasan yang berbobot, Mang AI bakal kasih bonus <span class="font-bold text-yellow-300">XP</span> buat naikin level kejuraganan lo!'
+    },
+    {
+        icon: '🔥',
+        title: 'Jangan Lupa Mampir Pameran!',
+        text: 'Udah liat <strong class="text-white">Pameran Brand</strong> belum? Kasih \'Menyala!\' ke karya juragan lain buat nambah XP dan saling semangatin. Karyamu juga bisa dipamerin di sana lho!'
+    },
+    {
+        icon: '💾',
+        title: 'PENTING: Amankan Aset Lo!',
+        text: 'Mang AI mau ngingetin lagi, semua aset visual (logo, gambar, dll) itu disimpen sementara di browser. <strong class="text-white">Jangan lupa diunduh</strong> biar nggak ilang ya!'
+    },
+    {
+        icon: '🤖',
+        title: 'Mang AI Siap Dengerin',
+        text: 'Kalau ada ide, kritik, atau nemu yang aneh-aneh di aplikasi, langsung aja bikin topik baru. Masukan dari lo berharga banget buat Mang AI.'
+    },
+];
+
 const MANG_AI_WELCOME_THREAD: ForumThread = {
   id: '0', // Special ID to prevent reply/fetch logic
   created_at: new Date('2024-09-12T10:00:00Z').toISOString(),
   user_id: 'mang-ai-official',
-  title: 'Selamat Datang di Forum Juragan! ☕ Sokin, Ngobrol di Sini!',
-  content: `Wih, mantap! Selamat datang di markasnya para juragan kreatif se-Indonesia!\n\nIni Forum Juragan, tempat kita bisa:\n- Pamerin hasil karya dari desain.fun\n- Nanya-nanya soal branding, marketing, atau fitur aplikasi\n- Saling kasih masukan biar bisnis makin gacor\n- Ngobrol santai bareng sesama pejuang UMKM\n\nJangan malu-malu, ya! Coba kenalan dulu, ceritain bisnis lo, atau langsung aja bikin topik baru. Mang AI tungguin, nih!`,
+  title: 'Selamat Datang di WarKop Juragan! ☕ Sokin, Ngopi Sambil Ngobrol!',
+  content: `Wih, mantap! Selamat datang di WarKop Juragan, tempat nongkrongnya para pejuang UMKM kreatif se-Indonesia!\n\nAnggap aja ini warung kopi langganan kita. Tempat buat:\n- Pamerin hasil racikan brand dari desain.fun\n- Nanya-nanya soal resep branding & marketing\n- Saling kasih masukan biar bisnis makin ngebul\n- Ngobrol santai ngalor-ngidul bareng sesama juragan\n\nJangan malu-malu, ya! Pesan kopi (bikin topik baru), kenalan dulu, atau nimbrung di obrolan yang udah ada. Mang AI udah siapin kopinya, nih!`,
   profiles: {
     full_name: MANG_AI_ACCOUNT_NAME,
     avatar_url: MANG_AI_AVATAR,
   },
   posts: []
 };
+
+const WarKopInfoBox: React.FC = () => {
+    const [currentTipIndex, setCurrentTipIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTipIndex(prevIndex => (prevIndex + 1) % WARUNG_INFO_TIPS.length);
+        }, 8000); // Ganti info setiap 8 detik
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const currentTip = WARUNG_INFO_TIPS[currentTipIndex];
+
+    return (
+        <div key={currentTipIndex} className="w-full bg-gray-800/50 border border-indigo-700/50 rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in info-box-stream mb-8">
+            <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
+            <div>
+                <h4 className="font-bold text-white">{currentTip.title}</h4>
+                <p className="text-sm text-gray-300" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+            </div>
+        </div>
+    );
+};
+
 
 const Forum: React.FC = () => {
     const { user, profile } = useAuth();
@@ -48,6 +102,18 @@ const Forum: React.FC = () => {
     const [newThreadContent, setNewThreadContent] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [cooldown, setCooldown] = useState(0); // Cooldown timer state
+
+    // Cooldown timer effect
+    useEffect(() => {
+        if (cooldown > 0) {
+            const timer = setTimeout(() => {
+                setCooldown(prev => prev - 1);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [cooldown]);
+
 
     const getOfficialDisplayData = (profile: { full_name?: string | null, avatar_url?: string | null } | null) => {
         const isOfficial = profile?.full_name === MANG_AI_ACCOUNT_NAME;
@@ -168,6 +234,7 @@ const Forum: React.FC = () => {
         e.preventDefault();
         if (!user || !newThreadTitle.trim() || !newThreadContent.trim()) return;
         setIsSubmitting(true);
+        setError(null);
         try {
             const { error } = await supabase.from('threads').insert({
                 user_id: user.id,
@@ -179,8 +246,15 @@ const Forum: React.FC = () => {
             setNewThreadContent('');
             setShowNewThreadForm(false);
             await fetchThreads();
+            setCooldown(POST_COOLDOWN_SECONDS);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Gagal membuat topik baru.');
+            const errorMsg = err instanceof Error ? err.message : 'Gagal membuat topik baru.';
+            if (errorMsg.toLowerCase().includes('security policy')) {
+                setError('Waduh, Juragan, jangan ngebut-ngebut! Kasih jeda sebentar sebelum posting lagi ya.');
+                setCooldown(10); // Start a small cooldown on frontend if backend rejects
+            } else {
+                setError(errorMsg);
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -190,6 +264,7 @@ const Forum: React.FC = () => {
         e.preventDefault();
         if (!user || !selectedThread || !newPostContent.trim()) return;
         setIsSubmitting(true);
+        setError(null);
         try {
             const { error } = await supabase.from('posts').insert({
                 user_id: user.id,
@@ -199,8 +274,15 @@ const Forum: React.FC = () => {
             if (error) throw error;
             setNewPostContent('');
             await fetchPosts(selectedThread.id); // Refresh posts
+            setCooldown(POST_COOLDOWN_SECONDS);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Gagal mengirim balasan.');
+            const errorMsg = err instanceof Error ? err.message : 'Gagal mengirim balasan.';
+            if (errorMsg.toLowerCase().includes('security policy')) {
+                setError('Waduh, Juragan, jangan ngebut-ngebut! Kasih jeda sebentar sebelum posting lagi ya.');
+                setCooldown(10); // Start a small cooldown on frontend if backend rejects
+            } else {
+                setError(errorMsg);
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -219,7 +301,11 @@ const Forum: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto">
+            {/* NEW Info Box */}
+            <WarKopInfoBox />
+            
+            <div className="flex flex-col md:flex-row gap-6">
             {/* Thread List */}
             <aside className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-4">
                 <div className="flex justify-between items-center">
@@ -231,7 +317,14 @@ const Forum: React.FC = () => {
                         <form onSubmit={handleCreateThread} className="flex flex-col gap-4">
                             <Input label="Judul Topik" name="title" value={newThreadTitle} onChange={e => setNewThreadTitle(e.target.value)} required />
                             <Textarea label="Isi Topik" name="content" value={newThreadContent} onChange={e => setNewThreadContent(e.target.value)} rows={4} required />
-                            <Button type="submit" isLoading={isSubmitting}>Kirim Topik</Button>
+                            <div className="flex items-center gap-4">
+                                <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting || cooldown > 0}>Kirim Topik</Button>
+                                {cooldown > 0 && (
+                                    <p className="text-sm text-yellow-400 animate-pulse">
+                                        Tunggu {cooldown}d...
+                                    </p>
+                                )}
+                            </div>
                         </form>
                     </Card>
                 )}
@@ -239,7 +332,7 @@ const Forum: React.FC = () => {
                 {isLoadingThreads ? <LoadingMessage /> : error && threads.length <= 1 ? <ErrorMessage message={error}/> : (
                     threads.length <= 1 && !showNewThreadForm ? ( // Check if only the welcome thread exists
                         <div className="text-center p-4 bg-gray-800/50 rounded-lg">
-                            <p className="text-gray-400 text-sm">Forumnya masih sepi, Mang! Sokin, bikin postingan pertama!</p>
+                            <p className="text-gray-400 text-sm">WarKop masih sepi, Mang! Sokin, bikin obrolan pertama!</p>
                              <Button size="small" onClick={() => setShowNewThreadForm(true)} className="mt-4">Bikin Topik Pertama</Button>
                         </div>
                     ) : (
@@ -315,8 +408,13 @@ const Forum: React.FC = () => {
                              <div className="mt-6 pt-6 border-t border-gray-700 flex-shrink-0">
                                  <form onSubmit={handleCreatePost} className="flex flex-col gap-3">
                                     <Textarea label={`Balas sebagai ${profile?.full_name || 'Anda'}`} name="reply" value={newPostContent} onChange={e => setNewPostContent(e.target.value)} rows={3} required/>
-                                    <div className="self-end">
-                                        <Button type="submit" isLoading={isSubmitting}>Kirim Balasan</Button>
+                                    <div className="self-end flex items-center gap-4">
+                                        {cooldown > 0 && (
+                                            <p className="text-sm text-yellow-400 animate-pulse">
+                                                Tunggu {cooldown}d...
+                                            </p>
+                                        )}
+                                        <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting || cooldown > 0}>Kirim Balasan</Button>
                                     </div>
                                 </form>
                             </div>
@@ -325,11 +423,12 @@ const Forum: React.FC = () => {
                 ) : (
                     <div className="flex-grow flex flex-col items-center justify-center text-gray-500 text-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                        <h2 className="text-lg font-semibold">Selamat Datang di Forum Juragan!</h2>
+                        <h2 className="text-lg font-semibold">Selamat Datang di WarKop Juragan!</h2>
                         <p>Pilih topik di sebelah kiri untuk mulai ngobrol, atau buat topik baru!</p>
                     </div>
                 )}
             </main>
+            </div>
         </div>
     );
 };
