@@ -1,3 +1,5 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 /**
  * Fetches an image from a URL (e.g., from Supabase Storage) and converts it to a Base64 data URL.
  * This is necessary for sending image data back to the Gemini Vision API for editing.
@@ -89,4 +91,70 @@ export const createWhiteCanvasBase64 = (width = 1024, height = 1024): string => 
  */
 export const isBase64DataUrl = (str: string | undefined): str is string => {
     return typeof str === 'string' && str.startsWith('data:image');
+};
+
+
+/**
+ * Applies a text watermark to a Base64 image using Canvas.
+ * It intelligently chooses between black or white text for readability.
+ * @param base64Image The source image as a Base64 data URL.
+ * @returns A promise that resolves with the watermarked image as a Base64 data URL.
+ */
+export const applyWatermark = (base64Image: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = base64Image;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return reject(new Error('Could not get canvas context'));
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            ctx.drawImage(img, 0, 0);
+
+            // Watermark style
+            const watermarkText = 'desain.fun by @rangga.p.h';
+            const padding = Math.max(10, canvas.width * 0.015);
+            const fontSize = Math.max(12, Math.min(canvas.width / 60, 24));
+            
+            ctx.font = `500 ${fontSize}px "Plus Jakarta Sans"`;
+            ctx.globalAlpha = 0.7;
+
+            // Check brightness of corner to decide font color
+            // Check a small area in the bottom-right corner for average brightness.
+            const sampleWidth = Math.min(200, canvas.width * 0.2);
+            const sampleHeight = Math.min(50, canvas.height * 0.1);
+            const sampleX = canvas.width - sampleWidth - padding;
+            const sampleY = canvas.height - sampleHeight - padding;
+
+            const pixelData = ctx.getImageData(sampleX, sampleY, sampleWidth, sampleHeight).data;
+            let totalBrightness = 0;
+            for (let i = 0; i < pixelData.length; i += 4) {
+                // Using the luminance formula
+                totalBrightness += (pixelData[i] * 0.299 + pixelData[i + 1] * 0.587 + pixelData[i + 2] * 0.114);
+            }
+            const avgBrightness = totalBrightness / (pixelData.length / 4);
+            
+            // Set text color based on brightness
+            const textColor = avgBrightness > 128 ? '#000000' : '#FFFFFF';
+            const shadowColor = avgBrightness > 128 ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+            
+            ctx.fillStyle = textColor;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            
+            // Add a subtle shadow for better readability on complex backgrounds
+            ctx.shadowColor = shadowColor;
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+
+            ctx.fillText(watermarkText, canvas.width - padding, canvas.height - padding);
+
+            resolve(canvas.toDataURL());
+        };
+        img.onerror = () => reject(new Error('Failed to load image for watermarking.'));
+    });
 };

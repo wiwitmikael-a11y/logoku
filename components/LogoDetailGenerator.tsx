@@ -27,6 +27,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
   const credits = profile?.credits ?? 0;
 
   const [finalLogoUrl, setFinalLogoUrl] = useState<string>(baseLogoUrl);
+  const [history, setHistory] = useState<string[]>([]);
   const [variations, setVariations] = useState<LogoVariations | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
@@ -71,21 +72,35 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
     setError(null);
     playSound('start');
     try {
+      setHistory(prev => [...prev, finalLogoUrl]); // Save current state before editing
       const base64Data = finalLogoUrl.split(',')[1];
       const mimeType = finalLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/png';
       const editedBase64Result = await editLogo(base64Data, mimeType, editPrompt);
       await deductCredits(EDIT_COST);
       setFinalLogoUrl(editedBase64Result);
-      setVariations(null);
+      setVariations(null); // Invalidate variations after edit
       setShowNextStepNudge(false);
+      setEditPrompt('');
       playSound('success');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal mengedit logo.');
+      setHistory(prev => prev.slice(0, -1)); // Revert history on error
       playSound('error');
     } finally {
       setIsEditing(false);
     }
   };
+  
+  const handleUndo = () => {
+    if (history.length === 0) return;
+    playSound('click');
+    const lastVersion = history[history.length - 1];
+    setFinalLogoUrl(lastVersion);
+    setHistory(prev => prev.slice(0, -1));
+    setVariations(null);
+    setShowNextStepNudge(false);
+  };
+
 
   const handleContinue = () => {
     if (variations) {
@@ -135,8 +150,12 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
             <p className="text-sm text-text-muted mb-4">Kasih perintah simpel buat ubah logo lo. Misal: "ganti warnanya jadi biru dongker" atau "tambahin outline tipis". Mengedit logo akan menghapus variasi yang sudah dibuat.</p>
             <form onSubmit={handleEdit} className="flex flex-col gap-4">
                 <Input label="Perintah Revisi" name="editPrompt" value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} placeholder="cth: Ganti warna merahnya jadi hijau" />
-                <div className="self-start pt-2">
+                <div className="self-start pt-2 flex items-center gap-3">
                     <Button type="submit" isLoading={isEditing} disabled={credits < EDIT_COST} variant="secondary">Revisi, Gercep! ({EDIT_COST} Token)</Button>
+                    <Button type="button" onClick={handleUndo} disabled={history.length === 0 || isEditing} variant="secondary" title="Kembali ke versi sebelumnya">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                        Undo
+                    </Button>
                 </div>
             </form>
         </Card>

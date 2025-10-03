@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { createWhiteCanvasBase64, fetchImageAsBase64 } from '../utils/imageUtils';
+import { createWhiteCanvasBase64, fetchImageAsBase64, applyWatermark } from '../utils/imageUtils';
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets } from '../types';
 
 // --- Environment Variable Setup ---
@@ -224,7 +224,8 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
 
         for (const part of response.candidates?.[0]?.content?.parts || []) {
             if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
-                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                const watermarkedImage = await applyWatermark(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
+                return watermarkedImage;
             }
         }
         
@@ -475,7 +476,10 @@ export const generateMoodboardImages = async (keywords: string): Promise<string[
             },
         });
 
-        return response.generatedImages.map(img => `data:image/jpeg;base64,${img.image.imageBytes}`);
+        const watermarkedImages = await Promise.all(
+            response.generatedImages.map(img => applyWatermark(`data:image/jpeg;base64,${img.image.imageBytes}`))
+        );
+        return watermarkedImages;
     } catch (error) {
         throw handleApiError(error, "Moodboard Image Generator");
     }
@@ -718,7 +722,8 @@ export const editLogo = async (base64ImageData: string, mimeType: string, prompt
 
         for (const part of response.candidates?.[0]?.content?.parts || []) {
             if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
-                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                 const watermarkedImage = await applyWatermark(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
+                 return watermarkedImage;
             }
         }
         
@@ -791,7 +796,8 @@ const generateImageWithLogo = async (logoBase64: string, instructionPrompt: stri
 
         for (const part of response.candidates?.[0]?.content?.parts || []) {
             if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
-                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                const watermarkedImage = await applyWatermark(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
+                return watermarkedImage;
             }
         }
 
