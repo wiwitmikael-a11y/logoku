@@ -1213,6 +1213,7 @@
           #ff00ff  /* Back to Magenta for smooth loop */
         );
         animation: animate-rgb-laser-border 4s linear infinite;
+        pointer-events: none; /* FIX: Prevents the pseudo-element from blocking clicks */
       }
       .rgb-laser-wrapper > * { /* UPDATED: Target any direct child */
         height: 100%;
