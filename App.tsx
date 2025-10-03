@@ -55,7 +55,7 @@ const LevelUpModal = React.lazy(() => import('./components/gamification/LevelUpM
 const AchievementToast = React.lazy(() => import('./components/gamification/AchievementToast'));
 const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
 const LightImageEditor = React.lazy(() => import('./components/common/LightImageEditor'));
-const Sotosop = React.lazy(() => import('./components/Sotosop'));
+const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
@@ -212,7 +212,7 @@ const MainApp: React.FC = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
     const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
-    const [showSotosop, setShowSotosop] = useState(false);
+    const [showSotoshop, setShowSotoshop] = useState(false);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -417,7 +417,7 @@ const MainApp: React.FC = () => {
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} addXp={addXp} onShareToForum={() => handleShareToForum(project)} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
-            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotosop={() => setShowSotosop(true)} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
@@ -497,7 +497,7 @@ const MainApp: React.FC = () => {
             <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
             <LightImageEditor show={imageEditorState.isOpen} imageUrl={imageEditorState.imageUrl} onClose={closeImageEditor} />
-            <Sotosop show={showSotosop} onClose={() => setShowSotosop(false)} />
+            <Sotoshop show={showSotoshop} onClose={() => setShowSotoshop(false)} />
         </Suspense>
       </>
     );
