@@ -37,7 +37,7 @@ const TermsOfServiceModal = lazy(() => import('./components/common/TermsOfServic
 const BrandGalleryModal = lazy(() => import('./components/BrandGalleryModal'));
 const PusatJuraganModal = lazy(() => import('./components/gamification/PusatJuraganModal'));
 
-const API_KEY = import.meta.env.VITE_API_KEY;
+const API_KEY = process.env.VITE_API_KEY;
 
 export type AppView = 'DASHBOARD' | 'WIZARD' | 'QUICK_TOOLS' | 'FORUM';
 

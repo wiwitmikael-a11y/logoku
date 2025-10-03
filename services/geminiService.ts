@@ -5,7 +5,7 @@ import { createWhiteCanvasBase64, fetchImageAsBase64 } from '../utils/imageUtils
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets } from '../types';
 
 // --- Environment Variable Setup ---
-const API_KEY = import.meta.env.VITE_API_KEY;
+const API_KEY = process.env.VITE_API_KEY;
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
