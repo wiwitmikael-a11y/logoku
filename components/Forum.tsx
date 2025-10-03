@@ -152,11 +152,16 @@ const Forum: React.FC = () => {
 
             if (threadsError) throw threadsError;
             
-            // FIX: Changed 'threadsData' to 'data' to correctly reference the destructured result from the Supabase query.
-            const processedThreads = data.map((t: any) => ({
-                ...t,
-                reply_count: t.posts[0]?.count ?? 0,
-            }));
+            const processedThreads = data.map((t: any) => {
+                // Supabase returns 'posts' as an array with a single count object: [{ count: N }]
+                // We extract the count and replace the 'posts' array to match our ForumThread type.
+                const { posts, ...restOfThread } = t;
+                return {
+                    ...restOfThread,
+                    posts: [], // Satisfy the ForumPost[] type, we don't need the full posts here.
+                    reply_count: posts[0]?.count ?? 0,
+                };
+            });
 
             setThreads([MANG_AI_WELCOME_THREAD, ...processedThreads]);
         } catch (err) {
@@ -191,7 +196,6 @@ const Forum: React.FC = () => {
                 .order('created_at', { ascending: true })
                 .limit(POSTS_PAGE_SIZE);
 
-            // FIX: Changed 'postsData' to 'data' to correctly reference the destructured result from the Supabase query.
             if (postsError) throw postsError;
             setPosts(data as ForumPost[]);
         } catch (err) {
@@ -351,7 +355,6 @@ const Forum: React.FC = () => {
                             className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 border-b border-gray-700 last:border-b-0 cursor-pointer transition-colors ${isPinned ? 'bg-indigo-900/30' : 'hover:bg-gray-700/50'}`}
                         >
                             {isPinned && <span title="Topik Penting">📌</span>}
-                             {/* FIX: Changed function call 'author.name()' to property access 'author.name' as 'name' is a string property. */}
                              <img src={author.avatar} alt={author.name} className={`w-10 h-10 rounded-full flex-shrink-0 ${author.isOfficial ? 'p-1 bg-amber-200' : 'bg-gray-700'}`} style={author.isOfficial ? { imageRendering: 'pixelated' } : {}}/>
                             <div className="flex-grow overflow-hidden">
                                 <h3 className="font-semibold text-white truncate">{thread.title}</h3>
