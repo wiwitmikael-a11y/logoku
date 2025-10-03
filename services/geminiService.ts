@@ -5,14 +5,14 @@ import { createWhiteCanvasBase64, fetchImageAsBase64 } from '../utils/imageUtils
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets } from '../types';
 
 // --- Environment Variable Setup ---
-const API_KEY = import.meta.env?.VITE_API_KEY;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 // --- Gemini Client Setup ---
 let ai: GoogleGenAI | null = null;
 const getAiClient = (): GoogleGenAI => {
     if (ai) return ai;
     if (!API_KEY) {
-        throw new Error("Waduh, API Key Google Gemini (`VITE_API_KEY`) nggak ketemu, bro! Di Vercel, semua environment variable untuk frontend harus diawali 'VITE_'. Cek lagi settingan-mu ya.");
+        throw new Error("Waduh, API Key Google Gemini (`VITE_API_KEY`) nggak ketemu, bro! Pastikan environment variable `VITE_API_KEY` sudah di-setting dengan benar.");
     }
     ai = new GoogleGenAI({ apiKey: API_KEY });
     return ai;

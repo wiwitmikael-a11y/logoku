@@ -14,15 +14,19 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
+  // FIX: Initialized state as a class property to resolve TypeScript errors
+  // where 'this.state' and 'this.props' were not being correctly inferred.
+  // This modern syntax avoids the need for a constructor for basic state setup.
+  state: State = {
     hasError: false,
+    error: undefined,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
     // You could also log the error to an external service here
   }
@@ -35,7 +39,7 @@ class ErrorBoundary extends Component<Props, State> {
       window.location.href = '/';
   }
 
-  public render() {
+  render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-background text-text-body flex items-center justify-center p-4">

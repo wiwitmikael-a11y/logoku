@@ -110,23 +110,29 @@ const ProjectDashboard: React.FC<Props> = ({ onStartNewProject }) => {
         }
     };
 
-    const onRegenerateContentCalendar = () => handleRegenerate(1, () => generateContentCalendar(selectedProject!.project_data.brandInputs.businessName, selectedProject!.project_data.selectedPersona), 'contentCalendar');
-    const onRegenerateSocialKit = () => handleRegenerate(2, () => generateSocialMediaKitAssets(selectedProject!.project_data), 'socialMediaKit');
-    const onRegenerateProfiles = () => handleRegenerate(1, () => generateSocialProfiles(selectedProject!.project_data.brandInputs, selectedProject!.project_data.selectedPersona), 'socialProfiles');
-    const onRegenerateSocialAds = () => handleRegenerate(1, () => generateSocialAds(selectedProject!.project_data.brandInputs, selectedProject!.project_data.selectedPersona, selectedProject!.project_data.selectedSlogan), 'socialAds');
+    // FIX: Changed handleRegenerate to handleRegenerateAsset
+    const onRegenerateContentCalendar = () => handleRegenerateAsset(1, () => generateContentCalendar(selectedProject!.project_data.brandInputs.businessName, selectedProject!.project_data.selectedPersona), 'contentCalendar');
+    // FIX: Changed handleRegenerate to handleRegenerateAsset
+    const onRegenerateSocialKit = () => handleRegenerateAsset(2, () => generateSocialMediaKitAssets(selectedProject!.project_data), 'socialMediaKit');
+    // FIX: Changed handleRegenerate to handleRegenerateAsset
+    const onRegenerateProfiles = () => handleRegenerateAsset(1, () => generateSocialProfiles(selectedProject!.project_data.brandInputs, selectedProject!.project_data.selectedPersona), 'socialProfiles');
+    // FIX: Changed handleRegenerate to handleRegenerateAsset
+    const onRegenerateSocialAds = () => handleRegenerateAsset(1, () => generateSocialAds(selectedProject!.project_data.brandInputs, selectedProject!.project_data.selectedPersona, selectedProject!.project_data.selectedSlogan), 'socialAds');
     
     const onRegeneratePackaging = async () => {
         if (!selectedProject) return;
         const prompt = 'Create a photorealistic product mockup for packaging a product called ' + selectedProject.project_data.brandInputs.businessDetail;
         const logoBase64 = await fetchImageAsBase64(selectedProject.project_data.selectedLogoUrl);
-        await handleRegenerate(1, async () => (await generatePackagingDesign(prompt, logoBase64))[0], 'selectedPackagingUrl');
+        // FIX: Changed handleRegenerate to handleRegenerateAsset
+        await handleRegenerateAsset(1, async () => (await generatePackagingDesign(prompt, logoBase64))[0], 'selectedPackagingUrl');
     };
 
     const onRegenerateMerchandise = async () => {
         if (!selectedProject) return;
         const prompt = 'A realistic mockup of a t-shirt with a brand logo.';
         const logoBase64 = await fetchImageAsBase64(selectedProject.project_data.selectedLogoUrl);
-        await handleRegenerate(1, async () => (await generateMerchandiseMockup(prompt, logoBase64))[0], 'merchandiseUrl');
+        // FIX: Changed handleRegenerate to handleRegenerateAsset
+        await handleRegenerateAsset(1, async () => (await generateMerchandiseMockup(prompt, logoBase64))[0], 'merchandiseUrl');
     };
     
     const onRegeneratePrintMedia = async (mediaType: 'banner' | 'roll_banner') => {

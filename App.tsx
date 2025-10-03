@@ -25,6 +25,7 @@ import PuzzleCaptchaModal from './components/common/PuzzleCaptchaModal';
 import LevelUpModal from './components/gamification/LevelUpModal';
 import AchievementToast from './components/gamification/AchievementToast';
 import { compressAndConvertToWebP, isBase64DataUrl } from './utils/imageUtils';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Lazy loading major components
 const ProjectDashboard = lazy(() => import('./components/ProjectDashboard'));
@@ -33,10 +34,12 @@ const Forum = lazy(() => import('./components/Forum'));
 const ContactModal = lazy(() => import('./components/common/ContactModal'));
 const AboutModal = lazy(() => import('./components/common/AboutModal'));
 const TermsOfServiceModal = lazy(() => import('./components/common/TermsOfServiceModal'));
+const BrandGalleryModal = lazy(() => import('./components/BrandGalleryModal'));
+const PusatJuraganModal = lazy(() => import('./components/gamification/PusatJuraganModal'));
 
 const API_KEY = import.meta.env.VITE_API_KEY;
 
-type AppView = 'DASHBOARD' | 'WIZARD' | 'QUICK_TOOLS' | 'FORUM' | 'GALLERY';
+export type AppView = 'DASHBOARD' | 'WIZARD' | 'QUICK_TOOLS' | 'FORUM';
 
 const AppContent: React.FC = () => {
   const { session, user, profile, loading, grantAchievement, grantFirstStepXp, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement } = useAuth();
@@ -49,6 +52,9 @@ const AppContent: React.FC = () => {
   const [showToS, setShowToS] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
+  const [showPusatJuragan, setShowPusatJuragan] = useState(false);
+
 
   useEffect(() => {
     if (session) {
@@ -257,7 +263,15 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <Header onNavigate={handleNavigate} currentView={view} onShowAbout={() => setShowAbout(true)} />
+      <Header 
+        onNavigate={handleNavigate} 
+        currentView={view} 
+        onShowAbout={() => setShowAbout(true)} 
+        onShowContact={() => setShowContact(true)}
+        onShowGallery={() => setShowGallery(true)}
+        onShowPusatJuragan={() => setShowPusatJuragan(true)}
+        onShowToS={() => setShowToS(true)}
+      />
       <main id="main-content" className="flex-grow container mx-auto px-4 py-8 md:py-12 transition-all duration-300">
         {renderView()}
       </main>
@@ -270,6 +284,8 @@ const AppContent: React.FC = () => {
         {showToS && <TermsOfServiceModal show={showToS} onClose={() => setShowToS(false)} />}
         {showContact && <ContactModal show={showContact} onClose={() => setShowContact(false)} />}
         {showAbout && <AboutModal show={showAbout} onClose={() => setShowAbout(false)} />}
+        {showGallery && <BrandGalleryModal show={showGallery} onClose={() => setShowGallery(false)} />}
+        {showPusatJuragan && <PusatJuraganModal show={showPusatJuragan} onClose={() => setShowPusatJuragan(false)} />}
       </Suspense>
     </>
   );
@@ -282,7 +298,9 @@ const App: React.FC = () => {
 
   return (
     <AuthProvider>
+      <ErrorBoundary>
         <AppContent />
+      </ErrorBoundary>
     </AuthProvider>
   );
 };
