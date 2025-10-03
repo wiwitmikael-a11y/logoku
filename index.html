@@ -108,12 +108,6 @@
         user-select: text;       /* Standard syntax */
       }
 
-      /* NEW: Keyframe for subtle background pulse */
-      @keyframes bg-pulse {
-        0%, 100% { opacity: 0.7; }
-        50% { opacity: 1; }
-      }
-
       /* Layer 1: Slower, more prominent diagonal lines */
       body::before {
         content: '';
@@ -135,7 +129,7 @@
           rgba(99, 102, 241, 0.15) 38px,
           rgba(99, 102, 241, 0.15) 40px
         );
-        animation: bg-pan 45s linear infinite, bg-pulse 10s ease-in-out infinite alternate; /* More noticeable speed */
+        animation: bg-pan 35s linear infinite; /* UPDATED: Smoother, more noticeable panning */
       }
 
       /* Layer 2: Faster-moving diagonal lines for parallax */
@@ -1218,6 +1212,65 @@
       }
       .rgb-laser-wrapper > div { /* Target the inner modal content */
         height: 100%;
+      }
+      
+      /* --- NEW: FOLDER TAB STYLES --- */
+      .folder-tab-container {
+        display: flex;
+        padding: 0 1rem;
+        border-bottom: 2px solid #374151; /* gray-700 */
+        position: relative;
+      }
+      .folder-tab {
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem; /* text-sm */
+        border: 2px solid transparent;
+        border-bottom: none;
+        color: #9ca3af; /* gray-400 */
+        background-color: transparent;
+        cursor: pointer;
+        position: relative;
+        bottom: -2px; /* Align with bottom border */
+        transition: all 0.2s ease-in-out;
+        clip-path: polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
+      }
+      @media (min-width: 640px) { /* sm breakpoint */
+        .folder-tab {
+          padding: 0.75rem 1.5rem;
+          font-size: 1rem; /* text-base */
+        }
+      }
+      .folder-tab:hover {
+        background-color: #374151; /* gray-700 */
+        color: #fff;
+      }
+      .folder-tab.active {
+        background-color: #4f46e5; /* indigo-600 */
+        border-color: #374151; /* gray-700 */
+        color: #fff;
+        border-radius: 8px 8px 0 0;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+      }
+
+      /* --- NEW: FANCY DIVIDER --- */
+      .fancy-divider {
+        position: relative;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(to right, transparent, rgba(79, 70, 229, 0.5), transparent);
+        margin: 3rem 0;
+      }
+      .fancy-divider::before {
+        content: '✨';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #111827; /* Body background */
+        padding: 0 0.75rem;
+        font-size: 1.25rem;
+        color: #a5b4fc; /* indigo-300 */
       }
     </style>
   <script type="importmap">

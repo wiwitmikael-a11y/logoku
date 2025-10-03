@@ -1,7 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 // FIX: Changed to use `React.Component` directly to resolve issues where `setState` and `props` were not found on the class instance.
-import React from 'react';
+// FIX: Using `import * as React from 'react'` to ensure correct type resolution from the 'react' module, which resolves the 'props' and 'setState' not found errors.
+import * as React from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';

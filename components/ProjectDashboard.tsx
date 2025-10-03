@@ -351,11 +351,7 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
             </div>
             
             <div className="w-full text-center mt-6">
-                <div className="relative inline-block my-2">
-                <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gray-600"></div>
-                <span className="relative bg-gray-900 px-4 text-gray-400 text-sm">Atau pake...</span>
-                </div>
-                <h3 className="text-lg md:text-xl font-bold mb-4 mt-2">Jalan Pintas Juragan 🚀</h3>
+                <h3 className="text-lg md:text-xl font-bold mb-4 mt-2">Atau Pake Jalan Pintas 🚀</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">
                 {templates.map(template => (
                     <TemplateCard 
@@ -367,9 +363,10 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
                 </div>
             </div>
 
+            <div className="fancy-divider my-8"></div>
 
             {inProgressProjects.length > 0 && (
-                <div className="w-full text-left mt-8">
+                <div className="w-full text-left">
                 <h3 className="text-lg md:text-xl font-bold mb-4">Project yang Sedang Dikerjakan:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {inProgressProjects.map(project => (
@@ -438,7 +435,9 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
                 </div>
             )}
             
-            <div className="w-full max-w-4xl mt-12 space-y-8">
+            <div className="fancy-divider my-8"></div>
+            
+            <div className="w-full max-w-4xl space-y-8">
                 <BrandGalleryPreview onShowGallery={onShowBrandGallery} />
                 <div className="saweria-elegant-wrapper">
                     <SaweriaWidget />
@@ -472,22 +471,22 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
       </div>
 
       {/* NEW: Tab Navigation */}
-      <div className="flex justify-center border-b border-gray-700">
+      <div className="folder-tab-container justify-center">
         <button 
           onClick={() => setActiveTab('projects')}
-          className={`px-4 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
+          className={`folder-tab ${activeTab === 'projects' ? 'active' : ''}`}
         >
           🚀 Project Saya
         </button>
         <button 
           onClick={() => setActiveTab('forum')}
-          className={`px-4 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
+          className={`folder-tab ${activeTab === 'forum' ? 'active' : ''}`}
         >
           ☕ WarKop Juragan
         </button>
         <button 
           onClick={() => setActiveTab('tools')}
-          className={`px-4 py-3 text-sm md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-400 hover:text-white'}`}
+          className={`folder-tab ${activeTab === 'tools' ? 'active' : ''}`}
         >
           💡 Warung Ide
         </button>
