@@ -31,20 +31,20 @@ const BrandHubSidebar: React.FC = () => {
         { id: 'strategi', name: 'Strategi Brand', icon: '⭐' },
         { id: 'logo', name: 'Paket Logo', icon: '⭐' },
         { id: 'sosmed-kit', name: 'Social Media Kit', icon: '🖼️' },
-        { id: 'profil-sosmed', name: 'Profil & Iklan', icon: '✍️' },
+        { id: 'profil-sosmed', name: 'Profil Sosmed & Teks Iklan', icon: '✍️' },
         { id: 'kalender-konten', name: 'Kalender Konten', icon: '📅' },
         { id: 'visual-konten', name: 'Aset Visual', icon: '🎨' },
         { id: 'tools', name: 'Tools Lanjutan', icon: '🛠️' },
     ];
     return (
         <aside className="w-full lg:w-1/4 xl:w-1/5">
-            <div className="sticky top-28 p-4 bg-surface-content rounded-lg border border-border-main shadow-sm">
-                <h3 className="text-lg font-bold text-text-header mb-4">Navigasi Brand Hub</h3>
+            <div className="sticky top-28 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-800 mb-4">Navigasi Brand Hub</h3>
                 <nav>
                     <ul className="space-y-2">
                         {navItems.map(item => (
                             <li key={item.id}>
-                                <a href={`#${item.id}`} className="flex items-center gap-3 px-3 py-2 text-sm text-text-body rounded-md hover:bg-background hover:text-text-header transition-colors">
+                                <a href={`#${item.id}`} className="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 rounded-md hover:bg-slate-100 hover:text-slate-800 transition-colors">
                                     <span>{item.icon}</span>
                                     <span>{item.name}</span>
                                 </a>
@@ -135,13 +135,13 @@ const ProjectSummary: React.FC<Props> = (props) => {
   return (
     <>
       <div className="text-center mb-10">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-splash mb-2">Brand Hub: "{brandInputs.businessName}"</h2>
-          <p className="text-text-muted max-w-3xl mx-auto">Selamat! Ini pusat kendali brand lo. Aset inti (Strategi & Logo) sudah dipatenkan. Lo bisa generate ulang aset turunan kapan aja.</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-sky-600 mb-2">Brand Hub untuk "{brandInputs.businessName}"</h2>
+          <p className="text-slate-600 max-w-3xl mx-auto">Selamat! Ini pusat kendali brand lo. Aset inti (Strategi & Logo) sudah dipatenkan. Lo bisa generate ulang aset turunan kapan aja.</p>
       </div>
 
-       <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 bg-surface-content border border-border-main rounded-lg p-4 mb-8 shadow-sm">
-            <h4 className="font-bold text-lg text-text-header">Aksi Cepat:</h4>
-            <Button onClick={handleDownloadAll} isLoading={isZipping} variant="splash">Unduh Semua Aset (.zip)</Button>
+       <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 bg-white border border-slate-200 rounded-lg p-4 mb-8 shadow-sm">
+            <h4 className="font-bold text-lg text-slate-800">Aksi Cepat:</h4>
+            <Button onClick={handleDownloadAll} isLoading={isZipping}>Unduh Semua Aset (.zip)</Button>
         </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -151,20 +151,20 @@ const ProjectSummary: React.FC<Props> = (props) => {
                 <Card title="⭐ Strategi Brand (Master)">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div>
-                        <h4 className="text-xl font-bold text-text-header">{brandInputs.businessName}</h4>
-                        <p className="text-primary italic mt-1 selectable-text">"{selectedSlogan}"</p>
-                        <div className="mt-4 pt-4 border-t border-border-main">
-                            <h5 className="font-semibold text-text-header mb-2">Persona: {selectedPersona.nama_persona}</h5>
-                            <p className="text-sm text-text-body selectable-text">{selectedPersona.deskripsi_singkat}</p>
+                        <h4 className="text-xl font-bold text-slate-800">{brandInputs.businessName}</h4>
+                        <p className="text-sky-600 italic mt-1 selectable-text">"{selectedSlogan}"</p>
+                        <div className="mt-4 pt-4 border-t border-slate-200">
+                            <h5 className="font-semibold text-slate-800 mb-2">Persona: {selectedPersona.nama_persona}</h5>
+                            <p className="text-sm text-slate-600 selectable-text">{selectedPersona.deskripsi_singkat}</p>
                         </div>
                       </div>
                       <div>
-                         <h5 className="font-semibold text-text-header mb-2">Palet Warna</h5>
+                         <h5 className="font-semibold text-slate-800 mb-2">Palet Warna</h5>
                          <div className="flex items-center gap-3">
                           {selectedPersona.palet_warna_hex.map((hex) => (
                             <div key={hex} className="flex flex-col items-center gap-1">
-                              <div className="w-10 h-10 rounded-full border-2 border-border-main" style={{ backgroundColor: hex }}></div>
-                              <span className="text-xs text-text-muted selectable-text">{hex}</span>
+                              <div className="w-10 h-10 rounded-full border-2 border-slate-300" style={{ backgroundColor: hex }}></div>
+                              <span className="text-xs text-slate-500 selectable-text">{hex}</span>
                             </div>
                           ))}
                         </div>
@@ -177,12 +177,12 @@ const ProjectSummary: React.FC<Props> = (props) => {
                 <Card title="⭐ Paket Logo (Master)">
                     {logoVariations ? (
                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                           <div><h5 className="font-semibold text-text-header mb-2 text-sm">Logo Utama</h5><div className="bg-background p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(selectedLogoUrl)}><img src={selectedLogoUrl} alt="Logo Utama" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
-                           <div><h5 className="font-semibold text-text-header mb-2 text-sm">Versi Tumpuk</h5><div className="bg-background p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(logoVariations.stacked)}><img src={logoVariations.stacked} alt="Logo Tumpuk" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
-                           <div><h5 className="font-semibold text-text-header mb-2 text-sm">Versi Datar</h5><div className="bg-background p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(logoVariations.horizontal)}><img src={logoVariations.horizontal} alt="Logo Datar" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
-                           <div><h5 className="font-semibold text-text-header mb-2 text-sm">Versi Monokrom</h5><div className="bg-background p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(logoVariations.monochrome)}><img src={logoVariations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
+                           <div><h5 className="font-semibold text-slate-800 mb-2 text-sm">Logo Utama</h5><div className="bg-slate-100 p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(selectedLogoUrl)}><img src={selectedLogoUrl} alt="Logo Utama" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
+                           <div><h5 className="font-semibold text-slate-800 mb-2 text-sm">Versi Tumpuk</h5><div className="bg-slate-100 p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(logoVariations.stacked)}><img src={logoVariations.stacked} alt="Logo Tumpuk" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
+                           <div><h5 className="font-semibold text-slate-800 mb-2 text-sm">Versi Datar</h5><div className="bg-slate-100 p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(logoVariations.horizontal)}><img src={logoVariations.horizontal} alt="Logo Datar" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
+                           <div><h5 className="font-semibold text-slate-800 mb-2 text-sm">Versi Monokrom</h5><div className="bg-slate-100 p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(logoVariations.monochrome)}><img src={logoVariations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105" loading="lazy"/></div></div>
                        </div>
-                    ) : <p className="text-sm text-text-muted italic">Aset ini belum dibuat.</p>}
+                    ) : <p className="text-sm text-slate-500 italic">Aset ini belum dibuat.</p>}
                 </Card>
             </section>
             
@@ -191,38 +191,38 @@ const ProjectSummary: React.FC<Props> = (props) => {
                     {regenerating === 'social_kit' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : (
                         socialMediaKit ? (
                             <div className="space-y-4">
-                                <div><h5 className="font-semibold text-text-header mb-2">Foto Profil</h5><div className="bg-background rounded-full p-2 w-32 h-32 mx-auto flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(socialMediaKit.profilePictureUrl)}><img src={socialMediaKit.profilePictureUrl} alt="Foto Profil" className="max-w-full max-h-full object-contain rounded-full group-hover:scale-105" loading="lazy"/></div></div>
-                                <div><h5 className="font-semibold text-text-header mb-2">Banner Header</h5><div className="bg-background p-2 rounded-lg cursor-pointer group" onClick={() => setModalImageUrl(socialMediaKit.bannerUrl)}><img src={socialMediaKit.bannerUrl} alt="Banner" className="w-full object-contain group-hover:scale-105" loading="lazy"/></div></div>
+                                <div><h5 className="font-semibold text-slate-800 mb-2">Foto Profil</h5><div className="bg-slate-100 rounded-full p-2 w-32 h-32 mx-auto flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(socialMediaKit.profilePictureUrl)}><img src={socialMediaKit.profilePictureUrl} alt="Foto Profil" className="max-w-full max-h-full object-contain rounded-full group-hover:scale-105" loading="lazy"/></div></div>
+                                <div><h5 className="font-semibold text-slate-800 mb-2">Banner Header</h5><div className="bg-slate-100 p-2 rounded-lg cursor-pointer group" onClick={() => setModalImageUrl(socialMediaKit.bannerUrl)}><img src={socialMediaKit.bannerUrl} alt="Banner" className="w-full object-contain group-hover:scale-105" loading="lazy"/></div></div>
                             </div>
-                        ) : <p className="text-sm text-text-muted italic">Aset ini belum dibuat.</p>
+                        ) : <p className="text-sm text-slate-500 italic">Aset ini belum dibuat.</p>
                     )}
-                    <div className="mt-4 pt-4 border-t border-border-main"><Button size="small" variant="secondary" onClick={() => handleRegenerate('social_kit', props.onRegenerateSocialKit)} isLoading={regenerating === 'social_kit'}>{socialMediaKit ? 'Generate Ulang (2 Token)' : 'Generate (2 Token)'}</Button></div>
+                    <div className="mt-4 pt-4 border-t border-slate-200"><Button size="small" variant="secondary" onClick={() => handleRegenerate('social_kit', props.onRegenerateSocialKit)} isLoading={regenerating === 'social_kit'}>{socialMediaKit ? 'Generate Ulang (2 Token)' : 'Generate (2 Token)'}</Button></div>
                 </Card>
             </section>
 
             <section id="profil-sosmed">
                 <div className="flex flex-col gap-8">
-                    <Card title="✍️ Profil & Iklan">
+                    <Card title="✍️ Profil Sosmed & Marketplace">
                         {regenerating === 'profiles' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : (
                             socialProfiles ? (
                                 <div className="space-y-4">
-                                    <div><h5 className="font-semibold text-text-header mb-2">Bio Instagram</h5><div className="relative bg-background p-3 rounded-lg"><p className="text-sm text-text-body whitespace-pre-wrap pr-10 selectable-text">{socialProfiles.instagramBio}</p><CopyButton textToCopy={socialProfiles.instagramBio} className="absolute top-2 right-2"/></div></div>
-                                    <div><h5 className="font-semibold text-text-header mb-2">Bio TikTok</h5><div className="relative bg-background p-3 rounded-lg"><p className="text-sm text-text-body whitespace-pre-wrap pr-10 selectable-text">{socialProfiles.tiktokBio}</p><CopyButton textToCopy={socialProfiles.tiktokBio} className="absolute top-2 right-2"/></div></div>
+                                    <div><h5 className="font-semibold text-slate-800 mb-2">Bio Instagram</h5><div className="relative bg-slate-100 p-3 rounded-lg"><p className="text-sm text-slate-700 whitespace-pre-wrap pr-10 selectable-text">{socialProfiles.instagramBio}</p><CopyButton textToCopy={socialProfiles.instagramBio} className="absolute top-2 right-2"/></div></div>
+                                    <div><h5 className="font-semibold text-slate-800 mb-2">Bio TikTok</h5><div className="relative bg-slate-100 p-3 rounded-lg"><p className="text-sm text-slate-700 whitespace-pre-wrap pr-10 selectable-text">{socialProfiles.tiktokBio}</p><CopyButton textToCopy={socialProfiles.tiktokBio} className="absolute top-2 right-2"/></div></div>
                                 </div>
-                            ) : <p className="text-sm text-text-muted italic">Aset ini belum dibuat.</p>
+                            ) : <p className="text-sm text-slate-500 italic">Aset ini belum dibuat.</p>
                         )}
-                        <div className="mt-4 pt-4 border-t border-border-main"><Button size="small" variant="secondary" onClick={() => handleRegenerate('profiles', props.onRegenerateProfiles)} isLoading={regenerating === 'profiles'}>{socialProfiles ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
-                         <div className="mt-4 pt-4 border-t border-border-main">
-                            <h5 className="font-semibold text-text-header mb-2">Teks Iklan Sosmed</h5>
-                            {regenerating === 'social_ads' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : (
+                        <div className="mt-4 pt-4 border-t border-slate-200"><Button size="small" variant="secondary" onClick={() => handleRegenerate('profiles', props.onRegenerateProfiles)} isLoading={regenerating === 'profiles'}>{socialProfiles ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
+                    </Card>
+
+                    <Card title="✍️ Teks Iklan Sosmed">
+                        {regenerating === 'social_ads' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : (
                             socialAds && socialAds.length > 0 ? (
                                 <div className="space-y-4 max-h-64 overflow-auto">
-                                    {socialAds.map((ad, index) => (<div key={index} className="border-b border-border-main pb-3 last:border-b-0 last:pb-0"><h6 className="font-semibold text-text-header mb-2">Iklan {ad.platform}</h6><div className="relative bg-background p-3 rounded-lg"><p className="text-sm text-text-body whitespace-pre-wrap pr-10 selectable-text">{ad.adCopy}</p><CopyButton textToCopy={ad.adCopy} className="absolute top-2 right-2"/></div></div>))}
+                                    {socialAds.map((ad, index) => (<div key={index} className="border-b border-slate-200 pb-3 last:border-b-0 last:pb-0"><h5 className="font-semibold text-slate-800 mb-2">Iklan {ad.platform}</h5><div className="relative bg-slate-100 p-3 rounded-lg"><p className="text-sm text-slate-700 whitespace-pre-wrap pr-10 selectable-text">{ad.adCopy}</p><CopyButton textToCopy={ad.adCopy} className="absolute top-2 right-2"/></div></div>))}
                                 </div>
-                            ) : <p className="text-sm text-text-muted italic">Aset ini belum dibuat.</p>
+                            ) : <p className="text-sm text-slate-500 italic">Aset ini belum dibuat.</p>
                         )}
-                         <div className="mt-4 pt-4 border-t border-border-main"><Button size="small" variant="secondary" onClick={() => handleRegenerate('social_ads', props.onRegenerateSocialAds)} isLoading={regenerating === 'social_ads'}>{socialAds ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
-                         </div>
+                         <div className="mt-4 pt-4 border-t border-slate-200"><Button size="small" variant="secondary" onClick={() => handleRegenerate('social_ads', props.onRegenerateSocialAds)} isLoading={regenerating === 'social_ads'}>{socialAds ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
                     </Card>
                 </div>
             </section>
@@ -232,37 +232,37 @@ const ProjectSummary: React.FC<Props> = (props) => {
                     {regenerating === 'content' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : (
                         contentCalendar && contentCalendar.length > 0 ? (
                             <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto">
-                                {contentCalendar.map((item, index) => (<div key={index} className="border-b border-border-main pb-3 last:border-b-0 text-sm"><h5 className="font-bold text-text-header">{item.hari} - <span className="text-primary">{item.tipe_konten}</span></h5><p className="text-xs text-text-muted mt-1 selectable-text">{item.ide_konten}</p><div className="relative"><p className="text-text-body whitespace-pre-wrap mt-2 text-xs pr-10 selectable-text">{item.draf_caption}</p><CopyButton textToCopy={item.draf_caption} className="absolute top-2 right-0"/></div></div>))}
+                                {contentCalendar.map((item, index) => (<div key={index} className="border-b border-slate-200 pb-3 last:border-b-0 text-sm"><h5 className="font-bold text-slate-800">{item.hari} - <span className="text-sky-600">{item.tipe_konten}</span></h5><p className="text-xs text-slate-500 mt-1 selectable-text">{item.ide_konten}</p><div className="relative"><p className="text-slate-700 whitespace-pre-wrap mt-2 text-xs pr-10 selectable-text">{item.draf_caption}</p><CopyButton textToCopy={item.draf_caption} className="absolute top-2 right-0"/></div></div>))}
                             </div>
-                        ) : <p className="text-sm text-text-muted italic">Aset ini belum dibuat.</p>
+                        ) : <p className="text-sm text-slate-500 italic">Aset ini belum dibuat.</p>
                     )}
-                     <div className="mt-4 pt-4 border-t border-border-main"><Button size="small" variant="secondary" onClick={() => handleRegenerate('content', props.onRegenerateContentCalendar)} isLoading={regenerating === 'content'}>{contentCalendar ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
+                     <div className="mt-4 pt-4 border-t border-slate-200"><Button size="small" variant="secondary" onClick={() => handleRegenerate('content', props.onRegenerateContentCalendar)} isLoading={regenerating === 'content'}>{contentCalendar ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
                   </Card>
             </section>
 
             <section id="visual-konten" className="md:col-span-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <Card title="🎨 Foto Produk & Kemasan">
-                        {regenerating === 'packaging' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : selectedPackagingUrl ? (<div className="cursor-pointer group" onClick={() => setModalImageUrl(selectedPackagingUrl)}><img src={selectedPackagingUrl} alt="Desain Kemasan" className="w-full object-contain rounded-lg group-hover:scale-105 transition-transform" loading="lazy" /></div>) : (<p className="text-sm text-text-muted italic">Aset ini belum dibuat.</p>)}
-                        <div className="mt-4 pt-4 border-t border-border-main"><Button size="small" variant="secondary" onClick={() => handleRegenerate('packaging', props.onRegeneratePackaging)} isLoading={regenerating === 'packaging'}>{selectedPackagingUrl ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
+                        {regenerating === 'packaging' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : selectedPackagingUrl ? (<div className="cursor-pointer group" onClick={() => setModalImageUrl(selectedPackagingUrl)}><img src={selectedPackagingUrl} alt="Desain Kemasan" className="w-full object-contain rounded-lg group-hover:scale-105 transition-transform" loading="lazy" /></div>) : (<p className="text-sm text-slate-500 italic">Aset ini belum dibuat.</p>)}
+                        <div className="mt-4 pt-4 border-t border-slate-200"><Button size="small" variant="secondary" onClick={() => handleRegenerate('packaging', props.onRegeneratePackaging)} isLoading={regenerating === 'packaging'}>{selectedPackagingUrl ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
                     </Card>
 
                     <Card title="🎨 Mockup Merchandise">
-                        {regenerating === 'merchandise' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : merchandiseUrl ? (<div className="cursor-pointer group" onClick={() => setModalImageUrl(merchandiseUrl)}><img src={merchandiseUrl} alt="Mockup Merchandise" className="w-full object-contain rounded-lg group-hover:scale-105 transition-transform" loading="lazy" /></div>) : (<p className="text-sm text-text-muted italic">Aset ini belum dibuat.</p>)}
-                        <div className="mt-4 pt-4 border-t border-border-main"><Button size="small" variant="secondary" onClick={() => handleRegenerate('merchandise', props.onRegenerateMerchandise)} isLoading={regenerating === 'merchandise'}>{merchandiseUrl ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
+                        {regenerating === 'merchandise' ? <div className="h-48 flex items-center justify-center"><LoadingMessage/></div> : merchandiseUrl ? (<div className="cursor-pointer group" onClick={() => setModalImageUrl(merchandiseUrl)}><img src={merchandiseUrl} alt="Mockup Merchandise" className="w-full object-contain rounded-lg group-hover:scale-105 transition-transform" loading="lazy" /></div>) : (<p className="text-sm text-slate-500 italic">Aset ini belum dibuat.</p>)}
+                        <div className="mt-4 pt-4 border-t border-slate-200"><Button size="small" variant="secondary" onClick={() => handleRegenerate('merchandise', props.onRegenerateMerchandise)} isLoading={regenerating === 'merchandise'}>{merchandiseUrl ? 'Generate Ulang (1 Token)' : 'Generate (1 Token)'}</Button></div>
                     </Card>
 
                      <div className="md:col-span-2">
                         <Card title="🎨 Template Media Cetak">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <h5 className="font-semibold text-text-header mb-2 text-sm">Spanduk (Horizontal)</h5>
-                                    {regenerating === 'banner' ? <div className="h-20 flex items-center justify-center"><LoadingMessage/></div> : printMediaAssets?.bannerUrl ? (<div className="cursor-pointer group" onClick={() => setModalImageUrl(printMediaAssets.bannerUrl!)}><img src={printMediaAssets.bannerUrl} alt="Template Spanduk" className="w-full object-contain rounded-lg group-hover:scale-105 transition-transform" loading="lazy" /></div>) : (<p className="text-xs text-text-muted italic">Belum dibuat.</p>)}
+                                    <h5 className="font-semibold text-slate-800 mb-2 text-sm">Spanduk (Horizontal)</h5>
+                                    {regenerating === 'banner' ? <div className="h-20 flex items-center justify-center"><LoadingMessage/></div> : printMediaAssets?.bannerUrl ? (<div className="cursor-pointer group" onClick={() => setModalImageUrl(printMediaAssets.bannerUrl!)}><img src={printMediaAssets.bannerUrl} alt="Template Spanduk" className="w-full object-contain rounded-lg group-hover:scale-105 transition-transform" loading="lazy" /></div>) : (<p className="text-xs text-slate-500 italic">Belum dibuat.</p>)}
                                     <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('banner', () => props.onRegeneratePrintMedia('banner'))} isLoading={regenerating === 'banner'}>{printMediaAssets?.bannerUrl ? 'Ulang (1 Token)' : 'Buat (1 Token)'}</Button></div>
                                 </div>
-                                <div className="pt-4 border-t border-border-main sm:border-t-0 sm:pt-0">
-                                    <h5 className="font-semibold text-text-header mb-2 text-sm">Roll Banner (Vertikal)</h5>
-                                    {regenerating === 'roll_banner' ? <div className="h-40 flex items-center justify-center"><LoadingMessage/></div> : printMediaAssets?.rollBannerUrl ? (<div className="cursor-pointer group flex justify-center" onClick={() => setModalImageUrl(printMediaAssets.rollBannerUrl!)}><img src={printMediaAssets.rollBannerUrl} alt="Template Roll Banner" className="h-40 object-contain rounded-lg group-hover:scale-105 transition-transform" loading="lazy" /></div>) : (<p className="text-xs text-text-muted italic">Belum dibuat.</p>)}
+                                <div className="pt-4 border-t border-slate-200 sm:border-t-0 sm:pt-0">
+                                    <h5 className="font-semibold text-slate-800 mb-2 text-sm">Roll Banner (Vertikal)</h5>
+                                    {regenerating === 'roll_banner' ? <div className="h-40 flex items-center justify-center"><LoadingMessage/></div> : printMediaAssets?.rollBannerUrl ? (<div className="cursor-pointer group flex justify-center" onClick={() => setModalImageUrl(printMediaAssets.rollBannerUrl!)}><img src={printMediaAssets.rollBannerUrl} alt="Template Roll Banner" className="h-40 object-contain rounded-lg group-hover:scale-105 transition-transform" loading="lazy" /></div>) : (<p className="text-xs text-slate-500 italic">Belum dibuat.</p>)}
                                     <div className="mt-2"><Button size="small" variant="secondary" onClick={() => handleRegenerate('roll_banner', () => props.onRegeneratePrintMedia('roll_banner'))} isLoading={regenerating === 'roll_banner'}>{printMediaAssets?.rollBannerUrl ? 'Ulang (1 Token)' : 'Buat (1 Token)'}</Button></div>
                                 </div>
                             </div>
@@ -275,13 +275,13 @@ const ProjectSummary: React.FC<Props> = (props) => {
                 <Card title="🛠️ Tools Lanjutan">
                     <div className="space-y-4">
                         <div>
-                            <h4 className="font-semibold text-text-header">Generator Caption Sosmed (+10 XP)</h4>
-                            <p className="text-sm text-text-body my-2">Butuh caption dadakan? Cukup kasih topiknya, Mang AI akan meracik 3 pilihan caption yang sesuai persona brand lo.</p>
+                            <h4 className="font-semibold text-slate-800">Generator Caption Sosmed (+10 XP)</h4>
+                            <p className="text-sm text-slate-600 my-2">Butuh caption dadakan? Cukup kasih topiknya, Mang AI akan meracik 3 pilihan caption yang sesuai persona brand lo.</p>
                             <Button size="small" variant="secondary" onClick={() => onGoToCaptionGenerator(project.id)}>Buka Generator Caption</Button>
                         </div>
-                        <div className="pt-4 border-t border-border-main">
-                            <h4 className="font-semibold text-text-header">Generator Konten Instan (+75 XP)</h4>
-                            <p className="text-sm text-text-body my-2">Ubah 1 ide jadi 1 paket konten (1 gambar + 3 caption) siap posting dalam sekejap!</p>
+                        <div className="pt-4 border-t border-slate-200">
+                            <h4 className="font-semibold text-slate-800">Generator Konten Instan (+75 XP)</h4>
+                            <p className="text-sm text-slate-600 my-2">Ubah 1 ide jadi 1 paket konten (1 gambar + 3 caption) siap posting dalam sekejap!</p>
                             <Button size="small" variant="secondary" onClick={() => onGoToInstantContent(project.id)}>Buka Konten Instan</Button>
                         </div>
                     </div>

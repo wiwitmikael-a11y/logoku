@@ -279,10 +279,10 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
       </div>
 
       <div className="flex justify-center border-b border-border-main">
-        <button onClick={() => setActiveTab('projects')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-all duration-200 ${activeTab === 'projects' ? 'text-splash border-b-2 border-splash' : 'text-text-muted hover:text-text-header'}`}>🚀 Project Saya</button>
-        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-all duration-200 ${activeTab === 'forum' ? 'text-splash border-b-2 border-splash' : 'text-text-muted hover:text-text-header'}`}>☕ WarKop Juragan</button>
-        <button onClick={() => setActiveTab('tools')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-all duration-200 ${activeTab === 'tools' ? 'text-splash border-b-2 border-splash' : 'text-text-muted hover:text-text-header'}`}>💡 Warung Ide</button>
-        <button onClick={() => setActiveTab('juragan')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-all duration-200 ${activeTab === 'juragan' ? 'text-splash border-b-2 border-splash' : 'text-text-muted hover:text-text-header'}`}>🏆 Pusat Juragan</button>
+        <button onClick={() => setActiveTab('projects')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>🚀 Project Saya</button>
+        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>☕ WarKop Juragan</button>
+        <button onClick={() => setActiveTab('tools')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>💡 Warung Ide</button>
+        <button onClick={() => setActiveTab('juragan')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'juragan' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>🏆 Pusat Juragan</button>
       </div>
       
       <div className="mt-4">

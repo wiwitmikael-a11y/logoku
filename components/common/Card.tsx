@@ -35,13 +35,13 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(({ title, children, onC
       style={style}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      className={`bg-surface-content border rounded-xl shadow-lg shadow-black/20 overflow-hidden transition-all duration-300 ${className} 
+      className={`bg-surface border rounded-xl shadow-lg shadow-black/20 overflow-hidden transition-all duration-300 ${className} 
       ${
         onClick ? 'cursor-pointer active:scale-[0.99]' : ''
       } ${
         isSelected
           ? 'border-primary ring-4 ring-primary/30'
-          : 'border-border-main hover:border-splash/50 hover:shadow-splash/20 hover:-translate-y-1'
+          : 'border-border-main hover:border-primary/50 hover:-translate-y-1'
       }`}
     >
       <div className="p-4 sm:p-5">

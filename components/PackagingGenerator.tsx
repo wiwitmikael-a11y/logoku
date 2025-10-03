@@ -146,23 +146,23 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   return (
     <div className="flex flex-col gap-10">
       <div className="text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-splash mb-2">Langkah 6: Foto Produk & Kemasan</h2>
-        <p className="text-text-muted max-w-3xl mx-auto">Pilih skenario foto produk yang paling pas, dan Mang AI akan membuatkan sebuah foto komersial profesional yang menampilkan beberapa variasi kemasan atau penyajian produk lo sekaligus.</p>
+        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah 6: Foto Produk & Kemasan</h2>
+        <p className="text-slate-600 max-w-3xl mx-auto">Pilih skenario foto produk yang paling pas, dan Mang AI akan membuatkan sebuah foto komersial profesional yang menampilkan beberapa variasi kemasan atau penyajian produk lo sekaligus.</p>
       </div>
 
       <Card title="Konfigurasi Foto Produk" className="p-4 sm:p-6">
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                   <label htmlFor="packagingType" className="block mb-1.5 text-sm font-medium text-text-muted">Pilih Skenario Foto Produk</label>
-                   <select id="packagingType" name="packagingType" value={selectedPackagingTypeId} onChange={(e) => setSelectedPackagingTypeId(e.target.value)} className="w-full px-3 py-2 text-text-body bg-background border border-border-main rounded-lg focus:outline-none focus:ring-2 focus:ring-splash/50 focus:border-splash transition-colors">
+                   <label htmlFor="packagingType" className="block mb-1.5 text-sm font-medium text-slate-600">Pilih Skenario Foto Produk</label>
+                   <select id="packagingType" name="packagingType" value={selectedPackagingTypeId} onChange={(e) => setSelectedPackagingTypeId(e.target.value)} className="w-full px-3 py-2 text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors">
                       {availableOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
                    </select>
               </div>
-              <p className="text-sm text-text-muted md:pt-8">Pilihan ini disesuaikan berdasarkan kategori bisnis "<span className="font-semibold text-text-header">{rawCategory}</span>", dan menggunakan skenario untuk "<span className="font-semibold text-text-header">{mappedCategory}</span>".</p>
+              <p className="text-sm text-slate-500 md:pt-8">Pilihan ini disesuaikan berdasarkan kategori bisnis "<span className="font-semibold text-slate-700">{rawCategory}</span>", dan menggunakan skenario untuk "<span className="font-semibold text-slate-700">{mappedCategory}</span>".</p>
           </div>
           <Textarea label="Prompt Foto Produk (Sudah Otomatis, Bisa Diedit)" name="packagingPrompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={10} />
-          <div className="pt-4 border-t border-border-main">
+          <div className="pt-4 border-t border-slate-200">
             <Button type="submit" isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>Jepret Foto Produknya, Mang! ({GENERATION_COST} Token)</Button>
           </div>
         </form>
@@ -171,20 +171,20 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {designs.length > 0 && (
-        <div className="bg-orange-400/10 border border-orange-400/20 rounded-lg p-4 flex items-start gap-4 text-left">
-            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-4 text-left">
+            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
             <div>
-                <h4 className="font-bold text-orange-300">Peringatan Penyimpanan Lokal!</h4>
-                <p className="text-sm text-orange-300/80 mt-1">Aset visual ini hanya disimpan sementara di browser. Segera lanjutkan ke langkah berikutnya untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
+                <h4 className="font-bold text-orange-600">Peringatan Penyimpanan Lokal!</h4>
+                <p className="text-sm text-orange-800 mt-1">Aset visual ini hanya disimpan sementara di browser. Segera lanjutkan ke langkah berikutnya untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
             </div>
         </div>
       )}
 
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
-          <h3 className="text-3xl font-bold text-text-header">Hasil Foto Produk 3-in-1:</h3>
+          <h3 className="text-xl font-bold text-slate-800">Hasil Foto Produk 3-in-1:</h3>
           <div className="flex justify-center w-full max-w-lg animate-item-appear">
-            <div className="bg-surface rounded-lg p-2 aspect-[4/3] flex items-center justify-center shadow-lg w-full border-2 border-primary ring-4 ring-primary/20 cursor-pointer group" onClick={() => setModalImageUrl(designs[0])}>
+            <div className="bg-white rounded-lg p-2 aspect-[4/3] flex items-center justify-center shadow-lg w-full border-2 border-sky-500 ring-4 ring-sky-500/20 cursor-pointer group" onClick={() => setModalImageUrl(designs[0])}>
                 <img src={designs[0]} alt="Generated packaging design" className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
             </div>
           </div>

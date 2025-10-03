@@ -379,7 +379,7 @@ const MainApp: React.FC = () => {
     
     return (
         <div className="min-h-screen bg-background text-text-body">
-            <header className="py-2 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300" style={{ background: 'linear-gradient(180deg, rgb(var(--c-surface)) 70%, transparent 100%)' }}>
+            <header className="py-3 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <h1 className="text-3xl md:text-4xl font-extrabold tracking-wider cursor-pointer transition-transform hover:scale-105" onClick={handleReturnToDashboard} style={{fontFamily: 'var(--font-display)'}}>
                         <span className="text-primary">desain</span><span className="text-text-header">.fun</span>
@@ -413,7 +413,7 @@ const MainApp: React.FC = () => {
                 </div>
             </header>
             <main id="main-content" className="py-8 md:py-12 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto bg-surface-content/50 p-4 sm:p-6 lg:p-8 rounded-xl border border-border-main" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(var(--c-surface-content), 0.7) 0%, transparent 80%)' }}>
+                <div className="max-w-7xl mx-auto">
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
                         <ErrorBoundary onReset={handleReturnToDashboard}>

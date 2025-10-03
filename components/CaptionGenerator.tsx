@@ -61,16 +61,16 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">
       <div className="text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-splash mb-2">Generator Caption Sosmed</h2>
-        <p className="text-text-muted max-w-3xl mx-auto">Butuh caption dadakan? Cukup kasih topiknya, dan Mang AI akan meracik 3 pilihan caption yang sesuai dengan persona brand "{projectData.selectedPersona?.nama_persona}". (+10 XP)</p>
+        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Generator Caption Sosmed</h2>
+        <p className="text-slate-600 max-w-3xl mx-auto">Butuh caption dadakan? Cukup kasih topiknya, dan Mang AI akan meracik 3 pilihan caption yang sesuai dengan persona brand "{projectData.selectedPersona?.nama_persona}". (+10 XP)</p>
       </div>
 
       <Card title="Konfigurasi Caption" className="p-4 sm:p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Textarea label="Topik Postingan" name="topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="cth: Lagi ada promo beli 1 gratis 1 untuk semua minuman kopi." rows={4} className="md:col-span-2"/>
           <div className="flex flex-col gap-2">
-              <label htmlFor="tone" className="block text-sm font-medium text-text-muted">Nada Bicara</label>
-              <select id="tone" name="tone" value={tone} onChange={(e) => setTone(e.target.value)} className="w-full px-3 py-2 text-text-body bg-background border border-border-main rounded-lg focus:outline-none focus:ring-2 focus:ring-splash/50 focus:border-splash transition-colors">
+              <label htmlFor="tone" className="block text-sm font-medium text-slate-600">Nada Bicara</label>
+              <select id="tone" name="tone" value={tone} onChange={(e) => setTone(e.target.value)} className="w-full px-3 py-2 text-slate-800 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors">
                   {toneOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
               </select>
           </div>
@@ -86,17 +86,17 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
 
       {captions.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 mt-4 scroll-mt-24">
-          <h3 className="text-3xl font-bold text-center text-text-header">Pilihan Caption Buat Lo:</h3>
+          <h3 className="text-xl font-bold text-center text-slate-800">Pilihan Caption Buat Lo:</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {captions.map((item, index) => (
               <Card key={index} title={`Opsi ${index + 1}`} className="animate-item-appear" style={{animationDelay: `${index*100}ms`}}>
                  <div className="space-y-4">
                     <div className="relative">
-                         <p className="text-text-body whitespace-pre-wrap text-sm pr-10 selectable-text">{item.caption}</p>
+                         <p className="text-slate-600 whitespace-pre-wrap text-sm pr-10 selectable-text">{item.caption}</p>
                          <CopyButton textToCopy={item.caption} className="absolute top-0 right-0"/>
                     </div>
-                    <div className="border-t border-border-main pt-3 relative">
-                        <p className="text-primary text-xs break-words selectable-text pr-10">{item.hashtags.join(' ')}</p>
+                    <div className="border-t border-slate-200 pt-3 relative">
+                        <p className="text-sky-600 text-xs break-words selectable-text pr-10">{item.hashtags.join(' ')}</p>
                         <CopyButton textToCopy={item.hashtags.join(' ')} className="absolute top-0 right-0"/>
                     </div>
                  </div>
