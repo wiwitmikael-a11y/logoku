@@ -115,18 +115,18 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah 7: Studio Media Cetak</h2>
-        <p className="text-slate-600 max-w-3xl mx-auto">Saatnya bikin amunisi promosi offline! Di sini, Mang AI akan membuatkan template desain (bukan mockup) yang siap cetak. Lo tinggal tambahin tulisan sendiri nanti.</p>
+        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Langkah 7: Studio Media Cetak</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">Saatnya bikin amunisi promosi offline! Di sini, Mang AI akan membuatkan template desain (bukan mockup) yang siap cetak. Lo tinggal tambahin tulisan sendiri nanti.</p>
       </div>
       
-      <div className="flex flex-wrap border-b border-slate-200">
-          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>Spanduk (Horizontal 3:1)</button>
-          <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>Roll Banner (Vertikal 1:3)</button>
+      <div className="flex flex-wrap border-b border-border-main">
+          <button onClick={() => handleTabClick('banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'banner' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>Spanduk (Horizontal 3:1)</button>
+          <button onClick={() => handleTabClick('roll_banner')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'roll_banner' ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>Roll Banner (Vertikal 1:3)</button>
       </div>
 
       <Card title={`Desain Template untuk ${activeTab === 'roll_banner' ? 'Roll Banner' : 'Spanduk'}`}>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <p className="text-sm text-slate-600">Mang AI akan membuatkan desain visual menggunakan logo dan palet warna brand-mu. Desain ini akan memiliki area kosong yang bisa kamu isi dengan tulisan sendiri menggunakan software editing gambar.</p>
+            <p className="text-sm text-text-body">Mang AI akan membuatkan desain visual menggunakan logo dan palet warna brand-mu. Desain ini akan memiliki area kosong yang bisa kamu isi dengan tulisan sendiri menggunakan software editing gambar.</p>
              <Button type="submit" isLoading={isLoading} disabled={credits < GENERATION_COST}>{`Bikinin Template Desain! (${GENERATION_COST} Token)`}</Button>
         </form>
       </Card>
@@ -134,20 +134,20 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
 
       {designs.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-4 text-left">
-            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
+        <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 flex items-start gap-4 text-left">
+            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
             <div>
-                <h4 className="font-bold text-orange-600">Peringatan Penyimpanan Lokal!</h4>
-                <p className="text-sm text-orange-800 mt-1">Aset visual ini hanya disimpan sementara di browser. Segera selesaikan dan finalisasi untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
+                <h4 className="font-bold text-accent">Peringatan Penyimpanan Lokal!</h4>
+                <p className="text-sm text-accent/80 mt-1">Aset visual ini hanya disimpan sementara di browser. Segera selesaikan dan finalisasi untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
             </div>
         </div>
       )}
 
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
-            <h3 className="text-xl font-bold text-slate-800">Desain Hasil Generate:</h3>
+            <h3 className="text-3xl md:text-4xl font-bold text-center text-text-header">Desain Hasil Generate:</h3>
           <div className="flex justify-center w-full max-w-3xl animate-item-appear">
-            <div className={`bg-white rounded-lg p-2 flex items-center justify-center shadow-lg border-2 border-sky-500 ring-4 ring-sky-500/20 cursor-pointer group ${previewContainerClasses}`} onClick={() => setModalImageUrl(designs[0])}>
+            <div className={`bg-surface rounded-lg p-2 flex items-center justify-center shadow-lg border-2 border-primary ring-4 ring-primary/20 cursor-pointer group ${previewContainerClasses}`} onClick={() => setModalImageUrl(designs[0])}>
                 <img src={designs[0]} alt={`Generated mockup for ${activeTab}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
               </div>
           </div>
@@ -155,7 +155,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       )}
 
       <div className="self-center mt-4 relative">
-        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">Mantap! Lanjut ke konten?</CalloutPopup>)}
+        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-1 w-max animate-fade-in">Mantap! Lanjut ke konten?</CalloutPopup>)}
         <Button onClick={handleContinue} disabled={Object.keys(generatedAssets).length === 0} size="large">Lanjut ke Kalender Konten &rarr;</Button>
       </div>
       

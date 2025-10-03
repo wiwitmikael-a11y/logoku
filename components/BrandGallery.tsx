@@ -16,20 +16,20 @@ interface Props {
 const PAGE_SIZE = 12;
 
 const SkeletonCard: React.FC = () => (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden h-full flex flex-col animate-pulse">
-        <div className="bg-gray-700 h-40"></div>
+    <div className="bg-surface border border-border-main rounded-xl shadow-lg overflow-hidden h-full flex flex-col animate-pulse">
+        <div className="bg-background h-40"></div>
         <div className="p-4 flex flex-col flex-grow">
-            <div className="h-6 w-3/4 bg-gray-700 rounded-md"></div>
-            <div className="h-4 w-1/2 bg-gray-700 rounded-md mt-2"></div>
-            <div className="h-4 w-full bg-gray-700 rounded-md mt-4"></div>
+            <div className="h-6 w-3/4 bg-background rounded-md"></div>
+            <div className="h-4 w-1/2 bg-background rounded-md mt-2"></div>
+            <div className="h-4 w-full bg-background rounded-md mt-4"></div>
             <div className="flex items-center gap-2 mt-4">
-                <div className="w-6 h-6 rounded-full bg-gray-700"></div>
-                <div className="w-6 h-6 rounded-full bg-gray-700"></div>
-                <div className="w-6 h-6 rounded-full bg-gray-700"></div>
+                <div className="w-6 h-6 rounded-full bg-background"></div>
+                <div className="w-6 h-6 rounded-full bg-background"></div>
+                <div className="w-6 h-6 rounded-full bg-background"></div>
             </div>
-            <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-700">
-                 <div className="h-3 w-1/3 bg-gray-700 rounded-md"></div>
-                 <div className="h-8 w-12 bg-gray-700 rounded-md"></div>
+            <div className="flex justify-between items-center mt-auto pt-3 border-t border-border-main">
+                 <div className="h-3 w-1/3 bg-background rounded-md"></div>
+                 <div className="h-8 w-12 bg-background rounded-md"></div>
             </div>
         </div>
     </div>
@@ -153,10 +153,10 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
     return (
         <div className="flex flex-col gap-8 items-center text-center">
             <div>
-                <p className="text-gray-400 max-w-3xl mx-auto">
+                <p className="text-text-body max-w-3xl mx-auto">
                     Lihat hasil karya para juragan dari seluruh Indonesia! Kasih 'Menyala!' 🔥 untuk mengapresiasi karya mereka dan dapatkan +1 XP.
                 </p>
-                <div className="mt-4 text-xs text-gray-500 max-w-2xl mx-auto bg-gray-800/50 p-2 rounded-md">
+                <div className="mt-4 text-xs text-text-muted max-w-2xl mx-auto bg-surface/50 p-2 rounded-md">
                     <strong>Info:</strong> Saat ini semua project yang selesai akan ditampilkan. Fitur untuk mengatur privasi project akan segera hadir!
                 </div>
             </div>
@@ -168,7 +168,7 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
             ) : error ? (
                 <ErrorMessage message={error} onGoToDashboard={onClose} />
             ) : projects.length === 0 ? (
-                <div className="min-h-[40vh] flex flex-col items-center justify-center text-gray-500">
+                <div className="min-h-[40vh] flex flex-col items-center justify-center text-text-muted">
                     <p className="text-lg font-semibold">Pameran Masih Sepi, Nih!</p>
                     <p>Belum ada brand yang dipamerin. Jadilah yang pertama menyelesaikan project dan tampil di sini!</p>
                 </div>
@@ -189,34 +189,34 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
                                     className="animate-gallery-card-appear" 
                                     style={{ animationDelay: `${(index % PAGE_SIZE) * 50}ms`, opacity: 0, animationFillMode: 'forwards' }}
                                 >
-                                    <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden h-full flex flex-col text-left transition-transform duration-200 hover:-translate-y-1">
+                                    <div className="bg-surface border border-border-main rounded-xl shadow-lg overflow-hidden h-full flex flex-col text-left transition-transform duration-200 hover:-translate-y-1">
                                         <div className="p-4 flex justify-center items-center aspect-square" style={{ backgroundColor: primaryColor, backgroundImage: 'radial-gradient(circle at top right, rgba(255,255,255,0.15) 0%, transparent 50%)' }}>
                                             <div className="bg-white p-3 rounded-lg shadow-lg">
                                                 <img src={selectedLogoUrl} alt={`Logo for ${brandInputs.businessName}`} className="max-w-full max-h-36 object-contain" loading="lazy" />
                                             </div>
                                         </div>
                                         <div className="p-4 flex flex-col flex-grow">
-                                            <h3 className="font-bold text-white truncate">{brandInputs.businessName}</h3>
-                                            {selectedSlogan && <p className="text-sm text-indigo-300 italic mt-1">"{selectedSlogan}"</p>}
+                                            <h3 className="font-bold text-text-header truncate">{brandInputs.businessName}</h3>
+                                            {selectedSlogan && <p className="text-sm text-primary italic mt-1">"{selectedSlogan}"</p>}
                                             <div className="mt-3 space-y-2 text-xs flex-grow">
-                                                <p className="text-gray-400"><span className="font-semibold text-gray-300">Persona:</span> {selectedPersona.nama_persona}</p>
+                                                <p className="text-text-body"><span className="font-semibold text-text-header">Persona:</span> {selectedPersona.nama_persona}</p>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-semibold text-gray-300">Warna:</span>
+                                                    <span className="font-semibold text-text-header">Warna:</span>
                                                     <div className="flex gap-1.5">
-                                                        {selectedPersona.palet_warna_hex.slice(0, 5).map(hex => <div key={hex} className="w-4 h-4 rounded-full border-2 border-gray-600" style={{backgroundColor: hex}}></div>)}
+                                                        {selectedPersona.palet_warna_hex.slice(0, 5).map(hex => <div key={hex} className="w-4 h-4 rounded-full border-2 border-border-light" style={{backgroundColor: hex}}></div>)}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex justify-between items-center text-xs text-gray-500 mt-3 pt-3 border-t border-gray-700">
+                                            <div className="flex justify-between items-center text-xs text-text-muted mt-3 pt-3 border-t border-border-main">
                                                 <p>{new Date(project.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                                 <button 
                                                     onClick={() => handleLikeToggle(project.id, project.user_id)}
                                                     disabled={isOwnProject}
-                                                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all duration-200 ${isOwnProject ? 'cursor-not-allowed text-gray-600' : `hover:bg-orange-900/50 ${userHasLiked ? 'bg-orange-900/50' : 'bg-gray-700/50'}`}`}
+                                                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all duration-200 ${isOwnProject ? 'cursor-not-allowed text-text-muted' : `hover:bg-accent/20 ${userHasLiked ? 'bg-accent/20' : 'bg-background/50'}`}`}
                                                     title={isOwnProject ? "Nggak bisa nge-like project sendiri" : "Kasih Menyala!"}
                                                 >
-                                                    <span className={`text-2xl transition-all duration-200 filter ${userHasLiked ? 'grayscale-0 drop-shadow-[0_0_4px_#f97316]' : 'grayscale'}`}>🔥</span>
-                                                    <span className="font-bold text-base text-gray-200">{project.like_count || 0}</span>
+                                                    <span className={`text-2xl transition-all duration-200 filter ${userHasLiked ? 'grayscale-0 drop-shadow-[0_0_4px_rgb(var(--c-accent))]' : 'grayscale'}`}>🔥</span>
+                                                    <span className="font-bold text-base text-text-header">{project.like_count || 0}</span>
                                                 </button>
                                             </div>
                                         </div>

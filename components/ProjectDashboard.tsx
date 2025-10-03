@@ -124,8 +124,8 @@ const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onCl
 
 const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     const statusMap = {
-        'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-400/20', dotColor: 'bg-yellow-400', textColor: 'text-yellow-300' },
-        'completed': { text: 'Selesai', color: 'bg-green-400/20', dotColor: 'bg-green-400', textColor: 'text-green-300' },
+        'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-400/20', dotColor: 'bg-yellow-400', textColor: 'text-yellow-200' },
+        'completed': { text: 'Selesai', color: 'bg-green-400/20', dotColor: 'bg-green-400', textColor: 'text-green-200' },
     };
     const { text, color, dotColor, textColor } = statusMap[status] || { text: 'Unknown', color: 'bg-slate-400/20', dotColor: 'bg-slate-400', textColor: 'text-slate-300' };
     return (
@@ -192,7 +192,7 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
             <DynamicInfoBox />
             <div className="relative">
                 <Button onClick={() => onNewProject()} size="large" variant="splash">+ Bikin Project Branding Baru</Button>
-                {showOnboarding && (<div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="cursor-pointer"><CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-bounce">Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup></div>)}
+                {showOnboarding && (<div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="cursor-pointer"><CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max animate-bounce">Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup></div>)}
             </div>
             
             <div className="w-full text-center mt-6">

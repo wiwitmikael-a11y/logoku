@@ -25,7 +25,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy, className, title })
       <button
         onClick={handleCopy}
         title={isCopied ? "Teks tersalin!" : (title || "Salin teks")}
-        className={`p-1.5 transition-colors bg-white/50 hover:bg-slate-100/80 rounded-full ${isCopied ? 'text-green-500' : 'text-slate-400 hover:text-sky-600'}`}
+        className={`p-1.5 transition-colors bg-surface/50 hover:bg-surface/80 rounded-full ${isCopied ? 'text-green-500' : 'text-text-muted hover:text-primary'}`}
       >
         {isCopied ? (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

@@ -83,13 +83,13 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete, onGoTo
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah Terakhir: Mockup Merchandise</h2>
-        <p className="text-slate-600 max-w-3xl mx-auto">Lihat gimana brand lo tampil di produk nyata. Pilih jenis merchandise, dan Mang AI bakal bikinin mockup realistisnya buat lo.</p>
+        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Langkah Terakhir: Mockup Merchandise</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">Lihat gimana brand lo tampil di produk nyata. Pilih jenis merchandise, dan Mang AI bakal bikinin mockup realistisnya buat lo.</p>
       </div>
       
-      <div className="flex flex-wrap border-b border-slate-200">
+      <div className="flex flex-wrap border-b border-border-main">
           {merchandiseTypes.map(merch => (
-             <button key={merch.id} onClick={() => handleTabClick(merch.id)} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === merch.id ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-500 hover:text-slate-800'}`}>{merch.name}</button>
+             <button key={merch.id} onClick={() => handleTabClick(merch.id)} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === merch.id ? 'text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-header'}`}>{merch.name}</button>
           ))}
       </div>
 
@@ -106,9 +106,9 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete, onGoTo
 
       {designs.length > 0 && (
         <div ref={resultsRef} className="flex flex-col gap-6 items-center scroll-mt-24">
-            <h3 className="text-xl font-bold text-slate-800">Mockup Hasil Generate:</h3>
+            <h3 className="text-3xl md:text-4xl font-bold text-center text-text-header">Mockup Hasil Generate:</h3>
           <div className="flex justify-center w-full max-w-lg">
-            <div className="bg-white rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-square border-2 border-sky-500 ring-4 ring-sky-500/20 cursor-pointer group" onClick={() => setModalImageUrl(designs[0])}>
+            <div className="bg-surface rounded-lg p-2 flex items-center justify-center shadow-lg w-full aspect-square border-2 border-primary ring-4 ring-primary/20 cursor-pointer group" onClick={() => setModalImageUrl(designs[0])}>
                 <img src={designs[0]} alt={`Generated mockup for ${activeTab}`} className="object-contain rounded-md max-w-full max-h-full group-hover:scale-105 transition-transform" />
               </div>
           </div>
@@ -116,7 +116,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete, onGoTo
       )}
 
       <div className="self-center mt-4 relative">
-        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">Satu langkah lagi!</CalloutPopup>)}
+        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-1 w-max animate-fade-in">Satu langkah lagi!</CalloutPopup>)}
         <Button onClick={handleFinalize} disabled={!selectedDesignBase64 || isLoading} isLoading={isLoading} size="large">Selesai & Lihat Brand Kit Lengkap &rarr;</Button>
       </div>
       

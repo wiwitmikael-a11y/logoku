@@ -101,11 +101,11 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
         <p className="text-text-muted max-w-3xl mx-auto">Logo utama (ikon) sudah jadi. Sekarang lo bisa langsung membuat paket logo lengkap (versi tumpuk, datar, & monokrom) atau memberikan revisi minor pada logo utama menggunakan AI.</p>
       </div>
 
-      <div className="bg-orange-400/10 border border-orange-400/20 rounded-lg p-4 flex items-start gap-4 text-left">
-          <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
+      <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 flex items-start gap-4 text-left">
+          <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
           <div>
-              <h4 className="font-bold text-orange-300">Peringatan Penyimpanan Lokal!</h4>
-              <p className="text-sm text-orange-300/80 mt-1">Logo dan variasinya hanya disimpan sementara. Selesaikan langkah ini dengan menekan tombol "Lanjut" di bawah untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh halaman.</strong></p>
+              <h4 className="font-bold text-accent">Peringatan Penyimpanan Lokal!</h4>
+              <p className="text-sm text-accent/80 mt-1">Logo dan variasinya hanya disimpan sementara. Selesaikan langkah ini dengan menekan tombol "Lanjut" di bawah untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh halaman.</strong></p>
           </div>
       </div>
 
@@ -145,7 +145,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
       {error && <div className="mt-4"><ErrorMessage message={error} onGoToDashboard={onGoToDashboard} /></div>}
 
       <div className="self-center mt-6 relative">
-        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-fade-in">Paket logo beres! Lanjut?</CalloutPopup>)}
+        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max animate-fade-in">Paket logo beres! Lanjut?</CalloutPopup>)}
         <Button onClick={handleContinue} disabled={!variations} size="large">Lanjut ke Social Media Kit &rarr;</Button>
       </div>
 

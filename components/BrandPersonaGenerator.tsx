@@ -229,7 +229,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
                 onClick={() => handleSelectPersona(index)}
                 isSelected={selectedPersonaIndex === index}
               >
-                <p className="text-text-muted mb-4 h-24 overflow-auto selectable-text">{persona.deskripsi_singkat}</p>
+                <p className="text-text-body mb-4 h-24 overflow-auto selectable-text">{persona.deskripsi_singkat}</p>
                 {selectedPersonaIndex === index && (
                     <div className="flex flex-col gap-4 mt-4 pt-4 border-t border-border-main animate-content-fade-in">
                         <div>
@@ -242,8 +242,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
                         </div>
                         <div className="selectable-text">
                             <h4 className="font-semibold text-text-header mb-2">Gaya Bicara:</h4>
-                            <p className="text-xs text-text-muted"><strong>Gunakan:</strong> {persona.brand_voice.kata_yang_digunakan.join(', ')}</p>
-                            <p className="text-xs text-text-muted"><strong>Hindari:</strong> {persona.brand_voice.kata_yang_dihindari.join(', ')}</p>
+                            <p className="text-xs text-text-body"><strong>Gunakan:</strong> {persona.brand_voice.kata_yang_digunakan.join(', ')}</p>
+                            <p className="text-xs text-text-body"><strong>Hindari:</strong> {persona.brand_voice.kata_yang_dihindari.join(', ')}</p>
                         </div>
                         <div>
                            <h4 className="font-semibold text-text-header mb-2">Palet Warna:</h4>
@@ -289,7 +289,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
       {(selectedPersonaIndex !== null && selectedSlogan) && (
         <div className="self-center mt-4 relative">
             {showNextStepNudge && (
-              <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-fade-in">Sip! Klik di sini buat lanjut.</CalloutPopup>
+              <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max animate-fade-in">Sip! Klik di sini buat lanjut.</CalloutPopup>
             )}
             <Button onClick={handleContinue} size="large">Mantap, Lanjut Bikin Logo &rarr;</Button>
         </div>

@@ -30,7 +30,7 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
                             }`}>
                                {isCompleted ? <CheckIcon /> : <span className={isActive ? 'text-white' : 'text-text-muted'}>{index + 1}</span>}
                             </div>
-                            <p className={`absolute top-10 left-1/2 -translate-x-1/2 font-medium text-center text-xs md:text-sm whitespace-nowrap ${
+                            <p className={`absolute top-9 left-1/2 -translate-x-1/2 font-medium text-center text-xs md:text-sm whitespace-nowrap ${
                                 isActive ? 'text-splash' : isCompleted ? 'text-primary' : 'text-text-muted'
                             }`}>{step}</p>
                         </div>

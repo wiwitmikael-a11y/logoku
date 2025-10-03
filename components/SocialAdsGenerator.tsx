@@ -63,8 +63,8 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   return (
     <div className="flex flex-col gap-8 items-center">
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-sky-600 mb-2">Langkah 9: Teks Iklan Sosmed</h2>
-        <p className="text-slate-600 max-w-3xl mx-auto">Saatnya beriklan! Di langkah ini, Mang AI akan meracik beberapa pilihan teks iklan (ad copy) untuk Instagram dan TikTok, lengkap dengan hashtag yang relevan untuk menjangkau audiens.</p>
+        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Langkah 9: Teks Iklan Sosmed</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">Saatnya beriklan! Di langkah ini, Mang AI akan meracik beberapa pilihan teks iklan (ad copy) untuk Instagram dan TikTok, lengkap dengan hashtag yang relevan untuk menjangkau audiens.</p>
       </div>
 
       <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST} size="large">Buatin Teks Iklannya Dong! ({GENERATION_COST} Token)</Button>
@@ -77,21 +77,21 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
             {adsData.map((ad, index) => (
                 <Card key={index} title={`Opsi Iklan untuk ${ad.platform}`} className="animate-item-appear" style={{animationDelay: `${index*100}ms`}}>
                     <div className="space-y-4">
-                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <div className="bg-background p-4 rounded-lg border border-border-main">
                              <div className="flex items-center gap-3 mb-3">
                                 <img src={projectData.socialMediaKit?.profilePictureUrl} alt="logo" className="w-10 h-10 rounded-full bg-white p-0.5 border" />
                                 <div>
-                                    <p className="font-bold text-slate-800 text-sm">{businessHandle}</p>
-                                    <p className="text-xs text-slate-500">Sponsored</p>
+                                    <p className="font-bold text-text-header text-sm">{businessHandle}</p>
+                                    <p className="text-xs text-text-muted">Sponsored</p>
                                 </div>
                             </div>
                             <div className="relative">
-                                <p className="text-sm text-slate-700 whitespace-pre-wrap selectable-text">{ad.adCopy}</p>
+                                <p className="text-sm text-text-body whitespace-pre-wrap selectable-text">{ad.adCopy}</p>
                                 <CopyButton textToCopy={ad.adCopy} className="absolute top-0 right-0" />
                             </div>
                         </div>
                          <div className="relative pt-2">
-                            <p className="text-sky-600 text-xs break-words selectable-text">{ad.hashtags.join(' ')}</p>
+                            <p className="text-primary text-xs break-words selectable-text">{ad.hashtags.join(' ')}</p>
                             <CopyButton textToCopy={ad.hashtags.join(' ')} className="absolute top-0 right-0" />
                         </div>
                     </div>
@@ -99,7 +99,7 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
             ))}
           </div>
           <div className="self-center mt-4 relative">
-            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-2 w-max animate-fade-in">Teks iklan siap! Lanjut?</CalloutPopup>)}
+            {showNextStepNudge && (<CalloutPopup className="absolute bottom-full mb-1 w-max animate-fade-in">Teks iklan siap! Lanjut?</CalloutPopup>)}
             <Button onClick={handleContinue} disabled={!adsData} size="large">Lanjut ke Mockup Merchandise &rarr;</Button>
           </div>
         </div>

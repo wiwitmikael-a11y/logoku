@@ -249,7 +249,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
                 </div>
             </div>
             {showTip && (
-                <CalloutPopup className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-max animate-content-fade-in">Bro, buat F&B, gaya 'Maskot' atau 'Rustic' biasanya paling nampol, lho!</CalloutPopup>
+                <CalloutPopup className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max animate-content-fade-in">Bro, buat F&B, gaya 'Maskot' atau 'Rustic' biasanya paling nampol, lho!</CalloutPopup>
             )}
 
             {selectedStyleInfo && (
@@ -276,11 +276,11 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
       
       {logos.length > 0 && (
-        <div className="bg-orange-400/10 border border-orange-400/20 rounded-lg p-4 flex items-start gap-4 text-left max-w-2xl mx-auto">
-            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
+        <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 flex items-start gap-4 text-left max-w-2xl mx-auto">
+            <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
             <div>
-                <h4 className="font-bold text-orange-300">Peringatan Penyimpanan Lokal!</h4>
-                <p className="text-sm text-orange-300/80 mt-1">Logo ini hanya disimpan sementara di browser. Segera pilih dan lanjutkan untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
+                <h4 className="font-bold text-accent">Peringatan Penyimpanan Lokal!</h4>
+                <p className="text-sm text-accent/80 mt-1">Logo ini hanya disimpan sementara di browser. Segera pilih dan lanjutkan untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh atau menutup halaman ini.</strong></p>
             </div>
         </div>
       )}
@@ -305,7 +305,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
                 <Button onClick={handleGenerateMore} variant="secondary" isLoading={isGeneratingMore} disabled={isGeneratingMore || credits < ADDITIONAL_LOGO_COST}>Kasih 3 Pilihan Lain! ({ADDITIONAL_LOGO_COST} Token)</Button>
              )}
             <div className="relative">
-                {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max animate-fade-in">Mantap! Klik di sini buat lanjut.</CalloutPopup>)}
+                {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max animate-fade-in">Mantap! Klik di sini buat lanjut.</CalloutPopup>)}
                 <Button onClick={() => setShowDisclaimer(true)} disabled={!selectedLogoBase64} size="large">Pilih & Finalisasi Logo &rarr;</Button>
             </div>
           </div>

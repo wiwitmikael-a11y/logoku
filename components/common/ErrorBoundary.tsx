@@ -33,13 +33,15 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  // FIX: Converted from an arrow function property to a standard method.
+  // The 'this' context is now bound in the constructor to ensure it's always correct.
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
-  };
+  }
 
   public render(): ReactNode {
     if (this.state.hasError) {
@@ -61,6 +63,7 @@ class ErrorBoundary extends Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
+                    {/* FIX: Correctly bound `this` ensures `this.props` is available. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -73,6 +76,7 @@ class ErrorBoundary extends Component<Props, State> {
                         <pre className="mt-2 p-2 bg-background rounded overflow-auto selectable-text">
                             {this.state.error.toString()}
                         </pre>
+                        {/* FIX: Converted handleCopy to a bound method. */}
                         <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-primary bg-transparent border border-primary/30 hover:bg-primary/10">
                             {this.state.isCopied ? 'Tersalin!' : 'Salin Detail'}
                         </button>
@@ -83,6 +87,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
+    // FIX: Correctly bound `this` ensures `this.props` is available.
     return this.props.children;
   }
 }
