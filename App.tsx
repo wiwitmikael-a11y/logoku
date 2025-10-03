@@ -63,7 +63,7 @@ type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 // --- NEW: AI Assistant Component ---
-const AiAssistant: React.FC = () => {
+const AiAssistant: React.FC<{ appState: AppState }> = ({ appState }) => {
     const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
@@ -75,6 +75,36 @@ const AiAssistant: React.FC = () => {
     const fabImageRef = useRef<HTMLImageElement>(null);
     const [isFabVisible, setIsFabVisible] = useState(true);
     const lastScrollY = useRef(0);
+    
+    const defaultPromptStarters = [
+        "Gimana cara bikin variasi logo?",
+        "Kasih ide bio Instagram buat jualan kopi.",
+        "Apa itu persona brand?",
+        "Bedanya logo 'stacked' sama 'horizontal' apa?",
+    ];
+    const [promptStarters, setPromptStarters] = useState(defaultPromptStarters);
+
+    // Contextual Prompts Effect
+    useEffect(() => {
+        if (appState === 'persona') {
+            setPromptStarters([
+                "Mang, 'value proposition' itu maksudnya apa sih?",
+                "Bantuin isi target pasar buat jualan seblak dong!",
+                "Apa bedanya target audience sama customer avatar?",
+                "Kasih contoh kompetitor buat bisnis fashion.",
+            ]);
+        } else if (appState === 'logo' || appState === 'logo_detail') {
+            setPromptStarters([
+                "Apa bedanya logo maskot sama emblem?",
+                "Kasih tips milih gaya logo buat F&B dong!",
+                "Jelasin soal 'negative space' di logo.",
+                "Gimana cara bikin logo yang timeless?",
+            ]);
+        } else {
+            setPromptStarters(defaultPromptStarters);
+        }
+    }, [appState]);
+
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -174,13 +204,6 @@ const AiAssistant: React.FC = () => {
             setIsLoading(false);
         }
     };
-
-    const promptStarters = [
-        "Gimana cara bikin variasi logo?",
-        "Kasih ide bio Instagram buat jualan kopi.",
-        "Apa itu persona brand?",
-        "Bedanya logo 'stacked' sama 'horizontal' apa?",
-    ];
     
     const credits = profile?.credits ?? 0;
     const mangAiAnimationClass = credits < 5 
@@ -988,7 +1011,7 @@ const MainApp: React.FC = () => {
             </main>
              <footer className="text-center py-6 px-4 text-sm text-gray-400 border-t border-gray-800">Powered by Atharrazka Core. Built for UMKM Indonesia.</footer>
             <AdBanner />
-            <AiAssistant />
+            <AiAssistant appState={appState} />
             <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
             {/* Modals */}
             <Suspense fallback={null}>

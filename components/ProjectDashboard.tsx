@@ -12,7 +12,8 @@ import LoadingMessage from './common/LoadingMessage';
 import CalloutPopup from './common/CalloutPopup'; // Import for onboarding
 
 const Forum = React.lazy(() => import('./Forum'));
-const QuickTools = React.lazy(() => import('./QuickTools')); // NEW: Lazy load QuickTools
+const QuickTools = React.lazy(() => import('./QuickTools'));
+const PusatJuragan = React.lazy(() => import('./gamification/PusatJuragan'));
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -452,7 +453,7 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name || 'Bro';
-  const [activeTab, setActiveTab] = useState<'projects' | 'forum' | 'tools'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'forum' | 'tools' | 'juragan'>('projects');
   
   useEffect(() => {
     const openForumTab = sessionStorage.getItem('openForumTab');
@@ -490,6 +491,12 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
         >
           💡 Warung Ide
         </button>
+        <button 
+          onClick={() => setActiveTab('juragan')}
+          className={`folder-tab ${activeTab === 'juragan' ? 'active' : ''}`}
+        >
+          🏆 Pusat Juragan
+        </button>
       </div>
       
       {/* Content based on active tab */}
@@ -503,6 +510,11 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
         {activeTab === 'tools' && (
           <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
             <QuickTools />
+          </Suspense>
+        )}
+        {activeTab === 'juragan' && (
+          <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
+            <PusatJuragan />
           </Suspense>
         )}
       </div>
