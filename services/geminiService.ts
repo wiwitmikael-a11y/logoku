@@ -415,6 +415,73 @@ export const generateBusinessNames = async (category: string, keywords: string):
     }
 };
 
+// NEW: For Moodboard Generator in Quick Tools
+export const generateMoodboardText = async (keywords: string): Promise<{ description: string; palette: string[] }> => {
+    const ai = getAiClient();
+    const prompt = `Act as a senior brand strategist. Based on the following keywords, create a brand moodboard concept.
+
+    Keywords: "${keywords}"
+
+    Your task is to provide:
+    1.  A short, evocative paragraph describing the brand's mood and feeling.
+    2.  A perfectly matching color palette of 5 hex codes.
+
+    Return a single JSON object with two keys: "description" (a string) and "palette" (an array of 5 hex strings).`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        description: { type: Type.STRING },
+                        palette: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    },
+                    required: ['description', 'palette']
+                }
+            },
+        });
+        return safeJsonParse<{ description: string; palette: string[] }>(response.text, 'generateMoodboardText');
+    } catch (error) {
+        throw handleApiError(error, "Moodboard Text Generator");
+    }
+};
+
+export const generateMoodboardImages = async (keywords: string): Promise<string[]> => {
+    const ai = getAiClient();
+    // Step 1: Create a master prompt for the image generator
+    const imagePromptInstruction = `Based on the keywords "${keywords}", create a single, highly detailed, and artistic prompt for an AI image generator to create 4 thematically cohesive images for a moodboard. The prompt should describe a scene, texture, style, and color palette. For example: "A moodboard of a rustic coffee shop at sunset, featuring warm tones, grainy textures, soft focus, and elements of nature. Cinematic, photorealistic."`;
+    
+    let imagePrompt = `A moodboard about ${keywords}, clean, aesthetic, 4 separate images`; // Fallback
+    try {
+        const promptResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: imagePromptInstruction });
+        imagePrompt = promptResponse.text.trim();
+    } catch (e) {
+        console.warn("Failed to generate enhanced prompt for moodboard, using fallback.");
+    }
+
+    // Step 2: Generate 4 images using the master prompt
+    try {
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: imagePrompt,
+            config: {
+                numberOfImages: 4,
+                outputMimeType: 'image/jpeg',
+                aspectRatio: '1:1',
+            },
+        });
+
+        return response.generatedImages.map(img => `data:image/jpeg;base64,${img.image.imageBytes}`);
+    } catch (error) {
+        throw handleApiError(error, "Moodboard Image Generator");
+    }
+};
+
+
 export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string): Promise<GeneratedCaption[]> => {
     const ai = getAiClient();
     const prompt = `Create 3 social media captions for a business named "${businessName}".

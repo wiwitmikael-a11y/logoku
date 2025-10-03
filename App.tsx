@@ -938,8 +938,6 @@ const MainApp: React.FC = () => {
                     </div>
                     {/* Header Right */}
                     <div className="flex items-center gap-2 md:gap-4 relative">
-                        <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI peeking" className="animate-header-ai-peek w-12 h-12" />
-                        
                         {/* REVERTED: Separated Token & User Menu */}
                         <div className="rgb-laser-wrapper rounded-full">
                             <div ref={tokenInfoRef} className="relative bg-gray-800 rounded-full">

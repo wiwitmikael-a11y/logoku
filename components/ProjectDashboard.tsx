@@ -509,7 +509,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
         )}
         {activeTab === 'tools' && (
           <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
-            <QuickTools />
+            <QuickTools onNewProject={props.onNewProject} />
           </Suspense>
         )}
         {activeTab === 'juragan' && (

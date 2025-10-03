@@ -1191,6 +1191,7 @@
         padding: 2px;
         border-radius: 1rem;
         overflow: hidden;
+        pointer-events: none; /* Crucial: Let mouse events pass through the wrapper itself. */
       }
       .rgb-laser-wrapper.rounded-full {
         border-radius: 9999px;
@@ -1217,6 +1218,7 @@
         position: relative; /* Create stacking context for content */
         z-index: 1; /* Place content ON TOP of the ::before pseudo-element */
         height: 100%;
+        pointer-events: auto; /* Crucial: Re-enable mouse events for the content inside. */
       }
       
       /* --- NEW: FOLDER TAB STYLES --- */
@@ -1293,7 +1295,8 @@
     "react": "https://aistudiocdn.com/react@^19.1.1",
     "react/": "https://aistudiocdn.com/react@^19.1.1/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.44.4"
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.44.4",
+    "jszip": "https://esm.sh/jszip@3.10.1"
   }
 }
 </script>
