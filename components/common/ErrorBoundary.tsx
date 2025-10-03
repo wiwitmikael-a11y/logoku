@@ -1,9 +1,9 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 // FIX: To resolve TypeScript errors where `this.props` and `this.setState` were not found,
-// use `React.Component` directly instead of a named import for `Component`. This ensures
-// the class is correctly recognized as a React Component and inherits its properties.
-import React from 'react';
+// use a named import for `Component`. This ensures the class is correctly recognized as a
+// React Component and inherits its properties.
+import React, { Component } from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -19,7 +19,7 @@ interface State {
   isCopied?: boolean;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
+class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: undefined,

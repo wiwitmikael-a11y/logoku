@@ -996,18 +996,149 @@
       @keyframes text-blink {
         50% { opacity: 0; }
       }
-      .arcade-monitor {
-        /* Ganti URL ini dengan URL gambar PNG skin lo nanti */
-        background-image: url('https://i.ibb.co/LQrL6x3/arcade-frame-manga.png');
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-        padding: 12% 15%; /* Sesuaikan padding ini agar pas dengan frame PNG lo */
-        min-height: 600px;
+       /* --- NEW: Arcade Cabinet Styles --- */
+      @keyframes neon-pulse {
+        0%, 100% { box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff; }
+        50% { box-shadow: 0 0 10px #0ff, 0 0 20px #0ff, 0 0 40px #0ff; }
+      }
+      @keyframes neon-text-flicker {
+        0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+          text-shadow: 0 0 5px #f0f, 0 0 10px #f0f, 0 0 20px #f0f, 0 0 40px #ff00de, 0 0 70px #ff00de;
+          opacity: 1;
+        }
+        20%, 24%, 55% { text-shadow: none; opacity: 0.8; }
+      }
+
+      .arcade-cabinet {
+        position: relative;
+        width: 100%;
+        max-width: 500px; /* Control max size */
+        margin: 0 auto;
+        background-color: #1a1a2e; /* Dark blue-ish black */
+        border: 2px solid #2a2a3e;
+        border-radius: 20px 20px 10px 10px;
+        box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.4);
+        padding: 15px;
+        padding-bottom: 0;
+      }
+      /* Side neon lines */
+      .arcade-cabinet::before, .arcade-cabinet::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 15px;
+        background: linear-gradient(to bottom, #1a1a2e, #2a2a3e 10%, #0ff 40%, #0ff 60%, #2a2a3e 90%, #1a1a2e);
+        box-shadow: 0 0 5px #0ff;
+        animation: neon-pulse 3s infinite alternate;
+      }
+      .arcade-cabinet::before { left: 0; border-radius: 20px 0 0 10px; }
+      .arcade-cabinet::after { right: 0; border-radius: 0 20px 10px 0; }
+
+      .arcade-top {
+        background-color: #0d0d1a;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 2px solid #2a2a3e;
+        border-radius: 10px;
+        box-shadow: inset 0 0 10px rgba(255,0,222,0.3);
+        text-align: center;
+      }
+      .arcade-title {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #f0f;
+        animation: neon-text-flicker 4s infinite;
+      }
+
+      /* Replaces old .arcade-monitor style */
+      .arcade-monitor-frame {
+        background-color: #0d0d1a;
+        padding: 20px;
+        border: 2px solid #2a2a3e;
+        border-radius: 15px;
+        box-shadow: inset 0 0 15px rgba(0,0,0,0.7);
+        min-height: 450px;
         display: flex;
         align-items: center;
         justify-content: center;
       }
+
+      .control-panel {
+        margin-top: 15px;
+        padding: 30px 20px;
+        background: #1e1e3f;
+        border-top: 2px solid #3a3a5e;
+        border-radius: 0 0 8px 8px;
+        transform: perspective(200px) rotateX(15deg);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      }
+      
+      .joystick {
+        position: relative;
+        width: 80px;
+        height: 80px;
+      }
+      .joystick-base {
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at 30% 30%, #444, #111);
+        border-radius: 50%;
+        border: 2px solid #000;
+        box-shadow: inset 0 0 10px #000;
+      }
+      .joystick-stick {
+        position: absolute;
+        bottom: 35px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 50px;
+        background: linear-gradient(to right, #ccc, #777, #ccc);
+        border-radius: 5px;
+        box-shadow: 0 0 5px #000;
+      }
+      .joystick-ball {
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 30px;
+        height: 30px;
+        background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b);
+        border-radius: 50%;
+        box-shadow: inset -2px -2px 5px rgba(0,0,0,0.5), 2px 2px 5px rgba(255,255,255,0.3);
+      }
+      
+      .arcade-buttons {
+        display: flex;
+        gap: 20px;
+      }
+      .arcade-button {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        border: 2px solid #000;
+        cursor: pointer;
+        box-shadow: inset -3px -3px 8px rgba(0,0,0,0.6), 
+                    3px 3px 8px rgba(255,255,255,0.1),
+                    0 5px 10px rgba(0,0,0,0.5);
+        transition: all 0.1s ease-in-out;
+      }
+      .arcade-button:active {
+        transform: translateY(2px) scale(0.95);
+        box-shadow: inset -1px -1px 4px rgba(0,0,0,0.6), 
+                    1px 1px 4px rgba(255,255,255,0.1),
+                    0 2px 5px rgba(0,0,0,0.5);
+      }
+      .arcade-button.red { background: radial-gradient(circle at 30% 30%, #ff8c8c, #e74c3c); }
+      .arcade-button.blue { background: radial-gradient(circle at 30% 30%, #8cb6ff, #3498db); }
+      .arcade-button.yellow { background: radial-gradient(circle at 30% 30%, #fff78c, #f1c40f); }
+
       .crt-screen {
         width: 100%;
         height: 100%;
