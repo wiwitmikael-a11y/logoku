@@ -1,7 +1,18 @@
 import React from 'react';
 
 const SaweriaWidget: React.FC = () => {
-  const supporters = [ { name: 'Juragan Kopi Sachet', amount: 'Rp 10.000', emoji: '✨' }, { name: 'Sultan Skincare', amount: 'Rp 50.000', emoji: '🔥' }, { name: 'Ratu Frozen Food', amount: 'Rp 25.000', emoji: '🧊' }, { name: 'CEO Keripik Level 30', amount: 'Rp 15.000', emoji: '🌶️' }, { name: 'Owner Distro Keren', amount: 'Rp 30.000', emoji: '👕' }, { name: 'Bos Ayam Geprek', amount: 'Rp 20.000', emoji: '🍗' }, ];
+  const supporters = [
+    { name: 'Sultan Cromboloni Viral', amount: 'Rp 50.000', emoji: '🥐' },
+    { name: 'Juragan Seblak Level 100', amount: 'Rp 25.000', emoji: '🌶️' },
+    { name: 'CEO Angkringan Senja', amount: 'Rp 15.000', emoji: '☕' },
+    { name: 'Ratu Skincare Glowing', amount: 'Rp 75.000', emoji: '✨' },
+    { name: 'Bos Jastip Bangkok', amount: 'Rp 30.000', emoji: '✈️' },
+    { name: 'Panglima Ayam Geprek', amount: 'Rp 20.000', emoji: '🍗' },
+    { name: 'Presiden Direktur Thrift Shop', amount: 'Rp 40.000', emoji: '👕' },
+    { name: 'Ketua Geng Pecel Lele', amount: 'Rp 10.000', emoji: '🐟' },
+    { name: 'Ahli Racik Kopi Manual', amount: 'Rp 35.000', emoji: '⚗️' },
+    { name: 'Master Kue Cubit Lumer', amount: 'Rp 12.345', emoji: '🍪' },
+  ];
 
   return (
     <div className="w-full p-6 bg-surface border border-border-main rounded-xl text-center shadow-lg shadow-black/20">

@@ -132,12 +132,15 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     };
 
     const mainContent = () => {
-        if (petState.stage === 'egg') {
+        if (petState.stage === 'egg' || !petState.visual_base64) {
+            const isEgg = petState.stage === 'egg';
             return (
                 <div className="text-center p-4">
-                    <p className="text-sm text-text-body mb-4">Sepertinya ada telur misterius di sini. Mau coba tetaskan?</p>
+                    <p className="text-sm text-text-body mb-4">
+                        {isEgg ? "Sepertinya ada telur misterius di sini. Mau coba tetaskan?" : "AI Pet-mu siap untuk diwujudkan wujud fisiknya!"}
+                    </p>
                     <button onClick={() => setShowHatchingModal(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover">
-                        Tetaskan Telur (10 Token)
+                        {isEgg ? "Tetaskan Telur" : "Wujudkan Visual"} (10 Token)
                     </button>
                 </div>
             );
