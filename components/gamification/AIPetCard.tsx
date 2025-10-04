@@ -1,5 +1,7 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React from 'react';
-import type { AIPetState } from '../../types';
+import type { AIPetState, AIPetPersonalityVector } from '../../types';
 
 interface AIPetCardProps {
     petState: AIPetState;
@@ -8,13 +10,10 @@ interface AIPetCardProps {
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const StatBar: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
-    <div>
-        <div className="flex justify-between items-center text-xs mb-0.5">
-            <span className="font-semibold text-text-header">{label}</span>
-            <span className="text-text-muted">{Math.round(value)}</span>
-        </div>
-        <div className="w-full bg-border-main rounded-full h-1.5">
-            <div className={`h-1.5 rounded-full`} style={{ width: `${value}%`, backgroundColor: color }}></div>
+    <div className="grid grid-cols-3 items-center gap-1 text-xs">
+        <span className="font-semibold text-yellow-200/80 col-span-1">{label}</span>
+        <div className="w-full bg-black/50 rounded-full h-2 col-span-2 border border-white/10">
+            <div className={`h-full rounded-full`} style={{ width: `${value}%`, backgroundColor: color }}></div>
         </div>
     </div>
 );
@@ -30,50 +29,77 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
-        .animate-card-shine {
-            background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.2) 50%, transparent 80%);
-            background-size: 200% 100%;
-            animation: card-shine 4s linear infinite;
+        .animate-card-shine::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.25) 50%, transparent 70%);
+            background-size: 250% 100%;
+            animation: card-shine 5s linear infinite;
+            z-index: 1;
         }
     `;
+    
+    // Determine card theme based on personality
+    const getArchetypeTheme = () => {
+        const p = petState.personality;
+        // FIX: Explicitly cast values to `Number` to satisfy TypeScript's strict arithmetic operation checks.
+        const sorted = Object.entries(p).sort(([, a], [, b]) => Number(b) - Number(a));
+        const dominant: keyof AIPetPersonalityVector = sorted.length > 0 ? sorted[0][0] as keyof AIPetPersonalityVector : 'playful';
+
+        switch(dominant) {
+            case 'bold': case 'rustic': return { bg: 'from-amber-800 via-stone-700 to-black', border: 'border-amber-500' }; // Beast/Earth
+            case 'modern': case 'minimalist': return { bg: 'from-sky-800 via-slate-700 to-black', border: 'border-sky-400' }; // Machine/Tech
+            case 'creative': case 'feminine': return { bg: 'from-purple-800 via-fuchsia-900 to-black', border: 'border-purple-400' }; // Mystic/Magic
+            case 'playful': return { bg: 'from-emerald-700 via-teal-800 to-black', border: 'border-emerald-400' }; // Chibi/Nature
+            default: return { bg: 'from-gray-700 via-gray-800 to-black', border: 'border-yellow-400' };
+        }
+    }
+    const theme = getArchetypeTheme();
+
 
     return (
         <div className="w-full max-w-xs mx-auto">
             <style>{cardShineAnimation}</style>
-            <div className="relative aspect-[3/4.5] bg-surface border-2 border-splash/50 rounded-2xl shadow-2xl shadow-splash/20 p-3 flex flex-col overflow-hidden">
-                {/* Holo Shine Effect */}
-                <div className="absolute inset-0 animate-card-shine z-10"></div>
-                
-                {/* Card Content */}
-                <div className="relative z-0 flex flex-col h-full">
-                    {/* Header */}
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-bold text-lg text-text-header" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{petState.name}</h3>
-                        <div className="text-xs font-semibold bg-splash/20 text-splash px-2 py-0.5 rounded-full capitalize">{petState.stage}</div>
-                    </div>
+            <div className={`relative aspect-[63/88] bg-gradient-to-br ${theme.bg} ${theme.border} border-4 rounded-2xl shadow-2xl shadow-black/50 p-1.5`}>
+                <div className="relative w-full h-full bg-gray-900/50 border-2 border-gray-500 rounded-lg flex flex-col overflow-hidden">
+                    
+                    {/* Card Content */}
+                    <div className="flex flex-col h-full z-0">
+                        {/* Header */}
+                        <div className="flex justify-between items-center p-2 mx-1 border-b-2 border-yellow-600">
+                            <h3 className="font-bold text-lg text-white" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{petState.name}</h3>
+                            <div className="text-xs font-semibold bg-yellow-400 text-black px-2 py-0.5 rounded-full capitalize">{petState.stage}</div>
+                        </div>
 
-                    {/* Image */}
-                    <div className="flex-grow bg-background border-2 border-border-main rounded-lg flex items-center justify-center mb-2 overflow-hidden">
-                        <img src={petState.visual_base64} alt={petState.name} className="w-full h-full object-cover" />
-                    </div>
+                        {/* Image */}
+                        <div className="relative mx-1.5 my-1.5 border-4 border-yellow-700 rounded-md shadow-inner shadow-black/50 animate-card-shine">
+                            <div className="absolute inset-0 bg-gradient-to-br from-gray-600 via-gray-800 to-gray-900"></div>
+                             <img src={petState.visual_base64} alt={petState.name} className="relative w-full h-full aspect-square object-contain" />
+                        </div>
 
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-2">
-                        <StatBar label="Energi" value={petState.stats.energy} color="#22c55e" />
-                        <StatBar label="Kreativitas" value={petState.stats.creativity} color="#38bdf8" />
-                        <StatBar label="Kecerdasan" value={petState.stats.intelligence} color="#c026d3" />
-                        <StatBar label="Karisma" value={petState.stats.charisma} color="#facc15" />
-                    </div>
+                        {/* Info Box */}
+                        <div className="mx-1.5 mb-1 p-2 border-2 border-yellow-700 bg-black/30 rounded-md flex-1 flex flex-col justify-between">
+                            {/* Stats */}
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                                <StatBar label="ENR" value={petState.stats.energy} color="#22c55e" />
+                                <StatBar label="CRT" value={petState.stats.creativity} color="#38bdf8" />
+                                <StatBar label="INT" value={petState.stats.intelligence} color="#c026d3" />
+                                <StatBar label="CHA" value={petState.stats.charisma} color="#facc15" />
+                            </div>
 
-                    {/* Narrative */}
-                    <div className="bg-background/50 border border-border-main rounded-md p-2 text-center text-xs text-text-body italic">
-                        <p>{petState.narrative || "Deskripsi belum tersedia."}</p>
-                    </div>
+                            {/* Narrative */}
+                            <div className="border-t-2 border-yellow-700/50 mt-2 pt-1 text-center text-[10px] text-yellow-100/80 italic">
+                                <p>{petState.narrative || "Deskripsi belum tersedia."}</p>
+                            </div>
+                        </div>
 
-                    {/* Footer */}
-                    <div className="mt-auto pt-2 flex justify-between items-center text-xs text-text-muted">
-                        <p>Aset Digital desain.fun</p>
-                        <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                        {/* Footer */}
+                        <div className="mt-auto px-2 pb-1 flex justify-between items-center text-[8px] font-semibold text-yellow-200/60">
+                            <p>desain.fun © 2024</p>
+                            <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-3 h-3" style={{ imageRendering: 'pixelated' }} />
+                            <p>Aset Digital</p>
+                        </div>
                     </div>
                 </div>
             </div>
