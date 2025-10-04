@@ -17,10 +17,9 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Switched from class property initializer to constructor for state and method binding.
-  // This is a more traditional and widely supported pattern for React class components that can
-  // resolve issues with `this` context in certain TypeScript/linting configurations, addressing
-  // errors where `setState` and `props` were reported as not existing on the component instance.
+  // FIX: Switched to a constructor for state initialization and method binding.
+  // This is a more traditional but highly compatible pattern that ensures 'this' context is correctly bound,
+  // resolving errors where `state`, `setState`, and `props` might not be recognized due to build tool configurations.
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -31,17 +30,17 @@ class ErrorBoundary extends Component<Props, State> {
     this.handleCopy = this.handleCopy.bind(this);
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): State {
     // This lifecycle method is called after an error has been thrown by a descendant component.
     // It should return an object to update state.
-    return { hasError: true, error: error };
+    return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  handleCopy() {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -49,7 +48,7 @@ class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  render(): ReactNode {
+  public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
