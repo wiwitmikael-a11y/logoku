@@ -250,20 +250,24 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
     
     // --- Step 1: Generate the Character Atlas (Sprite Sheet) ---
     const seed = userId + new Date().toISOString().slice(0, 10);
-    const atlasPrompt = `Create a character atlas sprite sheet for a unique baby digital monster, inspired by early-stage Digimon or a Ghibli spirit. The style is 2.5D isometric perspective, with clean sharp vector lines and consistent lighting from the top-left.
+    const atlasPrompt = `Create a flawless character rigging kit (sprite sheet) for a unique baby digital monster, suitable for 2.5D puppet animation. The style is clean, sharp vector art with consistent lighting from the top-left.
 
-    **CRITICAL**: The output MUST be a single PNG image with a SOLID TRANSPARENT background.
-    
-    The atlas must contain the following 7 body parts, disassembled and arranged neatly in a grid without overlapping:
-    1. Head: Expressive, anime-style.
-    2. Torso: The central body piece.
-    3. Left Arm
-    4. Right Arm
-    5. Left Leg
-    6. Right Leg
-    7. One unique accessory (e.g., a small wing, a floating crystal, a fiery tail).
-    
-    Do NOT include any text, labels, or borders. The image should ONLY contain the 7 separated parts on a transparent background.
+    **GLOBAL RULES (VERY IMPORTANT):**
+    1.  **SOLID TRANSPARENT BACKGROUND:** The final PNG must have a fully transparent background. No white, no colors, no frames.
+    2.  **CONSISTENT ORIENTATION:** All body parts MUST be drawn from a **2.5D isometric perspective as if the character is facing to the LEFT**. This uniformity is critical.
+    3.  **PERFECT SEPARATION:** Each part must be a distinct, complete, standalone object. There must be significant transparent space between each part in the grid layout. DO NOT allow parts to merge or overlap.
+    4.  **NO TEXT OR BORDERS:** The image must only contain the 7 specified body parts.
+
+    **REQUIRED BODY PARTS (7 TOTAL):**
+    1.  **Head:** A single, complete head, cleanly detached at the neck. It must NOT have any part of the torso attached.
+    2.  **Torso:** A single, complete torso. It MUST be cleanly detached at the neck, shoulders, and hips. It MUST NOT have any head, arms, or legs attached to it. It is the central body piece.
+    3.  **Left Arm:** A complete left arm, from the shoulder joint to the fingertips. It must be a single, separate piece.
+    4.  **Right Arm:** A complete right arm, from the shoulder joint to the fingertips. It must be a single, separate piece.
+    5.  **Left Leg:** A complete left leg, from the hip joint to the foot. It must be a single, separate piece.
+    6.  **Right Leg:** A complete right leg, from the hip joint to the foot. It must be a single, separate piece.
+    7.  **Accessory:** One unique accessory (like a small wing, a floating halo, or a tail). It must be a single, separate piece.
+
+    Arrange these 7 perfectly separated parts neatly in a grid. This is for a professional animation pipeline, so precision is key.
     Seed: ${seed}`;
 
     let atlasUrl: string;
