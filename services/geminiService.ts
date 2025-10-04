@@ -256,7 +256,7 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
     The aesthetic is 'AIPet': a fusion of a cute **animalistic creature (Pet)** and sleek mechanical parts (AI). The final form MUST be a **NON-HUMANOID mechanical animal or monster**. Think 'chibi-mecha beast', 'biomechanical creature', or a cute monster with integrated futuristic armor. It should be endearing but also look powerful and cool. **ABSOLUTELY NO humanoid, robotic, android, or Iron Man-like figures.** The style is clean, sharp vector art with consistent lighting from the top-left.
 
     **GLOBAL RULES (ABSOLUTELY CRITICAL):**
-    1.  **SOLID TRANSPARENT BACKGROUND:** The final PNG must have a fully transparent background. No white, no colors, no frames, no checkered patterns. This is non-negotiable.
+    1.  **SOLID TRANSPARENT BACKGROUND:** The final PNG must have a fully transparent background. No white, no colors, no frames. **NON-NEGOTIABLE: ABSOLUTELY NO checkered or checkerboard patterns.** The background must be 100% transparent. This is the most important rule.
     2.  **CONSISTENT ORIENTATION:** All body parts MUST be drawn from a **2.5D isometric perspective as if the character is facing to the LEFT**. This uniformity is critical.
     3.  **PERFECT, UNCOMPROMISING SEPARATION (MOST IMPORTANT RULE):** This is the most critical instruction. Each of the 7 parts MUST be a completely separate, distinct, and standalone object on the sprite sheet. There must be **large amounts of empty, transparent space** between every part. **NO part should touch, overlap, or be connected to another part in any way.** The AI must generate 7 individual, fully detached pieces. Failure to do this makes the output useless. The torso MUST NOT have arms attached, the head MUST NOT have the torso attached, etc.
     4.  **NO TEXT OR BORDERS:** The image must only contain the 7 specified body parts.
@@ -273,20 +273,30 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
     Arrange these 7 perfectly separated parts neatly in a grid. This is for a professional animation pipeline, so precision is key.
     Seed: ${seed}`;
 
-    let atlasUrl: string;
+    let initialAtlasUrl: string;
     try {
         const response = await ai.models.generateImages({
             model: 'imagen-4.0-generate-001',
             prompt: atlasPrompt,
             config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: '1:1' },
         });
-        atlasUrl = `data:image/png;base64,${response.generatedImages[0].image.imageBytes}`;
+        initialAtlasUrl = `data:image/png;base64,${response.generatedImages[0].image.imageBytes}`;
     } catch (error) {
-        throw handleApiError(error, "AIPet Atlas Generation");
+        throw handleApiError(error, "AIPet Atlas Generation (Stage 1)");
     }
 
-    // --- Step 2: Analyze the Atlas and Generate the Assembly Manifest JSON ---
-    const atlasBase64Data = atlasUrl.split(',')[1];
+    // --- Step 1.5: AI-Powered Background Cleanup ---
+    // This step ensures perfect transparency, fixing issues like checkerboard backgrounds.
+    let cleanedAtlasUrl: string;
+    try {
+        cleanedAtlasUrl = await removeImageBackground(initialAtlasUrl);
+    } catch (error) {
+        console.warn("AI background cleanup failed, attempting to use original atlas.", error);
+        cleanedAtlasUrl = initialAtlasUrl; // Fallback to the original if cleanup fails
+    }
+
+    // --- Step 2: Analyze the Cleaned Atlas and Generate the Assembly Manifest JSON ---
+    const atlasBase64Data = cleanedAtlasUrl.split(',')[1];
     const manifestPrompt = `Analyze the provided character atlas image. It contains 7 separated parts of a creature. Identify each part (head, torso, left_arm, right_arm, left_leg, right_leg, accessory1) and provide a complete JSON manifest for reassembling it.
 
     **JSON Output Instructions:**
@@ -353,9 +363,9 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
             }
         });
         const manifest = safeJsonParse<AtlasManifest>(response.text, 'AIPet Manifest Generation');
-        return { atlasUrl, manifest };
+        return { atlasUrl: cleanedAtlasUrl, manifest };
     } catch (error) {
-        throw handleApiError(error, "AIPet Manifest Generation");
+        throw handleApiError(error, "AIPet Manifest Generation (Stage 2)");
     }
 };
 

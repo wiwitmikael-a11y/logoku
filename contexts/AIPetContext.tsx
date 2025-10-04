@@ -21,7 +21,7 @@ export interface AIPetContextType {
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
-const HATCH_COST = 10;
+const HATCH_COST = 11; // 10 for atlas+manifest, +1 for mandatory background cleanup step
 
 const getStageForLevel = (level: number): AIPetStage => {
     if (level < 5) return 'child';

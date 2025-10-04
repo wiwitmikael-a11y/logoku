@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { AIPetState, AIPetPersonalityVector } from '../../types';
+import AIPetVisual from '../AIPetVisual';
 
 interface AIPetCardProps {
     petState: AIPetState;
@@ -75,7 +76,9 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                         {/* Image */}
                         <div className="relative mx-1.5 my-1.5 border-4 border-yellow-700 rounded-md shadow-inner shadow-black/50 animate-card-shine">
                             <div className="absolute inset-0 bg-background" style={{ backgroundImage: 'radial-gradient(circle, rgb(var(--c-border)) 0%, transparent 70%)' }}></div>
-                             <img src={petState.atlas_url} alt={petState.name} className="relative w-full h-full aspect-square object-contain" />
+                             <div className="relative w-full h-full aspect-square">
+                                <AIPetVisual petState={petState} />
+                             </div>
                         </div>
 
                         {/* Info Box */}
