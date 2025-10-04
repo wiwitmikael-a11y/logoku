@@ -23,6 +23,13 @@ class ErrorBoundary extends Component<Props, State> {
     isCopied: false,
   };
 
+  // FIX: The original arrow function property for handleCopy was causing type errors where `this` context was not being correctly inferred.
+  // Refactoring to use constructor binding is a more robust, classic approach to ensure `this` is correctly bound, resolving the errors.
+  constructor(props: Props) {
+    super(props);
+    this.handleCopy = this.handleCopy.bind(this);
+  }
+
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.
     // It should return an object to update state.
@@ -33,9 +40,7 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted to an arrow function to ensure `this` is correctly bound to the class instance.
-  // This resolves the errors where `this.state` and `this.setState` were not found.
-  private handleCopy = () => {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -63,7 +68,6 @@ class ErrorBoundary extends Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
-                    {/* FIX: `this.props` is correctly accessed in a class component's render method. The original type errors were resolved by fixing class method bindings. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -86,7 +90,6 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // FIX: `this.props` is correctly accessed in a class component's render method.
     return this.props.children;
   }
 }

@@ -5,28 +5,28 @@ import React from 'react';
 import type { AIPetState } from '../types';
 import {
   BodyShapes, EyeSets, MouthSets, HeadAccessories,
-  BackAccessories, TailAccessories, SVGDefs
+  BackAccessories, TailAccessories, SVGDefs, NoseSets
 } from '../components/AIPetParts';
 
 type Archetype = 'Beast' | 'Machine' | 'Mystic' | 'Chibi';
 type AnchorPoint = { x: number; y: number };
-type BodyAnchorMap = { [bodyName: string]: { head: AnchorPoint; back: AnchorPoint; tail: AnchorPoint; head_side: AnchorPoint } };
+type BodyAnchorMap = { [bodyName: string]: { head: AnchorPoint; back: AnchorPoint; tail: AnchorPoint; head_side: AnchorPoint; nose: AnchorPoint; } };
 
-// --- Definisi "Soket" atau Anchor Point untuk Setiap Bentuk Tubuh ---
+// --- Definisi "Soket" atau Anchor Point untuk Setiap Bentuk Tubuh (Termasuk Hidung) ---
 const BodyAnchors: BodyAnchorMap = {
   // Chibi & Beast
-  child_chibi:   { head: {x: 50, y: 28}, back: {x: 50, y: 50}, tail: {x: 50, y: 92}, head_side: {x: 50, y: 35} },
-  child_beast:   { head: {x: 50, y: 35}, back: {x: 50, y: 60}, tail: {x: 50, y: 90}, head_side: {x: 50, y: 40} },
-  teen_beast:    { head: {x: 50, y: 22}, back: {x: 50, y: 55}, tail: {x: 50, y: 95}, head_side: {x: 50, y: 30} },
-  adult_beast:   { head: {x: 50, y: 15}, back: {x: 50, y: 50}, tail: {x: 50, y: 98}, head_side: {x: 50, y: 25} },
+  child_chibi:   { head: {x: 50, y: 28}, back: {x: 50, y: 50}, tail: {x: 50, y: 92}, head_side: {x: 50, y: 35}, nose: {x: 50, y: 60} },
+  child_beast:   { head: {x: 50, y: 40}, back: {x: 50, y: 65}, tail: {x: 50, y: 90}, head_side: {x: 50, y: 45}, nose: {x: 50, y: 62} },
+  teen_beast:    { head: {x: 50, y: 22}, back: {x: 50, y: 55}, tail: {x: 50, y: 95}, head_side: {x: 50, y: 30}, nose: {x: 50, y: 60} },
+  adult_beast:   { head: {x: 50, y: 15}, back: {x: 50, y: 50}, tail: {x: 50, y: 98}, head_side: {x: 50, y: 25}, nose: {x: 50, y: 60} },
   // Machine
-  child_machine: { head: {x: 50, y: 30}, back: {x: 50, y: 50}, tail: {x: 50, y: 72}, head_side: {x: 50, y: 40} },
-  teen_machine:  { head: {x: 50, y: 20}, back: {x: 50, y: 50}, tail: {x: 50, y: 85}, head_side: {x: 50, y: 30} },
-  adult_machine: { head: {x: 50, y: 12}, back: {x: 50, y: 45}, tail: {x: 50, y: 90}, head_side: {x: 50, y: 25} },
+  child_machine: { head: {x: 50, y: 35}, back: {x: 50, y: 55}, tail: {x: 50, y: 82}, head_side: {x: 50, y: 45}, nose: {x: 50, y: 62} },
+  teen_machine:  { head: {x: 50, y: 20}, back: {x: 50, y: 50}, tail: {x: 50, y: 85}, head_side: {x: 50, y: 30}, nose: {x: 50, y: 60} },
+  adult_machine: { head: {x: 50, y: 12}, back: {x: 50, y: 45}, tail: {x: 50, y: 90}, head_side: {x: 50, y: 25}, nose: {x: 50, y: 60} },
   // Mystic
-  child_mystic:  { head: {x: 50, y: 30}, back: {x: 50, y: 55}, tail: {x: 50, y: 85}, head_side: {x: 50, y: 35} },
-  teen_mystic:   { head: {x: 50, y: 22}, back: {x: 50, y: 55}, tail: {x: 50, y: 95}, head_side: {x: 50, y: 30} },
-  adult_mystic:  { head: {x: 50, y: 12}, back: {x: 50, y: 50}, tail: {x: 50, y: 100}, head_side: {x: 50, y: 20} },
+  child_mystic:  { head: {x: 50, y: 35}, back: {x: 50, y: 60}, tail: {x: 50, y: 90}, head_side: {x: 50, y: 40}, nose: {x: 50, y: 63} },
+  teen_mystic:   { head: {x: 50, y: 22}, back: {x: 50, y: 55}, tail: {x: 50, y: 95}, head_side: {x: 50, y: 30}, nose: {x: 50, y: 60} },
+  adult_mystic:  { head: {x: 50, y: 12}, back: {x: 50, y: 50}, tail: {x: 50, y: 100}, head_side: {x: 50, y: 20}, nose: {x: 50, y: 60} },
 };
 
 export const useAIPetVisuals = (petState: AIPetState) => {
@@ -73,7 +73,7 @@ export const useAIPetVisuals = (petState: AIPetState) => {
 
   // --- 3. Rakit AIPet Berdasarkan Archetype, Stage, dan Anchor Points ---
   let SelectedBody: React.ReactElement, bodyKey: keyof typeof BodyShapes;
-  let SelectedEyes, SelectedMouth;
+  let SelectedEyes, SelectedMouth, SelectedNose;
   let SelectedHeadAccessory, SelectedBackAccessory, SelectedTailAccessory;
 
   if (stage === 'egg') {
@@ -87,12 +87,14 @@ export const useAIPetVisuals = (petState: AIPetState) => {
           bodyKey = 'child_beast';
           SelectedEyes = EyeSets.default();
           SelectedMouth = MouthSets.neutral();
+          SelectedNose = NoseSets.nose_animal(BodyAnchors[bodyKey].nose);
           SelectedHeadAccessory = HeadAccessories.ears_wolf(accentColor, 'none', BodyAnchors[bodyKey].head_side);
           SelectedTailAccessory = TailAccessories.tail_lizard(accentColor, BodyAnchors[bodyKey].tail);
         } else if (stage === 'teen') {
           bodyKey = 'teen_beast';
           SelectedEyes = EyeSets.fierce_beast(accentColor);
           SelectedMouth = MouthSets.fangs_beast();
+          SelectedNose = NoseSets.nose_animal(BodyAnchors[bodyKey].nose);
           SelectedHeadAccessory = HeadAccessories.horns_ram(accentColor, BodyAnchors[bodyKey].head);
           SelectedBackAccessory = BackAccessories.spikes_dorsal(accentColor, bodyFill, BodyAnchors[bodyKey].back);
           SelectedTailAccessory = TailAccessories.tail_lizard(accentColor, BodyAnchors[bodyKey].tail);
@@ -100,6 +102,7 @@ export const useAIPetVisuals = (petState: AIPetState) => {
           bodyKey = 'adult_beast';
           SelectedEyes = EyeSets.fierce_beast(accentColor);
           SelectedMouth = MouthSets.fangs_beast();
+          SelectedNose = NoseSets.nose_animal(BodyAnchors[bodyKey].nose);
           SelectedHeadAccessory = HeadAccessories.horns_ram(accentColor, BodyAnchors[bodyKey].head);
           SelectedBackAccessory = BackAccessories.wings_bat(accentColor, 'rgba(0,0,0,0.2)', BodyAnchors[bodyKey].back);
           SelectedTailAccessory = TailAccessories.tail_furry(accentColor, bodyFill, BodyAnchors[bodyKey].tail);
@@ -111,17 +114,20 @@ export const useAIPetVisuals = (petState: AIPetState) => {
           bodyKey = 'child_machine';
           SelectedEyes = EyeSets.visor_machine(accentColor);
           SelectedMouth = MouthSets.grill_machine();
+          SelectedNose = NoseSets.nose_vent(accentColor, BodyAnchors[bodyKey].nose);
           SelectedHeadAccessory = HeadAccessories.antenna_single(accentColor, BodyAnchors[bodyKey].head);
         } else if (stage === 'teen') {
           bodyKey = 'teen_machine';
           SelectedEyes = EyeSets.visor_machine(accentColor);
           SelectedMouth = MouthSets.grill_machine();
+          SelectedNose = NoseSets.nose_vent(accentColor, BodyAnchors[bodyKey].nose);
           SelectedHeadAccessory = HeadAccessories.vents_side(accentColor, BodyAnchors[bodyKey].head_side);
           SelectedTailAccessory = TailAccessories.tail_thruster(accentColor, bodyFill, BodyAnchors[bodyKey].tail);
         } else { // Adult
           bodyKey = 'adult_machine';
           SelectedEyes = EyeSets.visor_machine(accentColor);
           SelectedMouth = MouthSets.grill_machine();
+          SelectedNose = NoseSets.nose_vent(accentColor, BodyAnchors[bodyKey].nose);
           SelectedBackAccessory = BackAccessories.jetpack_dual(accentColor, bodyFill, BodyAnchors[bodyKey].back);
           SelectedHeadAccessory = BackAccessories.cannon_shoulder(accentColor, bodyFill, BodyAnchors[bodyKey].back);
           SelectedTailAccessory = TailAccessories.tail_cable(accentColor, BodyAnchors[bodyKey].tail);
@@ -133,17 +139,20 @@ export const useAIPetVisuals = (petState: AIPetState) => {
           bodyKey = 'child_mystic';
           SelectedEyes = EyeSets.glowing_mystic(accentColor);
           SelectedMouth = MouthSets.serene_mystic();
+          SelectedNose = NoseSets.nose_crystal(accentColor, bodyFill, BodyAnchors[bodyKey].nose);
           SelectedHeadAccessory = HeadAccessories.crest_elemental(accentColor, BodyAnchors[bodyKey].head);
         } else if (stage === 'teen') {
           bodyKey = 'teen_mystic';
           SelectedEyes = EyeSets.glowing_mystic(accentColor);
           SelectedMouth = MouthSets.serene_mystic();
+          SelectedNose = NoseSets.nose_crystal(accentColor, bodyFill, BodyAnchors[bodyKey].nose);
           SelectedHeadAccessory = HeadAccessories.crest_elemental(accentColor, BodyAnchors[bodyKey].head);
           SelectedTailAccessory = TailAccessories.tail_wisp(accentColor, BodyAnchors[bodyKey].tail);
         } else { // Adult
           bodyKey = 'adult_mystic';
           SelectedEyes = EyeSets.glowing_mystic(accentColor);
           SelectedMouth = MouthSets.serene_mystic();
+          SelectedNose = NoseSets.nose_crystal(accentColor, bodyFill, BodyAnchors[bodyKey].nose);
           SelectedHeadAccessory = HeadAccessories.halo_divine(accentColor, BodyAnchors[bodyKey].head);
           SelectedBackAccessory = BackAccessories.wings_angelic(accentColor, 'none', BodyAnchors[bodyKey].back);
           SelectedTailAccessory = TailAccessories.tail_crystal(accentColor, bodyFill, BodyAnchors[bodyKey].tail);
@@ -154,6 +163,7 @@ export const useAIPetVisuals = (petState: AIPetState) => {
         bodyKey = 'child_chibi';
         SelectedEyes = EyeSets.happy();
         SelectedMouth = MouthSets.smile();
+        SelectedNose = NoseSets.nose_animal(BodyAnchors[bodyKey].nose);
         break;
     }
     SelectedBody = BodyShapes[bodyKey](bodyFill);
@@ -166,6 +176,7 @@ export const useAIPetVisuals = (petState: AIPetState) => {
     SelectedBody,
     SelectedEyes: SelectedEyes || (() => null),
     SelectedMouth: SelectedMouth || (() => null),
+    SelectedNose: SelectedNose || (() => null),
     SelectedHeadAccessory,
     SelectedBackAccessory,
     SelectedTailAccessory,
