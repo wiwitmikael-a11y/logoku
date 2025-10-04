@@ -7,7 +7,7 @@ import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 // FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 // FIX: The import for AIPetContext was failing because the file was not a module. This is fixed by adding content to the file.
 import { AIPetProvider, useAIPet } from './contexts/AIPetContext';
 
@@ -212,7 +212,7 @@ const App: React.FC = () => {
 };
 
 const MainApp: React.FC = () => {
-    const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, imageEditorState, closeImageEditor } = useAuth();
+    const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, imageEditorState, closeImageEditor, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
     const aipetContext = useAIPet();
     const { petState, contextualMessage, setContextualMessage } = aipetContext;
     
@@ -475,13 +475,28 @@ const MainApp: React.FC = () => {
                             </button>
                             {showXpGain && <div className="xp-gain-animation">+XP!</div>}
                             {isUserMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-60 bg-surface/90 backdrop-blur-lg border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in">
+                                <div className="absolute right-0 mt-2 w-64 bg-surface/90 backdrop-blur-lg border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in">
                                     <div className="px-4 py-3 border-b border-border-main">
                                         <p className="font-bold text-sm text-text-header truncate">{profile?.full_name}</p>
                                         <p className="text-xs text-text-muted flex items-center gap-1.5 mt-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                                             <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span> <span className="text-text-muted">Token</span>
                                         </p>
+                                    </div>
+                                    <div className="px-4 py-3 border-b border-border-main space-y-3">
+                                        <h4 className="font-semibold text-xs text-text-muted">Pengaturan Audio</h4>
+                                        <div className="flex justify-between items-center">
+                                            <label htmlFor="bgm-select" className="text-sm text-text-body">Musik Latar</label>
+                                            <select id="bgm-select" value={bgmSelection} onChange={(e) => handleBgmChange(e.target.value as BgmSelection)} className="bg-background border border-border-main rounded-md text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-splash">
+                                                {(['Mute', 'Random', 'Jingle', 'Acoustic', 'Uplifting', 'LoFi', 'Bamboo', 'Ethnic', 'Cozy'] as BgmSelection[]).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-text-body">Master Mute</span>
+                                            <button onClick={handleToggleMute} role="switch" aria-checked={isMuted} className={`relative inline-flex items-center h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-splash focus:ring-offset-2 focus:ring-offset-surface ${isMuted ? 'bg-background' : 'bg-primary'}`}>
+                                                <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isMuted ? 'translate-x-0' : 'translate-x-5'}`}/>
+                                            </button>
+                                        </div>
                                     </div>
                                     <a onClick={handleRequestReturnToDashboard} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors">Dashboard</a>
                                     <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
