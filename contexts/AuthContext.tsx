@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = useCallback(async (user: User) => {
     const userId = user.id;
-    const { data, error } = await supabase
+    let { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     if (!data) {
-        // NEW USER: Set welcome bonus directly at creation.
+        // NEW USER: Attempt to insert. This might race with a DB trigger.
         const { data: newProfileData, error: insertError } = await supabase
             .from('profiles')
             .insert({ 
@@ -128,14 +128,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
 
         if (insertError) {
-            console.error('Failed to create new profile:', insertError);
-            setAuthError('Gagal membuat profil baru untuk Juragan.');
+            // This is the key part. Handle the race condition.
+            if (insertError.code === '23505') { // Duplicate key violation
+                console.warn('Race condition detected: Profile created by trigger. Refetching...');
+                const { data: refetchedData, error: refetchError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
+                
+                if (refetchError) {
+                    console.error('Failed to refetch profile after race condition:', refetchError);
+                    setAuthError('Gagal mengambil profil setelah konflik data.');
+                    return;
+                }
+                // Assign refetched data and fall through to the "existing user" logic block.
+                data = refetchedData;
+            } else {
+                // A different, real error occurred during insert.
+                console.error('Failed to create new profile:', insertError);
+                setAuthError('Gagal membuat profil baru untuk Juragan.');
+                return;
+            }
         } else {
+            // Insert was successful. This is a truly new profile.
+            // No daily logic needed. Just set it and we're done.
             setProfile(newProfileData as Profile);
+            return;
         }
-        return;
     }
     
+    // If we are here, 'data' must contain a profile (either from initial select or refetch).
     const profileData: Profile = {
         ...data,
         xp: data.xp ?? 0,
