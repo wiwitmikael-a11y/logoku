@@ -7,6 +7,7 @@ import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AIPetProvider, useAIPet } from './contexts/AIPetContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
@@ -56,6 +57,7 @@ const AchievementToast = React.lazy(() => import('./components/gamification/Achi
 const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
 const LightImageEditor = React.lazy(() => import('./components/common/LightImageEditor'));
 const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
+const AIPetWidget = React.lazy(() => import('./components/AIPetWidget'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
@@ -184,7 +186,7 @@ const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> =
 const App: React.FC = () => {
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
     if (!import.meta.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
-    return ( <AuthProvider> <MainApp /> </AuthProvider> );
+    return ( <AuthProvider> <AIPetProvider> <MainApp /> </AIPetProvider> </AuthProvider> );
 };
 
 const MainApp: React.FC = () => {
@@ -469,12 +471,13 @@ const MainApp: React.FC = () => {
                 <div className="max-w-7xl mx-auto">
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
-// FIX: The ErrorBoundary component requires a 'children' prop. The content that should be protected by the boundary is now wrapped within its tags.
                         <ErrorBoundary onReset={handleReturnToDashboard}>
-                            {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
-                            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
-                                <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
-                            </Suspense>
+                            <React.Fragment>
+                                {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
+                                <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
+                                    <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
+                                </Suspense>
+                            </React.Fragment>
                         </ErrorBoundary>
                     )}
                 </div>
@@ -486,6 +489,11 @@ const MainApp: React.FC = () => {
         {/* Modals and overlays that should not be blurred */}
         <AiAssistant appState={appState} isOpen={isAssistantOpen} onToggle={setAssistantOpen} isPulsing={isAiFabPulsing} />
         <Suspense fallback={null}>
+            {user && (
+                <AIPetWidget 
+                    {...useAIPet()} // Pass all context values to the widget
+                />
+            )}
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
             <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
             <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />

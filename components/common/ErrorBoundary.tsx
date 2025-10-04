@@ -13,24 +13,17 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
-  isCopied?: boolean;
+  isCopied: boolean;
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Refactored to use a constructor for state initialization and method binding.
-  // This ensures 'this' is correctly bound and resolves errors where component properties
-  // like 'props', 'state', and 'setState' were not being recognized.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  public state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
-  public static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.
     // It should return an object to update state.
     return { hasError: true, error };
@@ -40,7 +33,10 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy() {
+  // FIX: The `handleCopy` method is defined as a class property arrow function
+  // to ensure `this` is correctly bound to the component instance when used as an event handler.
+  // This prevents runtime errors where `this.setState` would otherwise be undefined.
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
