@@ -176,7 +176,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const visual_base64 = await geminiService.generateAIPetVisual(user.id);
 
         // Step 2: Generate initial personality (can be deterministic too)
-        const seed = user.id + new Date().toISOString();
+        const seed = user.id + new Date().toISOString().slice(0, 10);
         const hash = stringToHash(seed);
         const seedRandom = createSeededRandom(hash);
         const personalities: (keyof AIPetPersonalityVector)[] = ['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'];

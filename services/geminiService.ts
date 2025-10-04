@@ -265,19 +265,20 @@ export const generateAIPetVisual = async (userId: string): Promise<string> => {
     const ai = getAiClient();
     
     // --- Sophisticated Prompt Generation ---
-    const seed = stringToHash(userId + new Date().toISOString()); // Add timestamp for more variance on re-hatch
+    const seed = stringToHash(userId + new Date().toISOString().slice(0, 10)); // Daily seed for consistency
     const seededRandom = createSeededRandom(seed);
     const pick = <T,>(arr: T[]): T => arr[Math.floor(seededRandom() * arr.length)];
     
-    const baseTypes = ['a small reptilian creature', 'a fluffy mammalian creature', 'an insectoid-like being', 'a slime-based entity', 'a bird-like creature', 'a floating geometric entity'];
-    const elements = ['fire', 'ice', 'digital glitch', 'nature', 'electricity', 'shadow', 'light', 'water'];
-    const features = ['glowing crystalline armor', 'organic plant-like features', 'exposed circuitry and wires', 'ethereal floating rings', 'sharp metallic claws', 'soft, feathery wings', 'a long, powerful tail'];
-    const styles = ['chibi', 'cute but cool', 'rookie-level Digimon', 'early-stage Pokémon'];
+    const baseTypes = ['a small reptilian creature', 'a fluffy mammalian creature', 'an insectoid-like being', 'a slime-based entity', 'a bird-like creature', 'a floating geometric entity', 'a tiny botanical golem'];
+    const elements = ['fire', 'ice', 'digital glitch', 'nature', 'electricity', 'shadow', 'light', 'water', 'crystal', 'wind'];
+    const features = ['glowing crystalline armor', 'organic plant-like features', 'exposed circuitry and wires', 'ethereal floating rings', 'sharp metallic claws', 'soft, feathery wings', 'a long, powerful tail with a unique tip', 'multiple expressive eyes', 'bioluminescent patterns'];
+    const styles = ['chibi', 'cute but cool', 'rookie-level Digimon', 'early-stage Pokémon', 'Ghibli-style spirit'];
 
-    const prompt = `award-winning masterpiece vector logo art of a unique baby digital monster.
+    const prompt = `award-winning masterpiece character concept art of a unique baby digital monster.
 - **Concept**: A ${pick(styles)} creature that is a mix of ${pick(baseTypes)} with a ${pick(elements)} element theme. It has a distinct feature: ${pick(features)}.
-- **Style**: Clean sharp vector lines, vibrant anime color palette, simple solid colored background, centered, full body shot. It looks like a character from a modern monster-taming game.
+- **Style**: Clean sharp vector lines, vibrant anime color palette, centered, full body shot. It looks like a character from a modern monster-taming game.
 - **Crucial**: NO text, NO letters, NO words. The design MUST be a unique, brandable character.
+- **Background**: SOLID TRANSPARENT background. The final image must be a PNG with an alpha channel. No background color.
 - **Seed**: ${seed}`;
 
     try {
