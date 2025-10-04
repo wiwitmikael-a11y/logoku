@@ -86,7 +86,7 @@ export const useAIPetVisuals = (petState: AIPetState) => {
 
   // --- 3. Pilih Aksesoris Kepala ---
   let SelectedHeadAccessory = null;
-  if (stage === 'adult' || stage === 'teen') { // Aksesoris mulai muncul di Teen
+  if (stage !== 'egg') { // PERUBAHAN: Tampilkan untuk semua stage kecuali egg
     if (dominantPersonality === 'bold' || dominantPersonality === 'rustic') SelectedHeadAccessory = HeadAccessories.horns_demon(accentColor);
     else if (dominantPersonality === 'feminine' || dominantPersonality === 'playful') SelectedHeadAccessory = HeadAccessories.ears_floppy(accentColor);
     else if (dominantPersonality === 'modern' || stats.intelligence > 80) SelectedHeadAccessory = HeadAccessories.antenna_tech(accentColor);
@@ -96,7 +96,8 @@ export const useAIPetVisuals = (petState: AIPetState) => {
 
   // --- 4. Pilih Aksesoris Punggung ---
   let SelectedBackAccessory = null;
-  if (stage === 'adult' && (dominantPersonality === 'bold' || dominantPersonality === 'playful' || dominantPersonality === 'modern')) {
+  // PERUBAHAN: Logika diperluas untuk 'child' juga
+  if ((stage === 'adult' || stage === 'child') && (dominantPersonality === 'bold' || dominantPersonality === 'playful' || dominantPersonality === 'modern')) {
     if (dominantPersonality === 'bold') SelectedBackAccessory = BackAccessories.shell_spiky(accentColor, bodyFill);
     else if (dominantPersonality === 'playful') SelectedBackAccessory = BackAccessories.wings_small(accentColor, bodyFill);
     else if (dominantPersonality === 'modern' || stats.intelligence > 85) SelectedBackAccessory = BackAccessories.jetpack(accentColor, bodyFill);
@@ -106,7 +107,7 @@ export const useAIPetVisuals = (petState: AIPetState) => {
 
   // --- 5. Pilih Aksesoris Ekor ---
   let SelectedTailAccessory = null;
-  if (stage === 'adult' || stage === 'teen') {
+  if (stage !== 'egg') { // PERUBAHAN: Tampilkan untuk semua stage kecuali egg
     if (dominantPersonality === 'bold' || dominantPersonality === 'rustic') SelectedTailAccessory = TailAccessories.tail_beast(accentColor);
     else if (dominantPersonality === 'modern' || stats.intelligence > 70) SelectedTailAccessory = TailAccessories.tail_mech(accentColor);
     else if (dominantPersonality === 'creative') SelectedTailAccessory = TailAccessories.tail_flame(accentColor);
