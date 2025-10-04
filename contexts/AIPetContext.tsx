@@ -5,7 +5,7 @@ import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import * as geminiService from '../services/geminiService';
 import { cropImage } from '../utils/imageUtils';
-import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AtlasManifest } from '../types';
+import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage } from '../types';
 
 export interface AIPetContextType {
   petState: AIPetState | null;
@@ -22,7 +22,7 @@ export interface AIPetContextType {
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
-const HATCH_COST = 11; // 10 for atlas+manifest, +1 for mandatory background cleanup step
+const HATCH_COST = 5; // Cost for a single, complex Imagen 4 call for the sprite sheet.
 
 const getStageForLevel = (level: number): AIPetStage => {
     if (level < 5) return 'child';
@@ -126,10 +126,12 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
                 personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
-                atlas_url: null,
-                manifest: null,
+                sprite_sheet_url: null,
                 assembled_url: null,
                 narrative: null,
+                // Deprecated fields
+                atlas_url: null,
+                manifest: null,
             };
             setPetState(newPet);
             savePetStateToDb(newPet);
@@ -175,19 +177,17 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const success = await deductCredits(HATCH_COST);
         if (!success) throw new Error("Token tidak cukup.");
     
-        // Step 1: Generate the Master Blueprint image and its analysis data
-        const { characterSheetUrl, assembledBbox, atlasBbox, manifest } = await geminiService.generateAIPetCharacterSheet(user.id);
-    
-        // Step 2: Client-side cropping using the analysis data
-        const [assembledUrl, atlasUrl] = await Promise.all([
-            cropImage(characterSheetUrl, assembledBbox),
-            cropImage(characterSheetUrl, atlasBbox),
-        ]);
+        // Step 1: Generate the 4x3 Sprite Sheet
+        const spriteSheetUrl = await geminiService.generateAIPetSpriteSheet(user.id);
         
-        // The manifest coordinates from the AI are relative to the atlasBbox,
-        // so they are already correct for the newly cropped atlasUrl.
-        const finalManifest: AtlasManifest = { ...manifest, atlasSize: [atlasBbox[2], atlasBbox[3]] };
-    
+        // Step 2: Client-side cropping for the first frame (assembled_url)
+        const tempImg = new Image();
+        tempImg.src = spriteSheetUrl;
+        await new Promise(resolve => tempImg.onload = resolve);
+        const frameWidth = tempImg.width / 4; // 4 columns
+        const frameHeight = tempImg.height / 3; // 3 rows
+        const firstFrameUrl = await cropImage(spriteSheetUrl, [0, 0, frameWidth, frameHeight]);
+        
         // Step 3: Generate initial personality and narrative
         const seed = user.id + new Date().toISOString().slice(0, 10);
         const hash = stringToHash(seed);
@@ -203,7 +203,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
         const narrative = await geminiService.generateAIPetNarrative({ name: petName, personality: initialPersonality, stats: initialStats });
     
-        // Step 4: Construct the final state with both new image URLs
+        // Step 4: Construct the final state
         const hatchedState: AIPetState = {
             name: petName,
             stage: 'child',
@@ -212,9 +212,11 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             lastPlayed: Date.now(),
             personality: initialPersonality,
             narrative: narrative,
-            atlas_url: atlasUrl,
-            manifest: finalManifest,
-            assembled_url: assembledUrl,
+            sprite_sheet_url: spriteSheetUrl,
+            assembled_url: firstFrameUrl,
+            // Deprecated fields
+            atlas_url: null,
+            manifest: null,
         };
         
         setPetState(hatchedState);

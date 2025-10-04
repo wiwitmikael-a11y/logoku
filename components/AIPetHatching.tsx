@@ -7,7 +7,7 @@ import { playSound } from '../services/soundService';
 import AIPetVisual from './AIPetVisual';
 import type { AIPetState } from '../types';
 
-const HATCH_COST = 10;
+const HATCH_COST = 5;
 
 interface AIPetHatchingProps {
     onClose: () => void;
@@ -16,12 +16,11 @@ interface AIPetHatchingProps {
 const statusMessages = [
     "Menghubungi Mang AI...",
     "Lagi nyiapin kanvas & cat digital...",
-    "Menggambar bentuk kepala & badan...",
-    "Menambahkan detail tangan dan kaki...",
-    "Mewarnai setiap bagian...",
-    "Cetak biru AIPet selesai! Menganalisis gambar...",
-    "Menandai titik sendi untuk animasi...",
-    "Menulis panduan perakitan...",
+    "Membuat sketsa pose-pose AIPet...",
+    "Mewarnai dan merapikan setiap frame...",
+    "Menggabungkan semua pose ke dalam satu sprite sheet...",
+    "Sprite sheet selesai! Memotong frame pertama...",
+    "Mencatat kepribadian dan deskripsi...",
     "Sedikit lagi... lagi dirakit!",
 ];
 
@@ -49,22 +48,12 @@ const AIPetHatching: React.FC<AIPetHatchingProps> = ({ onClose }) => {
         setError(null);
         playSound('start');
         
-        // Simulate progress for better UX
         setProgress(10);
         setStatusText(statusMessages[0]);
         
-        // Simulate first stage (Image generation - takes longer)
-        setTimeout(() => {
-            setProgress(50);
-            setStatusText(statusMessages[2]);
-        }, 3000);
-        
-        // Simulate second stage (Manifest generation)
-        setTimeout(() => {
-            setProgress(75);
-            setStatusText(statusMessages[6]);
-        }, 12000);
-
+        // Simulate progress stages for better UX
+        setTimeout(() => { setProgress(50); setStatusText(statusMessages[2]); }, 3000);
+        setTimeout(() => { setProgress(85); setStatusText(statusMessages[5]); }, 10000);
 
         try {
             await hatchPet();
@@ -92,11 +81,11 @@ const AIPetHatching: React.FC<AIPetHatchingProps> = ({ onClose }) => {
         lastFed: Date.now(),
         lastPlayed: Date.now(),
         personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
+        sprite_sheet_url: null,
+        assembled_url: null,
+        narrative: null,
         atlas_url: null,
         manifest: null,
-        narrative: null,
-        // FIX: Add missing 'assembled_url' property to conform to the AIPetState type.
-        assembled_url: null,
     };
 
     return (
@@ -119,7 +108,7 @@ const AIPetHatching: React.FC<AIPetHatchingProps> = ({ onClose }) => {
                     </div>
                 ) : (
                     <>
-                        <p className="text-text-body mb-6">Menetaskan telur ini akan memunculkan wujud perdana AI Pet-mu! Proses ini menggunakan AI dan butuh <strong className="text-text-header">{HATCH_COST} token</strong>.</p>
+                        <p className="text-text-body mb-6">Menetaskan telur ini akan memunculkan wujud perdana AI Pet-mu dalam bentuk sprite animasi! Proses ini menggunakan AI dan butuh <strong className="text-text-header">{HATCH_COST} token</strong>.</p>
                         <div className="flex flex-col items-center gap-3">
                             <Button onClick={handleHatch} isLoading={isLoading} disabled={isLoading}>Ya, Tetaskan Sekarang! ({HATCH_COST} Token)</Button>
                             <Button onClick={onClose} variant="secondary" size="small">Nanti Aja Deh</Button>

@@ -115,7 +115,7 @@ export interface AIPetStats {
 
 export type AIPetStage = 'egg' | 'child' | 'teen' | 'adult';
 
-// New types for the 2.5D Puppet System
+// DEPRECATED Puppet System types
 export type PartName = 'torso' | 'head' | 'left_arm' | 'right_arm' | 'left_leg' | 'right_leg' | 'accessory1' | 'accessory2';
 export type AnchorName = 'neck' | 'left_shoulder' | 'right_shoulder' | 'left_hip' | 'right_hip' | 'accessory_mount1' | 'accessory_mount2';
 
@@ -135,6 +135,7 @@ export interface AtlasManifest {
   };
   layering: PartName[];
 }
+// END DEPRECATED
 
 export interface AIPetState {
   name: string;
@@ -144,10 +145,13 @@ export interface AIPetState {
   lastPlayed: number;
   personality: AIPetPersonalityVector;
   narrative?: string | null;
-  // New visual representation
+  // NEW Sprite Sheet System
+  sprite_sheet_url: string | null; // URL for the full 3x3 sprite sheet
+  assembled_url: string | null; // URL for the cropped first frame (for static display)
+  
+  // DEPRECATED
   atlas_url: string | null;
   manifest: AtlasManifest | null;
-  assembled_url: string | null; // URL for the fully assembled static image
 }
 
 

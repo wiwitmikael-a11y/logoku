@@ -3,7 +3,7 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { createWhiteCanvasBase64, fetchImageAsBase64, applyWatermark } from '../utils/imageUtils';
 // FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
-import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets, AIPetState, AIPetPersonalityVector, AIPetStats, AtlasManifest, PartName } from '../types';
+import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets, AIPetState, AIPetPersonalityVector, AIPetStats } from '../types';
 
 // --- Environment Variable Setup ---
 const API_KEY = import.meta.env?.VITE_API_KEY;
@@ -243,123 +243,47 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
     }
 };
 
-// --- NEW "MASTER BLUEPRINT" AIPET GENERATION SYSTEM ---
+// --- NEW "SPRITE SHEET GRID" AIPET GENERATION SYSTEM ---
 
-export const generateAIPetCharacterSheet = async (userId: string): Promise<{
-    characterSheetUrl: string;
-    assembledBbox: [number, number, number, number];
-    atlasBbox: [number, number, number, number];
-    manifest: AtlasManifest;
-}> => {
+export const generateAIPetSpriteSheet = async (userId: string): Promise<string> => {
     const ai = getAiClient();
     const seed = userId + new Date().toISOString();
 
-    // --- STAGE 1: AI CONCEPT ARTIST - Create the master blueprint ---
-    const blueprintPrompt = `Technical diagram for a game asset. Create a single image containing two elements side-by-side on a **100% TRANSPARENT background**.
+    const spriteSheetPrompt = `Technical character sprite sheet for a 2D game, aspect ratio 4:3. Create a single rectangular image containing a 4x3 grid (4 columns, 3 rows) of character poses.
     
-    **LEFT SIDE:** A single, fully assembled, unique, baby digital pet.
-        - **AESTHETIC:** 'AIPet' style - a cute, 'chibi-mecha' fusion of a non-humanoid biomechanical monster/animal. The style is clean, sharp 2.5D vector art.
-        - **AVOID:** Human-like figures, bipedal robots, Iron Man.
-        - **FOCUS ON:** Biomechanical insects, robotic mammals, alien monsters.
-        - **PERSPECTIVE:** 2.5D isometric view, facing slightly LEFT.
-    
-    **RIGHT SIDE:** The *exact same creature* from the left, deconstructed into 7 perfectly separated parts: 'head', 'torso', 'left_arm', 'right_arm', 'left_leg', 'right_leg', and 'accessory1'.
-        - **CONSISTENCY IS CRITICAL:** The parts MUST be identical in style, proportion, and detail to the assembled version.
-        - **LAYOUT:** Arrange the parts neatly in a grid. They must not touch or overlap.
-    
-    **FINAL IMAGE RULES:**
-    - The entire background MUST be transparent. No colors, no checkerboards. This is the most important rule.
-    - No text, borders, or other elements.
-    - Seed: ${seed}`;
+    **CRITICAL RULES:**
+    1.  **TRANSPARENT BACKGROUND:** The entire image's background MUST be 100% transparent. No colors, no checkerboards, no gradients. This is the most important rule.
+    2.  **GRID INTEGRITY:** Generate a perfect 4x3 grid. Each of the 12 cells must contain one sprite. The sprites must be centered in their cells and must not touch or overlap cell boundaries.
+    3.  **CHARACTER CONSISTENCY:** The character's design, proportions, colors, and size must be absolutely identical across all 12 poses.
+    4.  **NO TEXT OR BORDERS:** Do not add any text, numbers, grid lines, or borders to the image.
 
-    let blueprintImageBase64: string;
+    **CHARACTER DESIGN:**
+    - **AESTHETIC:** 'AIPet' style - a cute, 'chibi-mecha' fusion of a non-humanoid biomechanical creature. The style is clean, sharp 2.5D vector art with bold outlines.
+    - **AVOID:** Human-like figures, bipedal robots, Iron Man.
+    - **FOCUS ON:** Biomechanical insects, robotic mammals, alien monsters.
+    - **PERSPECTIVE:** All poses must be in a consistent 2.5D isometric view, facing slightly to the side.
+
+    **POSES (fill the 4x3 grid):**
+    - **Row 1 (4 frames):** Idle animation frames (e.g., standing still, slight bobbing, blinking, tail wag).
+    - **Row 2 (4 frames):** Walk cycle animation frames (part 1).
+    - **Row 3 (4 frames):** Walk cycle animation frames (part 2). The 8 walk frames should form a complete, smooth loop.
+
+    **Seed for consistency:** ${seed}`;
+
     try {
         const response = await ai.models.generateImages({
             model: 'imagen-4.0-generate-001',
-            prompt: blueprintPrompt,
-            config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: '1:1' },
+            prompt: spriteSheetPrompt,
+            config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: '4:3' },
         });
         // Mandatory background cleanup as a safeguard.
-        blueprintImageBase64 = await removeImageBackground(`data:image/png;base64,${response.generatedImages[0].image.imageBytes}`);
+        const cleanedSpriteSheetBase64 = await removeImageBackground(`data:image/png;base64,${response.generatedImages[0].image.imageBytes}`);
+        return cleanedSpriteSheetBase64;
     } catch (error) {
-        throw handleApiError(error, "AIPet Blueprint Generation (Stage 1)");
-    }
-    
-    // --- STAGE 2: AI RIGGING ANALYST - Analyze the blueprint ---
-    const blueprintData = blueprintImageBase64.split(',')[1];
-    const analysisPrompt = `You are a professional game asset processor. Analyze the provided character sheet image which contains an assembled creature on the left and its deconstructed parts on the right.
-
-    **YOUR TASK:**
-    Provide a single JSON object containing three keys: "assembledBbox", "atlasBbox", and "manifest".
-
-    1.  **"assembledBbox"**: An array [x, y, width, height] for the bounding box of the complete, assembled creature on the left.
-    2.  **"atlasBbox"**: An array [x, y, width, height] for the bounding box that tightly encloses ALL the separated parts on the right.
-    3.  **"manifest"**: A complete JSON rigging manifest for reassembling the parts.
-        - All coordinates in the manifest ("bbox", "assemblyPoint", "anchors") **MUST be relative to the "atlasBbox"** you defined, NOT the full image.
-        - "parts": An array of 7 part objects. Each must have "name", "bbox", "assemblyPoint", "attachTo", "attachmentPoint".
-        - "anchors": An object mapping parts to their anchor locations. The 'torso' MUST have 'neck', 'left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'.
-        - "layering": Z-index order from back to front.
-    
-    Analyze the image and provide only the complete, valid JSON object.`;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: {
-                parts: [
-                    { inlineData: { data: blueprintData, mimeType: 'image/png' } },
-                    { text: analysisPrompt },
-                ],
-            },
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        assembledBbox: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                        atlasBbox: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                        manifest: {
-                            type: Type.OBJECT,
-                            properties: {
-                                atlasSize: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                                parts: {
-                                    type: Type.ARRAY,
-                                    items: {
-                                        type: Type.OBJECT,
-                                        properties: {
-                                            name: { type: Type.STRING },
-                                            bbox: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                                            assemblyPoint: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                                            attachTo: { type: Type.STRING, nullable: true },
-                                            attachmentPoint: { type: Type.STRING, nullable: true },
-                                        },
-                                        required: ["name", "bbox", "assemblyPoint", "attachTo", "attachmentPoint"]
-                                    }
-                                },
-                                anchors: { type: Type.OBJECT },
-                                layering: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            },
-                             required: ["atlasSize", "parts", "anchors", "layering"]
-                        }
-                    },
-                    required: ["assembledBbox", "atlasBbox", "manifest"]
-                }
-            }
-        });
-
-        const result = safeJsonParse<any>(response.text, 'AIPet Analysis (Stage 2)');
-        
-        return {
-            characterSheetUrl: blueprintImageBase64,
-            assembledBbox: result.assembledBbox,
-            atlasBbox: result.atlasBbox,
-            manifest: result.manifest,
-        };
-
-    } catch (error) {
-        throw handleApiError(error, "AIPet Analysis & Rigging (Stage 2)");
+        throw handleApiError(error, "AIPet Sprite Sheet Generation");
     }
 };
+
 
 export const generateAIPetNarrative = async (petData: { name: string, personality: AIPetPersonalityVector, stats: AIPetStats }): Promise<string> => {
     const ai = getAiClient();

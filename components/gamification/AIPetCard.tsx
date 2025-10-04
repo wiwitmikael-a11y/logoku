@@ -21,7 +21,7 @@ const StatBar: React.FC<{ label: string; value: number; color: string }> = ({ la
 
 
 const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
-    if (petState.stage === 'egg' || !petState.atlas_url) {
+    if (petState.stage === 'egg' || !petState.sprite_sheet_url) {
         return <p className="text-sm text-text-muted italic">AIPet belum menetas.</p>;
     }
 
