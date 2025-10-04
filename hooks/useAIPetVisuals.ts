@@ -8,8 +8,26 @@ import {
   BackAccessories, TailAccessories, SVGDefs
 } from '../components/AIPetParts';
 
-// Tentukan tipe Archetype
 type Archetype = 'Beast' | 'Machine' | 'Mystic' | 'Chibi';
+type AnchorPoint = { x: number; y: number };
+type BodyAnchorMap = { [bodyName: string]: { head: AnchorPoint; back: AnchorPoint; tail: AnchorPoint; head_side: AnchorPoint } };
+
+// --- Definisi "Soket" atau Anchor Point untuk Setiap Bentuk Tubuh ---
+const BodyAnchors: BodyAnchorMap = {
+  // Chibi & Beast
+  child_chibi:   { head: {x: 50, y: 28}, back: {x: 50, y: 50}, tail: {x: 50, y: 92}, head_side: {x: 50, y: 35} },
+  child_beast:   { head: {x: 50, y: 35}, back: {x: 50, y: 60}, tail: {x: 50, y: 90}, head_side: {x: 50, y: 40} },
+  teen_beast:    { head: {x: 50, y: 22}, back: {x: 50, y: 55}, tail: {x: 50, y: 95}, head_side: {x: 50, y: 30} },
+  adult_beast:   { head: {x: 50, y: 15}, back: {x: 50, y: 50}, tail: {x: 50, y: 98}, head_side: {x: 50, y: 25} },
+  // Machine
+  child_machine: { head: {x: 50, y: 30}, back: {x: 50, y: 50}, tail: {x: 50, y: 72}, head_side: {x: 50, y: 40} },
+  teen_machine:  { head: {x: 50, y: 20}, back: {x: 50, y: 50}, tail: {x: 50, y: 85}, head_side: {x: 50, y: 30} },
+  adult_machine: { head: {x: 50, y: 12}, back: {x: 50, y: 45}, tail: {x: 50, y: 90}, head_side: {x: 50, y: 25} },
+  // Mystic
+  child_mystic:  { head: {x: 50, y: 30}, back: {x: 50, y: 55}, tail: {x: 50, y: 85}, head_side: {x: 50, y: 35} },
+  teen_mystic:   { head: {x: 50, y: 22}, back: {x: 50, y: 55}, tail: {x: 50, y: 95}, head_side: {x: 50, y: 30} },
+  adult_mystic:  { head: {x: 50, y: 12}, back: {x: 50, y: 50}, tail: {x: 50, y: 100}, head_side: {x: 50, y: 20} },
+};
 
 export const useAIPetVisuals = (petState: AIPetState) => {
   const { stats, personality, stage } = petState;
@@ -24,13 +42,12 @@ export const useAIPetVisuals = (petState: AIPetState) => {
     if (p.bold > 7 || p.rustic > 7 || (dominant === 'bold' && secondary === 'rustic')) return 'Beast';
     if (p.modern > 7 || p.minimalist > 7 || (dominant === 'modern' && secondary === 'minimalist')) return 'Machine';
     if (p.creative > 7 || p.luxury > 7 || (dominant === 'creative' && secondary === 'feminine')) return 'Mystic';
-
-    // Fallback berdasarkan dominant personality
+    
     switch (dominant) {
       case 'bold': case 'rustic': return 'Beast';
       case 'modern': case 'minimalist': return 'Machine';
       case 'creative': case 'luxury': case 'feminine': return 'Mystic';
-      default: return 'Chibi'; // 'playful' atau default
+      default: return 'Chibi';
     }
   };
   
@@ -40,109 +57,110 @@ export const useAIPetVisuals = (petState: AIPetState) => {
   const charismaFactor = stats.charisma / 100;
   const energyFactor = stats.energy / 100;
   
-  // Penentuan HUE berdasarkan Archetype untuk tema warna yang lebih kuat
   let baseHue: number;
   switch(archetype) {
-    case 'Beast': baseHue = 0; break; // Merah/Oranye
-    case 'Machine': baseHue = 180; break; // Cyan/Biru
-    case 'Mystic': baseHue = 270; break; // Ungu/Pink
-    default: baseHue = 120; // Hijau (Chibi)
+    case 'Beast': baseHue = 0; break;
+    case 'Machine': baseHue = 180; break;
+    case 'Mystic': baseHue = 270; break;
+    default: baseHue = 120;
   }
   const hue = baseHue + (charismaFactor * 60);
   const saturation = 60 + (energyFactor * 40);
   const lightness = 40 + (energyFactor * 20);
 
   const bodyFill = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-  const accentColor = `hsl(${(hue + 180) % 360}, ${saturation}%, ${lightness + (lightness > 50 ? -20 : 20)}%)`; // Warna komplementer
+  const accentColor = `hsl(${(hue + 180) % 360}, ${saturation}%, ${lightness + (lightness > 50 ? -20 : 20)}%)`;
 
-  // --- 3. Rakit AIPet Berdasarkan Archetype dan Stage ---
-  let SelectedBody, SelectedEyes, SelectedMouth;
+  // --- 3. Rakit AIPet Berdasarkan Archetype, Stage, dan Anchor Points ---
+  let SelectedBody: React.ReactElement, bodyKey: keyof typeof BodyShapes;
+  let SelectedEyes, SelectedMouth;
   let SelectedHeadAccessory, SelectedBackAccessory, SelectedTailAccessory;
 
   if (stage === 'egg') {
     SelectedBody = BodyShapes.egg(bodyFill);
-    SelectedEyes = () => null;
-    SelectedMouth = () => null;
+    bodyKey = 'egg'; // Not in anchors, but needed for key
   } else {
     // Evolusi berdasarkan Archetype
     switch (archetype) {
       case 'Beast':
         if (stage === 'child') {
-          SelectedBody = BodyShapes.child_beast(bodyFill);
+          bodyKey = 'child_beast';
           SelectedEyes = EyeSets.default();
           SelectedMouth = MouthSets.neutral();
-          SelectedHeadAccessory = HeadAccessories.ears_wolf(accentColor, 'none');
-          SelectedTailAccessory = TailAccessories.tail_lizard(accentColor, 'none');
+          SelectedHeadAccessory = HeadAccessories.ears_wolf(accentColor, 'none', BodyAnchors[bodyKey].head_side);
+          SelectedTailAccessory = TailAccessories.tail_lizard(accentColor, BodyAnchors[bodyKey].tail);
         } else if (stage === 'teen') {
-          SelectedBody = BodyShapes.teen_beast(bodyFill);
+          bodyKey = 'teen_beast';
           SelectedEyes = EyeSets.fierce_beast(accentColor);
           SelectedMouth = MouthSets.fangs_beast();
-          SelectedHeadAccessory = HeadAccessories.horns_ram(accentColor);
-          SelectedBackAccessory = BackAccessories.spikes_dorsal(accentColor, bodyFill);
-          SelectedTailAccessory = TailAccessories.tail_lizard(accentColor, 'none');
+          SelectedHeadAccessory = HeadAccessories.horns_ram(accentColor, BodyAnchors[bodyKey].head);
+          SelectedBackAccessory = BackAccessories.spikes_dorsal(accentColor, bodyFill, BodyAnchors[bodyKey].back);
+          SelectedTailAccessory = TailAccessories.tail_lizard(accentColor, BodyAnchors[bodyKey].tail);
         } else { // Adult
-          SelectedBody = BodyShapes.adult_beast(bodyFill);
+          bodyKey = 'adult_beast';
           SelectedEyes = EyeSets.fierce_beast(accentColor);
           SelectedMouth = MouthSets.fangs_beast();
-          SelectedHeadAccessory = HeadAccessories.horns_ram(accentColor);
-          SelectedBackAccessory = BackAccessories.wings_bat(accentColor, bodyFill);
-          SelectedTailAccessory = TailAccessories.tail_furry(accentColor, bodyFill);
+          SelectedHeadAccessory = HeadAccessories.horns_ram(accentColor, BodyAnchors[bodyKey].head);
+          SelectedBackAccessory = BackAccessories.wings_bat(accentColor, 'rgba(0,0,0,0.2)', BodyAnchors[bodyKey].back);
+          SelectedTailAccessory = TailAccessories.tail_furry(accentColor, bodyFill, BodyAnchors[bodyKey].tail);
         }
         break;
 
       case 'Machine':
         if (stage === 'child') {
-          SelectedBody = BodyShapes.child_machine(bodyFill);
+          bodyKey = 'child_machine';
           SelectedEyes = EyeSets.visor_machine(accentColor);
           SelectedMouth = MouthSets.grill_machine();
-          SelectedHeadAccessory = HeadAccessories.antenna_single(accentColor);
+          SelectedHeadAccessory = HeadAccessories.antenna_single(accentColor, BodyAnchors[bodyKey].head);
         } else if (stage === 'teen') {
-          SelectedBody = BodyShapes.teen_machine(bodyFill);
+          bodyKey = 'teen_machine';
           SelectedEyes = EyeSets.visor_machine(accentColor);
           SelectedMouth = MouthSets.grill_machine();
-          SelectedHeadAccessory = HeadAccessories.vents_side(accentColor);
-          SelectedTailAccessory = TailAccessories.tail_thruster(accentColor, bodyFill);
+          SelectedHeadAccessory = HeadAccessories.vents_side(accentColor, BodyAnchors[bodyKey].head_side);
+          SelectedTailAccessory = TailAccessories.tail_thruster(accentColor, bodyFill, BodyAnchors[bodyKey].tail);
         } else { // Adult
-          SelectedBody = BodyShapes.adult_machine(bodyFill);
+          bodyKey = 'adult_machine';
           SelectedEyes = EyeSets.visor_machine(accentColor);
           SelectedMouth = MouthSets.grill_machine();
-          SelectedBackAccessory = BackAccessories.jetpack_dual(accentColor, bodyFill);
-          SelectedHeadAccessory = BackAccessories.cannon_shoulder(accentColor, bodyFill); // Gunakan slot punggung untuk bahu
-          SelectedTailAccessory = TailAccessories.tail_cable(accentColor);
+          SelectedBackAccessory = BackAccessories.jetpack_dual(accentColor, bodyFill, BodyAnchors[bodyKey].back);
+          SelectedHeadAccessory = BackAccessories.cannon_shoulder(accentColor, bodyFill, BodyAnchors[bodyKey].back);
+          SelectedTailAccessory = TailAccessories.tail_cable(accentColor, BodyAnchors[bodyKey].tail);
         }
         break;
 
       case 'Mystic':
         if (stage === 'child') {
-          SelectedBody = BodyShapes.child_mystic(bodyFill);
+          bodyKey = 'child_mystic';
           SelectedEyes = EyeSets.glowing_mystic(accentColor);
           SelectedMouth = MouthSets.serene_mystic();
+          SelectedHeadAccessory = HeadAccessories.crest_elemental(accentColor, BodyAnchors[bodyKey].head);
         } else if (stage === 'teen') {
-          SelectedBody = BodyShapes.teen_mystic(bodyFill);
+          bodyKey = 'teen_mystic';
           SelectedEyes = EyeSets.glowing_mystic(accentColor);
           SelectedMouth = MouthSets.serene_mystic();
-          SelectedHeadAccessory = HeadAccessories.crest_elemental(accentColor);
-          SelectedTailAccessory = TailAccessories.tail_wisp(accentColor);
+          SelectedHeadAccessory = HeadAccessories.crest_elemental(accentColor, BodyAnchors[bodyKey].head);
+          SelectedTailAccessory = TailAccessories.tail_wisp(accentColor, BodyAnchors[bodyKey].tail);
         } else { // Adult
-          SelectedBody = BodyShapes.adult_mystic(bodyFill);
+          bodyKey = 'adult_mystic';
           SelectedEyes = EyeSets.glowing_mystic(accentColor);
           SelectedMouth = MouthSets.serene_mystic();
-          SelectedHeadAccessory = HeadAccessories.halo_divine(accentColor);
-          SelectedBackAccessory = BackAccessories.wings_angelic(accentColor, 'none');
-          SelectedTailAccessory = TailAccessories.tail_crystal(accentColor, bodyFill);
+          SelectedHeadAccessory = HeadAccessories.halo_divine(accentColor, BodyAnchors[bodyKey].head);
+          SelectedBackAccessory = BackAccessories.wings_angelic(accentColor, 'none', BodyAnchors[bodyKey].back);
+          SelectedTailAccessory = TailAccessories.tail_crystal(accentColor, bodyFill, BodyAnchors[bodyKey].tail);
         }
         break;
 
       default: // Chibi (fallback)
-        SelectedBody = BodyShapes.child_chibi(bodyFill);
+        bodyKey = 'child_chibi';
         SelectedEyes = EyeSets.happy();
         SelectedMouth = MouthSets.smile();
         break;
     }
+    SelectedBody = BodyShapes[bodyKey](bodyFill);
   }
 
   // Defs diperlukan untuk efek seperti glow
-  const SelectedPattern = SVGDefs.glow(accentColor); // Menggunakan slot Pattern untuk Defs
+  const SelectedPattern = SVGDefs.glow(accentColor);
 
   return {
     SelectedBody,
@@ -151,7 +169,7 @@ export const useAIPetVisuals = (petState: AIPetState) => {
     SelectedHeadAccessory,
     SelectedBackAccessory,
     SelectedTailAccessory,
-    SelectedPattern, // Ini sebenarnya adalah <defs>
+    SelectedPattern,
     bodyFill,
     accentColor
   };

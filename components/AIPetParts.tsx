@@ -3,6 +3,8 @@
 
 import React from 'react';
 
+type AnchorPoint = { x: number; y: number };
+
 // --- BASE BODY LIBRARY (Bentuk lebih dinamis & tematik) ---
 export const BodyShapes = {
   egg: (fill: string) => <path d="M50,25 C20,25 20,95 50,95 C80,95 80,25 50,25 Z" fill={fill} />,
@@ -51,51 +53,77 @@ export const MouthSets = {
 };
 
 
-// --- HEAD ACCESSORIES (Archetype-specific) ---
+// --- REFACTORED ACCESSORIES WITH ANCHOR POINTS ---
+const createAccessory = (path: React.ReactNode, anchor: AnchorPoint) => (
+  <g transform={`translate(${anchor.x} ${anchor.y})`}>{path}</g>
+);
+
+// --- HEAD ACCESSORIES (Archetype-specific, redrawn relative to 0,0) ---
 export const HeadAccessories = {
-  // Beast
-  horns_ram: (stroke: string) => <path d="M 30,25 C 10,10 10,40 30,40 M 70,25 C 90,10 90,40 70,40" stroke={stroke} fill="none" strokeWidth="4" strokeLinecap="round" />,
-  ears_wolf: (stroke: string, fill: string) => <path d="M25,25 L15,5 L35,20 Z M75,25 L85,5 L65,20 Z" stroke={stroke} fill={fill} />,
-  
-  // Machine
-  antenna_single: (stroke: string) => <path d="M 50,20 Q 55,10 52,5 M 52,5 a 3,3 0 1,1 -6,0 a 3,3 0 1,1 6,0" stroke={stroke} fill="none" strokeWidth="2" strokeLinecap="round" />,
-  vents_side: (stroke: string) => <path d="M20 30 L15 35 L20 40 M20 45 L15 50 L20 55 M80 30 L85 35 L80 40 M80 45 L85 50 L80 55" stroke={stroke} strokeWidth="2" />,
-  
-  // Mystic
-  crest_elemental: (fill: string) => <path d="M50,20 Q40,10 50,0 Q60,10 50,20 Z" fill={fill} />,
-  halo_divine: (fill: string) => <ellipse cx="50" cy="15" rx="25" ry="5" fill="none" stroke={fill} strokeWidth="2" />,
+  horns_ram: (stroke: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M -20,0 C -40,-15 -40,15 -20,15 M 20,0 C 40,-15 40,15 20,15" stroke={stroke} fill="none" strokeWidth="4" strokeLinecap="round" />, anchor
+  ),
+  ears_wolf: (stroke: string, fill: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M -25,0 L -35,-20 -15,-5 Z M 25,0 L 35,-20 15,-5 Z" stroke={stroke} fill={fill} />, anchor
+  ),
+  antenna_single: (stroke: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M 0,-5 Q 5,-15 2,-20 M 2,-20 a 3,3 0 1,1 -6,0 a 3,3 0 1,1 6,0" stroke={stroke} fill="none" strokeWidth="2" strokeLinecap="round" />, anchor
+  ),
+  vents_side: (stroke: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M -30,5 L -35,10 -30,15 M -30,20 L -35,25 -30,30 M 30,5 L 35,10 30,15 M 30,20 L 35,25 30,30" stroke={stroke} strokeWidth="2" />, anchor
+  ),
+  crest_elemental: (fill: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M 0,-5 Q -10,-15 0,-25 Q 10,-15 0,-5 Z" fill={fill} />, anchor
+  ),
+  halo_divine: (fill: string, anchor: AnchorPoint) => createAccessory(
+    <ellipse cx="0" cy="-10" rx="25" ry="5" fill="none" stroke={fill} strokeWidth="2" />, anchor
+  ),
 };
 
-
-// --- BACK ACCESSORIES (Archetype-specific) ---
+// --- BACK ACCESSORIES (Archetype-specific, redrawn relative to 0,0) ---
 export const BackAccessories = {
-  // Beast
-  wings_bat: (stroke: string, fill: string) => <path d="M20 40 L0 30 L20 60 L30 50 Z M80 40 L100 30 L80 60 L70 50 Z" stroke={stroke} fill={fill} />,
-  spikes_dorsal: (stroke: string, fill: string) => <path d="M50 30 L45 40 L50 50 L55 40 Z M50 50 L45 60 L50 70 L55 60 Z" stroke={stroke} fill={fill} />,
-  
-  // Machine
-  jetpack_dual: (stroke: string, fill: string) => <><rect x="30" y="40" width="15" height="25" rx="3" fill={fill} stroke={stroke} /><rect x="55" y="40" width="15" height="25" rx="3" fill={fill} stroke={stroke} /></>,
-  cannon_shoulder: (stroke: string, fill: string) => <rect x="65" y="30" width="25" height="10" rx="2" transform="rotate(-15 77.5 35)" fill={fill} stroke={stroke} />,
-  
-  // Mystic
-  wings_angelic: (stroke: string, fill: string) => <path d="M25 40 Q-10 60 25 80 L35 70 Q10 60 35 50 Z M75 40 Q110 60 75 80 L65 70 Q90 60 65 50 Z" stroke={stroke} fill={fill} />,
-  runes_floating: (fill: string) => <><circle cx="20" cy="50" r="4" fill={fill} /><path d="M80 45 L75 55 L85 55 Z" fill={fill} /></>,
+  wings_bat: (stroke: string, fill: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M -30,-10 L -50,-20 -30,10 -20,0 Z M 30,-10 L 50,-20 30,10 20,0 Z" stroke={stroke} fill={fill} />, anchor
+  ),
+  spikes_dorsal: (stroke: string, fill: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M 0,-20 L -5,-10 L 0,0 L 5,-10 Z M 0,0 L -5,10 L 0,20 L 5,10 Z" stroke={stroke} fill={fill} />, anchor
+  ),
+  jetpack_dual: (stroke: string, fill: string, anchor: AnchorPoint) => createAccessory(
+    <><rect x="-25" y="-10" width="15" height="25" rx="3" fill={fill} stroke={stroke} /><rect x="10" y="-10" width="15" height="25" rx="3" fill={fill} stroke={stroke} /></>, anchor
+  ),
+  cannon_shoulder: (stroke: string, fill: string, anchor: AnchorPoint) => createAccessory(
+    <rect x="15" y="-20" width="25" height="10" rx="2" transform="rotate(-15 27.5 -15)" fill={fill} stroke={stroke} />, anchor
+  ),
+  wings_angelic: (stroke: string, fill: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M -25,-10 Q -60,10 -25,30 L -15,20 Q -40,10 -15,0 Z M 25,-10 Q 60,10 25,30 L 15,20 Q 40,10 15,0 Z" stroke={stroke} fill={fill} />, anchor
+  ),
+  runes_floating: (fill: string, anchor: AnchorPoint) => createAccessory(
+    <><circle cx="-30" cy="0" r="4" fill={fill} /><path d="M 30,-5 L 25,5 L 35,5 Z" fill={fill} /></>, anchor
+  ),
 };
 
-// --- TAIL ACCESSORIES (Archetype-specific) ---
+// --- TAIL ACCESSORIES (Archetype-specific, redrawn relative to 0,0) ---
 export const TailAccessories = {
-  // Beast
-  tail_lizard: (stroke: string, fill: string) => <path d="M50 90 Q70 95 80 80" stroke={stroke} fill="none" strokeWidth="4" strokeLinecap="round" />,
-  tail_furry: (stroke: string, fill: string) => <path d="M50 90 C 60 100, 70 80, 60 70" stroke={stroke} fill={fill} strokeWidth="3" strokeLinecap="round"/>,
-
-  // Machine
-  tail_cable: (stroke: string) => <path d="M50 90 Q 60 95 55 100 Q 50 105 55 110" stroke={stroke} fill="none" strokeWidth="2" />,
-  tail_thruster: (stroke: string, fill: string) => <path d="M50 90 L 55 95 L 45 95 Z" fill={fill} stroke={stroke} />,
-  
-  // Mystic
-  tail_wisp: (fill: string) => <path d="M50 90 Q 60 95 50 100 Q 40 95 50 90" fill={fill} opacity="0.7"/>,
-  tail_crystal: (stroke: string, fill: string) => <path d="M50 90 L 55 100 L 45 100 Z" stroke={stroke} fill={fill} />,
+  tail_lizard: (stroke: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M 0,0 Q 20,5 30,-10" stroke={stroke} fill="none" strokeWidth="4" strokeLinecap="round" />, anchor
+  ),
+  tail_furry: (stroke: string, fill: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M 0,0 C 10,10 20,-10 10,-20" stroke={stroke} fill={fill} strokeWidth="3" strokeLinecap="round"/>, anchor
+  ),
+  tail_cable: (stroke: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M 0,0 Q 10,5 5,10 Q 0,15 5,20" stroke={stroke} fill="none" strokeWidth="2" />, anchor
+  ),
+  tail_thruster: (stroke: string, fill: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M 0,0 L 5,5 L -5,5 Z" fill={fill} stroke={stroke} />, anchor
+  ),
+  tail_wisp: (fill: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M 0,0 Q 10,5 0,10 Q -10,5 0,0" fill={fill} opacity="0.7"/>, anchor
+  ),
+  tail_crystal: (stroke: string, fill: string, anchor: AnchorPoint) => createAccessory(
+    <path d="M 0,0 L 5,10 L -5,10 Z" stroke={stroke} fill={fill} />, anchor
+  ),
 };
+
 
 // --- SVG DEFS for effects ---
 export const SVGDefs = {
