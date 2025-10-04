@@ -17,7 +17,10 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
+  // FIX: Reverted to class property initializers for state and methods.
+  // This is a more modern and robust way to handle 'this' context in React class components
+  // and resolves the TypeScript errors regarding missing properties like 'state' and 'props'.
+  state: State = {
     hasError: false,
     error: undefined,
     isCopied: false,
@@ -31,16 +34,13 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Refactored to use an arrow function for the method.
-  // This modern pattern correctly binds 'this' and resolves TypeScript errors
-  // where 'this.setState' was not found on the component instance.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
-  }
+  };
 
   public render(): ReactNode {
     if (this.state.hasError) {

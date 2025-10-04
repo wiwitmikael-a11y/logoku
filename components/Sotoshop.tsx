@@ -3,29 +3,43 @@
 import React, { useState, useEffect, useRef, useCallback, useReducer } from 'react';
 import Button from './common/Button';
 import { playSound } from '../services/soundService';
+import QuickActionsToolbar from './common/QuickActionsToolbar';
+import PropertiesPanel from './common/PropertiesPanel';
 
 // --- TYPE DEFINITIONS ---
-type Tool = 'select' | 'text' | 'shape' | 'hand' | 'image';
-type ShapeType = 'rectangle' | 'circle';
-type TextAlign = 'left' | 'center' | 'right';
-type Handle = 'tl' | 'tr' | 'bl' | 'br' | 't' | 'b' | 'l' | 'r' | 'rot';
+export type Tool = 'select' | 'text' | 'shape' | 'hand' | 'image';
+export type ShapeType = 'rectangle' | 'circle';
+export type TextAlign = 'left' | 'center' | 'right';
+export type Handle = 'tl' | 'tr' | 'bl' | 'br' | 'rot';
 
-interface BaseLayer { id: number; type: 'text' | 'image' | 'shape'; name: string; x: number; y: number; width: number; height: number; rotation: number; isVisible: boolean; isLocked: boolean; opacity: number; }
-interface TextLayer extends BaseLayer { type: 'text'; content: string; font: string; size: number; color: string; textAlign: TextAlign; }
-interface ImageLayer extends BaseLayer { type: 'image'; image: HTMLImageElement; }
-interface ShapeLayer extends BaseLayer { type: 'shape'; shape: ShapeType; fillColor: string; strokeColor: string; strokeWidth: number; }
-type Layer = TextLayer | ImageLayer | ShapeLayer;
+export interface BaseLayer { id: number; type: 'text' | 'image' | 'shape'; name: string; x: number; y: number; width: number; height: number; rotation: number; isVisible: boolean; isLocked: boolean; opacity: number; }
+export interface TextLayer extends BaseLayer { type: 'text'; content: string; font: string; size: number; color: string; textAlign: TextAlign; }
+export interface ImageLayer extends BaseLayer { type: 'image'; image: HTMLImageElement; }
+export interface ShapeLayer extends BaseLayer { type: 'shape'; shape: ShapeType; fillColor: string; strokeColor: string; strokeWidth: number; }
+export type Layer = TextLayer | ImageLayer | ShapeLayer;
 
-type CanvasState = { layers: Layer[]; backgroundColor: string; width: number; height: number; };
+export type CanvasState = { layers: Layer[]; backgroundColor: string; width: number; height: number; };
 type HistoryState = { past: CanvasState[]; present: CanvasState; future: CanvasState[]; };
 
 type HistoryAction = 
     | { type: 'SET_STATE'; newState: Partial<CanvasState>, withHistory: boolean }
     | { type: 'UNDO' }
     | { type: 'REDO' };
+    
+type InteractionState = {
+    type: 'move' | 'scale' | 'rotate' | 'pan';
+    handle?: Handle;
+    initialLayerState?: Layer;
+    initialPoint: { x: number; y: number; }; // in world coordinates for layer interactions
+    initialScreenPoint: { x: number; y: number; }; // in screen coordinates for panning
+    initialPan?: { x: number; y: number; };
+    layerCenter?: { x: number; y: number; };
+    aspectRatio?: number;
+} | null;
 
-const FONT_FAMILES = ['Plus Jakarta Sans', 'Bebas Neue', 'Caveat', 'Arial', 'Verdana', 'Times New Roman'];
 const CANVAS_PRESETS: {[key: string]: {w: number, h: number}} = { 'Instagram Post (1:1)': { w: 1080, h: 1080 }, 'Instagram Story (9:16)': { w: 1080, h: 1920 }, 'Facebook Post': { w: 1200, h: 630 }, 'Twitter Post': { w: 1600, h: 900 } };
+const HANDLE_SIZE = 8;
+const ROTATION_HANDLE_OFFSET = 20;
 
 // --- HISTORY REDUCER ---
 const historyReducer = (state: HistoryState, action: HistoryAction): HistoryState => {
@@ -47,13 +61,18 @@ const historyReducer = (state: HistoryState, action: HistoryAction): HistoryStat
     }
 };
 
-// --- HELPER UI ---
-const PropertyInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string, suffix?: string }> = ({ label, suffix, ...props }) => ( <div className="grid grid-cols-2 items-center gap-2"><label className="text-text-muted text-xs truncate">{label}</label><div className="relative"><input {...props} className={`w-full bg-background border border-border-main rounded p-1 text-sm ${suffix ? 'pr-6' : ''}`}/><span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted">{suffix}</span></div></div>);
-const PropertyTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><textarea {...props} className="w-full bg-background border border-border-main rounded p-1.5 text-sm"/></div>);
-const PropertySelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string, children: React.ReactNode }> = ({ label, children, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><select {...props} className="w-full bg-background border border-border-main rounded p-1.5 text-sm">{children}</select></div>);
-const PropertyColorInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => ( <div className="grid grid-cols-2 items-center gap-2"><label className="text-text-muted text-xs truncate">{label}</label><input type="color" {...props} className="w-full h-8 p-0.5 bg-background border border-border-main rounded" /></div>);
+// --- HELPER UI & MATH ---
+export const PropertyInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string, suffix?: string }> = ({ label, suffix, ...props }) => ( <div className="grid grid-cols-2 items-center gap-2"><label className="text-text-muted text-xs truncate">{label}</label><div className="relative"><input {...props} className={`w-full bg-background border border-border-main rounded p-1 text-sm ${suffix ? 'pr-6' : ''}`}/><span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted">{suffix}</span></div></div>);
+export const PropertyTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><textarea {...props} className="w-full bg-background border border-border-main rounded p-1.5 text-sm"/></div>);
+export const PropertySelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string, children: React.ReactNode }> = ({ label, children, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><select {...props} className="w-full bg-background border border-border-main rounded p-1.5 text-sm">{children}</select></div>);
+export const PropertyColorInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => ( <div className="grid grid-cols-2 items-center gap-2"><label className="text-text-muted text-xs truncate">{label}</label><input type="color" {...props} className="w-full h-8 p-0.5 bg-background border border-border-main rounded" /></div>);
 const IconButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { title: string, isActive?: boolean, children: React.ReactNode }> = ({ title, isActive, children, ...props }) => <button title={title} {...props} className={`w-12 h-12 flex items-center justify-center rounded-lg transition-colors ${isActive ? 'bg-splash text-white' : 'text-text-muted hover:bg-border-light'}`}>{children}</button>;
-const PanelSection: React.FC<{title: string, children: React.ReactNode}> = ({title, children}) => <details className="border-b border-border-main" open><summary className="font-bold text-text-header text-xs py-2 cursor-pointer">{title}</summary><div className="pb-3 space-y-3">{children}</div></details>
+export const PanelSection: React.FC<{title: string, children: React.ReactNode, defaultOpen?: boolean}> = ({title, children, defaultOpen = true}) => <details className="border-b border-border-main" open={defaultOpen}><summary className="font-bold text-text-header text-xs py-2 cursor-pointer uppercase tracking-wider">{title}</summary><div className="pb-3 space-y-3">{children}</div></details>
+const rotatePoint = (point: {x:number, y:number}, center: {x:number, y:number}, angle: number) => {
+    const rad = angle * Math.PI / 180; const cos = Math.cos(rad); const sin = Math.sin(rad);
+    const x = point.x - center.x; const y = point.y - center.y;
+    return { x: x * cos - y * sin + center.x, y: x * sin + y * cos + center.y };
+};
 
 // --- NEW DOCUMENT MODAL ---
 const NewDocumentModal: React.FC<{onClose: () => void, onCreate: (w:number, h:number, bg:string) => void}> = ({onClose, onCreate}) => {
@@ -106,6 +125,7 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     
     const [viewTransform, setViewTransform] = useState({ zoom: 0.5, pan: { x: 0, y: 0 } });
     const isSpacePressed = useRef(false);
+    const [interactionState, setInteractionState] = useState<InteractionState>(null);
 
     const setState = (newState: Partial<CanvasState>, withHistory = true) => dispatchHistory({ type: 'SET_STATE', newState, withHistory });
     const undo = () => { playSound('select'); dispatchHistory({ type: 'UNDO' }); };
@@ -113,86 +133,48 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     
     // --- CANVAS DRAWING LOGIC ---
     const redrawCanvas = useCallback(() => {
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext('2d');
-        const container = canvasContainerRef.current;
+        const canvas = canvasRef.current; const ctx = canvas?.getContext('2d'); const container = canvasContainerRef.current;
         if (!canvas || !ctx || !container) return;
-        
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
-
+        canvas.width = container.clientWidth; canvas.height = container.clientHeight;
         ctx.save();
-        // Background
         ctx.fillStyle = '#18181b'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.translate(viewTransform.pan.x, viewTransform.pan.y); ctx.scale(viewTransform.zoom, viewTransform.zoom);
+        ctx.fillStyle = backgroundColor; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 20;
+        ctx.fillRect(0, 0, width, height); ctx.shadowBlur = 0;
 
-        // Apply View Transform
-        ctx.translate(viewTransform.pan.x, viewTransform.pan.y);
-        ctx.scale(viewTransform.zoom, viewTransform.zoom);
-
-        // Canvas itself
-        ctx.fillStyle = backgroundColor;
-        ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 20;
-        ctx.fillRect(0, 0, width, height);
-        ctx.shadowBlur = 0;
-
-        // Draw Layers
         [...layers].forEach(layer => {
             if (!layer.isVisible) return;
-            ctx.save();
-            ctx.globalAlpha = layer.opacity / 100;
-            
-            // Apply layer transforms
+            ctx.save(); ctx.globalAlpha = layer.opacity / 100;
             ctx.translate(layer.x + layer.width / 2, layer.y + layer.height / 2);
             ctx.rotate(layer.rotation * Math.PI / 180);
             ctx.translate(-(layer.x + layer.width / 2), -(layer.y + layer.height / 2));
-            
-            if (layer.type === 'image' && layer.image.complete) {
-                ctx.drawImage(layer.image, layer.x, layer.y, layer.width, layer.height);
+            if (layer.type === 'image' && layer.image.complete) { ctx.drawImage(layer.image, layer.x, layer.y, layer.width, layer.height);
             } else if (layer.type === 'text') {
-                ctx.font = `${layer.size}px ${layer.font}`;
-                ctx.fillStyle = layer.color;
-                ctx.textBaseline = 'top';
-                ctx.textAlign = layer.textAlign;
+                ctx.font = `${layer.size}px ${layer.font}`; ctx.fillStyle = layer.color; ctx.textBaseline = 'top'; ctx.textAlign = layer.textAlign;
                 const drawX = layer.textAlign === 'center' ? layer.x + layer.width/2 : layer.textAlign === 'right' ? layer.x + layer.width : layer.x;
                 ctx.fillText(layer.content, drawX, layer.y);
             } else if (layer.type === 'shape') {
-                ctx.fillStyle = layer.fillColor;
-                ctx.strokeStyle = layer.strokeColor;
-                ctx.lineWidth = layer.strokeWidth;
-                if (layer.shape === 'rectangle') {
-                    ctx.fillRect(layer.x, layer.y, layer.width, layer.height);
-                    if(layer.strokeWidth > 0) ctx.strokeRect(layer.x, layer.y, layer.width, layer.height);
-                } else { 
-                    ctx.beginPath(); 
-                    ctx.ellipse(layer.x + layer.width / 2, layer.y + layer.height / 2, layer.width / 2, layer.height / 2, 0, 0, 2 * Math.PI);
-                    ctx.fill();
-                    if(layer.strokeWidth > 0) ctx.stroke();
-                }
+                ctx.fillStyle = layer.fillColor; ctx.strokeStyle = layer.strokeColor; ctx.lineWidth = layer.strokeWidth;
+                if (layer.shape === 'rectangle') { ctx.fillRect(layer.x, layer.y, layer.width, layer.height); if(layer.strokeWidth > 0) ctx.strokeRect(layer.x, layer.y, layer.width, layer.height);
+                } else { ctx.beginPath(); ctx.ellipse(layer.x + layer.width / 2, layer.y + layer.height / 2, layer.width / 2, layer.height / 2, 0, 0, 2 * Math.PI); ctx.fill(); if(layer.strokeWidth > 0) ctx.stroke(); }
             }
             ctx.restore();
         });
         
-        // Draw selection handles
         const selectedLayer = layers.find(l => l.id === selectedLayerId);
         if (selectedLayer) {
             ctx.save();
             ctx.translate(selectedLayer.x + selectedLayer.width / 2, selectedLayer.y + selectedLayer.height / 2);
             ctx.rotate(selectedLayer.rotation * Math.PI / 180);
-            
-            const handleSize = 8 / viewTransform.zoom;
-            ctx.strokeStyle = 'rgb(var(--c-splash))'; ctx.lineWidth = 1 / viewTransform.zoom; ctx.fillStyle = 'white';
+            const handleSize = HANDLE_SIZE / viewTransform.zoom; ctx.strokeStyle = 'rgb(var(--c-splash))'; ctx.lineWidth = 1 / viewTransform.zoom; ctx.fillStyle = 'white';
             ctx.strokeRect(-selectedLayer.width / 2, -selectedLayer.height / 2, selectedLayer.width, selectedLayer.height);
-
-            // Corner handles
             ctx.fillRect(-selectedLayer.width/2 - handleSize/2, -selectedLayer.height/2 - handleSize/2, handleSize, handleSize);
             ctx.fillRect(selectedLayer.width/2 - handleSize/2, -selectedLayer.height/2 - handleSize/2, handleSize, handleSize);
             ctx.fillRect(-selectedLayer.width/2 - handleSize/2, selectedLayer.height/2 - handleSize/2, handleSize, handleSize);
             ctx.fillRect(selectedLayer.width/2 - handleSize/2, selectedLayer.height/2 - handleSize/2, handleSize, handleSize);
-            
-            // Rotation handle
-            ctx.beginPath(); ctx.moveTo(0, -selectedLayer.height / 2); ctx.lineTo(0, -selectedLayer.height / 2 - handleSize * 2); ctx.stroke();
-            ctx.beginPath(); ctx.arc(0, -selectedLayer.height / 2 - handleSize * 2, handleSize / 1.5, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
-            
+            const rotHandleOffset = ROTATION_HANDLE_OFFSET / viewTransform.zoom;
+            ctx.beginPath(); ctx.moveTo(0, -selectedLayer.height / 2); ctx.lineTo(0, -selectedLayer.height / 2 - rotHandleOffset); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, -selectedLayer.height / 2 - rotHandleOffset, handleSize / 1.5, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
             ctx.restore();
         }
         ctx.restore();
@@ -201,11 +183,9 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     useEffect(() => { if (show && canvasState === 'editing') redrawCanvas(); }, [show, redrawCanvas, canvasState]);
     useEffect(() => { const handler = () => { if(canvasState === 'editing') redrawCanvas()}; window.addEventListener('resize', handler); return () => window.removeEventListener('resize', handler);}, [canvasState, redrawCanvas]);
 
-    // --- LAYER & STATE MANAGEMENT ---
     const updateLayer = (id: number, props: Partial<Layer>, withHistory = true) => setState({ layers: layers.map(l => (l.id === id ? { ...l, ...props } : l)) }, withHistory);
     const addLayer = (type: 'text' | 'shape' | 'image', options: any = {}) => {
-        let newLayer: Layer;
-        const common = { id: Date.now(), x: (width/2)-75, y: (height/2)-50, rotation: 0, isVisible: true, isLocked: false, opacity: 100 };
+        let newLayer: Layer; const common = { id: Date.now(), x: (width/2)-75, y: (height/2)-50, rotation: 0, isVisible: true, isLocked: false, opacity: 100 };
         if (type === 'text') { newLayer = { ...common, name: "Teks Baru", type: 'text', content: 'Teks Baru', font: 'Plus Jakarta Sans', size: 48, color: '#FFFFFF', width: 200, height: 50, textAlign: 'left' }; }
         else if (type === 'image') { newLayer = { ...common, name: options.name || "Gambar", type: 'image', image: options.image, width: options.image.width, height: options.image.height }; }
         else { newLayer = { ...common, name: "Bentuk Baru", type: 'shape', shape: options.shapeType!, fillColor: '#c026d3', strokeColor: '#000000', strokeWidth: 0, width: 150, height: 150 }; }
@@ -213,72 +193,159 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     };
     const deleteLayer = (id: number) => { setState({ layers: layers.filter(l => l.id !== id) }); if(selectedLayerId === id) setSelectedLayerId(null); };
 
-    // --- IMAGE UPLOAD ---
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => addLayer('image', { image: img, name: file.name });
-            img.src = event.target?.result as string;
-        };
+        const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader();
+        reader.onload = (event) => { const img = new Image(); img.onload = () => addLayer('image', { image: img, name: file.name }); img.src = event.target?.result as string; };
         reader.readAsDataURL(file);
     };
-
+    
     // --- CANVAS INTERACTIONS ---
-    // FIX: Defined placeholder for handleCanvasMouseDown to resolve reference error.
+    const screenToWorld = useCallback((screenX: number, screenY: number) => ({ x: (screenX - viewTransform.pan.x) / viewTransform.zoom, y: (screenY - viewTransform.pan.y) / viewTransform.zoom }), [viewTransform]);
+    
+    const getHandleAtPoint = useCallback((point: {x:number, y:number}, layer: Layer): Handle | null => {
+        const { x, y, width, height, rotation } = layer; const center = { x: x + width/2, y: y + height/2 };
+        const handleSize = HANDLE_SIZE / viewTransform.zoom; const rotHandleOffset = ROTATION_HANDLE_OFFSET / viewTransform.zoom;
+        const handles = {
+            tl: { x: x, y: y }, tr: { x: x + width, y: y }, bl: { x: x, y: y + height }, br: { x: x + width, y: y + height },
+            rot: { x: center.x, y: y - rotHandleOffset }
+        };
+        for(const [key, handlePos] of Object.entries(handles)) {
+            const rotatedHandle = rotatePoint(handlePos, center, rotation);
+            if (Math.abs(point.x - rotatedHandle.x) < handleSize && Math.abs(point.y - rotatedHandle.y) < handleSize) return key as Handle;
+        }
+        return null;
+    }, [viewTransform.zoom]);
+
+    const isPointInLayer = (point: {x:number, y:number}, layer: Layer) => {
+        const center = { x: layer.x + layer.width/2, y: layer.y + layer.height/2 };
+        const localPoint = rotatePoint(point, center, -layer.rotation);
+        return localPoint.x >= layer.x && localPoint.x <= layer.x + layer.width && localPoint.y >= layer.y && localPoint.y <= layer.y + layer.height;
+    };
+
     const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-      // Placeholder: Full logic is complex and was intentionally omitted in the original code.
-      // This stub prevents a compile error.
+        const { offsetX: screenX, offsetY: screenY } = e.nativeEvent; const worldPoint = screenToWorld(screenX, screenY);
+        if (isSpacePressed.current || activeTool === 'hand') { setInteractionState({ type: 'pan', initialPoint: worldPoint, initialScreenPoint: {x: screenX, y: screenY}, initialPan: viewTransform.pan }); return; }
+        const selectedLayer = layers.find(l => l.id === selectedLayerId);
+        if (selectedLayer) {
+            const handle = getHandleAtPoint(worldPoint, selectedLayer);
+            if (handle) {
+                const type = handle === 'rot' ? 'rotate' : 'scale';
+                setInteractionState({ type, handle, initialLayerState: selectedLayer, initialPoint: worldPoint, initialScreenPoint: {x: screenX, y: screenY}, layerCenter: {x: selectedLayer.x + selectedLayer.width/2, y: selectedLayer.y + selectedLayer.height/2}, aspectRatio: selectedLayer.width / selectedLayer.height });
+                return;
+            }
+        }
+        for (const layer of [...layers].reverse()) {
+            if (isPointInLayer(worldPoint, layer)) {
+                setSelectedLayerId(layer.id);
+                setInteractionState({ type: 'move', initialLayerState: layer, initialPoint: worldPoint, initialScreenPoint: {x: screenX, y: screenY} });
+                return;
+            }
+        }
+        setSelectedLayerId(null);
     };
     
+    const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!interactionState) return;
+        const { offsetX: screenX, offsetY: screenY } = e.nativeEvent; const worldPoint = screenToWorld(screenX, screenY);
+        const dx = worldPoint.x - interactionState.initialPoint.x; const dy = worldPoint.y - interactionState.initialPoint.y;
+        
+        switch (interactionState.type) {
+            case 'pan': setViewTransform(v => ({...v, pan: { x: interactionState.initialPan!.x + (screenX - interactionState.initialScreenPoint.x), y: interactionState.initialPan!.y + (screenY - interactionState.initialScreenPoint.y) }})); break;
+            case 'move': updateLayer(interactionState.initialLayerState!.id, { x: interactionState.initialLayerState!.x + dx, y: interactionState.initialLayerState!.y + dy }, false); break;
+            case 'rotate':
+                const angle = Math.atan2(worldPoint.y - interactionState.layerCenter!.y, worldPoint.x - interactionState.layerCenter!.x) * 180 / Math.PI + 90;
+                updateLayer(interactionState.initialLayerState!.id, { rotation: angle }, false);
+                break;
+            case 'scale':
+                const { initialLayerState: initial, layerCenter, handle, aspectRatio } = interactionState;
+                if (!initial || !layerCenter || !handle || !aspectRatio) break;
+                
+                const localMouse = rotatePoint(worldPoint, layerCenter, -initial.rotation);
+                let newWidth = initial.width, newHeight = initial.height, newX = initial.x, newY = initial.y;
+
+                if (handle.includes('r')) newWidth = localMouse.x - (layerCenter.x - initial.width/2);
+                if (handle.includes('l')) newWidth = (layerCenter.x + initial.width/2) - localMouse.x;
+                if (handle.includes('b')) newHeight = localMouse.y - (layerCenter.y - initial.height/2);
+                if (handle.includes('t')) newHeight = (layerCenter.y + initial.height/2) - localMouse.y;
+                
+                newWidth = Math.max(newWidth, 10); newHeight = Math.max(newHeight, 10);
+                newHeight = newWidth / aspectRatio;
+
+                newX = layerCenter.x - newWidth/2;
+                if(handle.includes('l')) newX = layerCenter.x + initial.width/2 - newWidth;
+                newY = layerCenter.y - newHeight/2;
+                if(handle.includes('t')) newY = layerCenter.y + initial.height/2 - newHeight;
+
+                const finalPos = rotatePoint({x: newX, y: newY}, layerCenter, initial.rotation);
+
+                updateLayer(initial.id, { width: newWidth, height: newHeight, x: finalPos.x, y: finalPos.y }, false);
+                break;
+        }
+        redrawCanvas();
+    };
+
+    const handleCanvasMouseUp = () => {
+        if (interactionState && (interactionState.type === 'move' || interactionState.type === 'scale' || interactionState.type === 'rotate')) {
+            const currentLayer = layers.find(l => l.id === interactionState.initialLayerState!.id);
+            if (currentLayer && JSON.stringify(currentLayer) !== JSON.stringify(interactionState.initialLayerState)) {
+                setState({ layers: [...layers] }, true);
+            }
+        }
+        setInteractionState(null);
+    };
+    
+    const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+        e.preventDefault(); const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9; const newZoom = Math.max(0.1, Math.min(viewTransform.zoom * zoomFactor, 5));
+        const mouseX = e.nativeEvent.offsetX; const mouseY = e.nativeEvent.offsetY;
+        const newPanX = mouseX - (mouseX - viewTransform.pan.x) * (newZoom / viewTransform.zoom);
+        const newPanY = mouseY - (mouseY - viewTransform.pan.y) * (newZoom / viewTransform.zoom);
+        setViewTransform({ zoom: newZoom, pan: { x: newPanX, y: newPanY } });
+    };
+
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => { if ((e.target as HTMLElement).tagName.match(/INPUT|TEXTAREA/)) return; if (e.code === 'Space' && !e.repeat) { e.preventDefault(); isSpacePressed.current = true; redrawCanvas(); } if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); } if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'Z' && e.shiftKey))) { e.preventDefault(); redo(); } if ((e.key === 'Delete' || e.key === 'Backspace') && selectedLayerId !== null) deleteLayer(selectedLayerId); };
-        const handleKeyUp = (e: KeyboardEvent) => { if (e.code === 'Space') { isSpacePressed.current = false; redrawCanvas(); } };
+        const handleKeyDown = (e: KeyboardEvent) => { if ((e.target as HTMLElement).tagName.match(/INPUT|TEXTAREA/)) return; if (e.code === 'Space' && !e.repeat) { e.preventDefault(); isSpacePressed.current = true; if(canvasRef.current) canvasRef.current.style.cursor='grabbing'; } if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); } if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'Z' && e.shiftKey))) { e.preventDefault(); redo(); } if ((e.key === 'Delete' || e.key === 'Backspace') && selectedLayerId !== null) deleteLayer(selectedLayerId); };
+        const handleKeyUp = (e: KeyboardEvent) => { if (e.code === 'Space') { isSpacePressed.current = false; if(canvasRef.current) canvasRef.current.style.cursor='default'; } };
         window.addEventListener('keydown', handleKeyDown); window.addEventListener('keyup', handleKeyUp);
         return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); };
-    }, [selectedLayerId, layers, redrawCanvas, undo, redo]); // Re-bind if selectedLayerId changes for delete key
-    
-    // ... other interaction handlers (mousedown, mousemove, mouseup, wheel) would go here, they are very complex ...
-    // For this rewrite, we'll focus on the UI and basic state management. The full transform logic is extensive.
+    }, [selectedLayerId, undo, redo, deleteLayer]);
 
     const handleCreateCanvas = (w:number, h:number, bg:string) => {
-        setState({ layers: [], backgroundColor: bg, width: w, height: h });
-        setCanvasState('editing');
-        // Fit canvas to view on creation
-        setTimeout(() => {
-            const container = canvasContainerRef.current;
-            if(container) {
-                const zoomX = container.clientWidth / (w + 100);
-                const zoomY = container.clientHeight / (h + 100);
-                const newZoom = Math.min(zoomX, zoomY, 1);
+        setState({ layers: [], backgroundColor: bg, width: w, height: h }); setCanvasState('editing');
+        setTimeout(() => { const container = canvasContainerRef.current; if(container) {
+                const zoomX = container.clientWidth / (w + 100); const zoomY = container.clientHeight / (h + 100); const newZoom = Math.min(zoomX, zoomY, 1);
                 setViewTransform({ zoom: newZoom, pan: {x: (container.clientWidth - w * newZoom)/2, y: (container.clientHeight - h * newZoom)/2 }});
-            }
-        }, 10);
+        }}, 10);
     };
 
     const handleExport = () => {
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = width;
-        tempCanvas.height = height;
-        const tctx = tempCanvas.getContext('2d');
-        if(!tctx) return;
-        // This is a simplified redraw, for a real export you'd replicate the full redraw logic without view transforms
-        tctx.fillStyle = backgroundColor;
-        tctx.fillRect(0,0,width,height);
-        layers.forEach(layer => {
-             if (layer.type === 'image' && layer.image.complete) {
-                tctx.drawImage(layer.image, layer.x, layer.y, layer.width, layer.height);
-            }
-            // ... draw other layer types
-        });
-        const link = document.createElement('a');
-        link.download = `sotoshop-export.png`;
-        link.href = tempCanvas.toDataURL('image/png');
-        link.click();
+        const tempCanvas = document.createElement('canvas'); tempCanvas.width = width; tempCanvas.height = height; const tctx = tempCanvas.getContext('2d'); if(!tctx) return;
+        tctx.fillStyle = backgroundColor; tctx.fillRect(0,0,width,height);
+        layers.forEach(layer => { if (layer.type === 'image' && layer.image.complete) { tctx.drawImage(layer.image, layer.x, layer.y, layer.width, layer.height); } }); // simplified
+        const link = document.createElement('a'); link.download = `sotoshop-export.png`; link.href = tempCanvas.toDataURL('image/png'); link.click();
     }
     
+    // --- LAYER ACTIONS ---
+    const handleMoveLayer = (direction: 'up' | 'down') => {
+        if (selectedLayerId === null) return;
+        const currentIndex = layers.findIndex(l => l.id === selectedLayerId);
+        if (currentIndex === -1) return;
+        const newIndex = direction === 'up' ? currentIndex + 1 : currentIndex - 1;
+        if (newIndex < 0 || newIndex >= layers.length) return;
+        const newLayers = [...layers];
+        [newLayers[currentIndex], newLayers[newIndex]] = [newLayers[newIndex], newLayers[currentIndex]];
+        setState({ layers: newLayers });
+    };
+
+    const handleDuplicateLayer = () => {
+        const layerToDuplicate = layers.find(l => l.id === selectedLayerId);
+        if (!layerToDuplicate) return;
+        const newLayer = { ...layerToDuplicate, id: Date.now(), x: layerToDuplicate.x + 20, y: layerToDuplicate.y + 20, name: `${layerToDuplicate.name} (copy)` };
+        const currentIndex = layers.findIndex(l => l.id === selectedLayerId);
+        const newLayers = [...layers.slice(0, currentIndex + 1), newLayer, ...layers.slice(currentIndex + 1)];
+        setState({ layers: newLayers });
+        setSelectedLayerId(newLayer.id);
+    };
+
     const selectedLayer = layers.find(l => l.id === selectedLayerId);
     if (!show) return null;
 
@@ -300,41 +367,23 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                             <IconButton title="Upload Image" onClick={() => fileInputRef.current?.click()}><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></IconButton>
                             <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
                         </aside>
-                        <main ref={canvasContainerRef} className="flex-grow flex items-center justify-center bg-background overflow-hidden" style={{ cursor: isSpacePressed.current ? 'grabbing' : 'default' }}>
-                            <canvas ref={canvasRef} onMouseDown={handleCanvasMouseDown} />
+                        <main ref={canvasContainerRef} className="flex-grow flex items-center justify-center bg-background overflow-hidden relative">
+                            <canvas ref={canvasRef} onMouseDown={handleCanvasMouseDown} onMouseMove={handleCanvasMouseMove} onMouseUp={handleCanvasMouseUp} onMouseLeave={handleCanvasMouseUp} onWheel={handleWheel} />
+                             <QuickActionsToolbar 
+                                layer={selectedLayer} 
+                                transform={viewTransform}
+                                onDelete={() => selectedLayer && deleteLayer(selectedLayer.id)}
+                                onDuplicate={handleDuplicateLayer}
+                                onMoveUp={() => handleMoveLayer('up')}
+                                onMoveDown={() => handleMoveLayer('down')}
+                            />
                         </main>
-                        <aside className="w-64 flex-shrink-0 bg-surface p-3 border-l border-border-main overflow-y-auto text-sm">
-                            <div className="flex mb-2 border-b border-border-main">
-                                <button className="flex-1 p-2 text-xs font-bold text-center border-b-2 border-splash text-splash">Properties</button>
-                                <button className="flex-1 p-2 text-xs font-bold text-center border-b-2 border-transparent text-text-muted hover:text-text-header">Layers</button>
-                            </div>
-                            {selectedLayer ? (
-                                <div className="space-y-3">
-                                    <PanelSection title="Transform">
-                                        <div className="grid grid-cols-2 gap-2"><PropertyInput label="X" type="number" value={Math.round(selectedLayer.x)} onChange={e => updateLayer(selectedLayer.id, { x: +e.target.value })} /><PropertyInput label="Y" type="number" value={Math.round(selectedLayer.y)} onChange={e => updateLayer(selectedLayer.id, { y: +e.target.value })} /></div>
-                                        <div className="grid grid-cols-2 gap-2"><PropertyInput label="Width" type="number" value={Math.round(selectedLayer.width)} onChange={e => updateLayer(selectedLayer.id, { width: +e.target.value })} /><PropertyInput label="Height" type="number" value={Math.round(selectedLayer.height)} onChange={e => updateLayer(selectedLayer.id, { height: +e.target.value })} /></div>
-                                        <PropertyInput label="Rotation" type="number" value={selectedLayer.rotation} onChange={e => updateLayer(selectedLayer.id, { rotation: +e.target.value })} suffix="°" />
-                                    </PanelSection>
-                                    
-                                    {selectedLayer.type === 'text' && (
-                                        <PanelSection title="Text">
-                                            <PropertyTextarea label="Content" value={selectedLayer.content} onChange={e => updateLayer(selectedLayer.id, { content: e.target.value })}/>
-                                            <PropertySelect label="Font" value={selectedLayer.font} onChange={e => updateLayer(selectedLayer.id, { font: e.target.value })}>{FONT_FAMILES.map(f => <option key={f} value={f}>{f}</option>)}</PropertySelect>
-                                            <div className="grid grid-cols-2 gap-2"><PropertyInput label="Size" type="number" value={selectedLayer.size} onChange={e => updateLayer(selectedLayer.id, { size: +e.target.value })} suffix="px" /><PropertyColorInput label="Color" value={selectedLayer.color} onChange={e => updateLayer(selectedLayer.id, { color: e.target.value })} /></div>
-                                        </PanelSection>
-                                    )}
-
-                                    {selectedLayer.type === 'shape' && (
-                                        <PanelSection title="Appearance">
-                                            <PropertyColorInput label="Fill" value={selectedLayer.fillColor} onChange={e => updateLayer(selectedLayer.id, { fillColor: e.target.value })} />
-                                            <PropertyColorInput label="Stroke" value={selectedLayer.strokeColor} onChange={e => updateLayer(selectedLayer.id, { strokeColor: e.target.value })} />
-                                            <PropertyInput label="Stroke Width" type="number" min="0" value={selectedLayer.strokeWidth} onChange={e => updateLayer(selectedLayer.id, { strokeWidth: +e.target.value })} suffix="px" />
-                                        </PanelSection>
-                                    )}
-                                    <Button onClick={() => deleteLayer(selectedLayerId)} size="small" variant="secondary" className="w-full !border-red-500/50 !text-red-400 hover:!bg-red-500/20">Delete Layer</Button>
-                                </div>
-                            ) : (<div><h4 className="font-bold text-text-header text-xs mb-2">Canvas</h4><PropertyColorInput label="Background" value={backgroundColor} onChange={e => setState({ backgroundColor: e.target.value })}/></div>)}
-                        </aside>
+                        <PropertiesPanel 
+                            selectedLayer={selectedLayer}
+                            canvasState={currentCanvas}
+                            onUpdateLayer={updateLayer}
+                            onUpdateCanvas={setState}
+                        />
                     </div>
                 </>
             )}
