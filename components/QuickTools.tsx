@@ -103,18 +103,18 @@ const QuickTools: React.FC<QuickToolsProps> = () => {
     return (
         <div className="flex flex-col gap-8 max-w-4xl mx-auto animate-content-fade-in">
             <div className="text-center">
-                <h2 className="text-xl md:text-2xl font-bold text-splash mb-2">Warung Ide Arcade 🕹️</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-splash mb-2">Generator Ide Kreatif</h2>
                 <p className="text-text-muted">
                     Butuh inspirasi cepat? Di sini tempatnya! Mang AI sediain alat-alat bantu praktis buat kebutuhan branding dadakan lo.
                 </p>
             </div>
 
-            <div className="arcade-wrapper">
-                <div className="arcade-cabinet">
-                    <div className="arcade-top">
-                        <h2 className="arcade-title">Warung Ide</h2>
+            <div className="creative-console-wrapper">
+                <div className="creative-console">
+                    <div className="console-header">
+                        <h2 className="console-title">Generator Ide Kreatif</h2>
                     </div>
-                    <div className="arcade-monitor-frame">
+                    <div className="console-monitor-frame">
                         <div className="crt-screen p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto">
                             
                             {/* --- TABS --- */}
@@ -183,9 +183,16 @@ const QuickTools: React.FC<QuickToolsProps> = () => {
                             <p className="text-center text-xs text-splash/50">MANG AI SYSTEMS - READY PLAYER ONE - +{XP_REWARD} XP</p>
                         </div>
                     </div>
-                    <div className="control-panel">
-                        <div className="joystick"><div className="joystick-base"></div><div className="joystick-stick"><div className="joystick-ball"></div></div></div>
-                        <div className="arcade-buttons"><div className="arcade-button red"></div><div className="arcade-button blue"></div><div className="arcade-button yellow"></div></div>
+                    <div className="console-controls">
+                       <div className="control-group">
+                            <div className="toggle-switch"><div className="switch-lever"></div></div>
+                            <div className="toggle-switch on"><div className="switch-lever"></div></div>
+                            <div className="toggle-switch"><div className="switch-lever"></div></div>
+                        </div>
+                        <div className="control-group">
+                            <div className="chunky-button red"></div>
+                            <div className="chunky-button blue"></div>
+                        </div>
                     </div>
                 </div>
             </div>

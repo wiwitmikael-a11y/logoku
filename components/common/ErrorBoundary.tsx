@@ -16,10 +16,7 @@ interface State {
   isCopied?: boolean;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to modern class property syntax for state initialization and an arrow function for the method binding.
-  // The constructor-based approach was still causing type resolution issues for `this.props` and `this.state`,
-  // which suggests the build configuration is better suited for this more modern syntax.
+class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: undefined,
