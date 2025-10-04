@@ -2,7 +2,7 @@
 // file: components/AIPetVisual.tsx
 
 import React from 'react';
-import type { AIPetState } from '../types'; // Asumsikan Anda punya file types.ts
+import type { AIPetState } from '../types';
 import { useAIPetVisuals } from '../hooks/useAIPetVisuals';
 
 interface AIPetVisualProps {
@@ -12,62 +12,29 @@ interface AIPetVisualProps {
 const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState }) => {
   const { stats, stage } = petState;
   
-  const {
-    SelectedBody,
-    SelectedEyes,
-    SelectedMouth,
-    SelectedNose, // Ambil hidung dari hook
-    SelectedHeadAccessory,
-    SelectedBackAccessory,
-    SelectedTailAccessory,
-    SelectedPattern,
-    bodyFill, 
-    accentColor
-  } = useAIPetVisuals(petState);
+  // useAIPetVisuals now returns a Render function
+  const visuals = useAIPetVisuals(petState);
 
-  const filterStyle = stats.energy < 30 ? `saturate(${stats.energy + 20}%) opacity(0.8)` : 'none';
+  // If the hook is not ready, for example during initial state calculation.
+  if (!visuals || !visuals.Render) {
+    return <svg viewBox="0 0 100 100" />;
+  }
+  
+  const { Render } = visuals;
+
+  const filterStyle: React.CSSProperties = {
+    filter: stats.energy < 30 ? `saturate(${stats.energy + 20}%) opacity(0.8)` : 'none',
+    overflow: 'visible',
+  };
   const animationClass = stage !== 'egg' ? 'animate-breathing-ai' : ''; 
 
-  return (
-    <svg viewBox="0 0 100 100" style={{ filter: filterStyle, overflow: 'visible' }} className={animationClass}>
-      
-      <defs>
-        {SelectedPattern}
-      </defs>
+  const PetComponent = Render();
 
-      {SelectedBackAccessory && (
-        <g>
-          {SelectedBackAccessory}
-        </g>
-      )}
-
-      <g>
-        {SelectedBody}
-        {SelectedPattern && <path d={(SelectedBody as any).props.d} fill={`url(#${(SelectedPattern as any).props.id})`} />}
-      </g>
-      
-      {SelectedHeadAccessory && (
-        <g>
-          {SelectedHeadAccessory}
-        </g>
-      )}
-
-      {SelectedTailAccessory && (
-        <g>
-          {SelectedTailAccessory}
-        </g>
-      )}
-
-      {stage !== 'egg' && (
-        <g fill="none" stroke="#1c1c20" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          {SelectedEyes}
-          {SelectedNose} 
-          {SelectedMouth}
-        </g>
-      )}
-      
-    </svg>
-  );
+  // Clone the SVG element returned by Render and add our dynamic props
+  return React.cloneElement(PetComponent, {
+      style: { ...filterStyle, ...PetComponent.props.style },
+      className: `${animationClass} ${PetComponent.props.className || ''}`
+  });
 };
 
 export default AIPetVisual;
