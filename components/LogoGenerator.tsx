@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, Suspense, useRef } from 'react
 import { generateLogoOptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+import { useAIPet } from '../contexts/AIPetContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -127,6 +128,7 @@ const logoStyles = [
 
 const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const { notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState('');
@@ -154,8 +156,9 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   
   useEffect(() => {
     const timer = setTimeout(() => setShowTip(true), 4000);
-    return () => clearTimeout(timer);
-  }, []);
+    const interval = setInterval(() => notifyPetOfActivity('designing_logo'), 2000);
+    return () => { clearTimeout(timer); clearInterval(interval); };
+  }, [notifyPetOfActivity]);
 
   useEffect(() => {
     if (logos.length > 0 && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });

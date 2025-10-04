@@ -18,7 +18,7 @@ interface AIPetContextType {
   handlePlayGame: (gameType: 'color' | 'pattern') => Promise<boolean>;
   onGameWin: (statBoost: Partial<AIPetStats>) => void;
   onGameLose: () => void;
-  notifyPetOfActivity: (activityType: string) => void;
+  notifyPetOfActivity: (activityType: string, data?: any) => void;
 }
 
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
@@ -26,12 +26,29 @@ const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 // A simple debounce hook
 const useDebounce = (callback: (...args: any[]) => void, delay: number) => {
     const timeoutRef = useRef<number | null>(null);
-    return (...args: any[]) => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    const savedCallback = useRef(callback);
+
+    useEffect(() => {
+        savedCallback.current = callback;
+    }, [callback]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    return useCallback((...args: any[]) => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
         timeoutRef.current = window.setTimeout(() => {
-            callback(...args);
+            savedCallback.current(...args);
         }, delay);
-    };
+    }, [delay]);
 };
 
 export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -40,15 +57,18 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isInteracting, setIsInteracting] = useState(false);
   const gameLoopRef = useRef<number>();
   
-  // Debounced function for saving to Supabase
-  const debouncedSave = useDebounce(async (newState: AIPetState) => {
+  // FIX: The callback is wrapped in useCallback to make it stable.
+  // This, combined with the robust useDebounce hook, prevents an infinite loop.
+  const debouncedSaveCallback = useCallback(async (newState: AIPetState) => {
     if (!user) return;
     const { error } = await supabase
       .from('profiles')
       .update({ aipet_state: newState })
       .eq('id', user.id);
     if (error) console.error("Failed to sync AIPet state to Supabase:", error);
-  }, 2000); // Save every 2 seconds of inactivity
+  }, [user]);
+  
+  const debouncedSave = useDebounce(debouncedSaveCallback, 2000); // Save every 2 seconds of inactivity
 
   // Initialize pet state from profile or create new
   useEffect(() => {
@@ -70,6 +90,9 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   // The main "Game Loop" for organic stat decay
   useEffect(() => {
+    // For simplicity, let's assume the widget being open implies activity
+    const isOpen = true; // This can be replaced with actual visibility check
+
     const loop = () => {
       setPetState(prev => {
         if (!prev || prev.stage === 'egg' || !isOpen) return prev;
@@ -97,8 +120,6 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       gameLoopRef.current = requestAnimationFrame(loop);
     };
     
-    // For simplicity, let's assume the widget being open implies activity
-    const isOpen = true; // This can be replaced with actual visibility check
     if(isOpen) gameLoopRef.current = requestAnimationFrame(loop);
 
     return () => {
@@ -156,9 +177,39 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     playSound('error');
   };
 
-  const notifyPetOfActivity = (activityType: string) => {
-      // Placeholder for future immersive features
-      console.log(`AIPet notified of activity: ${activityType}`);
+  const notifyPetOfActivity = (activityType: string, data?: any) => {
+      setPetState(prev => {
+        if (!prev || prev.stage === 'egg') return prev;
+        
+        const boost = (stat: number, amount: number) => Math.min(STAT_MAX, stat + amount);
+        let newStats = { ...prev.stats };
+
+        switch(activityType) {
+            case 'designing_logo':
+                newStats.creativity = boost(newStats.creativity, 0.1);
+                break;
+            case 'generating_captions':
+                newStats.intelligence = boost(newStats.intelligence, 0.1);
+                break;
+            case 'project_completed':
+                playSound('success');
+                handleInteraction(); // Trigger happy animation
+                newStats = {
+                    energy: boost(newStats.energy, 40),
+                    creativity: boost(newStats.creativity, 40),
+                    intelligence: boost(newStats.intelligence, 40),
+                };
+                break;
+            case 'user_idle':
+                newStats.energy = Math.max(0, newStats.energy - 0.5);
+                break;
+            // Add more cases here for 'style_choice', 'feed_item', etc.
+        }
+        
+        const newState = { ...prev, stats: newStats, lastUpdated: Date.now() };
+        debouncedSave(newState); // Save on significant events
+        return newState;
+      });
   };
 
   const value = {

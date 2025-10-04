@@ -4,6 +4,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+import { useAIPet } from '../contexts/AIPetContext';
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -22,6 +23,7 @@ const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Intera
 
 const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const { notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
   
   const [topic, setTopic] = useState('');
@@ -34,6 +36,11 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
   useEffect(() => {
     if (captions.length > 0 && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [captions]);
+
+  useEffect(() => {
+    const interval = setInterval(() => notifyPetOfActivity('generating_captions'), 3000);
+    return () => clearInterval(interval);
+  }, [notifyPetOfActivity]);
 
   const handleSubmit = useCallback(async () => {
     if (!topic || !projectData.brandInputs || !projectData.selectedPersona) return;

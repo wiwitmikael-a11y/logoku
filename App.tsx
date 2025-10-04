@@ -191,6 +191,7 @@ const App: React.FC = () => {
 
 const MainApp: React.FC = () => {
     const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, imageEditorState, closeImageEditor } = useAuth();
+    const { notifyPetOfActivity } = useAIPet();
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -267,6 +268,24 @@ const MainApp: React.FC = () => {
         if (previousAppState.current !== appState) { playSound('transition'); window.scrollTo(0, 0); }
         previousAppState.current = appState;
     }, [appState]);
+
+    // AIPet Idle Timer
+    useEffect(() => {
+        let idleTimeout: number;
+        const resetTimer = () => {
+            clearTimeout(idleTimeout);
+            idleTimeout = window.setTimeout(() => {
+                notifyPetOfActivity('user_idle');
+            }, 120000); // 2 minutes
+        };
+        const events = ['mousemove', 'keydown', 'mousedown', 'touchstart'];
+        events.forEach(event => window.addEventListener(event, resetTimer));
+        resetTimer();
+        return () => {
+            clearTimeout(idleTimeout);
+            events.forEach(event => window.removeEventListener(event, resetTimer));
+        };
+    }, [notifyPetOfActivity]);
 
     // Proactive AI Assistant
     useEffect(() => {
@@ -374,8 +393,10 @@ const MainApp: React.FC = () => {
         if (projectError) { setGeneralError(`Gagal menyimpan finalisasi project: ${projectError.message}`); return; } const newTotalCompleted = (profile.total_projects_completed ?? 0) + 1;
         await supabase.from('profiles').update({ total_projects_completed: newTotalCompleted }).eq('id', user.id); await addXp(500);
         if (newTotalCompleted === 1) await grantAchievement('BRAND_PERTAMA_LAHIR'); else if (newTotalCompleted === 5) await grantAchievement('SANG_KOLEKTOR'); else if (newTotalCompleted === 10) await grantAchievement('SULTAN_KONTEN');
-        await refreshProfile(); const updatedProject: Project = dbData as any; setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p)); handleReturnToDashboard(); showToast("Mantap! Project lo berhasil diselesaikan.");
-    }, [session, user, selectedProjectId, profile, grantFirstTimeCompletionBonus, addXp, grantAchievement, refreshProfile, handleReturnToDashboard, showToast]);
+        await refreshProfile(); const updatedProject: Project = dbData as any; setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+        notifyPetOfActivity('project_completed');
+        handleReturnToDashboard(); showToast("Mantap! Project lo berhasil diselesaikan.");
+    }, [session, user, selectedProjectId, profile, grantFirstTimeCompletionBonus, addXp, grantAchievement, refreshProfile, handleReturnToDashboard, showToast, notifyPetOfActivity]);
 
     const handleRegenerateTextAsset = useCallback(async <T,>(projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<T>, successMessage: string) => {
         setGeneralError(null); if ((profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
