@@ -5,7 +5,7 @@ import { GoogleGenAI, Chat } from "@google/genai";
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus } from './types';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // --- API Services ---
@@ -497,7 +497,14 @@ const MainApp: React.FC = () => {
             <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
             <LightImageEditor show={imageEditorState.isOpen} imageUrl={imageEditorState.imageUrl} onClose={closeImageEditor} />
-            <Sotoshop show={showSotoshop} onClose={() => setShowSotoshop(false)} />
+            <Sotoshop 
+                show={showSotoshop} 
+                onClose={() => setShowSotoshop(false)} 
+                profile={profile}
+                deductCredits={deductCredits}
+                setShowOutOfCreditsModal={setShowOutOfCreditsModal}
+                addXp={addXp}
+            />
         </Suspense>
       </>
     );

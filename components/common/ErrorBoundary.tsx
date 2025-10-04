@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -16,27 +16,32 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: Changed `extends Component` to `extends React.Component` and updated the import
-// to resolve TypeScript errors where properties from the base class (like `props` and `setState`)
-// were not being recognized. This makes the inheritance explicit and ensures type correctness.
-class ErrorBoundary extends React.Component<Props, State> {
-  state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+class ErrorBoundary extends Component<Props, State> {
+  // FIX: Switched from class property initializer to constructor for state and method binding.
+  // This is a more traditional and widely supported pattern for React class components that can
+  // resolve issues with `this` context in certain TypeScript/linting configurations, addressing
+  // errors where `setState` and `props` were reported as not existing on the component instance.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error: error, isCopied: false };
+    // This lifecycle method is called after an error has been thrown by a descendant component.
+    // It should return an object to update state.
+    return { hasError: true, error: error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Removed `private` keyword, making the method public.
-  // This is better practice for methods accessed from render event handlers and resolves potential type issues.
-  handleCopy = () => {
+  handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });

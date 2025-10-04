@@ -974,3 +974,54 @@ export const generateSocialMediaKitAssets = async (
         throw handleApiError(error, `Flash Preview (Social Media Kit)`);
     }
 };
+
+export const removeImageBackground = async (base64ImageData: string): Promise<string> => {
+    const ai = getAiClient();
+    try {
+        const data = base64ImageData.split(',')[1];
+        const mimeType = base64ImageData.match(/data:(.*);base64/)?.[1] || 'image/png';
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [
+                    { inlineData: { data, mimeType } },
+                    { text: "CRITICAL INSTRUCTION: Remove the background from this image. The output MUST be only the main subject with a fully transparent background. Do not add any new elements or change the subject." },
+                ],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        });
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
+            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+                 return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            }
+        }
+        const textResponse = response.text?.trim();
+        if (textResponse) throw new Error(`Model tidak mengembalikan gambar. Pesan dari AI: "${textResponse}"`);
+        throw new Error("Model failed to return an image for background removal.");
+    } catch (error) {
+        throw handleApiError(error, "AI Background Remover");
+    }
+};
+
+export const generateImageForCanvas = async (prompt: string): Promise<string> => {
+    try {
+        const ai = getAiClient();
+        // We will not enhance the prompt here to give user more direct control in the editor.
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: `award-winning digital painting, ${prompt}`,
+            config: {
+                numberOfImages: 1,
+                outputMimeType: 'image/png',
+                aspectRatio: '1:1',
+            },
+        });
+        
+        const base64ImageBytes = response.generatedImages[0].image.imageBytes;
+        return `data:image/png;base64,${base64ImageBytes}`;
+    } catch (error) {
+        throw handleApiError(error, "AI Image Generator");
+    }
+};
