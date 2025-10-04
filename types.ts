@@ -147,6 +147,7 @@ export interface AIPetState {
   // New visual representation
   atlas_url: string | null;
   manifest: AtlasManifest | null;
+  assembled_url: string | null; // URL for the fully assembled static image
 }
 
 

@@ -158,3 +158,31 @@ export const applyWatermark = (base64Image: string): Promise<string> => {
         img.onerror = () => reject(new Error('Failed to load image for watermarking.'));
     });
 };
+
+/**
+ * Crops a Base64 image using a bounding box.
+ * @param base64Image The source image as a Base64 data URL.
+ * @param bbox The bounding box [x, y, width, height] to crop.
+ * @returns A promise that resolves with the cropped image as a Base64 data URL.
+ */
+export const cropImage = (base64Image: string, bbox: [number, number, number, number]): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = base64Image;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return reject(new Error('Could not get canvas context'));
+            
+            const [x, y, width, height] = bbox;
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            ctx.drawImage(img, x, y, width, height, 0, 0, width, height);
+            
+            resolve(canvas.toDataURL());
+        };
+        img.onerror = () => reject(new Error('Failed to load image for cropping.'));
+    });
+};

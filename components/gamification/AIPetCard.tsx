@@ -77,7 +77,11 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                         <div className="relative mx-1.5 my-1.5 border-4 border-yellow-700 rounded-md shadow-inner shadow-black/50 animate-card-shine">
                             <div className="absolute inset-0 bg-background" style={{ backgroundImage: 'radial-gradient(circle, rgb(var(--c-border)) 0%, transparent 70%)' }}></div>
                              <div className="relative w-full h-full aspect-square">
-                                <AIPetVisual petState={petState} />
+                                {petState.assembled_url ? (
+                                    <img src={petState.assembled_url} alt={petState.name} className="w-full h-full object-contain" />
+                                ) : (
+                                    <AIPetVisual petState={petState} />
+                                )}
                              </div>
                         </div>
 

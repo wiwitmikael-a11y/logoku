@@ -95,6 +95,8 @@ const AIPetHatching: React.FC<AIPetHatchingProps> = ({ onClose }) => {
         atlas_url: null,
         manifest: null,
         narrative: null,
+        // FIX: Add missing 'assembled_url' property to conform to the AIPetState type.
+        assembled_url: null,
     };
 
     return (

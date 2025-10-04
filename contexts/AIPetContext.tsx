@@ -4,7 +4,8 @@ import React, { createContext, useState, useContext, useEffect, useCallback, use
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import * as geminiService from '../services/geminiService';
-import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage } from '../types';
+import { cropImage } from '../utils/imageUtils';
+import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AtlasManifest } from '../types';
 
 export interface AIPetContextType {
   petState: AIPetState | null;
@@ -127,6 +128,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
                 atlas_url: null,
                 manifest: null,
+                assembled_url: null,
                 narrative: null,
             };
             setPetState(newPet);
@@ -169,14 +171,24 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const hatchPet = useCallback(async () => {
         if (!user || !profile) throw new Error("User not found");
-        
+    
         const success = await deductCredits(HATCH_COST);
         if (!success) throw new Error("Token tidak cukup.");
+    
+        // Step 1: Generate the Master Blueprint image and its analysis data
+        const { characterSheetUrl, assembledBbox, atlasBbox, manifest } = await geminiService.generateAIPetCharacterSheet(user.id);
+    
+        // Step 2: Client-side cropping using the analysis data
+        const [assembledUrl, atlasUrl] = await Promise.all([
+            cropImage(characterSheetUrl, assembledBbox),
+            cropImage(characterSheetUrl, atlasBbox),
+        ]);
         
-        // Step 1: Generate Character Atlas and Assembly Manifest
-        const { atlasUrl, manifest } = await geminiService.generateAIPetAtlasAndManifest(user.id);
-
-        // Step 2: Generate initial personality
+        // The manifest coordinates from the AI are relative to the atlasBbox,
+        // so they are already correct for the newly cropped atlasUrl.
+        const finalManifest: AtlasManifest = { ...manifest, atlasSize: [atlasBbox[2], atlasBbox[3]] };
+    
+        // Step 3: Generate initial personality and narrative
         const seed = user.id + new Date().toISOString().slice(0, 10);
         const hash = stringToHash(seed);
         const seedRandom = createSeededRandom(hash);
@@ -188,11 +200,10 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         const initialStats: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
         const petName = `AIPet-${String(hash).slice(0, 4)}`;
-
-        // Step 3: Generate narrative based on initial state
+    
         const narrative = await geminiService.generateAIPetNarrative({ name: petName, personality: initialPersonality, stats: initialStats });
-
-        // Step 4: Construct the final state
+    
+        // Step 4: Construct the final state with both new image URLs
         const hatchedState: AIPetState = {
             name: petName,
             stage: 'child',
@@ -202,7 +213,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             personality: initialPersonality,
             narrative: narrative,
             atlas_url: atlasUrl,
-            manifest: manifest,
+            manifest: finalManifest,
+            assembled_url: assembledUrl,
         };
         
         setPetState(hatchedState);

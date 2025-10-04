@@ -3,7 +3,7 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { createWhiteCanvasBase64, fetchImageAsBase64, applyWatermark } from '../utils/imageUtils';
 // FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
-import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets, AIPetState, AIPetPersonalityVector, AIPetStats, AtlasManifest } from '../types';
+import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets, AIPetState, AIPetPersonalityVector, AIPetStats, AtlasManifest, PartName } from '../types';
 
 // --- Environment Variable Setup ---
 const API_KEY = import.meta.env?.VITE_API_KEY;
@@ -243,109 +243,121 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
     }
 };
 
-// --- NEW 2.5D AIPET GENERATION SYSTEM (AI Deconstruction Method) ---
+// --- NEW "MASTER BLUEPRINT" AIPET GENERATION SYSTEM ---
 
-export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ atlasUrl: string, manifest: AtlasManifest }> => {
+export const generateAIPetCharacterSheet = async (userId: string): Promise<{
+    characterSheetUrl: string;
+    assembledBbox: [number, number, number, number];
+    atlasBbox: [number, number, number, number];
+    manifest: AtlasManifest;
+}> => {
     const ai = getAiClient();
     const seed = userId + new Date().toISOString();
 
-    // --- STAGE 1: AI CONCEPT ARTIST ---
-    // Generate a single, cohesive, assembled creature. This is a much more reliable task for the AI.
-    const conceptPrompt = `Masterpiece, award-winning concept art of a single, unique, baby digital pet.
+    // --- STAGE 1: AI CONCEPT ARTIST - Create the master blueprint ---
+    const blueprintPrompt = `Technical diagram for a game asset. Create a single image containing two elements side-by-side on a **100% TRANSPARENT background**.
     
-    **AESTHETIC (NON-NEGOTIABLE):**
-    - The creature is a **NON-HUMANOID mechanical animal or monster**.
-    - The style is 'AIPet': a cute, 'chibi-mecha' fusion of an organic creature and sleek robotic parts.
-    - **AVOID**: Human-like figures, bipedal robots, Iron Man, Gundam.
-    - **FOCUS ON**: Biomechanical insects, quadrupedal robotic mammals, ethereal energy creatures with tech shells, alien monsters.
-    - The art style is clean, sharp 2.5D vector art with consistent lighting.
-    - The creature is viewed from a **2.5D isometric perspective, facing slightly LEFT**.
+    **LEFT SIDE:** A single, fully assembled, unique, baby digital pet.
+        - **AESTHETIC:** 'AIPet' style - a cute, 'chibi-mecha' fusion of a non-humanoid biomechanical monster/animal. The style is clean, sharp 2.5D vector art.
+        - **AVOID:** Human-like figures, bipedal robots, Iron Man.
+        - **FOCUS ON:** Biomechanical insects, robotic mammals, alien monsters.
+        - **PERSPECTIVE:** 2.5D isometric view, facing slightly LEFT.
     
-    **COMPOSITION:**
-    - The creature is fully assembled and centered.
-    - The background MUST be a solid, pure white (#FFFFFF) background. This is crucial for the next step.
+    **RIGHT SIDE:** The *exact same creature* from the left, deconstructed into 7 perfectly separated parts: 'head', 'torso', 'left_arm', 'right_arm', 'left_leg', 'right_leg', and 'accessory1'.
+        - **CONSISTENCY IS CRITICAL:** The parts MUST be identical in style, proportion, and detail to the assembled version.
+        - **LAYOUT:** Arrange the parts neatly in a grid. They must not touch or overlap.
+    
+    **FINAL IMAGE RULES:**
+    - The entire background MUST be transparent. No colors, no checkerboards. This is the most important rule.
     - No text, borders, or other elements.
     - Seed: ${seed}`;
 
-    let conceptImageBase64: string;
+    let blueprintImageBase64: string;
     try {
         const response = await ai.models.generateImages({
             model: 'imagen-4.0-generate-001',
-            prompt: conceptPrompt,
+            prompt: blueprintPrompt,
             config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: '1:1' },
         });
-        conceptImageBase64 = `data:image/png;base64,${response.generatedImages[0].image.imageBytes}`;
+        // Mandatory background cleanup as a safeguard.
+        blueprintImageBase64 = await removeImageBackground(`data:image/png;base64,${response.generatedImages[0].image.imageBytes}`);
     } catch (error) {
-        throw handleApiError(error, "AIPet Concept Generation (Stage 1)");
+        throw handleApiError(error, "AIPet Blueprint Generation (Stage 1)");
     }
     
-    // --- STAGE 2: AI RIGGING ARTIST (DECONSTRUCTION & MANIFEST) ---
-    // The AI now analyzes the concept and is tasked with deconstructing it and creating the rig.
-    const conceptData = conceptImageBase64.split(',')[1];
-    const deconstructionPrompt = `You are a professional 2D rigging artist for a puppet animation system. Analyze the provided image of a creature.
-    
+    // --- STAGE 2: AI RIGGING ANALYST - Analyze the blueprint ---
+    const blueprintData = blueprintImageBase64.split(',')[1];
+    const analysisPrompt = `You are a professional game asset processor. Analyze the provided character sheet image which contains an assembled creature on the left and its deconstructed parts on the right.
+
     **YOUR TASK:**
-    Deconstruct the creature into a sprite sheet and simultaneously generate a JSON rigging manifest.
+    Provide a single JSON object containing three keys: "assembledBbox", "atlasBbox", and "manifest".
+
+    1.  **"assembledBbox"**: An array [x, y, width, height] for the bounding box of the complete, assembled creature on the left.
+    2.  **"atlasBbox"**: An array [x, y, width, height] for the bounding box that tightly encloses ALL the separated parts on the right.
+    3.  **"manifest"**: A complete JSON rigging manifest for reassembling the parts.
+        - All coordinates in the manifest ("bbox", "assemblyPoint", "anchors") **MUST be relative to the "atlasBbox"** you defined, NOT the full image.
+        - "parts": An array of 7 part objects. Each must have "name", "bbox", "assemblyPoint", "attachTo", "attachmentPoint".
+        - "anchors": An object mapping parts to their anchor locations. The 'torso' MUST have 'neck', 'left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'.
+        - "layering": Z-index order from back to front.
     
-    **SPRITE SHEET RULES (CRITICAL):**
-    1.  Redraw the creature as a sprite sheet containing **7 perfectly separated, detached parts**: 'head', 'torso', 'left_arm', 'right_arm', 'left_leg', 'right_leg', and one 'accessory1'.
-    2.  The final sprite sheet image MUST have a **100% TRANSPARENT background**. No checkerboards, no colors.
-    3.  Arrange the parts neatly in a grid with ample transparent space between them. They must not touch or overlap.
-    
-    **JSON MANIFEST RULES:**
-    Provide a complete JSON manifest for reassembling the parts you've drawn.
-    - "atlasSize": The [width, height] of the sprite sheet image you are generating.
-    - "parts": An array of 7 objects. Each object must have:
-        - "name": Part name (e.g., "head").
-        - "bbox": The bounding box [x, y, width, height] of the part on your new sprite sheet.
-        - "assemblyPoint": The part's joint point [x, y], relative to its bbox. (e.g., shoulder for an arm, neck for a head).
-        - "attachTo": The parent part name (e.g., "left_arm" attaches to "torso"). The torso's 'attachTo' is null.
-        - "attachmentPoint": The named anchor on the parent (e.g., "left_shoulder").
-    - "anchors": An object mapping parts to their anchor locations. The 'torso' MUST have 'neck', 'left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'.
-    - "layering": Z-index order from back to front (e.g., ['right_leg', 'left_leg', 'right_arm', 'torso', 'left_arm', 'head']).
-    
-    **RESPONSE FORMAT:**
-    You must respond with BOTH the new sprite sheet image AND the JSON manifest.`;
+    Analyze the image and provide only the complete, valid JSON object.`;
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+            model: 'gemini-2.5-flash',
             contents: {
                 parts: [
-                    { inlineData: { data: conceptData, mimeType: 'image/png' } },
-                    { text: deconstructionPrompt },
+                    { inlineData: { data: blueprintData, mimeType: 'image/png' } },
+                    { text: analysisPrompt },
                 ],
             },
             config: {
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
-            },
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        assembledBbox: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                        atlasBbox: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                        manifest: {
+                            type: Type.OBJECT,
+                            properties: {
+                                atlasSize: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                                parts: {
+                                    type: Type.ARRAY,
+                                    items: {
+                                        type: Type.OBJECT,
+                                        properties: {
+                                            name: { type: Type.STRING },
+                                            bbox: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                                            assemblyPoint: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                                            attachTo: { type: Type.STRING, nullable: true },
+                                            attachmentPoint: { type: Type.STRING, nullable: true },
+                                        },
+                                        required: ["name", "bbox", "assemblyPoint", "attachTo", "attachmentPoint"]
+                                    }
+                                },
+                                anchors: { type: Type.OBJECT },
+                                layering: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            },
+                             required: ["atlasSize", "parts", "anchors", "layering"]
+                        }
+                    },
+                    required: ["assembledBbox", "atlasBbox", "manifest"]
+                }
+            }
         });
 
-        let atlasUrl: string | null = null;
-        let manifestJson: string | null = null;
-
-        for (const part of response.candidates?.[0]?.content?.parts || []) {
-            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
-                atlasUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-            } else if (part.text) {
-                manifestJson = part.text;
-            }
-        }
-
-        if (!atlasUrl || !manifestJson) {
-            throw new Error("AI failed to return both a sprite sheet and a manifest.");
-        }
-
-        const cleanedJson = cleanJsonString(manifestJson, 'object');
-        const manifest = safeJsonParse<AtlasManifest>(cleanedJson, 'AIPet Manifest Deconstruction');
-
-        // Final mandatory background cleanup as a safeguard
-        const cleanedAtlasUrl = await removeImageBackground(atlasUrl);
+        const result = safeJsonParse<any>(response.text, 'AIPet Analysis (Stage 2)');
         
-        return { atlasUrl: cleanedAtlasUrl, manifest };
+        return {
+            characterSheetUrl: blueprintImageBase64,
+            assembledBbox: result.assembledBbox,
+            atlasBbox: result.atlasBbox,
+            manifest: result.manifest,
+        };
 
     } catch (error) {
-        throw handleApiError(error, "AIPet Deconstruction & Rigging (Stage 2)");
+        throw handleApiError(error, "AIPet Analysis & Rigging (Stage 2)");
     }
 };
 
