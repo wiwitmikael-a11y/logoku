@@ -80,7 +80,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setPetState(profile.aipet_state as AIPetState);
         } else {
             const newPet: AIPetState = {
-                name: 'DesiPet',
+                name: 'AIPet',
                 stage: 'child',
                 stats: INITIAL_STATS,
                 lastFed: Date.now(),

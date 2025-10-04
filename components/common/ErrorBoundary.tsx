@@ -17,15 +17,17 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
-
-  // FIX: Switched to constructor binding for `handleCopy` to ensure `this` context is correctly resolved by TypeScript, addressing errors where `setState` and `props` were not found on the component type.
+  // FIX: Refactored to use a constructor for state initialization and method binding.
+  // This is a more traditional and robust pattern for React class components that can resolve
+  // potential issues with `this` context in certain build environments, fixing errors where
+  // `this.props` and `this.setState` were not recognized.
   constructor(props: Props) {
     super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
     this.handleCopy = this.handleCopy.bind(this);
   }
 

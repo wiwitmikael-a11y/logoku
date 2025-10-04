@@ -525,7 +525,7 @@ const MainApp: React.FC = () => {
                 </div>
 
                 {isPetMenuOpen && (
-                    <div className="fixed bottom-[10.5rem] right-8 w-48 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg p-2 space-y-2 z-40 animate-content-fade-in">
+                    <div className="pet-menu-popup fixed bottom-[8.5rem] right-2 w-48 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg p-2 space-y-2 z-40 animate-content-fade-in">
                         <button onClick={() => { setPetPanelOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Lihat Profil {aipetContext.petState.name}</button>
                         <button onClick={() => { setAssistantOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Tanya {aipetContext.petState.name}</button>
                     </div>

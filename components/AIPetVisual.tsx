@@ -9,13 +9,12 @@ interface AIPetVisualProps {
 
 // --- SVG Part Library ---
 const BODY_SHAPES = {
-  child: "M50 25 C 80 25, 85 70, 50 90 S 20 25, 50 25 Z",
-  adult_default: "M50 15 C 80 15, 90 70, 50 95 S 20 15, 50 15 Z",
-  adult_geometric: "M50 15 L85 50 L50 95 L15 50 Z",
-  adult_smooth: "M50 20 C 90 30, 95 70, 50 90 S 10 30, 50 20 Z",
-  adult_blob: "M50,20 C85,20 100,50 85,70 C70,90 30,90 15,70 C0,50 15,20 50,20 Z",
-  adult_hex: "M40 15 L60 15 L85 50 L60 95 L40 95 L15 50 Z",
+  child: "M50,30 C20,30 20,90 50,90 C80,90 80,30 50,30 Z", // Symmetrical round blob
+  adult_default: "M50,20 C20,20 10,95 30,95 Q50,85 70,95 C90,95 80,20 50,20 Z", // Symmetrical pear shape
+  adult_geometric: "M50 15 L85 35 L85 75 L50 95 L15 75 L15 35 Z", // Symmetrical Hexagon (unchanged)
+  adult_smooth: "M50,15 C20,15 20,95 50,95 C80,95 80,15 50,15 Z", // Tall symmetrical oval
 };
+
 
 const EYE_SETS = {
   default: { left: "M 38,50 a 4,4 0 1,1 -8,0 a 4,4 0 1,1 8,0", right: "M 62,50 a 4,4 0 1,1 -8,0 a 4,4 0 1,1 8,0" },
@@ -46,8 +45,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState }) => {
                 case 'modern': bodyPath = BODY_SHAPES.adult_geometric; break;
                 case 'rustic':
                 case 'feminine': bodyPath = BODY_SHAPES.adult_smooth; break;
-                case 'playful': bodyPath = BODY_SHAPES.adult_blob; break;
-                case 'bold': bodyPath = BODY_SHAPES.adult_hex; break;
+                case 'playful':
+                case 'bold': bodyPath = BODY_SHAPES.adult_default; break; // Playful and bold use the default adult shape now
                 default: bodyPath = BODY_SHAPES.adult_default;
             }
         }
