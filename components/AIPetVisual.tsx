@@ -30,12 +30,21 @@ const EggVisual: React.FC = () => (
     </svg>
 );
 
+// --- NEW: Define ideal size ratios relative to the torso's width ---
+const TARGET_RATIOS: { [key in PartName]?: number } = {
+    'head': 0.8,
+    'left_arm': 0.45,
+    'right_arm': 0.45,
+    'left_leg': 0.5,
+    'right_leg': 0.5,
+    'accessory1': 0.4,
+    'accessory2': 0.4,
+};
+
 const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manifest, atlasUrl }) => {
     const { parts, anchors, layering, atlasSize } = manifest;
     const partsMap = useMemo(() => new Map(parts.map(p => [p.name, p])), [parts]);
 
-    // Recursive function to calculate final position of a part
-    // FIX: Import useCallback to resolve 'Cannot find name' error.
     const getPartPosition = useCallback((partName: PartName, memo: Map<PartName, { x: number; y: number }>): { x: number; y: number } => {
         if (memo.has(partName)) {
             return memo.get(partName)!;
@@ -57,11 +66,6 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
         const parentPos = getPartPosition(part.attachTo, memo);
         const partAssemblyPoint = part.assemblyPoint;
 
-        // --- FIX: The Core Logic Error Was Here ---
-        // The previous calculation incorrectly included the parent's bounding box offset (parentBbox[0] and parentBbox[1]),
-        // which mixed up coordinates from the atlas file with on-screen DOM coordinates, causing the "mutilated" look.
-        // The correct calculation only needs the parent's final screen position, the anchor's position relative to the parent,
-        // and the child's assembly point relative to itself.
         const x = parentPos.x + parentAnchor[0] - partAssemblyPoint[0];
         const y = parentPos.y + parentAnchor[1] - partAssemblyPoint[1];
         
@@ -73,11 +77,28 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
 
     const assembledParts = useMemo(() => {
         const memo = new Map<PartName, { x: number; y: number }>();
+        const torso = partsMap.get('torso');
+        if (!torso) return []; // Torso is essential for scaling
+
         return layering.map(partName => {
             const part = partsMap.get(partName);
             if (!part) return null;
+
             const pos = getPartPosition(partName, memo);
-            return { ...part, ...pos, id: partName }; // Use partName as a unique key for React
+
+            // --- NEW: Scaling Logic ---
+            let scale = 1.0;
+            const targetRatio = TARGET_RATIOS[part.name];
+            if (targetRatio) {
+                const torsoWidth = torso.bbox[2];
+                const partWidth = part.bbox[2];
+                if (partWidth > 0) {
+                    const targetWidth = torsoWidth * targetRatio;
+                    scale = targetWidth / partWidth;
+                }
+            }
+
+            return { ...part, ...pos, scale, id: partName };
         });
     }, [layering, partsMap, getPartPosition]);
 
@@ -91,11 +112,9 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
                 let animationStyle: React.CSSProperties = {};
                 if (part.name.includes('arm')) {
                     animationStyle.animation = `pet-arm-swing 3s ease-in-out infinite ${index * 0.1}s`;
-                    animationStyle.transformOrigin = `${part.assemblyPoint[0]}px ${part.assemblyPoint[1]}px`;
                 }
                  if (part.name === 'head') {
                     animationStyle.animation = `pet-head-bob 3s ease-in-out infinite`;
-                    animationStyle.transformOrigin = `50% 90%`;
                 }
 
                 return (
@@ -111,6 +130,9 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
                             backgroundPosition: `-${bx}px -${by}px`,
                             backgroundSize: `${atlasSize[0]}px ${atlasSize[1]}px`,
                             zIndex: index,
+                            transform: `scale(${part.scale})`,
+                            // Scale from the joint for correct positioning
+                            transformOrigin: `${part.assemblyPoint[0]}px ${part.assemblyPoint[1]}px`,
                             ...animationStyle
                         }}
                     />
