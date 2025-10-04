@@ -61,6 +61,9 @@ const getTodaysDateWIB = (): string => {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
 };
 
+// --- KONFIGURASI TOKENOMICS ---
+const WELCOME_BONUS_CREDITS = 20;
+
 // NEW: Achievement definitions
 const ACHIEVEMENTS_MAP: { [key: string]: Achievement } = {
   BRAND_PERTAMA_LAHIR: { id: 'BRAND_PERTAMA_LAHIR', name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
@@ -108,14 +111,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (!data) {
         // NEW USER: Set welcome bonus directly at creation.
-        const WELCOME_BONUS = 20; // FIX: Corrected welcome bonus to 20
         const { data: newProfileData, error: insertError } = await supabase
             .from('profiles')
             .insert({ 
                 id: userId,
                 full_name: user.user_metadata.full_name,
                 avatar_url: user.user_metadata.avatar_url,
-                credits: WELCOME_BONUS, 
+                credits: WELCOME_BONUS_CREDITS, 
                 last_credit_reset: getTodaysDateWIB(),
                 welcome_bonus_claimed: true,
                 xp: 0, level: 1, achievements: [], total_projects_completed: 0,
