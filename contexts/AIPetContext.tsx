@@ -16,7 +16,6 @@ export interface AIPetContextType {
 
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
-const INITIAL_STATS: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
 
 const getStageForLevel = (level: number): AIPetStage => {
@@ -41,6 +40,25 @@ const useDebounce = <F extends (...args: any[]) => any>(callback: F, delay: numb
         }, delay);
     }, [delay]);
 };
+
+// --- Seeded Random Generation ---
+const stringToHash = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+};
+
+const createSeededRandom = (seed: number) => {
+    return () => {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280; // Returns a value between 0 and 1
+    };
+};
+
 
 export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, profile, addXp } = useAuth();
@@ -74,7 +92,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 
     useEffect(() => {
-        if (!profile) {
+        if (!profile || !user) {
             setIsLoading(false);
             return;
         }
@@ -91,19 +109,36 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 setPetState(existingState);
             }
         } else {
+            // --- NEW PET GENERATION LOGIC ---
+            const seed = stringToHash(user.id);
+            const seededRandom = createSeededRandom(seed);
+            
+            const personalities: (keyof AIPetPersonalityVector)[] = ['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'];
+            const initialPersonality: AIPetPersonalityVector = personalities.reduce((acc, curr) => {
+                acc[curr] = Math.floor(seededRandom() * 11); // Random value between 0-10
+                return acc;
+            }, {} as AIPetPersonalityVector);
+
+            const initialStats: AIPetStats = {
+                energy: 80 + Math.floor(seededRandom() * 21), // 80-100
+                creativity: 40 + Math.floor(seededRandom() * 21), // 40-60
+                intelligence: 40 + Math.floor(seededRandom() * 21), // 40-60
+                charisma: 40 + Math.floor(seededRandom() * 21), // 40-60
+            };
+
             const newPet: AIPetState = {
                 name: 'AIPet',
                 stage: currentStage,
-                stats: INITIAL_STATS,
+                stats: initialStats,
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
-                personality: { minimalist: 0, rustic: 0, playful: 0, modern: 0, luxury: 0, feminine: 0, bold: 0, creative: 0 }
+                personality: initialPersonality
             };
             setPetState(newPet);
             savePetStateToDb(newPet);
         }
         setIsLoading(false);
-    }, [profile, savePetStateToDb]);
+    }, [profile, user, savePetStateToDb]);
     
     useEffect(() => {
         let animationFrameId: number;

@@ -17,12 +17,6 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Switched to class field properties and arrow functions. This is the modern
-  // and recommended way to write React class components with TypeScript, as it
-  // automatically handles the binding of `this` for methods, preventing errors where
-  // `this.props` or `this.state` might be undefined. The previous constructor-based
-  // approach was also failing, suggesting that this idiomatic pattern is the most
-  // robust solution.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -47,11 +41,7 @@ class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  // FIX: Converted `render` from a class property arrow function back to a standard class method.
-  // Standard lifecycle methods like `render` in React class components have their `this` context
-  // automatically bound by React. Using an arrow function here is unconventional and was likely
-  // causing TypeScript to incorrectly infer the type of `this`, leading to errors where
-  // `this.props` and `this.setState` were reported as non-existent.
+  // FIX: Reverted `render` to a standard class method. Arrow function class fields can sometimes have issues with `this` type inference in certain TypeScript configurations.
   public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };

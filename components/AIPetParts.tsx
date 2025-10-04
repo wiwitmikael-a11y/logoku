@@ -11,7 +11,7 @@ const defaultFill = "none";
 // --- BASE BODY LIBRARY (Menambahkan bentuk yang lebih "monster-like") ---
 export const BodyShapes = {
   egg: (fill: string) => <path d="M50,25 C20,25 20,95 50,95 C80,95 80,25 50,25 Z" fill={fill} />,
-  child_chibi: (fill: string) => <path d="M50,30 C20,30 20,90 50,90 C80,90 80,30 50,30 Z" fill={fill} />,
+  child_chibi: (fill: string) => <path d="M50,25 C25,25 15,50 25,70 C30,95 70,95 75,70 C85,50 75,25 50,25 Z" fill={fill} />,
   child_beast: (fill: string) => <path d="M50,25 C15,30 20,85 50,90 C80,85 85,30 50,25 Z" fill={fill} />, // Bentuk awal binatang
   teen_humanoid: (fill: string) => <path d="M50,15 C20,15 10,90 45,95 C60,95 80,90 70,15 Z" fill={fill} />, // Bentuk awal humanoid/robot
   teen_mech: (fill: string) => <path d="M50,10 L80,30 L70,80 L50,90 L30,80 L20,30 Z" fill={fill} />, // Bentuk awal robotik
