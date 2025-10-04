@@ -17,8 +17,6 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Switched to class property initialization for state and an arrow function for the method
-  // to resolve issues where 'this.props', 'this.state', and 'this.setState' were not found.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -36,11 +34,15 @@ class ErrorBoundary extends Component<Props, State> {
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
+      // FIX: The arrow function for `handleCopy` ensures `this` is correctly bound, so `setState` can be called.
       this.setState({ isCopied: true });
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
 
+  // FIX: Converted `render` from an arrow function property to a standard class method.
+  // React correctly binds `this` for the `render` method, so an arrow function is not necessary.
+  // This change resolves TypeScript errors where `this.props` was not being recognized on the component type.
   public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
