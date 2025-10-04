@@ -16,7 +16,10 @@ interface State {
   isCopied?: boolean;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+// FIX: Changed `Component` to `React.Component` to resolve a TypeScript issue
+// where properties from the base class (like `props` and `setState`) were not being recognized.
+// This makes the inheritance explicit and avoids potential type resolution conflicts.
+class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
     error: undefined,
@@ -31,7 +34,9 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  // FIX: Removed `private` keyword, making the method public.
+  // This is better practice for methods accessed from render event handlers and resolves potential type issues.
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
