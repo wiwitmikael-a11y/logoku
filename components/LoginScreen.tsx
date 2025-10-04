@@ -65,8 +65,8 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
         <div className="relative h-40 mb-4 z-10">
             <img
             src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-            alt="Mang AI character"
-            className="w-40 h-40 absolute bottom-0 left-1/2 -translate-x-1/2 animate-breathing-ai drop-shadow-lg"
+            alt="Mang AI tersandung kabel"
+            className="w-40 h-40 absolute bottom-0 left-1/2 -translate-x-1/2 animate-tripped-ai"
             style={{ imageRendering: 'pixelated' }}
             />
         </div>
