@@ -62,9 +62,9 @@ const historyReducer = (state: HistoryState, action: HistoryAction): HistoryStat
 };
 
 // --- HELPER UI & MATH ---
-export const PropertyInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string, suffix?: string }> = ({ label, suffix, ...props }) => ( <div className="grid grid-cols-2 items-center gap-2"><label className="text-text-muted text-xs truncate">{label}</label><div className="relative"><input {...props} className={`w-full bg-background border border-border-main rounded p-1 text-sm ${suffix ? 'pr-6' : ''}`}/><span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted">{suffix}</span></div></div>);
-export const PropertyTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><textarea {...props} className="w-full bg-background border border-border-main rounded p-1.5 text-sm"/></div>);
-export const PropertySelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string, children: React.ReactNode }> = ({ label, children, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><select {...props} className="w-full bg-background border border-border-main rounded p-1.5 text-sm">{children}</select></div>);
+export const PropertyInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string, suffix?: string }> = ({ label, suffix, ...props }) => ( <div className="grid grid-cols-2 items-center gap-2"><label className="text-text-muted text-xs truncate">{label}</label><div className="relative"><input {...props} className={`w-full bg-background border border-border-main rounded p-1.5 text-sm ${suffix ? 'pr-6' : ''}`}/><span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted">{suffix}</span></div></div>);
+export const PropertyTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><textarea {...props} className="w-full bg-background border border-border-main rounded py-2 px-2 text-sm"/></div>);
+export const PropertySelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string, children: React.ReactNode }> = ({ label, children, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><select {...props} className="w-full bg-background border border-border-main rounded py-2 px-2 text-sm">{children}</select></div>);
 export const PropertyColorInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => ( <div className="grid grid-cols-2 items-center gap-2"><label className="text-text-muted text-xs truncate">{label}</label><input type="color" {...props} className="w-full h-8 p-0.5 bg-background border border-border-main rounded" /></div>);
 const IconButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { title: string, isActive?: boolean, children: React.ReactNode }> = ({ title, isActive, children, ...props }) => <button title={title} {...props} className={`w-12 h-12 flex items-center justify-center rounded-lg transition-colors ${isActive ? 'bg-splash text-white' : 'text-text-muted hover:bg-border-light'}`}>{children}</button>;
 export const PanelSection: React.FC<{title: string, children: React.ReactNode, defaultOpen?: boolean}> = ({title, children, defaultOpen = true}) => <details className="border-b border-border-main" open={defaultOpen}><summary className="font-bold text-text-header text-xs py-2 cursor-pointer uppercase tracking-wider">{title}</summary><div className="pb-3 space-y-3">{children}</div></details>
@@ -126,6 +126,7 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     const [viewTransform, setViewTransform] = useState({ zoom: 0.5, pan: { x: 0, y: 0 } });
     const isSpacePressed = useRef(false);
     const [interactionState, setInteractionState] = useState<InteractionState>(null);
+    const multiTouchStateRef = useRef<{ initialDist: number, initialPan: {x:number, y:number}, initialZoom: number, initialMid: {x:number, y:number} } | null>(null);
 
     const setState = (newState: Partial<CanvasState>, withHistory = true) => dispatchHistory({ type: 'SET_STATE', newState, withHistory });
     const undo = () => { playSound('select'); dispatchHistory({ type: 'UNDO' }); };
@@ -293,6 +294,53 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
         }
         setInteractionState(null);
     };
+
+    // --- TOUCH HANDLERS ---
+    const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const touches = e.nativeEvent.touches;
+        const rect = canvasRef.current!.getBoundingClientRect();
+        
+        if (touches.length === 2) {
+            const t1 = touches[0]; const t2 = touches[1];
+            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            const mid = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
+            multiTouchStateRef.current = { initialDist: dist, initialMid: mid, initialZoom: viewTransform.zoom, initialPan: viewTransform.pan };
+            setInteractionState(null); // Stop single-touch interactions
+        } else if (touches.length === 1) {
+            const touch = touches[0];
+            const simulatedEvent = { nativeEvent: { offsetX: touch.clientX - rect.left, offsetY: touch.clientY - rect.top } } as React.MouseEvent<HTMLCanvasElement>;
+            handleCanvasMouseDown(simulatedEvent);
+        }
+    };
+
+    const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const touches = e.nativeEvent.touches;
+        const rect = canvasRef.current!.getBoundingClientRect();
+
+        if (touches.length === 2 && multiTouchStateRef.current) {
+            const { initialDist, initialPan, initialZoom, initialMid } = multiTouchStateRef.current;
+            const t1 = touches[0]; const t2 = touches[1];
+            const newDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            const newMid = { x: (t1.clientX + t2.clientX)/2, y: (t1.clientY + t2.clientY)/2 };
+            const zoomDelta = newDist / initialDist;
+            const newZoom = Math.max(0.1, Math.min(initialZoom * zoomDelta, 5));
+            const newPanX = initialPan.x + (newMid.x - initialMid.x);
+            const newPanY = initialPan.y + (newMid.y - initialMid.y);
+            setViewTransform({ zoom: newZoom, pan: {x: newPanX, y: newPanY }});
+        } else if (touches.length === 1) {
+            const touch = touches[0];
+            const simulatedEvent = { nativeEvent: { offsetX: touch.clientX - rect.left, offsetY: touch.clientY - rect.top } } as React.MouseEvent<HTMLCanvasElement>;
+            handleCanvasMouseMove(simulatedEvent);
+        }
+    };
+    
+    const handleCanvasTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        if (e.nativeEvent.touches.length < 2) multiTouchStateRef.current = null;
+        if (e.nativeEvent.touches.length < 1) handleCanvasMouseUp();
+    };
     
     const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
         e.preventDefault(); const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9; const newZoom = Math.max(0.1, Math.min(viewTransform.zoom * zoomFactor, 5));
@@ -367,8 +415,18 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                             <IconButton title="Upload Image" onClick={() => fileInputRef.current?.click()}><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></IconButton>
                             <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
                         </aside>
-                        <main ref={canvasContainerRef} className="flex-grow flex items-center justify-center bg-background overflow-hidden relative">
-                            <canvas ref={canvasRef} onMouseDown={handleCanvasMouseDown} onMouseMove={handleCanvasMouseMove} onMouseUp={handleCanvasMouseUp} onMouseLeave={handleCanvasMouseUp} onWheel={handleWheel} />
+                        <main ref={canvasContainerRef} className="flex-grow flex items-center justify-center bg-background overflow-hidden relative touch-none">
+                            <canvas 
+                                ref={canvasRef} 
+                                onMouseDown={handleCanvasMouseDown} 
+                                onMouseMove={handleCanvasMouseMove} 
+                                onMouseUp={handleCanvasMouseUp} 
+                                onMouseLeave={handleCanvasMouseUp} 
+                                onWheel={handleWheel}
+                                onTouchStart={handleCanvasTouchStart}
+                                onTouchMove={handleCanvasTouchMove}
+                                onTouchEnd={handleCanvasTouchEnd}
+                            />
                              <QuickActionsToolbar 
                                 layer={selectedLayer} 
                                 transform={viewTransform}
