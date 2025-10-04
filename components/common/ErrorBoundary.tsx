@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -16,11 +16,10 @@ interface State {
   isCopied?: boolean;
 }
 
-// FIX: Changed `Component` to `React.Component` to resolve a TypeScript issue
-// where properties from the base class (like `props` and `setState`) were not being recognized.
-// This makes the inheritance explicit and avoids potential type resolution conflicts.
-// DEV-FIX: Changed `React.Component` to the named import `Component` to resolve a potential module resolution or typing issue that was causing the errors.
-class ErrorBoundary extends Component<Props, State> {
+// FIX: Changed `extends Component` to `extends React.Component` and updated the import
+// to resolve TypeScript errors where properties from the base class (like `props` and `setState`)
+// were not being recognized. This makes the inheritance explicit and ensures type correctness.
+class ErrorBoundary extends React.Component<Props, State> {
   state: State = {
     hasError: false,
     error: undefined,
