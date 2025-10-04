@@ -69,14 +69,15 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, animatio
       to { background-position: -400% 0%; }
     }
     @keyframes pet-sprite-walk {
-      0%, 12.49% { background-position: 0% 50%; } /* row 2, frame 1 */
-      12.5%, 24.99% { background-position: -100% 50%; } /* row 2, frame 2 */
-      25%, 37.49% { background-position: -200% 50%; } /* row 2, frame 3 */
-      37.5%, 49.99% { background-position: -300% 50%; } /* row 2, frame 4 */
-      50%, 62.49% { background-position: 0% 100%; } /* row 3, frame 1 */
-      62.5%, 74.99% { background-position: -100% 100%; } /* row 3, frame 2 */
-      75%, 87.49% { background-position: -200% 100%; } /* row 3, frame 3 */
-      87.5%, 100% { background-position: -300% 100%; } /* row 3, frame 4 */
+      0% { background-position: 0% 50%; } /* R2, F1 */
+      12.5% { background-position: -100% 50%; } /* R2, F2 */
+      25% { background-position: -200% 50%; } /* R2, F3 */
+      37.5% { background-position: -300% 50%; } /* R2, F4 */
+      50% { background-position: 0% 100%; } /* R3, F1 */
+      62.5% { background-position: -100% 100%; } /* R3, F2 */
+      75% { background-position: -200% 100%; } /* R3, F3 */
+      87.5% { background-position: -300% 100%; } /* R3, F4 */
+      100% { background-position: -300% 100%; }
     }
     @keyframes pet-float {
         0%, 100% { transform: translateY(0); }
@@ -101,7 +102,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, animatio
   
   const selectedAnimationName = animationType === 'walk' ? 'pet-sprite-walk' : 'pet-sprite-idle';
   const selectedAnimationSettings = animationType === 'walk'
-    ? '1s infinite'
+    ? '1s steps(1) infinite'
     : '1.2s steps(4) infinite';
 
 
