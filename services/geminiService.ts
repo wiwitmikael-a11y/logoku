@@ -292,6 +292,49 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
         - "attachmentPoint": The named anchor on the parent (e.g., "left_shoulder"). The torso's 'attachmentPoint' is null.
     - "anchors": An object mapping parts that have attachment points (mainly the 'torso') to their named anchor locations [x, y] relative to their bbox. The torso MUST have 'neck', 'left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'.
     - "layering": An array of part names in the correct z-index order for a 2.5D isometric view (from back to front). A good default is: ['right_leg', 'left_leg', 'right_arm', 'torso', 'left_arm', 'head']. Place the accessory where it makes sense.`;
+    
+    const manifestSchema = {
+        type: Type.OBJECT,
+        properties: {
+            atlasSize: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "The [width, height] of the entire atlas image." },
+            parts: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        name: { type: Type.STRING, description: "Part name (e.g., 'head', 'torso')." },
+                        bbox: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "Bounding box [x, y, width, height]." },
+                        assemblyPoint: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "Joint point [x, y] relative to bbox." },
+                        attachTo: { type: Type.STRING, description: "Parent part name to attach to. Can be null for the root part." },
+                        attachmentPoint: { type: Type.STRING, description: "Anchor name on parent. Can be null for the root part." }
+                    },
+                    required: ['name', 'bbox', 'assemblyPoint', 'attachTo', 'attachmentPoint']
+                }
+            },
+            anchors: {
+                type: Type.OBJECT,
+                description: "Maps parts to their anchor points. Primarily for the 'torso'.",
+                properties: {
+                    torso: {
+                        type: Type.OBJECT,
+                        description: "Anchor points on the torso.",
+                        properties: {
+                            neck: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                            left_shoulder: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                            right_shoulder: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                            left_hip: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                            right_hip: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                            accessory_mount1: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                            accessory_mount2: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                        }
+                    },
+                }
+            },
+            layering: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Z-index order of parts from back to front." }
+        },
+        required: ['atlasSize', 'parts', 'anchors', 'layering']
+    };
+
 
     try {
         const response = await ai.models.generateContent({
@@ -299,7 +342,7 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
             contents: { parts: [{ inlineData: { data: atlasBase64Data, mimeType: 'image/png' } }, { text: manifestPrompt }] },
             config: {
                 responseMimeType: "application/json",
-                responseSchema: { /* Abridged for brevity, but would be the full AtlasManifest schema */ type: Type.OBJECT }
+                responseSchema: manifestSchema
             }
         });
         const manifest = safeJsonParse<AtlasManifest>(response.text, 'AIPet Manifest Generation');
