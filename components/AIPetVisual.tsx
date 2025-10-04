@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useCallback } from 'react';
 import type { AIPetState, AtlasManifest, AtlasPart, PartName } from '../types';
 
 interface AIPetVisualProps {
@@ -34,36 +34,52 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
     const { parts, anchors, layering, atlasSize } = manifest;
     const partsMap = useMemo(() => new Map(parts.map(p => [p.name, p])), [parts]);
 
-    const getPartPosition = (partName: PartName): { x: number; y: number; rotation: number } => {
+    // Recursive function to calculate final position of a part
+    // FIX: Import useCallback to resolve 'Cannot find name' error.
+    const getPartPosition = useCallback((partName: PartName, memo: Map<PartName, { x: number; y: number }>): { x: number; y: number } => {
+        if (memo.has(partName)) {
+            return memo.get(partName)!;
+        }
+
         const part = partsMap.get(partName);
         if (!part || !part.attachTo || !part.attachmentPoint) {
-            return { x: 0, y: 0, rotation: 0 };
+            memo.set(partName, { x: 0, y: 0 });
+            return { x: 0, y: 0 };
         }
 
         const parent = partsMap.get(part.attachTo);
         const parentAnchor = anchors[part.attachTo]?.[part.attachmentPoint];
         if (!parent || !parentAnchor) {
-            return { x: 0, y: 0, rotation: 0 };
+            memo.set(partName, { x: 0, y: 0 });
+            return { x: 0, y: 0 };
         }
-
-        const parentPos = getPartPosition(part.attachTo);
-        const parentBbox = parent.bbox;
+        
+        const parentPos = getPartPosition(part.attachTo, memo);
         const partAssemblyPoint = part.assemblyPoint;
 
-        const x = parentPos.x + (parentBbox[0] + parentAnchor[0]) - partAssemblyPoint[0];
-        const y = parentPos.y + (parentBbox[1] + parentAnchor[1]) - partAssemblyPoint[1];
+        // --- FIX: The Core Logic Error Was Here ---
+        // The previous calculation incorrectly included the parent's bounding box offset (parentBbox[0] and parentBbox[1]),
+        // which mixed up coordinates from the atlas file with on-screen DOM coordinates, causing the "mutilated" look.
+        // The correct calculation only needs the parent's final screen position, the anchor's position relative to the parent,
+        // and the child's assembly point relative to itself.
+        const x = parentPos.x + parentAnchor[0] - partAssemblyPoint[0];
+        const y = parentPos.y + parentAnchor[1] - partAssemblyPoint[1];
         
-        return { x, y, rotation: parentPos.rotation };
-    };
+        const finalPos = { x, y };
+        memo.set(partName, finalPos);
+        return finalPos;
+    }, [partsMap, anchors]);
+
 
     const assembledParts = useMemo(() => {
+        const memo = new Map<PartName, { x: number; y: number }>();
         return layering.map(partName => {
             const part = partsMap.get(partName);
             if (!part) return null;
-            const pos = getPartPosition(partName);
-            return { ...part, ...pos };
+            const pos = getPartPosition(partName, memo);
+            return { ...part, ...pos, id: partName }; // Use partName as a unique key for React
         });
-    }, [layering, partsMap]);
+    }, [layering, partsMap, getPartPosition]);
 
 
     return (
@@ -72,7 +88,6 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
                 if (!part) return null;
                 const [bx, by, bw, bh] = part.bbox;
                 
-                // Breathing animation for limbs
                 let animationStyle: React.CSSProperties = {};
                 if (part.name.includes('arm')) {
                     animationStyle.animation = `pet-arm-swing 3s ease-in-out infinite ${index * 0.1}s`;
@@ -80,7 +95,7 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
                 }
                  if (part.name === 'head') {
                     animationStyle.animation = `pet-head-bob 3s ease-in-out infinite`;
-                    animationStyle.transformOrigin = `50% 90%`; // Bob from the neck
+                    animationStyle.transformOrigin = `50% 90%`;
                 }
 
                 return (
@@ -95,7 +110,7 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
                             backgroundImage: `url(${atlasUrl})`,
                             backgroundPosition: `-${bx}px -${by}px`,
                             backgroundSize: `${atlasSize[0]}px ${atlasSize[1]}px`,
-                            zIndex: index, // Use layering order for z-index
+                            zIndex: index,
                             ...animationStyle
                         }}
                     />
@@ -139,13 +154,20 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
       );
   }
 
+  // Find the torso part to determine the center for scaling.
+  const torso = manifest.parts.find(p => p.name === 'torso');
+  const viewboxWidth = torso ? torso.bbox[2] * 2.5 : 200;
+  const viewboxHeight = torso ? torso.bbox[3] * 2 : 200;
+  const offsetX = torso ? -torso.bbox[0] + (viewboxWidth/2) - (torso.bbox[2]/2) : 0;
+  const offsetY = torso ? -torso.bbox[1] + (viewboxHeight/2) - (torso.bbox[3]/2) : 0;
+
   return (
     <div 
         style={filterStyle}
         className={`w-full h-full object-contain ${className || ''}`}
     >
         <style>{animationKeyframes}</style>
-        <div style={{ animation: `pet-body-bob 3s ease-in-out infinite` }}>
+        <div style={{ animation: `pet-body-bob 3s ease-in-out infinite`, transform: `translate(${offsetX}px, ${offsetY}px)` }}>
              <Puppet manifest={manifest} atlasUrl={atlas_url} />
         </div>
     </div>
