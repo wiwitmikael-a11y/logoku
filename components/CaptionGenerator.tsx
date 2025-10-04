@@ -4,9 +4,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-// FIX: The import for AIPetContext was failing because the file was not a module. This is fixed by adding content to the file.
 import { useAIPet } from '../contexts/AIPetContext';
-// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -40,9 +38,16 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
   }, [captions]);
 
   useEffect(() => {
-    const interval = setInterval(() => notifyPetOfActivity('generating_captions'), 3000);
-    return () => clearInterval(interval);
-  }, [notifyPetOfActivity]);
+    let activityInterval: number | undefined;
+    if (isLoading) {
+        activityInterval = window.setInterval(() => notifyPetOfActivity('generating_captions'), 3000);
+    }
+    return () => {
+        if (activityInterval) {
+            clearInterval(activityInterval);
+        }
+    };
+  }, [isLoading, notifyPetOfActivity]);
 
   const handleSubmit = useCallback(async () => {
     if (!topic || !projectData.brandInputs || !projectData.selectedPersona) return;

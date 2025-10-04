@@ -20,7 +20,6 @@ const INITIAL_STATS: AIPetStats = { energy: 100, creativity: 50, intelligence: 5
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
 
 const getStageForLevel = (level: number): AIPetStage => {
-    if (level < 2) return 'egg';
     if (level < 5) return 'child';
     if (level < 10) return 'teen';
     return 'adult';
@@ -83,8 +82,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         if (profile.aipet_state) {
             const existingState = profile.aipet_state as AIPetState;
-            // Check for evolution
-            if (existingState.stage !== currentStage) {
+            // Check for evolution or if stage is still egg (to force evolution)
+            if (existingState.stage !== currentStage || existingState.stage === 'egg') {
                 const evolvedState = { ...existingState, stage: currentStage };
                 setPetState(evolvedState);
                 savePetStateToDb(evolvedState);
