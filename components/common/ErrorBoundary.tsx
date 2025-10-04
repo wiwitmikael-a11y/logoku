@@ -23,13 +23,6 @@ class ErrorBoundary extends Component<Props, State> {
     isCopied: false,
   };
 
-  // FIX: The original arrow function property for handleCopy was causing type errors where `this` context was not being correctly inferred.
-  // Refactoring to use constructor binding is a more robust, classic approach to ensure `this` is correctly bound, resolving the errors.
-  constructor(props: Props) {
-    super(props);
-    this.handleCopy = this.handleCopy.bind(this);
-  }
-
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.
     // It should return an object to update state.
@@ -40,7 +33,9 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy() {
+  // FIX: Refactored `handleCopy` to be an arrow function property. This is the modern and standard way in React class components
+  // to ensure `this` always refers to the component instance, resolving context issues that caused errors like "setState does not exist".
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -68,6 +63,7 @@ class ErrorBoundary extends Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
+                    {/* FIX: The error "props does not exist" was a symptom of the component's `this` context issue. With `this` correctly bound, `this.props` is now accessible as expected in the render method. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -90,6 +86,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
+    // FIX: The error "props does not exist" was a symptom of the component's `this` context issue. `this.props` is valid here.
     return this.props.children;
   }
 }

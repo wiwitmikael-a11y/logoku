@@ -23,6 +23,7 @@ interface ProjectDashboardProps {
   onDeleteProject: (projectId: number) => void;
   onShowBrandGallery: () => void;
   onShowSotoshop: () => void;
+  onShowVisualizer: () => void;
 }
 
 const DYNAMIC_INFO_TIPS = [
@@ -156,7 +157,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => (
   </div>
 );
 
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'onShowVisualizer'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
@@ -283,7 +284,7 @@ const TabButton: React.FC<{
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name?.split(' ')[0] || 'Juragan';
-  const [activeTab, setActiveTab] = useState<'projects' | 'sotoshop' | 'tools' | 'forum' | 'juragan'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'sotoshop' | 'tools' | 'forum' | 'juragan' | 'visualizer'>('projects');
   
   useEffect(() => {
     if (sessionStorage.getItem('openForumTab')) {
@@ -298,7 +299,14 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
     { id: 'tools', name: 'Ide', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg> },
     { id: 'forum', name: 'Forum', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H17z" /></svg> },
     { id: 'juragan', name: 'Juara', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
+    { id: 'visualizer', name: 'AIPet Lab', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-400" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 00-1-1v-.5a1.5 1.5 0 01-3 0V15a1 1 0 00-1 1H6a1 1 0 01-1-1v-3a1 1 0 011-1h.5a1.5 1.5 0 000-3H6a1 1 0 01-1-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z" /></svg> },
   ];
+
+  const handleTabClick = (id: string) => {
+      if (id === 'sotoshop') props.onShowSotoshop();
+      else if (id === 'visualizer') props.onShowVisualizer();
+      else setActiveTab(id as any);
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -307,14 +315,14 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
         <p className="text-text-muted max-w-3xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain.</p>
       </div>
 
-      <div className="flex justify-center border-b border-border-main">
+      <div className="flex justify-center border-b border-border-main overflow-x-auto">
         {tabs.map(tab => (
             <TabButton 
                 key={tab.id}
                 name={tab.name}
                 icon={tab.icon}
                 active={activeTab === tab.id}
-                onClick={() => tab.id === 'sotoshop' ? props.onShowSotoshop() : setActiveTab(tab.id as any)}
+                onClick={() => handleTabClick(tab.id)}
             />
         ))}
       </div>

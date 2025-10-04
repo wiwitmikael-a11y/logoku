@@ -63,6 +63,7 @@ const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
 // FIX: The import for AIPetWidget was failing because the file was not a module. This is fixed by adding content to the file.
 const AIPetWidget = React.lazy(() => import('./components/AIPetWidget'));
 const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
+const AIPetVisualizerModal = React.lazy(() => import('./components/AIPetVisualizerModal'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
@@ -238,6 +239,7 @@ const MainApp: React.FC = () => {
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
     const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
     const [showSotoshop, setShowSotoshop] = useState(false);
+    const [showVisualizer, setShowVisualizer] = useState(false);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -445,7 +447,7 @@ const MainApp: React.FC = () => {
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} addXp={addXp} onShareToForum={() => handleShareToForum(project)} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
-            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onShowVisualizer={() => setShowVisualizer(true)} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
@@ -551,6 +553,7 @@ const MainApp: React.FC = () => {
         <Suspense fallback={null}>
             <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={aipetContext.petState} profile={profile} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
+            <AIPetVisualizerModal show={showVisualizer} onClose={() => setShowVisualizer(false)} />
             <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
             <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
             <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
