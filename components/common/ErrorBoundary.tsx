@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 import Button from './Button';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -16,7 +16,8 @@ interface State {
   isCopied: boolean;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+// FIX: Explicitly extend React.Component to ensure props, state, and setState are correctly inherited, resolving all type errors.
+class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
     error: undefined,
@@ -33,8 +34,6 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Using an arrow function property ensures `this` is correctly bound without needing a constructor.
-  // This fixes the errors where `this.setState` was not found.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());

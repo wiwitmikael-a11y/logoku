@@ -227,7 +227,6 @@ const MainApp: React.FC = () => {
     
     const [isAssistantOpen, setAssistantOpen] = useState(false);
     const [isPetPanelOpen, setPetPanelOpen] = useState(false);
-    const [isPetMenuOpen, setPetMenuOpen] = useState(false);
     const [showAIPetHome, setShowAIPetHome] = useState(false);
     const [showHatchingModal, setShowHatchingModal] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
@@ -245,7 +244,6 @@ const MainApp: React.FC = () => {
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
-    const petMenuRef = useRef<HTMLDivElement>(null);
     const previousAppState = useRef<AppState>(appState);
 
     // UX Enhancements
@@ -280,7 +278,6 @@ const MainApp: React.FC = () => {
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => { 
             if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false); 
-            if (petMenuRef.current && !petMenuRef.current.contains(event.target as Node)) setPetMenuOpen(false); 
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -519,26 +516,13 @@ const MainApp: React.FC = () => {
 
         {/* --- Floating Pet Assistant & Panels --- */}
         {user && !aipetContext.isLoading && aipetContext.petState && (
-            <div ref={petMenuRef}>
+            <>
                 <div 
-                    onClick={() => setPetMenuOpen(p => !p)}
+                    onClick={() => setPetPanelOpen(p => !p)}
                     className="fixed bottom-8 right-8 w-24 h-24 z-40 cursor-pointer group"
                 >
                     <Suspense fallback={null}><AIPetVisual petState={aipetContext.petState} /></Suspense>
                 </div>
-
-                {isPetMenuOpen && (
-                    <div className="pet-menu-popup fixed bottom-[8.5rem] right-2 w-48 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg p-2 space-y-2 z-40 animate-content-fade-in">
-                        {aipetContext.petState.stage === 'egg' ? (
-                            <button onClick={() => { setShowHatchingModal(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Tetaskan Telur (10 Token)</button>
-                        ) : (
-                            <button onClick={() => { setPetPanelOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Lihat Profil {aipetContext.petState.name}</button>
-                        )}
-                        <button onClick={() => { setAssistantOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors" disabled={aipetContext.petState.stage === 'egg'}>
-                            Tanya {aipetContext.petState.name}
-                        </button>
-                    </div>
-                )}
 
                 <Suspense fallback={null}>
                     <AiAssistant 
@@ -549,11 +533,12 @@ const MainApp: React.FC = () => {
                     <AIPetWidget 
                         isOpen={isPetPanelOpen}
                         onClose={() => setPetPanelOpen(false)}
-                        onShowHome={() => setShowAIPetHome(true)}
+                        onShowHome={() => { setShowAIPetHome(true); setPetPanelOpen(false); }}
+                        onAskPet={() => { setAssistantOpen(true); setPetPanelOpen(false); }}
                         {...aipetContext}
                     />
                 </Suspense>
-            </div>
+            </>
         )}
 
         {/* Modals and overlays */}
