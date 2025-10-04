@@ -8,27 +8,59 @@ interface AIPetVisualProps {
   className?: string;
 }
 
-const EggVisual: React.FC = () => (
-    <svg viewBox="0 0 100 125">
-        <g transform="translate(0, 5)">
-            <path 
-                d="M50,5 C25,5 10,40 10,70 C10,100 30,120 50,120 C70,120 90,100 90,70 C90,40 75,5 50,5Z" 
-                fill="url(#eggGradient)" 
-                stroke="#52525b" 
-                strokeWidth="2"
-            />
-            <defs>
-                <radialGradient id="eggGradient" cx="0.5" cy="0.9" r="0.9">
-                    <stop offset="0%" stopColor="#e2e8f0" />
-                    <stop offset="100%" stopColor="#f8fafc" />
-                </radialGradient>
-            </defs>
-            <circle cx="50" cy="40" r="8" fill="#c084fc" opacity="0.5" />
-            <circle cx="70" cy="70" r="12" fill="#60a5fa" opacity="0.5" />
-            <circle cx="35" cy="85" r="10" fill="#f87171" opacity="0.5" />
-        </g>
-    </svg>
-);
+// NEW: Consolidated, enhanced Egg visual component with mechanical base
+const EggVisual: React.FC = () => {
+    const eggAnimation = `
+        @keyframes egg-pulse { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.03) translateY(-2px); } }
+        @keyframes divine-glow { 0%, 100% { filter: drop-shadow(0 0 15px rgb(var(--c-splash) / 0.5)) drop-shadow(0 0 30px rgb(var(--c-splash) / 0.3)); } 50% { filter: drop-shadow(0 0 25px rgb(var(--c-splash) / 0.8)) drop-shadow(0 0 50px rgb(var(--c-splash) / 0.5)); } }
+    `;
+    return (
+        <div className="w-full h-full" style={{ animation: `egg-pulse 2.5s ease-in-out infinite, divine-glow 3.5s ease-in-out infinite` }}>
+            <style>{eggAnimation}</style>
+            <svg viewBox="0 0 100 135" className="w-full h-full">
+                <defs>
+                    <pattern id="mecha-pattern-egg" patternUnits="userSpaceOnUse" width="12" height="12">
+                        <path d="M-2,2 l4,-4 M0,12 l12,-12 M10,14 l4,-4" stroke="rgb(var(--c-border))" strokeWidth="0.7" />
+                    </pattern>
+                    <radialGradient id="eggShine" cx="0.3" cy="0.3" r="0.8">
+                        <stop offset="0%" stopColor="rgba(255,255,255,0.2)" />
+                        <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                    </radialGradient>
+                    <linearGradient id="metalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#404040" />
+                        <stop offset="50%" stopColor="#2a2a2e" />
+                        <stop offset="100%" stopColor="#404040" />
+                    </linearGradient>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                {/* Mechanical Base */}
+                <g id="mechanical-base">
+                    <path d="M 20 115 C 30 130, 70 130, 80 115 L 75 110 C 65 120, 35 120, 25 110 Z" fill="url(#metalGradient)" stroke="#18181b" strokeWidth="2" />
+                    <ellipse cx="50" cy="118" rx="15" ry="4" fill="rgb(var(--c-splash))" filter="url(#glow)" />
+                    <path d="M 22 114 L 35 105 M 78 114 L 65 105" stroke="#18181b" strokeWidth="1.5" />
+                </g>
+
+                {/* Egg Body */}
+                <g>
+                    <path d="M50,5 C25,5 12,35 12,70 C12,105 30,120 50,120 C70,120 88,105 88,70 C88,35 75,5 50,5Z" fill="#404040" stroke="#18181b" strokeWidth="3"/>
+                    <path d="M50,5 C25,5 12,35 12,70 C12,105 30,120 50,120 C70,120 88,105 88,70 C88,35 75,5 50,5Z" fill="url(#mecha-pattern-egg)" opacity="0.3"/>
+                    <path d="M 40 20 Q 50 40 45 60 T 55 90" stroke="rgb(var(--c-splash))" strokeWidth="1.5" fill="none" strokeLinecap="round" filter="url(#glow)"/>
+                    <path d="M 60 25 Q 75 50 60 75 T 70 100" stroke="rgb(var(--c-splash))" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.7" filter="url(#glow)"/>
+                    <circle cx="50" cy="70" r="3" fill="rgb(var(--c-splash))" filter="url(#glow)" />
+                    <path d="M50,5 C25,5 12,35 12,70 C12,105 30,120 50,120 C70,120 88,105 88,70 C88,35 75,5 50,5Z" fill="url(#eggShine)"/>
+                </g>
+            </svg>
+        </div>
+    );
+};
+
 
 // --- NEW: Define ideal size ratios relative to the torso's width ---
 const TARGET_RATIOS: { [key in PartName]?: number } = {
@@ -110,11 +142,19 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
                 const [bx, by, bw, bh] = part.bbox;
                 
                 let animationStyle: React.CSSProperties = {};
+                // NEW: Set transform origin based on AI-provided assembly point for natural movement
+                const transformOrigin = `${part.assemblyPoint[0]}px ${part.assemblyPoint[1]}px`;
+
                 if (part.name.includes('arm')) {
-                    animationStyle.animation = `pet-arm-swing 3s ease-in-out infinite ${index * 0.1}s`;
-                }
-                 if (part.name === 'head') {
-                    animationStyle.animation = `pet-head-bob 3s ease-in-out infinite`;
+                    animationStyle = {
+                        animation: `pet-arm-swing 4s ease-in-out infinite ${index * 0.2}s`,
+                        transformOrigin: transformOrigin,
+                    };
+                } else if (part.name === 'head') {
+                    animationStyle = {
+                        animation: `pet-head-bob 5s ease-in-out infinite`,
+                        transformOrigin: transformOrigin,
+                    };
                 }
 
                 return (
@@ -131,7 +171,6 @@ const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manif
                             backgroundSize: `${atlasSize[0]}px ${atlasSize[1]}px`,
                             zIndex: index,
                             transform: `scale(${part.scale})`,
-                            // Scale from the joint for correct positioning
                             transformOrigin: `${part.assemblyPoint[0]}px ${part.assemblyPoint[1]}px`,
                             ...animationStyle
                         }}
@@ -149,15 +188,17 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
   const animationKeyframes = `
     @keyframes pet-body-bob {
         0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-2px); }
+        50% { transform: translateY(-3%); }
     }
     @keyframes pet-arm-swing {
-        0%, 100% { transform: rotate(0deg); }
-        50% { transform: rotate(5deg); }
+        0%, 100% { transform: rotate(-5deg); }
+        50% { transform: rotate(7deg); }
     }
     @keyframes pet-head-bob {
-        0%, 100% { transform: translateY(0) rotate(0); }
-        50% { transform: translateY(-1px) rotate(1deg); }
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        25% { transform: rotate(-3deg); }
+        50% { transform: translateY(-4%) rotate(0deg); }
+        75% { transform: rotate(3deg); }
     }
   `;
 
@@ -166,11 +207,9 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
     imageRendering: 'pixelated',
   };
 
-  const animationClass = stage !== 'egg' ? 'breathing-pet' : 'animate-pulse'; 
-
   if (stage === 'egg' || !atlas_url || !manifest) {
       return (
-          <div style={filterStyle} className={`w-full h-full ${className || ''} ${animationClass}`}>
+          <div style={filterStyle} className={`w-full h-full ${className || ''}`}>
               <EggVisual />
           </div>
       );
@@ -189,7 +228,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         className={`w-full h-full object-contain ${className || ''}`}
     >
         <style>{animationKeyframes}</style>
-        <div style={{ animation: `pet-body-bob 3s ease-in-out infinite`, transform: `translate(${offsetX}px, ${offsetY}px)` }}>
+        <div style={{ animation: `pet-body-bob 4s ease-in-out infinite`, transform: `translate(${offsetX}px, ${offsetY}px)` }}>
              <Puppet manifest={manifest} atlasUrl={atlas_url} />
         </div>
     </div>

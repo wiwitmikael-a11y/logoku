@@ -243,138 +243,111 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
     }
 };
 
-// --- NEW 2.5D AIPET GENERATION SYSTEM ---
+// --- NEW 2.5D AIPET GENERATION SYSTEM (AI Deconstruction Method) ---
 
 export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ atlasUrl: string, manifest: AtlasManifest }> => {
     const ai = getAiClient();
+    const seed = userId + new Date().toISOString();
+
+    // --- STAGE 1: AI CONCEPT ARTIST ---
+    // Generate a single, cohesive, assembled creature. This is a much more reliable task for the AI.
+    const conceptPrompt = `Masterpiece, award-winning concept art of a single, unique, baby digital pet.
     
-    // --- Step 1: Generate the Character Atlas (Sprite Sheet) ---
-    const seed = userId + new Date().toISOString().slice(0, 10);
-    const atlasPrompt = `Create a flawless character rigging kit (sprite sheet) for a unique baby digital pet, suitable for 2.5D puppet animation.
+    **AESTHETIC (NON-NEGOTIABLE):**
+    - The creature is a **NON-HUMANOID mechanical animal or monster**.
+    - The style is 'AIPet': a cute, 'chibi-mecha' fusion of an organic creature and sleek robotic parts.
+    - **AVOID**: Human-like figures, bipedal robots, Iron Man, Gundam.
+    - **FOCUS ON**: Biomechanical insects, quadrupedal robotic mammals, ethereal energy creatures with tech shells, alien monsters.
+    - The art style is clean, sharp 2.5D vector art with consistent lighting.
+    - The creature is viewed from a **2.5D isometric perspective, facing slightly LEFT**.
+    
+    **COMPOSITION:**
+    - The creature is fully assembled and centered.
+    - The background MUST be a solid, pure white (#FFFFFF) background. This is crucial for the next step.
+    - No text, borders, or other elements.
+    - Seed: ${seed}`;
 
-    **AESTHETIC STYLE (CRUCIAL):**
-    The aesthetic is 'AIPet': a fusion of a cute **animalistic creature (Pet)** and sleek mechanical parts (AI). The final form MUST be a **NON-HUMANOID mechanical animal or monster**. Think 'chibi-mecha beast', 'biomechanical creature', or a cute monster with integrated futuristic armor. It should be endearing but also look powerful and cool. **ABSOLUTELY NO humanoid, robotic, android, or Iron Man-like figures.** The style is clean, sharp vector art with consistent lighting from the top-left.
-
-    **GLOBAL RULES (ABSOLUTELY CRITICAL):**
-    1.  **SOLID TRANSPARENT BACKGROUND:** The final PNG must have a fully transparent background. No white, no colors, no frames. **NON-NEGOTIABLE: ABSOLUTELY NO checkered or checkerboard patterns.** The background must be 100% transparent. This is the most important rule.
-    2.  **CONSISTENT ORIENTATION:** All body parts MUST be drawn from a **2.5D isometric perspective as if the character is facing to the LEFT**. This uniformity is critical.
-    3.  **PERFECT, UNCOMPROMISING SEPARATION (MOST IMPORTANT RULE):** This is the most critical instruction. Each of the 7 parts MUST be a completely separate, distinct, and standalone object on the sprite sheet. There must be **large amounts of empty, transparent space** between every part. **NO part should touch, overlap, or be connected to another part in any way.** The AI must generate 7 individual, fully detached pieces. Failure to do this makes the output useless. The torso MUST NOT have arms attached, the head MUST NOT have the torso attached, etc.
-    4.  **NO TEXT OR BORDERS:** The image must only contain the 7 specified body parts.
-
-    **REQUIRED BODY PARTS (7 INDIVIDUAL, SEPARATED PIECES):**
-    1.  **Head:** A single, complete, fully detached head. It must NOT have any part of the torso attached.
-    2.  **Torso:** A single, complete, fully detached torso. It is the central body piece. It MUST NOT have any head, arms, or legs attached to it whatsoever.
-    3.  **Left Arm:** A complete, fully detached left arm (or forelimb), from the shoulder joint to the paw/claw/hand. It must be one single, separate piece.
-    4.  **Right Arm:** A complete, fully detached right arm (or forelimb), from the shoulder joint to the paw/claw/hand. It must be one single, separate piece.
-    5.  **Left Leg:** A complete, fully detached left leg (or hindlimb), from the hip joint to the foot. It must be one single, separate piece.
-    6.  **Right Leg:** A complete, fully detached right leg (or hindlimb), from the hip joint to the foot. It must be one single, separate piece.
-    7.  **Accessory:** One unique accessory (like a small mechanical wing, a floating data halo, or a cybernetic tail). It must be a single, separate piece.
-
-    Arrange these 7 perfectly separated parts neatly in a grid. This is for a professional animation pipeline, so precision is key.
-    Seed: ${seed}`;
-
-    let initialAtlasUrl: string;
+    let conceptImageBase64: string;
     try {
         const response = await ai.models.generateImages({
             model: 'imagen-4.0-generate-001',
-            prompt: atlasPrompt,
+            prompt: conceptPrompt,
             config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: '1:1' },
         });
-        initialAtlasUrl = `data:image/png;base64,${response.generatedImages[0].image.imageBytes}`;
+        conceptImageBase64 = `data:image/png;base64,${response.generatedImages[0].image.imageBytes}`;
     } catch (error) {
-        throw handleApiError(error, "AIPet Atlas Generation (Stage 1)");
+        throw handleApiError(error, "AIPet Concept Generation (Stage 1)");
     }
-
-    // --- Step 1.5: AI-Powered Background Cleanup ---
-    // This step ensures perfect transparency, fixing issues like checkerboard backgrounds.
-    let cleanedAtlasUrl: string;
-    try {
-        cleanedAtlasUrl = await removeImageBackground(initialAtlasUrl);
-    } catch (error) {
-        console.warn("AI background cleanup failed, attempting to use original atlas.", error);
-        cleanedAtlasUrl = initialAtlasUrl; // Fallback to the original if cleanup fails
-    }
-
-    // --- Step 2: Analyze the Cleaned Atlas and Generate the Assembly Manifest JSON ---
-    const atlasBase64Data = cleanedAtlasUrl.split(',')[1];
-    const manifestPrompt = `Analyze the provided character atlas image. It contains 7 separated parts of a creature. Identify each part (head, torso, left_arm, right_arm, left_leg, right_leg, accessory1) and provide a complete JSON manifest for reassembling it.
-
-    **JSON Output Instructions:**
-    - "atlasSize": The [width, height] of the entire image.
-    - "parts": An array of objects for each part. Each object must have:
-        - "name": The part name (e.g., "head").
-        - "bbox": The bounding box [x, y, width, height] of the part.
-        - "assemblyPoint": The part's own joint point [x, y], relative to its bbox. For arms/legs, this is the shoulder/hip. For the head, this is the neck.
-        - "attachTo": The name of the parent part (e.g., "left_arm" attaches to "torso"). The torso's 'attachTo' is null.
-        - "attachmentPoint": The named anchor on the parent (e.g., "left_shoulder"). The torso's 'attachmentPoint' is null.
-    - "anchors": An object mapping parts that have attachment points (mainly the 'torso') to their named anchor locations [x, y] relative to their bbox. The torso MUST have 'neck', 'left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'.
-    - "layering": An array of part names in the correct z-index order for a 2.5D isometric view (from back to front). A good default is: ['right_leg', 'left_leg', 'right_arm', 'torso', 'left_arm', 'head']. Place the accessory where it makes sense.`;
     
-    const manifestSchema = {
-        type: Type.OBJECT,
-        properties: {
-            atlasSize: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "The [width, height] of the entire atlas image." },
-            parts: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        name: { type: Type.STRING, description: "Part name (e.g., 'head', 'torso')." },
-                        bbox: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "Bounding box [x, y, width, height]." },
-                        assemblyPoint: { type: Type.ARRAY, items: { type: Type.NUMBER }, description: "Joint point [x, y] relative to bbox." },
-                        attachTo: { type: Type.STRING, description: "Parent part name to attach to. Can be null for the root part." },
-                        attachmentPoint: { type: Type.STRING, description: "Anchor name on parent. Can be null for the root part." }
-                    },
-                    required: ['name', 'bbox', 'assemblyPoint', 'attachTo', 'attachmentPoint']
-                }
-            },
-            anchors: {
-                type: Type.OBJECT,
-                description: "Maps parts to their anchor points. Primarily for the 'torso'.",
-                properties: {
-                    torso: {
-                        type: Type.OBJECT,
-                        description: "Anchor points on the torso.",
-                        properties: {
-                            neck: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                            left_shoulder: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                            right_shoulder: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                            left_hip: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                            right_hip: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                            accessory_mount1: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                            accessory_mount2: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                        }
-                    },
-                }
-            },
-            layering: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Z-index order of parts from back to front." }
-        },
-        required: ['atlasSize', 'parts', 'anchors', 'layering']
-    };
-
+    // --- STAGE 2: AI RIGGING ARTIST (DECONSTRUCTION & MANIFEST) ---
+    // The AI now analyzes the concept and is tasked with deconstructing it and creating the rig.
+    const conceptData = conceptImageBase64.split(',')[1];
+    const deconstructionPrompt = `You are a professional 2D rigging artist for a puppet animation system. Analyze the provided image of a creature.
+    
+    **YOUR TASK:**
+    Deconstruct the creature into a sprite sheet and simultaneously generate a JSON rigging manifest.
+    
+    **SPRITE SHEET RULES (CRITICAL):**
+    1.  Redraw the creature as a sprite sheet containing **7 perfectly separated, detached parts**: 'head', 'torso', 'left_arm', 'right_arm', 'left_leg', 'right_leg', and one 'accessory1'.
+    2.  The final sprite sheet image MUST have a **100% TRANSPARENT background**. No checkerboards, no colors.
+    3.  Arrange the parts neatly in a grid with ample transparent space between them. They must not touch or overlap.
+    
+    **JSON MANIFEST RULES:**
+    Provide a complete JSON manifest for reassembling the parts you've drawn.
+    - "atlasSize": The [width, height] of the sprite sheet image you are generating.
+    - "parts": An array of 7 objects. Each object must have:
+        - "name": Part name (e.g., "head").
+        - "bbox": The bounding box [x, y, width, height] of the part on your new sprite sheet.
+        - "assemblyPoint": The part's joint point [x, y], relative to its bbox. (e.g., shoulder for an arm, neck for a head).
+        - "attachTo": The parent part name (e.g., "left_arm" attaches to "torso"). The torso's 'attachTo' is null.
+        - "attachmentPoint": The named anchor on the parent (e.g., "left_shoulder").
+    - "anchors": An object mapping parts to their anchor locations. The 'torso' MUST have 'neck', 'left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'.
+    - "layering": Z-index order from back to front (e.g., ['right_leg', 'left_leg', 'right_arm', 'torso', 'left_arm', 'head']).
+    
+    **RESPONSE FORMAT:**
+    You must respond with BOTH the new sprite sheet image AND the JSON manifest.`;
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: { parts: [{ inlineData: { data: atlasBase64Data, mimeType: 'image/png' } }, { text: manifestPrompt }] },
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [
+                    { inlineData: { data: conceptData, mimeType: 'image/png' } },
+                    { text: deconstructionPrompt },
+                ],
+            },
             config: {
-                responseMimeType: "application/json",
-                responseSchema: manifestSchema
-            }
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
         });
-        const manifest = safeJsonParse<AtlasManifest>(response.text, 'AIPet Manifest Generation');
+
+        let atlasUrl: string | null = null;
+        let manifestJson: string | null = null;
+
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
+            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+                atlasUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            } else if (part.text) {
+                manifestJson = part.text;
+            }
+        }
+
+        if (!atlasUrl || !manifestJson) {
+            throw new Error("AI failed to return both a sprite sheet and a manifest.");
+        }
+
+        const cleanedJson = cleanJsonString(manifestJson, 'object');
+        const manifest = safeJsonParse<AtlasManifest>(cleanedJson, 'AIPet Manifest Deconstruction');
+
+        // Final mandatory background cleanup as a safeguard
+        const cleanedAtlasUrl = await removeImageBackground(atlasUrl);
+        
         return { atlasUrl: cleanedAtlasUrl, manifest };
+
     } catch (error) {
-        throw handleApiError(error, "AIPet Manifest Generation (Stage 2)");
+        throw handleApiError(error, "AIPet Deconstruction & Rigging (Stage 2)");
     }
 };
-
-/** @deprecated Replaced by generateAIPetAtlasAndManifest */
-export const DEPRECATED_generateAIPetVisual = async (userId: string): Promise<string> => {
-    // [CODE OMITTED FOR BREVITY - The old logic remains here but is no longer called]
-    return "";
-};
-
 
 export const generateAIPetNarrative = async (petData: { name: string, personality: AIPetPersonalityVector, stats: AIPetStats }): Promise<string> => {
     const ai = getAiClient();
