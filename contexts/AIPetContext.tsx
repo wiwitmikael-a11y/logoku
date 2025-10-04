@@ -9,6 +9,8 @@ import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage } from 
 export interface AIPetContextType {
   petState: AIPetState | null;
   isLoading: boolean;
+  contextualMessage: string | null;
+  setContextualMessage: React.Dispatch<React.SetStateAction<string | null>>;
   notifyPetOfActivity: (activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => void;
   handleInteraction: () => void;
   onGameWin: (game: 'color' | 'pattern' | 'style' | 'slogan') => void;
@@ -67,6 +69,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const { user, profile, addXp, deductCredits } = useAuth();
     const [petState, setPetState] = useState<AIPetState | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [contextualMessage, setContextualMessage] = useState<string | null>(null);
     const lastUpdateRef = useRef(Date.now());
 
     const savePetStateToDb = useCallback(async (stateToSave: AIPetState) => {
@@ -158,6 +161,10 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
         return () => cancelAnimationFrame(animationFrameId);
     }, [petState, updatePetState]);
+
+    useEffect(() => {
+        setContextualMessage(null);
+    }, [petState?.stage]);
 
     const hatchPet = useCallback(async () => {
         if (!user || !profile) throw new Error("User not found");
@@ -261,7 +268,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [updatePetState]);
 
 
-    const value: AIPetContextType = { petState, isLoading, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, hatchPet };
+    const value: AIPetContextType = { petState, isLoading, contextualMessage, setContextualMessage, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, hatchPet };
     
     return <AIPetContext.Provider value={value}>{children}</AIPetContext.Provider>;
 };

@@ -23,7 +23,7 @@ const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Intera
 
 const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
-  const { notifyPetOfActivity } = useAIPet();
+  const { petState, setContextualMessage, notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
   
   const [topic, setTopic] = useState('');
@@ -64,13 +64,20 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
       await addXp(10);
       setCaptions(result);
       playSound('success');
+
+      if (petState && petState.stage !== 'egg' && petState.stats.charisma > 60) {
+          const randomOption = Math.floor(Math.random() * 3) + 1;
+          setTimeout(() => {
+              setContextualMessage(`Mantap! Caption <strong>nomor ${randomOption}</strong> kayaknya paling nendang dan pas buat target pasar kita, Juragan!`);
+          }, 1000);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       playSound('error');
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal, petState, setContextualMessage]);
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">

@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateBrandPersona, generateSlogans } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { loadWorkflowState } from '../services/workflowPersistence';
-import type { BrandPersona, BrandInputs } from '../types';
+import type { BrandPersona, BrandInputs, AIPetPersonalityVector } from '../types';
 import { useAIPet } from '../contexts/AIPetContext';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -41,7 +41,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   const [error, setError] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { notifyPetOfActivity } = useAIPet();
+  const { petState, setContextualMessage, notifyPetOfActivity } = useAIPet();
+  const suggestionShownRef = useRef(false);
 
   const personasRef = useRef<HTMLDivElement>(null);
   const slogansRef = useRef<HTMLDivElement>(null);
@@ -89,6 +90,28 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
       setShowNextStepNudge(false);
     }
   }, [selectedSlogan]);
+
+  useEffect(() => {
+    if (personas.length > 0 && petState && petState.stage !== 'egg' && !suggestionShownRef.current) {
+        const getDominantTrait = (p: AIPetPersonalityVector): keyof AIPetPersonalityVector => {
+            return (Object.keys(p) as Array<keyof AIPetPersonalityVector>).reduce((a, b) => p[a] > p[b] ? a : b);
+        };
+
+        const dominantTrait = getDominantTrait(petState.personality);
+        
+        const matchedPersona = personas.find(p => 
+            p.nama_persona.toLowerCase().includes(dominantTrait) ||
+            p.kata_kunci.some(k => k.toLowerCase().includes(dominantTrait))
+        );
+
+        if (matchedPersona) {
+            setTimeout(() => {
+                setContextualMessage(`Psst, Juragan! Persona <strong>"${matchedPersona.nama_persona}"</strong> ini kayaknya cocok banget sama kepribadianku, lho! Mungkin bisa jadi inspirasi?`);
+                suggestionShownRef.current = true;
+            }, 1500); // Delay for a more natural feel
+        }
+    }
+  }, [personas, petState, setContextualMessage]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

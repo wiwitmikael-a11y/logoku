@@ -65,6 +65,7 @@ const AIPetWidget = React.lazy(() => import('./components/AIPetWidget'));
 const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
 const AIPetHatching = React.lazy(() => import('./components/AIPetHatching'));
 const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
+const AIPetContextualBubble = React.lazy(() => import('./components/AIPetContextualBubble'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
@@ -213,6 +214,7 @@ const App: React.FC = () => {
 const MainApp: React.FC = () => {
     const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, imageEditorState, closeImageEditor } = useAuth();
     const aipetContext = useAIPet();
+    const { petState, contextualMessage, setContextualMessage } = aipetContext;
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -519,20 +521,20 @@ const MainApp: React.FC = () => {
         </div>
 
         {/* --- Floating Pet Assistant & Panels --- */}
-        {user && !aipetContext.isLoading && aipetContext.petState && (
+        {user && !aipetContext.isLoading && petState && (
             <>
                 <div 
                     onClick={() => setPetPanelOpen(p => !p)}
                     className="fixed bottom-8 right-8 w-24 h-24 z-40 cursor-pointer group"
                 >
-                    <Suspense fallback={null}><AIPetVisual petState={aipetContext.petState} /></Suspense>
+                    <Suspense fallback={null}><AIPetVisual petState={petState} /></Suspense>
                 </div>
 
                 <Suspense fallback={null}>
                     <AiAssistant 
                         isOpen={isAssistantOpen} 
                         onToggle={setAssistantOpen} 
-                        petName={aipetContext.petState.name} 
+                        petName={petState.name} 
                     />
                     <AIPetWidget 
                         isOpen={isPetPanelOpen}
@@ -541,6 +543,10 @@ const MainApp: React.FC = () => {
                         onAskPet={() => { setAssistantOpen(true); setPetPanelOpen(false); }}
                         {...aipetContext}
                     />
+                    <AIPetContextualBubble
+                        message={contextualMessage}
+                        onClose={() => setContextualMessage(null)}
+                    />
                 </Suspense>
             </>
         )}
@@ -548,7 +554,7 @@ const MainApp: React.FC = () => {
         {/* Modals and overlays */}
         <Suspense fallback={null}>
             {showHatchingModal && <AIPetHatching onClose={() => setShowHatchingModal(false)} />}
-            <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={aipetContext.petState} profile={profile} />
+            <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={petState} profile={profile} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
             <AIPetLabModal show={showAIPetLab} onClose={() => setShowAIPetLab(false)} />
             <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
