@@ -229,6 +229,7 @@ const MainApp: React.FC = () => {
     const [isPetPanelOpen, setPetPanelOpen] = useState(false);
     const [isPetMenuOpen, setPetMenuOpen] = useState(false);
     const [showAIPetHome, setShowAIPetHome] = useState(false);
+    const [showHatchingModal, setShowHatchingModal] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
     const [showAboutModal, setShowAboutModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
@@ -528,8 +529,14 @@ const MainApp: React.FC = () => {
 
                 {isPetMenuOpen && (
                     <div className="pet-menu-popup fixed bottom-[8.5rem] right-2 w-48 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg p-2 space-y-2 z-40 animate-content-fade-in">
-                        <button onClick={() => { setPetPanelOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Lihat Profil {aipetContext.petState.name}</button>
-                        <button onClick={() => { setAssistantOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors" disabled={aipetContext.petState.stage === 'egg'}>Tanya {aipetContext.petState.name}</button>
+                        {aipetContext.petState.stage === 'egg' ? (
+                            <button onClick={() => { setShowHatchingModal(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Tetaskan Telur (1 Token)</button>
+                        ) : (
+                            <button onClick={() => { setPetPanelOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Lihat Profil {aipetContext.petState.name}</button>
+                        )}
+                        <button onClick={() => { setAssistantOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors" disabled={aipetContext.petState.stage === 'egg'}>
+                            Tanya {aipetContext.petState.name}
+                        </button>
                     </div>
                 )}
 
@@ -551,6 +558,7 @@ const MainApp: React.FC = () => {
 
         {/* Modals and overlays */}
         <Suspense fallback={null}>
+            {showHatchingModal && <AIPetHatching onClose={() => setShowHatchingModal(false)} />}
             <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={aipetContext.petState} profile={profile} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
             <AIPetVisualizerModal show={showVisualizer} onClose={() => setShowVisualizer(false)} />

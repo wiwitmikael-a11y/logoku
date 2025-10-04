@@ -40,11 +40,11 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
     imageRendering: 'pixelated'
   };
 
-  const animationClass = stage !== 'egg' ? 'animate-breathing-ai' : ''; 
+  const animationClass = stage !== 'egg' ? 'animate-breathing-ai' : 'animate-pulse'; 
 
   if (stage === 'egg' || !visual_base64) {
       return (
-          <div style={filterStyle} className={`w-full h-full ${className || ''} animate-pulse`}>
+          <div style={filterStyle} className={`w-full h-full ${className || ''} ${animationClass}`}>
               <EggVisual />
           </div>
       );
