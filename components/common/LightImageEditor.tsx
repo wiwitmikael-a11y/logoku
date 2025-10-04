@@ -23,7 +23,11 @@ type CanvasObject = {
 };
 type Filters = { brightness: number; contrast: number; saturate: number; grayscale: number; };
 
-const FONT_FAMILES = ['Plus Jakarta Sans', 'Bebas Neue', 'Caveat', 'Arial', 'Verdana', 'Times New Roman', 'Courier New'];
+const FONT_CATEGORIES = [
+    { label: "Sans Serif (Modern & Jelas)", fonts: ["Poppins", "Montserrat", "Oswald", "Roboto", "Plus Jakarta Sans"] },
+    { label: "Serif (Klasik & Elegan)", fonts: ["Playfair Display", "Lora"] },
+    { label: "Display & Script (Gaya Unik)", fonts: ["Anton", "Bebas Neue", "Lobster", "Pacifico", "Satisfy", "Caveat"] }
+];
 
 const LightImageEditor: React.FC<Props> = ({ show, imageUrl, onClose }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -227,7 +231,16 @@ const LightImageEditor: React.FC<Props> = ({ show, imageUrl, onClose }) => {
                 <div className="space-y-4">
                      <h4 className="text-primary font-semibold">Edit Teks</h4>
                      <div><label className="block text-text-muted mb-1">Konten</label><textarea value={selectedObject.content} onChange={e => updateSelectedObject({ content: e.target.value })} className="w-full bg-background border border-border-main rounded-md p-2" rows={3}></textarea></div>
-                     <div><label className="block text-text-muted mb-1">Font</label><select value={selectedObject.font} onChange={e => updateSelectedObject({ font: e.target.value })} className="w-full bg-background border border-border-main rounded-md p-2"><option value="">Pilih Font</option>{FONT_FAMILES.map(f => <option key={f} value={f}>{f}</option>)}</select></div>
+                     <div>
+                        <label className="block text-text-muted mb-1">Font</label>
+                        <select value={selectedObject.font} onChange={e => updateSelectedObject({ font: e.target.value })} className="w-full bg-background border border-border-main rounded-md p-2">
+                             {FONT_CATEGORIES.map(category => (
+                                <optgroup label={category.label} key={category.label}>
+                                    {category.fonts.map(font => <option key={font} value={font}>{font}</option>)}
+                                </optgroup>
+                            ))}
+                        </select>
+                     </div>
                      <div className="flex items-center gap-2">
                          <div className="flex-1"><label className="block text-text-muted mb-1">Ukuran</label><input type="number" value={selectedObject.size} onChange={e => updateSelectedObject({ size: parseInt(e.target.value, 10) || 12 })} className="w-full bg-background border border-border-main rounded-md p-2" /></div>
                          <div className="flex-1"><label className="block text-text-muted mb-1">Warna</label><input type="color" value={selectedObject.color} onChange={e => updateSelectedObject({ color: e.target.value })} className="w-full h-10 p-1 bg-background border border-border-main rounded-md" /></div>

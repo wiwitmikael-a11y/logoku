@@ -50,6 +50,14 @@ const ROTATION_HANDLE_OFFSET = 20;
 const SNAP_THRESHOLD = 5;
 const DOUBLE_TAP_THRESHOLD = 300; // ms
 
+// --- NEW FONT LIBRARY ---
+const FONT_CATEGORIES = [
+    { label: "Sans Serif (Modern & Jelas)", fonts: ["Poppins", "Montserrat", "Oswald", "Roboto", "Plus Jakarta Sans"] },
+    { label: "Serif (Klasik & Elegan)", fonts: ["Playfair Display", "Lora"] },
+    { label: "Display & Script (Gaya Unik)", fonts: ["Anton", "Bebas Neue", "Lobster", "Pacifico", "Satisfy", "Caveat"] }
+];
+
+
 // --- HISTORY REDUCER ---
 const historyReducer = (state: HistoryState, action: HistoryAction): HistoryState => {
     const { past, present, future } = state;
@@ -71,7 +79,6 @@ const historyReducer = (state: HistoryState, action: HistoryAction): HistoryStat
 };
 
 // --- HELPER UI COMPONENTS ---
-const FONT_FAMILES = ['Plus Jakarta Sans', 'Bebas Neue', 'Caveat', 'Arial', 'Verdana', 'Times New Roman'];
 export const PropertyInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string, suffix?: string }> = ({ label, suffix, ...props }) => ( <div className="grid grid-cols-2 items-center gap-2"><label className="text-text-muted text-xs truncate">{label}</label><div className="relative"><input {...props} className={`w-full bg-background border border-border-main rounded p-1.5 text-sm ${suffix ? 'pr-6' : ''}`}/><span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted">{suffix}</span></div></div>);
 export const PropertyTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }> = ({ label, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><textarea {...props} className="w-full bg-background border border-border-main rounded py-2 px-2.5 text-sm"/></div>);
 export const PropertySelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label: string, children: React.ReactNode }> = ({ label, children, ...props }) => ( <div><label className="block text-text-muted mb-1 text-xs">{label}</label><select {...props} className="w-full bg-background border border-border-main rounded py-2 px-2.5 text-sm">{children}</select></div>);
@@ -467,8 +474,22 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
             <div className="absolute w-64 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-2xl flex flex-col" style={{ top: panelPositions.properties.y, left: panelPositions.properties.x }}>
                 <div onMouseDown={(e) => setInteractionState({type: 'drag_panel', panel: 'properties', initialMouse: {x: e.clientX, y: e.clientY}, initialPanelPos: panelPositions.properties })} className="p-2 cursor-move border-b border-border-main flex justify-between items-center"><h3 className="font-bold text-text-header text-sm">Properties</h3><button onClick={() => setActivePopup({type: null})} className="p-1 text-text-muted hover:text-white">&times;</button></div>
                 <div className="p-2 space-y-3 max-h-96 overflow-y-auto">
-                    { selectedLayer && <PanelSection title="Transform">...</PanelSection> }
-                    {/* ... other sections */}
+                    { selectedLayer && selectedLayer.type === 'text' && (
+                         <PanelSection title="Text">
+                            <PropertyTextarea label="Content" value={(selectedLayer as TextLayer).content} onChange={e => updateLayerNoHistory({ content: e.target.value })} rows={3} />
+                            <PropertySelect label="Font" value={(selectedLayer as TextLayer).font} onChange={e => updateLayerNoHistory({ font: e.target.value })}>
+                                {FONT_CATEGORIES.map(category => (
+                                    <optgroup label={category.label} key={category.label}>
+                                        {category.fonts.map(font => <option key={font} value={font}>{font}</option>)}
+                                    </optgroup>
+                                ))}
+                            </PropertySelect>
+                            <div className="grid grid-cols-2 gap-2">
+                                <PropertyInput label="Size" type="number" value={(selectedLayer as TextLayer).size} onChange={e => updateLayerNoHistory({ size: parseInt(e.target.value) || 12 })} suffix="px" />
+                                <PropertyColorInput label="Color" value={(selectedLayer as TextLayer).color} onChange={e => updateLayerNoHistory({ color: e.target.value })} />
+                            </div>
+                        </PanelSection>
+                    )}
                 </div>
             </div>
         );
