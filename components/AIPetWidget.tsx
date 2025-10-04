@@ -1,158 +1,170 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect } from 'react';
-import type { AIPetState, AIPetStats } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import type { AIPetContextType } from '../contexts/AIPetContext';
+import { useAuth } from '../contexts/AuthContext';
+import AIPetVisual from './AIPetVisual';
 import { playSound } from '../services/soundService';
-import Button from './common/Button';
-import { useAIPet } from '../contexts/AIPetContext';
 
-// --- PROPS ---
-// The component now receives all its state and logic from the context props.
-interface AIPetWidgetProps extends ReturnType<typeof useAIPet> {}
+type MiniGame = 'color' | 'pattern' | null;
 
+const AIPetWidget: React.FC<AIPetContextType> = ({ petState, isLoading, handleInteraction, onGameWin }) => {
+    const { deductCredits, profile } = useAuth();
+    const [isOpen, setIsOpen] = useState(false);
+    const [isInteracting, setIsInteracting] = useState(false);
+    const [activeGame, setActiveGame] = useState<MiniGame>(null);
+    const [gameFeedback, setGameFeedback] = useState<'correct' | 'incorrect' | null>(null);
 
-// --- CONSTANTS ---
-const STAT_MAX = 100;
-const GAME_COST = 1; // Token cost to play a game
-const GAME_XP_REWARD = 10;
-const statIcons: { [key in keyof AIPetStats]: string } = {
-  energy: '⚡️',
-  creativity: '🎨',
-  intelligence: '💡',
-};
-const statColors: { [key in keyof AIPetStats]: string } = {
-  energy: 'bg-yellow-400',
-  creativity: 'bg-fuchsia-500',
-  intelligence: 'bg-sky-400',
-};
+    const MINIGAME_COST = 1;
 
+    // --- Color Harmony Game ---
+    const [colorTarget, setColorTarget] = useState('');
+    const [colorOptions, setColorOptions] = useState<string[]>([]);
+    
+    // --- Pattern Puzzle Game ---
+    const [patternTarget, setPatternTarget] = useState<number[]>([]);
+    const [patternOptions, setPatternOptions] = useState<number[][]>([]);
+    
+    // FIX: Changed useRef<number>() to useRef<number | null>(null) to provide an explicit initial value. This resolves an ambiguous type issue that was causing misleading errors about argument counts in other functions.
+    const interactionTimeoutRef = useRef<number | null>(null);
 
-// --- HELPER COMPONENTS & FUNCTIONS ---
-const StatBar: React.FC<{ stat: keyof AIPetStats; value: number }> = ({ stat, value }) => (
-  <div>
-    <div className="flex justify-between items-center text-xs mb-1">
-      <span className="font-semibold text-text-header">{statIcons[stat]} {stat.charAt(0).toUpperCase() + stat.slice(1)}</span>
-      <span className="text-text-muted">{Math.round(value)}/{STAT_MAX}</span>
-    </div>
-    <div className="w-full bg-background rounded-full h-2.5">
-      <div className={`${statColors[stat]} h-2.5 rounded-full`} style={{ width: `${value}%` }}></div>
-    </div>
-  </div>
-);
-
-const getRandomColor = () => `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
-
-// --- MAIN COMPONENT ---
-const AIPetWidget: React.FC<AIPetWidgetProps> = (props) => {
-  const { petState, onGameWin, onGameLose, handleInteraction, isInteracting, handlePlayGame } = props;
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeGame, setActiveGame] = useState<'color' | 'pattern' | null>(null);
-
-  if (!petState) return null;
-
-  // --- Visual Logic for the Pet ---
-  const petSize = petState.stage === 'egg' ? 40 : 80;
-  const energyLevel = petState.stats.energy / STAT_MAX;
-  const petColor = `hsl(280, ${energyLevel * 60 + 20}%, ${energyLevel * 40 + 30}%)`;
-  const pulseSpeed = 1 + (2 * (1 - energyLevel)); // Faster pulse when low energy
-
-  return (
-    <>
-      <div className={`fixed bottom-4 left-4 z-40 transition-all duration-300 ${isOpen ? 'w-[300px]' : 'w-16 h-16'}`}>
-        {/* Expanded Panel */}
-        <div className={`bg-surface border border-border-main rounded-2xl shadow-xl transition-all duration-300 overflow-hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <header className="p-3 border-b border-border-main flex justify-between items-center">
-                <h3 className="text-lg font-bold text-primary">{petState.name}</h3>
-                <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-full hover:bg-background">&times;</button>
-            </header>
-            <div className="p-4 space-y-3">
-                <div className="flex justify-center items-center h-24">
-                  {/* The Pet Visual */}
-                  <svg viewBox="0 0 100 100" className={`w-24 h-24 drop-shadow-lg ${isInteracting ? 'animate-aipet-interact' : ''}`} style={{ animation: `aipet-float ${pulseSpeed * 2}s ease-in-out infinite` }} onClick={handleInteraction}>
-                      <g style={{ animation: `aipet-pulse ${pulseSpeed}s ease-in-out infinite` }}>
-                        <path d="M 50,20 C 80,20 90,40 90,60 C 90,80 80,100 50,100 C 20,100 10,80 10,60 C 10,40 20,20 50,20 Z" fill={petColor} />
-                      </g>
-                  </svg>
-                </div>
-                {petState.stage !== 'egg' ? (
-                  <>
-                    <div className="space-y-2">
-                      {Object.keys(petState.stats).map(key => <StatBar key={key} stat={key as keyof AIPetStats} value={petState.stats[key as keyof AIPetStats]} />)}
-                    </div>
-                    <div className="pt-3 border-t border-border-main grid grid-cols-2 gap-2">
-                        <Button size="small" variant="secondary" onClick={() => handlePlayGame('color').then(canPlay => canPlay && setActiveGame('color'))}>Harmoni Warna</Button>
-                        <Button size="small" variant="secondary" onClick={() => handlePlayGame('pattern').then(canPlay => canPlay && setActiveGame('pattern'))}>Teka-Teki Pola</Button>
-                    </div>
-                    <p className="text-center text-xs text-text-muted">Main game: -{GAME_COST} Token, +{GAME_XP_REWARD} XP</p>
-                  </>
-                ) : (
-                    <p className="text-center text-sm text-text-muted">Sebuah telur misterius... Coba klik berulang kali!</p>
-                )}
-            </div>
-        </div>
-
-        {/* Collapsed FAB */}
-        <button onClick={() => setIsOpen(true)} className={`absolute bottom-0 right-0 w-16 h-16 bg-surface border-2 border-splash rounded-full shadow-lg flex items-center justify-center transition-opacity duration-300 ${!isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-             <svg viewBox="0 0 100 100" width={petSize} height={petSize} style={{ animation: `aipet-float ${pulseSpeed * 2}s ease-in-out infinite` }}>
-                 <g style={{ animation: `aipet-pulse ${pulseSpeed}s ease-in-out infinite` }}>
-                    <path d="M 50,20 C 80,20 90,40 90,60 C 90,80 80,100 50,100 C 20,100 10,80 10,60 C 10,40 20,20 50,20 Z" fill={petColor} />
-                 </g>
-             </svg>
-        </button>
-      </div>
-
-      {activeGame && (
-         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            {activeGame === 'color' && <ColorHarmonyGame onWin={() => { onGameWin({ creativity: 25 }); setActiveGame(null); }} onLose={() => { onGameLose(); setActiveGame(null); }} />}
-            {activeGame === 'pattern' && <PatternPuzzleGame onWin={() => { onGameWin({ intelligence: 25 }); setActiveGame(null); }} onLose={() => { onGameLose(); setActiveGame(null); }} />}
-         </div>
-      )}
-    </>
-  );
-};
-
-// --- Mini-Game Components ---
-const ColorHarmonyGame: React.FC<{onWin: ()=>void, onLose: ()=>void}> = ({onWin, onLose}) => {
-    const [targetColor, setTargetColor] = useState(getRandomColor());
-    const [options, setOptions] = useState<string[]>([]);
-    const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
-
-    useEffect(() => {
-        setOptions([getRandomColor(), targetColor, getRandomColor()].sort(() => Math.random() - 0.5));
-    }, [targetColor]);
-
-    const handleSelect = (color: string) => {
-        if (result) return;
-        if (color === targetColor) { setResult('correct'); setTimeout(onWin, 500); }
-        else { setResult('wrong'); setTimeout(onLose, 500); }
+    const handlePetClick = () => {
+        handleInteraction();
+        setIsInteracting(true);
+        if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
+        interactionTimeoutRef.current = window.setTimeout(() => setIsInteracting(false), 500);
     };
 
-    return <div className="bg-surface p-6 rounded-lg text-center space-y-4">
-        <h4 className="font-bold text-lg text-primary">Harmoni Warna</h4>
-        <p className="text-sm">Pilih warna yang cocok dengan ini:</p>
-        <div className="w-24 h-24 rounded-md mx-auto" style={{ backgroundColor: targetColor }}></div>
-        <div className="flex gap-4 justify-center">
-            {options.map(color => <div key={color} onClick={() => handleSelect(color)} className={`w-16 h-16 rounded-md cursor-pointer transition-transform hover:scale-110 ${result === 'correct' && color === targetColor ? 'animate-minigame-correct' : ''}`} style={{backgroundColor: color}}></div>)}
-        </div>
-        {result === 'wrong' && <p className="text-red-500 font-bold">Yah, salah!</p>}
-    </div>;
+    const startGame = async (game: MiniGame) => {
+        if (!game) return;
+        if ((profile?.credits ?? 0) < MINIGAME_COST) {
+            alert("Token lo kurang buat main, Juragan!");
+            return;
+        }
+
+        const success = await deductCredits(MINIGAME_COST);
+        if (!success) return;
+        
+        playSound('start');
+        setActiveGame(game);
+        
+        if (game === 'color') {
+            const generateRandomColor = () => `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+            const target = generateRandomColor();
+            const options = [target, generateRandomColor(), generateRandomColor()].sort(() => Math.random() - 0.5);
+            setColorTarget(target);
+            setColorOptions(options);
+        } else if (game === 'pattern') {
+            const sequence = Array.from({length: 3}, () => Math.floor(Math.random() * 4));
+            setPatternTarget(sequence);
+            const wrongOption1 = sequence.map(v => (v + Math.floor(Math.random()*3) + 1) % 4);
+            const wrongOption2 = sequence.map(v => (v + Math.floor(Math.random()*3) + 1) % 4);
+            const options = [sequence, wrongOption1, wrongOption2].sort(() => Math.random() - 0.5);
+            setPatternOptions(options);
+        }
+    };
+
+    const handleGameAnswer = (answer: string | number[]) => {
+        const isCorrect = Array.isArray(answer) 
+            ? JSON.stringify(answer) === JSON.stringify(patternTarget)
+            : answer === colorTarget;
+
+        if (isCorrect) {
+            playSound('success');
+            setGameFeedback('correct');
+            onGameWin(activeGame!);
+        } else {
+            playSound('error');
+            setGameFeedback('incorrect');
+        }
+
+        setTimeout(() => {
+            setGameFeedback(null);
+            setActiveGame(null);
+        }, 1000);
+    };
+
+    if (isLoading || !petState) return null;
+    
+    const energyPercent = (petState.stats.energy / 100) * 100;
+    const petAnimation = energyPercent < 20 ? 'aipet-pulse' : 'aipet-float';
+
+    const renderPattern = (sequence: number[]) => {
+        const symbols = ['■', '●', '▲', '◆'];
+        return sequence.map(i => symbols[i]).join(' ');
+    };
+
+    return (
+        <>
+            {/* Widget Button */}
+            <div 
+                onClick={() => setIsOpen(p => !p)}
+                className="fixed bottom-8 left-8 w-24 h-24 z-30 cursor-pointer group"
+                style={{ animation: `${petAnimation} ${4 + (100 - energyPercent)/10}s ease-in-out infinite` }}
+            >
+                <div onClick={e => { e.stopPropagation(); handlePetClick(); }} className={`w-full h-full transition-transform duration-200 ${isInteracting ? 'animate-aipet-interact' : ''}`}>
+                    <AIPetVisual petState={petState} />
+                </div>
+                 <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4/5 h-3 bg-black/20 rounded-[50%] filter blur-sm"></div>
+            </div>
+
+            {/* Panel */}
+            <div className={`fixed bottom-8 left-36 w-80 bg-surface/80 backdrop-blur-md border border-border-main rounded-xl shadow-lg p-4 z-30 transition-all duration-300 origin-bottom-left ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
+                 <div className="flex justify-between items-center pb-2 border-b border-border-main">
+                    <h3 className="font-bold text-text-header">{petState.name}</h3>
+                    <button onClick={() => setIsOpen(false)} className="text-text-muted hover:text-text-header">&times;</button>
+                 </div>
+                 
+                 {!activeGame ? (
+                     <div className="mt-3 space-y-3 animate-content-fade-in">
+                        <div className="text-xs space-y-2">
+                            <div>
+                                <p>⚡ Energi ({Math.round(petState.stats.energy)}%)</p>
+                                <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-green-500 h-2 rounded-full" style={{width: `${petState.stats.energy}%`}}></div></div>
+                            </div>
+                            <div>
+                                <p>🎨 Kreativitas ({Math.round(petState.stats.creativity)}%)</p>
+                                <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-sky-400 h-2 rounded-full" style={{width: `${petState.stats.creativity}%`}}></div></div>
+                            </div>
+                             <div>
+                                <p>🧠 Kecerdasan ({Math.round(petState.stats.intelligence)}%)</p>
+                                <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-fuchsia-500 h-2 rounded-full" style={{width: `${petState.stats.intelligence}%`}}></div></div>
+                            </div>
+                        </div>
+                        <div className="pt-3 border-t border-border-main">
+                             <p className="text-xs text-text-muted mb-2">Main bareng buat naikin stat! (-{MINIGAME_COST} Token, +15 XP)</p>
+                             <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => startGame('color')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">Harmoni Warna</button>
+                                <button onClick={() => startGame('pattern')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">Teka-Teki Pola</button>
+                             </div>
+                        </div>
+                     </div>
+                 ) : (
+                    <div className="mt-3 animate-content-fade-in">
+                        {activeGame === 'color' && (
+                            <div>
+                                <p className="text-sm text-center mb-3">Pilih warna yang sama:</p>
+                                <div className="w-16 h-16 mx-auto rounded-md mb-4" style={{ backgroundColor: colorTarget, animation: gameFeedback === 'correct' ? 'minigame-correct 0.5s' : '' }}></div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {colorOptions.map(color => <button key={color} onClick={() => handleGameAnswer(color)} className="h-12 rounded-md" style={{backgroundColor: color}}></button>)}
+                                </div>
+                            </div>
+                        )}
+                        {activeGame === 'pattern' && (
+                             <div>
+                                <p className="text-sm text-center mb-3">Lengkapi polanya:</p>
+                                <p className="text-2xl text-center font-mono tracking-widest p-3 bg-background rounded-md mb-4" style={{animation: gameFeedback === 'correct' ? 'minigame-correct 0.5s' : ''}}>{renderPattern(patternTarget)}</p>
+                                <div className="grid grid-cols-1 gap-2">
+                                    {patternOptions.map((opt, i) => <button key={i} onClick={() => handleGameAnswer(opt)} className="font-mono text-lg bg-background hover:bg-border-light p-2 rounded-md">{renderPattern(opt)}</button>)}
+                                </div>
+                            </div>
+                        )}
+                         {gameFeedback === 'incorrect' && <p className="text-center text-red-500 font-bold mt-3 animate-pulse">Salah!</p>}
+                    </div>
+                 )}
+            </div>
+        </>
+    );
 };
-
-const PatternPuzzleGame: React.FC<{onWin: ()=>void, onLose: ()=>void}> = ({onWin, onLose}) => {
-    const onWinRef = React.useRef(onWin);
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            onWinRef.current(); // Auto-win for this placeholder
-        }, 1500);
-        return () => clearTimeout(timer);
-    }, []);
-
-    return <div className="bg-surface p-6 rounded-lg text-center space-y-4">
-        <h4 className="font-bold text-lg text-primary">Teka-Teki Pola</h4>
-        <p className="text-sm">Menyusun pola... (Fitur segera hadir)</p>
-        <div className="animate-spin h-8 w-8 rounded-full border-4 border-dashed border-primary mx-auto"></div>
-    </div>;
-}
-
 
 export default AIPetWidget;

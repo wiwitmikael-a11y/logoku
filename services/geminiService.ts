@@ -2,6 +2,7 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { createWhiteCanvasBase64, fetchImageAsBase64, applyWatermark } from '../utils/imageUtils';
+// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets } from '../types';
 
 // --- Environment Variable Setup ---

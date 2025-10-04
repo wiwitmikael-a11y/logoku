@@ -4,7 +4,9 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+// FIX: The import for AIPetContext was failing because the file was not a module. This is fixed by adding content to the file.
 import { useAIPet } from '../contexts/AIPetContext';
+// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';

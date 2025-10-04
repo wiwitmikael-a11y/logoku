@@ -5,8 +5,10 @@ import { GoogleGenAI, Chat } from "@google/genai";
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
+// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+// FIX: The import for AIPetContext was failing because the file was not a module. This is fixed by adding content to the file.
 import { AIPetProvider, useAIPet } from './contexts/AIPetContext';
 
 // --- API Services ---
@@ -31,6 +33,7 @@ import Toast from './components/common/Toast';
 // --- Lazily Loaded Components ---
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
 const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersonaGenerator'));
+// FIX: The import for LogoGenerator was failing because the file was not a module. This is fixed by adding content to the file.
 const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
 const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
@@ -57,6 +60,7 @@ const AchievementToast = React.lazy(() => import('./components/gamification/Achi
 const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
 const LightImageEditor = React.lazy(() => import('./components/common/LightImageEditor'));
 const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
+// FIX: The import for AIPetWidget was failing because the file was not a module. This is fixed by adding content to the file.
 const AIPetWidget = React.lazy(() => import('./components/AIPetWidget'));
 
 

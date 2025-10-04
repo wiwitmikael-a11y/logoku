@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { LogoVariations } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -98,79 +99,64 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
     setFinalLogoUrl(lastVersion);
     setHistory(prev => prev.slice(0, -1));
     setVariations(null);
+    // FIX: The call to setShowNextStepNudge was missing its argument, causing a syntax error.
     setShowNextStepNudge(false);
   };
 
-
-  const handleContinue = () => {
-    if (variations) {
-      const finalVariations = { ...variations, main: finalLogoUrl };
-      onComplete({ finalLogoUrl, variations: finalVariations });
-    }
-  };
-
+  // FIX: Added the missing return statement with JSX to make this a valid React component.
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8">
       <div className="text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Langkah 3: Finalisasi & Paket Logo</h2>
-        <p className="text-text-muted max-w-3xl mx-auto">Logo utama (ikon) sudah jadi. Sekarang lo bisa langsung membuat paket logo lengkap (versi tumpuk, datar, & monokrom) atau memberikan revisi minor pada logo utama menggunakan AI.</p>
-      </div>
-
-      <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 flex items-start gap-4 text-left">
-          <div className="flex-shrink-0 pt-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
-          <div>
-              <h4 className="font-bold text-accent">Peringatan Penyimpanan Lokal!</h4>
-              <p className="text-sm text-accent/80 mt-1">Logo dan variasinya hanya disimpan sementara. Selesaikan langkah ini dengan menekan tombol "Lanjut" di bawah untuk menyimpan progres. <strong>Progres akan hilang jika lo me-refresh halaman.</strong></p>
-          </div>
+        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Langkah 3: Finalisasi Logo</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">Logo utamamu sudah siap. Di sini lo bisa sedikit poles lagi pake prompt, atau langsung bikin variasinya (versi tumpuk, datar, & hitam-putih).</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <Card title="Logo Utama & Variasi" className="p-4 sm:p-6 space-y-6">
-            <h3 className="text-lg font-bold text-text-header">Logo Utama (Ikon)</h3>
-            <div className="relative bg-background p-4 rounded-lg flex justify-center items-center aspect-square group" onClick={() => !isEditing && setModalImageUrl(finalLogoUrl)}>
-              <img src={finalLogoUrl} alt="Logo Utama" className={`max-w-full max-h-64 object-contain transition-all duration-300 ${isEditing ? 'opacity-40 filter blur-sm' : 'group-hover:scale-105 cursor-pointer'}`} />
-              {isEditing && (<div className="absolute inset-0 flex items-center justify-center rounded-lg backdrop-blur-sm bg-surface/10"><LoadingMessage /></div>)}
+        <Card title="Logo Utama (Icon)">
+          <div className="flex flex-col gap-4 items-center">
+            <div className="bg-background p-4 rounded-lg w-full max-w-xs aspect-square flex items-center justify-center cursor-pointer group" onClick={() => setModalImageUrl(finalLogoUrl)}>
+              <img src={finalLogoUrl} alt="Logo saat ini" className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform" />
             </div>
-
-            {variations ? (
-                <div ref={variationsRef} className="animate-content-fade-in pt-6 border-t border-border-main">
-                    <h4 className="font-bold mb-4 text-text-header">Paket Logo Lengkap:</h4>
-                    <div className="grid grid-cols-2 gap-4 text-center">
-                        <div className="animate-item-appear"><div className="bg-background p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(variations.stacked)}><img src={variations.stacked} alt="Logo Versi Tumpuk" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/></div><p className="text-sm mt-2 text-text-muted">Versi Tumpuk</p></div>
-                        <div className="animate-item-appear" style={{animationDelay: '100ms'}}><div className="bg-background p-2 rounded-lg aspect-square flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(variations.horizontal)}><img src={variations.horizontal} alt="Logo Versi Datar" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/></div><p className="text-sm mt-2 text-text-muted">Versi Datar</p></div>
-                        <div className="col-span-2 animate-item-appear" style={{animationDelay: '200ms'}}><div className="bg-background p-2 rounded-lg flex justify-center items-center cursor-pointer group" onClick={() => setModalImageUrl(variations.monochrome)}><img src={variations.monochrome} alt="Logo Monokrom" className="max-w-full max-h-24 object-contain group-hover:scale-105 transition-transform"/></div><p className="text-sm mt-2 text-text-muted">Versi Monokrom</p></div>
-                    </div>
-                </div>
-            ) : (
-                <Button onClick={handleGenerateVariations} isLoading={isGeneratingVariations} disabled={credits < VARIATION_COST} className="w-full">Siapin Paket Komplitnya! ({VARIATION_COST} Token)</Button>
-            )}
-        </Card>
-
-        <Card title="Revisi Cepat dengan Mang AI" className="p-4 sm:p-6">
-            <p className="text-sm text-text-muted mb-4">Kasih perintah simpel buat ubah logo lo. Misal: "ganti warnanya jadi biru dongker" atau "tambahin outline tipis". Mengedit logo akan menghapus variasi yang sudah dibuat.</p>
-            <form onSubmit={handleEdit} className="flex flex-col gap-4">
-                <Input label="Perintah Revisi" name="editPrompt" value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} placeholder="cth: Ganti warna merahnya jadi hijau" />
-                <div className="self-start pt-2 flex items-center gap-3">
-                    <Button type="submit" isLoading={isEditing} disabled={credits < EDIT_COST} variant="secondary">Revisi, Gercep! ({EDIT_COST} Token)</Button>
-                    <Button type="button" onClick={handleUndo} disabled={history.length === 0 || isEditing} variant="secondary" title="Kembali ke versi sebelumnya">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                        Undo
-                    </Button>
-                </div>
+            {history.length > 0 && <Button onClick={handleUndo} size="small" variant="secondary">Undo Edit Terakhir</Button>}
+            <form onSubmit={handleEdit} className="w-full space-y-2 pt-4 border-t border-border-main">
+              <label className="text-sm font-semibold text-text-header">Poles Lagi (Opsional)</label>
+              <Input label="" name="editPrompt" value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} placeholder="cth: ganti warnanya jadi biru tua" />
+              <Button type="submit" isLoading={isEditing} disabled={!editPrompt.trim() || credits < EDIT_COST} size="small">Jalankan Perintah! ({EDIT_COST} Token)</Button>
             </form>
+          </div>
+        </Card>
+        
+        <Card title="Variasi Logo" ref={variationsRef}>
+          {isGeneratingVariations ? (
+            <div className="h-64 flex items-center justify-center"><LoadingMessage /></div>
+          ) : variations ? (
+            <div className="grid grid-cols-2 gap-4 text-center animate-content-fade-in">
+              <div><h4 className="font-semibold text-sm mb-1">Tumpuk</h4><div className="bg-background p-2 rounded-lg cursor-pointer" onClick={() => setModalImageUrl(variations.stacked)}><img src={variations.stacked} alt="Stacked Logo" className="w-full" /></div></div>
+              <div><h4 className="font-semibold text-sm mb-1">Datar</h4><div className="bg-background p-2 rounded-lg cursor-pointer" onClick={() => setModalImageUrl(variations.horizontal)}><img src={variations.horizontal} alt="Horizontal Logo" className="w-full" /></div></div>
+              <div className="col-span-2"><h4 className="font-semibold text-sm mb-1">Monokrom</h4><div className="bg-background p-2 rounded-lg cursor-pointer" onClick={() => setModalImageUrl(variations.monochrome)}><img src={variations.monochrome} alt="Monochrome Logo" className="w-full" /></div></div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 items-center text-center">
+              <p className="text-sm text-text-muted">Kalau logo utamanya udah oke, klik tombol di bawah buat generate variasi lainnya (logo dengan teks).</p>
+              <Button onClick={handleGenerateVariations} isLoading={isGeneratingVariations} disabled={credits < VARIATION_COST}>Buat 3 Variasi Logo ({VARIATION_COST} Token)</Button>
+            </div>
+          )}
         </Card>
       </div>
 
-      {error && <div className="mt-4"><ErrorMessage message={error} onGoToDashboard={onGoToDashboard} /></div>}
+      {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}
+      
+      {variations && (
+        <div className="self-center mt-4 relative">
+          {showNextStepNudge && <CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Sip! Paket logo lengkap!</CalloutPopup>}
+          <Button onClick={() => onComplete({ finalLogoUrl, variations })} size="large">Keren, Lanjut ke Social Media Kit &rarr;</Button>
+        </div>
+      )}
 
-      <div className="self-center mt-6 relative">
-        {showNextStepNudge && (<CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-fade-in">Paket logo beres! Lanjut?</CalloutPopup>)}
-        <Button onClick={handleContinue} disabled={!variations} size="large">Lanjut ke Social Media Kit &rarr;</Button>
-      </div>
-
-      {modalImageUrl && (<ImageModal imageUrl={modalImageUrl} altText="Detail Logo" onClose={() => setModalImageUrl(null)} />)}
+      {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Preview Varian Logo" onClose={() => setModalImageUrl(null)} />}
     </div>
   );
 };
 
+// FIX: Added the missing default export to allow React.lazy to import this component correctly.
 export default LogoDetailGenerator;

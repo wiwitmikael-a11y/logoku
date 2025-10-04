@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';

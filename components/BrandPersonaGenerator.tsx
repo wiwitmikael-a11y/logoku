@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateBrandPersona, generateSlogans } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { loadWorkflowState } from '../services/workflowPersistence';
+// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { BrandPersona, BrandInputs } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';

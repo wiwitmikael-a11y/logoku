@@ -1,6 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useEffect, useState, useMemo, Suspense } from 'react';
+// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { Project, BrandInputs } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';

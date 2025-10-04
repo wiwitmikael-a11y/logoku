@@ -3,226 +3,169 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
-import type { AIPetState, AIPetStats } from '../types';
-import { playSound } from '../services/soundService';
+import type { AIPetState, AIPetStats, AIPetPersonalityVector } from '../types';
 
-const STAT_MAX = 100;
-const STAT_DECAY_RATE = 0.05; // Points per second
-const GAME_COST = 1;
-const GAME_XP_REWARD = 10;
-
-interface AIPetContextType {
+export interface AIPetContextType {
   petState: AIPetState | null;
-  isInteracting: boolean;
+  isLoading: boolean;
+  notifyPetOfActivity: (activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice', detail?: any) => void;
   handleInteraction: () => void;
-  handlePlayGame: (gameType: 'color' | 'pattern') => Promise<boolean>;
-  onGameWin: (statBoost: Partial<AIPetStats>) => void;
-  onGameLose: () => void;
-  notifyPetOfActivity: (activityType: string, data?: any) => void;
+  onGameWin: (game: 'color' | 'pattern') => void;
 }
 
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
-// A simple debounce hook
-const useDebounce = (callback: (...args: any[]) => void, delay: number) => {
-    const timeoutRef = useRef<number | null>(null);
-    const savedCallback = useRef(callback);
+const INITIAL_STATS: AIPetStats = { energy: 100, creativity: 50, intelligence: 50 };
+const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100 };
 
+const useDebounce = <F extends (...args: any[]) => any>(callback: F, delay: number) => {
+    // FIX: Changed useRef<number>() to useRef<number | null>(null) to provide an explicit initial value. This resolves an ambiguous type issue that was causing misleading errors about argument counts in other functions.
+    const timeoutRef = useRef<number | null>(null);
+    
+    // Use a ref to hold the callback to ensure the debounced function
+    // always calls the latest version of the callback.
+    const callbackRef = useRef(callback);
     useEffect(() => {
-        savedCallback.current = callback;
+        callbackRef.current = callback;
     }, [callback]);
 
-    // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, []);
-
-    return useCallback((...args: any[]) => {
+    // Return a memoized debounced function that is stable across renders.
+    return useCallback((...args: Parameters<F>) => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
         timeoutRef.current = window.setTimeout(() => {
-            savedCallback.current(...args);
+            callbackRef.current(...args);
         }, delay);
     }, [delay]);
 };
 
 export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, user, deductCredits, addXp, setShowOutOfCreditsModal, refreshProfile } = useAuth();
-  const [petState, setPetState] = useState<AIPetState | null>(null);
-  const [isInteracting, setIsInteracting] = useState(false);
-  const gameLoopRef = useRef<number>();
-  
-  // FIX: The callback is wrapped in useCallback to make it stable.
-  // This, combined with the robust useDebounce hook, prevents an infinite loop.
-  const debouncedSaveCallback = useCallback(async (newState: AIPetState) => {
-    if (!user) return;
-    const { error } = await supabase
-      .from('profiles')
-      .update({ aipet_state: newState })
-      .eq('id', user.id);
-    if (error) console.error("Failed to sync AIPet state to Supabase:", error);
-  }, [user]);
-  
-  const debouncedSave = useDebounce(debouncedSaveCallback, 2000); // Save every 2 seconds of inactivity
+    const { user, profile, addXp } = useAuth();
+    const [petState, setPetState] = useState<AIPetState | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const lastUpdateRef = useRef(Date.now());
 
-  // Initialize pet state from profile or create new
-  useEffect(() => {
-    if (profile && !petState) { // Only run once on initial load
-      if (profile.aipet_state) {
-        setPetState(profile.aipet_state as AIPetState);
-      } else {
-        const initialState: AIPetState = {
-          name: `${profile.full_name?.split(' ')[0] || 'My'}'s Pet`,
-          stage: 'egg',
-          createdAt: Date.now(),
-          stats: { energy: 80, creativity: 50, intelligence: 50 },
-          lastUpdated: Date.now(),
-        };
-        setPetState(initialState);
-      }
-    }
-  }, [profile, petState]);
-  
-  // The main "Game Loop" for organic stat decay
-  useEffect(() => {
-    // For simplicity, let's assume the widget being open implies activity
-    const isOpen = true; // This can be replaced with actual visibility check
+    const savePetStateToDb = useCallback(async (stateToSave: AIPetState) => {
+        if (!user) return;
+        const { error } = await supabase
+            .from('profiles')
+            .update({ aipet_state: stateToSave })
+            .eq('id', user.id);
+        if (error) console.error("Failed to save AIPet state:", error);
+    }, [user]);
 
-    const loop = () => {
-      setPetState(prev => {
-        if (!prev || prev.stage === 'egg' || !isOpen) return prev;
+    const debouncedSave = useDebounce(savePetStateToDb, 3000);
 
-        const now = Date.now();
-        const delta = (now - prev.lastUpdated) / 1000;
-
-        const decay = (stat: number) => {
-          const sineModifier = (Math.sin(now / 5000) + 1.5) / 2.5;
-          return Math.max(0, stat - STAT_DECAY_RATE * delta * sineModifier);
-        };
-        
-        const newState = {
-          ...prev,
-          stats: {
-            energy: decay(prev.stats.energy),
-            creativity: decay(prev.stats.creativity),
-            intelligence: decay(prev.stats.intelligence),
-          },
-          lastUpdated: now,
-        };
-        debouncedSave(newState);
-        return newState;
-      });
-      gameLoopRef.current = requestAnimationFrame(loop);
-    };
-    
-    if(isOpen) gameLoopRef.current = requestAnimationFrame(loop);
-
-    return () => {
-      if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
-    };
-  }, [debouncedSave]);
+    const updatePetState = useCallback((updater: (prevState: AIPetState) => AIPetState, skipDebounce = false) => {
+        setPetState(prevState => {
+            if (!prevState) return null;
+            const newState = updater(prevState);
+            if (!skipDebounce) {
+                debouncedSave(newState);
+            } else {
+                savePetStateToDb(newState);
+            }
+            return newState;
+        });
+    }, [debouncedSave, savePetStateToDb]);
 
 
-  const handleInteraction = () => {
-    setIsInteracting(true);
-    setTimeout(() => setIsInteracting(false), 300);
-    
-    if (petState?.stage === 'egg') {
-       const now = Date.now();
-       const ageInSeconds = (now - petState.createdAt) / 1000;
-       if (ageInSeconds > 10) {
-          playSound('success');
-          setPetState(prev => {
-              if (!prev) return null;
-              const newState: AIPetState = { ...prev, stage: 'child', lastUpdated: now };
-              debouncedSave(newState);
-              return newState;
-          });
-       }
-    }
-  };
-  
-  const handlePlayGame = async (gameType: 'color' | 'pattern'): Promise<boolean> => {
-      if ((profile?.credits ?? 0) < GAME_COST) {
-          setShowOutOfCreditsModal(true);
-          return false;
-      }
-      const deducted = await deductCredits(GAME_COST);
-      return deducted;
-  };
-
-  const onGameWin = (statBoost: Partial<AIPetStats>) => {
-    playSound('success');
-    addXp(GAME_XP_REWARD);
-    setPetState(prev => {
-      if (!prev) return null;
-      const newStats = { ...prev.stats };
-      for (const key in statBoost) {
-        const k = key as keyof AIPetStats;
-        const boost = (statBoost[k] || 0) + (Math.random() * 10 - 5);
-        newStats[k] = Math.min(STAT_MAX, newStats[k] + boost);
-      }
-      const newState = { ...prev, stats: newStats };
-      debouncedSave(newState);
-      return newState;
-    });
-  };
-
-  const onGameLose = () => {
-    playSound('error');
-  };
-
-  const notifyPetOfActivity = (activityType: string, data?: any) => {
-      setPetState(prev => {
-        if (!prev || prev.stage === 'egg') return prev;
-        
-        const boost = (stat: number, amount: number) => Math.min(STAT_MAX, stat + amount);
-        let newStats = { ...prev.stats };
-
-        switch(activityType) {
-            case 'designing_logo':
-                newStats.creativity = boost(newStats.creativity, 0.1);
-                break;
-            case 'generating_captions':
-                newStats.intelligence = boost(newStats.intelligence, 0.1);
-                break;
-            case 'project_completed':
-                playSound('success');
-                handleInteraction(); // Trigger happy animation
-                newStats = {
-                    energy: boost(newStats.energy, 40),
-                    creativity: boost(newStats.creativity, 40),
-                    intelligence: boost(newStats.intelligence, 40),
-                };
-                break;
-            case 'user_idle':
-                newStats.energy = Math.max(0, newStats.energy - 0.5);
-                break;
-            // Add more cases here for 'style_choice', 'feed_item', etc.
+    useEffect(() => {
+        if (!profile) {
+            setIsLoading(false);
+            return;
         }
-        
-        const newState = { ...prev, stats: newStats, lastUpdated: Date.now() };
-        debouncedSave(newState); // Save on significant events
-        return newState;
-      });
-  };
+        if (profile.aipet_state) {
+            setPetState(profile.aipet_state as AIPetState);
+        } else {
+            const newPet: AIPetState = {
+                name: 'DesiPet',
+                stage: 'child',
+                stats: INITIAL_STATS,
+                lastFed: Date.now(),
+                lastPlayed: Date.now(),
+                personality: { minimalist: 0, rustic: 0, playful: 0, modern: 0, luxury: 0, feminine: 0, bold: 0 }
+            };
+            setPetState(newPet);
+            savePetStateToDb(newPet);
+        }
+        setIsLoading(false);
+    }, [profile, savePetStateToDb]);
+    
+    useEffect(() => {
+        let animationFrameId: number;
+        const loop = () => {
+            const now = Date.now();
+            if (now - lastUpdateRef.current > 5000) { // Update every 5 seconds
+                updatePetState(p => {
+                    const decayRate = 0.1; // points per 5 seconds
+                    return {
+                        ...p,
+                        stats: {
+                            energy: Math.max(0, p.stats.energy - decayRate * 2),
+                            creativity: Math.max(0, p.stats.creativity - decayRate),
+                            intelligence: Math.max(0, p.stats.intelligence - decayRate)
+                        }
+                    };
+                }, true); // Use skipDebounce for background updates
+                lastUpdateRef.current = now;
+            }
+            animationFrameId = requestAnimationFrame(loop);
+        };
+        if (petState) {
+          animationFrameId = requestAnimationFrame(loop);
+        }
+        return () => cancelAnimationFrame(animationFrameId);
+    }, [petState, updatePetState]);
 
-  const value = {
-    petState,
-    isInteracting,
-    handleInteraction,
-    handlePlayGame,
-    onGameWin,
-    onGameLose,
-    notifyPetOfActivity,
-  };
+    const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice', detail?: any) => {
+        updatePetState(p => {
+            let newStats = { ...p.stats };
+            let newPersonality = { ...p.personality };
 
-  return <AIPetContext.Provider value={value}>{children}</AIPetContext.Provider>;
+            switch (activityType) {
+                case 'designing_logo': newStats.creativity = Math.min(MAX_STATS.creativity, newStats.creativity + 0.2); break;
+                case 'generating_captions': newStats.intelligence = Math.min(MAX_STATS.intelligence, newStats.intelligence + 0.2); break;
+                case 'project_completed':
+                    newStats.energy = Math.min(MAX_STATS.energy, newStats.energy + 20);
+                    newStats.creativity = Math.min(MAX_STATS.creativity, newStats.creativity + 10);
+                    break;
+                case 'user_idle': newStats.energy = Math.max(0, newStats.energy - 2); break;
+                case 'style_choice': if (detail && newPersonality.hasOwnProperty(detail)) { newPersonality[detail as keyof AIPetPersonalityVector]++; } break;
+            }
+            return { ...p, stats: newStats, personality: newPersonality };
+        });
+    }, [updatePetState]);
+    
+    const handleInteraction = useCallback(() => {
+        updatePetState(p => ({
+            ...p,
+            stats: {
+                ...p.stats,
+                energy: Math.min(MAX_STATS.energy, p.stats.energy + 1)
+            }
+        }));
+    }, [updatePetState]);
+    
+    const onGameWin = useCallback((game: 'color' | 'pattern') => {
+        addXp(15);
+        updatePetState(p => {
+            const statToBoost = game === 'color' ? 'creativity' : 'intelligence';
+            return {
+                ...p,
+                stats: {
+                    ...p.stats,
+                    [statToBoost]: Math.min(MAX_STATS[statToBoost], p.stats[statToBoost] + 15),
+                    energy: Math.max(0, p.stats.energy - 5) // Playing games costs a little energy
+                }
+            };
+        });
+    }, [updatePetState, addXp]);
+
+    const value: AIPetContextType = { petState, isLoading, notifyPetOfActivity, handleInteraction, onGameWin };
+    
+    return <AIPetContext.Provider value={value}>{children}</AIPetContext.Provider>;
 };
 
 export const useAIPet = (): AIPetContextType => {
