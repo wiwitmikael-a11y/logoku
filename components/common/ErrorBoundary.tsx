@@ -16,6 +16,7 @@ interface State {
   isCopied: boolean;
 }
 
+// FIX: To resolve errors about missing 'setState' and 'props', the ErrorBoundary class must extend React.Component. This makes it a valid React class component with access to component properties and state management methods.
 // FIX: The ErrorBoundary class must extend `React.Component` to be a valid class component. This provides access to `this.props` and `this.setState`, resolving the reported errors.
 class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {

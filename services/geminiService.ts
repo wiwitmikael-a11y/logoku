@@ -250,24 +250,24 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
     
     // --- Step 1: Generate the Character Atlas (Sprite Sheet) ---
     const seed = userId + new Date().toISOString().slice(0, 10);
-    const atlasPrompt = `Create a flawless character rigging kit (sprite sheet) for a unique baby digital monster, suitable for 2.5D puppet animation.
+    const atlasPrompt = `Create a flawless character rigging kit (sprite sheet) for a unique baby digital pet, suitable for 2.5D puppet animation.
 
     **AESTHETIC STYLE (CRUCIAL):**
-    The aesthetic is 'AIPet': a fusion of a cute organic creature (Pet) and sleek mechanical parts (AI). Think 'chibi-mecha', 'biomechanical', or a cute monster with integrated futuristic armor. It should be endearing but also look powerful and cool. The style is clean, sharp vector art with consistent lighting from the top-left.
+    The aesthetic is 'AIPet': a fusion of a cute **animalistic creature (Pet)** and sleek mechanical parts (AI). The final form MUST be a **NON-HUMANOID mechanical animal or monster**. Think 'chibi-mecha beast', 'biomechanical creature', or a cute monster with integrated futuristic armor. It should be endearing but also look powerful and cool. **ABSOLUTELY NO humanoid, robotic, android, or Iron Man-like figures.** The style is clean, sharp vector art with consistent lighting from the top-left.
 
-    **GLOBAL RULES (VERY IMPORTANT):**
-    1.  **SOLID TRANSPARENT BACKGROUND:** The final PNG must have a fully transparent background. No white, no colors, no frames, no checkered patterns.
+    **GLOBAL RULES (ABSOLUTELY CRITICAL):**
+    1.  **SOLID TRANSPARENT BACKGROUND:** The final PNG must have a fully transparent background. No white, no colors, no frames, no checkered patterns. This is non-negotiable.
     2.  **CONSISTENT ORIENTATION:** All body parts MUST be drawn from a **2.5D isometric perspective as if the character is facing to the LEFT**. This uniformity is critical.
-    3.  **PERFECT SEPARATION:** Each part must be a distinct, complete, standalone object. There must be significant transparent space between each part in the grid layout. DO NOT allow parts to merge or overlap.
+    3.  **PERFECT, UNCOMPROMISING SEPARATION (MOST IMPORTANT RULE):** This is the most critical instruction. Each of the 7 parts MUST be a completely separate, distinct, and standalone object on the sprite sheet. There must be **large amounts of empty, transparent space** between every part. **NO part should touch, overlap, or be connected to another part in any way.** The AI must generate 7 individual, fully detached pieces. Failure to do this makes the output useless. The torso MUST NOT have arms attached, the head MUST NOT have the torso attached, etc.
     4.  **NO TEXT OR BORDERS:** The image must only contain the 7 specified body parts.
 
-    **REQUIRED BODY PARTS (7 TOTAL):**
-    1.  **Head:** A single, complete head, cleanly detached at the neck. It must NOT have any part of the torso attached.
-    2.  **Torso:** A single, complete torso. It MUST be cleanly detached at the neck, shoulders, and hips. It MUST NOT have any head, arms, or legs attached to it. It is the central body piece.
-    3.  **Left Arm:** A complete left arm, from the shoulder joint to the fingertips. It must be a single, separate piece.
-    4.  **Right Arm:** A complete right arm, from the shoulder joint to the fingertips. It must be a single, separate piece.
-    5.  **Left Leg:** A complete left leg, from the hip joint to the foot. It must be a single, separate piece.
-    6.  **Right Leg:** A complete right leg, from the hip joint to the foot. It must be a single, separate piece.
+    **REQUIRED BODY PARTS (7 INDIVIDUAL, SEPARATED PIECES):**
+    1.  **Head:** A single, complete, fully detached head. It must NOT have any part of the torso attached.
+    2.  **Torso:** A single, complete, fully detached torso. It is the central body piece. It MUST NOT have any head, arms, or legs attached to it whatsoever.
+    3.  **Left Arm:** A complete, fully detached left arm (or forelimb), from the shoulder joint to the paw/claw/hand. It must be one single, separate piece.
+    4.  **Right Arm:** A complete, fully detached right arm (or forelimb), from the shoulder joint to the paw/claw/hand. It must be one single, separate piece.
+    5.  **Left Leg:** A complete, fully detached left leg (or hindlimb), from the hip joint to the foot. It must be one single, separate piece.
+    6.  **Right Leg:** A complete, fully detached right leg (or hindlimb), from the hip joint to the foot. It must be one single, separate piece.
     7.  **Accessory:** One unique accessory (like a small mechanical wing, a floating data halo, or a cybernetic tail). It must be a single, separate piece.
 
     Arrange these 7 perfectly separated parts neatly in a grid. This is for a professional animation pipeline, so precision is key.
