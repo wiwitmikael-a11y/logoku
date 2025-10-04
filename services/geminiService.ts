@@ -250,7 +250,10 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
     
     // --- Step 1: Generate the Character Atlas (Sprite Sheet) ---
     const seed = userId + new Date().toISOString().slice(0, 10);
-    const atlasPrompt = `Create a flawless character rigging kit (sprite sheet) for a unique baby digital monster, suitable for 2.5D puppet animation. The style is clean, sharp vector art with consistent lighting from the top-left.
+    const atlasPrompt = `Create a flawless character rigging kit (sprite sheet) for a unique baby digital monster, suitable for 2.5D puppet animation.
+
+    **AESTHETIC STYLE (CRUCIAL):**
+    The aesthetic is 'AIPet': a fusion of a cute organic creature (Pet) and sleek mechanical parts (AI). Think 'chibi-mecha', 'biomechanical', or a cute monster with integrated futuristic armor. It should be endearing but also look powerful and cool. The style is clean, sharp vector art with consistent lighting from the top-left.
 
     **GLOBAL RULES (VERY IMPORTANT):**
     1.  **SOLID TRANSPARENT BACKGROUND:** The final PNG must have a fully transparent background. No white, no colors, no frames.
@@ -265,7 +268,7 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
     4.  **Right Arm:** A complete right arm, from the shoulder joint to the fingertips. It must be a single, separate piece.
     5.  **Left Leg:** A complete left leg, from the hip joint to the foot. It must be a single, separate piece.
     6.  **Right Leg:** A complete right leg, from the hip joint to the foot. It must be a single, separate piece.
-    7.  **Accessory:** One unique accessory (like a small wing, a floating halo, or a tail). It must be a single, separate piece.
+    7.  **Accessory:** One unique accessory (like a small mechanical wing, a floating data halo, or a cybernetic tail). It must be a single, separate piece.
 
     Arrange these 7 perfectly separated parts neatly in a grid. This is for a professional animation pipeline, so precision is key.
     Seed: ${seed}`;

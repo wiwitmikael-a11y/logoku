@@ -80,23 +80,57 @@ const AIPetHatching: React.FC<AIPetHatchingProps> = ({ onClose }) => {
 
     const eggAnimation = `
         @keyframes egg-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
-        @keyframes egg-crack { 0% { transform: rotate(0deg); } 25% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } 75% { transform: rotate(-3deg); } 100% { transform: rotate(0deg); } }
+        @keyframes egg-crack { 0% { transform: rotate(0deg); } 25% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } 75% { transform: rotate(-2deg); } 100% { transform: rotate(0deg); } }
+        @keyframes divine-glow {
+            0%, 100% {
+                filter: drop-shadow(0 0 15px rgb(var(--c-splash) / 0.5)) drop-shadow(0 0 30px rgb(var(--c-splash) / 0.3));
+            }
+            50% {
+                filter: drop-shadow(0 0 25px rgb(var(--c-splash) / 0.8)) drop-shadow(0 0 50px rgb(var(--c-splash) / 0.5));
+            }
+        }
         .animate-egg-pulse { animation: egg-pulse 2.5s ease-in-out infinite; }
         .animate-egg-crack { animation: egg-crack 0.2s linear infinite; }
+        .divine-glow-effect { animation: divine-glow 3.5s ease-in-out infinite; }
     `;
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={isLoading ? undefined : onClose}>
             <style>{eggAnimation}</style>
             <div className="relative max-w-sm w-full bg-surface rounded-2xl shadow-xl p-8 flex flex-col items-center text-center" onClick={e => e.stopPropagation()}>
-                <div className={`w-48 h-48 mb-4 ${isLoading ? 'animate-egg-crack' : 'animate-egg-pulse'}`}>
-                    <svg viewBox="0 0 100 125">
+                <div className={`w-40 h-40 mb-4 ${isLoading ? 'animate-egg-crack' : 'animate-egg-pulse divine-glow-effect'}`}>
+                     <svg viewBox="0 0 100 125">
+                        <defs>
+                            <pattern id="mecha-pattern-egg" patternUnits="userSpaceOnUse" width="12" height="12">
+                                <path d="M-2,2 l4,-4 M0,12 l12,-12 M10,14 l4,-4" stroke="rgb(var(--c-border))" strokeWidth="0.7" />
+                            </pattern>
+                             <radialGradient id="eggShine" cx="0.3" cy="0.3" r="0.8">
+                                <stop offset="0%" stopColor="rgba(255,255,255,0.2)" />
+                                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                            </radialGradient>
+                        </defs>
                         <g transform="translate(0, 5)">
-                            <path d="M50,5 C25,5 10,40 10,70 C10,100 30,120 50,120 C70,120 90,100 90,70 C90,40 75,5 50,5Z" fill="url(#hatchEggGradient)" stroke="#44403c" strokeWidth="2"/>
-                            <defs><radialGradient id="hatchEggGradient" cx="0.5" cy="0.9" r="0.9"><stop offset="0%" stopColor="#e2e8f0" /><stop offset="100%" stopColor="#f8fafc" /></radialGradient></defs>
-                            <circle cx="50" cy="40" r="8" fill="#c084fc" opacity="0.6" /><circle cx="70" cy="70" r="12" fill="#60a5fa" opacity="0.6" /><circle cx="35" cy="85" r="10" fill="#f87171" opacity="0.6" />
-                            {isLoading && <path d="M 40 50 L 55 60 L 50 75 L 65 85" stroke="#44403c" strokeWidth="1.5" fill="none" />}
+                            {/* Base egg shape - slightly rounder and cuter */}
+                            <path d="M50,5 C25,5 12,35 12,70 C12,105 30,120 50,120 C70,120 88,105 88,70 C88,35 75,5 50,5Z" fill="#404040" stroke="#18181b" strokeWidth="3"/>
+                            
+                            {/* Mecha Panel Texture */}
+                            <path d="M50,5 C25,5 12,35 12,70 C12,105 30,120 50,120 C70,120 88,105 88,70 C88,35 75,5 50,5Z" fill="url(#mecha-pattern-egg)" opacity="0.3"/>
+                            
+                            {/* Bioluminescent "Circuits" */}
+                            <path d="M 40 20 Q 50 40 45 60 T 55 90" stroke="rgb(var(--c-splash))" strokeWidth="1.5" fill="none" strokeLinecap="round" filter="url(#glow)"/>
+                            <path d="M 60 25 Q 75 50 60 75 T 70 100" stroke="rgb(var(--c-splash))" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.7" filter="url(#glow)"/>
+                            <circle cx="50" cy="70" r="3" fill="rgb(var(--c-splash))" filter="url(#glow)" />
+
+                             {/* Metallic Shine */}
+                            <path d="M50,5 C25,5 12,35 12,70 C12,105 30,120 50,120 C70,120 88,105 88,70 C88,35 75,5 50,5Z" fill="url(#eggShine)"/>
                         </g>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
                     </svg>
                 </div>
                 
