@@ -14,13 +14,15 @@ const SLOGAN_GEN_COST = 1;
 const MOODBOARD_GEN_COST = 3;
 const XP_REWARD = 15;
 
-interface QuickToolsProps {}
+interface QuickToolsProps {
+    onShowSotoshop: () => void;
+}
 
-const QuickTools: React.FC<QuickToolsProps> = () => {
+const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
     const { profile, deductCredits, addXp, setShowOutOfCreditsModal } = useAuth();
     const credits = profile?.credits ?? 0;
     
-    const [activeTool, setActiveTool] = useState<'name' | 'slogan' | 'moodboard'>('name');
+    const [activeTool, setActiveTool] = useState<'name' | 'slogan' | 'moodboard' | 'sotoshop'>('name');
 
     // Name Gen State
     const [nameCategory, setNameCategory] = useState('');
@@ -96,7 +98,7 @@ const QuickTools: React.FC<QuickToolsProps> = () => {
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
     }, [moodboardKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
 
-    const handleToolChange = (tool: 'name' | 'slogan' | 'moodboard') => {
+    const handleToolChange = (tool: 'name' | 'slogan' | 'moodboard' | 'sotoshop') => {
         setActiveTool(tool); setError(null); setResults(null); setDisplayedItems([]); setMoodboardResult(null);
     }
 
@@ -122,6 +124,7 @@ const QuickTools: React.FC<QuickToolsProps> = () => {
                                 <button onClick={() => handleToolChange('name')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'name' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>NAME GEN</button>
                                 <button onClick={() => handleToolChange('slogan')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'slogan' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SLOGAN GEN</button>
                                 <button onClick={() => handleToolChange('moodboard')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'moodboard' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>MOODBOARD</button>
+                                <button onClick={() => handleToolChange('sotoshop')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'sotoshop' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SOTOSHOP</button>
                             </div>
                             
                             <div className="flex-grow space-y-4">
@@ -137,6 +140,15 @@ const QuickTools: React.FC<QuickToolsProps> = () => {
                                         <div className="space-y-2"><label className="text-splash font-bold text-sm block">KEYWORDS (OPTIONAL):</label><input value={sloganKeywords} onChange={(e) => setSloganKeywords(e.target.value)} placeholder="e.g., santai, temen ngobrol" className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
                                         <button onClick={handleGenerateSlogans} disabled={!sloganBusinessName || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `START GAME (${SLOGAN_GEN_COST} TOKEN)`}</button>
                                     </div>
+                                ) : activeTool === 'sotoshop' ? (
+                                    <div className="animate-content-fade-in space-y-4">
+                                        <p className="text-splash font-bold text-sm">SOTOSHOP (IMAGE EDITOR):</p>
+                                        <p className="text-white text-sm">Editor gambar ringan yang powerful, terintegrasi langsung dengan Mang AI. Gunakan untuk memoles logo, menambah teks ke gambar postingan, atau bahkan membuat desain sederhana dari nol.</p>
+                                        <p className="text-xs text-text-muted">Fitur unggulannya termasuk background removal dan AI image generation langsung di kanvas.</p>
+                                        <button onClick={onShowSotoshop} className="w-full font-mono text-lg font-bold bg-fuchsia-500 text-white p-3 my-2 hover:bg-fuchsia-400 transition-colors">
+                                            BUKA SOTOSHOP
+                                        </button>
+                                    </div>
                                 ) : ( // Moodboard
                                      <div className="animate-content-fade-in space-y-4">
                                         <div className="space-y-2"><label className="text-splash font-bold text-sm block">KEYWORDS/VIBE:</label><input value={moodboardKeywords} onChange={(e) => setMoodboardKeywords(e.target.value)} placeholder="e.g., rustic coffee shop, sunset, warm" required className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
@@ -149,8 +161,8 @@ const QuickTools: React.FC<QuickToolsProps> = () => {
                                 {isLoading && <p className="text-center text-yellow-400">MANG AI IS THINKING<span className="blinking-cursor">...</span></p>}
                                 {error && <p className="text-red-500 font-bold animate-pulse">ERROR: {error}</p>}
                                 
-                                {activeTool !== 'moodboard' && results && <p className="text-yellow-400 font-bold mb-2">{results.title}<span className="blinking-cursor">_</span></p>}
-                                {activeTool !== 'moodboard' && displayedItems.length > 0 && (
+                                {activeTool !== 'moodboard' && activeTool !== 'sotoshop' && results && <p className="text-yellow-400 font-bold mb-2">{results.title}<span className="blinking-cursor">_</span></p>}
+                                {activeTool !== 'moodboard' && activeTool !== 'sotoshop' && displayedItems.length > 0 && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                                         {displayedItems.map((item, index) => (
                                             <div key={index} className="flex items-center gap-2 animate-content-fade-in">
