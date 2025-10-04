@@ -3,7 +3,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
-import type { AIPetState, AIPetStats, AIPetPersonalityVector } from '../types';
+import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage } from '../types';
 
 export interface AIPetContextType {
   petState: AIPetState | null;
@@ -11,6 +11,7 @@ export interface AIPetContextType {
   notifyPetOfActivity: (activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => void;
   handleInteraction: () => void;
   onGameWin: (game: 'color' | 'pattern' | 'style' | 'slogan') => void;
+  updatePetName: (newName: string) => void;
 }
 
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
@@ -18,18 +19,20 @@ const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 const INITIAL_STATS: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
 
+const getStageForLevel = (level: number): AIPetStage => {
+    if (level < 2) return 'egg';
+    if (level < 5) return 'child';
+    if (level < 10) return 'teen';
+    return 'adult';
+};
+
 const useDebounce = <F extends (...args: any[]) => any>(callback: F, delay: number) => {
-    // FIX: Changed useRef<number>() to useRef<number | null>(null) to provide an explicit initial value. This resolves an ambiguous type issue that was causing misleading errors about argument counts in other functions.
     const timeoutRef = useRef<number | null>(null);
-    
-    // Use a ref to hold the callback to ensure the debounced function
-    // always calls the latest version of the callback.
     const callbackRef = useRef(callback);
     useEffect(() => {
         callbackRef.current = callback;
     }, [callback]);
 
-    // Return a memoized debounced function that is stable across renders.
     return useCallback((...args: Parameters<F>) => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
@@ -76,12 +79,22 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setIsLoading(false);
             return;
         }
+        const currentStage = getStageForLevel(profile.level);
+
         if (profile.aipet_state) {
-            setPetState(profile.aipet_state as AIPetState);
+            const existingState = profile.aipet_state as AIPetState;
+            // Check for evolution
+            if (existingState.stage !== currentStage) {
+                const evolvedState = { ...existingState, stage: currentStage };
+                setPetState(evolvedState);
+                savePetStateToDb(evolvedState);
+            } else {
+                setPetState(existingState);
+            }
         } else {
             const newPet: AIPetState = {
                 name: 'AIPet',
-                stage: 'child',
+                stage: currentStage,
                 stats: INITIAL_STATS,
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
@@ -99,7 +112,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const now = Date.now();
             if (now - lastUpdateRef.current > 5000) { // Update every 5 seconds
                 updatePetState(p => {
-                    const decayRate = 0.1; // points per 5 seconds
+                    const decayRate = p.stage === 'egg' ? 0 : 0.1; // Eggs don't lose stats
                     return {
                         ...p,
                         stats: {
@@ -109,7 +122,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                             charisma: Math.max(0, p.stats.charisma - decayRate)
                         }
                     };
-                }, true); // Use skipDebounce for background updates
+                }, true);
                 lastUpdateRef.current = now;
             }
             animationFrameId = requestAnimationFrame(loop);
@@ -122,6 +135,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {
         updatePetState(p => {
+            if (p.stage === 'egg') return p; // Eggs don't gain stats from activities
             let newStats = { ...p.stats };
             let newPersonality = { ...p.personality };
 
@@ -153,6 +167,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const onGameWin = useCallback((game: 'color' | 'pattern' | 'style' | 'slogan') => {
         addXp(15);
         updatePetState(p => {
+             if (p.stage === 'egg') return p;
             let statToBoost: keyof AIPetStats = 'creativity';
             if (game === 'color') statToBoost = 'creativity';
             if (game === 'pattern') statToBoost = 'intelligence';
@@ -164,13 +179,19 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 stats: {
                     ...p.stats,
                     [statToBoost]: Math.min(MAX_STATS[statToBoost], p.stats[statToBoost] + 15),
-                    energy: Math.max(0, p.stats.energy - 5) // Playing games costs a little energy
+                    energy: Math.max(0, p.stats.energy - 5)
                 }
             };
         });
     }, [updatePetState, addXp]);
 
-    const value: AIPetContextType = { petState, isLoading, notifyPetOfActivity, handleInteraction, onGameWin };
+    const updatePetName = useCallback((newName: string) => {
+        if (!newName.trim()) return;
+        updatePetState(p => ({ ...p, name: newName.trim() }), true);
+    }, [updatePetState]);
+
+
+    const value: AIPetContextType = { petState, isLoading, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName };
     
     return <AIPetContext.Provider value={value}>{children}</AIPetContext.Provider>;
 };

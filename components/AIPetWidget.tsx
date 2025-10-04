@@ -14,12 +14,27 @@ interface Props extends AIPetContextType {
     onShowHome: () => void;
 }
 
-const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, onClose, onShowHome }) => {
+const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, onClose, onShowHome, updatePetName }) => {
     const { deductCredits, profile } = useAuth();
     const [activeGame, setActiveGame] = useState<MiniGame>(null);
     const [gameFeedback, setGameFeedback] = useState<'correct' | 'incorrect' | null>(null);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [newName, setNewName] = useState(petState?.name || '');
 
     const MINIGAME_COST = 1;
+
+    useEffect(() => {
+        if (petState) {
+            setNewName(petState.name);
+        }
+    }, [petState]);
+
+    const handleSaveName = () => {
+        if (newName.trim()) {
+            updatePetName(newName.trim());
+        }
+        setIsEditingName(false);
+    };
 
     // --- Color Harmony Game ---
     const [colorTarget, setColorTarget] = useState('');
@@ -88,8 +103,28 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     return (
         <div className={`fixed bottom-8 left-8 w-80 bg-surface/80 backdrop-blur-md border border-border-main rounded-xl shadow-lg p-4 z-30 transition-all duration-300 origin-bottom-left ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
              <div className="flex justify-between items-center pb-2 border-b border-border-main">
-                <h3 className="font-bold text-text-header">{petState.name}</h3>
-                <button onClick={onClose} className="text-text-muted hover:text-text-header">&times;</button>
+                {isEditingName ? (
+                    <div className="flex items-center gap-2">
+                        <input 
+                            type="text" 
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); }}
+                            className="bg-background text-text-header font-bold text-base w-36 px-2 py-1 rounded-md"
+                            autoFocus
+                        />
+                        <button onClick={handleSaveName} className="text-primary hover:text-primary-hover">Simpan</button>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-text-header">{petState.name}</h3>
+                        <button onClick={() => setIsEditingName(true)} className="text-text-muted hover:text-text-header" title="Ganti Nama">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                        </button>
+                    </div>
+                )}
+
+                <button onClick={onClose} className="text-text-muted hover:text-text-header text-2xl leading-none">&times;</button>
              </div>
              
              {!activeGame ? (
@@ -116,8 +151,8 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
                          <p className="text-xs text-text-muted mb-2">Aktivitas (-{MINIGAME_COST} Token, +XP)</p>
                          <div className="grid grid-cols-2 gap-2">
                             <button onClick={onShowHome} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">🏠 Lihat Rumah</button>
-                            <button onClick={() => startGame('color')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">Harmoni Warna</button>
-                            <button onClick={() => startGame('pattern')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">Teka-Teki Pola</button>
+                            <button onClick={() => startGame('color')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md" disabled={petState.stage === 'egg'}>Harmoni Warna</button>
+                            <button onClick={() => startGame('pattern')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md" disabled={petState.stage === 'egg'}>Teka-Teki Pola</button>
                             <button disabled title="Segera Hadir!" className="text-sm bg-background p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Tebak Gaya</button>
                          </div>
                     </div>

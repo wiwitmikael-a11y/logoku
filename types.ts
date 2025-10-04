@@ -111,9 +111,11 @@ export interface AIPetStats {
   charisma: number;
 }
 
+export type AIPetStage = 'egg' | 'child' | 'teen' | 'adult';
+
 export interface AIPetState {
   name: string;
-  stage: 'child' | 'adult';
+  stage: AIPetStage;
   stats: AIPetStats;
   lastFed: number;
   lastPlayed: number;
