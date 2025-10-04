@@ -188,8 +188,10 @@ const Sotosop: React.FC<Props> = ({ show, onClose }) => {
   const updateSelectedLayer = (props: Partial<TextLayer>) => {
     setLayers(prev => prev.map(l => {
         if (l.id === selectedLayerId && l.type === 'text') {
-          // FIX: Cast the result to Layer to resolve complex discriminated union type inference issues.
-          return { ...l, ...props } as Layer;
+          // FIX: By creating an intermediate variable, we help TypeScript correctly infer
+          // the type within the map callback, resolving the discriminated union issue.
+          const updatedLayer: TextLayer = { ...l, ...props };
+          return updatedLayer;
         }
         return l;
     }));
