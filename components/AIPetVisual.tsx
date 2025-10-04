@@ -6,6 +6,7 @@ import type { AIPetState } from '../types';
 interface AIPetVisualProps {
   petState: AIPetState;
   className?: string;
+  animationType?: 'idle' | 'walk';
 }
 
 // --- EGG VISUAL (No changes needed) ---
@@ -58,7 +59,7 @@ const EggVisual: React.FC = () => {
 };
 
 // --- NEW SPRITE SHEET ANIMATION COMPONENT ---
-const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
+const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, animationType = 'idle' }) => {
   const { stats, stage, sprite_sheet_url } = petState;
 
   // Keyframes for the 4x3 sprite sheet animation
@@ -66,6 +67,16 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
     @keyframes pet-sprite-idle {
       from { background-position: 0% 0%; }
       to { background-position: -400% 0%; }
+    }
+    @keyframes pet-sprite-walk {
+      0%, 12.49% { background-position: 0% 50%; } /* row 2, frame 1 */
+      12.5%, 24.99% { background-position: -100% 50%; } /* row 2, frame 2 */
+      25%, 37.49% { background-position: -200% 50%; } /* row 2, frame 3 */
+      37.5%, 49.99% { background-position: -300% 50%; } /* row 2, frame 4 */
+      50%, 62.49% { background-position: 0% 100%; } /* row 3, frame 1 */
+      62.5%, 74.99% { background-position: -100% 100%; } /* row 3, frame 2 */
+      75%, 87.49% { background-position: -200% 100%; } /* row 3, frame 3 */
+      87.5%, 100% { background-position: -300% 100%; } /* row 3, frame 4 */
     }
     @keyframes pet-float {
         0%, 100% { transform: translateY(0); }
@@ -87,6 +98,12 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
           </div>
       );
   }
+  
+  const selectedAnimationName = animationType === 'walk' ? 'pet-sprite-walk' : 'pet-sprite-idle';
+  const selectedAnimationSettings = animationType === 'walk'
+    ? '1s infinite'
+    : '1.2s steps(4) infinite';
+
 
   // Render the animated sprite
   return (
@@ -102,7 +119,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                 backgroundImage: `url(${sprite_sheet_url})`,
                 backgroundSize: '400% 300%', // 4x3 grid
                 backgroundPosition: '0 0',
-                animation: `pet-sprite-idle 1.2s steps(4) infinite, pet-float 4s ease-in-out infinite`,
+                animation: `${selectedAnimationName} ${selectedAnimationSettings}, pet-float 4s ease-in-out infinite`,
             }}
         />
     </div>

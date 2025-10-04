@@ -22,7 +22,7 @@ export interface AIPetContextType {
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
-const HATCH_COST = 5; // Cost for a single, complex Imagen 4 call for the sprite sheet.
+const HATCH_COST = 10; // Cost for a single, complex Imagen 4 call for the sprite sheet.
 
 const getStageForLevel = (level: number): AIPetStage => {
     if (level < 5) return 'child';
