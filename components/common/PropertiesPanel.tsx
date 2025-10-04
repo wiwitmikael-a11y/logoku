@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React from 'react';
-import type { Layer, CanvasState, TextLayer, ShapeLayer } from '../Sotoshop';
+import type { Layer, CanvasState, TextLayer, ShapeLayer, ImageLayer } from '../Sotoshop';
 import { 
     PropertyInput, 
     PropertyTextarea, 
@@ -13,7 +13,7 @@ import {
 interface PropertiesPanelProps {
     selectedLayer: Layer | null | undefined;
     canvasState: CanvasState;
-    onUpdateLayer: (id: number, props: Partial<Layer>) => void;
+    onUpdateLayer: (id: number, props: Partial<Layer>, withHistory?: boolean) => void;
     onUpdateCanvas: (props: Partial<CanvasState>) => void;
 }
 
@@ -21,11 +21,17 @@ const FONT_FAMILES = ['Plus Jakarta Sans', 'Bebas Neue', 'Caveat', 'Arial', 'Ver
 
 const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedLayer, canvasState, onUpdateLayer, onUpdateCanvas }) => {
 
-    const updateLayer = (props: Partial<Layer>) => {
+    const updateLayer = (props: Partial<Layer>, withHistory = true) => {
         if (selectedLayer) {
-            onUpdateLayer(selectedLayer.id, props);
+            onUpdateLayer(selectedLayer.id, props, withHistory);
         }
     };
+    
+    const updateLayerNoHistory = (props: Partial<Layer>) => {
+        if (selectedLayer) {
+            onUpdateLayer(selectedLayer.id, props, false);
+        }
+    }
 
     return (
         <aside className="w-64 flex-shrink-0 bg-surface p-3 border-l border-border-main overflow-y-auto text-sm">
@@ -38,7 +44,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedLayer, canvas
                         <PropertyInput label="Rotation" type="number" value={Math.round(selectedLayer.rotation)} onChange={e => updateLayer({ rotation: +e.target.value })} suffix="°" />
                     </PanelSection>
                      <PanelSection title="Appearance" defaultOpen={true}>
-                        <PropertyInput label="Opacity" type="range" min="0" max="100" value={selectedLayer.opacity} onChange={e => updateLayer({ opacity: +e.target.value })} suffix="%" />
+                        <PropertyInput label="Opacity" type="range" min="0" max="100" value={selectedLayer.opacity} onChange={e => updateLayerNoHistory({ opacity: +e.target.value })} onMouseUp={() => updateLayer({opacity: selectedLayer.opacity})} suffix="%" />
                     </PanelSection>
                     
                     {selectedLayer.type === 'text' && (
@@ -54,6 +60,21 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedLayer, canvas
                             <PropertyColorInput label="Fill" value={selectedLayer.fillColor} onChange={e => updateLayer({ fillColor: e.target.value })} />
                             <PropertyColorInput label="Stroke" value={selectedLayer.strokeColor} onChange={e => updateLayer({ strokeColor: e.target.value })} />
                             <PropertyInput label="Stroke Width" type="number" min="0" value={selectedLayer.strokeWidth} onChange={e => updateLayer({ strokeWidth: +e.target.value })} suffix="px" />
+                        </PanelSection>
+                    )}
+                    
+                    <PanelSection title="Shadow">
+                        <div className="grid grid-cols-2 gap-2"><PropertyInput label="X Offset" type="number" value={selectedLayer.shadow.offsetX} onChange={e => updateLayer({ shadow: {...selectedLayer.shadow, offsetX: +e.target.value}})} /><PropertyInput label="Y Offset" type="number" value={selectedLayer.shadow.offsetY} onChange={e => updateLayer({ shadow: {...selectedLayer.shadow, offsetY: +e.target.value}})} /></div>
+                        <PropertyInput label="Blur" type="number" min="0" value={selectedLayer.shadow.blur} onChange={e => updateLayer({ shadow: {...selectedLayer.shadow, blur: +e.target.value}})} suffix="px" />
+                        <PropertyColorInput label="Color" value={selectedLayer.shadow.color} onChange={e => updateLayer({ shadow: {...selectedLayer.shadow, color: e.target.value}})} />
+                    </PanelSection>
+
+                    {selectedLayer.type === 'image' && (
+                        <PanelSection title="Image Filters">
+                             <PropertyInput label="Brightness" type="range" min="0" max="200" value={(selectedLayer as ImageLayer).filters.brightness} onChange={e => updateLayerNoHistory({ filters: {...(selectedLayer as ImageLayer).filters, brightness: +e.target.value}})} onMouseUp={() => updateLayer({filters: (selectedLayer as ImageLayer).filters})} suffix="%" />
+                             <PropertyInput label="Contrast" type="range" min="0" max="200" value={(selectedLayer as ImageLayer).filters.contrast} onChange={e => updateLayerNoHistory({ filters: {...(selectedLayer as ImageLayer).filters, contrast: +e.target.value}})} onMouseUp={() => updateLayer({filters: (selectedLayer as ImageLayer).filters})} suffix="%" />
+                             <PropertyInput label="Saturation" type="range" min="0" max="200" value={(selectedLayer as ImageLayer).filters.saturate} onChange={e => updateLayerNoHistory({ filters: {...(selectedLayer as ImageLayer).filters, saturate: +e.target.value}})} onMouseUp={() => updateLayer({filters: (selectedLayer as ImageLayer).filters})} suffix="%" />
+                             <PropertyInput label="Grayscale" type="range" min="0" max="100" value={(selectedLayer as ImageLayer).filters.grayscale} onChange={e => updateLayerNoHistory({ filters: {...(selectedLayer as ImageLayer).filters, grayscale: +e.target.value}})} onMouseUp={() => updateLayer({filters: (selectedLayer as ImageLayer).filters})} suffix="%" />
                         </PanelSection>
                     )}
                 </div>

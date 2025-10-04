@@ -263,7 +263,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name?.split(' ')[0] || 'Juragan';
-  const [activeTab, setActiveTab] = useState<'projects' | 'forum' | 'tools' | 'juragan'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'sotoshop' | 'tools' | 'forum' | 'juragan'>('projects');
   
   useEffect(() => {
     if (sessionStorage.getItem('openForumTab')) {
@@ -281,15 +281,16 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
 
       <div className="flex justify-center border-b border-border-main">
         <button onClick={() => setActiveTab('projects')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}>🚀 Project Saya</button>
-        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}>☕ WarKop Juragan</button>
+        <button onClick={() => props.onShowSotoshop()} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors text-text-muted hover:text-text-header`}>🎨 Sotoshop</button>
         <button onClick={() => setActiveTab('tools')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}>💡 Warung Ide</button>
+        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}>☕ WarKop Juragan</button>
         <button onClick={() => setActiveTab('juragan')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'juragan' ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}>🏆 Pusat Juragan</button>
       </div>
       
       <div className="mt-4">
         {activeTab === 'projects' && <ProjectContent {...props} />}
+        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools /></Suspense>)}
         {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
-        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools onShowSotoshop={props.onShowSotoshop} /></Suspense>)}
         {activeTab === 'juragan' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
       </div>
     </div>

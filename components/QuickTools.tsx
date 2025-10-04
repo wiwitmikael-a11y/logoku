@@ -14,11 +14,9 @@ const SLOGAN_GEN_COST = 1;
 const MOODBOARD_GEN_COST = 3;
 const XP_REWARD = 15;
 
-interface QuickToolsProps {
-  onShowSotoshop: () => void;
-}
+interface QuickToolsProps {}
 
-const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
+const QuickTools: React.FC<QuickToolsProps> = () => {
     const { profile, deductCredits, addXp, setShowOutOfCreditsModal } = useAuth();
     const credits = profile?.credits ?? 0;
     
@@ -98,11 +96,7 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
     }, [moodboardKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
 
-    const handleToolChange = (tool: 'name' | 'slogan' | 'moodboard' | 'sotoshop') => {
-        if (tool === 'sotoshop') {
-            onShowSotoshop();
-            return;
-        }
+    const handleToolChange = (tool: 'name' | 'slogan' | 'moodboard') => {
         setActiveTool(tool); setError(null); setResults(null); setDisplayedItems([]); setMoodboardResult(null);
     }
 
@@ -128,7 +122,6 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                 <button onClick={() => handleToolChange('name')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'name' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>NAME GEN</button>
                                 <button onClick={() => handleToolChange('slogan')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'slogan' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SLOGAN GEN</button>
                                 <button onClick={() => handleToolChange('moodboard')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'moodboard' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>MOODBOARD</button>
-                                <button onClick={() => handleToolChange('sotoshop')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors text-text-muted hover:bg-splash/10`}>SOTOSHOP</button>
                             </div>
                             
                             <div className="flex-grow space-y-4">
