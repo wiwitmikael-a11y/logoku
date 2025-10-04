@@ -256,7 +256,7 @@ export const generateAIPetAtlasAndManifest = async (userId: string): Promise<{ a
     The aesthetic is 'AIPet': a fusion of a cute organic creature (Pet) and sleek mechanical parts (AI). Think 'chibi-mecha', 'biomechanical', or a cute monster with integrated futuristic armor. It should be endearing but also look powerful and cool. The style is clean, sharp vector art with consistent lighting from the top-left.
 
     **GLOBAL RULES (VERY IMPORTANT):**
-    1.  **SOLID TRANSPARENT BACKGROUND:** The final PNG must have a fully transparent background. No white, no colors, no frames.
+    1.  **SOLID TRANSPARENT BACKGROUND:** The final PNG must have a fully transparent background. No white, no colors, no frames, no checkered patterns.
     2.  **CONSISTENT ORIENTATION:** All body parts MUST be drawn from a **2.5D isometric perspective as if the character is facing to the LEFT**. This uniformity is critical.
     3.  **PERFECT SEPARATION:** Each part must be a distinct, complete, standalone object. There must be significant transparent space between each part in the grid layout. DO NOT allow parts to merge or overlap.
     4.  **NO TEXT OR BORDERS:** The image must only contain the 7 specified body parts.

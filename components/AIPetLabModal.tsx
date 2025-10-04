@@ -70,7 +70,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                     ) : (
                         <div className="space-y-6">
                             <div>
-                                <h4 className="font-semibold text-splash mb-3">Statistik</h4>
+                                <h4 className="font-semibold text-splash mb-3">STATISTIK</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <StatBar label="⚡ Energi" value={petState.stats.energy} color="bg-green-500" />
                                     <StatBar label="🎨 Kreativitas" value={petState.stats.creativity} color="bg-sky-400" />
@@ -80,7 +80,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                             </div>
 
                             <div>
-                                <h4 className="font-semibold text-splash mb-3">Aktivitas (Segera Hadir)</h4>
+                                <h4 className="font-semibold text-splash mb-3">AKTIVITAS (SEGERA HADIR)</h4>
                                 <div className="grid grid-cols-2 gap-3">
                                     <Button size="small" variant="secondary" disabled>Beri Makan</Button>
                                     <Button size="small" variant="secondary" disabled>Ajak Main</Button>
@@ -88,7 +88,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                             </div>
 
                             <div>
-                                <h4 className="font-semibold text-splash mb-3">Dinding Prestasi</h4>
+                                <h4 className="font-semibold text-splash mb-3">DINDING PRESTASI</h4>
                                 <div className="p-4 bg-background rounded-lg">
                                 {userAchievements.length > 0 ? (
                                     <div className="flex justify-center gap-4">
