@@ -1,4 +1,3 @@
-// components/AIPetParts.tsx
 import React from "react";
 
 // === BODY SHAPES (anime chibi monster style) ===

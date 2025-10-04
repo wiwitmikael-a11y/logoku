@@ -23,12 +23,6 @@ class ErrorBoundary extends Component<Props, State> {
     isCopied: false,
   };
 
-  // Fix: Add constructor to bind event handlers.
-  constructor(props: Props) {
-    super(props);
-    this.handleCopy = this.handleCopy.bind(this);
-  }
-
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.
     // It should return an object to update state.
@@ -39,10 +33,8 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // Fix: Converted from an arrow function property to a standard class method.
-  // The `this` context is now handled by binding in the constructor. This resolves issues
-  // where `this.setState` was not found.
-  private handleCopy() {
+  // FIX: Using an arrow function property correctly binds `this`, resolving errors where `this.setState` and `this.props` were not found.
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -70,7 +62,6 @@ class ErrorBoundary extends Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
-                    {/* Fix: Correctly binding `this` in methods resolves TypeScript's confusion about the class, making `this.props` accessible here. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -93,7 +84,6 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // Fix: With the component's `this` context correctly handled, `this.props` is now valid.
     return this.props.children;
   }
 }

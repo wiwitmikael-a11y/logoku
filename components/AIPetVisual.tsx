@@ -17,7 +17,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState }) => {
 
   // If the hook is not ready, for example during initial state calculation.
   if (!visuals || !visuals.Render) {
-    return <svg viewBox="0 0 100 100" />;
+    return React.createElement("svg", { viewBox: "0 0 100 100" });
   }
   
   const { Render } = visuals;
