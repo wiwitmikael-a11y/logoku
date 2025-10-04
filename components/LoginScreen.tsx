@@ -1,7 +1,11 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Button from './common/Button';
+import { supabase } from '../services/supabaseClient';
+import type { AIPetState } from '../types';
+
+const AIPetParade = React.lazy(() => import('./AIPetParade'));
 
 interface Props {
   onGoogleLogin: () => void;
@@ -12,10 +16,53 @@ interface Props {
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowToS }) => {
+  const [paradePets, setParadePets] = useState<AIPetState[]>([]);
+
+  useEffect(() => {
+    const fetchParadePets = async () => {
+      try {
+        // We will create an RPC function in Supabase called 'get_random_hatched_aipets'
+        // This is more efficient than fetching all pets and randomizing on the client.
+        // SQL for the function:
+        // CREATE OR REPLACE FUNCTION get_random_hatched_aipets(count integer)
+        // RETURNS TABLE(aipet_state jsonb) AS $$
+        // BEGIN
+        //   RETURN QUERY
+        //   SELECT a.aipet_state
+        //   FROM profiles AS a
+        //   WHERE a.aipet_state IS NOT NULL AND a.aipet_state->>'stage' != 'egg'
+        //   ORDER BY random()
+        //   LIMIT count;
+        // END;
+        // $$ LANGUAGE plpgsql;
+        const { data, error } = await supabase.rpc('get_random_hatched_aipets', { count: 7 });
+
+        if (error) {
+          console.error("Error fetching parade pets:", error);
+          return;
+        }
+
+        if (data) {
+          const pets = data.map((item: any) => item.aipet_state as AIPetState);
+          setParadePets(pets);
+        }
+      } catch (e) {
+        console.error("Client-side error fetching parade pets:", e);
+      }
+    };
+
+    fetchParadePets();
+  }, []);
+
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-background text-text-body transition-colors duration-300">
-      <div className="max-w-xl w-full">
-        <div className="relative h-40 mb-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-background text-text-body transition-colors duration-300 overflow-hidden">
+      <div className="max-w-xl w-full relative">
+        <Suspense fallback={null}>
+          <AIPetParade pets={paradePets} />
+        </Suspense>
+
+        <div className="relative h-40 mb-4 z-10">
             <img
             src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
             alt="Mang AI character"
@@ -24,47 +71,49 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
             />
         </div>
 
-        <div className="inline-flex flex-col items-center mb-6">
-          <h1 style={{fontFamily: 'var(--font-display)'}} className="text-6xl md:text-7xl font-extrabold tracking-wider text-primary mb-2">
-            desain<span className="text-text-header">.fun</span>
-          </h1>
-          <p className="font-semibold text-text-muted">Studio Branding AI untuk UMKM Juara</p>
-        </div>
+        <div className="relative z-10">
+            <div className="inline-flex flex-col items-center mb-6">
+              <h1 style={{fontFamily: 'var(--font-display)'}} className="text-6xl md:text-7xl font-extrabold tracking-wider text-primary mb-2">
+                desain<span className="text-text-header">.fun</span>
+              </h1>
+              <p className="font-semibold text-text-muted">Studio Branding AI untuk UMKM Juara</p>
+            </div>
 
-        <p className="text-text-body mb-8 max-w-lg mx-auto">
-          Lupakan pusingnya mikirin desain. Mang AI hadir sebagai partner setia lo! Dalam hitungan menit, kita bakal sulap ide lo jadi <strong className="text-text-header">paket branding lengkap</strong>: dari logo, persona, social media kit, sampai konten siap posting.
-        </p>
-        
-        <div className="flex flex-col items-center gap-4">
-          <Button 
-            onClick={onGoogleLogin} 
-            disabled={!isCaptchaSolved}
-            title={!isCaptchaSolved ? "Selesaikan puzzle captcha dulu!" : "Masuk dengan akun Google"}
-            size="large"
-            variant="splash"
-          >
-            <svg className="w-5 h-5" aria-hidden="true" focusable="false" viewBox="0 0 48 48">
-              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-              <path fill="none" d="M0 0h48v48H0z"></path>
-            </svg>
-            Masuk dengan Google
-          </Button>
+            <p className="text-text-body mb-8 max-w-lg mx-auto">
+              Lupakan pusingnya mikirin desain. Mang AI hadir sebagai partner setia lo! Dalam hitungan menit, kita bakal sulap ide lo jadi <strong className="text-text-header">paket branding lengkap</strong>: dari logo, persona, social media kit, sampai konten siap posting.
+            </p>
+            
+            <div className="flex flex-col items-center gap-4">
+              <Button 
+                onClick={onGoogleLogin} 
+                disabled={!isCaptchaSolved}
+                title={!isCaptchaSolved ? "Selesaikan puzzle captcha dulu!" : "Masuk dengan akun Google"}
+                size="large"
+                variant="splash"
+              >
+                <svg className="w-5 h-5" aria-hidden="true" focusable="false" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                  <path fill="none" d="M0 0h48v48H0z"></path>
+                </svg>
+                Masuk dengan Google
+              </Button>
+            </div>
+            
+            <p className="text-xs text-text-muted mt-4">
+              Dengan masuk, lo setuju sama{' '}
+              <button 
+                onClick={isCaptchaSolved ? onShowToS : undefined} 
+                disabled={!isCaptchaSolved}
+                className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+              >
+                Ketentuan Layanan
+              </button>.
+               {!isCaptchaSolved && <span className="block text-accent font-semibold text-sm mt-2">Selesaikan puzzle di atas dulu, Juragan!</span>}
+            </p>
         </div>
-        
-        <p className="text-xs text-text-muted mt-4">
-          Dengan masuk, lo setuju sama{' '}
-          <button 
-            onClick={isCaptchaSolved ? onShowToS : undefined} 
-            disabled={!isCaptchaSolved}
-            className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
-          >
-            Ketentuan Layanan
-          </button>.
-           {!isCaptchaSolved && <span className="block text-accent font-semibold text-sm mt-2">Selesaikan puzzle di atas dulu, Juragan!</span>}
-        </p>
       </div>
     </div>
   );

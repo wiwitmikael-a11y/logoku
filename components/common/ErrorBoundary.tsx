@@ -16,7 +16,7 @@ interface State {
   isCopied: boolean;
 }
 
-// FIX: The ErrorBoundary class must extend React.Component to be a valid React class component and to have access to `this.props` and `this.setState`.
+// FIX: To function as a React error boundary, this class must extend React.Component. This provides access to lifecycle methods like `getDerivedStateFromError` and `componentDidCatch`, as well as `this.props` and `this.setState`, which resolves the reported errors.
 class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
