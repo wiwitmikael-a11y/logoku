@@ -5,132 +5,153 @@ import React from 'react';
 import type { AIPetState } from '../types';
 import {
   BodyShapes, EyeSets, MouthSets, HeadAccessories,
-  BackAccessories, TailAccessories, BodyPatterns
+  BackAccessories, TailAccessories, SVGDefs
 } from '../components/AIPetParts';
+
+// Tentukan tipe Archetype
+type Archetype = 'Beast' | 'Machine' | 'Mystic' | 'Chibi';
 
 export const useAIPetVisuals = (petState: AIPetState) => {
   const { stats, personality, stage } = petState;
 
-  const dominantPersonality = Object.entries(personality).reduce((a, b) => a[1] > b[1] ? a : b, ['', 0])[0];
+  // --- 1. Tentukan Archetype (Jalur Evolusi) ---
+  const getArchetype = (): Archetype => {
+    const p = personality;
+    const sorted = Object.entries(p).sort(([, a], [, b]) => b - a);
+    const dominant = sorted[0][0];
+    const secondary = sorted[1][0];
 
-  // --- Tentukan Warna Tubuh ---
+    if (p.bold > 7 || p.rustic > 7 || (dominant === 'bold' && secondary === 'rustic')) return 'Beast';
+    if (p.modern > 7 || p.minimalist > 7 || (dominant === 'modern' && secondary === 'minimalist')) return 'Machine';
+    if (p.creative > 7 || p.luxury > 7 || (dominant === 'creative' && secondary === 'feminine')) return 'Mystic';
+
+    // Fallback berdasarkan dominant personality
+    switch (dominant) {
+      case 'bold': case 'rustic': return 'Beast';
+      case 'modern': case 'minimalist': return 'Machine';
+      case 'creative': case 'luxury': case 'feminine': return 'Mystic';
+      default: return 'Chibi'; // 'playful' atau default
+    }
+  };
+  
+  const archetype = getArchetype();
+
+  // --- 2. Tentukan Warna ---
   const charismaFactor = stats.charisma / 100;
   const energyFactor = stats.energy / 100;
-  const hue = 120 + (charismaFactor * 180); // Dari hijau ke ungu/merah
-  const saturation = 50 + (energyFactor * 40);
-  const lightness = 45 + (energyFactor * 10);
-  const bodyFill = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-  const accentColor = `hsl(${hue + 30}, ${saturation + 10}%, ${lightness - 10}%)`; // Warna aksen lebih gelap/beda hue
+  
+  // Penentuan HUE berdasarkan Archetype untuk tema warna yang lebih kuat
+  let baseHue: number;
+  switch(archetype) {
+    case 'Beast': baseHue = 0; break; // Merah/Oranye
+    case 'Machine': baseHue = 180; break; // Cyan/Biru
+    case 'Mystic': baseHue = 270; break; // Ungu/Pink
+    default: baseHue = 120; // Hijau (Chibi)
+  }
+  const hue = baseHue + (charismaFactor * 60);
+  const saturation = 60 + (energyFactor * 40);
+  const lightness = 40 + (energyFactor * 20);
 
-  // --- 1. Pilih Base Body ---
-  let SelectedBody;
+  const bodyFill = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  const accentColor = `hsl(${(hue + 180) % 360}, ${saturation}%, ${lightness + (lightness > 50 ? -20 : 20)}%)`; // Warna komplementer
+
+  // --- 3. Rakit AIPet Berdasarkan Archetype dan Stage ---
+  let SelectedBody, SelectedEyes, SelectedMouth;
+  let SelectedHeadAccessory, SelectedBackAccessory, SelectedTailAccessory;
+
   if (stage === 'egg') {
     SelectedBody = BodyShapes.egg(bodyFill);
-  } else if (stage === 'child') {
-    SelectedBody = dominantPersonality === 'bold' || dominantPersonality === 'rustic'
-      ? BodyShapes.child_beast(bodyFill)
-      : BodyShapes.child_chibi(bodyFill);
-  } else if (stage === 'teen') {
-    SelectedBody = dominantPersonality === 'modern' || dominantPersonality === 'minimalist'
-      ? BodyShapes.teen_mech(bodyFill)
-      : BodyShapes.teen_humanoid(bodyFill);
-  } else { // Adult
-    switch (dominantPersonality) {
-      case 'modern':
-      case 'minimalist':
-        SelectedBody = BodyShapes.adult_cyborg(bodyFill);
+    SelectedEyes = () => null;
+    SelectedMouth = () => null;
+  } else {
+    // Evolusi berdasarkan Archetype
+    switch (archetype) {
+      case 'Beast':
+        if (stage === 'child') {
+          SelectedBody = BodyShapes.child_beast(bodyFill);
+          SelectedEyes = EyeSets.default();
+          SelectedMouth = MouthSets.neutral();
+          SelectedHeadAccessory = HeadAccessories.ears_wolf(accentColor, 'none');
+          SelectedTailAccessory = TailAccessories.tail_lizard(accentColor, 'none');
+        } else if (stage === 'teen') {
+          SelectedBody = BodyShapes.teen_beast(bodyFill);
+          SelectedEyes = EyeSets.fierce_beast(accentColor);
+          SelectedMouth = MouthSets.fangs_beast();
+          SelectedHeadAccessory = HeadAccessories.horns_ram(accentColor);
+          SelectedBackAccessory = BackAccessories.spikes_dorsal(accentColor, bodyFill);
+          SelectedTailAccessory = TailAccessories.tail_lizard(accentColor, 'none');
+        } else { // Adult
+          SelectedBody = BodyShapes.adult_beast(bodyFill);
+          SelectedEyes = EyeSets.fierce_beast(accentColor);
+          SelectedMouth = MouthSets.fangs_beast();
+          SelectedHeadAccessory = HeadAccessories.horns_ram(accentColor);
+          SelectedBackAccessory = BackAccessories.wings_bat(accentColor, bodyFill);
+          SelectedTailAccessory = TailAccessories.tail_furry(accentColor, bodyFill);
+        }
         break;
-      case 'feminine':
-      case 'playful':
-        SelectedBody = BodyShapes.adult_guardian(bodyFill); // Lebih 'lembut' tapi kuat
+
+      case 'Machine':
+        if (stage === 'child') {
+          SelectedBody = BodyShapes.child_machine(bodyFill);
+          SelectedEyes = EyeSets.visor_machine(accentColor);
+          SelectedMouth = MouthSets.grill_machine();
+          SelectedHeadAccessory = HeadAccessories.antenna_single(accentColor);
+        } else if (stage === 'teen') {
+          SelectedBody = BodyShapes.teen_machine(bodyFill);
+          SelectedEyes = EyeSets.visor_machine(accentColor);
+          SelectedMouth = MouthSets.grill_machine();
+          SelectedHeadAccessory = HeadAccessories.vents_side(accentColor);
+          SelectedTailAccessory = TailAccessories.tail_thruster(accentColor, bodyFill);
+        } else { // Adult
+          SelectedBody = BodyShapes.adult_machine(bodyFill);
+          SelectedEyes = EyeSets.visor_machine(accentColor);
+          SelectedMouth = MouthSets.grill_machine();
+          SelectedBackAccessory = BackAccessories.jetpack_dual(accentColor, bodyFill);
+          SelectedHeadAccessory = BackAccessories.cannon_shoulder(accentColor, bodyFill); // Gunakan slot punggung untuk bahu
+          SelectedTailAccessory = TailAccessories.tail_cable(accentColor);
+        }
         break;
-      case 'bold':
-      case 'rustic':
-        SelectedBody = BodyShapes.adult_feral(bodyFill);
+
+      case 'Mystic':
+        if (stage === 'child') {
+          SelectedBody = BodyShapes.child_mystic(bodyFill);
+          SelectedEyes = EyeSets.glowing_mystic(accentColor);
+          SelectedMouth = MouthSets.serene_mystic();
+        } else if (stage === 'teen') {
+          SelectedBody = BodyShapes.teen_mystic(bodyFill);
+          SelectedEyes = EyeSets.glowing_mystic(accentColor);
+          SelectedMouth = MouthSets.serene_mystic();
+          SelectedHeadAccessory = HeadAccessories.crest_elemental(accentColor);
+          SelectedTailAccessory = TailAccessories.tail_wisp(accentColor);
+        } else { // Adult
+          SelectedBody = BodyShapes.adult_mystic(bodyFill);
+          SelectedEyes = EyeSets.glowing_mystic(accentColor);
+          SelectedMouth = MouthSets.serene_mystic();
+          SelectedHeadAccessory = HeadAccessories.halo_divine(accentColor);
+          SelectedBackAccessory = BackAccessories.wings_angelic(accentColor, 'none');
+          SelectedTailAccessory = TailAccessories.tail_crystal(accentColor, bodyFill);
+        }
         break;
-      case 'luxury':
-      case 'creative':
-        SelectedBody = BodyShapes.adult_mystic(bodyFill);
+
+      default: // Chibi (fallback)
+        SelectedBody = BodyShapes.child_chibi(bodyFill);
+        SelectedEyes = EyeSets.happy();
+        SelectedMouth = MouthSets.smile();
         break;
-      default:
-        SelectedBody = BodyShapes.adult_guardian(bodyFill);
     }
   }
 
-  // --- 2. Pilih Mata & Mulut (Ekspresi) ---
-  let SelectedEyes = EyeSets.default();
-  let SelectedMouth = MouthSets.neutral();
-
-  // Logika ekspresi yang lebih kaya
-  if (stats.energy < 30) {
-    SelectedEyes = EyeSets.sleepy();
-  } else if (stats.creativity > 80) {
-    SelectedEyes = EyeSets.happy();
-    SelectedMouth = MouthSets.smile();
-  } else if (stats.intelligence > 75) {
-    SelectedEyes = EyeSets.glowing(accentColor); // Mata bercahaya untuk intelijen tinggi
-    SelectedMouth = MouthSets.digital_line();
-  } else if (dominantPersonality === 'playful') {
-    SelectedEyes = EyeSets.happy();
-    SelectedMouth = MouthSets.smile();
-  } else if (dominantPersonality === 'bold') {
-    SelectedEyes = EyeSets.fierce();
-    SelectedMouth = MouthSets.snarl();
-  } else if (dominantPersonality === 'modern') {
-    SelectedEyes = EyeSets.digital();
-    SelectedMouth = MouthSets.digital_line();
-  } else if (dominantPersonality === 'rustic') {
-    SelectedEyes = EyeSets.fierce();
-    SelectedMouth = MouthSets.open_sharp();
-  }
-
-  // --- 3. Pilih Aksesoris Kepala ---
-  let SelectedHeadAccessory = null;
-  if (stage !== 'egg') { // PERUBAHAN: Tampilkan untuk semua stage kecuali egg
-    if (dominantPersonality === 'bold' || dominantPersonality === 'rustic') SelectedHeadAccessory = HeadAccessories.horns_demon(accentColor);
-    else if (dominantPersonality === 'feminine' || dominantPersonality === 'playful') SelectedHeadAccessory = HeadAccessories.ears_floppy(accentColor);
-    else if (dominantPersonality === 'modern' || stats.intelligence > 80) SelectedHeadAccessory = HeadAccessories.antenna_tech(accentColor);
-    else if (dominantPersonality === 'luxury') SelectedHeadAccessory = HeadAccessories.crown_royal(accentColor);
-    else if (dominantPersonality === 'creative') SelectedHeadAccessory = HeadAccessories.fin_crest(accentColor, bodyFill);
-  }
-
-  // --- 4. Pilih Aksesoris Punggung ---
-  let SelectedBackAccessory = null;
-  // PERUBAHAN: Logika diperluas untuk 'child' juga
-  if ((stage === 'adult' || stage === 'child') && (dominantPersonality === 'bold' || dominantPersonality === 'playful' || dominantPersonality === 'modern')) {
-    if (dominantPersonality === 'bold') SelectedBackAccessory = BackAccessories.shell_spiky(accentColor, bodyFill);
-    else if (dominantPersonality === 'playful') SelectedBackAccessory = BackAccessories.wings_small(accentColor, bodyFill);
-    else if (dominantPersonality === 'modern' || stats.intelligence > 85) SelectedBackAccessory = BackAccessories.jetpack(accentColor, bodyFill);
-  } else if (stage === 'adult' && stats.energy > 90) { // Aura energi untuk pet berenergi tinggi
-    SelectedBackAccessory = BackAccessories.energy_aura(accentColor);
-  }
-
-  // --- 5. Pilih Aksesoris Ekor ---
-  let SelectedTailAccessory = null;
-  if (stage !== 'egg') { // PERUBAHAN: Tampilkan untuk semua stage kecuali egg
-    if (dominantPersonality === 'bold' || dominantPersonality === 'rustic') SelectedTailAccessory = TailAccessories.tail_beast(accentColor);
-    else if (dominantPersonality === 'modern' || stats.intelligence > 70) SelectedTailAccessory = TailAccessories.tail_mech(accentColor);
-    else if (dominantPersonality === 'creative') SelectedTailAccessory = TailAccessories.tail_flame(accentColor);
-  }
-
-  // --- 6. Pilih Pola Tubuh ---
-  let SelectedPattern = null;
-  if (stage === 'egg') {
-    SelectedPattern = BodyPatterns.speckle(bodyFill);
-  } else if (dominantPersonality === 'modern' || stats.intelligence > 90) {
-    SelectedPattern = BodyPatterns.circuit(accentColor);
-  } else if (dominantPersonality === 'rustic' || dominantPersonality === 'bold') {
-    SelectedPattern = BodyPatterns.scales(accentColor);
-  }
+  // Defs diperlukan untuk efek seperti glow
+  const SelectedPattern = SVGDefs.glow(accentColor); // Menggunakan slot Pattern untuk Defs
 
   return {
     SelectedBody,
-    SelectedEyes,
-    SelectedMouth,
+    SelectedEyes: SelectedEyes || (() => null),
+    SelectedMouth: SelectedMouth || (() => null),
     SelectedHeadAccessory,
-    SelectedBackAccessory, // Baru
-    SelectedTailAccessory, // Baru
-    SelectedPattern,
+    SelectedBackAccessory,
+    SelectedTailAccessory,
+    SelectedPattern, // Ini sebenarnya adalah <defs>
     bodyFill,
     accentColor
   };

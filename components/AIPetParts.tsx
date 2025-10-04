@@ -3,86 +3,109 @@
 
 import React from 'react';
 
-// Fungsi bantuan untuk style default
-const defaultStroke = "#1c1c20";
-const defaultStrokeWidth = "2.5";
-const defaultFill = "none";
-
-// --- BASE BODY LIBRARY (Menambahkan bentuk yang lebih "monster-like") ---
+// --- BASE BODY LIBRARY (Bentuk lebih dinamis & tematik) ---
 export const BodyShapes = {
   egg: (fill: string) => <path d="M50,25 C20,25 20,95 50,95 C80,95 80,25 50,25 Z" fill={fill} />,
-  child_chibi: (fill: string) => <path d="M50,25 C25,25 15,50 25,70 C30,95 70,95 75,70 C85,50 75,25 50,25 Z" fill={fill} />,
-  child_beast: (fill: string) => <path d="M50,25 C15,30 20,85 50,90 C80,85 85,30 50,25 Z" fill={fill} />, // Bentuk awal binatang
-  teen_humanoid: (fill: string) => <path d="M50,15 C20,15 10,90 45,95 C60,95 80,90 70,15 Z" fill={fill} />, // Bentuk awal humanoid/robot
-  teen_mech: (fill: string) => <path d="M50,10 L80,30 L70,80 L50,90 L30,80 L20,30 Z" fill={fill} />, // Bentuk awal robotik
-  adult_feral: (fill: string) => <path d="M50,10 C10,20 0,80 50,95 C100,80 90,20 50,10 Z" fill={fill} />, // Bentuk monster buas
-  adult_guardian: (fill: string) => <path d="M50,5 C10,10 0,85 50,100 C100,85 90,10 50,5 Z" fill={fill} />, // Bentuk pelindung besar
-  adult_cyborg: (fill: string) => <path d="M50,0 L90,20 L90,80 L50,100 L10,80 L10,20 Z" fill={fill} />, // Bentuk robot/cyborg
-  adult_mystic: (fill: string) => <path d="M50,10 C20,0 0,60 50,90 C100,60 80,0 50,10 Z" fill={fill} />, // Bentuk elemen/magic
+  child_chibi: (fill: string) => <path d="M50,25 C25,25 15,50 25,70 C30,95 70,95 75,70 C85,50 75,25 50,25 Z" fill={fill} />, // Blob umum
+  
+  // Beast Archetype Bodies
+  child_beast: (fill: string) => <path d="M50,35 C20,35 25,80 40,90 L60,90 C75,80 80,35 50,35 Z" fill={fill} />, // Badan gempal dengan cakar kecil
+  teen_beast: (fill: string) => <path d="M50,20 C20,20 10,95 40,95 L60,95 C90,95 80,20 50,20 Z" fill={fill} />, // Badan lebih tinggi & garang
+  adult_beast: (fill: string) => <path d="M50,10 C5,15 5,100 45,100 L55,100 C95,100 95,15 50,10 Z" fill={fill} />, // Badan monster buas besar
+  
+  // Machine Archetype Bodies
+  child_machine: (fill: string) => <path d="M30,30 L70,30 L75,70 L25,70 Z" fill={fill} />, // Badan kotak robot kecil
+  teen_machine: (fill: string) => <path d="M25,20 L75,20 L85,85 L15,85 Z" fill={fill} />, // Badan trapezoid lebih besar
+  adult_machine: (fill: string) => <path d="M20,10 L80,10 L95,90 L5,90 Z" fill={fill} />, // Badan robot raksasa
+  
+  // Mystic Archetype Bodies
+  child_mystic: (fill: string) => <path d="M50,30 C30,30 30,70 50,85 C70,70 70,30 50,30 Z" fill={fill} />, // Badan seperti api/roh
+  teen_mystic: (fill: string) => <path d="M50,20 C20,20 20,80 50,95 C80,80 80,20 50,20 Z" fill={fill} />, // Badan lebih ramping & elegan
+  adult_mystic: (fill: string) => <path d="M50,10 C10,10 20,100 50,100 C80,100 90,10 50,10 Z" fill={fill} />, // Badan agung seperti dewa
 };
 
-// --- EYE LIBRARY (Menambahkan detail iris/pupil) ---
+
+// --- EYE LIBRARY (Lebih banyak variasi ekspresif) ---
 export const EyeSets = {
-  default: () => <><circle cx="35" cy="50" r="5" /><circle cx="65" cy="50" r="5" /></>, // Contoh: mata bulat sederhana
-  happy: () => <><path d="M 32,50 a 8,4 0 0,1 16,0" /><path d="M 52,50 a 8,4 0 0,1 16,0" /></>, // Mata menyipit bahagia
-  fierce: () => <><path d="M 30,50 L 45,45 L 45,55 L 30,50 Z" /><path d="M 55,45 L 70,50 L 55,55 L 55,45 Z" /></>, // Mata Digimon yang agresif
-  digital: () => <><rect x="30" y="47" width="10" height="6" rx="1" /><rect x="60" y="47" width="10" height="6" rx="1" /></>, // Mata pixel/digital
-  glowing: (fill: string) => <><circle cx="35" cy="50" r="6" fill={fill} /><circle cx="65" cy="50" r="6" fill={fill} /></>, // Mata bercahaya
+  // Generic
+  default: () => <><circle cx="35" cy="50" r="5" /><circle cx="65" cy="50" r="5" /></>,
+  happy: () => <><path d="M 32,50 a 8,4 0 0,1 16,0" /><path d="M 52,50 a 8,4 0 0,1 16,0" /></>,
   sleepy: () => <><path d="M 30,55 Q 38,50 46,55" /><path d="M 54,55 Q 62,50 70,55" /></>,
+
+  // Thematic
+  fierce_beast: (fill: string) => <><path d="M28 45 L42 55 M42 45 L28 55" stroke={fill} strokeWidth="3" /><path d="M58 45 L72 55 M72 45 L58 55" stroke={fill} strokeWidth="3" /></>, // Mata silang buas
+  glowing_mystic: (fill: string) => <><circle cx="35" cy="50" r="6" fill={fill} filter="url(#glow)" /><circle cx="65" cy="50" r="6" fill={fill} filter="url(#glow)" /></>, // Mata aura
+  visor_machine: (fill: string) => <rect x="25" y="45" width="50" height="10" rx="2" fill={fill} />, // Visor robot
 };
 
-// --- MOUTH LIBRARY (Menambahkan taring, gigi, paruh) ---
+// --- MOUTH LIBRARY ---
 export const MouthSets = {
+  // Generic
   neutral: () => <path d="M 45,70 L 55,70" />,
   smile: () => <path d="M 40,70 Q 50,78 60,70" />,
-  snarl: () => <path d="M 40,75 C 45,70 55,70 60,75 L 55,70 L 45,70 Z" />, // Mulut menyeringai dengan gigi
-  beak: () => <path d="M 45,70 L 50,65 L 55,70 Z" />, // Mulut paruh
-  digital_line: () => <path d="M 40,72 L 60,72" strokeDasharray="3 2" />, // Mulut garis digital
-  open_sharp: () => <path d="M 40,70 A 10,5 0 0,1 60,70 L 55,75 L 45,75 Z" />, // Mulut terbuka dengan gigi tajam
+
+  // Thematic
+  fangs_beast: () => <path d="M 40,68 L 45,75 L 55,75 L 60,68 M 48,75 L 52,75" />, // Taring
+  grill_machine: () => <path d="M40 70 H 60 M40 73 H 60 M40 76 H 60" strokeWidth="1" />, // Grill/ventilasi
+  serene_mystic: () => <path d="M 47,72 Q 50,75 53,72" />, // Senyum tipis
 };
 
-// --- HEAD SLOT ACCESSORY LIBRARY ---
+
+// --- HEAD ACCESSORIES (Archetype-specific) ---
 export const HeadAccessories = {
-  horns_demon: (stroke: string) => <path d="M 30,25 C 20,10 10,20 25,35 M 70,25 C 80,10 90,20 75,35" stroke={stroke} fill={defaultFill} strokeWidth={defaultStrokeWidth} strokeLinecap="round" />,
-  ears_floppy: (stroke: string) => <path d="M 20,25 C 5,10 25,-5 35,20 M 80,25 C 95,10 75,-5 65,20" stroke={stroke} fill={defaultFill} strokeWidth={defaultStrokeWidth} strokeLinecap="round" />,
-  antenna_tech: (stroke: string) => <path d="M 50,20 Q 55,10 52,5 M 52,5 a 3,3 0 1,1 -6,0 a 3,3 0 1,1 6,0" stroke={stroke} fill={defaultFill} strokeWidth={defaultStrokeWidth} strokeLinecap="round" />,
-  crown_royal: (stroke: string) => <path d="M 30,20 L 40,10 L 50,20 L 60,10 L 70,20 L 65,30 L 35,30 Z" stroke={stroke} fill={stroke} strokeWidth="1" strokeLinejoin="round" />, // Mahkota dengan fill
-  fin_crest: (stroke: string, fill: string) => <path d="M50,15 C40,5 30,10 35,25 Q50,20 65,25 C70,10 60,5 50,15 Z" stroke={stroke} fill={fill} strokeWidth={defaultStrokeWidth} />, // Sirip di kepala
-  robot_ears: (stroke: string) => <path d="M25,30 L15,20 L25,10 L35,20 Z M75,30 L85,20 L75,10 L65,20 Z" stroke={stroke} fill={stroke} strokeWidth="1" />, // Telinga kotak robot
+  // Beast
+  horns_ram: (stroke: string) => <path d="M 30,25 C 10,10 10,40 30,40 M 70,25 C 90,10 90,40 70,40" stroke={stroke} fill="none" strokeWidth="4" strokeLinecap="round" />,
+  ears_wolf: (stroke: string, fill: string) => <path d="M25,25 L15,5 L35,20 Z M75,25 L85,5 L65,20 Z" stroke={stroke} fill={fill} />,
+  
+  // Machine
+  antenna_single: (stroke: string) => <path d="M 50,20 Q 55,10 52,5 M 52,5 a 3,3 0 1,1 -6,0 a 3,3 0 1,1 6,0" stroke={stroke} fill="none" strokeWidth="2" strokeLinecap="round" />,
+  vents_side: (stroke: string) => <path d="M20 30 L15 35 L20 40 M20 45 L15 50 L20 55 M80 30 L85 35 L80 40 M80 45 L85 50 L80 55" stroke={stroke} strokeWidth="2" />,
+  
+  // Mystic
+  crest_elemental: (fill: string) => <path d="M50,20 Q40,10 50,0 Q60,10 50,20 Z" fill={fill} />,
+  halo_divine: (fill: string) => <ellipse cx="50" cy="15" rx="25" ry="5" fill="none" stroke={fill} strokeWidth="2" />,
 };
 
-// --- BACK SLOT ACCESSORY LIBRARY (BARU!) ---
+
+// --- BACK ACCESSORIES (Archetype-specific) ---
 export const BackAccessories = {
-  wings_small: (stroke: string, fill: string) => <path d="M 15,40 C 0,30 0,60 15,70 M 85,40 C 100,30 100,60 85,70" stroke={stroke} fill={fill} strokeWidth={defaultStrokeWidth} strokeLinecap="round" />,
-  shell_spiky: (stroke: string, fill: string) => <path d="M 20,40 Q 50,30 80,40 Q 70,60 80,80 Q 50,70 20,80 Q 30,60 20,40 Z M 40,45 L 45,50 L 40,55 Z M 60,45 L 65,50 L 60,55 Z" stroke={stroke} fill={fill} strokeWidth={defaultStrokeWidth} />,
-  jetpack: (stroke: string, fill: string) => <><rect x="35" y="40" width="30" height="20" rx="5" fill={fill} stroke={stroke} strokeWidth={defaultStrokeWidth} /><circle cx="45" cy="65" r="5" fill="#f00" /><circle cx="55" cy="65" r="5" fill="#f00" /></>,
-  energy_aura: (color: string) => <circle cx="50" cy="50" r="45" fill={color} fillOpacity="0.1" />, // Efek aura
+  // Beast
+  wings_bat: (stroke: string, fill: string) => <path d="M20 40 L0 30 L20 60 L30 50 Z M80 40 L100 30 L80 60 L70 50 Z" stroke={stroke} fill={fill} />,
+  spikes_dorsal: (stroke: string, fill: string) => <path d="M50 30 L45 40 L50 50 L55 40 Z M50 50 L45 60 L50 70 L55 60 Z" stroke={stroke} fill={fill} />,
+  
+  // Machine
+  jetpack_dual: (stroke: string, fill: string) => <><rect x="30" y="40" width="15" height="25" rx="3" fill={fill} stroke={stroke} /><rect x="55" y="40" width="15" height="25" rx="3" fill={fill} stroke={stroke} /></>,
+  cannon_shoulder: (stroke: string, fill: string) => <rect x="65" y="30" width="25" height="10" rx="2" transform="rotate(-15 77.5 35)" fill={fill} stroke={stroke} />,
+  
+  // Mystic
+  wings_angelic: (stroke: string, fill: string) => <path d="M25 40 Q-10 60 25 80 L35 70 Q10 60 35 50 Z M75 40 Q110 60 75 80 L65 70 Q90 60 65 50 Z" stroke={stroke} fill={fill} />,
+  runes_floating: (fill: string) => <><circle cx="20" cy="50" r="4" fill={fill} /><path d="M80 45 L75 55 L85 55 Z" fill={fill} /></>,
 };
 
-// --- TAIL SLOT ACCESSORY LIBRARY (BARU!) ---
+// --- TAIL ACCESSORIES (Archetype-specific) ---
 export const TailAccessories = {
-  tail_beast: (stroke: string) => <path d="M 50,90 Q 60,100 70,95 L 65,85 Q 55,80 50,90 Z" stroke={stroke} fill={stroke} strokeWidth={defaultStrokeWidth} strokeLinecap="round" />,
-  tail_mech: (stroke: string) => <path d="M 50,90 L 55,95 L 50,100 L 45,95 L 50,90 Z" stroke={stroke} fill={stroke} strokeWidth={defaultStrokeWidth} strokeLinecap="square" />,
-  tail_spiky: (stroke: string) => <path d="M 50,90 C 45,95 40,90 45,85 L 50,90 M 50,90 C 55,95 60,90 55,85 L 50,90" stroke={stroke} fill={defaultFill} strokeWidth={defaultStrokeWidth} strokeLinecap="round" />,
-  tail_flame: (color: string) => <path d="M 50,90 Q 40,100 50,110 Q 60,100 50,90 Z" fill={color} fillOpacity="0.6" />,
+  // Beast
+  tail_lizard: (stroke: string, fill: string) => <path d="M50 90 Q70 95 80 80" stroke={stroke} fill="none" strokeWidth="4" strokeLinecap="round" />,
+  tail_furry: (stroke: string, fill: string) => <path d="M50 90 C 60 100, 70 80, 60 70" stroke={stroke} fill={fill} strokeWidth="3" strokeLinecap="round"/>,
+
+  // Machine
+  tail_cable: (stroke: string) => <path d="M50 90 Q 60 95 55 100 Q 50 105 55 110" stroke={stroke} fill="none" strokeWidth="2" />,
+  tail_thruster: (stroke: string, fill: string) => <path d="M50 90 L 55 95 L 45 95 Z" fill={fill} stroke={stroke} />,
+  
+  // Mystic
+  tail_wisp: (fill: string) => <path d="M50 90 Q 60 95 50 100 Q 40 95 50 90" fill={fill} opacity="0.7"/>,
+  tail_crystal: (stroke: string, fill: string) => <path d="M50 90 L 55 100 L 45 100 Z" stroke={stroke} fill={fill} />,
 };
 
-// --- BODY PATTERN LIBRARY (Menambahkan pola yang lebih agresif/digital) ---
-export const BodyPatterns = {
-  speckle: (fill: string) => (
-    <pattern id="speckle-pattern" patternUnits="userSpaceOnUse" width="10" height="10">
-      <circle cx="2" cy="5" r="0.5" fill={fill} fillOpacity="0.3" />
-      <circle cx="8" cy="8" r="0.5" fill={fill} fillOpacity="0.3" />
-    </pattern>
-  ),
-  circuit: (fill: string) => (
-    <pattern id="circuit-pattern" patternUnits="userSpaceOnUse" width="15" height="15">
-      <path d="M0,0 L7.5,7.5 L0,15 M7.5,0 L15,7.5 L7.5,15" stroke={fill} strokeOpacity="0.4" strokeWidth="0.5" />
-    </pattern>
-  ),
-  scales: (fill: string) => (
-    <pattern id="scales-pattern" patternUnits="userSpaceOnUse" width="12" height="10">
-      <path d="M0,0 L6,5 L0,10 Z M6,0 L12,5 L6,10 Z" fill={fill} fillOpacity="0.2" />
-    </pattern>
+// --- SVG DEFS for effects ---
+export const SVGDefs = {
+  glow: (color: string) => (
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+      <feMerge>
+        <feMergeNode in="coloredBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
   ),
 };
