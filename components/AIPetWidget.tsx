@@ -132,7 +132,7 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     };
 
     const mainContent = () => {
-        if (petState.stage === 'egg' || !petState.visual_base64) {
+        if (petState.stage === 'egg' || !petState.atlas_url) {
             const isEgg = petState.stage === 'egg';
             return (
                 <div className="text-center p-4">

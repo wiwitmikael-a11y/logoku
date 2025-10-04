@@ -125,7 +125,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
                 personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
-                visual_base64: null,
+                atlas_url: null,
+                manifest: null,
                 narrative: null,
             };
             setPetState(newPet);
@@ -172,10 +173,10 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const success = await deductCredits(HATCH_COST);
         if (!success) throw new Error("Token tidak cukup.");
         
-        // Step 1: Generate unique visual based on user ID
-        const visual_base64 = await geminiService.generateAIPetVisual(user.id);
+        // Step 1: Generate Character Atlas and Assembly Manifest
+        const { atlasUrl, manifest } = await geminiService.generateAIPetAtlasAndManifest(user.id);
 
-        // Step 2: Generate initial personality (can be deterministic too)
+        // Step 2: Generate initial personality
         const seed = user.id + new Date().toISOString().slice(0, 10);
         const hash = stringToHash(seed);
         const seedRandom = createSeededRandom(hash);
@@ -199,8 +200,9 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             lastFed: Date.now(),
             lastPlayed: Date.now(),
             personality: initialPersonality,
-            visual_base64: visual_base64,
             narrative: narrative,
+            atlas_url: atlasUrl,
+            manifest: manifest,
         };
         
         setPetState(hatchedState);

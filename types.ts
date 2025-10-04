@@ -98,6 +98,7 @@ export type AIPetPersonalityVector = {
   minimalist: number;
   rustic: number;
   playful: number;
+
   modern: number;
   luxury: number;
   feminine: number;
@@ -114,6 +115,27 @@ export interface AIPetStats {
 
 export type AIPetStage = 'egg' | 'child' | 'teen' | 'adult';
 
+// New types for the 2.5D Puppet System
+export type PartName = 'torso' | 'head' | 'left_arm' | 'right_arm' | 'left_leg' | 'right_leg' | 'accessory1' | 'accessory2';
+export type AnchorName = 'neck' | 'left_shoulder' | 'right_shoulder' | 'left_hip' | 'right_hip' | 'accessory_mount1' | 'accessory_mount2';
+
+export interface AtlasPart {
+  name: PartName;
+  bbox: [number, number, number, number]; // x, y, width, height
+  assemblyPoint: [number, number]; // joint location [x, y] relative to bbox
+  attachTo: PartName | null;
+  attachmentPoint: AnchorName | null;
+}
+
+export interface AtlasManifest {
+  atlasSize: [number, number]; // width, height of the entire atlas image
+  parts: AtlasPart[];
+  anchors: {
+    [key in PartName]?: { [key in AnchorName]?: [number, number] };
+  };
+  layering: PartName[];
+}
+
 export interface AIPetState {
   name: string;
   stage: AIPetStage;
@@ -121,9 +143,12 @@ export interface AIPetState {
   lastFed: number;
   lastPlayed: number;
   personality: AIPetPersonalityVector;
-  visual_base64?: string | null;
   narrative?: string | null;
+  // New visual representation
+  atlas_url: string | null;
+  manifest: AtlasManifest | null;
 }
+
 
 export interface Profile {
   id: string;

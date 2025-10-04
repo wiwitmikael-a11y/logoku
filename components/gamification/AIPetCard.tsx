@@ -20,7 +20,7 @@ const StatBar: React.FC<{ label: string; value: number; color: string }> = ({ la
 
 
 const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
-    if (petState.stage === 'egg' || !petState.visual_base64) {
+    if (petState.stage === 'egg' || !petState.atlas_url) {
         return <p className="text-sm text-text-muted italic">AIPet belum menetas.</p>;
     }
 
@@ -59,7 +59,7 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
 
 
     return (
-        <div className="w-full max-w-xs mx-auto">
+        <div className="w-full mx-auto">
             <style>{cardShineAnimation}</style>
             <div className={`relative aspect-[63/88] bg-gradient-to-br ${theme.bg} ${theme.border} border-4 rounded-2xl shadow-2xl shadow-black/50 p-1.5`}>
                 <div className="relative w-full h-full bg-gray-900/50 border-2 border-gray-500 rounded-lg flex flex-col overflow-hidden">
@@ -74,12 +74,12 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
 
                         {/* Image */}
                         <div className="relative mx-1.5 my-1.5 border-4 border-yellow-700 rounded-md shadow-inner shadow-black/50 animate-card-shine">
-                            <div className="absolute inset-0 bg-gradient-to-br from-gray-600 via-gray-800 to-gray-900"></div>
-                             <img src={petState.visual_base64} alt={petState.name} className="relative w-full h-full aspect-square object-contain" />
+                            <div className="absolute inset-0 bg-background" style={{ backgroundImage: 'radial-gradient(circle, rgb(var(--c-border)) 0%, transparent 70%)' }}></div>
+                             <img src={petState.atlas_url} alt={petState.name} className="relative w-full h-full aspect-square object-contain" />
                         </div>
 
                         {/* Info Box */}
-                        <div className="mx-1.5 mb-1 p-2 border-2 border-yellow-700 bg-black/30 rounded-md flex-1 flex flex-col justify-between">
+                        <div className="mx-1.5 mb-1 p-2 border-2 border-yellow-700 bg-black/30 rounded-md flex-1 flex flex-col justify-around">
                             {/* Stats */}
                             <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                                 <StatBar label="ENR" value={petState.stats.energy} color="#22c55e" />
@@ -89,8 +89,8 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                             </div>
 
                             {/* Narrative */}
-                            <div className="border-t-2 border-yellow-700/50 mt-2 pt-1 text-center text-[10px] text-yellow-100/80 italic">
-                                <p>{petState.narrative || "Deskripsi belum tersedia."}</p>
+                            <div className="border-t-2 border-yellow-700/50 mt-2 pt-2 text-center text-xs text-yellow-100/80 italic">
+                                <p className="leading-snug">{petState.narrative || "Deskripsi belum tersedia."}</p>
                             </div>
                         </div>
 

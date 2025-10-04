@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React from 'react';
-import type { AIPetState } from '../types';
+import React, { useMemo } from 'react';
+import type { AIPetState, AtlasManifest, AtlasPart, PartName } from '../types';
 
 interface AIPetVisualProps {
   petState: AIPetState;
@@ -30,19 +30,108 @@ const EggVisual: React.FC = () => (
     </svg>
 );
 
+const Puppet: React.FC<{ manifest: AtlasManifest; atlasUrl: string }> = ({ manifest, atlasUrl }) => {
+    const { parts, anchors, layering, atlasSize } = manifest;
+    const partsMap = useMemo(() => new Map(parts.map(p => [p.name, p])), [parts]);
+
+    const getPartPosition = (partName: PartName): { x: number; y: number; rotation: number } => {
+        const part = partsMap.get(partName);
+        if (!part || !part.attachTo || !part.attachmentPoint) {
+            return { x: 0, y: 0, rotation: 0 };
+        }
+
+        const parent = partsMap.get(part.attachTo);
+        const parentAnchor = anchors[part.attachTo]?.[part.attachmentPoint];
+        if (!parent || !parentAnchor) {
+            return { x: 0, y: 0, rotation: 0 };
+        }
+
+        const parentPos = getPartPosition(part.attachTo);
+        const parentBbox = parent.bbox;
+        const partAssemblyPoint = part.assemblyPoint;
+
+        const x = parentPos.x + (parentBbox[0] + parentAnchor[0]) - partAssemblyPoint[0];
+        const y = parentPos.y + (parentBbox[1] + parentAnchor[1]) - partAssemblyPoint[1];
+        
+        return { x, y, rotation: parentPos.rotation };
+    };
+
+    const assembledParts = useMemo(() => {
+        return layering.map(partName => {
+            const part = partsMap.get(partName);
+            if (!part) return null;
+            const pos = getPartPosition(partName);
+            return { ...part, ...pos };
+        });
+    }, [layering, partsMap]);
+
+
+    return (
+        <div className="relative w-full h-full">
+            {assembledParts.map((part, index) => {
+                if (!part) return null;
+                const [bx, by, bw, bh] = part.bbox;
+                
+                // Breathing animation for limbs
+                let animationStyle: React.CSSProperties = {};
+                if (part.name.includes('arm')) {
+                    animationStyle.animation = `pet-arm-swing 3s ease-in-out infinite ${index * 0.1}s`;
+                    animationStyle.transformOrigin = `${part.assemblyPoint[0]}px ${part.assemblyPoint[1]}px`;
+                }
+                 if (part.name === 'head') {
+                    animationStyle.animation = `pet-head-bob 3s ease-in-out infinite`;
+                    animationStyle.transformOrigin = `50% 90%`; // Bob from the neck
+                }
+
+                return (
+                    <div
+                        key={part.id}
+                        style={{
+                            position: 'absolute',
+                            left: `${part.x}px`,
+                            top: `${part.y}px`,
+                            width: `${bw}px`,
+                            height: `${bh}px`,
+                            backgroundImage: `url(${atlasUrl})`,
+                            backgroundPosition: `-${bx}px -${by}px`,
+                            backgroundSize: `${atlasSize[0]}px ${atlasSize[1]}px`,
+                            zIndex: index, // Use layering order for z-index
+                            ...animationStyle
+                        }}
+                    />
+                );
+            })}
+        </div>
+    );
+};
+
 
 const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
-  const { stats, stage, visual_base64 } = petState;
+  const { stats, stage, atlas_url, manifest } = petState;
+
+  const animationKeyframes = `
+    @keyframes pet-body-bob {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-2px); }
+    }
+    @keyframes pet-arm-swing {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(5deg); }
+    }
+    @keyframes pet-head-bob {
+        0%, 100% { transform: translateY(0) rotate(0); }
+        50% { transform: translateY(-1px) rotate(1deg); }
+    }
+  `;
 
   const filterStyle: React.CSSProperties = {
     filter: stats.energy < 30 ? `saturate(${stats.energy + 20}%) opacity(0.8)` : 'none',
-    overflow: 'visible',
-    imageRendering: 'pixelated'
+    imageRendering: 'pixelated',
   };
 
-  const animationClass = stage !== 'egg' ? 'animate-breathing-ai' : 'animate-pulse'; 
+  const animationClass = stage !== 'egg' ? 'breathing-pet' : 'animate-pulse'; 
 
-  if (stage === 'egg' || !visual_base64) {
+  if (stage === 'egg' || !atlas_url || !manifest) {
       return (
           <div style={filterStyle} className={`w-full h-full ${className || ''} ${animationClass}`}>
               <EggVisual />
@@ -51,12 +140,15 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
   }
 
   return (
-    <img 
-        src={visual_base64} 
-        alt={petState.name}
+    <div 
         style={filterStyle}
-        className={`w-full h-full object-contain ${animationClass} ${className || ''}`}
-    />
+        className={`w-full h-full object-contain ${className || ''}`}
+    >
+        <style>{animationKeyframes}</style>
+        <div style={{ animation: `pet-body-bob 3s ease-in-out infinite` }}>
+             <Puppet manifest={manifest} atlasUrl={atlas_url} />
+        </div>
+    </div>
   );
 };
 
