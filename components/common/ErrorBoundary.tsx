@@ -34,6 +34,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   // FIX: Using an arrow function property ensures `this` is correctly bound without needing a constructor.
+  // This fixes the errors where `this.setState` was not found.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());

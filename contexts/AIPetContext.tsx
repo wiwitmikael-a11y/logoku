@@ -19,6 +19,7 @@ export interface AIPetContextType {
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
+const HATCH_COST = 10;
 
 const getStageForLevel = (level: number): AIPetStage => {
     if (level < 5) return 'child';
@@ -51,7 +52,7 @@ const stringToHash = (str: string): number => {
         hash = ((hash << 5) - hash) + char;
         hash |= 0; // Convert to 32bit integer
     }
-    return hash;
+    return Math.abs(hash);
 };
 
 const createSeededRandom = (seed: number) => {
@@ -121,7 +122,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
                 personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
-                visual_base64: null
+                visual_base64: null,
+                narrative: null,
             };
             setPetState(newPet);
             savePetStateToDb(newPet);
@@ -158,41 +160,47 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [petState, updatePetState]);
 
     const hatchPet = useCallback(async () => {
-        if (!user) throw new Error("User not found");
-        const HATCH_COST = 1;
+        if (!user || !profile) throw new Error("User not found");
+        
         const success = await deductCredits(HATCH_COST);
         if (!success) throw new Error("Token tidak cukup.");
         
-        const seed = user.id + Date.now();
-        const keywords = ['futuristic', 'elemental', 'armored', 'mythical', 'chibi', 'glowing'];
-        const randomKeyword = keywords[stringToHash(seed) % keywords.length];
+        // Step 1: Generate unique visual based on user ID
+        const visual_base64 = await geminiService.generateAIPetVisual(user.id);
 
-        const prompt = `Masterpiece vector art of a cute chibi digital monster, "Digimon" anime style. The creature is a baby or rookie level. It has a ${randomKeyword} theme. Clean sharp vector lines, vibrant colors, simple colored background. Trending on artstation. No text, no words. Seed: ${seed}`;
-
-        const visual_base64 = await geminiService.generateAIPetVisual(prompt);
-
-        const seedRandom = createSeededRandom(stringToHash(seed));
+        // Step 2: Generate initial personality (can be deterministic too)
+        const seed = user.id + new Date().toISOString();
+        const hash = stringToHash(seed);
+        const seedRandom = createSeededRandom(hash);
         const personalities: (keyof AIPetPersonalityVector)[] = ['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'];
         const initialPersonality: AIPetPersonalityVector = personalities.reduce((acc, curr) => {
-            acc[curr] = Math.floor(seedRandom() * 11);
+            acc[curr] = Math.floor(seedRandom() * 11); // value 0-10
             return acc;
         }, {} as AIPetPersonalityVector);
         
+        const initialStats: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
+        const petName = `AIPet-${String(hash).slice(0, 4)}`;
+
+        // Step 3: Generate narrative based on initial state
+        const narrative = await geminiService.generateAIPetNarrative({ name: petName, personality: initialPersonality, stats: initialStats });
+
+        // Step 4: Construct the final state
         const hatchedState: AIPetState = {
-            name: 'AIPet-ku',
+            name: petName,
             stage: 'child',
-            stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
+            stats: initialStats,
             lastFed: Date.now(),
             lastPlayed: Date.now(),
             personality: initialPersonality,
             visual_base64: visual_base64,
+            narrative: narrative,
         };
         
         setPetState(hatchedState);
         await savePetStateToDb(hatchedState);
         await addXp(50); // Bonus XP for hatching
 
-    }, [user, deductCredits, addXp, savePetStateToDb]);
+    }, [user, profile, deductCredits, addXp, savePetStateToDb]);
 
 
     const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {

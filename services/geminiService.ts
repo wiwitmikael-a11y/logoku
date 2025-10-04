@@ -3,7 +3,7 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { createWhiteCanvasBase64, fetchImageAsBase64, applyWatermark } from '../utils/imageUtils';
 // FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
-import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets } from '../types';
+import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets, AIPetState, AIPetPersonalityVector, AIPetStats } from '../types';
 
 // --- Environment Variable Setup ---
 const API_KEY = import.meta.env?.VITE_API_KEY;
@@ -243,8 +243,43 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
     }
 };
 
-export const generateAIPetVisual = async (prompt: string): Promise<string> => {
+// Helper for seeded random generation
+const stringToHash = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0;
+    }
+    return Math.abs(hash);
+};
+
+const createSeededRandom = (seed: number) => {
+    return () => {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+    };
+};
+
+export const generateAIPetVisual = async (userId: string): Promise<string> => {
     const ai = getAiClient();
+    
+    // --- Sophisticated Prompt Generation ---
+    const seed = stringToHash(userId + new Date().toISOString()); // Add timestamp for more variance on re-hatch
+    const seededRandom = createSeededRandom(seed);
+    const pick = <T,>(arr: T[]): T => arr[Math.floor(seededRandom() * arr.length)];
+    
+    const baseTypes = ['a small reptilian creature', 'a fluffy mammalian creature', 'an insectoid-like being', 'a slime-based entity', 'a bird-like creature', 'a floating geometric entity'];
+    const elements = ['fire', 'ice', 'digital glitch', 'nature', 'electricity', 'shadow', 'light', 'water'];
+    const features = ['glowing crystalline armor', 'organic plant-like features', 'exposed circuitry and wires', 'ethereal floating rings', 'sharp metallic claws', 'soft, feathery wings', 'a long, powerful tail'];
+    const styles = ['chibi', 'cute but cool', 'rookie-level Digimon', 'early-stage Pokémon'];
+
+    const prompt = `award-winning masterpiece vector logo art of a unique baby digital monster.
+- **Concept**: A ${pick(styles)} creature that is a mix of ${pick(baseTypes)} with a ${pick(elements)} element theme. It has a distinct feature: ${pick(features)}.
+- **Style**: Clean sharp vector lines, vibrant anime color palette, simple solid colored background, centered, full body shot. It looks like a character from a modern monster-taming game.
+- **Crucial**: NO text, NO letters, NO words. The design MUST be a unique, brandable character.
+- **Seed**: ${seed}`;
+
     try {
         const response = await ai.models.generateImages({
             model: 'imagen-4.0-generate-001',
@@ -263,6 +298,36 @@ export const generateAIPetVisual = async (prompt: string): Promise<string> => {
         throw handleApiError(error, "AI Pet Visual Generator");
     }
 };
+
+export const generateAIPetNarrative = async (petData: { name: string, personality: AIPetPersonalityVector, stats: AIPetStats }): Promise<string> => {
+    const ai = getAiClient();
+    
+    const sortedPersonality = Object.entries(petData.personality).sort(([, a], [, b]) => b - a);
+    const dominantTrait = sortedPersonality[0][0];
+    const sortedStats = Object.entries(petData.stats).sort(([, a], [, b]) => b - a);
+    const dominantStat = sortedStats[0][0];
+
+    const prompt = `You are a creative writer for a digital monster game like Pokémon or Digimon. Write a short, evocative, "Pokédex-style" entry for a new creature. The entry should be 2-3 sentences.
+
+    Creature Details:
+    - Name: ${petData.name}
+    - Dominant Personality Trait: ${dominantTrait}
+    - Strongest Stat: ${dominantStat}
+
+    Write the entry in Bahasa Indonesia, with a slightly mysterious and intriguing tone.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: { temperature: 0.8 }
+        });
+        return response.text.trim();
+    } catch (error) {
+        throw handleApiError(error, "AI Pet Narrative Generator");
+    }
+};
+
 
 // --- Text Generation Functions ---
 export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string): Promise<BrandPersona[]> => {

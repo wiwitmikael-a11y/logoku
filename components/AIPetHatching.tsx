@@ -5,7 +5,7 @@ import { useAIPet } from '../contexts/AIPetContext';
 import Button from './common/Button';
 import { playSound } from '../services/soundService';
 
-const HATCH_COST = 1;
+const HATCH_COST = 10;
 
 interface AIPetHatchingProps {
     onClose: () => void;

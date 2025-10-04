@@ -122,6 +122,7 @@ export interface AIPetState {
   lastPlayed: number;
   personality: AIPetPersonalityVector;
   visual_base64?: string | null;
+  narrative?: string | null;
 }
 
 export interface Profile {

@@ -530,7 +530,7 @@ const MainApp: React.FC = () => {
                 {isPetMenuOpen && (
                     <div className="pet-menu-popup fixed bottom-[8.5rem] right-2 w-48 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg p-2 space-y-2 z-40 animate-content-fade-in">
                         {aipetContext.petState.stage === 'egg' ? (
-                            <button onClick={() => { setShowHatchingModal(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Tetaskan Telur (1 Token)</button>
+                            <button onClick={() => { setShowHatchingModal(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Tetaskan Telur (10 Token)</button>
                         ) : (
                             <button onClick={() => { setPetPanelOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Lihat Profil {aipetContext.petState.name}</button>
                         )}

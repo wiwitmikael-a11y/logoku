@@ -114,7 +114,7 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
                         <div className="text-center p-4">
                             <p className="text-sm text-text-body mb-4">Sepertinya ada telur misterius di sini. Mau coba tetaskan?</p>
                             <button onClick={() => setShowHatchingModal(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover">
-                                Tetaskan Telur (1 Token)
+                                Tetaskan Telur (10 Token)
                             </button>
                         </div>
                     </div>
