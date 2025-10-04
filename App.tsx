@@ -469,6 +469,7 @@ const MainApp: React.FC = () => {
                 <div className="max-w-7xl mx-auto">
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
+// FIX: The ErrorBoundary component requires a 'children' prop. The content that should be protected by the boundary is now wrapped within its tags.
                         <ErrorBoundary onReset={handleReturnToDashboard}>
                             {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
                             <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
