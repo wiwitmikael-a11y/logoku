@@ -102,6 +102,7 @@ export type AIPetPersonalityVector = {
   luxury: number;
   feminine: number;
   bold: number;
+  creative: number;
 };
 
 export interface AIPetStats {

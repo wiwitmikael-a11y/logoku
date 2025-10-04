@@ -17,13 +17,19 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Refactored to use a class property for state and an arrow function for the method.
-  // This modern pattern avoids issues with `this` context that can occur with constructors in some build environments.
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Reverted to a constructor-based approach. The class field properties and arrow
+  // function methods seemed to cause typing issues with `this`, leading to errors where `this.props`
+  // and `this.setState` were not found. Using a constructor and binding methods explicitly
+  // is a more robust pattern that ensures the correct `this` context.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.
@@ -35,7 +41,7 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });

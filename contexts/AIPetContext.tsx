@@ -98,7 +98,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 stats: INITIAL_STATS,
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
-                personality: { minimalist: 0, rustic: 0, playful: 0, modern: 0, luxury: 0, feminine: 0, bold: 0 }
+                personality: { minimalist: 0, rustic: 0, playful: 0, modern: 0, luxury: 0, feminine: 0, bold: 0, creative: 0 }
             };
             setPetState(newPet);
             savePetStateToDb(newPet);
