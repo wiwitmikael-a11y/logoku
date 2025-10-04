@@ -174,14 +174,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
       </div>
 
       <Card title="Detail Bisnis" className="p-4 sm:p-6">
-        <form ref={formRef} onSubmit={handleGeneratePersona} className="relative flex flex-col gap-6">
-          {showOnboarding && (
-               <div onClick={() => setShowOnboarding(false)} className="cursor-pointer">
-                  <CalloutPopup className="absolute -top-20 left-1/2 -translate-x-1/2 w-max animate-bounce">
-                      Isi detailnya, biar Mang AI bisa ngeracik!
-                  </CalloutPopup>
-              </div>
-          )}
+        <form ref={formRef} onSubmit={handleGeneratePersona} className="flex flex-col gap-6">
           <Input label="Nama Bisnis" name="businessName" value={formState.businessName} onChange={handleChange} placeholder="cth: Kopi Senja" />
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -207,7 +200,12 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
           <Textarea label="Yang Bikin Beda (Value Proposition)" name="valueProposition" value={formState.valueProposition} onChange={handleChange} placeholder="cth: Organik, murah, mewah" rows={3} />
           <Textarea label="Sebutin 1-2 Kompetitor" name="competitors" value={formState.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
           
-          <div className="flex items-center gap-4 pt-4 border-t border-border-main">
+          <div className="relative flex items-center gap-4 pt-4 border-t border-border-main">
+            {showOnboarding && (
+                <div onClick={() => setShowOnboarding(false)} className="absolute bottom-full left-0 mb-2 w-max cursor-pointer animate-bounce">
+                    <CalloutPopup>Isi detailnya, biar Mang AI bisa ngeracik!</CalloutPopup>
+                </div>
+            )}
             <Button type="submit" isLoading={isLoadingPersona}>Racik Persona Sekarang!</Button>
              {personas.length > 0 && !isLoadingPersona && (
               <Button variant="secondary" onClick={() => handleGeneratePersona()} isLoading={isLoadingPersona}>Racik Ulang Persona</Button>

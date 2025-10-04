@@ -93,11 +93,13 @@ const rotatePoint = (point: {x:number, y:number}, center: {x:number, y:number}, 
 const NewDocumentModal: React.FC<{
     onClose: () => void;
     onCreate: (w: number, h: number, bg: string) => void;
-}> = ({ onClose, onCreate }) => {
+    onCreateFromImage: (image: HTMLImageElement) => void;
+}> = ({ onClose, onCreate, onCreateFromImage }) => {
     const [preset, setPreset] = useState(Object.keys(CANVAS_PRESETS)[0]);
     const [width, setWidth] = useState(CANVAS_PRESETS[preset].w);
     const [height, setHeight] = useState(CANVAS_PRESETS[preset].h);
     const [bgColor, setBgColor] = useState('#101012');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const p = CANVAS_PRESETS[preset];
@@ -106,6 +108,24 @@ const NewDocumentModal: React.FC<{
             setHeight(p.h);
         }
     }, [preset]);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const imageUrl = event.target?.result as string;
+            if (imageUrl) {
+                const img = new Image();
+                img.src = imageUrl;
+                img.onload = () => {
+                    onCreateFromImage(img);
+                };
+            }
+        };
+        reader.readAsDataURL(file);
+    };
 
     return (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
@@ -126,6 +146,15 @@ const NewDocumentModal: React.FC<{
                         <Button variant="splash" onClick={() => onCreate(width, height, bgColor)}>Create</Button>
                     </div>
                 </div>
+
+                <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true"><div className="w-full border-t border-border-main" /></div>
+                    <div className="relative flex justify-center"><span className="bg-surface px-2 text-sm text-text-muted">Or</span></div>
+                </div>
+                <Button variant="secondary" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                    Upload Image & Start Editing
+                </Button>
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
             </div>
         </div>
     );
@@ -321,6 +350,39 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                 setViewTransform({ zoom: newZoom, pan: {x: (container.clientWidth - w * newZoom)/2, y: (container.clientHeight - h * newZoom)/2 }});
         }}, 10);
     };
+
+    const handleCreateCanvasFromImage = (img: HTMLImageElement) => {
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        const newLayer: ImageLayer = {
+            id: Date.now(),
+            type: 'image',
+            name: 'Background Image',
+            x: 0,
+            y: 0,
+            width: w,
+            height: h,
+            rotation: 0,
+            isVisible: true,
+            isLocked: false,
+            opacity: 100,
+            shadow: { offsetX: 0, offsetY: 0, blur: 0, color: '#00000000' },
+            image: img,
+            filters: { brightness: 100, contrast: 100, saturate: 100, grayscale: 0 },
+        };
+        dispatchHistory({ type: 'SET_STATE', newState: { layers: [newLayer], backgroundColor: '#101012', width: w, height: h }, withHistory: true });
+        setCanvasState('editing');
+        setTimeout(() => {
+            const container = canvasContainerRef.current;
+            if (container) {
+                const zoomX = container.clientWidth / (w + 100);
+                const zoomY = container.clientHeight / (h + 100);
+                const newZoom = Math.min(zoomX, zoomY, 0.9);
+                setViewTransform({ zoom: newZoom, pan: { x: (container.clientWidth - w * newZoom) / 2, y: (container.clientHeight - h * newZoom) / 2 } });
+            }
+        }, 10);
+    };
+
     const handleExport = () => { /* ... simplified for brevity ... */ };
 
     const selectedLayer = layers.find(l => l.id === selectedLayerId);
@@ -505,7 +567,7 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                     box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
                 }
             `}</style>
-            {canvasState === 'setup' && <NewDocumentModal onClose={onClose} onCreate={handleCreateCanvas} />}
+            {canvasState === 'setup' && <NewDocumentModal onClose={onClose} onCreate={handleCreateCanvas} onCreateFromImage={handleCreateCanvasFromImage} />}
             {canvasState === 'editing' && (
                 <>
                     <header className="relative flex-shrink-0 flex justify-between items-center p-1 bg-surface border-b border-border-main">

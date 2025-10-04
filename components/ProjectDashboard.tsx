@@ -92,7 +92,7 @@ const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGa
 
     return (
         <div className="w-full text-center mt-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Podium Juara Pameran Brand 🏆</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Podium Juara Pameran Brand 🏆</h2>
             <div className="group relative bg-surface/80 backdrop-blur-sm border border-border-main rounded-xl p-6 hover:border-primary/50 transition-colors cursor-pointer overflow-hidden shadow-lg shadow-black/20" onClick={onShowGallery} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.05) 0%, transparent 60%)' }}>
                 {isLoading ? (<div className="h-40 flex items-center justify-center"><LoadingMessage /></div>) : 
                 topProjects.length === 0 ? (
@@ -193,11 +193,15 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
             <DynamicInfoBox />
             <div className="relative">
                 <Button onClick={() => onNewProject()} size="large" variant="splash">+ Bikin Project Branding Baru</Button>
-                {showOnboarding && (<div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="cursor-pointer"><CalloutPopup className="absolute bottom-full left-1/2 -translate-x-1/2 w-max animate-bounce">Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup></div>)}
+                {showOnboarding && (
+                    <div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max cursor-pointer animate-bounce">
+                        <CalloutPopup>Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup>
+                    </div>
+                )}
             </div>
             
             <div className="w-full text-center mt-6">
-                <h2 className="text-4xl md:text-5xl font-bold mb-4 mt-2 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Atau Pake Jalan Pintas 🚀</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 mt-2 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Atau Pake Jalan Pintas 🚀</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">{templates.map(t => (<TemplateCard key={t.name} template={t} onClick={onNewProject} />))}</div>
             </div>
 
@@ -205,7 +209,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
 
             {inProgressProjects.length > 0 && (
                 <div className="w-full text-left">
-                <h2 className="text-4xl md:text-5xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project yang Sedang Dikerjakan:</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project yang Sedang Dikerjakan:</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {inProgressProjects.map(project => (
                         <div key={project.id} className="relative group">
@@ -224,7 +228,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
 
             {completedProjects.length > 0 && (
                 <div className="w-full text-left mt-8">
-                <h2 className="text-4xl md:text-5xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project Selesai (Brand Hub):</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project Selesai (Brand Hub):</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {completedProjects.map(project => (
                         <div key={project.id} className="relative group">
@@ -260,6 +264,21 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
     );
 };
 
+const TabButton: React.FC<{
+    name: string;
+    icon: React.ReactNode;
+    active: boolean;
+    onClick: () => void;
+}> = ({ name, icon, active, onClick }) => (
+    <button
+        onClick={onClick}
+        className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${active ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}
+    >
+        {icon}
+        <span>{name}</span>
+    </button>
+);
+
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name?.split(' ')[0] || 'Juragan';
@@ -272,19 +291,31 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
     }
   }, []);
 
+  const tabs = [
+    { id: 'projects', name: 'Proyek', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
+    { id: 'sotoshop', name: 'Sotoshop', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-fuchsia-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg> },
+    { id: 'tools', name: 'Ide', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg> },
+    { id: 'forum', name: 'Forum', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H17z" /></svg> },
+    { id: 'juragan', name: 'Juara', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
+  ];
+
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
-        <h2 className="text-5xl md:text-6xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Selamat Datang, {userName}!</h2>
-        <p className="text-text-muted max-w-3xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain di WarKop Juragan.</p>
+        <h2 className="text-4xl md:text-5xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Selamat Datang, {userName}!</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain.</p>
       </div>
 
       <div className="flex justify-center border-b border-border-main">
-        <button onClick={() => setActiveTab('projects')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'projects' ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}>🚀 Project Saya</button>
-        <button onClick={() => props.onShowSotoshop()} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors text-text-muted hover:text-text-header`}>🎨 Sotoshop</button>
-        <button onClick={() => setActiveTab('tools')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'tools' ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}>💡 Warung Ide</button>
-        <button onClick={() => setActiveTab('forum')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'forum' ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}>☕ WarKop Juragan</button>
-        <button onClick={() => setActiveTab('juragan')} className={`px-4 py-3 text-sm md:px-6 md:text-base font-semibold transition-colors ${activeTab === 'juragan' ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}>🏆 Pusat Juragan</button>
+        {tabs.map(tab => (
+            <TabButton 
+                key={tab.id}
+                name={tab.name}
+                icon={tab.icon}
+                active={activeTab === tab.id}
+                onClick={() => tab.id === 'sotoshop' ? props.onShowSotoshop() : setActiveTab(tab.id as any)}
+            />
+        ))}
       </div>
       
       <div className="mt-4">
