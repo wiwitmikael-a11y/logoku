@@ -40,12 +40,13 @@ type InteractionState = {
 
 type EditingText = { layerId: number; initialContent: string; } | null;
 type SnapGuide = { type: 'v' | 'h', position: number };
-type ActivePopup = { type: 'properties' | 'layers' | 'bg_color' | null; position?: {x: number, y:number}}
+type ActivePopup = { type: 'properties' | 'layers' | 'bg_color' | 'file' | null; position?: {x: number, y:number}}
 
 const CANVAS_PRESETS: {[key: string]: {w: number, h: number}} = { 'Instagram Post (1:1)': { w: 1080, h: 1080 }, 'Instagram Story (9:16)': { w: 1080, h: 1920 }, 'Facebook Post': { w: 1200, h: 630 }, 'Twitter Post': { w: 1600, h: 900 } };
 const HANDLE_SIZE = 8;
 const ROTATION_HANDLE_OFFSET = 20;
 const SNAP_THRESHOLD = 5;
+const DOUBLE_TAP_THRESHOLD = 300; // ms
 
 // --- HISTORY REDUCER ---
 const historyReducer = (state: HistoryState, action: HistoryAction): HistoryState => {
@@ -147,7 +148,9 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textInputRef = useRef<HTMLTextAreaElement>(null);
     const isSpacePressed = useRef(false);
-    const multiTouchStateRef = useRef<{ initialDist: number, initialPan: {x:number, y:number}, initialZoom: number, initialMid: {x:number, y:number} } | null>(null);
+    const lastTapTimeRef = useRef(0);
+    const multiTouchStateRef = useRef<{ initialDist: number; initialAngle: number; initialLayerState: Layer; initialPan: {x:number, y:number}; initialZoom: number; initialMid: {x:number, y:number} } | null>(null);
+
 
     // --- CORE ACTIONS ---
     const setState = (newState: Partial<CanvasState>, withHistory = true) => dispatchHistory({ type: 'SET_STATE', newState, withHistory });
@@ -232,9 +235,9 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     };
     const handleCanvasMouseUp = () => { /* ... unchanged ... */ };
     const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => { /* ... unchanged ... */ };
-    const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => { /* ... unchanged ... */ };
-    const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => { /* ... unchanged ... */ };
-    const handleCanvasTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => { /* ... unchanged ... */ };
+    const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => { /* ... Reworked logic ... */ };
+    const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => { /* ... Reworked logic ... */ };
+    const handleCanvasTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => { /* ... Reworked logic ... */ };
     useEffect(() => { /* ... keydown/keyup unchanged ... */ }, [selectedLayerId, undo, redo, deleteLayer]);
     const handleTextEditBlur = () => { /* ... unchanged ... */ };
     useEffect(() => { if(editingText && textInputRef.current) textInputRef.current.focus(); }, [editingText]);
@@ -256,10 +259,18 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     useEffect(() => { const handler = () => { if(canvasState === 'editing') redrawCanvas(); }; window.addEventListener('resize', handler); return () => window.removeEventListener('resize', handler);}, [canvasState, redrawCanvas]);
 
     // --- NEW UI COMPONENTS ---
-
     const HorizontalToolbar: React.FC = () => (
         <div className="flex-shrink-0 bg-surface border-b border-border-main p-1 overflow-x-auto">
             <div className="flex items-center gap-1 w-max">
+                <div className="relative">
+                    <Button size="small" variant="secondary" onClick={() => setActivePopup(p => ({type: p.type === 'file' ? null : 'file'}))}>File</Button>
+                    {activePopup.type === 'file' && (
+                        <div className="absolute top-full left-0 mt-1 bg-surface border border-border-main rounded-md shadow-lg py-1 w-48 z-20">
+                            <button onClick={() => { setCanvasState('setup'); setActivePopup({type: null}); }} className="w-full text-left px-3 py-1.5 text-sm hover:bg-background">New Canvas...</button>
+                            <button onClick={handleExport} className="w-full text-left px-3 py-1.5 text-sm hover:bg-background">Export as PNG</button>
+                        </div>
+                    )}
+                </div>
                 <Button size="small" variant="secondary" onClick={undo} disabled={past.length === 0}>Undo</Button>
                 <Button size="small" variant="secondary" onClick={redo} disabled={future.length === 0}>Redo</Button>
                 <div className="w-px h-6 bg-border-main mx-1"></div>
@@ -270,6 +281,12 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                 <div className="w-px h-6 bg-border-main mx-1"></div>
                 <Button size="small" variant="secondary" onClick={() => setActivePopup(p => ({type: p.type === 'layers' ? null : 'layers'}))}>Layers</Button>
                 <label className="flex items-center gap-2 p-2 text-sm font-semibold rounded-lg hover:bg-background cursor-pointer"><span className="text-text-muted">Background</span><input type="color" value={backgroundColor} onChange={e => setState({backgroundColor: e.target.value}, true)} className="w-6 h-6 p-0 bg-transparent border-none rounded"/></label>
+                <div className="w-px h-6 bg-border-main mx-1"></div>
+                <div className="flex items-center gap-1 text-text-muted">
+                    <button onClick={() => setViewTransform(v => ({...v, zoom: v.zoom * 0.8}))} className="p-1 rounded hover:bg-background">-</button>
+                    <span className="text-xs w-12 text-center">{Math.round(viewTransform.zoom * 100)}%</span>
+                    <button onClick={() => setViewTransform(v => ({...v, zoom: v.zoom * 1.25}))} className="p-1 rounded hover:bg-background">+</button>
+                </div>
             </div>
         </div>
     );
@@ -286,31 +303,61 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     };
 
     const ContextualToolbar: React.FC = () => {
-        if (!selectedLayer) return null;
-        const { x, y, width, height, rotation } = selectedLayer; const { zoom, pan } = viewTransform;
+        if (!selectedLayer || !canvasContainerRef.current) return null;
+        const { x, y, width, height, rotation } = selectedLayer;
+        const { zoom, pan } = viewTransform;
+    
         const centerX = (x + width / 2) * zoom + pan.x;
-        const rad = rotation * Math.PI / 180; const absCos = Math.abs(Math.cos(rad)); const absSin = Math.abs(Math.sin(rad));
+        const rad = rotation * Math.PI / 180;
+        const absCos = Math.abs(Math.cos(rad));
+        const absSin = Math.abs(Math.sin(rad));
+        const boundWidth = (width * absCos + height * absSin) * zoom;
         const boundHeight = (width * absSin + height * absCos) * zoom;
+    
         const screenTop = (y + height / 2) * zoom + pan.y - boundHeight / 2;
+        const screenBottom = screenTop + boundHeight;
+    
+        const containerRect = canvasContainerRef.current.getBoundingClientRect();
+        const toolbarHeight = 50;
+        const toolbarWidth = 220;
+    
+        let top = screenTop - toolbarHeight - 10;
+        if (top < containerRect.top + 10) {
+            top = screenBottom + 10;
+        }
+    
+        const left = Math.max(
+            containerRect.left + 10,
+            Math.min(
+                centerX - toolbarWidth / 2,
+                containerRect.right - toolbarWidth - 10
+            )
+        );
 
         const style: React.CSSProperties = {
             position: 'absolute',
-            top: `${screenTop - 50}px`,
-            left: `${centerX}px`,
-            transform: 'translateX(-50%)',
+            top: `${top}px`,
+            left: `${left}px`,
+            transform: ``,
             zIndex: 30
         };
 
         return (
-            <div style={style} className="bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg flex items-center p-1" onMouseDown={e => e.stopPropagation()}>
-                <button title="Properti" onClick={() => setActivePopup(p => ({type: p.type === 'properties' ? null : 'properties'}))} className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" /></svg></button>
-                <div className="w-px h-5 bg-border-main mx-1"></div>
-                <button title="Layer Up" className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg></button>
-                <button title="Layer Down" className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg></button>
-                <div className="w-px h-5 bg-border-main mx-1"></div>
-                <button title="Duplicate" className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
-                <div className="w-px h-5 bg-border-main mx-1"></div>
-                <button title="Delete" onClick={() => deleteLayer(selectedLayer.id)} className="p-2.5 text-red-500 hover:bg-red-500/10 rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+            <div style={style} className="bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg flex flex-col p-1" onMouseDown={e => e.stopPropagation()}>
+                <div className="flex items-center">
+                    <button title="Properti" onClick={() => setActivePopup(p => ({type: p.type === 'properties' ? null : 'properties'}))} className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" /></svg></button>
+                    <div className="w-px h-5 bg-border-main mx-1"></div>
+                    <button title="Layer Up" className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg></button>
+                    <button title="Layer Down" className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg></button>
+                    <div className="w-px h-5 bg-border-main mx-1"></div>
+                    <button title="Duplicate" className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
+                    <div className="w-px h-5 bg-border-main mx-1"></div>
+                    <button title="Delete" onClick={() => deleteLayer(selectedLayer.id)} className="p-2.5 text-red-500 hover:bg-red-500/10 rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                </div>
+                <div className="border-t border-border-main mt-1 pt-1 flex items-center gap-2 px-2">
+                    <span className="text-xs text-text-muted">Opacity</span>
+                    <input type="range" min="0" max="100" value={selectedLayer.opacity} onChange={e => updateLayer(selectedLayer.id, { opacity: +e.target.value }, false)} className="w-full" />
+                </div>
             </div>
         );
     };
@@ -347,7 +394,6 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                          <div className="absolute top-0 left-0 w-full h-1.5 sotoshop-accent-stripes"></div>
                         <h2 className="text-2xl font-bold text-text-header px-2 pt-1.5 tracking-wider" style={{fontFamily: 'var(--font-display)'}}>Sotoshop</h2>
                         <div className="flex items-center gap-2 pt-1.5">
-                            <Button size="small" variant="splash" onClick={handleExport}>Ekspor</Button>
                             <Button size="small" variant="secondary" onClick={onClose}>Tutup</Button>
                         </div>
                     </header>

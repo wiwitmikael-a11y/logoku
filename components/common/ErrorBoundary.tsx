@@ -17,11 +17,19 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Refactored to use a constructor for state initialization and method binding.
+  // The previous implementation using class properties was causing 'this' context issues,
+  // leading to errors where 'this.props' and 'this.setState' were not recognized.
+  // This classic React pattern explicitly sets the context and resolves the type errors.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error: error };
@@ -31,18 +39,14 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
-      // FIX: The arrow function for `handleCopy` ensures `this` is correctly bound, so `setState` can be called.
       this.setState({ isCopied: true });
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
 
-  // FIX: Converted `render` from an arrow function property to a standard class method.
-  // React correctly binds `this` for the `render` method, so an arrow function is not necessary.
-  // This change resolves TypeScript errors where `this.props` was not being recognized on the component type.
   public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
