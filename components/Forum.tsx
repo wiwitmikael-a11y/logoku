@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useAIPet } from '../contexts/AIPetContext';
 import type { ForumThread, ForumPost } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -113,6 +114,7 @@ const getOfficialDisplayData = (profile: { full_name?: string | null, avatar_url
 // --- Main Forum Component ---
 const Forum: React.FC = () => {
     const { user, profile, addXp } = useAuth();
+    const { notifyPetOfActivity } = useAIPet();
     const [view, setView] = useState<ForumView>('list');
     const [threads, setThreads] = useState<ForumThread[]>([]);
     const [selectedThread, setSelectedThread] = useState<ForumThread | null>(null);
@@ -300,6 +302,7 @@ const Forum: React.FC = () => {
             if (insertError) throw insertError;
             
             await addXp(20); // +20 XP for new thread
+            notifyPetOfActivity('forum_interaction');
             setCooldown(POST_COOLDOWN_SECONDS);
             setNewThreadTitle('');
             setNewThreadContent('');
@@ -329,6 +332,7 @@ const Forum: React.FC = () => {
             if (insertError) throw insertError;
 
             await addXp(5); // +5 XP for reply
+            notifyPetOfActivity('forum_interaction');
             setCooldown(POST_COOLDOWN_SECONDS);
             setNewPostContent('');
 

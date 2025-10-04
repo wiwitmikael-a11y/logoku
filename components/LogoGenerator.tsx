@@ -1,8 +1,9 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
+import { useAIPet } from '../contexts/AIPetContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -20,6 +21,7 @@ const GENERATION_COST = 4;
 
 const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const { notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState(`A minimalist and modern logo for "${businessName}", representing ${persona.kata_kunci.join(', ')}.`);
@@ -28,6 +30,18 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+
+  useEffect(() => {
+    let activityInterval: number | undefined;
+    if (isLoading) {
+      activityInterval = window.setInterval(() => notifyPetOfActivity('designing_logo'), 3000);
+    }
+    return () => {
+      if (activityInterval) {
+        clearInterval(activityInterval);
+      }
+    };
+  }, [isLoading, notifyPetOfActivity]);
 
   const handleGenerateLogos = useCallback(async () => {
     if (credits < GENERATION_COST) {

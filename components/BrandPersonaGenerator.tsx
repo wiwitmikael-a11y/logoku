@@ -6,6 +6,7 @@ import { playSound } from '../services/soundService';
 import { loadWorkflowState } from '../services/workflowPersistence';
 // FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { BrandPersona, BrandInputs } from '../types';
+import { useAIPet } from '../contexts/AIPetContext';
 import Button from './common/Button';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
@@ -41,6 +42,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   const [error, setError] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const { notifyPetOfActivity } = useAIPet();
 
   const personasRef = useRef<HTMLDivElement>(null);
   const slogansRef = useRef<HTMLDivElement>(null);
@@ -137,8 +139,18 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
         setSlogans([]);
         setSelectedSlogan(null);
         setShowNextStepNudge(false);
+
+        const selected = personas[index];
+        if (selected) {
+            selected.kata_kunci.forEach(keyword => {
+                const personalityKey = keyword.toLowerCase().trim();
+                if (['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'].includes(personalityKey)) {
+                    notifyPetOfActivity('style_choice', personalityKey);
+                }
+            });
+        }
       }
-  }, [selectedPersonaIndex]);
+  }, [selectedPersonaIndex, personas, notifyPetOfActivity]);
   
   const handleGenerateSlogans = useCallback(async () => {
     if (selectedPersonaIndex === null || !personas[selectedPersonaIndex]) return;
