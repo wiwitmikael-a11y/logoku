@@ -6,12 +6,16 @@ import { useAuth } from '../contexts/AuthContext';
 import AIPetVisual from './AIPetVisual';
 import { playSound } from '../services/soundService';
 
-type MiniGame = 'color' | 'pattern' | null;
+type MiniGame = 'color' | 'pattern' | 'style' | 'slogan' | null;
 
-const AIPetWidget: React.FC<AIPetContextType> = ({ petState, isLoading, handleInteraction, onGameWin }) => {
+interface Props extends AIPetContextType {
+    isOpen: boolean;
+    onClose: () => void;
+    onShowHome: () => void;
+}
+
+const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, onClose, onShowHome }) => {
     const { deductCredits, profile } = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
-    const [isInteracting, setIsInteracting] = useState(false);
     const [activeGame, setActiveGame] = useState<MiniGame>(null);
     const [gameFeedback, setGameFeedback] = useState<'correct' | 'incorrect' | null>(null);
 
@@ -25,16 +29,6 @@ const AIPetWidget: React.FC<AIPetContextType> = ({ petState, isLoading, handleIn
     const [patternTarget, setPatternTarget] = useState<number[]>([]);
     const [patternOptions, setPatternOptions] = useState<number[][]>([]);
     
-    // FIX: Changed useRef<number>() to useRef<number | null>(null) to provide an explicit initial value. This resolves an ambiguous type issue that was causing misleading errors about argument counts in other functions.
-    const interactionTimeoutRef = useRef<number | null>(null);
-
-    const handlePetClick = () => {
-        handleInteraction();
-        setIsInteracting(true);
-        if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
-        interactionTimeoutRef.current = window.setTimeout(() => setIsInteracting(false), 500);
-    };
-
     const startGame = async (game: MiniGame) => {
         if (!game) return;
         if ((profile?.credits ?? 0) < MINIGAME_COST) {
@@ -84,86 +78,74 @@ const AIPetWidget: React.FC<AIPetContextType> = ({ petState, isLoading, handleIn
         }, 1000);
     };
 
-    if (isLoading || !petState) return null;
+    if (isLoading || !petState || !isOpen) return null;
     
-    const energyPercent = (petState.stats.energy / 100) * 100;
-    const petAnimation = energyPercent < 20 ? 'aipet-pulse' : 'aipet-float';
-
     const renderPattern = (sequence: number[]) => {
         const symbols = ['■', '●', '▲', '◆'];
         return sequence.map(i => symbols[i]).join(' ');
     };
 
     return (
-        <>
-            {/* Widget Button */}
-            <div 
-                onClick={() => setIsOpen(p => !p)}
-                className="fixed bottom-8 left-8 w-24 h-24 z-30 cursor-pointer group"
-                style={{ animation: `${petAnimation} ${4 + (100 - energyPercent)/10}s ease-in-out infinite` }}
-            >
-                <div onClick={e => { e.stopPropagation(); handlePetClick(); }} className={`w-full h-full transition-transform duration-200 ${isInteracting ? 'animate-aipet-interact' : ''}`}>
-                    <AIPetVisual petState={petState} />
-                </div>
-                 <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4/5 h-3 bg-black/20 rounded-[50%] filter blur-sm"></div>
-            </div>
-
-            {/* Panel */}
-            <div className={`fixed bottom-8 left-36 w-80 bg-surface/80 backdrop-blur-md border border-border-main rounded-xl shadow-lg p-4 z-30 transition-all duration-300 origin-bottom-left ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
-                 <div className="flex justify-between items-center pb-2 border-b border-border-main">
-                    <h3 className="font-bold text-text-header">{petState.name}</h3>
-                    <button onClick={() => setIsOpen(false)} className="text-text-muted hover:text-text-header">&times;</button>
-                 </div>
-                 
-                 {!activeGame ? (
-                     <div className="mt-3 space-y-3 animate-content-fade-in">
-                        <div className="text-xs space-y-2">
-                            <div>
-                                <p>⚡ Energi ({Math.round(petState.stats.energy)}%)</p>
-                                <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-green-500 h-2 rounded-full" style={{width: `${petState.stats.energy}%`}}></div></div>
-                            </div>
-                            <div>
-                                <p>🎨 Kreativitas ({Math.round(petState.stats.creativity)}%)</p>
-                                <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-sky-400 h-2 rounded-full" style={{width: `${petState.stats.creativity}%`}}></div></div>
-                            </div>
-                             <div>
-                                <p>🧠 Kecerdasan ({Math.round(petState.stats.intelligence)}%)</p>
-                                <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-fuchsia-500 h-2 rounded-full" style={{width: `${petState.stats.intelligence}%`}}></div></div>
-                            </div>
+        <div className={`fixed bottom-8 left-8 w-80 bg-surface/80 backdrop-blur-md border border-border-main rounded-xl shadow-lg p-4 z-30 transition-all duration-300 origin-bottom-left ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
+             <div className="flex justify-between items-center pb-2 border-b border-border-main">
+                <h3 className="font-bold text-text-header">{petState.name}</h3>
+                <button onClick={onClose} className="text-text-muted hover:text-text-header">&times;</button>
+             </div>
+             
+             {!activeGame ? (
+                 <div className="mt-3 space-y-3 animate-content-fade-in">
+                    <div className="text-xs space-y-2">
+                        <div>
+                            <p>⚡ Energi ({Math.round(petState.stats.energy)}%)</p>
+                            <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-green-500 h-2 rounded-full" style={{width: `${petState.stats.energy}%`}}></div></div>
                         </div>
-                        <div className="pt-3 border-t border-border-main">
-                             <p className="text-xs text-text-muted mb-2">Main bareng buat naikin stat! (-{MINIGAME_COST} Token, +15 XP)</p>
-                             <div className="grid grid-cols-2 gap-2">
-                                <button onClick={() => startGame('color')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">Harmoni Warna</button>
-                                <button onClick={() => startGame('pattern')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">Teka-Teki Pola</button>
-                             </div>
+                        <div>
+                            <p>🎨 Kreativitas ({Math.round(petState.stats.creativity)}%)</p>
+                            <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-sky-400 h-2 rounded-full" style={{width: `${petState.stats.creativity}%`}}></div></div>
                         </div>
-                     </div>
-                 ) : (
-                    <div className="mt-3 animate-content-fade-in">
-                        {activeGame === 'color' && (
-                            <div>
-                                <p className="text-sm text-center mb-3">Pilih warna yang sama:</p>
-                                <div className="w-16 h-16 mx-auto rounded-md mb-4" style={{ backgroundColor: colorTarget, animation: gameFeedback === 'correct' ? 'minigame-correct 0.5s' : '' }}></div>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {colorOptions.map(color => <button key={color} onClick={() => handleGameAnswer(color)} className="h-12 rounded-md" style={{backgroundColor: color}}></button>)}
-                                </div>
-                            </div>
-                        )}
-                        {activeGame === 'pattern' && (
-                             <div>
-                                <p className="text-sm text-center mb-3">Lengkapi polanya:</p>
-                                <p className="text-2xl text-center font-mono tracking-widest p-3 bg-background rounded-md mb-4" style={{animation: gameFeedback === 'correct' ? 'minigame-correct 0.5s' : ''}}>{renderPattern(patternTarget)}</p>
-                                <div className="grid grid-cols-1 gap-2">
-                                    {patternOptions.map((opt, i) => <button key={i} onClick={() => handleGameAnswer(opt)} className="font-mono text-lg bg-background hover:bg-border-light p-2 rounded-md">{renderPattern(opt)}</button>)}
-                                </div>
-                            </div>
-                        )}
-                         {gameFeedback === 'incorrect' && <p className="text-center text-red-500 font-bold mt-3 animate-pulse">Salah!</p>}
+                         <div>
+                            <p>🧠 Kecerdasan ({Math.round(petState.stats.intelligence)}%)</p>
+                            <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-fuchsia-500 h-2 rounded-full" style={{width: `${petState.stats.intelligence}%`}}></div></div>
+                        </div>
+                        <div>
+                            <p>😎 Karisma ({Math.round(petState.stats.charisma)}%)</p>
+                            <div className="w-full bg-background rounded-full h-2 mt-1"><div className="bg-yellow-400 h-2 rounded-full" style={{width: `${petState.stats.charisma}%`}}></div></div>
+                        </div>
                     </div>
-                 )}
-            </div>
-        </>
+                    <div className="pt-3 border-t border-border-main">
+                         <p className="text-xs text-text-muted mb-2">Aktivitas (-{MINIGAME_COST} Token, +XP)</p>
+                         <div className="grid grid-cols-2 gap-2">
+                            <button onClick={onShowHome} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">🏠 Lihat Rumah</button>
+                            <button onClick={() => startGame('color')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">Harmoni Warna</button>
+                            <button onClick={() => startGame('pattern')} className="text-sm bg-background hover:bg-border-light p-2 rounded-md">Teka-Teki Pola</button>
+                            <button disabled title="Segera Hadir!" className="text-sm bg-background p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Tebak Gaya</button>
+                         </div>
+                    </div>
+                 </div>
+             ) : (
+                <div className="mt-3 animate-content-fade-in">
+                    {activeGame === 'color' && (
+                        <div>
+                            <p className="text-sm text-center mb-3">Pilih warna yang sama:</p>
+                            <div className="w-16 h-16 mx-auto rounded-md mb-4" style={{ backgroundColor: colorTarget, animation: gameFeedback === 'correct' ? 'minigame-correct 0.5s' : '' }}></div>
+                            <div className="grid grid-cols-3 gap-2">
+                                {colorOptions.map(color => <button key={color} onClick={() => handleGameAnswer(color)} className="h-12 rounded-md" style={{backgroundColor: color}}></button>)}
+                            </div>
+                        </div>
+                    )}
+                    {activeGame === 'pattern' && (
+                         <div>
+                            <p className="text-sm text-center mb-3">Lengkapi polanya:</p>
+                            <p className="text-2xl text-center font-mono tracking-widest p-3 bg-background rounded-md mb-4" style={{animation: gameFeedback === 'correct' ? 'minigame-correct 0.5s' : ''}}>{renderPattern(patternTarget)}</p>
+                            <div className="grid grid-cols-1 gap-2">
+                                {patternOptions.map((opt, i) => <button key={i} onClick={() => handleGameAnswer(opt)} className="font-mono text-lg bg-background hover:bg-border-light p-2 rounded-md">{renderPattern(opt)}</button>)}
+                            </div>
+                        </div>
+                    )}
+                     {gameFeedback === 'incorrect' && <p className="text-center text-red-500 font-bold mt-3 animate-pulse">Salah!</p>}
+                </div>
+             )}
+        </div>
     );
 };
 

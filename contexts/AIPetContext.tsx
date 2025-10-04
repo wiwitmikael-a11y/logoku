@@ -8,15 +8,15 @@ import type { AIPetState, AIPetStats, AIPetPersonalityVector } from '../types';
 export interface AIPetContextType {
   petState: AIPetState | null;
   isLoading: boolean;
-  notifyPetOfActivity: (activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice', detail?: any) => void;
+  notifyPetOfActivity: (activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => void;
   handleInteraction: () => void;
-  onGameWin: (game: 'color' | 'pattern') => void;
+  onGameWin: (game: 'color' | 'pattern' | 'style' | 'slogan') => void;
 }
 
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
-const INITIAL_STATS: AIPetStats = { energy: 100, creativity: 50, intelligence: 50 };
-const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100 };
+const INITIAL_STATS: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
+const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
 
 const useDebounce = <F extends (...args: any[]) => any>(callback: F, delay: number) => {
     // FIX: Changed useRef<number>() to useRef<number | null>(null) to provide an explicit initial value. This resolves an ambiguous type issue that was causing misleading errors about argument counts in other functions.
@@ -105,7 +105,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         stats: {
                             energy: Math.max(0, p.stats.energy - decayRate * 2),
                             creativity: Math.max(0, p.stats.creativity - decayRate),
-                            intelligence: Math.max(0, p.stats.intelligence - decayRate)
+                            intelligence: Math.max(0, p.stats.intelligence - decayRate),
+                            charisma: Math.max(0, p.stats.charisma - decayRate)
                         }
                     };
                 }, true); // Use skipDebounce for background updates
@@ -119,7 +120,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return () => cancelAnimationFrame(animationFrameId);
     }, [petState, updatePetState]);
 
-    const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice', detail?: any) => {
+    const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {
         updatePetState(p => {
             let newStats = { ...p.stats };
             let newPersonality = { ...p.personality };
@@ -132,6 +133,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     newStats.creativity = Math.min(MAX_STATS.creativity, newStats.creativity + 10);
                     break;
                 case 'user_idle': newStats.energy = Math.max(0, newStats.energy - 2); break;
+                case 'forum_interaction': newStats.charisma = Math.min(MAX_STATS.charisma, newStats.charisma + 0.5); break;
                 case 'style_choice': if (detail && newPersonality.hasOwnProperty(detail)) { newPersonality[detail as keyof AIPetPersonalityVector]++; } break;
             }
             return { ...p, stats: newStats, personality: newPersonality };
@@ -148,10 +150,15 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }));
     }, [updatePetState]);
     
-    const onGameWin = useCallback((game: 'color' | 'pattern') => {
+    const onGameWin = useCallback((game: 'color' | 'pattern' | 'style' | 'slogan') => {
         addXp(15);
         updatePetState(p => {
-            const statToBoost = game === 'color' ? 'creativity' : 'intelligence';
+            let statToBoost: keyof AIPetStats = 'creativity';
+            if (game === 'color') statToBoost = 'creativity';
+            if (game === 'pattern') statToBoost = 'intelligence';
+            if (game === 'style') statToBoost = 'intelligence';
+            if (game === 'slogan') statToBoost = 'charisma';
+            
             return {
                 ...p,
                 stats: {

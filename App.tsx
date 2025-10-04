@@ -6,7 +6,7 @@ import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 // FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
-import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile } from './types';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 // FIX: The import for AIPetContext was failing because the file was not a module. This is fixed by adding content to the file.
 import { AIPetProvider, useAIPet } from './contexts/AIPetContext';
@@ -62,12 +62,13 @@ const LightImageEditor = React.lazy(() => import('./components/common/LightImage
 const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
 // FIX: The import for AIPetWidget was failing because the file was not a module. This is fixed by adding content to the file.
 const AIPetWidget = React.lazy(() => import('./components/AIPetWidget'));
+const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const AiAssistant: React.FC<{ appState: AppState, isOpen: boolean, onToggle: (isOpen: boolean) => void, isPulsing: boolean }> = ({ appState, isOpen, onToggle, isPulsing }) => {
+const AiAssistant: React.FC<{ petName: string, isOpen: boolean, onToggle: (isOpen: boolean) => void }> = ({ petName, isOpen, onToggle }) => {
     const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
     const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
     const [input, setInput] = useState('');
@@ -75,42 +76,21 @@ const AiAssistant: React.FC<{ appState: AppState, isOpen: boolean, onToggle: (is
     const chatRef = useRef<Chat | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const [isFabVisible, setIsFabVisible] = useState(true);
-    const lastScrollY = useRef(0);
     
     const defaultPromptStarters = [ "Berapa token gratis yang saya dapat?", "Project pertama bayar gak?", "Gimana cara nyimpen logo saya?", "Apa itu persona brand?", ];
-    const [promptStarters, setPromptStarters] = useState(defaultPromptStarters);
-
-    useEffect(() => {
-        let contextualPrompts = defaultPromptStarters;
-        if (appState === 'persona') contextualPrompts = [ "Mang, 'value proposition' itu maksudnya apa sih?", "Bantuin isi target pasar buat jualan seblak dong!", "Apa bedanya target audience sama customer avatar?", "Kasih contoh kompetitor buat bisnis fashion." ];
-        else if (appState === 'logo' || appState === 'logo_detail') contextualPrompts = [ "Apa bedanya logo maskot sama emblem?", "Kasih tips milih gaya logo buat F&B dong!", "Jelasin soal 'negative space' di logo.", "Gimana cara bikin logo yang timeless?" ];
-        setPromptStarters(contextualPrompts);
-    }, [appState]);
 
     const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     useEffect(scrollToBottom, [messages, isLoading]);
     
     useEffect(() => {
-        if(isOpen && messages.length === 0) setMessages([{ role: 'model', text: "Sore, Juragan! Mang AI siap bantu. Ada yang bisa dibantuin soal branding atau fitur di aplikasi ini?" }]);
-    }, [isOpen, messages.length]);
+        if(isOpen && messages.length === 0) setMessages([{ role: 'model', text: `Halo Juragan! Aku ${petName}, siap bantu. Ada yang bisa dibantuin soal branding atau fitur di aplikasi ini?` }]);
+    }, [isOpen, messages.length, petName]);
 
     useEffect(() => {
         const textarea = textareaRef.current;
         if (textarea) { textarea.style.height = 'auto'; textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`; }
     }, [input]);
     
-    useEffect(() => {
-        const handleScroll = () => {
-            const currentScrollY = window.scrollY;
-            if (Math.abs(currentScrollY - lastScrollY.current) < 20) return;
-            setIsFabVisible(currentScrollY < lastScrollY.current || currentScrollY < 10);
-            lastScrollY.current = currentScrollY;
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
     const handleSendMessage = async (e?: React.FormEvent, prompt?: string) => {
         e?.preventDefault();
         const messageText = (prompt || input).trim();
@@ -120,14 +100,14 @@ const AiAssistant: React.FC<{ appState: AppState, isOpen: boolean, onToggle: (is
         try {
             if (!chatRef.current) {
                 const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_API_KEY});
-                chatRef.current = ai.chats.create({ model: 'gemini-2.5-flash', config: { systemInstruction: "You are Mang AI, a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'desain.fun' application. Your goal is to make branding feel fun and easy. You are an expert in branding, design, and marketing for small businesses. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.", }, });
+                chatRef.current = ai.chats.create({ model: 'gemini-2.5-flash', config: { systemInstruction: `You are an AI Pet assistant named ${petName}. You are a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'desain.fun' application. Your goal is to make branding feel fun and easy. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.`, }, });
             }
             const response = await chatRef.current.sendMessage({ message: messageText });
             await deductCredits(1);
             setMessages(prev => [...prev, { role: 'model', text: response.text }]);
         } catch (error) {
             console.error("AI Assistant Error:", error);
-            const errorMessage = error instanceof Error ? error.message : "Waduh, Mang AI lagi pusing, nih. Coba tanya lagi nanti ya.";
+            const errorMessage = error instanceof Error ? error.message : `Waduh, aku lagi pusing, nih. Coba tanya lagi nanti ya.`;
             setMessages(prev => [...prev, { role: 'model', text: `Error: ${errorMessage}` }]);
         } finally { setIsLoading(false); }
     };
@@ -135,12 +115,9 @@ const AiAssistant: React.FC<{ appState: AppState, isOpen: boolean, onToggle: (is
     return (
         <>
             <div id="ai-assistant-overlay" className={isOpen ? 'visible' : ''} onClick={() => onToggle(false)}></div>
-            <button id="ai-assistant-fab" onClick={() => onToggle(!isOpen)} title="Tanya Mang AI" className={`${!isFabVisible ? 'fab-hidden' : ''} ${isPulsing && !isOpen ? 'animate-ai-fab-pulse' : ''}`}>
-                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Panggil Mang AI" className="animate-breathing-ai" />
-            </button>
             <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>
                 <header className="p-4 border-b border-border-main flex justify-between items-center flex-shrink-0">
-                    <h3 className="text-lg font-bold text-primary">Tanya Mang AI</h3>
+                    <h3 className="text-lg font-bold text-primary">Tanya {petName}</h3>
                     <button onClick={() => onToggle(false)} title="Tutup" className="p-2 text-text-muted rounded-full hover:bg-background hover:text-text-header">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
@@ -153,7 +130,7 @@ const AiAssistant: React.FC<{ appState: AppState, isOpen: boolean, onToggle: (is
                      {messages.length === 1 && !isLoading && (
                         <div className="flex flex-col gap-2 items-start animate-content-fade-in">
                             <p className="text-sm text-text-muted mb-1">Contoh pertanyaan:</p>
-                            {promptStarters.map(prompt => (
+                            {defaultPromptStarters.map(prompt => (
                                 <button key={prompt} onClick={() => handleSendMessage(undefined, prompt)} className="bg-background border border-border-main text-text-body px-3 py-1.5 rounded-lg text-sm text-left hover:bg-border-light transition-colors">
                                     {prompt}
                                 </button>
@@ -186,6 +163,44 @@ const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> =
     </button>
 );
 
+const AIPetHomeModal: React.FC<{ show: boolean; onClose: () => void; petState: AIPetState | null; profile: Profile | null }> = ({ show, onClose, petState, profile }) => {
+    if (!show || !petState || !profile) return null;
+
+    const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; icon: string; } } = {
+      BRAND_PERTAMA_LAHIR: { name: 'Brand Pertama Lahir!', description: 'Selesaikan 1 project.', icon: '🥉' },
+      SANG_KOLEKTOR: { name: 'Sang Kolektor', description: 'Selesaikan 5 project.', icon: '🥈' },
+      SULTAN_KONTEN: { name: 'Sultan Konten', description: 'Selesaikan 10 project.', icon: '🥇' },
+    };
+    const userAchievements = profile.achievements || [];
+
+    return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={onClose}>
+            <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-xl p-8 flex flex-col items-center" onClick={e => e.stopPropagation()}>
+                <h2 className="text-3xl font-bold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>Rumah {petState.name}</h2>
+                <div className="w-48 h-48 my-4">
+                    <Suspense fallback={null}><AIPetVisual petState={petState} /></Suspense>
+                </div>
+                <p className="text-text-muted text-sm mb-6">Ini adalah tempat {petState.name} beristirahat dan memajang prestasimu!</p>
+                <div className="w-full bg-background p-4 rounded-lg">
+                    <h3 className="font-semibold text-text-header mb-3">Dinding Prestasi</h3>
+                    {userAchievements.length > 0 ? (
+                        <div className="flex justify-center gap-4">
+                            {userAchievements.map(id => ACHIEVEMENTS_MAP[id] && (
+                                <div key={id} className="text-center" title={ACHIEVEMENTS_MAP[id].description}>
+                                    <span className="text-5xl">{ACHIEVEMENTS_MAP[id].icon}</span>
+                                    <p className="text-xs font-semibold">{ACHIEVEMENTS_MAP[id].name}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-xs text-text-muted italic text-center">Dinding masih kosong. Selesaikan project untuk mendapatkan lencana!</p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const App: React.FC = () => {
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
@@ -195,7 +210,7 @@ const App: React.FC = () => {
 
 const MainApp: React.FC = () => {
     const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, imageEditorState, closeImageEditor } = useAuth();
-    const { notifyPetOfActivity } = useAIPet();
+    const aipetContext = useAIPet();
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -209,6 +224,9 @@ const MainApp: React.FC = () => {
     const [toast, setToast] = useState({ message: '', show: false });
     
     const [isAssistantOpen, setAssistantOpen] = useState(false);
+    const [isPetPanelOpen, setPetPanelOpen] = useState(false);
+    const [isPetMenuOpen, setPetMenuOpen] = useState(false);
+    const [showAIPetHome, setShowAIPetHome] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
     const [showAboutModal, setShowAboutModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
@@ -223,10 +241,10 @@ const MainApp: React.FC = () => {
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
+    const petMenuRef = useRef<HTMLDivElement>(null);
     const previousAppState = useRef<AppState>(appState);
 
     // UX Enhancements
-    const [isAiFabPulsing, setIsAiFabPulsing] = useState(false);
     const [showXpGain, setShowXpGain] = useState(false);
     const prevXp = useRef(profile?.xp ?? 0);
 
@@ -256,7 +274,10 @@ const MainApp: React.FC = () => {
     useEffect(() => { if (!session && !authLoading) setShowCaptcha(true); else setShowCaptcha(false); }, [session, authLoading]);
     
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => { if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false); };
+        const handleClickOutside = (event: MouseEvent) => { 
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false); 
+            if (petMenuRef.current && !petMenuRef.current.contains(event.target as Node)) setPetMenuOpen(false); 
+        };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
@@ -279,7 +300,7 @@ const MainApp: React.FC = () => {
         const resetTimer = () => {
             clearTimeout(idleTimeout);
             idleTimeout = window.setTimeout(() => {
-                notifyPetOfActivity('user_idle');
+                aipetContext.notifyPetOfActivity('user_idle');
             }, 120000); // 2 minutes
         };
         const events = ['mousemove', 'keydown', 'mousedown', 'touchstart'];
@@ -289,27 +310,7 @@ const MainApp: React.FC = () => {
             clearTimeout(idleTimeout);
             events.forEach(event => window.removeEventListener(event, resetTimer));
         };
-    }, [notifyPetOfActivity]);
-
-    // Proactive AI Assistant
-    useEffect(() => {
-        let idleTimeout: number;
-        const resetIdleTimer = () => {
-            clearTimeout(idleTimeout);
-            setIsAiFabPulsing(false);
-            if (['logo_detail', 'persona', 'logo', 'social_kit'].includes(appState)) {
-                idleTimeout = window.setTimeout(() => setIsAiFabPulsing(true), 30000);
-            }
-        };
-        window.addEventListener('mousemove', resetIdleTimer);
-        window.addEventListener('keydown', resetIdleTimer);
-        resetIdleTimer();
-        return () => {
-            clearTimeout(idleTimeout);
-            window.removeEventListener('mousemove', resetIdleTimer);
-            window.removeEventListener('keydown', resetIdleTimer);
-        };
-    }, [appState]);
+    }, [aipetContext.notifyPetOfActivity]);
 
     // XP Gain Animation
     useEffect(() => {
@@ -398,9 +399,9 @@ const MainApp: React.FC = () => {
         await supabase.from('profiles').update({ total_projects_completed: newTotalCompleted }).eq('id', user.id); await addXp(500);
         if (newTotalCompleted === 1) await grantAchievement('BRAND_PERTAMA_LAHIR'); else if (newTotalCompleted === 5) await grantAchievement('SANG_KOLEKTOR'); else if (newTotalCompleted === 10) await grantAchievement('SULTAN_KONTEN');
         await refreshProfile(); const updatedProject: Project = dbData as any; setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-        notifyPetOfActivity('project_completed');
+        aipetContext.notifyPetOfActivity('project_completed');
         handleReturnToDashboard(); showToast("Mantap! Project lo berhasil diselesaikan.");
-    }, [session, user, selectedProjectId, profile, grantFirstTimeCompletionBonus, addXp, grantAchievement, refreshProfile, handleReturnToDashboard, showToast, notifyPetOfActivity]);
+    }, [session, user, selectedProjectId, profile, grantFirstTimeCompletionBonus, addXp, grantAchievement, refreshProfile, handleReturnToDashboard, showToast, aipetContext.notifyPetOfActivity]);
 
     const handleRegenerateTextAsset = useCallback(async <T,>(projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<T>, successMessage: string) => {
         setGeneralError(null); if ((profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
@@ -455,7 +456,7 @@ const MainApp: React.FC = () => {
     
     return (
       <>
-        <div className={`min-h-screen bg-background text-text-body transition-all duration-300 ${isAssistantOpen ? 'blur-sm' : ''}`}>
+        <div className={`min-h-screen bg-background text-text-body transition-all duration-300`}>
             <header className="py-3 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300">
                 <div className="absolute top-0 left-0 w-full h-1.5 accent-stripes"></div>
                 <div className="max-w-7xl mx-auto flex justify-between items-center relative pt-1.5">
@@ -511,14 +512,44 @@ const MainApp: React.FC = () => {
             <AdBanner />
             <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
         </div>
-        {/* Modals and overlays that should not be blurred */}
-        <AiAssistant appState={appState} isOpen={isAssistantOpen} onToggle={setAssistantOpen} isPulsing={isAiFabPulsing} />
+
+        {/* --- Floating Pet Assistant & Panels --- */}
+        {user && !aipetContext.isLoading && aipetContext.petState && (
+            <div ref={petMenuRef}>
+                <div 
+                    onClick={() => setPetMenuOpen(p => !p)}
+                    className="fixed bottom-8 right-8 w-24 h-24 z-40 cursor-pointer group animate-breathing-ai"
+                    style={{ animationDuration: '4s' }}
+                >
+                    <Suspense fallback={null}><AIPetVisual petState={aipetContext.petState} /></Suspense>
+                </div>
+
+                {isPetMenuOpen && (
+                    <div className="fixed bottom-[10.5rem] right-8 w-48 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg p-2 space-y-2 z-40 animate-content-fade-in">
+                        <button onClick={() => { setPetPanelOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Lihat Profil {aipetContext.petState.name}</button>
+                        <button onClick={() => { setAssistantOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Tanya {aipetContext.petState.name}</button>
+                    </div>
+                )}
+
+                <Suspense fallback={null}>
+                    <AiAssistant 
+                        isOpen={isAssistantOpen} 
+                        onToggle={setAssistantOpen} 
+                        petName={aipetContext.petState.name} 
+                    />
+                    <AIPetWidget 
+                        isOpen={isPetPanelOpen}
+                        onClose={() => setPetPanelOpen(false)}
+                        onShowHome={() => setShowAIPetHome(true)}
+                        {...aipetContext}
+                    />
+                </Suspense>
+            </div>
+        )}
+
+        {/* Modals and overlays */}
         <Suspense fallback={null}>
-            {user && (
-                <AIPetWidget 
-                    {...useAIPet()}
-                />
-            )}
+            <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={aipetContext.petState} profile={profile} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
             <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
             <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />

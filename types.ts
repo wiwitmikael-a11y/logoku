@@ -108,6 +108,7 @@ export interface AIPetStats {
   energy: number;
   creativity: number;
   intelligence: number;
+  charisma: number;
 }
 
 export interface AIPetState {

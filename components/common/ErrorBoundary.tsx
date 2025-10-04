@@ -23,6 +23,12 @@ class ErrorBoundary extends Component<Props, State> {
     isCopied: false,
   };
 
+  // FIX: Switched to constructor binding for `handleCopy` to ensure `this` context is correctly resolved by TypeScript, addressing errors where `setState` and `props` were not found on the component type.
+  constructor(props: Props) {
+    super(props);
+    this.handleCopy = this.handleCopy.bind(this);
+  }
+
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.
     // It should return an object to update state.
@@ -33,10 +39,7 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: The `handleCopy` method is defined as a class property arrow function
-  // to ensure `this` is correctly bound to the component instance when used as an event handler.
-  // This prevents runtime errors where `this.setState` would otherwise be undefined.
-  private handleCopy = () => {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
