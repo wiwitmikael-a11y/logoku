@@ -206,23 +206,68 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
         }
         ctx.restore();
     }, [layers, selectedLayerId, backgroundColor, width, height, viewTransform, editingText]);
-    const drawGuides = useCallback(() => { /* ... unchanged ... */ }, [snapGuides, viewTransform, width, height]);
+    const drawGuides = useCallback((guides: SnapGuide[]) => {
+        const canvas = guideCanvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (!canvas || !ctx) return;
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        ctx.save();
+        ctx.translate(viewTransform.pan.x, viewTransform.pan.y);
+        ctx.scale(viewTransform.zoom, viewTransform.zoom);
+        ctx.strokeStyle = 'rgb(var(--c-splash))';
+        ctx.lineWidth = 1 / viewTransform.zoom;
+
+        guides.forEach(guide => {
+            ctx.beginPath();
+            if (guide.type === 'h') {
+                ctx.moveTo(0, guide.position);
+                ctx.lineTo(width, guide.position);
+            } else {
+                ctx.moveTo(guide.position, 0);
+                ctx.lineTo(guide.position, height);
+            }
+            ctx.stroke();
+        });
+        ctx.restore();
+    }, [viewTransform, width, height]);
+
 
     // --- LAYER & STATE MANIPULATION ---
     const updateLayer = (id: number, props: Partial<Layer>, withHistory = true) => setState({ layers: layers.map(l => (l.id === id ? { ...l, ...props } : l)) }, withHistory);
     const addLayer = (type: 'text' | 'shape' | 'image', options: any = {}) => {
         let newLayer: Layer; const defaultShadow = { offsetX: 2, offsetY: 2, blur: 4, color: '#00000080' };
-        const common = { id: Date.now(), x: (width/2)-75, y: (height/2)-50, rotation: 0, isVisible: true, isLocked: false, opacity: 100, shadow: defaultShadow };
+        const common = { id: Date.now(), x: 0, y: 0, rotation: 0, isVisible: true, isLocked: false, opacity: 100, shadow: defaultShadow };
         if (type === 'text') { newLayer = { ...common, name: "Teks Baru", type: 'text', content: 'Teks Baru', font: 'Plus Jakarta Sans', size: 48, color: '#FFFFFF', width: 200, height: 50, textAlign: 'left' }; }
-        else if (type === 'image') { newLayer = { ...common, name: options.name || "Gambar", type: 'image', image: options.image, width: options.image.width, height: options.image.height, filters: {brightness: 100, contrast: 100, saturate: 100, grayscale: 0} }; }
+        else if (type === 'image') { newLayer = { ...common, name: options.name || "Gambar", type: 'image', image: options.image, width: options.image.naturalWidth, height: options.image.naturalHeight, filters: {brightness: 100, contrast: 100, saturate: 100, grayscale: 0} }; }
         else { newLayer = { ...common, name: "Bentuk Baru", type: 'shape', shape: options.shapeType!, fillColor: '#c026d3', strokeColor: '#000000', strokeWidth: 0, width: 150, height: 150 }; }
+        // Center the new layer
+        newLayer.x = (width / 2) - (newLayer.width / 2);
+        newLayer.y = (height / 2) - (newLayer.height / 2);
         setState({ layers: [...layers, newLayer] }); setSelectedLayerId(newLayer.id);
     };
     const deleteLayer = useCallback((id: number) => { setState({ layers: layers.filter(l => l.id !== id) }); if(selectedLayerId === id) setSelectedLayerId(null); }, [layers, selectedLayerId, setState]);
     const handleReorderLayers = (newLayers: Layer[]) => setState({ layers: newLayers });
 
     // --- EVENT HANDLERS ---
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { /* ... unchanged ... */ };
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const imageUrl = event.target?.result as string;
+            if (imageUrl) {
+                const img = new Image();
+                img.src = imageUrl;
+                img.onload = () => {
+                    addLayer('image', { image: img, name: file.name });
+                };
+            }
+        };
+        reader.readAsDataURL(file);
+        e.target.value = ''; // Reset for re-uploading the same file
+    };
     const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => { /* ... unchanged ... */ };
     const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (interactionState?.type === 'drag_panel') {
