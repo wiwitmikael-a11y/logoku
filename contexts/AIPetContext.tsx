@@ -3,6 +3,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
+import * as geminiService from '../services/geminiService';
 import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage } from '../types';
 
 export interface AIPetContextType {
@@ -12,6 +13,7 @@ export interface AIPetContextType {
   handleInteraction: () => void;
   onGameWin: (game: 'color' | 'pattern' | 'style' | 'slogan') => void;
   updatePetName: (newName: string) => void;
+  hatchPet: () => Promise<void>;
 }
 
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
@@ -61,7 +63,7 @@ const createSeededRandom = (seed: number) => {
 
 
 export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user, profile, addXp } = useAuth();
+    const { user, profile, addXp, deductCredits } = useAuth();
     const [petState, setPetState] = useState<AIPetState | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const lastUpdateRef = useRef(Date.now());
@@ -96,43 +98,30 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setIsLoading(false);
             return;
         }
-        const currentStage = getStageForLevel(profile.level);
-
+        
         if (profile.aipet_state) {
             const existingState = profile.aipet_state as AIPetState;
-            // Check for evolution or if stage is still egg (to force evolution)
-            if (existingState.stage !== currentStage || existingState.stage === 'egg') {
-                const evolvedState = { ...existingState, stage: currentStage };
+            const expectedStage = getStageForLevel(profile.level);
+             // Evolve if stage in db is different, or if it's an unhatched egg
+            if (existingState.stage !== expectedStage && existingState.stage !== 'egg') {
+                 // Trigger evolution logic here in the future
+                console.log(`Pet should evolve from ${existingState.stage} to ${expectedStage}`);
+                const evolvedState = { ...existingState, stage: expectedStage };
                 setPetState(evolvedState);
                 savePetStateToDb(evolvedState);
             } else {
                 setPetState(existingState);
             }
         } else {
-            // --- NEW PET GENERATION LOGIC ---
-            const seed = stringToHash(user.id);
-            const seededRandom = createSeededRandom(seed);
-            
-            const personalities: (keyof AIPetPersonalityVector)[] = ['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'];
-            const initialPersonality: AIPetPersonalityVector = personalities.reduce((acc, curr) => {
-                acc[curr] = Math.floor(seededRandom() * 11); // Random value between 0-10
-                return acc;
-            }, {} as AIPetPersonalityVector);
-
-            const initialStats: AIPetStats = {
-                energy: 80 + Math.floor(seededRandom() * 21), // 80-100
-                creativity: 40 + Math.floor(seededRandom() * 21), // 40-60
-                intelligence: 40 + Math.floor(seededRandom() * 21), // 40-60
-                charisma: 40 + Math.floor(seededRandom() * 21), // 40-60
-            };
-
+            // NEW PET: Starts as an egg.
             const newPet: AIPetState = {
-                name: 'AIPet',
-                stage: currentStage,
-                stats: initialStats,
+                name: 'Telur AI',
+                stage: 'egg',
+                stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
-                personality: initialPersonality
+                personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
+                visual_base64: null
             };
             setPetState(newPet);
             savePetStateToDb(newPet);
@@ -146,7 +135,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const now = Date.now();
             if (now - lastUpdateRef.current > 5000) { // Update every 5 seconds
                 updatePetState(p => {
-                    const decayRate = p.stage === 'egg' ? 0 : 0.1; // Eggs don't lose stats
+                    if (p.stage === 'egg') return p;
+                    const decayRate = 0.1;
                     return {
                         ...p,
                         stats: {
@@ -166,6 +156,44 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
         return () => cancelAnimationFrame(animationFrameId);
     }, [petState, updatePetState]);
+
+    const hatchPet = useCallback(async () => {
+        if (!user) throw new Error("User not found");
+        const HATCH_COST = 1;
+        const success = await deductCredits(HATCH_COST);
+        if (!success) throw new Error("Token tidak cukup.");
+        
+        const seed = user.id + Date.now();
+        const keywords = ['futuristic', 'elemental', 'armored', 'mythical', 'chibi', 'glowing'];
+        const randomKeyword = keywords[stringToHash(seed) % keywords.length];
+
+        const prompt = `Masterpiece vector art of a cute chibi digital monster, "Digimon" anime style. The creature is a baby or rookie level. It has a ${randomKeyword} theme. Clean sharp vector lines, vibrant colors, simple colored background. Trending on artstation. No text, no words. Seed: ${seed}`;
+
+        const visual_base64 = await geminiService.generateAIPetVisual(prompt);
+
+        const seedRandom = createSeededRandom(stringToHash(seed));
+        const personalities: (keyof AIPetPersonalityVector)[] = ['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'];
+        const initialPersonality: AIPetPersonalityVector = personalities.reduce((acc, curr) => {
+            acc[curr] = Math.floor(seedRandom() * 11);
+            return acc;
+        }, {} as AIPetPersonalityVector);
+        
+        const hatchedState: AIPetState = {
+            name: 'AIPet-ku',
+            stage: 'child',
+            stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
+            lastFed: Date.now(),
+            lastPlayed: Date.now(),
+            personality: initialPersonality,
+            visual_base64: visual_base64,
+        };
+        
+        setPetState(hatchedState);
+        await savePetStateToDb(hatchedState);
+        await addXp(50); // Bonus XP for hatching
+
+    }, [user, deductCredits, addXp, savePetStateToDb]);
+
 
     const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {
         updatePetState(p => {
@@ -225,7 +253,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [updatePetState]);
 
 
-    const value: AIPetContextType = { petState, isLoading, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName };
+    const value: AIPetContextType = { petState, isLoading, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, hatchPet };
     
     return <AIPetContext.Provider value={value}>{children}</AIPetContext.Provider>;
 };

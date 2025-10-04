@@ -63,6 +63,7 @@ const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
 // FIX: The import for AIPetWidget was failing because the file was not a module. This is fixed by adding content to the file.
 const AIPetWidget = React.lazy(() => import('./components/AIPetWidget'));
 const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
+const AIPetHatching = React.lazy(() => import('./components/AIPetHatching'));
 const AIPetVisualizerModal = React.lazy(() => import('./components/AIPetVisualizerModal'));
 
 
@@ -520,8 +521,7 @@ const MainApp: React.FC = () => {
             <div ref={petMenuRef}>
                 <div 
                     onClick={() => setPetMenuOpen(p => !p)}
-                    className="fixed bottom-8 right-8 w-24 h-24 z-40 cursor-pointer group animate-breathing-ai"
-                    style={{ animationDuration: '4s' }}
+                    className="fixed bottom-8 right-8 w-24 h-24 z-40 cursor-pointer group"
                 >
                     <Suspense fallback={null}><AIPetVisual petState={aipetContext.petState} /></Suspense>
                 </div>
@@ -529,7 +529,7 @@ const MainApp: React.FC = () => {
                 {isPetMenuOpen && (
                     <div className="pet-menu-popup fixed bottom-[8.5rem] right-2 w-48 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg p-2 space-y-2 z-40 animate-content-fade-in">
                         <button onClick={() => { setPetPanelOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Lihat Profil {aipetContext.petState.name}</button>
-                        <button onClick={() => { setAssistantOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors">Tanya {aipetContext.petState.name}</button>
+                        <button onClick={() => { setAssistantOpen(true); setPetMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background rounded-md transition-colors" disabled={aipetContext.petState.stage === 'egg'}>Tanya {aipetContext.petState.name}</button>
                     </div>
                 )}
 

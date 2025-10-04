@@ -243,6 +243,27 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
     }
 };
 
+export const generateAIPetVisual = async (prompt: string): Promise<string> => {
+    const ai = getAiClient();
+    try {
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: prompt,
+            config: {
+                numberOfImages: 1,
+                outputMimeType: 'image/png',
+                aspectRatio: '1:1',
+            },
+        });
+
+        const base64ImageBytes = response.generatedImages[0].image.imageBytes;
+        // Don't apply watermark to AI pets to keep them clean
+        return `data:image/png;base64,${base64ImageBytes}`;
+    } catch (error) {
+        throw handleApiError(error, "AI Pet Visual Generator");
+    }
+};
+
 // --- Text Generation Functions ---
 export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string): Promise<BrandPersona[]> => {
   const ai = getAiClient();

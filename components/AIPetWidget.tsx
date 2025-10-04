@@ -1,10 +1,12 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import type { AIPetContextType } from '../contexts/AIPetContext';
 import { useAuth } from '../contexts/AuthContext';
 import AIPetVisual from './AIPetVisual';
 import { playSound } from '../services/soundService';
+
+const AIPetHatching = React.lazy(() => import('./AIPetHatching'));
 
 type MiniGame = 'color' | 'pattern' | 'style' | 'slogan' | null;
 
@@ -20,6 +22,7 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     const [gameFeedback, setGameFeedback] = useState<'correct' | 'incorrect' | null>(null);
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(petState?.name || '');
+    const [showHatchingModal, setShowHatchingModal] = useState(false);
 
     const MINIGAME_COST = 1;
 
@@ -36,11 +39,9 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
         setIsEditingName(false);
     };
 
-    // --- Color Harmony Game ---
+    // --- Game Logic ---
     const [colorTarget, setColorTarget] = useState('');
     const [colorOptions, setColorOptions] = useState<string[]>([]);
-    
-    // --- Pattern Puzzle Game ---
     const [patternTarget, setPatternTarget] = useState<number[]>([]);
     const [patternOptions, setPatternOptions] = useState<number[][]>([]);
     
@@ -93,15 +94,45 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
         }, 1000);
     };
 
-    if (isLoading || !petState || !isOpen) return null;
+    if (isLoading || !petState) return null;
     
     const renderPattern = (sequence: number[]) => {
         const symbols = ['■', '●', '▲', '◆'];
         return sequence.map(i => symbols[i]).join(' ');
     };
 
+    // --- HATCHING VIEW ---
+    if (petState.stage === 'egg') {
+        return (
+            <>
+                {isOpen && (
+                    <div className="fixed bottom-8 left-8 w-80 bg-surface/80 backdrop-blur-md border border-border-main rounded-xl shadow-lg p-4 z-30 transition-all duration-300 origin-bottom-left animate-content-fade-in">
+                        <div className="flex justify-between items-center pb-2 border-b border-border-main">
+                            <h3 className="font-bold text-text-header">{petState.name}</h3>
+                            <button onClick={onClose} className="text-text-muted hover:text-text-header text-2xl leading-none">&times;</button>
+                        </div>
+                        <div className="text-center p-4">
+                            <p className="text-sm text-text-body mb-4">Sepertinya ada telur misterius di sini. Mau coba tetaskan?</p>
+                            <button onClick={() => setShowHatchingModal(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover">
+                                Tetaskan Telur (1 Token)
+                            </button>
+                        </div>
+                    </div>
+                )}
+                {showHatchingModal && (
+                    <Suspense fallback={null}>
+                        <AIPetHatching onClose={() => setShowHatchingModal(false)} />
+                    </Suspense>
+                )}
+            </>
+        );
+    }
+    
+    // --- HATCHED PET VIEW ---
+    if (!isOpen) return null;
+
     return (
-        <div className={`fixed bottom-8 left-8 w-80 bg-surface/80 backdrop-blur-md border border-border-main rounded-xl shadow-lg p-4 z-30 transition-all duration-300 origin-bottom-left ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'}`}>
+        <div className={`fixed bottom-8 left-8 w-80 bg-surface/80 backdrop-blur-md border border-border-main rounded-xl shadow-lg p-4 z-30 transition-all duration-300 origin-bottom-left animate-content-fade-in`}>
              <div className="flex justify-between items-center pb-2 border-b border-border-main">
                 {isEditingName ? (
                     <div className="flex items-center gap-2">
