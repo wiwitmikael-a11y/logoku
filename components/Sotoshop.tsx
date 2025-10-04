@@ -160,8 +160,7 @@ const NewDocumentModal: React.FC<{
     );
 };
 
-// --- NEW FLOATING & CONTEXTUAL UI COMPONENTS (Defined inside Sotoshop) ---
-
+// --- MAIN COMPONENT ---
 const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onClose }) => {
     
     // --- STATE MANAGEMENT ---
@@ -288,6 +287,23 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     };
     const deleteLayer = useCallback((id: number) => { setState({ layers: layers.filter(l => l.id !== id) }); if(selectedLayerId === id) setSelectedLayerId(null); }, [layers, selectedLayerId, setState]);
     const handleReorderLayers = (newLayers: Layer[]) => setState({ layers: newLayers });
+    const duplicateLayer = useCallback((id: number) => {
+        const layerToDup = layers.find(l => l.id === id);
+        if (!layerToDup) return;
+        const newLayer = { ...layerToDup, id: Date.now(), name: `${layerToDup.name} (copy)`, x: layerToDup.x + 20, y: layerToDup.y + 20 };
+        setState({ layers: [...layers, newLayer] });
+        setSelectedLayerId(newLayer.id);
+    }, [layers, setState]);
+    const moveLayer = useCallback((id: number, direction: 'up' | 'down') => {
+        const index = layers.findIndex(l => l.id === id);
+        if (index === -1) return;
+        const newLayers = [...layers];
+        const [layer] = newLayers.splice(index, 1);
+        const newIndex = direction === 'up' ? Math.min(layers.length - 1, index + 1) : Math.max(0, index - 1);
+        newLayers.splice(newIndex, 0, layer);
+        setState({ layers: newLayers });
+    }, [layers, setState]);
+
 
     const handleAlign = (alignment: Alignment) => {
         const layer = layers.find(l => l.id === selectedLayerId);
@@ -335,9 +351,107 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     };
     const handleCanvasMouseUp = () => { /* ... unchanged ... */ };
     const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => { /* ... unchanged ... */ };
-    const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => { /* ... Reworked logic ... */ };
-    const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => { /* ... Reworked logic ... */ };
-    const handleCanvasTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => { /* ... Reworked logic ... */ };
+    
+    // --- REWORKED TOUCH HANDLERS ---
+    const screenToCanvasCoords = useCallback((screenX: number, screenY: number) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return { x: 0, y: 0 };
+        const rect = canvas.getBoundingClientRect();
+        const x = (screenX - rect.left - viewTransform.pan.x) / viewTransform.zoom;
+        const y = (screenY - rect.top - viewTransform.pan.y) / viewTransform.zoom;
+        return { x, y };
+    }, [viewTransform]);
+    
+    const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const touches = e.touches;
+
+        if (touches.length === 1) { // Single touch
+            const touch = touches[0];
+            const now = Date.now();
+            const timeSinceLastTap = now - lastTapTimeRef.current;
+            lastTapTimeRef.current = now;
+
+            const point = screenToCanvasCoords(touch.clientX, touch.clientY);
+
+            // Double tap to edit text
+            if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD) {
+                 const layer = [...layers].reverse().find(l => l.type === 'text' && point.x >= l.x && point.x <= l.x + l.width && point.y >= l.y && point.y <= l.y + l.height);
+                if (layer) {
+                    setEditingText({ layerId: layer.id, initialContent: (layer as TextLayer).content });
+                    return;
+                }
+            }
+            
+            // Standard mouse down logic for single touch
+             handleCanvasMouseDown(touch as any); // Type assertion to reuse logic
+
+        } else if (touches.length === 2) { // Multi-touch
+            const t1 = touches[0];
+            const t2 = touches[1];
+            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            const angle = Math.atan2(t1.clientY - t2.clientY, t1.clientX - t2.clientX) * 180 / Math.PI;
+            const midX = (t1.clientX + t2.clientX) / 2;
+            const midY = (t1.clientY + t2.clientY) / 2;
+            
+            const selectedLayer = layers.find(l => l.id === selectedLayerId);
+
+            multiTouchStateRef.current = {
+                initialDist: dist,
+                initialAngle: angle,
+                initialLayerState: selectedLayer!,
+                initialPan: viewTransform.pan,
+                initialZoom: viewTransform.zoom,
+                initialMid: {x: midX, y: midY}
+            };
+            setInteractionState(null); // Stop any single-touch interactions
+        }
+    };
+
+    const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const touches = e.touches;
+        if (touches.length === 1 && !multiTouchStateRef.current) {
+            handleCanvasMouseMove(touches[0] as any);
+        } else if (touches.length === 2 && multiTouchStateRef.current) {
+            const { initialDist, initialAngle, initialLayerState, initialPan, initialZoom, initialMid } = multiTouchStateRef.current;
+            const t1 = touches[0]; const t2 = touches[1];
+            const newDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            const newAngle = Math.atan2(t1.clientY - t2.clientY, t1.clientX - t2.clientX) * 180 / Math.PI;
+            const newMidX = (t1.clientX + t2.clientX) / 2;
+            const newMidY = (t1.clientY + t2.clientY) / 2;
+            
+            const scale = newDist / initialDist;
+            const rotation = newAngle - initialAngle;
+
+            if (initialLayerState && !initialLayerState.isLocked) { // Rotate & scale layer
+                const newWidth = initialLayerState.width * scale;
+                const newHeight = initialLayerState.height * scale;
+                 updateLayer(initialLayerState.id, {
+                    rotation: initialLayerState.rotation + rotation,
+                    width: newWidth, height: newHeight,
+                    x: initialLayerState.x - (newWidth - initialLayerState.width) / 2,
+                    y: initialLayerState.y - (newHeight - initialLayerState.height) / 2
+                }, false);
+            } else { // Pan & zoom canvas
+                const newZoom = initialZoom * scale;
+                const panX = initialPan.x + (newMidX - initialMid.x);
+                const panY = initialPan.y + (newMidY - initialMid.y);
+                setViewTransform({ zoom: newZoom, pan: {x: panX, y: panY} });
+            }
+        }
+    };
+    
+    const handleCanvasTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        if (multiTouchStateRef.current) {
+            const selectedLayer = layers.find(l => l.id === selectedLayerId);
+            if (selectedLayer && !selectedLayer.isLocked) setState({ layers: [...layers] }); // Commit to history
+            multiTouchStateRef.current = null;
+        } else {
+            handleCanvasMouseUp();
+        }
+    };
+
     useEffect(() => { /* ... keydown/keyup unchanged ... */ }, [selectedLayerId, undo, redo, deleteLayer]);
     const handleTextEditBlur = () => { /* ... unchanged ... */ };
     useEffect(() => { if(editingText && textInputRef.current) textInputRef.current.focus(); }, [editingText]);
@@ -459,87 +573,60 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
 
     const FloatingLayersPanel: React.FC = () => {
         if (activePopup.type !== 'layers') return null;
+
+        const [draggedItem, setDraggedItem] = useState<number | null>(null);
+
+        const handleDragStart = (e: React.DragEvent, id: number) => { setDraggedItem(id); e.dataTransfer.effectAllowed = "move"; };
+        const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+        const handleDrop = (targetId: number) => {
+            if (draggedItem === null || draggedItem === targetId) return;
+            const draggedIndex = layers.findIndex(l => l.id === draggedItem);
+            const targetIndex = layers.findIndex(l => l.id === targetId);
+            const newLayers = [...layers];
+            const [removed] = newLayers.splice(draggedIndex, 1);
+            newLayers.splice(targetIndex, 0, removed);
+            handleReorderLayers(newLayers);
+            setDraggedItem(null);
+        };
+        
         return (
              <div className="absolute w-64 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-2xl flex flex-col" style={{ top: panelPositions.layers.y, left: panelPositions.layers.x }}>
                 <div onMouseDown={(e) => setInteractionState({type: 'drag_panel', panel: 'layers', initialMouse: {x: e.clientX, y: e.clientY}, initialPanelPos: panelPositions.layers })} className="p-2 cursor-move border-b border-border-main flex justify-between items-center"><h3 className="font-bold text-text-header text-sm">Layers</h3><button onClick={() => setActivePopup({type: null})} className="p-1 text-text-muted hover:text-white">&times;</button></div>
-                {/* Logic from old LayersPanel.tsx */}
-                <div className="flex-grow overflow-y-auto space-y-1 p-1 max-h-80">{[...layers].reverse().map(l => <div key={l.id}>{l.name}</div>)}</div>
-            </div>
-        );
-    };
-
-    const ContextualToolbar: React.FC = () => {
-        if (!selectedLayer || !canvasContainerRef.current) return null;
-        const { x, y, width, height, rotation } = selectedLayer;
-        const { zoom, pan } = viewTransform;
-    
-        const centerX = (x + width / 2) * zoom + pan.x;
-        const rad = rotation * Math.PI / 180;
-        const absCos = Math.abs(Math.cos(rad));
-        const absSin = Math.abs(Math.sin(rad));
-        const boundWidth = (width * absCos + height * absSin) * zoom;
-        const boundHeight = (width * absSin + height * absCos) * zoom;
-    
-        const screenTop = (y + height / 2) * zoom + pan.y - boundHeight / 2;
-        const screenBottom = screenTop + boundHeight;
-    
-        const containerRect = canvasContainerRef.current.getBoundingClientRect();
-        const toolbarHeight = 50;
-        const toolbarWidth = 220;
-    
-        let top = screenTop - toolbarHeight - 10;
-        if (top < containerRect.top + 10) {
-            top = screenBottom + 10;
-        }
-    
-        const left = Math.max(
-            containerRect.left + 10,
-            Math.min(
-                centerX - toolbarWidth / 2,
-                containerRect.right - toolbarWidth - 10
-            )
-        );
-
-        const style: React.CSSProperties = {
-            position: 'absolute',
-            top: `${top}px`,
-            left: `${left}px`,
-            transform: ``,
-            zIndex: 30
-        };
-
-        return (
-            <div style={style} className="bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-lg flex flex-col p-1" onMouseDown={e => e.stopPropagation()}>
-                <div className="flex items-center">
-                    <button title="Properti" onClick={() => setActivePopup(p => ({type: p.type === 'properties' ? null : 'properties'}))} className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" /></svg></button>
-                    <div className="w-px h-5 bg-border-main mx-1"></div>
-                    <button title="Layer Up" className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg></button>
-                    <button title="Layer Down" className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg></button>
-                    <div className="w-px h-5 bg-border-main mx-1"></div>
-                    <button title="Duplicate" className="p-2.5 text-text-muted hover:bg-background rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
-                    <div className="w-px h-5 bg-border-main mx-1"></div>
-                    <button title="Delete" onClick={() => deleteLayer(selectedLayer.id)} className="p-2.5 text-red-500 hover:bg-red-500/10 rounded-md"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                </div>
-                <div className="border-t border-border-main mt-1 pt-1 flex items-center gap-2 px-2">
-                    <span className="text-xs text-text-muted">Opacity</span>
-                    <input type="range" min="0" max="100" value={selectedLayer.opacity} onChange={e => updateLayer(selectedLayer.id, { opacity: +e.target.value }, false)} className="w-full" />
-                </div>
+                <div className="flex-grow overflow-y-auto space-y-1 p-1 max-h-80">{[...layers].reverse().map(l => (
+                    <div key={l.id} draggable onDragStart={(e) => handleDragStart(e, l.id)} onDragOver={handleDragOver} onDrop={() => handleDrop(l.id)} onClick={() => setSelectedLayerId(l.id)}
+                        className={`flex items-center gap-2 p-1.5 rounded cursor-pointer ${selectedLayerId === l.id ? 'bg-splash/20' : 'hover:bg-background'}`}>
+                        <button onClick={(e) => { e.stopPropagation(); updateLayer(l.id, { isVisible: !l.isVisible }); }} className="p-1 text-text-muted hover:text-white">{ l.isVisible ? <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> : <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59" /></svg> }</button>
+                        <span className="flex-grow text-sm truncate">{l.name}</span>
+                        <button onClick={(e) => { e.stopPropagation(); updateLayer(l.id, { isLocked: !l.isLocked }); }} className="p-1 text-text-muted hover:text-white">{ l.isLocked ? <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg> : <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zm0 9a3 3 0 100-6 3 3 0 000 6z" /></svg> }</button>
+                    </div>
+                ))}</div>
             </div>
         );
     };
     
     const FloatingPropertiesPanel: React.FC = () => {
-        if(activePopup.type !== 'properties') return null;
-        // Logic from old PropertiesPanel
-        const updateLayerNoHistory = (props: Partial<Layer>) => { if (selectedLayer) updateLayer(selectedLayer.id, props, false); };
+        if(activePopup.type !== 'properties' || !selectedLayer) return null;
+        const updateLayerNoHistory = (props: Partial<Layer>) => updateLayer(selectedLayer.id, props, false);
+        const commitHistory = () => setState({ layers: [...layers] });
+
         return(
             <div className="absolute w-64 bg-surface/90 backdrop-blur-md border border-border-main rounded-lg shadow-2xl flex flex-col" style={{ top: panelPositions.properties.y, left: panelPositions.properties.x }}>
                 <div onMouseDown={(e) => setInteractionState({type: 'drag_panel', panel: 'properties', initialMouse: {x: e.clientX, y: e.clientY}, initialPanelPos: panelPositions.properties })} className="p-2 cursor-move border-b border-border-main flex justify-between items-center"><h3 className="font-bold text-text-header text-sm">Properties</h3><button onClick={() => setActivePopup({type: null})} className="p-1 text-text-muted hover:text-white">&times;</button></div>
                 <div className="p-2 space-y-3 max-h-96 overflow-y-auto">
-                    { selectedLayer && selectedLayer.type === 'text' && (
+                    <PanelSection title="Transform" defaultOpen={true}>
+                        <div className="grid grid-cols-2 gap-2">
+                             <PropertyInput label="X" type="number" value={Math.round(selectedLayer.x)} onChange={e => updateLayerNoHistory({ x: parseInt(e.target.value) })} onBlur={commitHistory} />
+                             <PropertyInput label="Y" type="number" value={Math.round(selectedLayer.y)} onChange={e => updateLayerNoHistory({ y: parseInt(e.target.value) })} onBlur={commitHistory} />
+                             <PropertyInput label="Width" type="number" value={Math.round(selectedLayer.width)} onChange={e => updateLayerNoHistory({ width: parseInt(e.target.value) })} onBlur={commitHistory} />
+                             <PropertyInput label="Height" type="number" value={Math.round(selectedLayer.height)} onChange={e => updateLayerNoHistory({ height: parseInt(e.target.value) })} onBlur={commitHistory} />
+                        </div>
+                        <PropertyInput label="Rotation" type="number" value={Math.round(selectedLayer.rotation)} onChange={e => updateLayerNoHistory({ rotation: parseInt(e.target.value) })} onBlur={commitHistory} suffix="°" />
+                    </PanelSection>
+
+                    { selectedLayer.type === 'text' && (
                          <PanelSection title="Text">
-                            <PropertyTextarea label="Content" value={(selectedLayer as TextLayer).content} onChange={e => updateLayerNoHistory({ content: e.target.value })} rows={3} />
-                            <PropertySelect label="Font" value={(selectedLayer as TextLayer).font} onChange={e => updateLayerNoHistory({ font: e.target.value })}>
+                            <PropertyTextarea label="Content" value={selectedLayer.content} onChange={e => updateLayer(selectedLayer.id, { content: e.target.value })} rows={3} />
+                            <PropertySelect label="Font" value={selectedLayer.font} onChange={e => updateLayer(selectedLayer.id, { font: e.target.value })}>
                                 {FONT_CATEGORIES.map(category => (
                                     <optgroup label={category.label} key={category.label}>
                                         {category.fonts.map(font => <option key={font} value={font}>{font}</option>)}
@@ -547,11 +634,34 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                                 ))}
                             </PropertySelect>
                             <div className="grid grid-cols-2 gap-2">
-                                <PropertyInput label="Size" type="number" value={(selectedLayer as TextLayer).size} onChange={e => updateLayerNoHistory({ size: parseInt(e.target.value) || 12 })} suffix="px" />
-                                <PropertyColorInput label="Color" value={(selectedLayer as TextLayer).color} onChange={e => updateLayerNoHistory({ color: e.target.value })} />
+                                <PropertyInput label="Size" type="number" value={selectedLayer.size} onChange={e => updateLayer(selectedLayer.id, { size: parseInt(e.target.value) || 12 })} suffix="px" />
+                                <PropertyColorInput label="Color" value={selectedLayer.color} onChange={e => updateLayer(selectedLayer.id, { color: e.target.value })} />
                             </div>
+                            <PropertySelect label="Align" value={selectedLayer.textAlign} onChange={e => updateLayer(selectedLayer.id, { textAlign: e.target.value as TextAlign })}>
+                                <option value="left">Left</option><option value="center">Center</option><option value="right">Right</option>
+                            </PropertySelect>
                         </PanelSection>
                     )}
+                    { selectedLayer.type === 'shape' && (
+                        <PanelSection title="Shape">
+                            <PropertyColorInput label="Fill" value={selectedLayer.fillColor} onChange={e => updateLayer(selectedLayer.id, { fillColor: e.target.value })}/>
+                            <PropertyColorInput label="Stroke" value={selectedLayer.strokeColor} onChange={e => updateLayer(selectedLayer.id, { strokeColor: e.target.value })}/>
+                            <PropertyInput label="Stroke Width" type="number" value={selectedLayer.strokeWidth} min={0} onChange={e => updateLayer(selectedLayer.id, { strokeWidth: parseInt(e.target.value) })} />
+                        </PanelSection>
+                    )}
+                    { selectedLayer.type === 'image' && (
+                        <PanelSection title="Image Filters">
+                             <div><label className="flex justify-between text-text-muted text-xs"><span>Brightness</span><span>{selectedLayer.filters.brightness}%</span></label><input type="range" min="0" max="200" value={selectedLayer.filters.brightness} onChange={e => updateLayerNoHistory({ filters: {...selectedLayer.filters, brightness: +e.target.value }})} onMouseUp={commitHistory} className="w-full" /></div>
+                             <div><label className="flex justify-between text-text-muted text-xs"><span>Contrast</span><span>{selectedLayer.filters.contrast}%</span></label><input type="range" min="0" max="200" value={selectedLayer.filters.contrast} onChange={e => updateLayerNoHistory({ filters: {...selectedLayer.filters, contrast: +e.target.value }})} onMouseUp={commitHistory} className="w-full" /></div>
+                             <div><label className="flex justify-between text-text-muted text-xs"><span>Saturation</span><span>{selectedLayer.filters.saturate}%</span></label><input type="range" min="0" max="200" value={selectedLayer.filters.saturate} onChange={e => updateLayerNoHistory({ filters: {...selectedLayer.filters, saturate: +e.target.value }})} onMouseUp={commitHistory} className="w-full" /></div>
+                        </PanelSection>
+                    )}
+                    <PanelSection title="Shadow">
+                        <PropertyInput label="Offset X" type="number" value={selectedLayer.shadow.offsetX} onChange={e => updateLayer(selectedLayer.id, { shadow: {...selectedLayer.shadow, offsetX: +e.target.value }})} />
+                        <PropertyInput label="Offset Y" type="number" value={selectedLayer.shadow.offsetY} onChange={e => updateLayer(selectedLayer.id, { shadow: {...selectedLayer.shadow, offsetY: +e.target.value }})} />
+                        <PropertyInput label="Blur" type="number" min="0" value={selectedLayer.shadow.blur} onChange={e => updateLayer(selectedLayer.id, { shadow: {...selectedLayer.shadow, blur: +e.target.value }})} />
+                        <PropertyColorInput label="Color" value={selectedLayer.shadow.color} onChange={e => updateLayer(selectedLayer.id, { shadow: {...selectedLayer.shadow, color: e.target.value }})} />
+                    </PanelSection>
                 </div>
             </div>
         );
@@ -575,6 +685,7 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                         <h2 className="text-2xl font-bold text-text-header px-2 pt-1.5 tracking-wider" style={{fontFamily: 'var(--font-display)'}}>Sotoshop</h2>
                         <div className="flex items-center gap-2 pt-1.5">
                              <Button size="small" variant="secondary" onClick={() => setActivePopup(p => ({type: p.type === 'layers' ? null : 'layers'}))}>Layers</Button>
+                             <Button size="small" variant="secondary" onClick={() => setActivePopup(p => ({type: p.type === 'properties' ? null : 'properties'}))}>Properties</Button>
                             <Button size="small" variant="secondary" onClick={onClose}>Tutup</Button>
                         </div>
                     </header>
@@ -584,7 +695,7 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                         <canvas ref={guideCanvasRef} className="absolute inset-0 pointer-events-none" />
                         <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
                         {editingText && ( <textarea ref={textInputRef} defaultValue={editingText.initialContent} onBlur={handleTextEditBlur} style={{/* ... */}} /> )}
-                        <ContextualToolbar />
+                        {/* FIX: Removed call to non-existent ContextualToolbar component */}
                         <FloatingLayersPanel />
                         <FloatingPropertiesPanel />
                     </main>

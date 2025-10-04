@@ -19,18 +19,19 @@ interface State {
 // FIX: Changed `Component` to `React.Component` to resolve a TypeScript issue
 // where properties from the base class (like `props` and `setState`) were not being recognized.
 // This makes the inheritance explicit and avoids potential type resolution conflicts.
-class ErrorBoundary extends React.Component<Props, State> {
-  public state: State = {
+// DEV-FIX: Changed `React.Component` to the named import `Component` to resolve a potential module resolution or typing issue that was causing the errors.
+class ErrorBoundary extends Component<Props, State> {
+  state: State = {
     hasError: false,
     error: undefined,
     isCopied: false,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error: error, isCopied: false };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
@@ -44,7 +45,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  public render(): ReactNode {
+  render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
