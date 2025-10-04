@@ -64,7 +64,7 @@ const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
 const AIPetWidget = React.lazy(() => import('./components/AIPetWidget'));
 const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
 const AIPetHatching = React.lazy(() => import('./components/AIPetHatching'));
-const AIPetVisualizerModal = React.lazy(() => import('./components/AIPetVisualizerModal'));
+const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
@@ -240,7 +240,7 @@ const MainApp: React.FC = () => {
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
     const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
     const [showSotoshop, setShowSotoshop] = useState(false);
-    const [showVisualizer, setShowVisualizer] = useState(false);
+    const [showAIPetLab, setShowAIPetLab] = useState(false);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -446,7 +446,7 @@ const MainApp: React.FC = () => {
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} addXp={addXp} onShareToForum={() => handleShareToForum(project)} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
-            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onShowVisualizer={() => setShowVisualizer(true)} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onShowAIPetLab={() => setShowAIPetLab(true)} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
@@ -509,7 +509,11 @@ const MainApp: React.FC = () => {
                     )}
                 </div>
             </main>
-             <footer className="text-center py-6 px-4 text-sm text-text-muted border-t border-border-main">Powered by Atharrazka Core. Built for UMKM Indonesia.</footer>
+             <Footer 
+                onShowAbout={() => setShowAboutModal(true)}
+                onShowContact={() => setShowContactModal(true)}
+                onShowToS={() => setShowToSModal(true)}
+            />
             <AdBanner />
             <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
         </div>
@@ -546,7 +550,7 @@ const MainApp: React.FC = () => {
             {showHatchingModal && <AIPetHatching onClose={() => setShowHatchingModal(false)} />}
             <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={aipetContext.petState} profile={profile} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
-            <AIPetVisualizerModal show={showVisualizer} onClose={() => setShowVisualizer(false)} />
+            <AIPetLabModal show={showAIPetLab} onClose={() => setShowAIPetLab(false)} />
             <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
             <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
             <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
@@ -568,6 +572,41 @@ const MainApp: React.FC = () => {
             />
         </Suspense>
       </>
+    );
+};
+
+const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onShowToS: () => void;}> = ({ onShowAbout, onShowContact, onShowToS }) => {
+    return (
+        <footer className="bg-surface border-t border-border-main text-text-muted">
+            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="space-y-4">
+                        <h3 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}><span className="text-primary">desain</span>.fun</h3>
+                        <p className="text-sm">Studio branding AI untuk UMKM juara. Ubah ide jadi brand siap tanding dalam hitungan menit.</p>
+                        <div className="flex space-x-4">
+                            <a href="https://www.instagram.com/rangga.p.h" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-primary transition-colors" title="Instagram Developer">
+                                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" /></svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <h4 className="font-semibold text-text-header">Navigasi</h4>
+                        <ul className="space-y-1 text-sm">
+                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
+                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Kontak Developer</button></li>
+                            <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
+                        </ul>
+                    </div>
+                     <div className="space-y-2">
+                        <h4 className="font-semibold text-text-header">Legal</h4>
+                        <p className="text-sm">Aplikasi ini disediakan "sebagaimana adanya". Pengguna bertanggung jawab penuh untuk melakukan pengecekan merek dagang sebelum penggunaan komersial.</p>
+                    </div>
+                </div>
+                <div className="mt-8 pt-4 border-t border-border-main text-center text-xs">
+                    <p>&copy; {new Date().getFullYear()} Atharrazka Core oleh Rangga.P.H. Dibangun dengan ❤️ untuk UMKM Indonesia.</p>
+                </div>
+            </div>
+        </footer>
     );
 };
 
