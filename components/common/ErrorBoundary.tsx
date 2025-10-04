@@ -17,9 +17,6 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Refactored to use class property for state and arrow function for methods.
-  // This modern pattern correctly binds 'this' and resolves TypeScript errors
-  // where 'this.props' and 'this.setState' were not found on the component instance.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -34,6 +31,9 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
+  // FIX: Refactored to use an arrow function for the method.
+  // This modern pattern correctly binds 'this' and resolves TypeScript errors
+  // where 'this.setState' was not found on the component instance.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
