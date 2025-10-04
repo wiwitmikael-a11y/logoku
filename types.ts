@@ -17,7 +17,7 @@ export interface Profile {
   completed_first_steps: string[]; // NEW: Array of wizard steps completed for the first time
   full_name?: string; // Add optional fields from profiles for joins
   avatar_url?: string;
-  aipet_state?: AIPetState | null; // NEW: For cloud persistence
+  aipet_state: AIPetState | null; // NEW: For cloud persistence
 }
 
 // --- NEW: AIPet Types ---

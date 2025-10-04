@@ -117,7 +117,6 @@ const ColorHarmonyGame: React.FC<{onWin: ()=>void, onLose: ()=>void}> = ({onWin,
     const [options, setOptions] = useState<string[]>([]);
     const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
 
-    // FIX: Imported and used useEffect hook to handle side effects.
     useEffect(() => {
         setOptions([getRandomColor(), targetColor, getRandomColor()].sort(() => Math.random() - 0.5));
     }, [targetColor]);
@@ -141,7 +140,6 @@ const ColorHarmonyGame: React.FC<{onWin: ()=>void, onLose: ()=>void}> = ({onWin,
 
 const PatternPuzzleGame: React.FC<{onWin: ()=>void, onLose: ()=>void}> = ({onWin, onLose}) => {
     const onWinRef = React.useRef(onWin);
-    // FIX: Imported and used useEffect hook to handle side effects.
     useEffect(() => {
         const timer = setTimeout(() => {
             onWinRef.current(); // Auto-win for this placeholder

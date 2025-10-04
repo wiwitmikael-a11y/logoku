@@ -54,7 +54,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (profile && !petState) { // Only run once on initial load
       if (profile.aipet_state) {
-        setPetState(profile.aipet_state);
+        setPetState(profile.aipet_state as AIPetState);
       } else {
         const initialState: AIPetState = {
           name: `${profile.full_name?.split(' ')[0] || 'My'}'s Pet`,
@@ -118,7 +118,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           playSound('success');
           setPetState(prev => {
               if (!prev) return null;
-              const newState = { ...prev, stage: 'child', lastUpdated: now };
+              const newState: AIPetState = { ...prev, stage: 'child', lastUpdated: now };
               debouncedSave(newState);
               return newState;
           });

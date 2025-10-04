@@ -136,7 +136,8 @@ const Sotoshop: React.FC<SotoshopProps> = ({ show, onClose, profile, deductCredi
     
     const updateLayer = useCallback((id: number, props: Partial<Layer>, withHistory = true) => {
         const newLayers = historyState.present.layers.map(l => l.id === id ? { ...l, ...props } : l);
-        setState({ layers: newLayers }, withHistory);
+        // FIX: Add type assertion to prevent type pollution. The result of the map is not strictly a Layer[] according to TypeScript.
+        setState({ layers: newLayers as Layer[] }, withHistory);
     }, [historyState.present.layers, setState]);
     
     // --- DRAWING LOGIC ---
@@ -225,11 +226,12 @@ const Sotoshop: React.FC<SotoshopProps> = ({ show, onClose, profile, deductCredi
     const renderPropertiesPanel = (isModal: boolean) => (
         <div className={`p-3 space-y-4 ${isModal ? '' : 'flex-grow overflow-y-auto'}`}>
             {!selectedLayer ? <div className="text-center text-xs text-text-muted p-4">Pilih layer untuk diedit.</div> : <>
-                <PanelSection title="Transform">{/* [REDACTED] Transform inputs */}</PanelSection>
-                {selectedLayer.type === 'text' && <PanelSection title="Text">{/* [REDACTED] Text properties */}</PanelSection>}
+                {/* FIX: Add empty fragment as children to satisfy the component's prop types. */}
+                <PanelSection title="Transform"><></></PanelSection>
+                {selectedLayer.type === 'text' && <PanelSection title="Text"><></></PanelSection>}
                 {selectedLayer.type === 'image' && <PanelSection title="Image Tools"><Button onClick={handleRemoveBackground} isLoading={isRemovingBg} size="small" variant="secondary">Hapus Background ({BG_REMOVAL_COST} Token)</Button></PanelSection>}
-                <PanelSection title="Tampilan">{/* [REDACTED] Opacity, Blend Mode */}</PanelSection>
-                <PanelSection title="Bayangan">{/* [REDACTED] Shadow controls */}</PanelSection>
+                <PanelSection title="Tampilan"><></></PanelSection>
+                <PanelSection title="Bayangan"><></></PanelSection>
             </>}
         </div>
     );

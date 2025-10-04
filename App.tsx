@@ -491,7 +491,7 @@ const MainApp: React.FC = () => {
         <Suspense fallback={null}>
             {user && (
                 <AIPetWidget 
-                    {...useAIPet()} // Pass all context values to the widget
+                    {...useAIPet()}
                 />
             )}
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
