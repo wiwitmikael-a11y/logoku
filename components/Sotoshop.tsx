@@ -9,6 +9,8 @@ export type Tool = 'select' | 'text' | 'shape' | 'hand' | 'image';
 export type ShapeType = 'rectangle' | 'circle';
 export type TextAlign = 'left' | 'center' | 'right';
 export type Handle = 'tl' | 'tr' | 'bl' | 'br' | 'rot';
+type Alignment = 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom';
+
 
 export interface Shadow { offsetX: number; offsetY: number; blur: number; color: string; }
 export interface Filters { brightness: number; contrast: number; saturate: number; grayscale: number; }
@@ -40,7 +42,7 @@ type InteractionState = {
 
 type EditingText = { layerId: number; initialContent: string; } | null;
 type SnapGuide = { type: 'v' | 'h', position: number };
-type ActivePopup = { type: 'properties' | 'layers' | 'bg_color' | 'file' | null; position?: {x: number, y:number}}
+type ActivePopup = { type: 'properties' | 'layers' | 'bg_color' | 'file' | 'shape' | null; position?: {x: number, y:number}}
 
 const CANVAS_PRESETS: {[key: string]: {w: number, h: number}} = { 'Instagram Post (1:1)': { w: 1080, h: 1080 }, 'Instagram Story (9:16)': { w: 1080, h: 1920 }, 'Facebook Post': { w: 1200, h: 630 }, 'Twitter Post': { w: 1600, h: 900 } };
 const HANDLE_SIZE = 8;
@@ -133,6 +135,7 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     const { layers, backgroundColor, width, height } = currentCanvas;
 
     const [selectedLayerId, setSelectedLayerId] = useState<number | null>(null);
+    const [activeTool, setActiveTool] = useState<Tool>('select');
     const [viewTransform, setViewTransform] = useState({ zoom: 0.5, pan: { x: 0, y: 0 } });
     const [interactionState, setInteractionState] = useState<InteractionState>(null);
     const [editingText, setEditingText] = useState<EditingText>(null);
@@ -157,7 +160,7 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     const undo = useCallback(() => { playSound('select'); dispatchHistory({ type: 'UNDO' }); }, []);
     const redo = useCallback(() => { playSound('select'); dispatchHistory({ type: 'REDO' }); }, []);
 
-    // --- DRAWING & CANVAS LOGIC --- (largely unchanged)
+    // --- DRAWING & CANVAS LOGIC ---
     const redrawCanvas = useCallback(() => {
         const canvas = canvasRef.current; const ctx = canvas?.getContext('2d'); const container = canvasContainerRef.current;
         if (!canvas || !ctx || !container) return;
@@ -206,6 +209,7 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
         }
         ctx.restore();
     }, [layers, selectedLayerId, backgroundColor, width, height, viewTransform, editingText]);
+    
     const drawGuides = useCallback((guides: SnapGuide[]) => {
         const canvas = guideCanvasRef.current;
         const ctx = canvas?.getContext('2d');
@@ -248,6 +252,21 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     };
     const deleteLayer = useCallback((id: number) => { setState({ layers: layers.filter(l => l.id !== id) }); if(selectedLayerId === id) setSelectedLayerId(null); }, [layers, selectedLayerId, setState]);
     const handleReorderLayers = (newLayers: Layer[]) => setState({ layers: newLayers });
+
+    const handleAlign = (alignment: Alignment) => {
+        const layer = layers.find(l => l.id === selectedLayerId);
+        if (!layer) return;
+        let newProps: Partial<Layer> = {};
+        switch (alignment) {
+            case 'left': newProps.x = 0; break;
+            case 'center-h': newProps.x = (width - layer.width) / 2; break;
+            case 'right': newProps.x = width - layer.width; break;
+            case 'top': newProps.y = 0; break;
+            case 'center-v': newProps.y = (height - layer.height) / 2; break;
+            case 'bottom': newProps.y = height - layer.height; break;
+        }
+        updateLayer(layer.id, newProps);
+    };
 
     // --- EVENT HANDLERS ---
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -304,37 +323,70 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
     useEffect(() => { const handler = () => { if(canvasState === 'editing') redrawCanvas(); }; window.addEventListener('resize', handler); return () => window.removeEventListener('resize', handler);}, [canvasState, redrawCanvas]);
 
     // --- NEW UI COMPONENTS ---
-    const HorizontalToolbar: React.FC = () => (
-        <div className="flex-shrink-0 bg-surface border-b border-border-main p-1 overflow-x-auto">
-            <div className="flex items-center gap-1 w-max">
-                <div className="relative">
-                    <Button size="small" variant="secondary" onClick={() => setActivePopup(p => ({type: p.type === 'file' ? null : 'file'}))}>File</Button>
-                    {activePopup.type === 'file' && (
-                        <div className="absolute top-full left-0 mt-1 bg-surface border border-border-main rounded-md shadow-lg py-1 w-48 z-20">
-                            <button onClick={() => { setCanvasState('setup'); setActivePopup({type: null}); }} className="w-full text-left px-3 py-1.5 text-sm hover:bg-background">New Canvas...</button>
-                            <button onClick={handleExport} className="w-full text-left px-3 py-1.5 text-sm hover:bg-background">Export as PNG</button>
+    const HorizontalToolbar: React.FC = () => {
+        const ToolButton: React.FC<{ tool: Tool; title: string; children: React.ReactNode }> = ({ tool, title, children }) => (
+            <button title={title} onClick={() => setActiveTool(tool)} className={`p-2.5 rounded-md ${activeTool === tool ? 'bg-splash text-white' : 'text-text-muted hover:bg-background'}`}>
+                {children}
+            </button>
+        );
+
+        return (
+            <div className="flex-shrink-0 bg-surface border-b border-border-main p-1 overflow-x-auto">
+                <div className="flex items-center gap-1 w-max">
+                    <div className="relative">
+                        <Button size="small" variant="secondary" onClick={() => setActivePopup(p => ({type: p.type === 'file' ? null : 'file'}))}>File</Button>
+                        {activePopup.type === 'file' && (
+                            <div className="absolute top-full left-0 mt-1 bg-surface border border-border-main rounded-md shadow-lg py-1 w-48 z-20">
+                                <button onClick={() => { setCanvasState('setup'); setActivePopup({type: null}); }} className="w-full text-left px-3 py-1.5 text-sm hover:bg-background">New Canvas...</button>
+                                <button onClick={handleExport} className="w-full text-left px-3 py-1.5 text-sm hover:bg-background">Export as PNG</button>
+                            </div>
+                        )}
+                    </div>
+                    <Button size="small" variant="secondary" onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">Undo</Button>
+                    <Button size="small" variant="secondary" onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Y)">Redo</Button>
+                    <div className="w-px h-6 bg-border-main mx-1"></div>
+
+                    <ToolButton tool="select" title="Select Tool (V)"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3.5m0 0a1.5 1.5 0 01-3 0V11" /></svg></ToolButton>
+                    <ToolButton tool="hand" title="Hand Tool (Spacebar)"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3.5m0 0a1.5 1.5 0 01-3 0V11" /></svg></ToolButton>
+                    <ToolButton tool="text" title="Text Tool (T)"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9.243 3.5a1 1 0 011.514 0l6.243 7.5a1 1 0 01-.757 1.65H3.757a1 1 0 01-.757-1.65l6.243-7.5zM9 13a1 1 0 112 0v3a1 1 0 11-2 0v-3z" clipRule="evenodd" /></svg></ToolButton>
+
+                    <div className="relative">
+                        <button title="Shape Tool" onClick={() => setActivePopup(p => ({ type: p.type === 'shape' ? null : 'shape' }))} className={`p-2.5 rounded-md text-text-muted hover:bg-background`}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" /></svg></button>
+                        {activePopup.type === 'shape' && (
+                            <div className="absolute top-full left-0 mt-1 bg-surface border border-border-main rounded-md shadow-lg py-1 w-40 z-20">
+                                <button onClick={() => { addLayer('shape', { shapeType: 'rectangle' }); setActivePopup({ type: null }); }} className="w-full text-left px-3 py-1.5 text-sm hover:bg-background">Rectangle</button>
+                                <button onClick={() => { addLayer('shape', { shapeType: 'circle' }); setActivePopup({ type: null }); }} className="w-full text-left px-3 py-1.5 text-sm hover:bg-background">Circle</button>
+                            </div>
+                        )}
+                    </div>
+                    <button title="Upload Image" onClick={() => fileInputRef.current?.click()} className="p-2.5 rounded-md text-text-muted hover:bg-background"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></button>
+                    <div className="w-px h-6 bg-border-main mx-1"></div>
+
+                    {selectedLayer && (
+                        <div className="flex items-center gap-1 border-l border-border-main pl-2">
+                             <button onClick={() => handleAlign('left')} title="Align Left" className="p-2.5 rounded-md text-text-muted hover:bg-background"><svg className="h-5 w-5" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 3H13v10h-2.5V3zM3 3h2.5v10H3V3z"/></svg></button>
+                             <button onClick={() => handleAlign('center-h')} title="Align Center" className="p-2.5 rounded-md text-text-muted hover:bg-background"><svg className="h-5 w-5" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 3H13v10h-2.5V3zM3 3h2.5v10H3V3zM6.75 3h2.5v10h-2.5V3z"/></svg></button>
+                             <button onClick={() => handleAlign('right')} title="Align Right" className="p-2.5 rounded-md text-text-muted hover:bg-background"><svg className="h-5 w-5" viewBox="0 0 16 16" fill="currentColor"><path d="M3 3h2.5v10H3V3zm10 0h-2.5v10H13V3z"/></svg></button>
+                             <div className="w-px h-5 bg-border-main mx-1"></div>
+                             <button onClick={() => handleAlign('top')} title="Align Top" className="p-2.5 rounded-md text-text-muted hover:bg-background"><svg className="h-5 w-5" viewBox="0 0 16 16" fill="currentColor" style={{transform: 'rotate(90deg)'}}><path d="M10.5 3H13v10h-2.5V3zM3 3h2.5v10H3V3z"/></svg></button>
+                             <button onClick={() => handleAlign('center-v')} title="Align Middle" className="p-2.5 rounded-md text-text-muted hover:bg-background"><svg className="h-5 w-5" viewBox="0 0 16 16" fill="currentColor" style={{transform: 'rotate(90deg)'}}><path d="M10.5 3H13v10h-2.5V3zM3 3h2.5v10H3V3zM6.75 3h2.5v10h-2.5V3z"/></svg></button>
+                             <button onClick={() => handleAlign('bottom')} title="Align Bottom" className="p-2.5 rounded-md text-text-muted hover:bg-background"><svg className="h-5 w-5" viewBox="0 0 16 16" fill="currentColor" style={{transform: 'rotate(90deg)'}}><path d="M3 3h2.5v10H3V3zm10 0h-2.5v10H13V3z"/></svg></button>
                         </div>
                     )}
-                </div>
-                <Button size="small" variant="secondary" onClick={undo} disabled={past.length === 0}>Undo</Button>
-                <Button size="small" variant="secondary" onClick={redo} disabled={future.length === 0}>Redo</Button>
-                <div className="w-px h-6 bg-border-main mx-1"></div>
-                <Button size="small" variant="secondary" onClick={() => addLayer('text')}>+ Teks</Button>
-                <Button size="small" variant="secondary" onClick={() => addLayer('shape', {shapeType: 'rectangle'})}>+ Persegi</Button>
-                <Button size="small" variant="secondary" onClick={() => addLayer('shape', {shapeType: 'circle'})}>+ Lingkaran</Button>
-                <Button size="small" variant="secondary" onClick={() => fileInputRef.current?.click()}>↑ Upload</Button>
-                <div className="w-px h-6 bg-border-main mx-1"></div>
-                <Button size="small" variant="secondary" onClick={() => setActivePopup(p => ({type: p.type === 'layers' ? null : 'layers'}))}>Layers</Button>
-                <label className="flex items-center gap-2 p-2 text-sm font-semibold rounded-lg hover:bg-background cursor-pointer"><span className="text-text-muted">Background</span><input type="color" value={backgroundColor} onChange={e => setState({backgroundColor: e.target.value}, true)} className="w-6 h-6 p-0 bg-transparent border-none rounded"/></label>
-                <div className="w-px h-6 bg-border-main mx-1"></div>
-                <div className="flex items-center gap-1 text-text-muted">
-                    <button onClick={() => setViewTransform(v => ({...v, zoom: v.zoom * 0.8}))} className="p-1 rounded hover:bg-background">-</button>
-                    <span className="text-xs w-12 text-center">{Math.round(viewTransform.zoom * 100)}%</span>
-                    <button onClick={() => setViewTransform(v => ({...v, zoom: v.zoom * 1.25}))} className="p-1 rounded hover:bg-background">+</button>
+                    
+                    <div className="flex-grow"></div>
+
+                    <label className="flex items-center gap-2 p-2 text-sm font-semibold rounded-lg hover:bg-background cursor-pointer"><span className="text-text-muted">Background</span><input type="color" value={backgroundColor} onChange={e => setState({backgroundColor: e.target.value}, true)} className="w-6 h-6 p-0 bg-transparent border-none rounded"/></label>
+                    <div className="w-px h-6 bg-border-main mx-1"></div>
+                    <div className="flex items-center gap-1 text-text-muted">
+                        <button onClick={() => setViewTransform(v => ({...v, zoom: v.zoom * 0.8}))} className="p-1 rounded hover:bg-background">-</button>
+                        <span className="text-xs w-12 text-center">{Math.round(viewTransform.zoom * 100)}%</span>
+                        <button onClick={() => setViewTransform(v => ({...v, zoom: v.zoom * 1.25}))} className="p-1 rounded hover:bg-background">+</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const FloatingLayersPanel: React.FC = () => {
         if (activePopup.type !== 'layers') return null;
@@ -439,6 +491,7 @@ const Sotoshop: React.FC<{ show: boolean; onClose: () => void }> = ({ show, onCl
                          <div className="absolute top-0 left-0 w-full h-1.5 sotoshop-accent-stripes"></div>
                         <h2 className="text-2xl font-bold text-text-header px-2 pt-1.5 tracking-wider" style={{fontFamily: 'var(--font-display)'}}>Sotoshop</h2>
                         <div className="flex items-center gap-2 pt-1.5">
+                             <Button size="small" variant="secondary" onClick={() => setActivePopup(p => ({type: p.type === 'layers' ? null : 'layers'}))}>Layers</Button>
                             <Button size="small" variant="secondary" onClick={onClose}>Tutup</Button>
                         </div>
                     </header>
