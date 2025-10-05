@@ -3,7 +3,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
-import { cropImage } from '../utils/imageUtils';
+import { generateAIPetNarrative } from '../services/geminiService';
 import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint, AIPetTier, AIPetColorPalette, AIPetBattleStats } from '../types';
 
 export interface AIPetContextType {
@@ -140,6 +140,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
                 personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
+                narrative: null,
                 blueprint: null,
                 colors: null,
                 battleStats: null,
@@ -271,6 +272,9 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 spd: 5 + Math.floor(seedRandom() * 6),    // 5-10
             };
         }
+        
+        // Generate narrative
+        const narrative = await generateAIPetNarrative(petName, tier, dominantPersonality);
     
         const activeState: AIPetState = {
             name: petName,
@@ -280,6 +284,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             lastFed: Date.now(),
             lastPlayed: Date.now(),
             personality: initialPersonality,
+            narrative,
             blueprint,
             colors,
             battleStats,

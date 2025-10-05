@@ -71,17 +71,15 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
 
     const dummyPodState: AIPetState = {
         name: 'Pod Stasis',
-        // FIX: The 'stage' type 'stasis_pod' is invalid. Corrected to 'aipod' to match the AIPetStage type definition.
         stage: 'aipod',
         tier: 'common',
         stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
         lastFed: Date.now(),
         lastPlayed: Date.now(),
         personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
+        narrative: null,
         blueprint: null,
         colors: null,
-        // FIX: The 'narrative' property does not exist on the AIPetState type.
-        // It has been replaced with `battleStats` and `buffs` to match the type definition.
         battleStats: null,
         buffs: [],
     };

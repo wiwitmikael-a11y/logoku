@@ -23,18 +23,19 @@ const StatBar: React.FC<{ label: string; value: number; color: string }> = ({ la
     </div>
 );
 
+const BattleStatDisplay: React.FC<{ label: string; value: number; icon: string }> = ({ label, value, icon }) => (
+    <div className="text-center bg-background p-3 rounded-lg border border-border-main">
+        <p className="text-2xl">{icon}</p>
+        <p className="text-xs text-text-muted">{label}</p>
+        <p className="font-bold text-2xl text-text-header">{value}</p>
+    </div>
+);
+
 const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
     const { profile } = useAuth();
     const { petState, isLoading } = useAIPet();
 
     if (!show) return null;
-
-    const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; icon: string; } } = {
-        BRAND_PERTAMA_LAHIR: { name: 'Brand Pertama Lahir!', description: 'Selesaikan 1 project.', icon: '🥉' },
-        SANG_KOLEKTOR: { name: 'Sang Kolektor', description: 'Selesaikan 5 project.', icon: '🥈' },
-        SULTAN_KONTEN: { name: 'Sultan Konten', description: 'Selesaikan 10 project.', icon: '🥇' },
-    };
-    const userAchievements = profile?.achievements || [];
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={onClose}>
@@ -49,10 +50,11 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                         <p>Loading Pet...</p>
                     ) : (
                         <>
-                            <div className="w-full max-w-xs aspect-square mb-4">
+                            <div className="w-full max-w-sm aspect-square mb-4">
                                 <AIPetVisual petState={petState} />
                             </div>
-                            <h2 className="text-3xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>{petState.name}</h2>
+                            <h2 className="text-4xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>{petState.name}</h2>
+                             <div className="mt-1 text-sm font-semibold bg-yellow-400 text-black px-3 py-0.5 rounded-full capitalize">{petState.tier}</div>
                         </>
                     )}
                 </div>
@@ -69,7 +71,31 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                     ) : (
                         <div className="space-y-6">
                             <div>
-                                <h4 className="font-semibold text-splash mb-3">STATISTIK</h4>
+                                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Cerita Asal</h4>
+                                <div className="bg-background p-4 rounded-lg border border-border-main">
+                                    <p className="text-sm text-text-body italic selectable-text">{petState.narrative || "Asal-usulnya masih menjadi misteri..."}</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Statistik Pertempuran</h4>
+                                {petState.battleStats ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <BattleStatDisplay label="HP" value={petState.battleStats.hp} icon="❤️" />
+                                        <BattleStatDisplay label="ATK" value={petState.battleStats.atk} icon="⚔️" />
+                                        <BattleStatDisplay label="DEF" value={petState.battleStats.def} icon="🛡️" />
+                                        <BattleStatDisplay label="SPD" value={petState.battleStats.spd} icon="💨" />
+                                    </div>
+                                ) : <p className="text-sm text-text-muted italic">Statistik tempur belum ada.</p>}
+                                {petState.buffs && petState.buffs.length > 0 && (
+                                    <div className="mt-3 text-center text-xs font-bold text-sky-300 bg-sky-900/50 rounded-lg py-1">
+                                        Buffs: {petState.buffs.join(', ')}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div>
+                                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Statistik Kepribadian</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <StatBar label="⚡ Energi" value={petState.stats.energy} color="bg-green-500" />
                                     <StatBar label="🎨 Kreativitas" value={petState.stats.creativity} color="bg-sky-400" />
@@ -79,28 +105,10 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                             </div>
 
                             <div>
-                                <h4 className="font-semibold text-splash mb-3">AKTIVITAS (SEGERA HADIR)</h4>
+                                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Aktivitas (Segera Hadir)</h4>
                                 <div className="grid grid-cols-2 gap-3">
                                     <Button size="small" variant="secondary" disabled>Beri Makan</Button>
                                     <Button size="small" variant="secondary" disabled>Ajak Main</Button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 className="font-semibold text-splash mb-3">DINDING PRESTASI</h4>
-                                <div className="p-4 bg-background rounded-lg">
-                                {userAchievements.length > 0 ? (
-                                    <div className="flex justify-center gap-4">
-                                        {userAchievements.map(id => ACHIEVEMENTS_MAP[id] && (
-                                            <div key={id} className="text-center" title={ACHIEVEMENTS_MAP[id].description}>
-                                                <span className="text-5xl">{ACHIEVEMENTS_MAP[id].icon}</span>
-                                                <p className="text-xs font-semibold">{ACHIEVEMENTS_MAP[id].name}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-text-muted italic text-center">Belum ada lencana. Selesaikan project untuk mendapatkannya!</p>
-                                )}
                                 </div>
                             </div>
                         </div>

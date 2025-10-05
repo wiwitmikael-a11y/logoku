@@ -3,7 +3,7 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { createWhiteCanvasBase64, fetchImageAsBase64, applyWatermark } from '../utils/imageUtils';
 // FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
-import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets, AIPetState, AIPetPersonalityVector, AIPetStats } from '../types';
+import type { BrandInputs, BrandPersona, ContentCalendarEntry, LogoVariations, ProjectData, GeneratedCaption, SocialProfileData, SocialAdsData, SocialMediaKitAssets, AIPetState, AIPetPersonalityVector, AIPetStats, AIPetTier } from '../types';
 
 // --- Environment Variable Setup ---
 const API_KEY = import.meta.env?.VITE_API_KEY;
@@ -242,6 +242,39 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
         throw error;
     }
 };
+
+// --- AIPet Narrative Generation ---
+export const generateAIPetNarrative = async (name: string, tier: AIPetTier, dominantPersonality: keyof AIPetPersonalityVector): Promise<string> => {
+    const ai = getAiClient();
+    const prompt = `Create a short, engaging, and slightly mysterious origin story (lore) for a digital creature named "${name}".
+
+    Key characteristics:
+    - Rarity/Tier: ${tier}
+    - Dominant Personality Trait: ${dominantPersonality}
+
+    Instructions:
+    - Write in Indonesian, using a storytelling tone suitable for a digital pet game.
+    - Keep it concise (2-3 sentences, max 400 characters).
+    - The story should hint at its origin (e.g., "ditemukan di...", "hasil eksperimen...", "terlahir dari...") without being too specific.
+    - Weave in its personality trait. For example, a 'bold' pet might have a story about bravery, a 'minimalist' one about simplicity and elegance.
+    
+    Example for a 'playful' pet: "Ditemukan sedang iseng mengubah data di server cloud, ${name} adalah percikan energi murni yang suka bermain. Tidak ada yang tahu persis asalnya, tapi ia membawa keceriaan di setiap byte-nya."
+
+    Now, create one for ${name}.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: { temperature: 0.8 }
+        });
+        return response.text.trim();
+    } catch (error) {
+        console.warn("AIPet narrative generation failed, returning a default story.", error);
+        return `Asal-usul ${name} masih menjadi misteri. Ia muncul begitu saja di dalam sistem, membawa aura ${dominantPersonality} yang kuat.`;
+    }
+};
+
 
 // --- Text Generation Functions ---
 export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string): Promise<BrandPersona[]> => {

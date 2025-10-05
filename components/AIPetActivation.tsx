@@ -19,7 +19,7 @@ const statusMessages = [
     "Memilih blueprint dasar dari database...",
     "Meracik palet warna dinamis...",
     "Mengkalibrasi statistik dasar...",
-    "Menyusun sekuens data digital...",
+    "Menulis bio & cerita asal...",
     "Finalisasi... Inisiasi protokol aktivasi!",
 ];
 
@@ -37,7 +37,7 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
             interval = window.setInterval(() => {
                 messageIndex = (messageIndex + 1) % statusMessages.length;
                 setStatusText(statusMessages[messageIndex]);
-                setProgress(p => Math.min(95, p + 15));
+                setProgress(p => Math.min(95, p + 14));
             }, 800);
         }
         return () => clearInterval(interval);
@@ -78,6 +78,7 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
         lastFed: Date.now(),
         lastPlayed: Date.now(),
         personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
+        narrative: null,
         blueprint: null,
         colors: null,
         battleStats: null,

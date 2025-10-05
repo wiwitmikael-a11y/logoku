@@ -95,11 +95,11 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                             <div className="border-t-2 border-yellow-700/50 mt-2 pt-1.5 space-y-1">
                                 {petState.battleStats ? (
                                     <>
-                                        <div className="grid grid-cols-2 gap-x-2 text-[10px] font-semibold text-center text-yellow-100/90">
-                                            <span>HP: {petState.battleStats.hp}</span>
-                                            <span>ATK: {petState.battleStats.atk}</span>
-                                            <span>DEF: {petState.battleStats.def}</span>
-                                            <span>SPD: {petState.battleStats.spd}</span>
+                                        <div className="grid grid-cols-2 gap-x-2 text-xs font-semibold text-center text-yellow-100/90">
+                                            <span>HP: <span className="font-bold text-base">{petState.battleStats.hp}</span></span>
+                                            <span>ATK: <span className="font-bold text-base">{petState.battleStats.atk}</span></span>
+                                            <span>DEF: <span className="font-bold text-base">{petState.battleStats.def}</span></span>
+                                            <span>SPD: <span className="font-bold text-base">{petState.battleStats.spd}</span></span>
                                         </div>
                                         {petState.buffs && petState.buffs.length > 0 && (
                                             <div className="text-center text-[9px] font-bold text-sky-300 bg-sky-900/50 rounded-sm py-0.5">
@@ -115,8 +115,7 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
 
                         {/* Footer */}
                         <div className="mt-auto px-2 pb-1 flex justify-between items-center text-[8px] font-semibold text-yellow-200/60">
-                            <p>desain.fun © 2024</p>
-                            <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-3 h-3" style={{ imageRendering: 'pixelated' }} />
+                            <p>desain.fun © 2025</p>
                             <p>Aset Digital</p>
                         </div>
                     </div>

@@ -147,6 +147,7 @@ export interface AIPetState {
   lastFed: number;
   lastPlayed: number;
   personality: AIPetPersonalityVector;
+  narrative: string | null; // Re-added for origin story/lore
   
   // New battle system
   battleStats: AIPetBattleStats | null;
