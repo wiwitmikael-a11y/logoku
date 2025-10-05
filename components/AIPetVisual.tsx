@@ -78,36 +78,36 @@ type RGB = { r: number; g: number; b: number };
 type Point = { x: number; y: number };
 
 type PartDefinition = {
-  anchor: Point; // A point guaranteed to be inside the part
-  pivot: Point;  // The rotation point, relative to the part's top-left corner
-  z: number;     // Z-index for drawing order
+  anchor: Point;
+  pivot: Point;
+  z: number;
+  scale?: number;
 };
 
-// --- Part Definitions for Rigging (Anchor-based) ---
 const partDefinitions: Record<string, Record<string, PartDefinition>> = {
   'Common_Gorilla.png': {
-    torso:      { anchor: { x: 128, y: 115 }, pivot: { x: 48, y: 45 }, z: 1 },
-    head:       { anchor: { x: 125, y: 55 }, pivot: { x: 50, y: 60 }, z: 2 },
-    right_arm:  { anchor: { x: 70, y: 110 }, pivot: { x: 25, y: 10 }, z: 3 }, // Visually left arm
-    left_arm:   { anchor: { x: 185, y: 110 }, pivot: { x: 25, y: 10 }, z: 0 }, // Visually right arm
-    right_leg:  { anchor: { x: 100, y: 180 }, pivot: { x: 30, y: 5 }, z: 2 },
-    left_leg:   { anchor: { x: 155, y: 180 }, pivot: { x: 30, y: 5 }, z: 0 },
+    torso:      { anchor: { x: 128, y: 115 }, pivot: { x: 48, y: 45 }, z: 1, scale: 1.0 },
+    head:       { anchor: { x: 125, y: 55 }, pivot: { x: 50, y: 60 }, z: 2, scale: 1.0 },
+    right_arm:  { anchor: { x: 70, y: 110 }, pivot: { x: 35, y: 10 }, z: 3, scale: 0.95 },
+    left_arm:   { anchor: { x: 185, y: 110 }, pivot: { x: 15, y: 10 }, z: 0, scale: 1.0 },
+    right_leg:  { anchor: { x: 100, y: 180 }, pivot: { x: 30, y: 5 }, z: 2, scale: 0.95 },
+    left_leg:   { anchor: { x: 155, y: 180 }, pivot: { x: 30, y: 5 }, z: 0, scale: 1.0 },
   },
    'Common_Beast.png': {
-    torso:      { anchor: { x: 125, y: 125 }, pivot: { x: 40, y: 45 }, z: 1 },
-    head:       { anchor: { x: 120, y: 60 }, pivot: { x: 60, y: 70 }, z: 2 },
-    right_arm:  { anchor: { x: 70, y: 110 }, pivot: { x: 27, y: 10 }, z: 3 },
-    left_arm:   { anchor: { x: 180, y: 110 }, pivot: { x: 27, y: 10 }, z: 0 },
-    right_leg:  { anchor: { x: 100, y: 185 }, pivot: { x: 25, y: 5 }, z: 2 },
-    left_leg:   { anchor: { x: 145, y: 185 }, pivot: { x: 25, y: 5 }, z: 0 },
+    torso:      { anchor: { x: 125, y: 125 }, pivot: { x: 40, y: 45 }, z: 1, scale: 1.0 },
+    head:       { anchor: { x: 120, y: 60 }, pivot: { x: 60, y: 70 }, z: 2, scale: 1.0 },
+    right_arm:  { anchor: { x: 70, y: 110 }, pivot: { x: 27, y: 10 }, z: 3, scale: 0.95 },
+    left_arm:   { anchor: { x: 180, y: 110 }, pivot: { x: 27, y: 10 }, z: 0, scale: 1.0 },
+    right_leg:  { anchor: { x: 100, y: 185 }, pivot: { x: 25, y: 5 }, z: 2, scale: 0.95 },
+    left_leg:   { anchor: { x: 145, y: 185 }, pivot: { x: 25, y: 5 }, z: 0, scale: 1.0 },
   },
   'Common_Mutant.png': {
-    torso:      { anchor: { x: 125, y: 110 }, pivot: { x: 45, y: 50 }, z: 1 },
-    head:       { anchor: { x: 125, y: 45 }, pivot: { x: 35, y: 50 }, z: 2 },
-    right_arm:  { anchor: { x: 65, y: 110 }, pivot: { x: 25, y: 10 }, z: 3 },
-    left_arm:   { anchor: { x: 185, y: 110 }, pivot: { x: 25, y: 10 }, z: 0 },
-    right_leg:  { anchor: { x: 100, y: 180 }, pivot: { x: 30, y: 5 }, z: 2 },
-    left_leg:   { anchor: { x: 150, y: 180 }, pivot: { x: 30, y: 5 }, z: 0 },
+    torso:      { anchor: { x: 125, y: 110 }, pivot: { x: 45, y: 50 }, z: 1, scale: 1.0 },
+    head:       { anchor: { x: 125, y: 45 }, pivot: { x: 35, y: 50 }, z: 2, scale: 1.0 },
+    right_arm:  { anchor: { x: 65, y: 110 }, pivot: { x: 30, y: 10 }, z: 3, scale: 0.95 },
+    left_arm:   { anchor: { x: 185, y: 110 }, pivot: { x: 15, y: 10 }, z: 0, scale: 1.0 },
+    right_leg:  { anchor: { x: 100, y: 180 }, pivot: { x: 30, y: 5 }, z: 2, scale: 0.95 },
+    left_leg:   { anchor: { x: 150, y: 180 }, pivot: { x: 30, y: 5 }, z: 0, scale: 1.0 },
   },
   'Epic_Random.png': { 
     torso: { anchor: { x: 128, y: 128 }, pivot: {x: 0, y: 0}, z: 1 },
@@ -157,8 +157,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
             { id: 'mechanical.base', target: { r: 0, g: 255, b: 0 }, dynamic: dynamicColorPalettes.mechanical.base }, { id: 'mechanical.highlight', target: { r: 102, g: 255, b: 102 }, dynamic: dynamicColorPalettes.mechanical.highlight }, { id: 'mechanical.shadow', target: { r: 0, g: 153, b: 0 }, dynamic: dynamicColorPalettes.mechanical.shadow },
             { id: 'energy.base', target: { r: 0, g: 0, b: 255 }, dynamic: dynamicColorPalettes.energy.base }, { id: 'energy.highlight', target: { r: 102, g: 102, b: 255 }, dynamic: dynamicColorPalettes.energy.highlight }, { id: 'energy.shadow', target: { r: 0, g: 0, b: 153 }, dynamic: dynamicColorPalettes.energy.shadow },
         ].filter(item => item.dynamic);
-        const pureBlack: RGB = { r: 0, g: 0, b: 0 };
-        const BG_THRESHOLD = 80, OUTLINE_THRESHOLD = 80;
+        const BG_THRESHOLD = 80, LUMINANCE_OUTLINE_THRESHOLD = 40;
 
         const processBlueprint = (blueprintImg: HTMLImageElement) => {
             const petId = parseInt(name.split('-')[1] || '0', 10);
@@ -178,7 +177,9 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                 if (data[i + 3] === 0) continue;
                 const pixel: RGB = { r: data[i], g: data[i + 1], b: data[i + 2] };
                 if (colorDistance(pixel, { r: 255, g: 255, b: 255 }) < BG_THRESHOLD) { data[i + 3] = 0; continue; }
-                if (colorDistance(pixel, pureBlack) < OUTLINE_THRESHOLD) continue;
+                const luminance = 0.2126 * pixel.r + 0.7152 * pixel.g + 0.0722 * pixel.b;
+                if (luminance < LUMINANCE_OUTLINE_THRESHOLD) continue;
+                
                 let minDistance = Infinity; let closestMatch: (typeof blueprintColorMap[0]) | null = null;
                 for (const colorMap of blueprintColorMap) {
                     const distance = colorDistance(pixel, colorMap.target);
@@ -188,7 +189,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
             }
             ctx.putImageData(imageData, 0, 0);
 
-            const segData = new Uint8Array(CANVAS_SIZE * CANVAS_SIZE); // 1 byte per pixel for part ID
+            const segData = new Uint8Array(CANVAS_SIZE * CANVAS_SIZE);
             const floodFill = (startX: number, startY: number, partId: number) => {
                 const queue: [number, number][] = [[startX, startY]];
                 while (queue.length > 0) {
@@ -197,7 +198,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                     const idx = y * CANVAS_SIZE + x;
                     const dataIdx = idx * 4;
                     if (data[dataIdx + 3] < 128) continue;
-                    if (colorDistance({ r: data[dataIdx], g: data[dataIdx + 1], b: data[dataIdx + 2] }, pureBlack) < OUTLINE_THRESHOLD) continue;
+                    const luminance = 0.2126 * data[dataIdx] + 0.7152 * data[dataIdx + 1] + 0.0722 * data[dataIdx + 2];
+                    if (luminance < LUMINANCE_OUTLINE_THRESHOLD) continue;
                     if (segData[idx] > 0) continue;
                     segData[idx] = partId;
                     queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
@@ -219,7 +221,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                     }
                 }
 
-                if (minX > maxX) return; // Part not found
+                if (minX > maxX) return;
 
                 const width = maxX - minX + 1;
                 const height = maxY - minY + 1;
@@ -249,8 +251,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         const ctx = canvas?.getContext('2d');
         if (!ctx || !blueprint) return;
         
-        // FIX: Add explicit types to the sort callback parameters to ensure correct type inference for `partName`.
-        const sortedPartNames = Array.from(partCache.current.keys()).sort((a: string, b: string) => {
+        // FIX: Explicitly type the array to ensure correct type inference for its elements.
+        const sortedPartNames: string[] = Array.from(partCache.current.keys()).sort((a, b) => {
             const partA = partCache.current.get(a)?.def.z || 0;
             const partB = partCache.current.get(b)?.def.z || 0;
             return partA - partB;
@@ -274,27 +276,31 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                 const part = partCache.current.get(partName);
                 if (!part) continue;
 
-                let partX = (canvas.width - 256) / 2 + part.x;
-                let partY = (canvas.height - 256) / 2 + part.y;
-                
                 ctx.save();
-                if (partName === 'torso') {
+                
+                const partX = (canvas.width - 256) / 2 + part.x;
+                let partY = (canvas.height - 256) / 2 + part.y;
+                let animRot = 0;
+                
+                // FIX: partName is now correctly inferred as a string, so '.includes' can be called.
+                if (partName.includes('arm')) {
                     partY += torsoBobY;
-                } else if (partName === 'head') {
-                    partY += torsoBobY + Math.sin(time / 400) * 1;
-                } else if (partName.includes('arm')) {
-                    partY += torsoBobY;
-                    const sway = Math.sin(time / 500 + (partName.includes('left') ? Math.PI : 0)) * 5;
-                    const pivotX = partX + part.def.pivot.x;
-                    const pivotY = partY + part.def.pivot.y;
-                    ctx.translate(pivotX, pivotY);
-                    ctx.rotate(sway * Math.PI / 180);
-                    ctx.translate(-pivotX, -pivotY);
+                    animRot = Math.sin(time / 500 + (partName.includes('left') ? Math.PI : 0)) * 5;
                 } else if (partName.includes('leg')) {
                     partY += torsoBobY;
+                } else {
+                    partY += torsoBobY + (partName === 'head' ? Math.sin(time / 400) * 1 : 0);
                 }
+
+                const pivotX = partX + part.def.pivot.x;
+                const pivotY = partY + part.def.pivot.y;
                 
-                ctx.drawImage(part.canvas, partX, partY);
+                ctx.translate(pivotX, pivotY);
+                ctx.rotate(animRot * Math.PI / 180);
+                const scale = part.def.scale || 1.0;
+                ctx.scale(scale, scale);
+                ctx.drawImage(part.canvas, -part.def.pivot.x, -part.def.pivot.y);
+                
                 ctx.restore();
             }
             
