@@ -17,9 +17,9 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Moved state initialization into the constructor. While class property initializers are valid syntax,
-  // explicitly setting state in the constructor can resolve type inference issues in some TypeScript configurations,
-  // which appears to be the cause of the errors related to `this.setState` and `this.props`.
+  // FIX: The original code had numerous errors indicating `this.state` and `this.props` were not available.
+  // This is often a `this` context issue. By converting `handleCopy` to a regular method and explicitly
+  // binding it in the constructor, we ensure the correct `this` context is always used.
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -27,6 +27,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       error: undefined,
       isCopied: false,
     };
+    this.handleCopy = this.handleCopy.bind(this);
   }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
@@ -39,7 +40,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
