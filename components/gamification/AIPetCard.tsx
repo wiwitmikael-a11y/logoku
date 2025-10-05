@@ -41,22 +41,23 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
         }
     `;
     
-    // Determine card theme based on personality
-    const getArchetypeTheme = () => {
+    const getArchetypeAndTheme = () => {
         const p = petState.personality;
-        // FIX: Explicitly cast values to `Number` to satisfy TypeScript's strict arithmetic operation checks.
         const sorted = Object.entries(p).sort(([, a], [, b]) => Number(b) - Number(a));
         const dominant: keyof AIPetPersonalityVector = sorted.length > 0 ? sorted[0][0] as keyof AIPetPersonalityVector : 'playful';
 
+        let theme;
         switch(dominant) {
-            case 'bold': case 'rustic': return { bg: 'from-amber-800 via-stone-700 to-black', border: 'border-amber-500' }; // Beast/Earth
-            case 'modern': case 'minimalist': return { bg: 'from-sky-800 via-slate-700 to-black', border: 'border-sky-400' }; // Machine/Tech
-            case 'creative': case 'feminine': return { bg: 'from-purple-800 via-fuchsia-900 to-black', border: 'border-purple-400' }; // Mystic/Magic
-            case 'playful': return { bg: 'from-emerald-700 via-teal-800 to-black', border: 'border-emerald-400' }; // Chibi/Nature
-            default: return { bg: 'from-gray-700 via-gray-800 to-black', border: 'border-yellow-400' };
+            case 'bold': case 'rustic': theme = { bg: 'from-amber-800 via-stone-700 to-black', border: 'border-amber-500' }; break;
+            case 'modern': case 'minimalist': theme = { bg: 'from-sky-800 via-slate-700 to-black', border: 'border-sky-400' }; break;
+            case 'creative': case 'feminine': theme = { bg: 'from-purple-800 via-fuchsia-900 to-black', border: 'border-purple-400' }; break;
+            case 'playful': theme = { bg: 'from-emerald-700 via-teal-800 to-black', border: 'border-emerald-400' }; break;
+            default: theme = { bg: 'from-gray-700 via-gray-800 to-black', border: 'border-yellow-400' };
         }
+        return { dominant, theme };
     }
-    const theme = getArchetypeTheme();
+    const { dominant: dominantPersonality, theme } = getArchetypeAndTheme();
+    const petId = petState.name.split('-')[1] || '0000';
 
 
     return (
@@ -114,9 +115,9 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                         </div>
 
                         {/* Footer */}
-                        <div className="mt-auto px-2 pb-1 flex justify-between items-center text-[8px] font-semibold text-yellow-200/60 flex-shrink-0">
-                            <p>desain.fun © 2025</p>
-                            <p>Aset Digital</p>
+                        <div className="mt-auto px-2 pb-1 flex justify-between items-center text-[9px] font-mono text-yellow-200/60 flex-shrink-0">
+                            <p>ID: APH-{petId}</p>
+                            <p>{dominantPersonality.toUpperCase()}</p>
                         </div>
                     </div>
                 </div>
