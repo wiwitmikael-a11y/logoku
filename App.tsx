@@ -42,6 +42,7 @@ const InstantContentGenerator = React.lazy(() => import('./components/InstantCon
 const ContactModal = React.lazy(() => import('./components/common/ContactModal'));
 const AboutModal = React.lazy(() => import('./components/common/AboutModal'));
 const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
+const PrivacyPolicyModal = React.lazy(() => import('./components/common/PrivacyPolicyModal'));
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
 const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
@@ -384,6 +385,7 @@ const MainApp: React.FC = () => {
     const [showContactModal, setShowContactModal] = useState(false);
     const [showAboutModal, setShowAboutModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
+    const [showPrivacyModal, setShowPrivacyModal] = useState(false);
     const [showCaptcha, setShowCaptcha] = useState(true);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -613,7 +615,7 @@ const MainApp: React.FC = () => {
     
     if (authLoading) return <AuthLoadingScreen />;
     
-    if (!session) return ( <> <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} onShowToS={() => setShowToSModal(true)} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} /> </Suspense> </> );
+    if (!session) return ( <> <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} onShowToS={() => setShowToSModal(true)} onShowPrivacy={() => setShowPrivacyModal(true)} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} /> </Suspense> </> );
     
     return (
       <>
@@ -686,6 +688,7 @@ const MainApp: React.FC = () => {
                 onShowAbout={() => setShowAboutModal(true)}
                 onShowContact={() => setShowContactModal(true)}
                 onShowToS={() => setShowToSModal(true)}
+                onShowPrivacy={() => setShowPrivacyModal(true)}
             />
             <AdBanner />
             <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
@@ -730,6 +733,7 @@ const MainApp: React.FC = () => {
             <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
             <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
             <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
+            <PrivacyPolicyModal show={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
             <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
             <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={() => setShowToSModal(true)} onShowContact={() => setShowContactModal(true)} />
             <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout" cancelText="Batal">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
@@ -750,7 +754,7 @@ const MainApp: React.FC = () => {
     );
 };
 
-const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onShowToS: () => void;}> = ({ onShowAbout, onShowContact, onShowToS }) => {
+const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onShowToS: () => void; onShowPrivacy: () => void;}> = ({ onShowAbout, onShowContact, onShowToS, onShowPrivacy }) => {
     return (
         <footer className="bg-surface border-t border-border-main text-text-muted">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -770,6 +774,7 @@ const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onSh
                             <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
                             <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Kontak Developer</button></li>
                             <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
+                            <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
                         </ul>
                     </div>
                      <div className="space-y-2">

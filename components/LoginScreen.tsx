@@ -11,11 +11,12 @@ interface Props {
   onGoogleLogin: () => void;
   isCaptchaSolved: boolean;
   onShowToS: () => void;
+  onShowPrivacy: () => void;
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowToS }) => {
+const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowToS, onShowPrivacy }) => {
   const [paradePets, setParadePets] = useState<AIPetState[]>([]);
 
   useEffect(() => {
@@ -81,7 +82,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
             </div>
 
             <p className="text-text-body mb-8 max-w-lg mx-auto">
-              Pusing mikirin logo? Bingung nentuin gaya brand? Gak tau mau posting apa di sosmed? Tenang, Juragan! Mang AI di sini buat jadi partner setia lo. Dalam hitungan menit, kita bakal sulap ide sederhana jadi <strong className="text-text-header">paket branding lengkap</strong> siap tanding: dari logo, persona, sampai konten sosmed.
+              Pusing mikirin logo, konten sosmed, atau kemasan produk? Tenang, Juragan! Mang AI siap jadi partner setia lo. Ubah ide sederhana jadi <strong className="text-text-header">paket branding lengkap</strong>: mulai dari <strong className="text-primary">logo</strong>, <strong className="text-primary">persona brand</strong>, <strong className="text-primary">kalender konten</strong>, sampai <strong className="text-primary">desain kemasan</strong>. Asah kreativitasmu di <strong className="text-splash">Sotoshop</strong>, ngobrol bareng sesama UMKM di <strong className="text-splash">Forum</strong>, dan pelihara <strong className="text-splash">AIPet</strong>-mu biar makin gacor! Siap naik kelas?
             </p>
             
             <div className="flex flex-col items-center gap-4">
@@ -108,9 +109,15 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
               <button 
                 onClick={isCaptchaSolved ? onShowToS : undefined} 
                 disabled={!isCaptchaSolved}
-                className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+                className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Ketentuan Layanan
+              </button> & <button 
+                onClick={isCaptchaSolved ? onShowPrivacy : undefined} 
+                disabled={!isCaptchaSolved}
+                className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Kebijakan Privasi
               </button>.
                {!isCaptchaSolved && <span className="block text-accent font-semibold text-sm mt-2">Selesaikan puzzle di atas dulu, Juragan!</span>}
             </p>

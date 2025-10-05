@@ -17,17 +17,16 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // Using modern class property syntax for state initialization, which avoids constructor/binding issues.
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
-
-  // FIX: Added constructor to explicitly bind `this` for handleCopy. This resolves errors where `this` context is lost and properties like `setState` are not found.
+  // FIX: Moved state initialization into the constructor. While class property initializers are valid syntax,
+  // explicitly setting state in the constructor can resolve type inference issues in some TypeScript configurations,
+  // which appears to be the cause of the errors related to `this.setState` and `this.props`.
   constructor(props: Props) {
     super(props);
-    this.handleCopy = this.handleCopy.bind(this);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
   }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
@@ -40,8 +39,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Changed from an arrow function property to a standard class method. It is now bound in the constructor to ensure `this` is correctly scoped.
-  private handleCopy() {
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -49,7 +47,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: The errors regarding 'this.props' not existing were likely due to a misconfiguration or a subtle issue with how the class was being interpreted. By ensuring all methods have correctly bound `this`, we resolve all related context errors.
   public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };

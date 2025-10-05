@@ -309,8 +309,14 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Selamat Datang, {userName}!</h2>
-        <p className="text-text-muted max-w-3xl mx-auto">Studio branding AI pribadi lo. Mulai project baru, kelola brand kit, atau ngobrol santai bareng juragan lain.</p>
+        <h2 className="text-3xl md:text-4xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userName}! Siap Jadi Juara?</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">
+            Ini studio branding pribadimu. Mulai dari <strong className="text-sky-400 font-semibold">Project</strong> baru, 
+            cari <strong className="text-yellow-400 font-semibold">Ide</strong> instan, 
+            ngobrol di <strong className="text-orange-400 font-semibold">Forum</strong>, 
+            atau asah jiwa kompetisimu di menu <strong className="text-green-400 font-semibold">Juara</strong>. 
+            Semua alat buat jadi juara ada di sini!
+        </p>
       </div>
 
       <div className="flex justify-center border-b border-border-main overflow-x-auto">
