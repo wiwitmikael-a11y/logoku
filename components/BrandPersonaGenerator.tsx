@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { generateBrandPersona, generateSlogans } from '../services/geminiService';
+import { generateBrandPersona, generateSlogans, analyzeCompetitorUrl } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { loadWorkflowState } from '../services/workflowPersistence';
 import type { BrandPersona, BrandInputs, AIPetPersonalityVector } from '../types';
@@ -30,6 +30,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     targetAudienceAge: '',
     valueProposition: 'Kualitas premium dengan harga terjangkau dan pelayanan yang ramah.',
     competitors: '',
+    competitorUrl: '',
   });
 
   const [personas, setPersonas] = useState<BrandPersona[]>([]);
@@ -37,6 +38,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   const [selectedPersonaIndex, setSelectedPersonaIndex] = useState<number | null>(null);
   const [selectedSlogan, setSelectedSlogan] = useState<string | null>(null);
   const [isLoadingPersona, setIsLoadingPersona] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [isLoadingSlogan, setIsLoadingSlogan] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
@@ -62,7 +65,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
       const age = ageMatch ? ageMatch[1] : '';
       const category = targetAudience.replace(/(\s+usia\s+[\d\-]+)/i, '').trim() || 'Masyarakat Umum';
       
-      setFormState({
+      setFormState(prev => ({
+        ...prev,
         businessName: businessName || '',
         businessCategory: businessCategory || 'Makanan',
         businessDetail: businessDetail || '',
@@ -70,7 +74,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
         targetAudienceAge: age,
         valueProposition: valueProposition || 'Kualitas premium dengan harga terjangkau dan pelayanan yang ramah.',
         competitors: competitors || '',
-      });
+      }));
     }
   }, []);
 
@@ -122,7 +126,12 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     e?.preventDefault();
     setError(null);
 
-    const requiredFields: (keyof typeof formState)[] = ['businessName', 'businessDetail', 'targetAudienceAge', 'valueProposition', 'competitors'];
+    const requiredFields: (keyof typeof formState)[] = ['businessName', 'businessDetail', 'targetAudienceAge', 'valueProposition'];
+    if (!formState.competitors.trim() && !formState.competitorUrl.trim()) {
+      setError("Waduh, Juragan! Tolong isi salah satu, kompetitor via teks atau via URL ya.");
+      playSound('error');
+      return;
+    }
     const emptyField = requiredFields.find(field => !formState[field].trim());
     if (emptyField) {
         setError("Waduh, Juragan! Ada isian yang masih kosong, nih. Tolong lengkapi dulu semua detailnya ya.");
@@ -131,6 +140,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     }
 
     setIsLoadingPersona(true);
+    setAnalysisResult(null);
+    let competitorAnalysis: string | null = null;
     setPersonas([]);
     setSlogans([]);
     setSelectedPersonaIndex(null);
@@ -142,8 +153,15 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     const combinedAudience = `${formState.targetAudienceCat}${formState.targetAudienceAge ? ` usia ${formState.targetAudienceAge}` : ''}`.trim();
 
     try {
+      if (formState.competitorUrl.trim()) {
+        setIsAnalyzing(true);
+        competitorAnalysis = await analyzeCompetitorUrl(formState.competitorUrl, formState.businessName, petState);
+        setAnalysisResult(competitorAnalysis);
+        setIsAnalyzing(false);
+      }
+
       const result = await generateBrandPersona(
-        formState.businessName, combinedIndustry, combinedAudience, formState.valueProposition, petState
+        formState.businessName, combinedIndustry, combinedAudience, formState.valueProposition, competitorAnalysis, petState
       );
       setPersonas(result);
       playSound('success');
@@ -152,6 +170,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
       playSound('error');
     } finally {
       setIsLoadingPersona(false);
+      setIsAnalyzing(false);
     }
   }, [formState, petState]);
   
@@ -197,7 +216,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     if (selectedPersonaIndex === null || !selectedSlogan || !personas[selectedPersonaIndex]) return;
     const combinedIndustry = `${formState.businessCategory} ${formState.businessDetail}`.trim();
     const combinedAudience = `${formState.targetAudienceCat}${formState.targetAudienceAge ? ` usia ${formState.targetAudienceAge}` : ''}`.trim();
-    const inputs: BrandInputs = { ...formState, industry: combinedIndustry, targetAudience: combinedAudience };
+    const inputs: BrandInputs = { ...formState, industry: combinedIndustry, targetAudience: combinedAudience, businessCategory: formState.businessCategory, businessDetail: formState.businessDetail, businessName: formState.businessName, competitors: formState.competitors, valueProposition: formState.valueProposition };
     onComplete({ inputs, selectedPersona: personas[selectedPersonaIndex], selectedSlogan });
   };
 
@@ -233,7 +252,20 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
           </div>
 
           <Textarea label="Yang Bikin Beda (Value Proposition)" name="valueProposition" value={formState.valueProposition} onChange={handleChange} placeholder="cth: Organik, murah, mewah" rows={3} />
-          <Textarea label="Sebutin 1-2 Kompetitor" name="competitors" value={formState.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
+          
+          <div>
+            <Textarea label="Sebutin 1-2 Kompetitor (via Teks)" name="competitors" value={formState.competitors} onChange={handleChange} placeholder="cth: Starbucks, Janji Jiwa" rows={2} />
+            <div className="text-center text-sm text-text-muted my-2">- ATAU -</div>
+            <Input label="URL Kompetitor (Opsional, Lebih Akurat)" name="competitorUrl" value={formState.competitorUrl} onChange={handleChange} placeholder="cth: https://www.instagram.com/kompetitor" />
+            {analysisResult && (
+                <details className="mt-2 text-sm">
+                    <summary className="cursor-pointer font-semibold text-primary">Lihat Hasil Analisis Kompetitor</summary>
+                    <div className="mt-2 p-3 bg-background rounded-md border border-border-main whitespace-pre-wrap selectable-text">
+                        {analysisResult}
+                    </div>
+                </details>
+            )}
+          </div>
           
           <div className="relative flex items-center gap-4 pt-4 border-t border-border-main">
             {showOnboarding && (
@@ -244,6 +276,9 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
             <Button type="submit" isLoading={isLoadingPersona}>Racik Persona Sekarang!</Button>
              {personas.length > 0 && !isLoadingPersona && (
               <Button variant="secondary" onClick={() => handleGeneratePersona()} isLoading={isLoadingPersona}>Racik Ulang Persona</Button>
+            )}
+            {isLoadingPersona && (
+              <p className="text-sm text-accent animate-pulse">{isAnalyzing ? 'Menganalisis URL kompetitor...' : 'Meracik persona...'}</p>
             )}
           </div>
         </form>

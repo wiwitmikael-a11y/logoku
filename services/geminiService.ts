@@ -288,8 +288,45 @@ export const generateAIPetNarrative = async (name: string, tier: AIPetTier, domi
 
 
 // --- Text Generation Functions ---
-export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string, petState: AIPetState | null): Promise<BrandPersona[]> => {
+export const analyzeCompetitorUrl = async (url: string, businessName: string, petState: AIPetState | null): Promise<string> => {
+    const ai = getAiClient();
+    const prompt = `As a senior brand strategist, analyze the branding of the business at the following URL: ${url}. The user's business is named "${businessName}".
+
+    Your task is to provide a concise, actionable analysis that the user can use for inspiration and differentiation. Use Google Search to access and understand the content of the URL.
+
+    Focus on these three key areas:
+    1.  **Tone of Voice:** How do they communicate? (e.g., "Playful and uses a lot of slang," "Formal and professional," "Inspirational and story-driven").
+    2.  **Visual Style & Colors:** What is the overall aesthetic? (e.g., "Minimalist with a monochrome palette," "Rustic and earthy with warm tones," "Bold and vibrant with neon colors").
+    3.  **Key Differentiator/Strategy:** What seems to be their main selling point or strategy based on their branding? (e.g., "They focus heavily on being eco-friendly," "Their main strategy is low prices and promotions," "They build a strong community around their products").
+
+    Return the analysis as a single, well-formatted string.
+    `;
+    try {
+        const finalPrompt = enhancePromptWithPetStats(prompt, petState);
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: finalPrompt,
+            config: { tools: [{ googleSearch: {} }] },
+        });
+        return response.text.trim();
+    } catch (error) {
+        throw handleApiError(error, "Competitor URL Analysis");
+    }
+};
+
+export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string, competitorAnalysis: string | null, petState: AIPetState | null): Promise<BrandPersona[]> => {
   const ai = getAiClient();
+
+  const analysisContext = competitorAnalysis
+    ? `\n\n---
+    CRITICAL ADDITIONAL CONTEXT: Here is an AI analysis of a key competitor. Use this information to generate personas that are DISTINCT and offer a unique position in the market. Do not copy the competitor's style.
+    
+    Competitor Analysis:
+    ${competitorAnalysis}
+    ---
+    `
+    : '';
+    
   const prompt = `Based on the following business details, create 3 distinct brand personas. Each persona should be a complete JSON object.
   
   Business Details:
@@ -297,6 +334,7 @@ export const generateBrandPersona = async (businessName: string, industry: strin
   - Industry: ${industry}
   - Target Audience: ${targetAudience}
   - Value Proposition: ${valueProposition}
+  ${analysisContext}
 
   For each persona, provide:
   1.  "nama_persona": A catchy name for the persona (e.g., "The Modern Minimalist", "The Playful Companion").

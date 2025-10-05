@@ -17,12 +17,7 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: The errors indicate a problem with `this` context. While the component used
-  // modern class properties, the build environment might not be handling it correctly.
-  // Reverting to the traditional constructor-based state initialization and method binding
-  // is a more robust way to ensure `this` is correctly bound.
-  
-  // FIX: Explicitly declaring the 'state' property on the class is necessary for some TypeScript configurations to recognize the state initialized in the constructor. This resolves all "Property 'state' does not exist" errors.
+  // Fix: Explicitly declaring the 'state' property on the class is necessary for some TypeScript configurations to recognize the state initialized in the constructor. This resolves all "Property 'state' does not exist" errors.
   public state: State;
 
   constructor(props: Props) {
@@ -48,7 +43,9 @@ class ErrorBoundary extends React.Component<Props, State> {
   private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
+      // Fix: Correctly use this.setState which is available on a class component instance.
       this.setState({ isCopied: true });
+      // Fix: Correctly use this.setState in timeout.
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
@@ -56,8 +53,7 @@ class ErrorBoundary extends React.Component<Props, State> {
   public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
-      // FIX: Added the missing `return` statement. The render method must return a value.
-      // The original code had a parenthesis `(` without `return`, which is a syntax error.
+      // Fix: Added the missing `return` statement. The render method must return a value.
       return (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
             <img 
@@ -75,6 +71,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
+                    {/* Fix: Correctly access props via 'this.props' in a class component. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -97,6 +94,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
+    // Fix: Correctly access children via 'this.props' in a class component.
     return this.props.children;
   }
 }
