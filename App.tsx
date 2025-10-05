@@ -61,7 +61,6 @@ const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModa
 const LightImageEditor = React.lazy(() => import('./components/common/LightImageEditor'));
 const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
 const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
-const AIPetActivation = React.lazy(() => import('./components/AIPetActivation'));
 const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
 const AIPetContextualBubble = React.lazy(() => import('./components/AIPetContextualBubble'));
 const AIPetInteractionBubble = React.lazy(() => import('./components/AIPetInteractionBubble'));
@@ -82,9 +81,11 @@ const FloatingAIPet: React.FC<{
     const animationFrameRef = useRef<number>();
     const behaviorTimeoutRef = useRef<number>();
     const [isBubbleOpen, setBubbleOpen] = useState(false);
+    const isPod = petState.stage === 'aipod';
 
     // Main animation loop for movement
     useEffect(() => {
+        if (isPod) return;
         const move = () => {
             if (behavior === 'walking') {
                 setPosition(prev => {
@@ -99,10 +100,11 @@ const FloatingAIPet: React.FC<{
         };
         animationFrameRef.current = requestAnimationFrame(move);
         return () => cancelAnimationFrame(animationFrameRef.current!);
-    }, [behavior]);
+    }, [behavior, isPod]);
 
     // Behavior state machine (idle <-> walking)
     useEffect(() => {
+        if (isPod) return;
         clearTimeout(behaviorTimeoutRef.current);
         const setNextBehavior = () => {
             if (behavior === 'idle') {
@@ -115,10 +117,10 @@ const FloatingAIPet: React.FC<{
         };
         behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 2000 + 1000); // Initial delay
         return () => clearTimeout(behaviorTimeoutRef.current);
-    }, [behavior]);
+    }, [behavior, isPod]);
     
     const handlePetClick = () => {
-        if (petState.stage === 'aipod') {
+        if (isPod) {
             onActivate();
         } else {
             setBubbleOpen(p => !p);
@@ -126,20 +128,19 @@ const FloatingAIPet: React.FC<{
     };
 
     const animationClass = isVisible ? 'animate-aipet-blip-in' : 'animate-aipet-blink-out';
+    const containerStyle: React.CSSProperties = isPod
+        ? { position: 'fixed', bottom: '1rem', right: '1rem' }
+        : { left: `${position.x}vw`, transform: `translateX(-50%)`, transition: 'left 0.1s linear' };
 
     return (
         <div 
             className={`fixed bottom-0 z-40`}
-            style={{
-                left: `${position.x}vw`,
-                transform: `translateX(-50%)`,
-                transition: 'left 0.1s linear',
-            }}
+            style={containerStyle}
         >
             <div 
                 onClick={handlePetClick}
-                className={`w-24 h-24 cursor-pointer group ${animationClass}`}
-                style={{
+                className={`cursor-pointer group ${animationClass} ${isPod ? 'w-20 h-20' : 'w-24 h-24'}`}
+                style={isPod ? {} : {
                     transform: `scaleX(${position.direction})`,
                     transition: 'transform 0.3s ease-in-out',
                 }}
@@ -321,7 +322,6 @@ const MainApp: React.FC = () => {
     
     const [isAssistantOpen, setAssistantOpen] = useState(false);
     const [showAIPetHome, setShowAIPetHome] = useState(false);
-    const [showActivationModal, setShowActivationModal] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
     const [showAboutModal, setShowAboutModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
@@ -334,6 +334,7 @@ const MainApp: React.FC = () => {
     const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
     const [showSotoshop, setShowSotoshop] = useState(false);
     const [showAIPetLab, setShowAIPetLab] = useState(false);
+    const [isFirstActivation, setIsFirstActivation] = useState(false);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -641,7 +642,10 @@ const MainApp: React.FC = () => {
                     isVisible={isPetVisible}
                     onAsk={() => setAssistantOpen(true)}
                     onShowLab={() => setShowAIPetLab(true)}
-                    onActivate={() => setShowActivationModal(true)}
+                    onActivate={() => {
+                        setIsFirstActivation(true);
+                        setShowAIPetLab(true);
+                    }}
                 />
 
                 <Suspense fallback={null}>
@@ -660,10 +664,16 @@ const MainApp: React.FC = () => {
 
         {/* Modals and overlays */}
         <Suspense fallback={null}>
-            {showActivationModal && <AIPetActivation onClose={() => setShowActivationModal(false)} />}
             <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={petState} profile={profile} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
-            <AIPetLabModal show={showAIPetLab} onClose={() => setShowAIPetLab(false)} />
+            <AIPetLabModal 
+                show={showAIPetLab} 
+                onClose={() => {
+                    setShowAIPetLab(false);
+                    setIsFirstActivation(false);
+                }}
+                isFirstActivation={isFirstActivation}
+            />
             <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
             <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
             <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />

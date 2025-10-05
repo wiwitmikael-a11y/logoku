@@ -1,15 +1,26 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIPet } from '../contexts/AIPetContext';
 import AIPetVisual from './AIPetVisual';
 import Button from './common/Button';
+import type { AIPetState } from '../types';
+import { playSound } from '../services/soundService';
 
 interface Props {
   show: boolean;
   onClose: () => void;
+  isFirstActivation: boolean;
 }
+
+const ACTIVATION_COST = 5;
+
+const statusMessages = [
+    "Menghubungi Lab Mang AI...", "Mensintesis matriks kepribadian...", "Memilih blueprint dasar...",
+    "Meracik palet warna dinamis...", "Mengkalibrasi statistik...", "Menulis bio & cerita asal...",
+    "Finalisasi... Inisiasi protokol aktivasi!",
+];
 
 const StatBar: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
     <div>
@@ -31,88 +42,155 @@ const BattleStatDisplay: React.FC<{ label: string; value: number; icon: string }
     </div>
 );
 
-const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
+const AIPetLabModal: React.FC<Props> = ({ show, onClose, isFirstActivation }) => {
     const { profile } = useAuth();
-    const { petState, isLoading } = useAIPet();
+    const { petState, isLoading: isPetLoading, activatePet } = useAIPet();
+    
+    const [activationStep, setActivationStep] = useState<'idle' | 'loading' | 'reveal' | 'done'>('idle');
+    const [error, setError] = useState<string | null>(null);
+    const [progress, setProgress] = useState(0);
+    const [statusText, setStatusText] = useState("Siap aktivasi?");
+
+    useEffect(() => {
+        if (!show) {
+            // Reset state on close
+            setTimeout(() => {
+                setActivationStep('idle');
+                setError(null);
+                setProgress(0);
+            }, 300);
+        }
+    }, [show]);
+
+    useEffect(() => {
+        let interval: number;
+        if (activationStep === 'loading') {
+            let messageIndex = 0;
+            interval = window.setInterval(() => {
+                messageIndex = (messageIndex + 1) % statusMessages.length;
+                setStatusText(statusMessages[messageIndex]);
+                setProgress(p => Math.min(95, p + 14));
+            }, 800);
+        }
+        return () => clearInterval(interval);
+    }, [activationStep]);
+
+    const handleActivate = async () => {
+        setActivationStep('loading');
+        setError(null);
+        playSound('start');
+        setProgress(10);
+        setStatusText(statusMessages[0]);
+        
+        try {
+            await activatePet();
+            setProgress(100);
+            setStatusText("Aktivasi Berhasil! AIPet telah lahir!");
+            playSound('success');
+            setActivationStep('reveal');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Gagal mengaktifkan pet.");
+            playSound('error');
+            setActivationStep('idle');
+            setProgress(0);
+        }
+    };
+
+    const podAnimation = `@keyframes pod-wobble { 0%{transform:rotate(0deg)} 25%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} 75%{transform:rotate(-3deg)} 100%{transform:rotate(0deg)} } .animate-pod-wobble { animation: pod-wobble 0.3s linear infinite; } @keyframes pet-reveal { 0% { transform: scale(0) rotate(-180deg); opacity: 0; filter: brightness(3) saturate(0); } 100% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1) saturate(1); } } .animate-pet-reveal { animation: pet-reveal 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards; }`;
+
+    const dummyPodState: AIPetState = { name: 'AIPod', stage: 'aipod', tier: 'common', stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 }, lastFed: Date.now(), lastPlayed: Date.now(), personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 }, narrative: null, blueprint: null, colors: null, battleStats: null, buffs: [], };
+    
+    const renderActivationView = () => (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+             <h2 className="text-3xl font-bold text-primary mb-2" style={{ fontFamily: 'var(--font-display)' }}>Aktifkan AIPod?</h2>
+            <div className={`w-40 h-48 my-4 ${activationStep === 'loading' ? 'animate-pod-wobble' : ''}`}>
+                <AIPetVisual petState={dummyPodState} />
+            </div>
+            {activationStep === 'loading' ? (
+                <div className="w-full max-w-xs">
+                    <p className="text-sm text-splash font-semibold animate-pulse">{statusText}</p>
+                    <div className="w-full bg-background rounded-full h-2.5 mt-2 border border-border-main"><div className="bg-splash h-2.5 rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }}></div></div>
+                </div>
+            ) : (
+                 <>
+                    <p className="text-text-body mb-6 text-sm max-w-xs">Mengaktifkan AIPod ini akan mereplikasi wujud fisik, statistik, dan narasi unik perdana AIPet-mu. Proses ini membutuhkan <strong className="text-text-header">{ACTIVATION_COST} token</strong>.</p>
+                    <div className="flex flex-col items-center gap-3">
+                        <Button onClick={handleActivate}>Ya, Aktifkan Sekarang! ({ACTIVATION_COST} Token)</Button>
+                        <Button onClick={onClose} variant="secondary" size="small">Nanti Aja Deh</Button>
+                    </div>
+                    {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+                </>
+            )}
+        </div>
+    );
+
+    const renderLabView = (pet: AIPetState) => (
+        <div className="space-y-6">
+            <div>
+                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Cerita Asal</h4>
+                <div className="bg-background p-4 rounded-lg border border-border-main">
+                    <p className="text-sm text-text-body italic selectable-text">{pet.narrative || "Asal-usulnya masih menjadi misteri..."}</p>
+                </div>
+            </div>
+            <div>
+                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Statistik Pertempuran</h4>
+                {pet.battleStats ? (
+                    <>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3"><BattleStatDisplay label="HP" value={pet.battleStats.hp} icon="❤️" /><BattleStatDisplay label="ATK" value={pet.battleStats.atk} icon="⚔️" /><BattleStatDisplay label="DEF" value={pet.battleStats.def} icon="🛡️" /><BattleStatDisplay label="SPD" value={pet.battleStats.spd} icon="💨" /></div>
+                        {pet.buffs && pet.buffs.length > 0 && (<div className="mt-3 text-center text-xs font-bold text-sky-300 bg-sky-900/50 rounded-lg py-1">Buffs: {pet.buffs.join(', ')}</div>)}
+                    </>
+                ) : <p className="text-sm text-text-muted italic">Statistik tempur belum ada.</p>}
+            </div>
+            <div>
+                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Statistik Kepribadian</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><StatBar label="⚡ Energi" value={pet.stats.energy} color="bg-green-500" /><StatBar label="🎨 Kreativitas" value={pet.stats.creativity} color="bg-sky-400" /><StatBar label="🧠 Kecerdasan" value={pet.stats.intelligence} color="bg-fuchsia-500" /><StatBar label="😎 Karisma" value={pet.stats.charisma} color="bg-yellow-400" /></div>
+            </div>
+            <div>
+                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Aktivitas (Segera Hadir)</h4>
+                <div className="grid grid-cols-2 gap-3"><Button size="small" variant="secondary" disabled>Beri Makan</Button><Button size="small" variant="secondary" disabled>Ajak Main</Button></div>
+            </div>
+        </div>
+    );
 
     if (!show) return null;
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={onClose}>
+            <style>{podAnimation}</style>
             <div className="relative max-w-4xl w-full h-[90vh] bg-surface rounded-2xl shadow-xl flex flex-col md:flex-row" onClick={e => e.stopPropagation()}>
                 <button onClick={onClose} title="Tutup" className="absolute top-3 right-3 z-20 p-2 text-text-muted rounded-full hover:bg-background hover:text-text-header transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
 
                 {/* Left Panel: Visual */}
-                <div className="w-full md:w-1/2 flex-shrink-0 flex flex-col items-center justify-center p-8 bg-background/50 rounded-t-2xl md:rounded-t-none md:rounded-l-2xl">
-                    {isLoading || !petState ? (
-                        <p>Loading Pet...</p>
-                    ) : (
-                        <>
-                            <div className="w-full max-w-sm aspect-square mb-4">
-                                <AIPetVisual petState={petState} />
-                            </div>
-                            <h2 className="text-4xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>{petState.name}</h2>
-                             <div className="mt-1 text-sm font-semibold bg-yellow-400 text-black px-3 py-0.5 rounded-full capitalize">{petState.tier}</div>
-                        </>
+                <div className="w-full md:w-1/2 flex-shrink-0 flex flex-col items-center justify-center p-8 bg-background/50 rounded-t-2xl md:rounded-t-none md:rounded-l-2xl overflow-hidden">
+                    {isPetLoading ? <p>Loading Pet...</p> : (
+                        <div className={`w-full max-w-sm aspect-square ${activationStep === 'reveal' ? 'animate-pet-reveal' : ''}`}>
+                             {(petState && petState.stage === 'active') ? <AIPetVisual petState={petState} /> : <AIPetVisual petState={dummyPodState} />}
+                        </div>
                     )}
+                     {petState && petState.stage === 'active' && (
+                        <div className={`text-center transition-opacity duration-500 ${activationStep === 'reveal' ? 'opacity-0' : 'opacity-100'}`}>
+                            <h2 className="text-4xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>{petState.name}</h2>
+                            <div className="mt-1 text-sm font-semibold bg-yellow-400 text-black px-3 py-0.5 rounded-full capitalize">{petState.tier}</div>
+                        </div>
+                     )}
                 </div>
 
                 {/* Right Panel: Info & Actions */}
                 <div className="flex-grow p-6 overflow-y-auto">
                     <h3 className="text-2xl font-bold text-text-header mb-4" style={{ fontFamily: 'var(--font-display)' }}>AIPet Lab</h3>
-                    {isLoading || !petState ? <p>Loading stats...</p> : petState.stage === 'aipod' ? (
-                        <div className="text-center p-8 border border-dashed border-border-main rounded-lg">
-                            <p className="text-lg">🧬</p>
-                            <p className="text-text-body">AIPod masih dalam mode tidur.</p>
-                            <p className="text-sm text-text-muted mt-2">Buka menu AIPet di pojok kanan bawah dashboard untuk mengaktifkannya.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            <div>
-                                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Cerita Asal</h4>
-                                <div className="bg-background p-4 rounded-lg border border-border-main">
-                                    <p className="text-sm text-text-body italic selectable-text">{petState.narrative || "Asal-usulnya masih menjadi misteri..."}</p>
-                                </div>
+                    {isPetLoading ? <p>Loading stats...</p> : 
+                        (isFirstActivation && petState?.stage === 'aipod') ? renderActivationView() :
+                        (petState && petState.stage === 'active') ? renderLabView(petState) :
+                        (
+                            <div className="text-center p-8 border border-dashed border-border-main rounded-lg">
+                                <p className="text-lg">🧬</p>
+                                <p className="text-text-body">AIPod masih dalam mode tidur.</p>
+                                <p className="text-sm text-text-muted mt-2">Buka menu AIPet di pojok kanan bawah dashboard untuk mengaktifkannya.</p>
                             </div>
-                            
-                            <div>
-                                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Statistik Pertempuran</h4>
-                                {petState.battleStats ? (
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                        <BattleStatDisplay label="HP" value={petState.battleStats.hp} icon="❤️" />
-                                        <BattleStatDisplay label="ATK" value={petState.battleStats.atk} icon="⚔️" />
-                                        <BattleStatDisplay label="DEF" value={petState.battleStats.def} icon="🛡️" />
-                                        <BattleStatDisplay label="SPD" value={petState.battleStats.spd} icon="💨" />
-                                    </div>
-                                ) : <p className="text-sm text-text-muted italic">Statistik tempur belum ada.</p>}
-                                {petState.buffs && petState.buffs.length > 0 && (
-                                    <div className="mt-3 text-center text-xs font-bold text-sky-300 bg-sky-900/50 rounded-lg py-1">
-                                        Buffs: {petState.buffs.join(', ')}
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div>
-                                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Statistik Kepribadian</h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <StatBar label="⚡ Energi" value={petState.stats.energy} color="bg-green-500" />
-                                    <StatBar label="🎨 Kreativitas" value={petState.stats.creativity} color="bg-sky-400" />
-                                    <StatBar label="🧠 Kecerdasan" value={petState.stats.intelligence} color="bg-fuchsia-500" />
-                                    <StatBar label="😎 Karisma" value={petState.stats.charisma} color="bg-yellow-400" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Aktivitas (Segera Hadir)</h4>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Button size="small" variant="secondary" disabled>Beri Makan</Button>
-                                    <Button size="small" variant="secondary" disabled>Ajak Main</Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                        )
+                    }
                 </div>
             </div>
         </div>

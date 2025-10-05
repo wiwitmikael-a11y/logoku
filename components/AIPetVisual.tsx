@@ -21,16 +21,7 @@ const AIPodVisual: React.FC = () => {
             <style>{podAnimation}</style>
             <svg viewBox="0 0 120 120" className="w-full h-full">
                 <defs>
-                    <linearGradient id="podMetal" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#555" />
-                        <stop offset="50%" stopColor="#333" />
-                        <stop offset="100%" stopColor="#444" />
-                    </linearGradient>
-                    <linearGradient id="podGlass" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="rgba(var(--c-primary), 0.2)" />
-                        <stop offset="100%" stopColor="rgba(var(--c-primary), 0.1)" />
-                    </linearGradient>
-                     <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
                         <stop offset="0%" stopColor="rgb(var(--c-splash))" />
                         <stop offset="100%" stopColor="rgba(var(--c-splash), 0)" />
                     </radialGradient>
@@ -43,29 +34,17 @@ const AIPodVisual: React.FC = () => {
                     </filter>
                 </defs>
 
-                <g transform="translate(10, 0)">
-                    {/* Base */}
-                    <path d="M 20,115 H 80 L 75,120 H 25 Z" fill="url(#podMetal)" />
-                    <rect x="30" y="110" width="40" height="5" fill="#222" />
-
-                    {/* Main Body */}
-                    <path d="M 10,110 C 0,80 0,40 10,10 H 90 C 100,40 100,80 90,110 Z" fill="url(#podGlass)" stroke="rgba(var(--c-primary), 0.4)" strokeWidth="1" />
-                    <path d="M 10,110 C 0,80 0,40 10,10 H 90 C 100,40 100,80 90,110 Z" stroke="rgba(var(--c-splash), 0.1)" strokeWidth="3" fill="none" />
-
+                <g style={{ filter: 'url(#podGlow)' }}>
                     {/* Core */}
-                    <g style={{ filter: 'url(#podGlow)' }}>
-                        <circle cx="50" cy="65" r="15" fill="url(#coreGlow)" />
-                        <circle cx="50" cy="65" fill="rgb(var(--c-splash))">
-                            <animate attributeName="r" values="8;10;8" dur="2s" repeatCount="indefinite" />
-                            <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite" />
-                        </circle>
-                    </g>
+                    <circle cx="60" cy="60" r="25" fill="url(#coreGlow)" />
+                    <circle cx="60" cy="60" fill="rgb(var(--c-splash))">
+                        <animate attributeName="r" values="12;15;12" dur="2.5s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0.8;1;0.8" dur="2.5s" repeatCount="indefinite" />
+                    </circle>
                     
                     {/* Floating Ring */}
-                    <ellipse cx="50" cy="75" rx="35" ry="10" fill="none" stroke="rgba(var(--c-primary), 0.7)" strokeWidth="1.5" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'ring-rotate 8s linear infinite' }} />
-
-                     {/* Glass Highlight */}
-                    <path d="M 20 20 C 30 50, 25 80, 22 100" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none" />
+                    <ellipse cx="60" cy="60" rx="40" ry="15" fill="none" stroke="rgba(var(--c-primary), 0.7)" strokeWidth="1.5" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'ring-rotate 8s linear infinite' }} />
+                     <ellipse cx="60" cy="60" rx="30" ry="10" fill="none" stroke="rgba(var(--c-primary), 0.5)" strokeWidth="1" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'ring-rotate 12s linear infinite reverse' }} />
                 </g>
             </svg>
         </div>

@@ -66,9 +66,9 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                 <div className="relative w-full h-full bg-gray-900/50 border-2 border-gray-500 rounded-lg flex flex-col overflow-hidden">
                     
                     {/* Card Content */}
-                    <div className="flex flex-col h-full z-0">
+                    <div className="flex flex-col flex-grow h-full z-0">
                         {/* Header */}
-                        <div className="flex justify-between items-center p-2 mx-1 border-b-2 border-yellow-600">
+                        <div className="flex justify-between items-center p-2 mx-1 border-b-2 border-yellow-600 flex-shrink-0">
                             <h3 className="font-bold text-lg text-white" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{petState.name}</h3>
                             <div className="text-xs font-semibold bg-yellow-400 text-black px-2 py-0.5 rounded-full capitalize">{petState.tier}</div>
                         </div>
@@ -82,7 +82,7 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                         </div>
 
                         {/* Info Box */}
-                        <div className="mx-1.5 mb-1 p-2 border-2 border-yellow-700 bg-black/30 rounded-md flex-1 flex flex-col justify-around">
+                        <div className="mx-1.5 mb-1 p-2 border-2 border-yellow-700 bg-black/30 rounded-md flex-grow flex flex-col justify-around">
                             {/* Personality Stats */}
                             <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                                 <StatBar label="ENR" value={petState.stats.energy} color="#22c55e" />
@@ -114,7 +114,7 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                         </div>
 
                         {/* Footer */}
-                        <div className="mt-auto px-2 pb-1 flex justify-between items-center text-[8px] font-semibold text-yellow-200/60">
+                        <div className="mt-auto px-2 pb-1 flex justify-between items-center text-[8px] font-semibold text-yellow-200/60 flex-shrink-0">
                             <p>desain.fun © 2025</p>
                             <p>Aset Digital</p>
                         </div>
