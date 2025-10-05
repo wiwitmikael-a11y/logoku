@@ -16,6 +16,7 @@ import { moderateContent } from '../services/geminiService';
 const THREADS_PAGE_SIZE = 10;
 const POSTS_PAGE_SIZE = 50;
 const POST_COOLDOWN_SECONDS = 30; // Cooldown in seconds
+const LINK_POSTING_MIN_LEVEL = 3;
 
 type ForumView = 'list' | 'thread' | 'new_thread';
 
@@ -36,6 +37,12 @@ const formatRelativeTime = (isoString: string): string => {
     if (days < 7) return `${days} hari lalu`;
     
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const linkify = (text: string): string => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const externalLinkIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="inline-block h-3 w-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>`;
+    return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="nofollow ugc" class="text-primary hover:underline break-all">${url}${externalLinkIcon}</a>`);
 };
 
 
@@ -289,6 +296,11 @@ const Forum: React.FC = () => {
         setIsSubmitting(true);
         setError(null);
         try {
+            // Link posting restriction
+            if (/(https?:\/\/|www\.)/i.test(newThreadContent) && profile.level < LINK_POSTING_MIN_LEVEL) {
+                throw new Error(`Untuk mencegah spam, fitur kirim link hanya untuk Juragan Level ${LINK_POSTING_MIN_LEVEL} ke atas. Tingkatkan levelmu dengan aktif di aplikasi!`);
+            }
+
             const moderationResult = await moderateContent(newThreadContent);
             if (!moderationResult.isAppropriate) {
                 throw new Error(moderationResult.reason);
@@ -320,6 +332,11 @@ const Forum: React.FC = () => {
         setIsSubmitting(true);
         setError(null);
         try {
+             // Link posting restriction
+            if (/(https?:\/\/|www\.)/i.test(newPostContent) && profile.level < LINK_POSTING_MIN_LEVEL) {
+                throw new Error(`Untuk mencegah spam, fitur kirim link hanya untuk Juragan Level ${LINK_POSTING_MIN_LEVEL} ke atas. Tingkatkan levelmu dengan aktif di aplikasi!`);
+            }
+
             const moderationResult = await moderateContent(newPostContent);
             if (!moderationResult.isAppropriate) {
                 throw new Error(moderationResult.reason);
@@ -360,7 +377,7 @@ const Forum: React.FC = () => {
                                         <p className="text-xs text-text-muted">{formatRelativeTime(selectedThread.created_at)}</p>
                                     </div>
                                 </div>
-                                <p className="mt-3 text-text-body whitespace-pre-wrap selectable-text">{selectedThread.content}</p>
+                                <p className="mt-3 text-text-body whitespace-pre-wrap selectable-text" dangerouslySetInnerHTML={{ __html: linkify(selectedThread.content) }} />
                             </div>
 
                             {isLoadingPosts ? <LoadingMessage /> : posts.map(post => {
@@ -373,7 +390,7 @@ const Forum: React.FC = () => {
                                                 <p className={`font-semibold text-sm ${postAuthor.isOfficial ? 'text-primary' : 'text-text-header'}`}>{postAuthor.name}</p>
                                                 <p className="text-xs text-text-muted">{formatRelativeTime(post.created_at)}</p>
                                             </div>
-                                            <p className="mt-1 text-sm text-text-body whitespace-pre-wrap selectable-text">{post.content}</p>
+                                            <p className="mt-1 text-sm text-text-body whitespace-pre-wrap selectable-text" dangerouslySetInnerHTML={{ __html: linkify(post.content) }}/>
                                         </div>
                                     </div>
                                 );

@@ -37,19 +37,19 @@ const BrandingTipModal: React.FC<Props> = ({ show, onConfirm }) => {
     >
       <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-xl p-8 text-center flex flex-col items-center">
         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 mb-4" style={{ imageRendering: 'pixelated' }} />
-        <h2 id="tip-modal-title" className="text-3xl font-bold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>Eh, Juragan, Tau Gak Sih?</h2>
-        <div className="text-text-body text-left space-y-3 mb-8">
+        <h2 id="tip-modal-title" className="text-3xl font-bold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>Selamat Datang di Studio!</h2>
+        <div className="text-text-body text-center space-y-3 mb-8">
             <p>
-                Di pasar yang ramenya kayak stasiun pas jam pulang kerja, <strong className="text-splash">branding yang KONSISTEN</strong> itu tiket VVIP biar bisnis lo dilirik dan diinget terus!
+                Sebagai juragan baru, Mang AI udah siapin amunisi awal buat lo: <strong className="text-splash text-xl">20 Token GRATIS!</strong>
             </p>
             <p>
-                Ini bukan cuma soal logo cakep, tapi soal <strong className="text-text-header">'rasa' dan 'cerita'</strong> yang bikin pelanggan ngerasa nyambung. Dari warna, gaya bahasa, sampe cara lo bales chat—semua harus seirama.
+                Gunakan token ini buat ngeracik brand pertamamu dari nol—mulai dari persona, logo, sampai konten sosmed. Gak ada alesan buat nunda lagi.
             </p>
-            <p>
-                <strong className="block mt-2 text-splash">Kabar baiknya?</strong> Project branding pertamamu di sini lebih hemat! Setiap token yang kepake di alur kerja utama bakal Mang AI <strong className="text-white">balikin lagi 1 token</strong>. Jadi, jangan takut buat eksplorasi. Siap bikin brand lo jadi juara? Ayo kita mulai!
+            <p className="font-bold text-text-header">
+                Ayo kita mulai petualangan branding ini!
             </p>
         </div>
-        <Button onClick={handleConfirm}> Ngerti, Mang! Lanjut! </Button>
+        <Button onClick={handleConfirm}> Gas, Mang! Kita Mulai! </Button>
       </div>
     </div>
   );

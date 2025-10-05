@@ -43,11 +43,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: Reverted `render` to be a standard class method instead of an arrow function property.
-  // Using arrow functions for lifecycle methods like `render` is unconventional and can sometimes
-  // interfere with TypeScript's type inference for `this`, leading to errors where `this.props`
-  // and `this.setState` are not found on the component instance. The standard method syntax
-  // is the idiomatic and safest approach for `render`.
+  // FIX: Converted `render` to a standard class method. React binds `this` for `render` automatically,
+  // which is a more robust way to handle component context and resolves the `this.props` and `this.setState` errors.
   public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };

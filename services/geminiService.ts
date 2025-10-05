@@ -686,6 +686,8 @@ export const moderateContent = async (text: string): Promise<{ isAppropriate: bo
   - Personal information (phone numbers, addresses).
   - Dangerous or illegal content.
 
+  NEW INSTRUCTION: If the text contains a URL (http:// or https://), be extra critical. The link MUST be relevant to the business/branding discussion. Generic promotional links are spam and should be marked as inappropriate.
+
   Analyze this text: "${text}"
 
   Return your verdict as a JSON object.`;
