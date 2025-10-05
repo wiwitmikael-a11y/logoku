@@ -193,7 +193,7 @@ const FloatingAIPet: React.FC<{
                     id="ai-assistant-fab"
                     onClick={onActivate}
                     title="Aktifkan AIPet"
-                    className={`p-2 cursor-pointer ${animationClass} animate-ai-fab-pulse`}
+                    className={`p-2 cursor-pointer ${animationClass}`}
                 >
                      <Suspense fallback={null}>
                         <AIPetVisual petState={petState} />

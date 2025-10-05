@@ -14,13 +14,23 @@ interface AIPetVisualProps {
 // --- NEW AIPOD VISUAL ---
 const AIPodVisual: React.FC = () => {
     const podAnimation = `
-        @keyframes pod-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes pod-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @keyframes core-pulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
-        @keyframes rock-float-1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-        @keyframes rock-float-2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+        @keyframes rock-orbit-1 { 
+            0% { transform: translate(0, 0) rotate(0deg) translateX(45px) rotate(0deg); } 
+            100% { transform: translate(0, 0) rotate(360deg) translateX(45px) rotate(-360deg); } 
+        }
+        @keyframes rock-orbit-2 { 
+            0% { transform: translate(0, 0) rotate(0deg) translateX(55px) translateY(5px) rotate(0deg); } 
+            100% { transform: translate(0, 0) rotate(-360deg) translateX(55px) translateY(5px) rotate(360deg); } 
+        }
+        @keyframes rock-float-3 { 
+            0%, 100% { transform: translateY(0px) rotate(0deg); } 
+            50% { transform: translateY(8px) rotate(15deg); } 
+        }
     `;
     return (
-        <div className="w-full h-full" style={{ animation: `pod-float 3s ease-in-out infinite` }}>
+        <div className="w-full h-full" style={{ animation: `pod-float 4s ease-in-out infinite` }}>
             <style>{podAnimation}</style>
             <svg viewBox="0 0 120 120" className="w-full h-full">
                 <defs>
@@ -35,6 +45,19 @@ const AIPodVisual: React.FC = () => {
                     </linearGradient>
                 </defs>
 
+                {/* Floating Rocks */}
+                <g filter="url(#runeGlow)">
+                    <g style={{ animation: `rock-orbit-1 10s linear infinite`, transformOrigin: '60px 65px' }}>
+                        <path d="M0,0 l5,2 l-2,5 l-4,-3 Z" fill="rgb(var(--c-primary))" />
+                    </g>
+                    <g style={{ animation: `rock-orbit-2 15s linear infinite reverse`, transformOrigin: '60px 65px' }}>
+                         <path d="M0,0 l-6,1 l2,4 l5,-2 Z" fill="rgb(var(--c-primary))" />
+                    </g>
+                    <g transform="translate(20, 50)" style={{ animation: `rock-float-3 7s ease-in-out infinite 0.5s` }}>
+                         <path d="M0,0 l4,4 l-5,3 l-1,-6 Z" fill="rgb(var(--c-primary))" />
+                    </g>
+                </g>
+                
                 {/* Main Totem Body */}
                 <g>
                     <path d="M45 100 L40 80 L80 80 L75 100 Z" fill="url(#totemGradient)" stroke="#1a1a1c" strokeWidth="1.5" />
@@ -48,12 +71,6 @@ const AIPodVisual: React.FC = () => {
                     {/* Rune Glyphs */}
                     <path d="M55 58 V 72 M52 65 H 58" stroke="rgb(var(--c-bg))" strokeWidth="1.5" />
                     <path d="M65 58 L 62 65 L 65 72" stroke="rgb(var(--c-bg))" strokeWidth="1.5" fill="none" />
-                </g>
-                
-                {/* Floating Rocks */}
-                <g>
-                    <path d="M35 105 L40 110 L30 115 L25 108 Z" fill="rgb(var(--c-primary))" filter="url(#runeGlow)" style={{ animation: `rock-float-1 4s ease-in-out infinite` }} />
-                    <path d="M85 102 L95 105 L90 112 L82 110 Z" fill="rgb(var(--c-primary))" filter="url(#runeGlow)" style={{ animation: `rock-float-2 3.5s ease-in-out infinite 0.5s` }} />
                 </g>
             </svg>
         </div>
