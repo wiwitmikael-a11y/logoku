@@ -193,7 +193,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'o
     return (
         <div className="flex flex-col gap-8 items-center text-center">
             <DynamicInfoBox />
-            <div className="relative">
+            <div className="relative mt-12">
                 <Button onClick={() => onNewProject()} size="large" variant="splash">+ Bikin Project Branding Baru</Button>
                 {showOnboarding && (
                     <div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max cursor-pointer animate-bounce">
