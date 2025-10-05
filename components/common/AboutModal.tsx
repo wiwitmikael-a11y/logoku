@@ -36,8 +36,8 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
       tabIndex={-1}
     >
       <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-xl p-8 flex flex-col items-center">
-        <button onClick={handleClose} title="Tutup" className="absolute top-4 right-4 p-2 text-text-muted rounded-full hover:bg-background hover:text-text-header transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        <button onClick={handleClose} title="Tutup" className="absolute top-4 right-4 p-2 text-primary rounded-full hover:bg-background hover:text-primary-hover transition-colors close-button-glow">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI character" className="w-24 mb-4 animate-breathing-ai" style={{ imageRendering: 'pixelated' }} />
         <h2 id="about-modal-title" className="text-4xl font-bold text-primary mb-4 text-center" style={{ fontFamily: 'var(--font-display)' }}>Tentang desain.fun</h2>

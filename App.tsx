@@ -273,8 +273,8 @@ const AiAssistant: React.FC<{ petName: string, isOpen: boolean, onToggle: (isOpe
             <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>
                 <header className="p-4 border-b border-border-main flex justify-between items-center flex-shrink-0">
                     <h3 className="text-lg font-bold text-primary">Tanya {petName}</h3>
-                    <button onClick={() => onToggle(false)} title="Tutup" className="p-2 text-text-muted rounded-full hover:bg-background hover:text-text-header">
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <button onClick={() => onToggle(false)} title="Tutup" className="p-2 text-primary rounded-full hover:bg-background hover:text-primary-hover close-button-glow">
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </header>
                 <div className="flex-grow overflow-y-auto p-4 flex flex-col gap-3">

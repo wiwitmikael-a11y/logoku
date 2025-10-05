@@ -158,8 +158,8 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose, isFirstActivation }) =>
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={onClose}>
             <style>{podAnimation}</style>
             <div className="relative max-w-4xl w-full h-[90vh] bg-surface rounded-2xl shadow-xl flex flex-col md:flex-row" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} title="Tutup" className="absolute top-3 right-3 z-20 p-2 text-text-muted rounded-full hover:bg-background hover:text-text-header transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <button onClick={onClose} title="Tutup" className="absolute top-3 right-3 z-20 p-2 text-primary rounded-full hover:bg-background hover:text-primary-hover transition-colors close-button-glow">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
 
                 {/* Left Panel: Visual */}

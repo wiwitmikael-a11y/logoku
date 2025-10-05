@@ -17,7 +17,7 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Using modern class property syntax for state initialization, which avoids constructor/binding issues.
+  // Using modern class property syntax for state initialization, which avoids constructor/binding issues.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -34,7 +34,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted to an arrow function to automatically bind `this`, ensuring `this.state` and `this.setState` are available.
+  // Using an arrow function to automatically bind `this`.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
@@ -43,8 +43,10 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: Changed render to a standard class method. React handles `this` binding for `render`, so an arrow function is not necessary and was causing context issues.
-  public render(): ReactNode {
+  // Fix: Converted the render method to an arrow function property.
+  // This ensures `this` is correctly bound, resolving errors where `this.props` 
+  // and `this.setState` (in handlers called from render) were not found.
+  public render = (): ReactNode => {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

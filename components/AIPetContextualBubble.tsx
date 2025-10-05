@@ -35,7 +35,7 @@ const AIPetContextualBubble: React.FC<Props> = ({ message, onClose }) => {
         }
       `}</style>
       <div className="contextual-bubble relative">
-        <button onClick={onClose} className="absolute -top-1 -right-1 text-text-muted hover:text-text-header text-xl leading-none">&times;</button>
+        <button onClick={onClose} title="Tutup" className="absolute -top-5 -right-5 w-6 h-6 flex items-center justify-center bg-surface border border-border-main rounded-full text-primary hover:text-primary-hover text-2xl leading-none font-bold close-button-glow">&times;</button>
         <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: message }} />
       </div>
     </div>

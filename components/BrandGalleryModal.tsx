@@ -35,8 +35,8 @@ const BrandGalleryModal: React.FC<Props> = ({ show, onClose }) => {
       <div className="relative max-w-7xl w-full h-[90vh] bg-surface rounded-2xl shadow-xl flex flex-col">
         <header className="p-4 border-b border-border-main flex-shrink-0 flex justify-between items-center">
              <h2 id="gallery-modal-title" className="text-xl font-bold text-primary"> Pameran Brand Juragan </h2>
-            <button onClick={onClose} title="Tutup" className="p-2 -mr-2 text-text-muted rounded-full hover:bg-background hover:text-text-header transition-colors">
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <button onClick={onClose} title="Tutup" className="p-2 -mr-2 text-primary rounded-full hover:bg-background hover:text-primary-hover transition-colors close-button-glow">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </header>
         <main className="p-6 overflow-y-auto">

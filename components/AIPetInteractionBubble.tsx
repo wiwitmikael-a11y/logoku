@@ -64,7 +64,7 @@ const AIPetInteractionBubble: React.FC<Props> = ({ isOpen, onClose, onAsk, onSho
                 }
             `}</style>
             <div className="interaction-bubble relative">
-                <button onClick={onClose} className="absolute -top-1 -right-1 text-text-muted hover:text-text-header text-xl leading-none" title="Tutup">&times;</button>
+                <button onClick={onClose} className="absolute -top-5 -right-5 w-6 h-6 flex items-center justify-center bg-surface border border-border-main rounded-full text-primary hover:text-primary-hover text-2xl leading-none font-bold close-button-glow" title="Tutup">&times;</button>
                 <p className="text-sm text-text-body mb-3 pr-4">{phrase}</p>
                 <div className="grid grid-cols-2 gap-2">
                     <Button onClick={handleAsk} size="small" variant="secondary">Tanya {petName}</Button>
