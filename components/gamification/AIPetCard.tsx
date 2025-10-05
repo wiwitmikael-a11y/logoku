@@ -21,8 +21,8 @@ const StatBar: React.FC<{ label: string; value: number; color: string }> = ({ la
 
 
 const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
-    if (petState.stage === 'egg' || !petState.blueprint) {
-        return <p className="text-sm text-text-muted italic">AIPet belum menetas.</p>;
+    if (petState.stage === 'stasis_pod' || !petState.blueprint) {
+        return <p className="text-sm text-text-muted italic">AIPet belum diaktifkan.</p>;
     }
 
     const cardShineAnimation = `
@@ -70,7 +70,7 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                         {/* Header */}
                         <div className="flex justify-between items-center p-2 mx-1 border-b-2 border-yellow-600">
                             <h3 className="font-bold text-lg text-white" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{petState.name}</h3>
-                            <div className="text-xs font-semibold bg-yellow-400 text-black px-2 py-0.5 rounded-full capitalize">{petState.stage}</div>
+                            <div className="text-xs font-semibold bg-yellow-400 text-black px-2 py-0.5 rounded-full capitalize">{petState.tier}</div>
                         </div>
 
                         {/* Image */}
@@ -83,7 +83,7 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
 
                         {/* Info Box */}
                         <div className="mx-1.5 mb-1 p-2 border-2 border-yellow-700 bg-black/30 rounded-md flex-1 flex flex-col justify-around">
-                            {/* Stats */}
+                            {/* Personality Stats */}
                             <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                                 <StatBar label="ENR" value={petState.stats.energy} color="#22c55e" />
                                 <StatBar label="CRT" value={petState.stats.creativity} color="#38bdf8" />
@@ -91,9 +91,25 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                                 <StatBar label="CHA" value={petState.stats.charisma} color="#facc15" />
                             </div>
 
-                            {/* Narrative */}
-                            <div className="border-t-2 border-yellow-700/50 mt-2 pt-2 text-center text-xs text-yellow-100/80 italic">
-                                <p className="leading-snug">{petState.narrative || "Deskripsi belum tersedia."}</p>
+                            {/* Battle Stats */}
+                            <div className="border-t-2 border-yellow-700/50 mt-2 pt-1.5 space-y-1">
+                                {petState.battleStats ? (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-x-2 text-[10px] font-semibold text-center text-yellow-100/90">
+                                            <span>HP: {petState.battleStats.hp}</span>
+                                            <span>ATK: {petState.battleStats.atk}</span>
+                                            <span>DEF: {petState.battleStats.def}</span>
+                                            <span>SPD: {petState.battleStats.spd}</span>
+                                        </div>
+                                        {petState.buffs && petState.buffs.length > 0 && (
+                                            <div className="text-center text-[9px] font-bold text-sky-300 bg-sky-900/50 rounded-sm py-0.5">
+                                                {petState.buffs.join(', ')}
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                     <div className="text-center text-xs text-yellow-100/80 italic">Statistik battle belum ada.</div>
+                                )}
                             </div>
                         </div>
 

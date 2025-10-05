@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import AIPetVisual from './AIPetVisual';
 import { playSound } from '../services/soundService';
 
-const AIPetHatching = React.lazy(() => import('./AIPetHatching'));
+const AIPetActivation = React.lazy(() => import('./AIPetActivation'));
 
 type MiniGame = 'color' | 'pattern' | 'style' | 'slogan' | null;
 
@@ -23,7 +23,7 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     const [gameFeedback, setGameFeedback] = useState<'correct' | 'incorrect' | null>(null);
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(petState?.name || '');
-    const [showHatchingModal, setShowHatchingModal] = useState(false);
+    const [showActivationModal, setShowActivationModal] = useState(false);
 
     const MINIGAME_COST = 1;
 
@@ -103,7 +103,7 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     };
 
     const headerContent = () => {
-        if (petState.stage === 'egg') {
+        if (petState.stage === 'stasis_pod') {
             return <h3 className="font-bold text-text-header">{petState.name}</h3>;
         }
         if (isEditingName) {
@@ -132,15 +132,15 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     };
 
     const mainContent = () => {
-        if (petState.stage === 'egg' || !petState.blueprint) {
-            const isEgg = petState.stage === 'egg';
+        if (petState.stage === 'stasis_pod' || !petState.blueprint) {
+            const isPod = petState.stage === 'stasis_pod';
             return (
                 <div className="text-center p-4">
                     <p className="text-sm text-text-body mb-4">
-                        {isEgg ? "Sepertinya ada telur misterius di sini. Mau coba tetaskan?" : "AI Pet-mu siap untuk diwujudkan wujud fisiknya!"}
+                        {isPod ? "Pod Stasis terdeteksi. Siap untuk aktivasi?" : "AIPet-mu siap untuk diwujudkan wujud fisiknya!"}
                     </p>
-                    <button onClick={() => setShowHatchingModal(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover">
-                        {isEgg ? "Tetaskan Telur" : "Wujudkan Visual"} (1 Token)
+                    <button onClick={() => setShowActivationModal(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover">
+                        {isPod ? "Aktifkan Pod" : "Wujudkan Visual"} (1 Token)
                     </button>
                 </div>
             );
@@ -187,9 +187,9 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
                 </div>
                 {mainContent()}
             </div>
-            {showHatchingModal && (
+            {showActivationModal && (
                 <Suspense fallback={null}>
-                    <AIPetHatching onClose={() => setShowHatchingModal(false)} />
+                    <AIPetActivation onClose={() => setShowActivationModal(false)} />
                 </Suspense>
             )}
         </>

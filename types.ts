@@ -113,28 +113,45 @@ export interface AIPetStats {
 }
 
 export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
-export type AIPetStage = 'egg' | 'hatched';
+export type AIPetStage = 'stasis_pod' | 'active';
 
 // --- New Blueprint System Types ---
 export interface AIPetBlueprint {
   url: string; // e.g., 'Common_Beast.png'
 }
 
+export interface AIPetColorPalette {
+  base: string;
+  highlight: string;
+  shadow: string;
+}
+
 export interface AIPetColors {
-  organic: string; // Replaces blueprint's pure red
-  mechanical: string; // Replaces blueprint's pure green
-  energy: string; // Replaces blueprint's pure blue
+  organic: AIPetColorPalette;
+  mechanical: AIPetColorPalette;
+  energy: AIPetColorPalette;
+}
+
+export interface AIPetBattleStats {
+  hp: number;
+  atk: number;
+  def: number;
+  spd: number;
 }
 
 export interface AIPetState {
   name: string;
   stage: AIPetStage;
   tier: AIPetTier;
-  stats: AIPetStats;
+  stats: AIPetStats; // This is now "personality stats"
   lastFed: number;
   lastPlayed: number;
   personality: AIPetPersonalityVector;
-  narrative?: string | null;
+  
+  // New battle system
+  battleStats: AIPetBattleStats | null;
+  buffs: string[];
+
   // New blueprint system
   blueprint: AIPetBlueprint | null;
   colors: AIPetColors | null;

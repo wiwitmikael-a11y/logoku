@@ -7,7 +7,7 @@ import { playSound } from '../services/soundService';
 import AIPetVisual from './AIPetVisual';
 import type { AIPetState } from '../types';
 
-const ACTIVATION_COST = 1;
+const ACTIVATION_COST = 5;
 
 interface AIPetActivationProps {
     onClose: () => void;
@@ -18,7 +18,7 @@ const statusMessages = [
     "Mensintesis matriks kepribadian...",
     "Memilih blueprint dasar dari database...",
     "Meracik palet warna dinamis...",
-    "Meminta narasi genetik dari Gemini...",
+    "Mengkalibrasi statistik dasar...",
     "Menyusun sekuens data digital...",
     "Finalisasi... Inisiasi protokol aktivasi!",
 ];
@@ -80,8 +80,6 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
         personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
         blueprint: null,
         colors: null,
-        // FIX: The 'narrative' property does not exist on the AIPetState type.
-        // It has been replaced with `battleStats` and `buffs` to match the type definition.
         battleStats: null,
         buffs: [],
     };
@@ -106,7 +104,7 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
                     </div>
                 ) : (
                     <>
-                        <p className="text-text-body mb-6 text-sm">Mengaktifkan pod ini akan mereplikasi wujud visual perdana AIPet-mu. Proses ini hanya membutuhkan <strong className="text-text-header">{ACTIVATION_COST} token</strong> (kurang dari <strong className="text-text-header">Rp 5,-</strong>) untuk membuat narasi uniknya via AI.</p>
+                        <p className="text-text-body mb-6 text-sm">Mengaktifkan pod ini akan mereplikasi wujud fisik dan statistik dasar AIPet-mu. Proses ini membutuhkan <strong className="text-text-header">{ACTIVATION_COST} token</strong>.</p>
                         <div className="flex flex-col items-center gap-3">
                             <Button onClick={handleActivate} isLoading={isLoading} disabled={isLoading}>Ya, Aktifkan Sekarang! ({ACTIVATION_COST} Token)</Button>
                             <Button onClick={onClose} variant="secondary" size="small">Nanti Aja Deh</Button>

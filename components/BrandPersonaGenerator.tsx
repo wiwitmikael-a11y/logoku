@@ -92,7 +92,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   }, [selectedSlogan]);
 
   useEffect(() => {
-    if (personas.length > 0 && petState && petState.stage !== 'egg' && !suggestionShownRef.current) {
+    // FIX: The comparison `petState.stage !== 'egg'` was causing a type error because the AIPetStage type has been updated to use 'stasis_pod' instead of 'egg'.
+    if (personas.length > 0 && petState && petState.stage !== 'stasis_pod' && !suggestionShownRef.current) {
         const getDominantTrait = (p: AIPetPersonalityVector): keyof AIPetPersonalityVector => {
             return (Object.keys(p) as Array<keyof AIPetPersonalityVector>).reduce((a, b) => p[a] > p[b] ? a : b);
         };

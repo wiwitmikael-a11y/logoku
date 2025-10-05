@@ -65,7 +65,8 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
       setCaptions(result);
       playSound('success');
 
-      if (petState && petState.stage !== 'egg' && petState.stats.charisma > 60) {
+      // FIX: The comparison `petState.stage !== 'egg'` was causing a type error because the AIPetStage type has been updated to use 'stasis_pod' instead of 'egg'.
+      if (petState && petState.stage !== 'stasis_pod' && petState.stats.charisma > 60) {
           const randomOption = Math.floor(Math.random() * 3) + 1;
           setTimeout(() => {
               setContextualMessage(`Mantap! Caption <strong>nomor ${randomOption}</strong> kayaknya paling nendang dan pas buat target pasar kita, Juragan!`);

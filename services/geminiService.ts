@@ -243,36 +243,6 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
     }
 };
 
-export const generateAIPetNarrative = async (petData: { name: string, personality: AIPetPersonalityVector, stats: AIPetStats }): Promise<string> => {
-    const ai = getAiClient();
-    
-    const sortedPersonality = Object.entries(petData.personality).sort(([, a], [, b]) => b - a);
-    const dominantTrait = sortedPersonality[0][0];
-    const sortedStats = Object.entries(petData.stats).sort(([, a], [, b]) => b - a);
-    const dominantStat = sortedStats[0][0];
-
-    const prompt = `You are a creative writer for a digital monster game like Pokémon or Digimon. Write a short, evocative, "Pokédex-style" entry for a new creature. The entry should be 2-3 sentences.
-
-    Creature Details:
-    - Name: ${petData.name}
-    - Dominant Personality Trait: ${dominantTrait}
-    - Strongest Stat: ${dominantStat}
-
-    Write the entry in Bahasa Indonesia, with a slightly mysterious and intriguing tone.`;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: { temperature: 0.8 }
-        });
-        return response.text.trim();
-    } catch (error) {
-        throw handleApiError(error, "AI Pet Narrative Generator");
-    }
-};
-
-
 // --- Text Generation Functions ---
 export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string): Promise<BrandPersona[]> => {
   const ai = getAiClient();

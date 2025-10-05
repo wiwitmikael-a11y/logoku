@@ -30,7 +30,8 @@ const getArchetypeFromPersonality = (personality: AIPetState['personality']): Ar
 export const useAIPetVisuals = (pet: AIPetState) => {
   return useMemo(() => {
     // Handle egg stage separately
-    if (pet.stage === 'egg') {
+// FIX: The comparison `pet.stage === 'egg'` was causing a type error because the AIPetStage type has been updated to use 'stasis_pod' instead of 'egg'.
+    if (pet.stage === 'stasis_pod') {
       const hue = (Date.now() / 10000) % 360; // slow color cycle for egg
       const bodyColor = `hsl(${hue}, 60%, 70%)`;
       const Body = BodyShapes.blob; // Use blob shape for egg

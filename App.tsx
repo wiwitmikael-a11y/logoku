@@ -63,7 +63,7 @@ const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
 // FIX: The import for AIPetWidget was failing because the file was not a module. This is fixed by adding content to the file.
 const AIPetWidget = React.lazy(() => import('./components/AIPetWidget'));
 const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
-const AIPetHatching = React.lazy(() => import('./components/AIPetHatching'));
+const AIPetActivation = React.lazy(() => import('./components/AIPetActivation'));
 const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
 const AIPetContextualBubble = React.lazy(() => import('./components/AIPetContextualBubble'));
 
@@ -230,7 +230,7 @@ const MainApp: React.FC = () => {
     const [isAssistantOpen, setAssistantOpen] = useState(false);
     const [isPetPanelOpen, setPetPanelOpen] = useState(false);
     const [showAIPetHome, setShowAIPetHome] = useState(false);
-    const [showHatchingModal, setShowHatchingModal] = useState(false);
+    const [showActivationModal, setShowActivationModal] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
     const [showAboutModal, setShowAboutModal] = useState(false);
     const [showToSModal, setShowToSModal] = useState(false);
@@ -568,7 +568,7 @@ const MainApp: React.FC = () => {
 
         {/* Modals and overlays */}
         <Suspense fallback={null}>
-            {showHatchingModal && <AIPetHatching onClose={() => setShowHatchingModal(false)} />}
+            {showActivationModal && <AIPetActivation onClose={() => setShowActivationModal(false)} />}
             <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={petState} profile={profile} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
             <AIPetLabModal show={showAIPetLab} onClose={() => setShowAIPetLab(false)} />

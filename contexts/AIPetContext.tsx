@@ -5,7 +5,7 @@ import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import * as geminiService from '../services/geminiService';
 import { cropImage } from '../utils/imageUtils';
-import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint, AIPetTier } from '../types';
+import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint, AIPetTier, AIPetColorPalette, AIPetBattleStats } from '../types';
 
 export interface AIPetContextType {
   petState: AIPetState | null;
@@ -16,13 +16,13 @@ export interface AIPetContextType {
   handleInteraction: () => void;
   onGameWin: (game: 'color' | 'pattern' | 'style' | 'slogan') => void;
   updatePetName: (newName: string) => void;
-  hatchPet: () => Promise<void>;
+  activatePet: () => Promise<void>;
 }
 
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
-const HATCH_COST = 1; // Cost for narrative generation.
+const ACTIVATION_COST = 5; // Cost for activation.
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const useDebounce = <F extends (...args: any[]) => any>(callback: F, delay: number) => {
@@ -114,29 +114,38 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 needsDbUpdate = true;
             }
 
-            // Backwards compatibility: simplify stage from child/teen/adult to 'hatched'
-            if (['child', 'teen', 'adult'].includes(existingState.stage)) {
-                existingState.stage = 'hatched';
+            // Backwards compatibility: simplify stage from child/teen/adult/hatched to 'active' and 'egg' to 'stasis_pod'
+            if (['child', 'teen', 'adult', 'hatched'].includes(existingState.stage)) {
+                existingState.stage = 'active';
+                needsDbUpdate = true;
+// FIX: The comparison `existingState.stage === 'egg'` was causing a type error. Casting to `any` for this specific backward-compatibility check allows the migration logic to function without affecting the strict `AIPetStage` type elsewhere.
+            } else if ((existingState.stage as any) === 'egg') {
+                existingState.stage = 'stasis_pod';
+                if (existingState.name === 'Telur AI') {
+                    existingState.name = 'Pod Stasis';
+                }
                 needsDbUpdate = true;
             }
+
 
             setPetState(existingState);
             if (needsDbUpdate) {
                 savePetStateToDb(existingState);
             }
         } else {
-            // NEW PET: Starts as an egg.
+            // NEW PET: Starts as an stasis_pod.
             const newPet: AIPetState = {
-                name: 'Telur AI',
-                stage: 'egg',
-                tier: 'common', // Default tier for an egg
+                name: 'Pod Stasis',
+                stage: 'stasis_pod',
+                tier: 'common', // Default tier for an stasis_pod
                 stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
                 personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
                 blueprint: null,
                 colors: null,
-                narrative: null,
+                battleStats: null,
+                buffs: [],
             };
             setPetState(newPet);
             savePetStateToDb(newPet);
@@ -150,7 +159,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const now = Date.now();
             if (now - lastUpdateRef.current > 5000) { // Update every 5 seconds
                 updatePetState(p => {
-                    if (p.stage === 'egg') return p;
+                    if (p.stage === 'stasis_pod') return p;
                     const decayRate = 0.1;
                     return {
                         ...p,
@@ -176,66 +185,119 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setContextualMessage(null);
     }, [petState?.stage]);
 
-    const hatchPet = useCallback(async () => {
+    const activatePet = useCallback(async () => {
         if (!user || !profile) throw new Error("User not found");
     
-        const success = await deductCredits(HATCH_COST);
+        const success = await deductCredits(ACTIVATION_COST);
         if (!success) throw new Error("Token tidak cukup.");
     
-        // Step 1: Generate initial personality, stats, and name
         const seed = user.id + new Date().toISOString().slice(0, 10);
         const hash = stringToHash(seed);
         const seedRandom = createSeededRandom(hash);
         
         const personalities: (keyof AIPetPersonalityVector)[] = ['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'];
         const initialPersonality: AIPetPersonalityVector = personalities.reduce((acc, curr) => {
-            acc[curr] = Math.floor(seedRandom() * 11); // value 0-10
+            acc[curr] = Math.floor(seedRandom() * 11);
             return acc;
         }, {} as AIPetPersonalityVector);
+        const dominantPersonality = (Object.keys(initialPersonality) as Array<keyof AIPetPersonalityVector>).reduce((a, b) => initialPersonality[a] > initialPersonality[b] ? a : b);
         
         const initialStats: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
         const petName = `AIPet-${String(hash).slice(0, 4)}`;
 
-        // Step 2: Determine archetype and select a blueprint, derive tier
         const blueprints = ['Common_Beast.png', 'Common_Gorilla.png', 'Common_Mutant.png', 'Epic_Random.png'];
         const blueprintUrl = blueprints[Math.floor(seedRandom() * blueprints.length)];
         const blueprint: AIPetBlueprint = { url: `${GITHUB_ASSETS_URL}AIPets/${blueprintUrl}` };
         const tier = blueprintUrl.split('_')[0].toLowerCase() as AIPetTier;
 
-        // Step 3: Generate dynamic colors
-        const colors: AIPetColors = {
-            organic: `hsl(${Math.floor(seedRandom() * 360)}, 70%, 50%)`,
-            mechanical: `hsl(${Math.floor(seedRandom() * 360)}, 60%, 60%)`,
-            energy: `hsl(${Math.floor(seedRandom() * 360)}, 80%, 55%)`,
+        // --- DYNAMIC SHADING COLOR GENERATION ---
+        const createColorPalette = (h: number, s: number, l: number, isEpic: boolean): AIPetColorPalette => {
+            const highlightModifier = isEpic ? 20 : 15;
+            const shadowModifier = isEpic ? 20 : 15;
+            const shadowSatModifier = isEpic ? 15 : 10;
+            return {
+                base: `hsl(${h}, ${s}%, ${l}%)`,
+                highlight: `hsl(${h}, ${s}%, ${Math.min(100, l + highlightModifier)}%)`,
+                shadow: `hsl(${h}, ${Math.max(0, s - shadowSatModifier)}%, ${Math.max(0, l - shadowModifier)}%)`,
+            };
         };
+
+        let organicHue = seedRandom() * 60; // Natural range: Reds, Oranges, Yellows, Browns
+        let organicSaturation = seedRandom() * 30 + 40; // 40-70% saturation, not too vibrant
+        let organicLightness = seedRandom() * 20 + 40; // 40-60% lightness (mid-tones)
+
+        let mechanicalHue = seedRandom() * 360;
+        let mechanicalSaturation = seedRandom() * 40 + 60; // 60-100%, can be vibrant
+        let mechanicalLightness = seedRandom() * 30 + 35; // 35-65%, often darker metals
+
+        let energyHue = seedRandom() * 360;
+        let energySaturation = seedRandom() * 20 + 80; // 80-100%, very vibrant glow
+        let energyLightness = seedRandom() * 20 + 50; // 50-70%, bright but not white
+
+        if (dominantPersonality === 'bold' || dominantPersonality === 'rustic') {
+            mechanicalHue = seedRandom() * 60; // Warm metals like bronze, copper
+        } else if (dominantPersonality === 'modern' || dominantPersonality === 'minimalist' || dominantPersonality === 'luxury') {
+            mechanicalHue = 180 + seedRandom() * 100; // Cool metals like steel, chrome
+            organicSaturation = Math.max(0, organicSaturation - 20); // Muted organic colors
+        } else if (dominantPersonality === 'playful') {
+            mechanicalSaturation = 90; // Extra vibrant mecha parts
+            energySaturation = 100;
+        }
+
+        const isEpic = tier === 'epic';
+        const colors: AIPetColors = {
+            organic: createColorPalette(organicHue, organicSaturation, organicLightness, isEpic),
+            mechanical: createColorPalette(mechanicalHue, mechanicalSaturation, mechanicalLightness, isEpic),
+            energy: createColorPalette(energyHue, energySaturation, energyLightness, isEpic),
+        };
+
+        let battleStats: AIPetBattleStats;
+        let buffs: string[] = [];
     
-        // Step 4: Generate narrative with Gemini (the only API call)
-        const narrative = await geminiService.generateAIPetNarrative({ name: petName, personality: initialPersonality, stats: initialStats });
+        // Generate stats based on tier
+        if (tier === 'epic') {
+            battleStats = {
+                hp: 150 + Math.floor(seedRandom() * 31), // 150-180
+                atk: 15 + Math.floor(seedRandom() * 11),  // 15-25
+                def: 15 + Math.floor(seedRandom() * 11),  // 15-25
+                spd: 10 + Math.floor(seedRandom() * 6),   // 10-15
+            };
+            if (seedRandom() > 0.5) {
+                buffs.push('ATK Up S');
+            }
+        } else { // common
+            battleStats = {
+                hp: 100 + Math.floor(seedRandom() * 21), // 100-120
+                atk: 10 + Math.floor(seedRandom() * 6),   // 10-15
+                def: 10 + Math.floor(seedRandom() * 6),   // 10-15
+                spd: 5 + Math.floor(seedRandom() * 6),    // 5-10
+            };
+        }
     
-        // Step 5: Construct the final state
-        const hatchedState: AIPetState = {
+        const activeState: AIPetState = {
             name: petName,
-            stage: 'hatched',
+            stage: 'active',
             tier: tier,
             stats: initialStats,
             lastFed: Date.now(),
             lastPlayed: Date.now(),
             personality: initialPersonality,
-            narrative: narrative,
             blueprint,
             colors,
+            battleStats,
+            buffs,
         };
         
-        setPetState(hatchedState);
-        await savePetStateToDb(hatchedState);
-        await addXp(50); // Bonus XP for hatching
+        setPetState(activeState);
+        await savePetStateToDb(activeState);
+        await addXp(50);
 
     }, [user, profile, deductCredits, addXp, savePetStateToDb]);
 
 
     const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {
         updatePetState(p => {
-            if (p.stage === 'egg') return p; // Eggs don't gain stats from activities
+            if (p.stage === 'stasis_pod') return p; // Pods don't gain stats from activities
             let newStats = { ...p.stats };
             let newPersonality = { ...p.personality };
 
@@ -267,7 +329,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const onGameWin = useCallback((game: 'color' | 'pattern' | 'style' | 'slogan') => {
         addXp(15);
         updatePetState(p => {
-             if (p.stage === 'egg') return p;
+             if (p.stage === 'stasis_pod') return p;
             let statToBoost: keyof AIPetStats = 'creativity';
             if (game === 'color') statToBoost = 'creativity';
             if (game === 'pattern') statToBoost = 'intelligence';
@@ -291,7 +353,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [updatePetState]);
 
 
-    const value: AIPetContextType = { petState, isLoading, contextualMessage, setContextualMessage, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, hatchPet };
+    const value: AIPetContextType = { petState, isLoading, contextualMessage, setContextualMessage, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, activatePet };
     
     return <AIPetContext.Provider value={value}>{children}</AIPetContext.Provider>;
 };

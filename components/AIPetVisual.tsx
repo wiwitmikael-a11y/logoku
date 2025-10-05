@@ -8,50 +8,60 @@ interface AIPetVisualProps {
   className?: string;
 }
 
-// --- EGG VISUAL (No changes needed) ---
-const EggVisual: React.FC = () => {
-    const eggAnimation = `
-        @keyframes egg-pulse { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.03) translateY(-2px); } }
-        @keyframes divine-glow { 0%, 100% { filter: drop-shadow(0 0 15px rgb(var(--c-splash) / 0.5)) drop-shadow(0 0 30px rgb(var(--c-splash) / 0.3)); } 50% { filter: drop-shadow(0 0 25px rgb(var(--c-splash) / 0.8)) drop-shadow(0 0 50px rgb(var(--c-splash) / 0.5)); } }
+// --- NEW STASIS POD VISUAL ---
+const StasisPodVisual: React.FC = () => {
+    const podAnimation = `
+        @keyframes pod-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes divine-glow { 0%, 100% { filter: drop-shadow(0 0 10px rgb(var(--c-splash) / 0.4)) drop-shadow(0 0 20px rgb(var(--c-splash) / 0.2)); } 50% { filter: drop-shadow(0 0 20px rgb(var(--c-splash) / 0.7)) drop-shadow(0 0 40px rgb(var(--c-splash) / 0.4)); } }
+        @keyframes bubble-rise { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-60px); opacity: 0; } }
     `;
     return (
-        <div className="w-full h-full" style={{ animation: `egg-pulse 2.5s ease-in-out infinite, divine-glow 3.5s ease-in-out infinite` }}>
-            <style>{eggAnimation}</style>
-            <svg viewBox="0 0 100 135" className="w-full h-full">
+        <div className="w-full h-full" style={{ animation: `pod-float 3s ease-in-out infinite` }}>
+            <style>{podAnimation}</style>
+            <svg viewBox="0 0 100 130" className="w-full h-full">
                 <defs>
-                    <pattern id="mecha-pattern-egg" patternUnits="userSpaceOnUse" width="12" height="12">
-                        <path d="M-2,2 l4,-4 M0,12 l12,-12 M10,14 l4,-4" stroke="rgb(var(--c-border))" strokeWidth="0.7" />
-                    </pattern>
-                    <radialGradient id="eggShine" cx="0.3" cy="0.3" r="0.8">
-                        <stop offset="0%" stopColor="rgba(255,255,255,0.2)" />
-                        <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-                    </radialGradient>
-                    <linearGradient id="metalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <linearGradient id="glassGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="rgba(255,255,255,0.1)" />
+                        <stop offset="50%" stopColor="rgba(255,255,255,0.05)" />
+                        <stop offset="100%" stopColor="rgba(255,255,255,0.1)" />
+                    </linearGradient>
+                     <linearGradient id="metalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" stopColor="#404040" />
                         <stop offset="50%" stopColor="#2a2a2e" />
                         <stop offset="100%" stopColor="#404040" />
                     </linearGradient>
+                    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stopColor="rgb(var(--c-splash) / 0.8)" />
+                        <stop offset="100%" stopColor="rgb(var(--c-splash) / 0)" />
+                    </radialGradient>
                     <filter id="glow">
-                        <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
                         <feMerge>
                             <feMergeNode in="coloredBlur"/>
                             <feMergeNode in="SourceGraphic"/>
                         </feMerge>
                     </filter>
                 </defs>
-                <g id="mechanical-base">
-                    <path d="M 20 115 C 30 130, 70 130, 80 115 L 75 110 C 65 120, 35 120, 25 110 Z" fill="url(#metalGradient)" stroke="#18181b" strokeWidth="2" />
-                    <ellipse cx="50" cy="118" rx="15" ry="4" fill="rgb(var(--c-splash))" filter="url(#glow)" />
-                    <path d="M 22 114 L 35 105 M 78 114 L 65 105" stroke="#18181b" strokeWidth="1.5" />
+                 {/* Base */}
+                <path d="M 20 125 C 30 135, 70 135, 80 125 L 90 110 L 10 110 Z" fill="url(#metalGradient)" stroke="#18181b" strokeWidth="2" />
+                <rect x="15" y="100" width="70" height="10" rx="2" fill="#2a2a2e" stroke="#18181b" strokeWidth="1.5" />
+                
+                {/* Glass Container */}
+                <path d="M 20 100 C 5 70, 5 30, 20 5 L 80 5 C 95 30, 95 70, 80 100 Z" fill="url(#glassGradient)" stroke="rgb(var(--c-border))" strokeWidth="1.5" />
+                
+                {/* Core & Bubbles */}
+                <g style={{ animation: `divine-glow 3.5s ease-in-out infinite` }}>
+                    <circle cx="50" cy="75" r="12" fill="url(#coreGlow)" />
+                    <circle cx="50" cy="75" r="4" fill="rgb(var(--c-splash))" />
+                    
+                    {/* Bubbles */}
+                    <circle cx="45" cy="80" r="1.5" fill="rgb(var(--c-splash)/0.5)" style={{ animation: `bubble-rise 3s ease-in infinite`, animationDelay: '0s' }}/>
+                    <circle cx="55" cy="85" r="2" fill="rgb(var(--c-splash)/0.5)" style={{ animation: `bubble-rise 2.5s ease-in infinite`, animationDelay: '0.5s' }}/>
+                    <circle cx="48" cy="90" r="1" fill="rgb(var(--c-splash)/0.5)" style={{ animation: `bubble-rise 4s ease-in infinite`, animationDelay: '1s' }}/>
                 </g>
-                <g>
-                    <path d="M50,5 C25,5 12,35 12,70 C12,105 30,120 50,120 C70,120 88,105 88,70 C88,35 75,5 50,5Z" fill="#404040" stroke="#18181b" strokeWidth="3"/>
-                    <path d="M50,5 C25,5 12,35 12,70 C12,105 30,120 50,120 C70,120 88,105 88,70 C88,35 75,5 50,5Z" fill="url(#mecha-pattern-egg)" opacity="0.3"/>
-                    <path d="M 40 20 Q 50 40 45 60 T 55 90" stroke="rgb(var(--c-splash))" strokeWidth="1.5" fill="none" strokeLinecap="round" filter="url(#glow)"/>
-                    <path d="M 60 25 Q 75 50 60 75 T 70 100" stroke="rgb(var(--c-splash))" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.7" filter="url(#glow)"/>
-                    <circle cx="50" cy="70" r="3" fill="rgb(var(--c-splash))" filter="url(#glow)" />
-                    <path d="M50,5 C25,5 12,35 12,70 C12,105 30,120 50,120 C70,120 88,105 88,70 C88,35 75,5 50,5Z" fill="url(#eggShine)"/>
-                </g>
+
+                {/* Glass Shine */}
+                <path d="M 25 10 C 20 50, 25 90, 30 95" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
             </svg>
         </div>
     );
@@ -59,9 +69,23 @@ const EggVisual: React.FC = () => {
 
 // --- NEW CANVAS-BASED BLUEPRINT RENDERER ---
 const imageCache: { [key: string]: HTMLImageElement } = {};
-const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+const colorStringToRgb = (color: string): { r: number, g: number, b: number } | null => {
+    if (color.startsWith('#')) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+        return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+    }
+    if (color.startsWith('hsl')) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        return { r, g, b };
+    }
+    return null;
 };
 
 const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
@@ -88,10 +112,10 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         const assembly = partDefinitions[blueprintName as keyof typeof partDefinitions];
         if (!assembly) return;
 
-        const organicRGB = hexToRgb(colors.organic);
-        const mechanicalRGB = hexToRgb(colors.mechanical);
-        const energyRGB = hexToRgb(colors.energy);
-        if (!organicRGB || !mechanicalRGB || !energyRGB) return;
+        const organic = { base: colorStringToRgb(colors.organic.base), highlight: colorStringToRgb(colors.organic.highlight), shadow: colorStringToRgb(colors.organic.shadow) };
+        const mechanical = { base: colorStringToRgb(colors.mechanical.base), highlight: colorStringToRgb(colors.mechanical.highlight), shadow: colorStringToRgb(colors.mechanical.shadow) };
+        const energy = { base: colorStringToRgb(colors.energy.base), highlight: colorStringToRgb(colors.energy.highlight), shadow: colorStringToRgb(colors.energy.shadow) };
+        if (!organic.base || !mechanical.base || !energy.base) return;
 
         const processBlueprint = (blueprintImg: HTMLImageElement) => {
             partCache.current.clear();
@@ -111,9 +135,26 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
 
                 for (let i = 0; i < data.length; i += 4) {
                     const r = data[i], g = data[i+1], b = data[i+2];
-                    if (r > 240 && g < 15 && b < 15) { data[i] = organicRGB.r; data[i+1] = organicRGB.g; data[i+2] = organicRGB.b; } 
-                    else if (r < 15 && g > 240 && b < 15) { data[i] = mechanicalRGB.r; data[i+1] = mechanicalRGB.g; data[i+2] = mechanicalRGB.b; } 
-                    else if (r < 15 && g < 15 && b > 240) { data[i] = energyRGB.r; data[i+1] = energyRGB.g; data[i+2] = energyRGB.b; }
+
+                    if (r === 255 && g === 0 && b === 0) { // organic base
+                        data[i] = organic.base!.r; data[i+1] = organic.base!.g; data[i+2] = organic.base!.b;
+                    } else if (r === 255 && g === 102 && b === 102) { // organic highlight
+                        data[i] = organic.highlight!.r; data[i+1] = organic.highlight!.g; data[i+2] = organic.highlight!.b;
+                    } else if (r === 153 && g === 0 && b === 0) { // organic shadow
+                        data[i] = organic.shadow!.r; data[i+1] = organic.shadow!.g; data[i+2] = organic.shadow!.b;
+                    } else if (r === 0 && g === 255 && b === 0) { // mechanical base
+                        data[i] = mechanical.base!.r; data[i+1] = mechanical.base!.g; data[i+2] = mechanical.base!.b;
+                    } else if (r === 102 && g === 255 && b === 102) { // mechanical highlight
+                        data[i] = mechanical.highlight!.r; data[i+1] = mechanical.highlight!.g; data[i+2] = mechanical.highlight!.b;
+                    } else if (r === 0 && g === 153 && b === 0) { // mechanical shadow
+                        data[i] = mechanical.shadow!.r; data[i+1] = mechanical.shadow!.g; data[i+2] = mechanical.shadow!.b;
+                    } else if (r === 0 && g === 0 && b === 255) { // energy base
+                        data[i] = energy.base!.r; data[i+1] = energy.base!.g; data[i+2] = energy.base!.b;
+                    } else if (r === 102 && g === 102 && b === 255) { // energy highlight
+                        data[i] = energy.highlight!.r; data[i+1] = energy.highlight!.g; data[i+2] = energy.highlight!.b;
+                    } else if (r === 0 && g === 0 && b === 153) { // energy shadow
+                        data[i] = energy.shadow!.r; data[i+1] = energy.shadow!.g; data[i+2] = energy.shadow!.b;
+                    }
                 }
                 offscreenCtx.putImageData(imageData, 0, 0);
                 partCache.current.set(part.index, offscreenCanvas);
@@ -186,11 +227,11 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
     const filterStyle: React.CSSProperties = {
         filter: stats.energy < 30 ? `saturate(${stats.energy + 20}%) opacity(0.8)` : 'none',
         imageRendering: 'pixelated',
-        cursor: stage === 'hatched' ? 'pointer' : 'default',
+        cursor: stage === 'active' ? 'pointer' : 'default',
     };
 
-    if (stage === 'egg') {
-        return <div style={filterStyle} className={`w-full h-full ${className || ''}`}><EggVisual /></div>;
+    if (stage === 'stasis_pod') {
+        return <div style={filterStyle} className={`w-full h-full ${className || ''}`}><StasisPodVisual /></div>;
     }
 
     if (!blueprint || !colors) {
