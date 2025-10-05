@@ -67,7 +67,7 @@ const AIPetInteractionBubble = React.lazy(() => import('./components/AIPetIntera
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
-type PetBehavior = 'idle' | 'walking' | 'running' | 'jumping';
+type PetBehavior = 'idle' | 'walking' | 'running' | 'jumping' | 'interacting' | 'turning' | 'somersault';
 
 const FloatingAIPet: React.FC<{ 
     petState: AIPetState, 
@@ -80,9 +80,13 @@ const FloatingAIPet: React.FC<{
     const [position, setPosition] = useState({ x: 50, direction: 1 });
     const [behavior, setBehavior] = useState<PetBehavior>('idle');
     const [isInteracting, setIsInteracting] = useState(false);
+    const [isFacingAway, setIsFacingAway] = useState(false);
+    
     const animationFrameRef = useRef<number>();
-    const behaviorTimeoutRef = useRef<number>();
-    const interactionTimeoutRef = useRef<number>();
+    // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setTimeout> for browser compatibility.
+    const behaviorTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+    const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
     const [isBubbleOpen, setBubbleOpen] = useState(false);
     const isPod = petState.stage === 'aipod';
 
@@ -95,49 +99,67 @@ const FloatingAIPet: React.FC<{
                 setPosition(prev => {
                     let newX = prev.x + speed * prev.direction;
                     let newDirection = prev.direction;
-                    if (newX > 98) { newDirection = -1; setBehavior('idle'); }
-                    if (newX < 2) { newDirection = 1; setBehavior('idle'); }
+                    if (newX > 98 || newX < 2) { 
+                        newDirection = newX > 98 ? -1 : 1;
+                        setBehavior('turning'); 
+                    }
                     return { x: newX, direction: newDirection };
                 });
             }
             animationFrameRef.current = requestAnimationFrame(move);
         };
         animationFrameRef.current = requestAnimationFrame(move);
-        return () => cancelAnimationFrame(animationFrameRef.current!);
+        return () => {
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        };
     }, [behavior, isPod]);
 
     // Behavior state machine
     useEffect(() => {
         if (isPod) return;
+        
         clearTimeout(behaviorTimeoutRef.current);
+
         const setNextBehavior = () => {
             const nextAction = Math.random();
-            if (isInteracting) {
-                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, 1000);
-                return;
+            if (isInteracting || ['turning', 'somersault', 'jumping'].includes(behavior)) {
+                return; // Don't interrupt special actions
             }
     
             if (behavior === 'idle') {
-                setBehavior('walking');
-                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 4000 + 4000);
-            } else if (behavior === 'walking') {
-                if (nextAction < 0.15) {
-                    setBehavior('running');
-                    behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 2000 + 1500);
-                } else if (nextAction < 0.25) {
-                    setBehavior('jumping');
-                    behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, 800);
+                if (nextAction < 0.05) { // 5% chance to do a somersault
+                    setBehavior('somersault');
                 } else {
-                    setBehavior('idle');
-                    behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 2000 + 2000);
+                    setBehavior('walking');
                 }
-            } else {
+            } else if (behavior === 'walking') {
+                if (nextAction < 0.15) setBehavior('running');
+                else if (nextAction < 0.25) setBehavior('jumping');
+                else setBehavior('idle');
+            } else { // from running or other states
                 setBehavior('walking');
-                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 4000 + 4000);
             }
         };
-        behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 1500 + 1000);
+
+        let delay = 2000 + Math.random() * 2000; // Default delay
+        if (behavior === 'turning') {
+            delay = 300; // Duration of the turn animation
+            setTimeout(() => {
+                setIsFacingAway(p => !p);
+                setBehavior('idle');
+            }, delay);
+        } else if (behavior === 'jumping') {
+            delay = 800; // Duration of jump
+            setTimeout(() => setBehavior('idle'), delay);
+        } else if (behavior === 'somersault') {
+            delay = 1500; // Duration of somersault
+             setTimeout(() => setBehavior('idle'), delay);
+        }
+
+        behaviorTimeoutRef.current = setTimeout(setNextBehavior, delay);
+        
         return () => clearTimeout(behaviorTimeoutRef.current);
+
     }, [behavior, isPod, isInteracting]);
     
     const handlePetClick = () => {
@@ -147,7 +169,7 @@ const FloatingAIPet: React.FC<{
             clearTimeout(interactionTimeoutRef.current);
             setBubbleOpen(p => !p);
             setIsInteracting(true);
-            interactionTimeoutRef.current = window.setTimeout(() => setIsInteracting(false), 1200);
+            interactionTimeoutRef.current = setTimeout(() => setIsInteracting(false), 1200);
         }
     };
 
@@ -162,10 +184,10 @@ const FloatingAIPet: React.FC<{
 
     return (
         <div 
-            className={`fixed bottom-0 z-40`}
+            className={`fixed bottom-0 z-40 transition-transform duration-300`}
             style={containerStyle}
         >
-            <Suspense fallback={null}>
+             <Suspense fallback={null}>
                 <AIPetContextualBubble
                     message={contextualMessage}
                     onClose={() => setContextualMessage(null)}
@@ -175,15 +197,18 @@ const FloatingAIPet: React.FC<{
             <div 
                 onClick={handlePetClick}
                 className={`cursor-pointer group relative ${animationClass} ${petContainerClass}`}
-                style={isPod ? {} : {
-                    transform: `scaleX(${position.direction})`,
-                    transition: 'transform 0.3s ease-in-out',
-                }}
             >
-                <Suspense fallback={null}><AIPetVisual petState={petState} behavior={isInteracting ? 'interacting' : behavior} /></Suspense>
+                <Suspense fallback={null}>
+                    <AIPetVisual 
+                        petState={petState} 
+                        behavior={isInteracting ? 'interacting' : behavior}
+                        direction={position.direction}
+                        isFacingAway={isFacingAway}
+                    />
+                </Suspense>
             </div>
             
-            {petState.stage === 'active' && (
+            {petState.stage === 'active' && !isPod && (
               <Suspense fallback={null}>
                   <AIPetInteractionBubble
                       isOpen={isBubbleOpen}
@@ -650,12 +675,10 @@ const MainApp: React.FC = () => {
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
                         <ErrorBoundary onReset={handleReturnToDashboard}>
-                            <React.Fragment>
-                                {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
-                                <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
-                                    <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
-                                </Suspense>
-                            </React.Fragment>
+                            {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
+                            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
+                                <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
+                            </Suspense>
                         </ErrorBoundary>
                     )}
                 </div>
