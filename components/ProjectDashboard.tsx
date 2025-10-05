@@ -30,9 +30,9 @@ const DYNAMIC_INFO_TIPS = [
     { icon: '🎉', title: 'Project Pertama GRATIS!', text: 'Rancang brand pertamamu dari A sampai Z <strong class="text-text-header">tanpa keluar token!</strong> Setiap token yang kamu pakai di alur kerja pertama bakal <span class="font-bold text-splash">dikembalikan lagi</span>. Cobain semua fiturnya tanpa takut!' },
     { icon: '🎁', title: 'Bonus Sambutan 20 Token', text: 'Sebagai juragan baru, lo juga langsung dapet bonus sambutan <span class="font-bold text-splash">20 token</span> di hari pertama! Manfaatin buat eksplorasi sepuasnya, ya!' },
     { icon: '☀️', title: 'Jatah Harian Anti Rugi', text: 'Tiap pagi, kalo token lo kurang dari 5, Mang AI bakal <strong class="text-text-header">isi ulang sampe jadi 5</strong>, gratis! Kalo sisa token lo banyak (misal 12), jumlahnya <strong class="text-text-header">nggak akan direset</strong>. Aman!' },
+    { icon: '🐾', title: 'AIPet Hidup & Bergerak!', text: 'Mang AI sekarang punya teman, si AIPet! Dia bukan cuma gambar, tapi teman digital yang <strong class="text-text-header">berjalan, melompat, dan bereaksi</strong> terhadap progresmu. Cek statistiknya di Lab AIPet!' },
     { icon: '💾', title: 'WAJIB: Amankan Aset Visual!', text: 'Untuk menjaga layanan ini gratis, semua gambar (logo, mockup) <strong class="text-text-header">hanya disimpan sementara</strong> di browser. Setelah project selesai, jangan lupa <span class="font-bold text-splash">unduh semua asetmu</span> lewat Brand Hub!' },
     { icon: '🚀', title: 'Kekuatan Brand Hub', text: 'Project yang udah selesai masuk ke <strong class="text-text-header">Brand Hub</strong>. Dari sana, lo bisa generate ulang teks iklan atau kalender konten kapan aja tanpa ngulang dari nol.' },
-    { icon: '🤖', title: 'Tanya Mang AI Aja!', text: 'Ada yang bikin bingung? Klik tombol Mang AI yang ngambang di pojok kanan bawah. Dia siap jawab pertanyaan lo soal branding atau fitur aplikasi.' },
 ];
 
 const DynamicInfoBox: React.FC = () => {

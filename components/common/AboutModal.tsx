@@ -50,9 +50,9 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
                  <ul className="list-disc list-inside space-y-2">
                      <li><strong className="text-text-header">Studio Branding Lengkap:</strong> Alur kerja terpandu untuk meracik persona, logo, kit sosmed, kalender konten, hingga desain kemasan.</li>
                      <li><strong className="text-text-header">WarKop Juragan:</strong> Forum komunitas untuk pamer karya, minta masukan, dan ngobrol santai bareng sesama pejuang UMKM.</li>
-                     <li><strong className="text-text-header">Pusat Juragan & Gamifikasi:</strong> Naikkan level, selesaikan misi harian, kumpulkan lencana, dan rebut posisi puncak di papan peringkat.</li>
-                     <li><strong className="text-text-header">Warung Ide:</strong> Butuh inspirasi cepat? Gunakan generator nama bisnis dan slogan instan.</li>
-                     <li><strong className="text-text-header">Asisten Pribadi Mang AI:</strong> Bingung? Tanya apa aja soal branding atau fitur aplikasi ke Mang AI.</li>
+                     <li><strong className="text-text-header">Pusat Juragan & Gamifikasi:</strong> Naikkan level, selesaikan misi, kumpulkan lencana, dan rebut posisi puncak di papan peringkat.</li>
+                     <li><strong className="text-text-header">Generator Ide & Sotoshop:</strong> Butuh inspirasi cepat? Gunakan generator nama/slogan instan atau poles gambarmu di editor Sotoshop.</li>
+                     <li><strong className="text-text-header">Asisten Digital AIPet:</strong> Teman digital yang hidup, bergerak, dan bereaksi terhadap progresmu.</li>
                  </ul>
             </div>
              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300">
