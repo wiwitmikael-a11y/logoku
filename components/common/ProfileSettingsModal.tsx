@@ -67,8 +67,18 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
                 </div>
             </div>
 
-            <div className="bg-background border border-border-main p-4 rounded-lg">
+            <div className="w-full">
+                <h3 className="text-sm font-semibold text-text-muted mb-3 uppercase tracking-wider">Tindakan</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <Button onClick={handleLogoutClick} size="small" variant="secondary">Logout</Button>
+                    <Button onClick={handleTosClick} size="small" variant="secondary">Ketentuan Layanan</Button>
+                    <Button onClick={handleContactClick} size="small" variant="secondary">Info Dev</Button>
+                </div>
+            </div>
+
+            <div className="w-full border-t border-border-main pt-6 mt-6">
                 <h3 className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Aset Digital AIPet</h3>
+                <div className="bg-background border border-border-main p-4 rounded-lg">
                 {profile.aipet_state && profile.aipet_state.stage !== 'aipod' ? (
                      <Suspense fallback={<div className="h-64 flex items-center justify-center text-sm text-text-muted">Memuat Kartu...</div>}>
                          <AIPetCard petState={profile.aipet_state} />
@@ -78,14 +88,6 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
                          <p>AIPet-mu masih di dalam AIPod! Buka menu AIPet di dashboard untuk mengaktifkannya.</p>
                      </div>
                  )}
-            </div>
-
-            <div className="w-full border-t border-border-main pt-6">
-                <h3 className="text-sm font-semibold text-text-muted mb-3 uppercase tracking-wider">Tindakan</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <Button onClick={handleLogoutClick} size="small" variant="secondary">Logout</Button>
-                    <Button onClick={handleTosClick} size="small" variant="secondary">Ketentuan Layanan</Button>
-                    <Button onClick={handleContactClick} size="small" variant="secondary">Info Dev</Button>
                 </div>
             </div>
 
