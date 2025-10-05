@@ -3,7 +3,6 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
-import * as geminiService from '../services/geminiService';
 import { cropImage } from '../utils/imageUtils';
 import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint, AIPetTier, AIPetColorPalette, AIPetBattleStats } from '../types';
 
@@ -205,7 +204,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const petName = `AIPet-${String(hash).slice(0, 4)}`;
 
         const blueprints = ['Common_Beast.png', 'Common_Gorilla.png', 'Common_Mutant.png', 'Epic_Random.png'];
-        const blueprintUrl = blueprints[Math.floor(seedRandom() * blueprints.length)];
+        const blueprintUrl = blueprints[hash % blueprints.length]; // Deterministic selection
         const blueprint: AIPetBlueprint = { url: `${GITHUB_ASSETS_URL}AIPets/${blueprintUrl}` };
         const tier = blueprintUrl.split('_')[0].toLowerCase() as AIPetTier;
 
