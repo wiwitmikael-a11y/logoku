@@ -129,8 +129,6 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
 
         const pureWhite: RGB = { r: 255, g: 255, b: 255 };
         const pureBlack: RGB = { r: 0, g: 0, b: 0 };
-        const SIMILARITY_THRESHOLD = 80; // Lower is stricter. 80 is good for catching slight variations.
-        const WHITE_THRESHOLD = 40; // Very strict for white/background pixels.
 
         const processBlueprint = (blueprintImg: HTMLImageElement) => {
             const petId = parseInt(name.split('-')[1] || '0', 10);
@@ -149,27 +147,27 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
             
             const imageData = offscreenCtx.getImageData(0, 0, 256, 256);
             const data = imageData.data;
+            
+            const BG_THRESHOLD = 80; // Increased to catch anti-aliased grid lines (grayish pixels)
+            const OUTLINE_THRESHOLD = 80;
 
             for (let i = 0; i < data.length; i += 4) {
-                const pixel: RGB = { r: data[i], g: data[i+1], b: data[i+2] };
-                
-                // 1. Background & White Highlight Removal
-                if (colorDistance(pixel, pureWhite) < WHITE_THRESHOLD) {
-                    // This pixel is white or very close to it (background, grid lines, highlights)
-                    if (pixel.r === 255 && pixel.g === 255 && pixel.b === 255 && blueprintColorMap.some(c => c.id.includes('highlight'))) {
-                        // This is a pure white highlight pixel, don't make it transparent
-                    } else {
-                        data[i+3] = 0; // Make transparent
-                        continue;
-                    }
-                }
-                
-                // 2. Preserve Black Outlines
-                if (colorDistance(pixel, pureBlack) < SIMILARITY_THRESHOLD) {
-                    continue; // Leave black/dark pixels as they are
+                if (data[i + 3] === 0) continue; // Skip already transparent pixels
+
+                const pixel: RGB = { r: data[i], g: data[i + 1], b: data[i + 2] };
+
+                // 1. Aggressively remove background (white and near-white/gray pixels). No more highlight exceptions.
+                if (colorDistance(pixel, pureWhite) < BG_THRESHOLD) {
+                    data[i + 3] = 0; // Make transparent
+                    continue;
                 }
 
-                // 3. Find Closest Blueprint Color & Replace
+                // 2. Preserve outlines (black and near-black pixels).
+                if (colorDistance(pixel, pureBlack) < OUTLINE_THRESHOLD) {
+                    continue;
+                }
+                
+                // 3. "Gunpla" Step: If it's not background or outline, it MUST be a color. Find the closest match and replace it.
                 let minDistance = Infinity;
                 let closestMatch: (typeof blueprintColorMap[0]) | null = null;
 
@@ -181,10 +179,12 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                     }
                 }
                 
-                if (closestMatch && minDistance < SIMILARITY_THRESHOLD) {
-                    data[i] = closestMatch.dynamic!.r;
-                    data[i+1] = closestMatch.dynamic!.g;
-                    data[i+2] = closestMatch.dynamic!.b;
+                // By removing any further distance checks, we ensure every "in-between" anti-aliased pixel
+                // gets "painted" according to its closest blueprint color.
+                if (closestMatch && closestMatch.dynamic) {
+                    data[i] = closestMatch.dynamic.r;
+                    data[i + 1] = closestMatch.dynamic.g;
+                    data[i + 2] = closestMatch.dynamic.b;
                 }
             }
             offscreenCtx.putImageData(imageData, 0, 0);
@@ -209,6 +209,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         if (!ctx || !blueprint) return;
         
         const draw = (time: number) => {
+            if (!canvas) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const cachedSprite = spriteCache.current;
             if (!cachedSprite) {
