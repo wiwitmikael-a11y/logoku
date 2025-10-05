@@ -204,10 +204,29 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const initialStats: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
         const petName = `AIPet-${String(hash).slice(0, 4)}`;
 
-        const blueprints = ['Common_Beast.png', 'Common_Gorilla.png', 'Common_Mutant.png', 'Epic_Random.png'];
-        const blueprintUrl = blueprints[hash % blueprints.length]; // Deterministic selection
-        const blueprint: AIPetBlueprint = { url: `${GITHUB_ASSETS_URL}AIPets/${blueprintUrl}` };
-        const tier = blueprintUrl.split('_')[0].toLowerCase() as AIPetTier;
+        const blueprints = {
+            common: [ 'Common_Beast.png', 'Common_Samurai.png', 'Common_Dogs.png', 'Common_Animalia.png', 'Common_Insects.png', 'Common_Dinosaurus.png', 'Common_Unggas.png', 'Common_Amfibia.png' ],
+            epic: [ 'Epic_Vikings.png', 'Epic_Siberian.png', 'Epic_Aztec.png', 'Epic_Transformer.png', 'Epic_Masked.png' ],
+            mythic: [ 'Myth_Zodiac.png', 'Myth_Predator.png', 'Myth_Desert.png', 'Myth_Olympian.png', 'Myth_Archangel.png', 'Myth_Wayang.png' ],
+        };
+    
+        const rand = seedRandom();
+        let selectedTier: AIPetTier;
+        let selectedBlueprintUrl: string;
+    
+        if (rand < 0.5) { // 50%
+            selectedTier = 'common';
+            selectedBlueprintUrl = blueprints.common[hash % blueprints.common.length];
+        } else if (rand < 0.9) { // 40%
+            selectedTier = 'epic';
+            selectedBlueprintUrl = blueprints.epic[hash % blueprints.epic.length];
+        } else { // 10%
+            selectedTier = 'mythic';
+            selectedBlueprintUrl = blueprints.mythic[hash % blueprints.mythic.length];
+        }
+    
+        const blueprint: AIPetBlueprint = { url: `${GITHUB_ASSETS_URL}AIPets/${selectedBlueprintUrl}` };
+        const tier = selectedTier;
 
         // --- DYNAMIC SHADING COLOR GENERATION ---
         const createColorPalette = (h: number, s: number, l: number, isEpic: boolean): AIPetColorPalette => {
@@ -252,25 +271,25 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         let battleStats: AIPetBattleStats;
         let buffs: string[] = [];
-    
-        // Generate stats based on tier
-        if (tier === 'epic') {
-            battleStats = {
-                hp: 150 + Math.floor(seedRandom() * 31), // 150-180
-                atk: 15 + Math.floor(seedRandom() * 11),  // 15-25
-                def: 15 + Math.floor(seedRandom() * 11),  // 15-25
-                spd: 10 + Math.floor(seedRandom() * 6),   // 10-15
-            };
-            if (seedRandom() > 0.5) {
-                buffs.push('ATK Up S');
-            }
-        } else { // common
-            battleStats = {
-                hp: 100 + Math.floor(seedRandom() * 21), // 100-120
-                atk: 10 + Math.floor(seedRandom() * 6),   // 10-15
-                def: 10 + Math.floor(seedRandom() * 6),   // 10-15
-                spd: 5 + Math.floor(seedRandom() * 6),    // 5-10
-            };
+        const rand1 = seedRandom(), rand2 = seedRandom(), rand3 = seedRandom(), rand4 = seedRandom();
+
+        switch(tier) {
+            case 'mythic':
+                battleStats = { hp: 200 + Math.floor(rand1 * 51), atk: 25 + Math.floor(rand2 * 11), def: 25 + Math.floor(rand3 * 11), spd: 15 + Math.floor(rand4 * 11) };
+                buffs.push('Aura Dewa');
+                if (rand1 > 0.5) buffs.push('Regen S');
+                if (selectedBlueprintUrl.includes('Predator') || selectedBlueprintUrl.includes('Archangel')) { battleStats.atk += 5; buffs.push('Crit Up M'); }
+                if (selectedBlueprintUrl.includes('Olympian') || selectedBlueprintUrl.includes('Wayang')) { battleStats.def += 5; buffs.push('Guard Up M'); }
+                break;
+            case 'epic':
+                battleStats = { hp: 150 + Math.floor(rand1 * 31), atk: 15 + Math.floor(rand2 * 11), def: 15 + Math.floor(rand3 * 11), spd: 10 + Math.floor(rand4 * 6) };
+                if (rand1 > 0.5) buffs.push('ATK Up S');
+                if (selectedBlueprintUrl.includes('Transformer') || selectedBlueprintUrl.includes('Aztec')) { battleStats.def += 3; buffs.push('Defense Mode'); }
+                if (selectedBlueprintUrl.includes('Vikings') || selectedBlueprintUrl.includes('Siberian')) { battleStats.atk += 3; buffs.push('Rage'); }
+                break;
+            default: // common
+                battleStats = { hp: 100 + Math.floor(rand1 * 21), atk: 10 + Math.floor(rand2 * 6), def: 10 + Math.floor(rand3 * 6), spd: 5 + Math.floor(rand4 * 6) };
+                break;
         }
         
         // Generate narrative

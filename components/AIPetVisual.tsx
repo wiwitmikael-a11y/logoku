@@ -84,35 +84,25 @@ type PartDefinition = {
   scale?: number;
 };
 
-const partDefinitions: Record<string, Record<string, PartDefinition>> = {
-  'Common_Gorilla.png': {
+const standardHumanoidRig: Record<string, PartDefinition> = {
     torso:      { anchor: { x: 128, y: 115 }, pivot: { x: 48, y: 45 }, z: 1, scale: 1.0 },
     head:       { anchor: { x: 125, y: 55 }, pivot: { x: 50, y: 60 }, z: 2, scale: 1.0 },
-    right_arm:  { anchor: { x: 70, y: 110 }, pivot: { x: 35, y: 10 }, z: 3, scale: 0.95 },
-    left_arm:   { anchor: { x: 185, y: 110 }, pivot: { x: 15, y: 10 }, z: 0, scale: 1.0 },
-    right_leg:  { anchor: { x: 100, y: 180 }, pivot: { x: 30, y: 5 }, z: 2, scale: 0.95 },
-    left_leg:   { anchor: { x: 155, y: 180 }, pivot: { x: 30, y: 5 }, z: 0, scale: 1.0 },
-  },
-   'Common_Beast.png': {
-    torso:      { anchor: { x: 125, y: 125 }, pivot: { x: 40, y: 45 }, z: 1, scale: 1.0 },
-    head:       { anchor: { x: 120, y: 60 }, pivot: { x: 60, y: 70 }, z: 2, scale: 1.0 },
-    right_arm:  { anchor: { x: 70, y: 110 }, pivot: { x: 27, y: 10 }, z: 3, scale: 0.95 },
-    left_arm:   { anchor: { x: 180, y: 110 }, pivot: { x: 27, y: 10 }, z: 0, scale: 1.0 },
-    right_leg:  { anchor: { x: 100, y: 185 }, pivot: { x: 25, y: 5 }, z: 2, scale: 0.95 },
-    left_leg:   { anchor: { x: 145, y: 185 }, pivot: { x: 25, y: 5 }, z: 0, scale: 1.0 },
-  },
-  'Common_Mutant.png': {
-    torso:      { anchor: { x: 125, y: 110 }, pivot: { x: 45, y: 50 }, z: 1, scale: 1.0 },
-    head:       { anchor: { x: 125, y: 45 }, pivot: { x: 35, y: 50 }, z: 2, scale: 1.0 },
-    right_arm:  { anchor: { x: 65, y: 110 }, pivot: { x: 30, y: 10 }, z: 3, scale: 0.95 },
-    left_arm:   { anchor: { x: 185, y: 110 }, pivot: { x: 15, y: 10 }, z: 0, scale: 1.0 },
-    right_leg:  { anchor: { x: 100, y: 180 }, pivot: { x: 30, y: 5 }, z: 2, scale: 0.95 },
-    left_leg:   { anchor: { x: 150, y: 180 }, pivot: { x: 30, y: 5 }, z: 0, scale: 1.0 },
-  },
-  'Epic_Random.png': { 
-    torso: { anchor: { x: 128, y: 128 }, pivot: {x: 0, y: 0}, z: 1 },
-  }
+    right_arm:  { anchor: { x: 80, y: 110 }, pivot: { x: 25, y: 10 }, z: 3, scale: 0.95 },
+    left_arm:   { anchor: { x: 175, y: 110 }, pivot: { x: 25, y: 10 }, z: 0, scale: 1.0 },
+    right_leg:  { anchor: { x: 105, y: 180 }, pivot: { x: 25, y: 5 }, z: 2, scale: 0.95 },
+    left_leg:   { anchor: { x: 150, y: 180 }, pivot: { x: 25, y: 5 }, z: 0, scale: 1.0 },
 };
+
+const allPetFileNames = [
+    'Common_Beast.png', 'Epic_Vikings.png', 'Common_Samurai.png', 'Epic_Siberian.png',
+    'Common_Dogs.png', 'Epic_Aztec.png', 'Myth_Zodiac.png', 'Common_Animalia.png',
+    'Myth_Predator.png', 'Epic_Transformer.png', 'Common_Insects.png', 'Myth_Desert.png',
+    'Myth_Olympian.png', 'Common_Dinosaurus.png', 'Epic_Masked.png', 'Common_Unggas.png',
+    'Common_Amfibia.png', 'Myth_Archangel.png', 'Myth_Wayang.png'
+];
+
+const partDefinitions: Record<string, Record<string, PartDefinition>> = 
+    Object.fromEntries(allPetFileNames.map(name => [name, standardHumanoidRig]));
 
 const colorStringToRgb = (color: string): RGB | null => {
     const canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
@@ -145,7 +135,11 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         if (!blueprint || !colors || !name) return;
 
         const blueprintFileName = blueprint.url.substring(blueprint.url.lastIndexOf('/') + 1);
-        const parts = partDefinitions[blueprintFileName] || partDefinitions['Epic_Random.png'];
+        const parts = partDefinitions[blueprintFileName];
+        if (!parts) {
+            console.warn(`No part definition found for ${blueprintFileName}.`);
+            return;
+        }
         
         const dynamicColorPalettes = {
             organic: { base: colorStringToRgb(colors.organic.base), highlight: colorStringToRgb(colors.organic.highlight), shadow: colorStringToRgb(colors.organic.shadow) },
