@@ -91,7 +91,27 @@ const historyReducer = (state: HistoryState, action: HistoryAction): HistoryStat
 };
 
 // --- HELPER UI & FUNCTIONS ---
-const PropertyInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string, suffix?: string }> = ({ label, suffix, ...props }) => ( <div className="grid grid-cols-2 items-center gap-2"><label className="text-text-muted text-xs truncate">{label}</label><div className="relative"><input {...props} className={`w-full bg-background border border-border-main rounded p-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-splash ${suffix ? 'pr-6' : ''}`}/><span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted">{suffix}</span></div></div>);
+const PropertyInput: React.FC<({ as?: 'input' } & React.InputHTMLAttributes<HTMLInputElement> | { as: 'select' } & React.SelectHTMLAttributes<HTMLSelectElement>) & { label: string, suffix?: string }> = ({ label, suffix, as = 'input', ...props }) => {
+    const commonClasses = "w-full bg-background border border-border-main rounded p-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-splash";
+    
+    return (
+        <div className="grid grid-cols-2 items-center gap-2">
+            <label className="text-text-muted text-xs truncate">{label}</label>
+            <div className="relative">
+                {as === 'select' ? (
+                    <select {...props as React.SelectHTMLAttributes<HTMLSelectElement>} className={commonClasses}>
+                        {props.children}
+                    </select>
+                ) : (
+                    <>
+                        <input {...props as React.InputHTMLAttributes<HTMLInputElement>} className={`${commonClasses} ${suffix ? 'pr-6' : ''}`} />
+                        {suffix && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted">{suffix}</span>}
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
 const PanelSection: React.FC<{title: string, children: React.ReactNode, defaultOpen?: boolean}> = ({title, children, defaultOpen = true}) => <details className="border-b border-border-main last:border-b-0" open={defaultOpen}><summary className="font-bold text-text-header text-xs py-2 cursor-pointer uppercase tracking-wider" style={{fontFamily: 'var(--font-display)'}}>{title}</summary><div className="pb-3 space-y-3">{children}</div></details>
 const rotatePoint = (point: {x:number, y:number}, center: {x:number, y:number}, angle: number) => { const rad = angle * Math.PI / 180; const cos = Math.cos(rad); const sin = Math.sin(rad); return { x: (cos * (point.x - center.x)) - (sin * (point.y - center.y)) + center.x, y: (sin * (point.x - center.x)) + (cos * (point.y - center.y)) + center.y }; };
 const deg = (p1: {x:number, y:number}, p2: {x:number, y:number}) => Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
@@ -136,7 +156,6 @@ const Sotoshop: React.FC<SotoshopProps> = ({ show, onClose, profile, deductCredi
     
     const updateLayer = useCallback((id: number, props: Partial<Layer>, withHistory = true) => {
         const newLayers = historyState.present.layers.map(l => l.id === id ? { ...l, ...props } : l);
-        // FIX: Add type assertion to prevent type pollution. The result of the map is not strictly a Layer[] according to TypeScript.
         setState({ layers: newLayers as Layer[] }, withHistory);
     }, [historyState.present.layers, setState]);
     
