@@ -39,7 +39,7 @@ const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGene
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 const CaptionGenerator = React.lazy(() => import('./components/CaptionGenerator'));
 const InstantContentGenerator = React.lazy(() => import('./components/InstantContentGenerator'));
-const ContactModal = React.lazy(() => import('./components/ContactModal'));
+const ContactModal = React.lazy(() => import('./components/common/ContactModal'));
 const AboutModal = React.lazy(() => import('./components/common/AboutModal'));
 const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
@@ -60,22 +60,28 @@ const AchievementToast = React.lazy(() => import('./components/gamification/Achi
 const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
 const LightImageEditor = React.lazy(() => import('./components/common/LightImageEditor'));
 const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
-// FIX: The import for AIPetWidget was failing because the file was not a module. This is fixed by adding content to the file.
-const AIPetWidget = React.lazy(() => import('./components/AIPetWidget'));
 const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
 const AIPetActivation = React.lazy(() => import('./components/AIPetActivation'));
 const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
 const AIPetContextualBubble = React.lazy(() => import('./components/AIPetContextualBubble'));
+const AIPetInteractionBubble = React.lazy(() => import('./components/AIPetInteractionBubble'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const FloatingAIPet: React.FC<{ petState: AIPetState, isVisible: boolean, onClick: () => void }> = ({ petState, isVisible, onClick }) => {
-    const [position, setPosition] = useState({ x: 50, direction: 1 }); // x in vw, direction 1 is right, -1 is left
+const FloatingAIPet: React.FC<{ 
+    petState: AIPetState, 
+    isVisible: boolean, 
+    onAsk: () => void, 
+    onShowLab: () => void,
+    onActivate: () => void,
+}> = ({ petState, isVisible, onAsk, onShowLab, onActivate }) => {
+    const [position, setPosition] = useState({ x: 50, direction: 1 });
     const [behavior, setBehavior] = useState<'idle' | 'walking'>('idle');
     const animationFrameRef = useRef<number>();
     const behaviorTimeoutRef = useRef<number>();
+    const [isBubbleOpen, setBubbleOpen] = useState(false);
 
     // Main animation loop for movement
     useEffect(() => {
@@ -111,19 +117,47 @@ const FloatingAIPet: React.FC<{ petState: AIPetState, isVisible: boolean, onClic
         return () => clearTimeout(behaviorTimeoutRef.current);
     }, [behavior]);
     
+    const handlePetClick = () => {
+        if (petState.stage === 'aipod') {
+            onActivate();
+        } else {
+            setBubbleOpen(p => !p);
+        }
+    };
+
     const animationClass = isVisible ? 'animate-aipet-blip-in' : 'animate-aipet-blink-out';
 
     return (
         <div 
-            onClick={onClick}
-            className={`fixed bottom-0 w-24 h-24 z-40 cursor-pointer group ${animationClass}`}
+            className={`fixed bottom-0 z-40`}
             style={{
                 left: `${position.x}vw`,
-                transform: `translateX(-50%) scaleX(${position.direction})`,
-                transition: 'transform 0.3s ease-in-out',
+                transform: `translateX(-50%)`,
+                transition: 'left 0.1s linear',
             }}
         >
-            <Suspense fallback={null}><AIPetVisual petState={petState} /></Suspense>
+            <div 
+                onClick={handlePetClick}
+                className={`w-24 h-24 cursor-pointer group ${animationClass}`}
+                style={{
+                    transform: `scaleX(${position.direction})`,
+                    transition: 'transform 0.3s ease-in-out',
+                }}
+            >
+                <Suspense fallback={null}><AIPetVisual petState={petState} /></Suspense>
+            </div>
+            
+            {petState.stage === 'active' && (
+              <Suspense fallback={null}>
+                  <AIPetInteractionBubble
+                      isOpen={isBubbleOpen}
+                      onClose={() => setBubbleOpen(false)}
+                      onAsk={onAsk}
+                      onShowLab={onShowLab}
+                      petName={petState.name}
+                  />
+              </Suspense>
+            )}
         </div>
     );
 };
@@ -286,7 +320,6 @@ const MainApp: React.FC = () => {
     const [toast, setToast] = useState({ message: '', show: false });
     
     const [isAssistantOpen, setAssistantOpen] = useState(false);
-    const [isPetPanelOpen, setPetPanelOpen] = useState(false);
     const [showAIPetHome, setShowAIPetHome] = useState(false);
     const [showActivationModal, setShowActivationModal] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
@@ -606,7 +639,9 @@ const MainApp: React.FC = () => {
                 <FloatingAIPet 
                     petState={petState} 
                     isVisible={isPetVisible}
-                    onClick={() => setPetPanelOpen(p => !p)}
+                    onAsk={() => setAssistantOpen(true)}
+                    onShowLab={() => setShowAIPetLab(true)}
+                    onActivate={() => setShowActivationModal(true)}
                 />
 
                 <Suspense fallback={null}>
@@ -614,13 +649,6 @@ const MainApp: React.FC = () => {
                         isOpen={isAssistantOpen} 
                         onToggle={setAssistantOpen} 
                         petName={petState.name} 
-                    />
-                    <AIPetWidget 
-                        isOpen={isPetPanelOpen}
-                        onClose={() => setPetPanelOpen(false)}
-                        onShowHome={() => { setShowAIPetHome(true); setPetPanelOpen(false); }}
-                        onAskPet={() => { setAssistantOpen(true); setPetPanelOpen(false); }}
-                        {...aipetContext}
                     />
                     <AIPetContextualBubble
                         message={contextualMessage}

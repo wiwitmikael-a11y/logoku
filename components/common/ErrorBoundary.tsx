@@ -17,7 +17,9 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Refactored to use constructor for state and method binding to ensure `this` is correctly bound.
+  // FIX: Reverted to a constructor-based setup. The class property syntax was causing type errors
+  // where `this.props` and `this.setState` were not recognized, likely due to an environment/build configuration issue.
+  // This approach is more broadly compatible.
   constructor(props: Props) {
     super(props);
     this.state = {

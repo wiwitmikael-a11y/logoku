@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import type { AIPetState } from '../types';
+import type { AIPetState, AIPetColorPalette } from '../types';
 
 interface AIPetVisualProps {
   petState: AIPetState;
@@ -74,23 +74,26 @@ const AIPodVisual: React.FC = () => {
 
 // --- NEW SINGLE FULL-BODY CANVAS RENDERER ---
 const imageCache: { [key: string]: HTMLImageElement } = {};
-const colorStringToRgb = (color: string): { r: number, g: number, b: number } | null => {
-    if (color.startsWith('#')) {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
-        return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
-    }
-    if (color.startsWith('hsl')) {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return null;
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, 1, 1);
-        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
-        return { r, g, b };
-    }
-    return null;
+type RGB = { r: number; g: number; b: number };
+
+const colorStringToRgb = (color: string): RGB | null => {
+    // This is a robust HSL/HEX to RGB converter using a temporary canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return { r, g, b };
+};
+
+const colorDistance = (c1: RGB, c2: RGB): number => {
+  const rDiff = c1.r - c2.r;
+  const gDiff = c1.g - c2.g;
+  const bDiff = c1.b - c2.b;
+  return Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
 };
 
 const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
@@ -106,10 +109,28 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
     useEffect(() => {
         if (!blueprint || !colors || !name) return;
 
-        const organic = { base: colorStringToRgb(colors.organic.base), highlight: colorStringToRgb(colors.organic.highlight), shadow: colorStringToRgb(colors.organic.shadow) };
-        const mechanical = { base: colorStringToRgb(colors.mechanical.base), highlight: colorStringToRgb(colors.mechanical.highlight), shadow: colorStringToRgb(colors.mechanical.shadow) };
-        const energy = { base: colorStringToRgb(colors.energy.base), highlight: colorStringToRgb(colors.energy.highlight), shadow: colorStringToRgb(colors.energy.shadow) };
-        if (!organic.base || !mechanical.base || !energy.base) return;
+        const dynamicColorPalettes = {
+            organic: { base: colorStringToRgb(colors.organic.base), highlight: colorStringToRgb(colors.organic.highlight), shadow: colorStringToRgb(colors.organic.shadow) },
+            mechanical: { base: colorStringToRgb(colors.mechanical.base), highlight: colorStringToRgb(colors.mechanical.highlight), shadow: colorStringToRgb(colors.mechanical.shadow) },
+            energy: { base: colorStringToRgb(colors.energy.base), highlight: colorStringToRgb(colors.energy.highlight), shadow: colorStringToRgb(colors.energy.shadow) },
+        };
+
+        const blueprintColorMap = [
+            { id: 'organic.base', target: { r: 255, g: 0, b: 0 }, dynamic: dynamicColorPalettes.organic.base },
+            { id: 'organic.highlight', target: { r: 255, g: 102, b: 102 }, dynamic: dynamicColorPalettes.organic.highlight },
+            { id: 'organic.shadow', target: { r: 153, g: 0, b: 0 }, dynamic: dynamicColorPalettes.organic.shadow },
+            { id: 'mechanical.base', target: { r: 0, g: 255, b: 0 }, dynamic: dynamicColorPalettes.mechanical.base },
+            { id: 'mechanical.highlight', target: { r: 102, g: 255, b: 102 }, dynamic: dynamicColorPalettes.mechanical.highlight },
+            { id: 'mechanical.shadow', target: { r: 0, g: 153, b: 0 }, dynamic: dynamicColorPalettes.mechanical.shadow },
+            { id: 'energy.base', target: { r: 0, g: 0, b: 255 }, dynamic: dynamicColorPalettes.energy.base },
+            { id: 'energy.highlight', target: { r: 102, g: 102, b: 255 }, dynamic: dynamicColorPalettes.energy.highlight },
+            { id: 'energy.shadow', target: { r: 0, g: 0, b: 153 }, dynamic: dynamicColorPalettes.energy.shadow },
+        ].filter(item => item.dynamic); // Filter out any null colors
+
+        const pureWhite: RGB = { r: 255, g: 255, b: 255 };
+        const pureBlack: RGB = { r: 0, g: 0, b: 0 };
+        const SIMILARITY_THRESHOLD = 80; // Lower is stricter. 80 is good for catching slight variations.
+        const WHITE_THRESHOLD = 40; // Very strict for white/background pixels.
 
         const processBlueprint = (blueprintImg: HTMLImageElement) => {
             const petId = parseInt(name.split('-')[1] || '0', 10);
@@ -124,30 +145,47 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
             const gridX = cellIndex % 4;
             const gridY = Math.floor(cellIndex / 4);
             
-            // Draw ONLY the selected cell from the grid
             offscreenCtx.drawImage(blueprintImg, gridX * 256, gridY * 256, 256, 256, 0, 0, 256, 256);
             
             const imageData = offscreenCtx.getImageData(0, 0, 256, 256);
             const data = imageData.data;
 
             for (let i = 0; i < data.length; i += 4) {
-                const r = data[i], g = data[i+1], b = data[i+2];
-
-                // Make white background transparent
-                if (r > 250 && g > 250 && b > 250) {
-                    data[i+3] = 0;
-                    continue;
+                const pixel: RGB = { r: data[i], g: data[i+1], b: data[i+2] };
+                
+                // 1. Background & White Highlight Removal
+                if (colorDistance(pixel, pureWhite) < WHITE_THRESHOLD) {
+                    // This pixel is white or very close to it (background, grid lines, highlights)
+                    if (pixel.r === 255 && pixel.g === 255 && pixel.b === 255 && blueprintColorMap.some(c => c.id.includes('highlight'))) {
+                        // This is a pure white highlight pixel, don't make it transparent
+                    } else {
+                        data[i+3] = 0; // Make transparent
+                        continue;
+                    }
+                }
+                
+                // 2. Preserve Black Outlines
+                if (colorDistance(pixel, pureBlack) < SIMILARITY_THRESHOLD) {
+                    continue; // Leave black/dark pixels as they are
                 }
 
-                if (r === 255 && g === 0 && b === 0) { data[i] = organic.base!.r; data[i+1] = organic.base!.g; data[i+2] = organic.base!.b; } 
-                else if (r === 255 && g === 102 && b === 102) { data[i] = organic.highlight!.r; data[i+1] = organic.highlight!.g; data[i+2] = organic.highlight!.b; }
-                else if (r === 153 && g === 0 && b === 0) { data[i] = organic.shadow!.r; data[i+1] = organic.shadow!.g; data[i+2] = organic.shadow!.b; }
-                else if (r === 0 && g === 255 && b === 0) { data[i] = mechanical.base!.r; data[i+1] = mechanical.base!.g; data[i+2] = mechanical.base!.b; }
-                else if (r === 102 && g === 255 && b === 102) { data[i] = mechanical.highlight!.r; data[i+1] = mechanical.highlight!.g; data[i+2] = mechanical.highlight!.b; }
-                else if (r === 0 && g === 153 && b === 0) { data[i] = mechanical.shadow!.r; data[i+1] = mechanical.shadow!.g; data[i+2] = mechanical.shadow!.b; }
-                else if (r === 0 && g === 0 && b === 255) { data[i] = energy.base!.r; data[i+1] = energy.base!.g; data[i+2] = energy.base!.b; }
-                else if (r === 102 && g === 102 && b === 255) { data[i] = energy.highlight!.r; data[i+1] = energy.highlight!.g; data[i+2] = energy.highlight!.b; }
-                else if (r === 0 && g === 0 && b === 153) { data[i] = energy.shadow!.r; data[i+1] = energy.shadow!.g; data[i+2] = energy.shadow!.b; }
+                // 3. Find Closest Blueprint Color & Replace
+                let minDistance = Infinity;
+                let closestMatch: (typeof blueprintColorMap[0]) | null = null;
+
+                for (const colorMap of blueprintColorMap) {
+                    const distance = colorDistance(pixel, colorMap.target);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestMatch = colorMap;
+                    }
+                }
+                
+                if (closestMatch && minDistance < SIMILARITY_THRESHOLD) {
+                    data[i] = closestMatch.dynamic!.r;
+                    data[i+1] = closestMatch.dynamic!.g;
+                    data[i+2] = closestMatch.dynamic!.b;
+                }
             }
             offscreenCtx.putImageData(imageData, 0, 0);
             spriteCache.current = offscreenCanvas;
