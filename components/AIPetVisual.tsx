@@ -76,8 +76,11 @@ const AIPodVisual: React.FC = () => {
 const imageCache: { [key: string]: HTMLImageElement } = {};
 type RGB = { r: number; g: number; b: number };
 
-// --- Part Definitions for Rigging ---
-const partDefinitions: Record<string, Record<string, { x: number, y: number, w: number, h: number, z: number }>> = {
+// FIX: Added a type definition for a part of the rigging data structure.
+type PartDefinition = { x: number; y: number; w: number; h: number; z: number };
+
+// --- Part Definitions for Rigging (Used as hints for flood fill) ---
+const partDefinitions: Record<string, Record<string, PartDefinition>> = {
   'Common_Gorilla.png': {
     torso:      { x: 80, y: 70, w: 96, h: 90, z: 1 },
     head:       { x: 75, y: 25, w: 100, h: 70, z: 2 },
@@ -119,7 +122,8 @@ const colorDistance = (c1: RGB, c2: RGB): number => Math.sqrt((c1.r - c2.r)**2 +
 const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationFrameId = useRef<number>(0);
-    const partCache = useRef<Map<string, HTMLCanvasElement>>(new Map());
+    // FIX: Updated the useRef type to use the new PartDefinition type, which provides correct type inference.
+    const partCache = useRef<Map<string, { canvas: HTMLCanvasElement, def: PartDefinition }>>(new Map());
     const [interactionTs, setInteractionTs] = useState(0);
     const { stage, blueprint, colors, stats, name } = petState;
 
@@ -131,46 +135,39 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         const blueprintFileName = blueprint.url.substring(blueprint.url.lastIndexOf('/') + 1);
         const parts = partDefinitions[blueprintFileName] || partDefinitions['Epic_Random.png'];
         
+        // --- 1. SETUP COLORS & THRESHOLDS ---
         const dynamicColorPalettes = {
             organic: { base: colorStringToRgb(colors.organic.base), highlight: colorStringToRgb(colors.organic.highlight), shadow: colorStringToRgb(colors.organic.shadow) },
             mechanical: { base: colorStringToRgb(colors.mechanical.base), highlight: colorStringToRgb(colors.mechanical.highlight), shadow: colorStringToRgb(colors.mechanical.shadow) },
             energy: { base: colorStringToRgb(colors.energy.base), highlight: colorStringToRgb(colors.energy.highlight), shadow: colorStringToRgb(colors.energy.shadow) },
         };
-
         const blueprintColorMap = [
-            { id: 'organic.base', target: { r: 255, g: 0, b: 0 }, dynamic: dynamicColorPalettes.organic.base },
-            { id: 'organic.highlight', target: { r: 255, g: 102, b: 102 }, dynamic: dynamicColorPalettes.organic.highlight },
-            { id: 'organic.shadow', target: { r: 153, g: 0, b: 0 }, dynamic: dynamicColorPalettes.organic.shadow },
-            { id: 'mechanical.base', target: { r: 0, g: 255, b: 0 }, dynamic: dynamicColorPalettes.mechanical.base },
-            { id: 'mechanical.highlight', target: { r: 102, g: 255, b: 102 }, dynamic: dynamicColorPalettes.mechanical.highlight },
-            { id: 'mechanical.shadow', target: { r: 0, g: 153, b: 0 }, dynamic: dynamicColorPalettes.mechanical.shadow },
-            { id: 'energy.base', target: { r: 0, g: 0, b: 255 }, dynamic: dynamicColorPalettes.energy.base },
-            { id: 'energy.highlight', target: { r: 102, g: 102, b: 255 }, dynamic: dynamicColorPalettes.energy.highlight },
-            { id: 'energy.shadow', target: { r: 0, g: 0, b: 153 }, dynamic: dynamicColorPalettes.energy.shadow },
+            { id: 'organic.base', target: { r: 255, g: 0, b: 0 }, dynamic: dynamicColorPalettes.organic.base }, { id: 'organic.highlight', target: { r: 255, g: 102, b: 102 }, dynamic: dynamicColorPalettes.organic.highlight }, { id: 'organic.shadow', target: { r: 153, g: 0, b: 0 }, dynamic: dynamicColorPalettes.organic.shadow },
+            { id: 'mechanical.base', target: { r: 0, g: 255, b: 0 }, dynamic: dynamicColorPalettes.mechanical.base }, { id: 'mechanical.highlight', target: { r: 102, g: 255, b: 102 }, dynamic: dynamicColorPalettes.mechanical.highlight }, { id: 'mechanical.shadow', target: { r: 0, g: 153, b: 0 }, dynamic: dynamicColorPalettes.mechanical.shadow },
+            { id: 'energy.base', target: { r: 0, g: 0, b: 255 }, dynamic: dynamicColorPalettes.energy.base }, { id: 'energy.highlight', target: { r: 102, g: 102, b: 255 }, dynamic: dynamicColorPalettes.energy.highlight }, { id: 'energy.shadow', target: { r: 0, g: 0, b: 153 }, dynamic: dynamicColorPalettes.energy.shadow },
         ].filter(item => item.dynamic);
-
-        const pureWhite: RGB = { r: 255, g: 255, b: 255 };
         const pureBlack: RGB = { r: 0, g: 0, b: 0 };
         const BG_THRESHOLD = 80, OUTLINE_THRESHOLD = 80;
 
+        // --- 2. PROCESSING FUNCTION ---
         const processBlueprint = (blueprintImg: HTMLImageElement) => {
+            // --- A. SELECT & COLOR CELL ---
             const petId = parseInt(name.split('-')[1] || '0', 10);
             const cellIndex = petId % 16;
             const gridX = cellIndex % 4, gridY = Math.floor(cellIndex / 4);
             
-            const fullCellCanvas = document.createElement('canvas');
-            fullCellCanvas.width = 256; fullCellCanvas.height = 256;
-            const cellCtx = fullCellCanvas.getContext('2d', { willReadFrequently: true });
-            if (!cellCtx) return;
-            cellCtx.drawImage(blueprintImg, gridX * 256, gridY * 256, 256, 256, 0, 0, 256, 256);
+            const workingCanvas = document.createElement('canvas');
+            workingCanvas.width = 256; workingCanvas.height = 256;
+            const ctx = workingCanvas.getContext('2d', { willReadFrequently: true });
+            if (!ctx) return;
+            ctx.drawImage(blueprintImg, gridX * 256, gridY * 256, 256, 256, 0, 0, 256, 256);
             
-            const imageData = cellCtx.getImageData(0, 0, 256, 256);
+            const imageData = ctx.getImageData(0, 0, 256, 256);
             const data = imageData.data;
-            
             for (let i = 0; i < data.length; i += 4) {
                 if (data[i + 3] === 0) continue;
                 const pixel: RGB = { r: data[i], g: data[i + 1], b: data[i + 2] };
-                if (colorDistance(pixel, pureWhite) < BG_THRESHOLD) { data[i + 3] = 0; continue; }
+                if (colorDistance(pixel, { r: 255, g: 255, b: 255 }) < BG_THRESHOLD) { data[i + 3] = 0; continue; }
                 if (colorDistance(pixel, pureBlack) < OUTLINE_THRESHOLD) continue;
                 let minDistance = Infinity; let closestMatch: (typeof blueprintColorMap[0]) | null = null;
                 for (const colorMap of blueprintColorMap) {
@@ -179,23 +176,67 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                 }
                 if (closestMatch?.dynamic) { data[i] = closestMatch.dynamic.r; data[i+1] = closestMatch.dynamic.g; data[i+2] = closestMatch.dynamic.b; }
             }
-            cellCtx.putImageData(imageData, 0, 0);
+            ctx.putImageData(imageData, 0, 0);
 
-            // Slice into parts and cache them
-            const newCache = new Map<string, HTMLCanvasElement>();
-            for (const partName in parts) {
-                const p = parts[partName];
+            // --- B. SEGMENT PARTS USING FLOOD FILL ---
+            const segmentationCanvas = document.createElement('canvas');
+            segmentationCanvas.width = 256; segmentationCanvas.height = 256;
+            const segCtx = segmentationCanvas.getContext('2d', { willReadFrequently: true });
+            if (!segCtx) return;
+            const segData = segCtx.createImageData(256, 256);
+            
+            const floodFill = (startX: number, startY: number, partId: number) => {
+                const queue: [number, number][] = [[startX, startY]];
+                while (queue.length > 0) {
+                    const [x, y] = queue.shift()!;
+                    if (x < 0 || x >= 256 || y < 0 || y >= 256) continue;
+                    const idx = (y * 256 + x) * 4;
+                    if (data[idx + 3] < 128) continue; // Boundary: transparent
+                    if (colorDistance({ r: data[idx], g: data[idx + 1], b: data[idx + 2] }, pureBlack) < OUTLINE_THRESHOLD) continue; // Boundary: outline
+                    if (segData.data[idx + 3] > 0) continue; // Already visited
+                    
+                    segData.data[idx] = partId; segData.data[idx+3] = 255;
+                    queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+                }
+            };
+            Object.values(parts).forEach((p, i) => floodFill(Math.floor(p.x + p.w / 2), Math.floor(p.y + p.h / 2), i + 1));
+            segCtx.putImageData(segData, 0, 0);
+            
+            // --- C. EXTRACT & CACHE CLEAN PARTS ---
+            const newCache = new Map<string, { canvas: HTMLCanvasElement, def: PartDefinition }>();
+            Object.entries(parts).forEach(([partName, partDef], i) => {
+                const partId = i + 1;
                 const partCanvas = document.createElement('canvas');
-                partCanvas.width = p.w; partCanvas.height = p.h;
-                const partCtx = partCanvas.getContext('2d');
-                partCtx?.drawImage(fullCellCanvas, p.x, p.y, p.w, p.h, 0, 0, p.w, p.h);
-                newCache.set(partName, partCanvas);
-            }
+                partCanvas.width = partDef.w; partCanvas.height = partDef.h;
+                const partCtx = partCanvas.getContext('2d', { willReadFrequently: true });
+                if (!partCtx) return;
+                
+                const partImageData = partCtx.createImageData(partDef.w, partDef.h);
+                for (let y = 0; y < partDef.h; y++) {
+                    for (let x = 0; x < partDef.w; x++) {
+                        const sourceX = partDef.x + x;
+                        const sourceY = partDef.y + y;
+                        const segIdx = (sourceY * 256 + sourceX) * 4;
+                        if (segData.data[segIdx] === partId) {
+                             const sourceIdx = (sourceY * 256 + sourceX) * 4;
+                             const destIdx = (y * partDef.w + x) * 4;
+                             partImageData.data[destIdx] = data[sourceIdx];
+                             partImageData.data[destIdx+1] = data[sourceIdx+1];
+                             partImageData.data[destIdx+2] = data[sourceIdx+2];
+                             partImageData.data[destIdx+3] = data[sourceIdx+3];
+                        }
+                    }
+                }
+                partCtx.putImageData(partImageData, 0, 0);
+                newCache.set(partName, { canvas: partCanvas, def: partDef });
+            });
             partCache.current = newCache;
         };
 
-        if (imageCache[blueprint.url]) processBlueprint(imageCache[blueprint.url]);
-        else {
+        // --- 3. LOAD & RUN ---
+        if (imageCache[blueprint.url]) {
+            processBlueprint(imageCache[blueprint.url]);
+        } else {
             const img = new Image(); img.crossOrigin = "anonymous"; img.src = blueprint.url;
             img.onload = () => { imageCache[blueprint.url] = img; processBlueprint(img); };
             img.onerror = () => console.error("Failed to load blueprint:", blueprint.url);
@@ -206,11 +247,9 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
         if (!ctx || !blueprint) return;
-
-        const blueprintFileName = blueprint.url.substring(blueprint.url.lastIndexOf('/') + 1);
-        const parts = partDefinitions[blueprintFileName] || partDefinitions['Epic_Random.png'];
-        const sortedParts = Object.entries(parts).sort(([, a], [, b]) => a.z - b.z);
         
+        const sortedParts = Array.from(partCache.current.values()).sort((a, b) => a.def.z - b.def.z);
+
         const draw = (time: number) => {
             if (!canvas) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -225,9 +264,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
             
             const torsoBobY = Math.sin(time / 450) * 1.5 + interactY;
             
-            for (const [partName, partDef] of sortedParts) {
-                const partCanvas = partCache.current.get(partName);
-                if (!partCanvas) continue;
+            for (const { canvas: partCanvas, def: partDef } of sortedParts) {
+                const partName = Object.keys(partDefinitions[blueprint.url.substring(blueprint.url.lastIndexOf('/')+1)] || {}).find(key => (partDefinitions[blueprint.url.substring(blueprint.url.lastIndexOf('/')+1)] as any)[key] === partDef) || '';
                 
                 let partX = (canvas.width - 256) / 2 + partDef.x;
                 let partY = (canvas.height - 256) / 2 + partDef.y;
