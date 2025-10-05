@@ -20,6 +20,33 @@ const DAILY_MISSIONS = [
   { id: 'CREATE_POST', description: 'Bales 1 topik di WarKop Juragan', xp: 5, progress: 0, target: 1 },
 ];
 
+const PUSAT_JURAGAN_TIPS = [
+    { icon: '👑', title: 'Rebut Takhta Juragan Teratas', text: 'Papan Peringkat diurutin berdasarkan total XP. Makin aktif lo di aplikasi (bikin project, ngobrol di forum, nge-like di pameran), makin tinggi peringkat lo!' },
+    { icon: '🎯', title: 'Bonus XP dari Misi Harian', text: 'Selesaikan Misi Harian buat dapet bonus XP setiap hari. Ini cara cepet buat jadi Sultan Branding Nusantara!' },
+    { icon: '📜', title: 'Koleksi Lencana Kebanggaan', text: 'Lencana Pencapaian itu bukti perjalanan branding lo. Selesaikan 1, 5, atau 10 project buat ngebuka lencana perunggu, perak, dan emas!' },
+    { icon: '🚀', title: 'Naik Level, Dapat Hadiah!', text: 'Levelmu nentuin pangkatmu! Tiap naik level, ada hadiah token menanti. Pangkat baru juga kebuka di level 5, 10, 20, dan 50.' },
+];
+
+const PusatJuraganInfoBox: React.FC = () => {
+    const [currentTipIndex, setCurrentTipIndex] = useState(0);
+    useEffect(() => {
+        const interval = setInterval(() => { setCurrentTipIndex(prev => (prev + 1) % PUSAT_JURAGAN_TIPS.length); }, 7000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const currentTip = PUSAT_JURAGAN_TIPS[currentTipIndex];
+
+    return (
+        <div key={currentTipIndex} className="w-full bg-surface border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-lg shadow-black/20">
+            <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
+            <div>
+                <h4 className="font-bold text-primary">{currentTip.title}</h4>
+                <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+            </div>
+        </div>
+    );
+};
+
 const LeaderboardSkeleton: React.FC = () => (
     <div className="space-y-3">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -76,6 +103,8 @@ const PusatJuragan: React.FC = () => {
                     Ini markas lo buat jadi juragan sejati! Selesaikan misi harian untuk dapat bonus XP, koleksi semua lencana pencapaian, dan rebut posisi puncak di papan peringkat juragan se-Indonesia.
                 </p>
             </div>
+
+            <PusatJuraganInfoBox />
 
             {error && <ErrorMessage message={error} />}
 

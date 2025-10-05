@@ -18,6 +18,33 @@ interface QuickToolsProps {
     onShowSotoshop: () => void;
 }
 
+const QUICK_TOOLS_TIPS = [
+    { icon: '⚡', title: 'Inspirasi Kilat, Hasil Cepat', text: 'Lagi butuh nama bisnis atau slogan keren dalam sekejap? Di sinilah tempatnya! Cukup kasih kata kunci, Mang AI langsung kasih ide.' },
+    { icon: '🎨', title: 'Ciptakan Nuansa Brand', text: "Bingung nentuin nuansa visual brand? Coba 'Moodboard Generator'. Dapetin deskripsi, palet warna, dan 4 gambar inspirasi instan." },
+    { icon: '🖼️', title: 'Editor Gambar Simpel', text: "Udah punya gambar tapi mau ditambahin teks atau logo? Buka 'Sotoshop', editor gambar ringan yang terintegrasi dengan AI." },
+    { icon: '🚀', title: 'Naik Level Sambil Cari Ide', text: 'Setiap generator di sini ngasih <strong class="text-text-header">+15 XP</strong>. Cara gampang buat naikin level sambil nyari inspirasi!' },
+];
+
+const QuickToolsInfoBox: React.FC = () => {
+    const [currentTipIndex, setCurrentTipIndex] = useState(0);
+    useEffect(() => {
+        const interval = setInterval(() => { setCurrentTipIndex(prev => (prev + 1) % QUICK_TOOLS_TIPS.length); }, 7000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const currentTip = QUICK_TOOLS_TIPS[currentTipIndex];
+
+    return (
+        <div key={currentTipIndex} className="w-full bg-surface border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-lg shadow-black/20">
+            <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
+            <div>
+                <h4 className="font-bold text-primary">{currentTip.title}</h4>
+                <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+            </div>
+        </div>
+    );
+};
+
 const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
     const { profile, deductCredits, addXp, setShowOutOfCreditsModal } = useAuth();
     const credits = profile?.credits ?? 0;
@@ -110,6 +137,8 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                     Butuh inspirasi cepat? Di sini tempatnya! Mang AI sediain alat-alat bantu praktis buat kebutuhan branding dadakan lo.
                 </p>
             </div>
+            
+            <QuickToolsInfoBox />
 
             <div className="creative-console-wrapper">
                 <div className="creative-console">
