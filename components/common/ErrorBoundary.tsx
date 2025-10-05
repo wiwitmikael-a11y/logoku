@@ -43,8 +43,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: Converted to an arrow function to ensure `this` context is correctly bound, allowing access to `this.props` and `this.state`.
-  public render = (): ReactNode => {
+  // FIX: Changed render to a standard class method. React handles `this` binding for `render`, so an arrow function is not necessary and was causing context issues.
+  public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

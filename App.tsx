@@ -58,7 +58,6 @@ const HeaderStats = React.lazy(() => import('./components/gamification/HeaderSta
 const LevelUpModal = React.lazy(() => import('./components/gamification/LevelUpModal'));
 const AchievementToast = React.lazy(() => import('./components/gamification/AchievementToast'));
 const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
-const LightImageEditor = React.lazy(() => import('./components/common/LightImageEditor'));
 const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
 const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
 const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
@@ -365,7 +364,7 @@ const App: React.FC = () => {
 };
 
 const MainApp: React.FC = () => {
-    const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, imageEditorState, closeImageEditor, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
+    const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
     const aipetContext = useAIPet();
     const { petState } = aipetContext;
     
@@ -738,7 +737,6 @@ const MainApp: React.FC = () => {
             <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} projectLogoUrl={projectToDelete?.project_data?.selectedLogoUrl} />
             <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
-            <LightImageEditor show={imageEditorState.isOpen} imageUrl={imageEditorState.imageUrl} onClose={closeImageEditor} />
             <Sotoshop 
                 show={showSotoshop} 
                 onClose={() => setShowSotoshop(false)} 
