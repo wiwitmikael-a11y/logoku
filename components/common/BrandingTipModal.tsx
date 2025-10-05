@@ -1,3 +1,5 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React, { useEffect, useRef } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
 import Button from './Button';
@@ -37,9 +39,15 @@ const BrandingTipModal: React.FC<Props> = ({ show, onConfirm }) => {
         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 mb-4" style={{ imageRendering: 'pixelated' }} />
         <h2 id="tip-modal-title" className="text-3xl font-bold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>Eh, Juragan, Tau Gak Sih?</h2>
         <div className="text-text-body text-left space-y-3 mb-8">
-            <p> Di lautan UMKM Indonesia yang ramenya kayak pasar malem, banyak banget kan yang jualannya mirip-mirip? Nah, di sinilah <strong className="text-splash">branding yang konsisten</strong> jadi jagoannya! </p>
-            <p> Branding itu bukan cuma soal logo cakep, tapi soal <strong className="text-text-header">'rasa' dan 'cerita'</strong> yang lo kasih ke pelanggan. Kalo brand lo konsisten—dari warna, gaya bahasa, sampe cara lo ngelayanin—pelanggan jadi gampang inget, percaya, dan akhirnya balik lagi. </p>
-            <p> Ini yang bikin "Kopi Senja" lo beda dari ribuan kopi senja lainnya. Siap bikin brand lo jadi juara? <strong className="block mt-2 text-splash">Sebagai pemanasan, project branding pertamamu dari A sampai Z di sini gratis, lho!</strong> Ayo kita mulai! </p>
+            <p>
+                Di pasar yang ramenya kayak stasiun pas jam pulang kerja, <strong className="text-splash">branding yang KONSISTEN</strong> itu tiket VVIP biar bisnis lo dilirik dan diinget terus!
+            </p>
+            <p>
+                Ini bukan cuma soal logo cakep, tapi soal <strong className="text-text-header">'rasa' dan 'cerita'</strong> yang bikin pelanggan ngerasa nyambung. Dari warna, gaya bahasa, sampe cara lo bales chat—semua harus seirama.
+            </p>
+            <p>
+                <strong className="block mt-2 text-splash">Kabar baiknya?</strong> Project branding pertamamu di sini lebih hemat! Setiap token yang kepake di alur kerja utama bakal Mang AI <strong className="text-white">balikin lagi 1 token</strong>. Jadi, jangan takut buat eksplorasi. Siap bikin brand lo jadi juara? Ayo kita mulai!
+            </p>
         </div>
         <Button onClick={handleConfirm}> Ngerti, Mang! Lanjut! </Button>
       </div>

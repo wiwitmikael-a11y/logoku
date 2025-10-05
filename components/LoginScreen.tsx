@@ -81,7 +81,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
             </div>
 
             <p className="text-text-body mb-8 max-w-lg mx-auto">
-              Lupakan pusingnya mikirin desain. Mang AI hadir sebagai partner setia lo! Dalam hitungan menit, kita bakal sulap ide lo jadi <strong className="text-text-header">paket branding lengkap</strong>: dari logo, persona, social media kit, sampai konten siap posting.
+              Pusing mikirin logo? Bingung nentuin gaya brand? Gak tau mau posting apa di sosmed? Tenang, Juragan! Mang AI di sini buat jadi partner setia lo. Dalam hitungan menit, kita bakal sulap ide sederhana jadi <strong className="text-text-header">paket branding lengkap</strong> siap tanding: dari logo, persona, sampai konten sosmed.
             </p>
             
             <div className="flex flex-col items-center gap-4">
@@ -90,7 +90,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
                 disabled={!isCaptchaSolved}
                 title={!isCaptchaSolved ? "Selesaikan puzzle captcha dulu!" : "Masuk dengan akun Google"}
                 size="large"
-                variant="splash"
+                className="!bg-[rgb(var(--c-bg-inverse))] !text-[rgb(var(--c-text-inverse))] border-2 border-border-main hover:!bg-border-light shadow-lg"
               >
                 <svg className="w-5 h-5" aria-hidden="true" focusable="false" viewBox="0 0 48 48">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>

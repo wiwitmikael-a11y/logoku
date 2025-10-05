@@ -27,7 +27,7 @@ interface ProjectDashboardProps {
 }
 
 const DYNAMIC_INFO_TIPS = [
-    { icon: '🎉', title: 'Project Pertama GRATIS!', text: 'Rancang brand pertamamu dari A sampai Z <strong class="text-text-header">tanpa keluar token!</strong> Setiap token yang kamu pakai di alur kerja pertama bakal <span class="font-bold text-splash">dikembalikan lagi</span>. Cobain semua fiturnya tanpa takut!' },
+    { icon: '🎉', title: 'Project Pertama Lebih Hemat!', text: 'Rancang brand pertamamu dan dapatkan <strong class="text-text-header">cashback 1 token</strong> di setiap langkah generator utamanya! Ini cara Mang AI bilang \'selamat datang\' dan bantu lo hemat di awal.' },
     { icon: '🎁', title: 'Bonus Sambutan 20 Token', text: 'Sebagai juragan baru, lo juga langsung dapet bonus sambutan <span class="font-bold text-splash">20 token</span> di hari pertama! Manfaatin buat eksplorasi sepuasnya, ya!' },
     { icon: '☀️', title: 'Jatah Harian Anti Rugi', text: 'Tiap pagi, kalo token lo kurang dari 5, Mang AI bakal <strong class="text-text-header">isi ulang sampe jadi 5</strong>, gratis! Kalo sisa token lo banyak (misal 12), jumlahnya <strong class="text-text-header">nggak akan direset</strong>. Aman!' },
     { icon: '🐾', title: 'AIPet Hidup & Bergerak!', text: 'Mang AI sekarang punya teman, si AIPet! Dia bukan cuma gambar, tapi teman digital yang <strong class="text-text-header">berjalan, melompat, dan bereaksi</strong> terhadap progresmu. Cek statistiknya di Lab AIPet!' },
