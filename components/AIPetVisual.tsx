@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useRef, useEffect, useCallback, useState } from 'react';
-import type { AIPetState } from '../types';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import type { AIPetState, AIPetTier } from '../types';
 
 interface AIPetVisualProps {
   petState: AIPetState;
@@ -101,15 +101,25 @@ interface PartCacheEntry {
     height: number;
 }
 
+// NEW: Physics state for each part
+type PartPhysicsState = {
+    x: number; y: number; angle: number;
+    vx: number; vy: number; vAngle: number;
+};
+type RigPhysicsState = Record<string, PartPhysicsState>;
 
 const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior = 'idle' }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationFrameId = useRef<number>(0);
     const partCache = useRef<Map<string, PartCacheEntry>>(new Map());
-    const [interactionTs, setInteractionTs] = useState(0);
-    const { stage, blueprint, colors, stats, name } = petState;
+    const physicsStateRef = useRef<RigPhysicsState | null>(null);
+    const interactionForceRef = useRef({ part: '', force: { x: 0, y: 0, angle: 0 }, duration: 0, startTime: 0 });
+    const { stage, blueprint, colors, stats, name, tier } = petState;
 
-    const handleInteraction = useCallback(() => setInteractionTs(Date.now()), []);
+    const handleInteraction = useCallback(() => {
+        const now = Date.now();
+        interactionForceRef.current = { part: 'right_arm', force: { x: 0, y: 0, angle: 2500 }, duration: 400, startTime: now };
+    }, []);
 
     useEffect(() => {
         if (!blueprint || !colors || !name) return;
@@ -171,8 +181,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
                     if (x < 0 || x >= CANVAS_SIZE || y < 0 || y >= CANVAS_SIZE) continue;
                     const idx = y * CANVAS_SIZE + x;
                     const dataIdx = idx * 4;
-                    if (data[dataIdx + 3] < 128) continue; // Stop at transparent
-                    if (segData[idx] > 0) continue; // Stop if already segmented
+                    if (data[dataIdx + 3] < 128) continue; 
+                    if (segData[idx] > 0) continue; 
                     segData[idx] = partId;
                     queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
                 }
@@ -181,23 +191,16 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
             Object.values(parts).forEach((p, i) => floodFill(p.anchor.x, p.anchor.y, i + 1));
             
             const newCache = new Map<string, PartCacheEntry>();
+            const newPhysicsState: RigPhysicsState = {};
+
             Object.entries(parts).forEach(([partName, partDef], i) => {
                 const partId = i + 1;
                 let minX = CANVAS_SIZE, minY = CANVAS_SIZE, maxX = 0, maxY = 0;
-                for (let y = 0; y < CANVAS_SIZE; y++) {
-                    for (let x = 0; x < CANVAS_SIZE; x++) {
-                        if (segData[y * CANVAS_SIZE + x] === partId) {
-                            minX = Math.min(minX, x); minY = Math.min(minY, y);
-                            maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
-                        }
-                    }
-                }
+                for (let y = 0; y < CANVAS_SIZE; y++) { for (let x = 0; x < CANVAS_SIZE; x++) { if (segData[y * CANVAS_SIZE + x] === partId) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); } } }
 
                 if (minX > maxX) return;
 
-                const width = maxX - minX + 1;
-                const height = maxY - minY + 1;
-                
+                const width = maxX - minX + 1; const height = maxY - minY + 1;
                 const partCanvas = document.createElement('canvas');
                 partCanvas.width = width; partCanvas.height = height;
                 const partCtx = partCanvas.getContext('2d');
@@ -205,8 +208,10 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
 
                 partCtx.drawImage(workingCanvas, minX, minY, width, height, 0, 0, width, height);
                 newCache.set(partName, { canvas: partCanvas, def: partDef, x: minX, y: minY, width, height });
+                newPhysicsState[partName] = { x: 0, y: 0, angle: 0, vx: 0, vy: 0, vAngle: 0 };
             });
             partCache.current = newCache;
+            physicsStateRef.current = newPhysicsState;
         };
 
         if (imageCache[blueprint.url]) {
@@ -221,94 +226,98 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
-        if (!ctx || !blueprint) return;
+        if (!ctx || !blueprint || !physicsStateRef.current) return;
         
-        const sortedPartNames = [...partCache.current.keys()].sort((a, b) => {
-            const partA = partCache.current.get(a)?.def.z || 0;
-            const partB = partCache.current.get(b)?.def.z || 0;
-            return partA - partB;
-        });
+        const sortedPartNames = [...partCache.current.keys()].sort((a, b) => (partCache.current.get(a)?.def.z || 0) - (partCache.current.get(b)?.def.z || 0));
 
         const draw = (time: number) => {
-            if (!canvas) return;
+            if (!canvas || !physicsStateRef.current) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             const now = Date.now();
-            const INTERACTION_DURATION = 1200;
-            const isInteracting = interactionTs > 0 && now - interactionTs < INTERACTION_DURATION;
-            
-            const animations: Record<string, { y: number; rot: number }> = {};
+            const stiffness = 0.1, damping = 0.8;
+
+            // --- Define Animation Targets ---
+            const targets: Record<string, { y: number; angle: number }> = {};
             const walkCycle = time / (behavior === 'running' ? 150 : 250);
             const idleCycle = time / 600;
-            let jumpY = 0;
+            let jumpY = 0, torsoYTarget = 0;
 
-            if (isInteracting) {
-                const progress = (now - interactionTs) / INTERACTION_DURATION;
-                const wave = Math.sin(progress * Math.PI * 3) * 60;
-                const bounce = -Math.sin(progress * Math.PI) * 15;
-                animations['torso'] = { y: bounce, rot: 0 };
-                animations['head'] = { y: 0, rot: Math.sin(progress * Math.PI * 3) * 5 };
-                animations['right_arm'] = { y: 0, rot: -20 + wave };
-                animations['left_arm'] = { y: 0, rot: 0 };
-                animations['left_leg'] = { y: 0, rot: 0 };
-                animations['right_leg'] = { y: 0, rot: 0 };
-            } else if (behavior === 'jumping') {
-                const jumpProgress = (time % 800) / 800; // 800ms jump duration
-                jumpY = -Math.sin(jumpProgress * Math.PI) * 40; // 40px jump height
+            if (behavior === 'jumping') {
+                const jumpProgress = (time % 800) / 800;
+                jumpY = -Math.sin(jumpProgress * Math.PI) * 40;
                 const legTuck = Math.sin(jumpProgress * Math.PI) * 30;
-                animations['torso'] = { y: 0, rot: 5 };
-                animations['head'] = { y: 0, rot: -5 };
-                animations['left_arm'] = { y: 0, rot: 45 };
-                animations['right_arm'] = { y: 0, rot: -45 };
-                animations['left_leg'] = { y: 0, rot: legTuck };
-                animations['right_leg'] = { y: 0, rot: legTuck };
-            } else if (behavior === 'running') {
-                const bob = Math.sin(walkCycle) * 5;
-                const lean = 5;
-                animations['torso'] = { y: bob, rot: lean };
-                animations['head'] = { y: bob, rot: Math.sin(walkCycle / 2) * 3 - lean };
-                animations['left_arm'] = { y: 0, rot: Math.sin(walkCycle + Math.PI) * 60 };
-                animations['right_arm'] = { y: 0, rot: Math.sin(walkCycle) * 60 };
-                animations['left_leg'] = { y: 0, rot: Math.sin(walkCycle) * 45 };
-                animations['right_leg'] = { y: 0, rot: Math.sin(walkCycle + Math.PI) * 45 };
-            } else if (behavior === 'walking') {
-                const bob = Math.sin(walkCycle) * 3;
-                animations['torso'] = { y: bob, rot: 0 };
-                animations['head'] = { y: bob, rot: Math.sin(walkCycle / 2) * 2 };
-                animations['left_arm'] = { y: 0, rot: Math.sin(walkCycle + Math.PI) * 35 };
-                animations['right_arm'] = { y: 0, rot: Math.sin(walkCycle) * 35 };
-                animations['left_leg'] = { y: 0, rot: Math.sin(walkCycle) * 25 };
-                animations['right_leg'] = { y: 0, rot: Math.sin(walkCycle + Math.PI) * 25 };
+                targets['torso'] = { y: 0, angle: 5 };
+                targets['head'] = { y: 0, angle: -5 };
+                targets['left_arm'] = { y: 0, angle: 45 };
+                targets['right_arm'] = { y: 0, angle: -45 };
+                targets['left_leg'] = { y: 0, angle: legTuck };
+                targets['right_leg'] = { y: 0, angle: legTuck };
+            } else if (behavior === 'running' || behavior === 'walking') {
+                const speed = behavior === 'running' ? 2 : 1;
+                torsoYTarget = Math.sin(walkCycle) * 3 * speed;
+                targets['torso'] = { y: 0, angle: speed };
+                targets['head'] = { y: 0, angle: Math.sin(walkCycle * 0.7) * 2 * speed - speed };
+                targets['left_arm'] = { y: 0, angle: Math.sin(walkCycle + Math.PI) * 40 * speed };
+                targets['right_arm'] = { y: 0, angle: Math.sin(walkCycle) * 40 * speed };
+                targets['left_leg'] = { y: 0, angle: Math.sin(walkCycle) * 30 * speed };
+                targets['right_leg'] = { y: 0, angle: Math.sin(walkCycle + Math.PI) * 30 * speed };
             } else { // idle
-                const bob = Math.sin(idleCycle) * 1.5;
-                animations['torso'] = { y: bob, rot: 0 };
-                animations['head'] = { y: bob, rot: Math.sin(idleCycle * 0.7) * 2 };
-                animations['left_arm'] = { y: 0, rot: Math.sin(idleCycle) * 3 };
-                animations['right_arm'] = { y: 0, rot: Math.sin(idleCycle) * 3 };
-                animations['left_leg'] = { y: 0, rot: 0 };
-                animations['right_leg'] = { y: 0, rot: 0 };
+                torsoYTarget = Math.sin(idleCycle) * 1.5;
+                targets['torso'] = { y: 0, angle: 0 };
+                targets['head'] = { y: 0, angle: Math.sin(idleCycle * 0.7) * 2 };
+                targets['left_arm'] = { y: 0, angle: Math.sin(idleCycle) * 3 };
+                targets['right_arm'] = { y: 0, angle: Math.sin(idleCycle) * 3 };
+                targets['left_leg'] = { y: 0, angle: 0 };
+                targets['right_leg'] = { y: 0, angle: 0 };
             }
-            
+
+            // --- Physics Simulation Loop ---
+            for (const partName of sortedPartNames) {
+                const state = physicsStateRef.current[partName];
+                const target = targets[partName] || { y: 0, angle: 0 };
+
+                let forceY = (target.y - state.y) * stiffness;
+                let forceAngle = (target.angle - state.angle) * stiffness;
+
+                // Handle main body vertical motion separately
+                if (partName === 'torso') {
+                    forceY = (torsoYTarget - state.y) * stiffness;
+                } else {
+                    // Other parts are affected by torso's movement
+                    const torsoState = physicsStateRef.current['torso'];
+                    forceY += (torsoState.y - state.y) * 0.05;
+                }
+                
+                // Handle one-off interaction forces
+                const interaction = interactionForceRef.current;
+                if (interaction.part === partName && now < interaction.startTime + interaction.duration) {
+                    const progress = (now - interaction.startTime) / interaction.duration;
+                    const impulse = Math.sin(progress * Math.PI); // Apply force in a curve
+                    forceAngle += interaction.force.angle * impulse;
+                }
+
+                state.vy = (state.vy + forceY) * damping;
+                state.vAngle = (state.vAngle + forceAngle) * damping;
+
+                state.y += state.vy;
+                state.angle += state.vAngle;
+            }
+
+            // --- Drawing Loop ---
             for (const partName of sortedPartNames) {
                 const part = partCache.current.get(partName);
                 if (!part) continue;
 
                 ctx.save();
-                
-                const anim = animations[partName] || { y: 0, rot: 0 };
-                
+                const state = physicsStateRef.current[partName];
                 const partX = (canvas.width - 256) / 2 + part.x;
-                let partY = (canvas.height - 256) / 2 + part.y + anim.y + (isInteracting ? 0 : jumpY);
-                
-                if (partName.includes('arm') || partName.includes('leg') || partName.includes('head')) {
-                    partY += animations['torso']?.y || 0;
-                }
-                
+                const partY = (canvas.height - 256) / 2 + part.y + state.y + jumpY;
                 const pivotX = partX + part.def.pivot.x;
                 const pivotY = partY + part.def.pivot.y;
                 
                 ctx.translate(pivotX, pivotY);
-                ctx.rotate(anim.rot * Math.PI / 180);
+                ctx.rotate(state.angle * Math.PI / 180);
                 const scale = part.def.scale || 1.0;
                 ctx.scale(scale, scale);
                 ctx.drawImage(part.canvas, -part.def.pivot.x, -part.def.pivot.y);
@@ -321,16 +330,39 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
         
         animationFrameId.current = requestAnimationFrame(draw);
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [blueprint, interactionTs, behavior]);
+    }, [blueprint, behavior]);
     
+    // --- AURA/GLOW LOGIC ---
+    const glowStyle = useMemo(() => {
+        if (!colors || stage === 'aipod') return {};
+
+        const baseSize = tier === 'mythic' ? 12 : tier === 'epic' ? 8 : 4;
+        const pulseSize = tier === 'mythic' ? 18 : tier === 'epic' ? 12 : 4;
+        
+        const energyFactor = (stats.energy / 100) * 0.5 + 0.6; // 60% to 110% intensity
+        const glowColor = colors.energy.base;
+
+        const base = `${glowColor} 0px 0px ${baseSize}px, ${glowColor} 0px 0px ${baseSize * 2}px`;
+        const pulse = `${glowColor} 0px 0px ${pulseSize}px, ${glowColor} 0px 0px ${pulseSize * 2}px`;
+
+        return {
+            '--glow-filter-base': `drop-shadow(${base})`,
+            '--glow-filter-pulse': `drop-shadow(${pulse})`,
+            filter: `var(--glow-filter-base)`,
+            opacity: energyFactor,
+        };
+    }, [tier, stats.energy, colors, stage]);
+
+    const animationClass = tier === 'mythic' ? 'animate-aipet-glow-mythic' : tier === 'epic' ? 'animate-aipet-glow-epic' : '';
+
     const filterStyle: React.CSSProperties = {
-        filter: stats.energy < 30 ? `saturate(${stats.energy + 20}%) opacity(0.8)` : 'none',
         imageRendering: 'pixelated',
         cursor: stage === 'active' ? 'pointer' : 'default',
+        ...(stage !== 'aipod' ? glowStyle : {})
     };
 
     if (stage === 'aipod') {
-        return <div style={filterStyle} className={`w-full h-full ${className || ''}`}><AIPodVisual /></div>;
+        return <div className={`w-full h-full ${className || ''}`}><AIPodVisual /></div>;
     }
 
     if (!blueprint || !colors) {
@@ -343,7 +375,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
             width={256}
             height={256}
             style={filterStyle}
-            className={`w-full h-full object-contain ${className || ''}`}
+            className={`w-full h-full object-contain ${animationClass} ${className || ''}`}
             onClick={handleInteraction}
             title={petState.name}
         />
