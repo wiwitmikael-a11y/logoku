@@ -98,7 +98,6 @@ export type AIPetPersonalityVector = {
   minimalist: number;
   rustic: number;
   playful: number;
-
   modern: number;
   luxury: number;
   feminine: number;
@@ -115,27 +114,16 @@ export interface AIPetStats {
 
 export type AIPetStage = 'egg' | 'child' | 'teen' | 'adult';
 
-// DEPRECATED Puppet System types
-export type PartName = 'torso' | 'head' | 'left_arm' | 'right_arm' | 'left_leg' | 'right_leg' | 'accessory1' | 'accessory2';
-export type AnchorName = 'neck' | 'left_shoulder' | 'right_shoulder' | 'left_hip' | 'right_hip' | 'accessory_mount1' | 'accessory_mount2';
-
-export interface AtlasPart {
-  name: PartName;
-  bbox: [number, number, number, number]; // x, y, width, height
-  assemblyPoint: [number, number]; // joint location [x, y] relative to bbox
-  attachTo: PartName | null;
-  attachmentPoint: AnchorName | null;
+// --- New Blueprint System Types ---
+export interface AIPetBlueprint {
+  url: string; // e.g., 'Common_Beast.png'
 }
 
-export interface AtlasManifest {
-  atlasSize: [number, number]; // width, height of the entire atlas image
-  parts: AtlasPart[];
-  anchors: {
-    [key in PartName]?: { [key in AnchorName]?: [number, number] };
-  };
-  layering: PartName[];
+export interface AIPetColors {
+  organic: string; // Replaces blueprint's pure red
+  mechanical: string; // Replaces blueprint's pure green
+  energy: string; // Replaces blueprint's pure blue
 }
-// END DEPRECATED
 
 export interface AIPetState {
   name: string;
@@ -145,13 +133,9 @@ export interface AIPetState {
   lastPlayed: number;
   personality: AIPetPersonalityVector;
   narrative?: string | null;
-  // NEW Sprite Sheet System
-  sprite_sheet_url: string | null; // URL for the full 3x3 sprite sheet
-  assembled_url: string | null; // URL for the cropped first frame (for static display)
-  
-  // DEPRECATED
-  atlas_url: string | null;
-  manifest: AtlasManifest | null;
+  // New blueprint system
+  blueprint: AIPetBlueprint | null;
+  colors: AIPetColors | null;
 }
 
 

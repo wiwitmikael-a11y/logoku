@@ -243,48 +243,6 @@ const generateImageFromWhiteCanvas = async (prompt: string, aspectRatio: '1:1' |
     }
 };
 
-// --- NEW "SPRITE SHEET GRID" AIPET GENERATION SYSTEM ---
-
-export const generateAIPetSpriteSheet = async (userId: string): Promise<string> => {
-    const ai = getAiClient();
-    const seed = userId + new Date().toISOString();
-
-    const spriteSheetPrompt = `Technical character sprite sheet for a 2D game, aspect ratio 4:3. Create a single rectangular image containing a perfect 4x3 grid (4 columns, 3 rows) of character poses.
-
-    **CRITICAL RULES:**
-    1.  **PERFECTLY TRANSPARENT BACKGROUND:** The entire image's background MUST be 100% transparent PNG (alpha channel 0). Do not simulate transparency with a checkerboard pattern. No colors, no gradients. This is the most important rule.
-    2.  **GRID INTEGRITY & PADDING:** Generate a perfect 4x3 grid. Each of the 12 cells must contain one sprite. Each sprite must be perfectly centered within its cell and occupy roughly 80% of the cell's space to ensure generous padding and prevent any part of a sprite from touching or overlapping cell boundaries. The sprites must be fully isolated.
-    3.  **CHARACTER CONSISTENCY:** The character's design, proportions, colors, and size must be absolutely identical across all 12 poses.
-    4.  **NO TEXT OR BORDERS:** Do not add any text, numbers, grid lines, or borders to the image.
-
-    **CHARACTER DESIGN:**
-    - **AESTHETIC:** 'AIPet' style - a cute, 'chibi-mecha' fusion of a non-humanoid biomechanical creature. The style is clean, sharp 2.5D vector art with bold outlines.
-    - **AVOID:** Human-like figures, bipedal robots, Iron Man.
-    - **FOCUS ON:** Biomechanical insects, robotic mammals, alien monsters.
-    - **PERSPECTIVE:** All poses must be in a consistent 2.5D isometric view, with the character facing forward-right. The anchor point (e.g., center of mass) should be consistent in every frame.
-
-    **POSES (fill the 4x3 grid, read from left to right, top to bottom):**
-    - **Row 1 (Frames 1-4):** Idle animation frames (e.g., standing still, slight bobbing, blinking, tail wag).
-    - **Row 2 (Frames 5-8):** Walk cycle animation frames (part 1).
-    - **Row 3 (Frames 9-12):** Walk cycle animation frames (part 2). The 8 walk frames (frames 5-12) must form a complete, smooth loop of the character walking **forward**, not backward (no moonwalking).
-
-    **Seed for consistency:** ${seed}`;
-
-    try {
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: spriteSheetPrompt,
-            config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: '4:3' },
-        });
-        // Mandatory background cleanup as a safeguard.
-        const cleanedSpriteSheetBase64 = await removeImageBackground(`data:image/png;base64,${response.generatedImages[0].image.imageBytes}`);
-        return cleanedSpriteSheetBase64;
-    } catch (error) {
-        throw handleApiError(error, "AIPet Sprite Sheet Generation");
-    }
-};
-
-
 export const generateAIPetNarrative = async (petData: { name: string, personality: AIPetPersonalityVector, stats: AIPetStats }): Promise<string> => {
     const ai = getAiClient();
     

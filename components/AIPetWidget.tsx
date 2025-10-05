@@ -132,7 +132,7 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     };
 
     const mainContent = () => {
-        if (petState.stage === 'egg' || !petState.sprite_sheet_url) {
+        if (petState.stage === 'egg' || !petState.blueprint) {
             const isEgg = petState.stage === 'egg';
             return (
                 <div className="text-center p-4">
@@ -140,7 +140,7 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
                         {isEgg ? "Sepertinya ada telur misterius di sini. Mau coba tetaskan?" : "AI Pet-mu siap untuk diwujudkan wujud fisiknya!"}
                     </p>
                     <button onClick={() => setShowHatchingModal(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover">
-                        {isEgg ? "Tetaskan Telur" : "Wujudkan Visual"} (10 Token)
+                        {isEgg ? "Tetaskan Telur" : "Wujudkan Visual"} (1 Token)
                     </button>
                 </div>
             );

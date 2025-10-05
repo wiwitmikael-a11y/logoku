@@ -50,11 +50,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                     ) : (
                         <>
                             <div className="w-full max-w-xs aspect-square mb-4">
-                                {petState.assembled_url ? (
-                                    <img src={petState.assembled_url} alt={petState.name} className="w-full h-full object-contain" />
-                                ) : (
-                                    <AIPetVisual petState={petState} />
-                                )}
+                                <AIPetVisual petState={petState} />
                             </div>
                             <h2 className="text-3xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>{petState.name}</h2>
                             <p className="text-sm text-text-muted italic text-center">"{petState.narrative || 'A mysterious creature.'}"</p>

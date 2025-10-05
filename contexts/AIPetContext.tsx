@@ -5,7 +5,7 @@ import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import * as geminiService from '../services/geminiService';
 import { cropImage } from '../utils/imageUtils';
-import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage } from '../types';
+import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint } from '../types';
 
 export interface AIPetContextType {
   petState: AIPetState | null;
@@ -22,7 +22,8 @@ export interface AIPetContextType {
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
-const HATCH_COST = 10; // Cost for a single, complex Imagen 4 call for the sprite sheet.
+const HATCH_COST = 1; // Cost for narrative generation.
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const getStageForLevel = (level: number): AIPetStage => {
     if (level < 5) return 'child';
@@ -126,12 +127,9 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
                 personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
-                sprite_sheet_url: null,
-                assembled_url: null,
+                blueprint: null,
+                colors: null,
                 narrative: null,
-                // Deprecated fields
-                atlas_url: null,
-                manifest: null,
             };
             setPetState(newPet);
             savePetStateToDb(newPet);
@@ -177,21 +175,11 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const success = await deductCredits(HATCH_COST);
         if (!success) throw new Error("Token tidak cukup.");
     
-        // Step 1: Generate the 4x3 Sprite Sheet
-        const spriteSheetUrl = await geminiService.generateAIPetSpriteSheet(user.id);
-        
-        // Step 2: Client-side cropping for the first frame (assembled_url)
-        const tempImg = new Image();
-        tempImg.src = spriteSheetUrl;
-        await new Promise(resolve => tempImg.onload = resolve);
-        const frameWidth = tempImg.width / 4; // 4 columns
-        const frameHeight = tempImg.height / 3; // 3 rows
-        const firstFrameUrl = await cropImage(spriteSheetUrl, [0, 0, frameWidth, frameHeight]);
-        
-        // Step 3: Generate initial personality and narrative
+        // Step 1: Generate initial personality, stats, and name
         const seed = user.id + new Date().toISOString().slice(0, 10);
         const hash = stringToHash(seed);
         const seedRandom = createSeededRandom(hash);
+        
         const personalities: (keyof AIPetPersonalityVector)[] = ['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'];
         const initialPersonality: AIPetPersonalityVector = personalities.reduce((acc, curr) => {
             acc[curr] = Math.floor(seedRandom() * 11); // value 0-10
@@ -200,10 +188,23 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         const initialStats: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
         const petName = `AIPet-${String(hash).slice(0, 4)}`;
+
+        // Step 2: Determine archetype and select a blueprint
+        const blueprints = ['Common_Beast.png', 'Common_Gorilla.png', 'Common_Mutant.png', 'Epic_Random.png'];
+        const blueprintUrl = blueprints[Math.floor(seedRandom() * blueprints.length)];
+        const blueprint: AIPetBlueprint = { url: `${GITHUB_ASSETS_URL}AIPets/${blueprintUrl}` };
+
+        // Step 3: Generate dynamic colors
+        const colors: AIPetColors = {
+            organic: `hsl(${Math.floor(seedRandom() * 360)}, 70%, 50%)`,
+            mechanical: `hsl(${Math.floor(seedRandom() * 360)}, 60%, 60%)`,
+            energy: `hsl(${Math.floor(seedRandom() * 360)}, 80%, 55%)`,
+        };
     
+        // Step 4: Generate narrative with Gemini (the only API call)
         const narrative = await geminiService.generateAIPetNarrative({ name: petName, personality: initialPersonality, stats: initialStats });
     
-        // Step 4: Construct the final state
+        // Step 5: Construct the final state
         const hatchedState: AIPetState = {
             name: petName,
             stage: 'child',
@@ -212,11 +213,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             lastPlayed: Date.now(),
             personality: initialPersonality,
             narrative: narrative,
-            sprite_sheet_url: spriteSheetUrl,
-            assembled_url: firstFrameUrl,
-            // Deprecated fields
-            atlas_url: null,
-            manifest: null,
+            blueprint,
+            colors,
         };
         
         setPetState(hatchedState);

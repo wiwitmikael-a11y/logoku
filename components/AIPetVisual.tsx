@@ -1,12 +1,11 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React from 'react';
+import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import type { AIPetState } from '../types';
 
 interface AIPetVisualProps {
   petState: AIPetState;
   className?: string;
-  animationType?: 'idle' | 'walk';
 }
 
 // --- EGG VISUAL (No changes needed) ---
@@ -58,73 +57,125 @@ const EggVisual: React.FC = () => {
     );
 };
 
-// --- NEW SPRITE SHEET ANIMATION COMPONENT ---
-const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, animationType = 'idle' }) => {
-  const { stats, stage, sprite_sheet_url } = petState;
+// --- NEW CANVAS-BASED BLUEPRINT RENDERER ---
+const imageCache: { [key: string]: HTMLImageElement } = {};
+const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+};
 
-  // Keyframes for the 4x3 sprite sheet animation
-  const animationKeyframes = `
-    @keyframes pet-sprite-idle {
-      from { background-position: 0% 0%; }
-      to { background-position: -400% 0%; }
+const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const animationFrameId = useRef<number>(0);
+    const { stage, blueprint, colors, stats } = petState;
+
+    // --- Part Assembly Definitions ---
+    const partDefinitions = useMemo(() => ({
+        'Common_Beast.png': [{ index: 5 }, { index: 1, y: -45, x: 0 }, { index: 4, y: 10, x: -35 }, { index: 6, y: 10, x: 35 }, { index: 9, y: 55, x: -25 }, { index: 11, y: 55, x: 25 }, ],
+        'Common_Gorilla.png': [{ index: 6 }, { index: 2, y: -40, x: 0 }, { index: 5, y: 5, x: -45 }, { index: 7, y: 5, x: 45 }, { index: 13, y: 50, x: -20 }, { index: 15, y: 50, x: 20 }, ],
+        'Common_Mutant.png': [{ index: 9 }, { index: 1, y: -50, x: 0 }, { index: 4, y: 0, x: -40 }, { index: 7, y: 0, x: 40 }, { index: 12, y: 40, x: -25 }, { index: 14, y: 40, x: 25 }, ],
+        'Epic_Random.png': [{ index: 10 }, { index: 1, y: -50, x: 0 }, { index: 4, y: -10, x: -45 }, { index: 7, y: -10, x: 45 }, { index: 13, y: 50, x: 0 }, ],
+    }), []);
+
+    const draw = useCallback((time: number) => {
+        const canvas = canvasRef.current;
+        if (!canvas || !blueprint || !colors) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const blueprintName = blueprint.url.substring(blueprint.url.lastIndexOf('/') + 1);
+        const blueprintImg = imageCache[blueprint.url];
+        const assembly = partDefinitions[blueprintName as keyof typeof partDefinitions];
+        if (!blueprintImg || !assembly) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const organicRGB = hexToRgb(colors.organic);
+        const mechanicalRGB = hexToRgb(colors.mechanical);
+        const energyRGB = hexToRgb(colors.energy);
+        if (!organicRGB || !mechanicalRGB || !energyRGB) return;
+
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = 256;
+        offscreenCanvas.height = 256;
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+        if (!offscreenCtx) return;
+
+        const bobY = Math.sin(time / 400) * 3;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        for (const part of assembly) {
+            const gridX = part.index % 4;
+            const gridY = Math.floor(part.index / 4);
+
+            offscreenCtx.clearRect(0, 0, 256, 256);
+            offscreenCtx.drawImage(blueprintImg, gridX * 256, gridY * 256, 256, 256, 0, 0, 256, 256);
+            const imageData = offscreenCtx.getImageData(0, 0, 256, 256);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i], g = data[i+1], b = data[i+2];
+                if (r > 240 && g < 15 && b < 15) { data[i] = organicRGB.r; data[i+1] = organicRGB.g; data[i+2] = organicRGB.b; } 
+                else if (r < 15 && g > 240 && b < 15) { data[i] = mechanicalRGB.r; data[i+1] = mechanicalRGB.g; data[i+2] = mechanicalRGB.b; } 
+                else if (r < 15 && g < 15 && b > 240) { data[i] = energyRGB.r; data[i+1] = energyRGB.g; data[i+2] = energyRGB.b; }
+            }
+            offscreenCtx.putImageData(imageData, 0, 0);
+
+            const drawX = centerX - 128 + (part.x || 0);
+            const drawY = centerY - 128 + bobY + (part.y || 0);
+            ctx.drawImage(offscreenCanvas, drawX, drawY);
+        }
+
+        animationFrameId.current = requestAnimationFrame(draw);
+    }, [blueprint, colors, partDefinitions]);
+
+    useEffect(() => {
+        if (!blueprint || !colors) return;
+        
+        const loadImage = () => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = blueprint.url;
+            img.onload = () => {
+                imageCache[blueprint.url] = img;
+                animationFrameId.current = requestAnimationFrame(draw);
+            };
+            img.onerror = () => console.error("Failed to load blueprint image:", blueprint.url);
+        }
+
+        if (imageCache[blueprint.url]) {
+             animationFrameId.current = requestAnimationFrame(draw);
+        } else {
+            loadImage();
+        }
+
+        return () => cancelAnimationFrame(animationFrameId.current);
+    }, [blueprint, colors, draw]);
+    
+    // Apply visual effects based on pet's energy
+    const filterStyle: React.CSSProperties = {
+        filter: stats.energy < 30 ? `saturate(${stats.energy + 20}%) opacity(0.8)` : 'none',
+        imageRendering: 'pixelated',
+    };
+
+    if (stage === 'egg') {
+        return <div style={filterStyle} className={`w-full h-full ${className || ''}`}><EggVisual /></div>;
     }
-    @keyframes pet-sprite-walk {
-      0% { background-position: 0% 50%; } /* R2, F1 */
-      12.5% { background-position: -100% 50%; } /* R2, F2 */
-      25% { background-position: -200% 50%; } /* R2, F3 */
-      37.5% { background-position: -300% 50%; } /* R2, F4 */
-      50% { background-position: 0% 100%; } /* R3, F1 */
-      62.5% { background-position: -100% 100%; } /* R3, F2 */
-      75% { background-position: -200% 100%; } /* R3, F3 */
-      87.5% { background-position: -300% 100%; } /* R3, F4 */
-      100% { background-position: -300% 100%; }
+
+    if (!blueprint || !colors) {
+        return <div className="w-full h-full flex items-center justify-center text-xs text-text-muted">Loading visual...</div>
     }
-    @keyframes pet-float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-5%); }
-    }
-  `;
 
-  // Apply visual effects based on pet's energy
-  const filterStyle: React.CSSProperties = {
-    filter: stats.energy < 30 ? `saturate(${stats.energy + 20}%) opacity(0.8)` : 'none',
-    imageRendering: 'pixelated',
-  };
-
-  // Render the egg if it's not hatched yet
-  if (stage === 'egg' || !sprite_sheet_url) {
-      return (
-          <div style={filterStyle} className={`w-full h-full ${className || ''}`}>
-              <EggVisual />
-          </div>
-      );
-  }
-  
-  const selectedAnimationName = animationType === 'walk' ? 'pet-sprite-walk' : 'pet-sprite-idle';
-  const selectedAnimationSettings = animationType === 'walk'
-    ? '1s steps(1) infinite'
-    : '1.2s steps(4) infinite';
-
-
-  // Render the animated sprite
-  return (
-    <div 
-        style={filterStyle}
-        className={`w-full h-full object-contain ${className || ''}`}
-    >
-        <style>{animationKeyframes}</style>
-        <div
-            style={{
-                width: '100%',
-                height: '100%',
-                backgroundImage: `url(${sprite_sheet_url})`,
-                backgroundSize: '400% 300%', // 4x3 grid
-                backgroundPosition: '0 0',
-                animation: `${selectedAnimationName} ${selectedAnimationSettings}, pet-float 4s ease-in-out infinite`,
-            }}
+    return (
+        <canvas
+            ref={canvasRef}
+            width={256}
+            height={256}
+            style={filterStyle}
+            className={`w-full h-full object-contain ${className || ''}`}
         />
-    </div>
-  );
+    );
 };
 
 export default AIPetVisual;
