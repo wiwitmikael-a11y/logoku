@@ -16,16 +16,18 @@ interface State {
   isCopied: boolean;
 }
 
-// FIX: Extended React.Component to make this a valid React class component, resolving errors with `this.props`, `this.state`, and `this.setState`.
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Refactored to use class property for state initialization and an arrow function for handleCopy.
-  // This is a more modern and robust way to handle state and `this` context in React class components,
-  // resolving the TypeScript errors about `this.state` and `this.props` being unavailable.
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Refactored to use a constructor for state initialization.
+  // This is a more traditional approach for React class components and resolves TypeScript errors where
+  // `this.props` and `this.setState` were not recognized, likely due to a build tooling issue with class properties.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.

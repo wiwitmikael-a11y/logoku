@@ -15,38 +15,45 @@ interface AIPetVisualProps {
 const AIPodVisual: React.FC = () => {
     const podAnimation = `
         @keyframes pod-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-        @keyframes core-pulse { 0%, 100% { r: 8; opacity: 0.8; } 50% { r: 10; opacity: 1; } }
-        @keyframes ring-rotate { 0% { transform: rotateY(0deg) rotateZ(-10deg); } 100% { transform: rotateY(360deg) rotateZ(-10deg); } }
+        @keyframes core-pulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
+        @keyframes rock-float-1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        @keyframes rock-float-2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
     `;
     return (
-        <div className="w-full h-full" style={{ animation: `pod-float 3.5s ease-in-out infinite` }}>
+        <div className="w-full h-full" style={{ animation: `pod-float 3s ease-in-out infinite` }}>
             <style>{podAnimation}</style>
             <svg viewBox="0 0 120 120" className="w-full h-full">
                 <defs>
-                    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="rgb(var(--c-splash))" />
-                        <stop offset="100%" stopColor="rgba(var(--c-splash), 0)" />
-                    </radialGradient>
-                    <filter id="podGlow">
-                        <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
-                        <feMerge>
-                            <feMergeNode in="coloredBlur" />
-                            <feMergeNode in="SourceGraphic" />
-                        </feMerge>
+                    <filter id="runeGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
+                     <linearGradient id="totemGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#4a4a52" />
+                        <stop offset="50%" stopColor="#303036" />
+                        <stop offset="100%" stopColor="#25252a" />
+                    </linearGradient>
                 </defs>
 
-                <g style={{ filter: 'url(#podGlow)' }}>
-                    {/* Core */}
-                    <circle cx="60" cy="60" r="25" fill="url(#coreGlow)" />
-                    <circle cx="60" cy="60" fill="rgb(var(--c-splash))">
-                        <animate attributeName="r" values="12;15;12" dur="2.5s" repeatCount="indefinite" />
-                        <animate attributeName="opacity" values="0.8;1;0.8" dur="2.5s" repeatCount="indefinite" />
-                    </circle>
-                    
-                    {/* Floating Ring */}
-                    <ellipse cx="60" cy="60" rx="40" ry="15" fill="none" stroke="rgba(var(--c-primary), 0.7)" strokeWidth="1.5" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'ring-rotate 8s linear infinite' }} />
-                     <ellipse cx="60" cy="60" rx="30" ry="10" fill="none" stroke="rgba(var(--c-primary), 0.5)" strokeWidth="1" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'ring-rotate 12s linear infinite reverse' }} />
+                {/* Main Totem Body */}
+                <g>
+                    <path d="M45 100 L40 80 L80 80 L75 100 Z" fill="url(#totemGradient)" stroke="#1a1a1c" strokeWidth="1.5" />
+                    <path d="M40 80 L40 50 L80 50 L80 80 Z" fill="url(#totemGradient)" stroke="#1a1a1c" strokeWidth="1.5" />
+                    <path d="M40 50 L45 30 L75 30 L80 50 Z" fill="url(#totemGradient)" stroke="#1a1a1c" strokeWidth="1.5" />
+                </g>
+
+                {/* Central Rune Core */}
+                 <g style={{ animation: `core-pulse 2.5s ease-in-out infinite`, transformOrigin: 'center' }} filter="url(#runeGlow)">
+                    <rect x="50" y="55" width="20" height="20" fill="rgb(var(--c-primary))" rx="2" />
+                    {/* Rune Glyphs */}
+                    <path d="M55 58 V 72 M52 65 H 58" stroke="rgb(var(--c-bg))" strokeWidth="1.5" />
+                    <path d="M65 58 L 62 65 L 65 72" stroke="rgb(var(--c-bg))" strokeWidth="1.5" fill="none" />
+                </g>
+                
+                {/* Floating Rocks */}
+                <g>
+                    <path d="M35 105 L40 110 L30 115 L25 108 Z" fill="rgb(var(--c-primary))" filter="url(#runeGlow)" style={{ animation: `rock-float-1 4s ease-in-out infinite` }} />
+                    <path d="M85 102 L95 105 L90 112 L82 110 Z" fill="rgb(var(--c-primary))" filter="url(#runeGlow)" style={{ animation: `rock-float-2 3.5s ease-in-out infinite 0.5s` }} />
                 </g>
             </svg>
         </div>

@@ -679,12 +679,15 @@ const MainApp: React.FC = () => {
                             {isUserMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-64 bg-surface border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in">
                                     <div className="px-4 py-3 border-b border-border-main">
-                                        <p className="font-bold text-sm text-text-header truncate">{profile?.full_name}</p>
+                                        <p className="font-bold text-lg text-text-header truncate">{profile?.full_name}</p>
                                         <p className="text-xs text-text-muted flex items-center gap-1.5 mt-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                                             <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span> <span className="text-text-muted">Token</span>
                                         </p>
                                     </div>
+                                    <a onClick={handleRequestReturnToDashboard} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors">Dashboard</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
+                                    <div className="border-t border-border-main my-1"></div>
                                     <div className="px-4 py-3 border-b border-border-main space-y-3">
                                         <h4 className="font-semibold text-xs text-text-muted">Pengaturan Audio</h4>
                                         <div className="flex justify-between items-center">
@@ -700,9 +703,6 @@ const MainApp: React.FC = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    <a onClick={handleRequestReturnToDashboard} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors">Dashboard</a>
-                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
-                                    <div className="border-t border-border-main my-1"></div>
                                     <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</a>
                                     <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Traktir Kopi</a>
                                     <div className="border-t border-border-main my-1"></div>
