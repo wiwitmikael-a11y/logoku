@@ -37,7 +37,9 @@ class ErrorBoundary extends React.Component<Props, State> {
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
+      // FIX: Property 'setState' does not exist on type 'ErrorBoundary'. This is fixed by extending React.Component.
       this.setState({ isCopied: true });
+      // FIX: Property 'setState' does not exist on type 'ErrorBoundary'. This is fixed by extending React.Component.
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
@@ -62,7 +64,9 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
+                    {/* FIX: Property 'props' does not exist on type 'ErrorBoundary'. This is fixed by extending React.Component. */}
                     {this.props.onReset && (
+                        // FIX: Property 'props' does not exist on type 'ErrorBoundary'. This is fixed by extending React.Component.
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
                         </Button>
@@ -84,6 +88,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
+    // FIX: Property 'props' does not exist on type 'ErrorBoundary'. This is fixed by extending React.Component.
     return this.props.children;
   }
 }

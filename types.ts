@@ -112,7 +112,8 @@ export interface AIPetStats {
   charisma: number;
 }
 
-export type AIPetStage = 'egg' | 'child' | 'teen' | 'adult';
+export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
+export type AIPetStage = 'egg' | 'hatched';
 
 // --- New Blueprint System Types ---
 export interface AIPetBlueprint {
@@ -128,6 +129,7 @@ export interface AIPetColors {
 export interface AIPetState {
   name: string;
   stage: AIPetStage;
+  tier: AIPetTier;
   stats: AIPetStats;
   lastFed: number;
   lastPlayed: number;

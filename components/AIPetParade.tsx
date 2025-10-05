@@ -53,7 +53,7 @@ const AIPetParade: React.FC<Props> = ({ pets }) => {
           }}
         >
           <div className="w-16 h-16 opacity-60 hover:opacity-100 transition-opacity">
-            <AIPetVisual petState={pet} animationType="walk" />
+            <AIPetVisual petState={pet} />
           </div>
         </div>
       ))}

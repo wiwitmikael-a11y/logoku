@@ -5,7 +5,7 @@ import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import * as geminiService from '../services/geminiService';
 import { cropImage } from '../utils/imageUtils';
-import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint } from '../types';
+import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint, AIPetTier } from '../types';
 
 export interface AIPetContextType {
   petState: AIPetState | null;
@@ -24,12 +24,6 @@ const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
 const HATCH_COST = 1; // Cost for narrative generation.
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
-
-const getStageForLevel = (level: number): AIPetStage => {
-    if (level < 5) return 'child';
-    if (level < 10) return 'teen';
-    return 'adult';
-};
 
 const useDebounce = <F extends (...args: any[]) => any>(callback: F, delay: number) => {
     const timeoutRef = useRef<number | null>(null);
@@ -106,23 +100,36 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
         
         if (profile.aipet_state) {
-            const existingState = profile.aipet_state as AIPetState;
-            const expectedStage = getStageForLevel(profile.level);
-             // Evolve if stage in db is different, or if it's an unhatched egg
-            if (existingState.stage !== expectedStage && existingState.stage !== 'egg') {
-                 // Trigger evolution logic here in the future
-                console.log(`Pet should evolve from ${existingState.stage} to ${expectedStage}`);
-                const evolvedState = { ...existingState, stage: expectedStage };
-                setPetState(evolvedState);
-                savePetStateToDb(evolvedState);
-            } else {
-                setPetState(existingState);
+            const existingState = { ...profile.aipet_state } as AIPetState;
+            let needsDbUpdate = false;
+
+            // Backwards compatibility: add tier if missing
+            if (!existingState.tier && existingState.blueprint?.url) {
+                const url = existingState.blueprint.url;
+                const name = url.substring(url.lastIndexOf('/') + 1);
+                existingState.tier = name.split('_')[0].toLowerCase() as AIPetTier;
+                needsDbUpdate = true;
+            } else if (!existingState.tier) {
+                existingState.tier = 'common';
+                needsDbUpdate = true;
+            }
+
+            // Backwards compatibility: simplify stage from child/teen/adult to 'hatched'
+            if (['child', 'teen', 'adult'].includes(existingState.stage)) {
+                existingState.stage = 'hatched';
+                needsDbUpdate = true;
+            }
+
+            setPetState(existingState);
+            if (needsDbUpdate) {
+                savePetStateToDb(existingState);
             }
         } else {
             // NEW PET: Starts as an egg.
             const newPet: AIPetState = {
                 name: 'Telur AI',
                 stage: 'egg',
+                tier: 'common', // Default tier for an egg
                 stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
@@ -189,10 +196,11 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const initialStats: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
         const petName = `AIPet-${String(hash).slice(0, 4)}`;
 
-        // Step 2: Determine archetype and select a blueprint
+        // Step 2: Determine archetype and select a blueprint, derive tier
         const blueprints = ['Common_Beast.png', 'Common_Gorilla.png', 'Common_Mutant.png', 'Epic_Random.png'];
         const blueprintUrl = blueprints[Math.floor(seedRandom() * blueprints.length)];
         const blueprint: AIPetBlueprint = { url: `${GITHUB_ASSETS_URL}AIPets/${blueprintUrl}` };
+        const tier = blueprintUrl.split('_')[0].toLowerCase() as AIPetTier;
 
         // Step 3: Generate dynamic colors
         const colors: AIPetColors = {
@@ -207,7 +215,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Step 5: Construct the final state
         const hatchedState: AIPetState = {
             name: petName,
-            stage: 'child',
+            stage: 'hatched',
+            tier: tier,
             stats: initialStats,
             lastFed: Date.now(),
             lastPlayed: Date.now(),

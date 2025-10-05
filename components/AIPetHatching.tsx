@@ -70,9 +70,11 @@ const AIPetHatching: React.FC<AIPetHatchingProps> = ({ onClose }) => {
         .animate-egg-crack { animation: egg-crack 0.2s linear infinite; }
     `;
 
+    // FIX: Add missing 'tier' property to satisfy the AIPetState type.
     const dummyEggState: AIPetState = {
         name: 'Telur AI',
         stage: 'egg',
+        tier: 'common',
         stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
         lastFed: Date.now(),
         lastPlayed: Date.now(),

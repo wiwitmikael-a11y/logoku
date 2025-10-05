@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react';
 import type { AIPetState } from '../types';
 
 interface AIPetVisualProps {
@@ -67,6 +67,8 @@ const hexToRgb = (hex: string) => {
 const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationFrameId = useRef<number>(0);
+    const partCache = useRef<Map<number, HTMLCanvasElement>>(new Map());
+    const [interactionTs, setInteractionTs] = useState(0);
     const { stage, blueprint, colors, stats } = petState;
 
     // --- Part Assembly Definitions ---
@@ -76,87 +78,115 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         'Common_Mutant.png': [{ index: 9 }, { index: 1, y: -50, x: 0 }, { index: 4, y: 0, x: -40 }, { index: 7, y: 0, x: 40 }, { index: 12, y: 40, x: -25 }, { index: 14, y: 40, x: 25 }, ],
         'Epic_Random.png': [{ index: 10 }, { index: 1, y: -50, x: 0 }, { index: 4, y: -10, x: -45 }, { index: 7, y: -10, x: 45 }, { index: 13, y: 50, x: 0 }, ],
     }), []);
+    
+    const handleInteraction = useCallback(() => setInteractionTs(Date.now()), []);
 
-    const draw = useCallback((time: number) => {
-        const canvas = canvasRef.current;
-        if (!canvas || !blueprint || !colors) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
+    // Effect to create and color cached part canvases for performance
+    useEffect(() => {
+        if (!blueprint || !colors) return;
         const blueprintName = blueprint.url.substring(blueprint.url.lastIndexOf('/') + 1);
-        const blueprintImg = imageCache[blueprint.url];
         const assembly = partDefinitions[blueprintName as keyof typeof partDefinitions];
-        if (!blueprintImg || !assembly) return;
+        if (!assembly) return;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
         const organicRGB = hexToRgb(colors.organic);
         const mechanicalRGB = hexToRgb(colors.mechanical);
         const energyRGB = hexToRgb(colors.energy);
         if (!organicRGB || !mechanicalRGB || !energyRGB) return;
 
-        const offscreenCanvas = document.createElement('canvas');
-        offscreenCanvas.width = 256;
-        offscreenCanvas.height = 256;
-        const offscreenCtx = offscreenCanvas.getContext('2d');
-        if (!offscreenCtx) return;
+        const processBlueprint = (blueprintImg: HTMLImageElement) => {
+            partCache.current.clear();
+            for (const part of assembly) {
+                const offscreenCanvas = document.createElement('canvas');
+                offscreenCanvas.width = 256;
+                offscreenCanvas.height = 256;
+                const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+                if (!offscreenCtx) continue;
 
-        const bobY = Math.sin(time / 400) * 3;
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
+                const gridX = part.index % 4;
+                const gridY = Math.floor(part.index / 4);
+                
+                offscreenCtx.drawImage(blueprintImg, gridX * 256, gridY * 256, 256, 256, 0, 0, 256, 256);
+                const imageData = offscreenCtx.getImageData(0, 0, 256, 256);
+                const data = imageData.data;
 
-        for (const part of assembly) {
-            const gridX = part.index % 4;
-            const gridY = Math.floor(part.index / 4);
-
-            offscreenCtx.clearRect(0, 0, 256, 256);
-            offscreenCtx.drawImage(blueprintImg, gridX * 256, gridY * 256, 256, 256, 0, 0, 256, 256);
-            const imageData = offscreenCtx.getImageData(0, 0, 256, 256);
-            const data = imageData.data;
-
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i], g = data[i+1], b = data[i+2];
-                if (r > 240 && g < 15 && b < 15) { data[i] = organicRGB.r; data[i+1] = organicRGB.g; data[i+2] = organicRGB.b; } 
-                else if (r < 15 && g > 240 && b < 15) { data[i] = mechanicalRGB.r; data[i+1] = mechanicalRGB.g; data[i+2] = mechanicalRGB.b; } 
-                else if (r < 15 && g < 15 && b > 240) { data[i] = energyRGB.r; data[i+1] = energyRGB.g; data[i+2] = energyRGB.b; }
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i+1], b = data[i+2];
+                    if (r > 240 && g < 15 && b < 15) { data[i] = organicRGB.r; data[i+1] = organicRGB.g; data[i+2] = organicRGB.b; } 
+                    else if (r < 15 && g > 240 && b < 15) { data[i] = mechanicalRGB.r; data[i+1] = mechanicalRGB.g; data[i+2] = mechanicalRGB.b; } 
+                    else if (r < 15 && g < 15 && b > 240) { data[i] = energyRGB.r; data[i+1] = energyRGB.g; data[i+2] = energyRGB.b; }
+                }
+                offscreenCtx.putImageData(imageData, 0, 0);
+                partCache.current.set(part.index, offscreenCanvas);
             }
-            offscreenCtx.putImageData(imageData, 0, 0);
+        };
 
-            const drawX = centerX - 128 + (part.x || 0);
-            const drawY = centerY - 128 + bobY + (part.y || 0);
-            ctx.drawImage(offscreenCanvas, drawX, drawY);
-        }
-
-        animationFrameId.current = requestAnimationFrame(draw);
-    }, [blueprint, colors, partDefinitions]);
-
-    useEffect(() => {
-        if (!blueprint || !colors) return;
-        
-        const loadImage = () => {
+        if (imageCache[blueprint.url]) {
+            processBlueprint(imageCache[blueprint.url]);
+        } else {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.src = blueprint.url;
-            img.onload = () => {
-                imageCache[blueprint.url] = img;
-                animationFrameId.current = requestAnimationFrame(draw);
-            };
+            img.onload = () => { imageCache[blueprint.url] = img; processBlueprint(img); };
             img.onerror = () => console.error("Failed to load blueprint image:", blueprint.url);
         }
+    }, [blueprint, colors, partDefinitions]);
+    
+    // Animation Loop Effect
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (!ctx || !blueprint) return;
+        
+        const blueprintName = blueprint.url.substring(blueprint.url.lastIndexOf('/') + 1);
+        const assembly = partDefinitions[blueprintName as keyof typeof partDefinitions];
+        if (!assembly) return;
 
-        if (imageCache[blueprint.url]) {
-             animationFrameId.current = requestAnimationFrame(draw);
-        } else {
-            loadImage();
-        }
+        const draw = (time: number) => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const now = Date.now();
+            let interactY = 0;
+            const INTERACTION_DURATION = 500;
+            if (interactionTs > 0 && now - interactionTs < INTERACTION_DURATION) {
+                const progress = (now - interactionTs) / INTERACTION_DURATION;
+                interactY = -Math.sin(progress * Math.PI) * 20; // Jump up 20px
+            }
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
 
+            for (const [i, part] of assembly.entries()) {
+                const cachedPart = partCache.current.get(part.index);
+                if (!cachedPart) continue;
+
+                // Procedural "battle stance" animation offsets
+                let bobY = 0, bobX = 0;
+                if (i === 0) { // Body
+                    bobY = Math.sin(time / 400) * 2;
+                } else if (i === 1) { // Head
+                    bobY = Math.sin(time / 450) * 2.5;
+                } else { // Limbs
+                    bobY = Math.sin(time / 350 + i) * 3;
+                    bobX = Math.cos(time / 350 + i) * 1.5;
+                }
+
+                const drawX = centerX - 128 + (part.x || 0) + bobX;
+                const drawY = centerY - 128 + (part.y || 0) + bobY + interactY;
+                
+                ctx.drawImage(cachedPart, drawX, drawY);
+            }
+            animationFrameId.current = requestAnimationFrame(draw);
+        };
+        
+        animationFrameId.current = requestAnimationFrame(draw);
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [blueprint, colors, draw]);
+    }, [blueprint, partDefinitions, interactionTs]);
     
     // Apply visual effects based on pet's energy
     const filterStyle: React.CSSProperties = {
         filter: stats.energy < 30 ? `saturate(${stats.energy + 20}%) opacity(0.8)` : 'none',
         imageRendering: 'pixelated',
+        cursor: stage === 'hatched' ? 'pointer' : 'default',
     };
 
     if (stage === 'egg') {
@@ -174,6 +204,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
             height={256}
             style={filterStyle}
             className={`w-full h-full object-contain ${className || ''}`}
+            onClick={handleInteraction}
+            title={petState.name}
         />
     );
 };
