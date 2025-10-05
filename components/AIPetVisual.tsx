@@ -16,18 +16,11 @@ const AIPodVisual: React.FC = () => {
     const podAnimation = `
         @keyframes pod-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @keyframes core-pulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
-        @keyframes rock-orbit-1 { 
-            0% { transform: translate(0, 0) rotate(0deg) translateX(38px) rotate(0deg); } 
-            100% { transform: translate(0, 0) rotate(360deg) translateX(38px) rotate(-360deg); } 
-        }
-        @keyframes rock-orbit-2 { 
-            0% { transform: translate(0, 0) rotate(0deg) translateX(42px) translateY(2px) rotate(0deg); } 
-            100% { transform: translate(0, 0) rotate(-360deg) translateX(42px) translateY(2px) rotate(360deg); } 
-        }
-        @keyframes rock-float-3 { 
-            0%, 100% { transform: translateY(0px) rotate(0deg); } 
-            50% { transform: translateY(8px) rotate(15deg); } 
-        }
+        @keyframes crystal-orbit-1 { 0% { transform: rotate(0deg) translateX(50px) rotate(0deg) scale(0.9); } 100% { transform: rotate(360deg) translateX(50px) rotate(-360deg) scale(0.9); } }
+        @keyframes crystal-orbit-2 { 0% { transform: rotate(72deg) translateX(55px) rotate(0deg) scale(1.1); } 100% { transform: rotate(-288deg) translateX(55px) rotate(360deg) scale(1.1); } }
+        @keyframes crystal-orbit-3 { 0% { transform: rotate(144deg) translateX(52px) rotate(0deg) scale(1.0); } 100% { transform: rotate(504deg) translateX(52px) rotate(-360deg) scale(1.0); } }
+        @keyframes crystal-orbit-4 { 0% { transform: rotate(216deg) translateX(48px) rotate(0deg) scale(0.8); } 100% { transform: rotate(-144deg) translateX(48px) rotate(360deg) scale(0.8); } }
+        @keyframes crystal-orbit-5 { 0% { transform: rotate(288deg) translateX(58px) rotate(0deg) scale(1.2); } 100% { transform: rotate(648deg) translateX(58px) rotate(-360deg) scale(1.2); } }
     `;
     return (
         <div className="w-full h-full" style={{ animation: `pod-float 4s ease-in-out infinite` }}>
@@ -45,16 +38,22 @@ const AIPodVisual: React.FC = () => {
                     </linearGradient>
                 </defs>
 
-                {/* Floating Rocks */}
+                {/* Floating Crystals */}
                 <g filter="url(#runeGlow)">
-                    <g style={{ animation: `rock-orbit-1 10s linear infinite`, transformOrigin: '60px 65px' }}>
-                        <path d="M0,0 l8,3 l-3,8 l-6,-5 Z" fill="rgb(var(--c-primary))" />
+                    <g style={{ animation: `crystal-orbit-1 12s linear infinite`, transformOrigin: '60px 85px' }}>
+                        <path d="M-4,-6 L5,0 L-3,7 Z" fill="rgb(var(--c-primary))" />
                     </g>
-                    <g style={{ animation: `rock-orbit-2 15s linear infinite reverse`, transformOrigin: '60px 65px' }}>
-                         <path d="M0,0 l-9,2 l3,6 l8,-3 Z" fill="rgb(var(--c-primary))" />
+                    <g style={{ animation: `crystal-orbit-2 15s linear infinite reverse`, transformOrigin: '60px 85px' }}>
+                        <path d="M-5,5 L6,-2 L2,8 Z" fill="rgb(var(--c-primary))" />
                     </g>
-                    <g transform="translate(85, 40)" style={{ animation: `rock-float-3 7s ease-in-out infinite 0.5s` }}>
-                         <path d="M0,0 l6,6 l-8,5 l-2,-9 Z" fill="rgb(var(--c-primary))" />
+                    <g style={{ animation: `crystal-orbit-3 10s linear infinite`, transformOrigin: '60px 85px' }}>
+                        <path d="M0,-7 L6,5 L-6,5 Z" fill="rgb(var(--c-primary))" />
+                    </g>
+                    <g style={{ animation: `crystal-orbit-4 18s linear infinite reverse`, transformOrigin: '60px 85px' }}>
+                        <path d="M-6,0 L0,8 L6,0 L0,-8 Z" fill="rgb(var(--c-primary))" />
+                    </g>
+                    <g style={{ animation: `crystal-orbit-5 9s linear infinite`, transformOrigin: '60px 85px' }}>
+                        <path d="M-7,-2 L7,-2 L0,9 Z" fill="rgb(var(--c-primary))" />
                     </g>
                 </g>
                 

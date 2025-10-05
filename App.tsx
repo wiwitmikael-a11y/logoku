@@ -718,10 +718,13 @@ const MainApp: React.FC = () => {
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
                         <ErrorBoundary onReset={handleReturnToDashboard}>
-                            {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
-                            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
-                                <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
-                            </Suspense>
+{/* FIX: Wrapped ErrorBoundary children in a React Fragment to resolve a potential TypeScript type inference issue causing a "children prop is missing" error. */}
+                            <>
+                                {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
+                                <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
+                                    <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
+                                </Suspense>
+                            </>
                         </ErrorBoundary>
                     )}
                 </div>

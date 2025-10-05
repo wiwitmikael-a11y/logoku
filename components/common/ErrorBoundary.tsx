@@ -21,6 +21,10 @@ class ErrorBoundary extends React.Component<Props, State> {
   // modern class properties, the build environment might not be handling it correctly.
   // Reverting to the traditional constructor-based state initialization and method binding
   // is a more robust way to ensure `this` is correctly bound.
+  
+  // FIX: Explicitly declaring the 'state' property on the class is necessary for some TypeScript configurations to recognize the state initialized in the constructor. This resolves all "Property 'state' does not exist" errors.
+  public state: State;
+
   constructor(props: Props) {
     super(props);
     this.state = {

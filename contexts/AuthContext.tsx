@@ -108,64 +108,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', userId)
         .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && error.code !== 'PGRST116') { // PGRST116 means "not found", which is fine
         console.error('Error fetching profile:', error);
         setAuthError('Gagal mengambil data profil pengguna.');
         return;
     }
     
     if (!data) {
-        // NEW USER: Attempt to insert. This might race with a DB trigger.
-        const { data: newProfileData, error: insertError } = await supabase
-            .from('profiles')
-            .insert({ 
-                id: userId,
-                full_name: user.user_metadata.full_name,
-                avatar_url: user.user_metadata.avatar_url,
-                credits: WELCOME_BONUS_CREDITS, 
-                last_credit_reset: getTodaysDateWIB(),
-                welcome_bonus_claimed: true,
-                xp: 0, level: 1, achievements: [], total_projects_completed: 0,
-                last_daily_xp_claim: getTodaysDateWIB(),
-                completed_first_steps: [],
-                // FIX: Initialize daily_actions for new users.
-                daily_actions: { claimed_missions: [] },
-            })
-            .select()
-            .single();
-
-        if (insertError) {
-            // This is the key part. Handle the race condition.
-            if (insertError.code === '23505') { // Duplicate key violation
-                console.warn('Race condition detected: Profile created by trigger. Refetching...');
-                const { data: refetchedData, error: refetchError } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', userId)
-                    .single();
-                
-                if (refetchError) {
-                    console.error('Failed to refetch profile after race condition:', refetchError);
-                    setAuthError('Gagal mengambil profil setelah konflik data.');
-                    return;
-                }
-                // Assign refetched data and fall through to the "existing user" logic block.
-                data = refetchedData;
-            } else {
-                // A different, real error occurred during insert.
-                console.error('Failed to create new profile:', insertError);
-                setAuthError('Gagal membuat profil baru untuk Juragan.');
+        // Profile not found. It's likely being created by the DB trigger.
+        // Poll for a few seconds to wait for it.
+        let attempts = 0;
+        let profileFromTrigger: Profile | null = null;
+    
+        while (attempts < 5 && !profileFromTrigger) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // wait 500ms
+            const { data: refetchedData, error: refetchError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+    
+            if (refetchError && refetchError.code !== 'PGRST116') {
+                // A real error occurred during polling, not just "not found"
+                console.error('Error polling for new user profile:', refetchError);
+                setAuthError('Gagal memverifikasi data profil baru.');
                 return;
             }
+    
+            if (refetchedData) {
+                profileFromTrigger = refetchedData as Profile;
+            }
+            attempts++;
+        }
+    
+        if (profileFromTrigger) {
+            // Successfully fetched the profile created by the trigger.
+            // Assign it to 'data' to let the downstream logic (daily updates, etc.) run.
+            data = profileFromTrigger;
         } else {
-            // Insert was successful. This is a truly new profile.
-            // No daily logic needed. Just set it and we're done.
-            setProfile(newProfileData as Profile);
+            // After polling, the profile still doesn't exist. This indicates a real problem,
+            // likely that the database trigger failed to execute.
+            console.error('Profile not found after polling for 2.5 seconds. The on-signup trigger may have failed.');
+            setAuthError('Gagal membuat profil baru untuk Juragan. Silakan coba login ulang atau hubungi developer.');
             return;
         }
     }
     
-    // If we are here, 'data' must contain a profile (either from initial select or refetch).
+    // If we are here, 'data' must contain a profile (either from initial select or polling).
     const profileData: Profile = {
         ...data,
         xp: data.xp ?? 0,
@@ -174,7 +163,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         total_projects_completed: data.total_projects_completed ?? 0,
         last_daily_xp_claim: data.last_daily_xp_claim ?? '2000-01-01',
         completed_first_steps: data.completed_first_steps ?? [],
-        // FIX: Initialize daily_actions from fetched data.
         daily_actions: data.daily_actions ?? { claimed_missions: [] },
     };
     
