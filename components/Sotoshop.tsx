@@ -94,20 +94,17 @@ const historyReducer = (state: HistoryState, action: HistoryAction): HistoryStat
 const PropertyInput: React.FC<({ as?: 'input' } & React.InputHTMLAttributes<HTMLInputElement> | { as: 'select' } & React.SelectHTMLAttributes<HTMLSelectElement>) & { label: string, suffix?: string }> = ({ label, suffix, as = 'input', ...props }) => {
     const commonClasses = "w-full bg-background border border-border-main rounded p-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-splash";
     
+    const Component = as;
+    const componentProps: any = props;
+
     return (
         <div className="grid grid-cols-2 items-center gap-2">
             <label className="text-text-muted text-xs truncate">{label}</label>
             <div className="relative">
-                {as === 'select' ? (
-                    <select {...props as React.SelectHTMLAttributes<HTMLSelectElement>} className={commonClasses}>
-                        {props.children}
-                    </select>
-                ) : (
-                    <>
-                        <input {...props as React.InputHTMLAttributes<HTMLInputElement>} className={`${commonClasses} ${suffix ? 'pr-6' : ''}`} />
-                        {suffix && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted">{suffix}</span>}
-                    </>
-                )}
+                <Component {...componentProps} className={`${commonClasses} ${suffix ? 'pr-6' : ''}`}>
+                    {props.children}
+                </Component>
+                {as === 'input' && suffix && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted">{suffix}</span>}
             </div>
         </div>
     );

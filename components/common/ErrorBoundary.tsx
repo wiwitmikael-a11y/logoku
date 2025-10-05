@@ -16,16 +16,19 @@ interface State {
   isCopied: boolean;
 }
 
-// FIX: Refactored the class component to use modern class property syntax.
-// This initializes state directly and uses an arrow function for the event handler
-// to ensure 'this' is correctly bound, resolving issues where 'this.props' and
-// 'this.setState' were not recognized.
+// FIX: Refactored to use a constructor for state initialization and method binding, as the modern class property syntax was causing 'this' context issues.
 class ErrorBoundary extends React.Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  public state: State;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.
@@ -37,7 +40,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
