@@ -37,7 +37,7 @@ const SkeletonCard: React.FC = () => (
 
 
 const BrandGallery: React.FC<Props> = ({ onClose }) => {
-    const { user, addXp } = useAuth();
+    const { user, addXp, incrementDailyAction } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -140,6 +140,7 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
                 // This +1 XP is for the current user who performed the action of liking.
                 // The +1 XP for the project owner must be handled on the backend via a trigger for security.
                 await addXp(1);
+                await incrementDailyAction('liked_projects');
             }
         } catch (err: any) {
             const msg = `Gagal update 'Menyala!': ${err.message || 'Gagal update.'}`;

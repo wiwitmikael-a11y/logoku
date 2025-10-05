@@ -22,7 +22,7 @@ interface Props {
 const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Interaktif"];
 
 const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
-  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const { profile, deductCredits, setShowOutOfCreditsModal, incrementDailyAction } = useAuth();
   const { petState, setContextualMessage, notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
   
@@ -62,6 +62,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
       await deductCredits(1);
       const result = await generateCaptions(projectData.brandInputs.businessName, projectData.selectedPersona, topic, tone);
       await addXp(10);
+      await incrementDailyAction('created_captions');
       setCaptions(result);
       playSound('success');
 
@@ -77,7 +78,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal, petState, setContextualMessage]);
+  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal, petState, setContextualMessage, incrementDailyAction]);
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">

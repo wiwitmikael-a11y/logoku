@@ -42,6 +42,15 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
   const handleTosClick = () => { onShowToS(); onClose(); };
   const handleContactClick = () => { onShowContact(); onClose(); };
 
+  const getXpForLevel = (level: number): number => (level - 1) * 750;
+  const currentLevel = profile.level ?? 1;
+  const currentXp = profile.xp ?? 0;
+  const xpForCurrentLevel = getXpForLevel(currentLevel);
+  const xpForNextLevel = getXpForLevel(currentLevel + 1);
+  const xpProgress = currentXp - xpForCurrentLevel;
+  const xpNeededForLevel = xpForNextLevel - xpForCurrentLevel;
+  const progressPercentage = xpNeededForLevel > 0 ? (xpProgress / xpNeededForLevel) * 100 : 100;
+
   return (
     <div
       ref={modalRef}
@@ -76,7 +85,41 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
                 </div>
             </div>
 
-            <div className="w-full border-t border-border-main pt-6 mt-6">
+            <div className="w-full border-t border-border-main pt-6">
+                <h3 className="text-sm font-semibold text-text-muted mb-3 uppercase tracking-wider">Progres Juragan</h3>
+                <div className="bg-background border border-border-main p-4 rounded-lg">
+                    <div className="flex justify-between items-baseline mb-1">
+                        <p className="font-bold text-orange-400">Level {currentLevel}</p>
+                        <p className="text-xs text-text-muted">{currentXp.toLocaleString()} / {xpForNextLevel.toLocaleString()} XP</p>
+                    </div>
+                    <div className="w-full bg-border-main rounded-full h-2.5">
+                        <div className="bg-orange-400 h-2.5 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+                    </div>
+                </div>
+            </div>
+
+             <div className="w-full">
+                <h3 className="text-sm font-semibold text-text-muted mb-3 uppercase tracking-wider">Lencana Pencapaian</h3>
+                <div className="flex gap-4 p-4 bg-background border border-border-main rounded-lg">
+                    {Object.keys(ACHIEVEMENTS_MAP).length > 0 && profile.achievements.length > 0 ? (
+                        Object.entries(ACHIEVEMENTS_MAP).map(([id, ach]) => {
+                            const isUnlocked = profile.achievements.includes(id);
+                            if (isUnlocked) {
+                                return (
+                                    <div key={id} className="flex flex-col items-center text-center" title={`${ach.name}: ${ach.description}`}>
+                                        <span className={`text-5xl transition-all duration-300`}>{ach.icon}</span>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })
+                    ) : (
+                        <p className="text-xs text-text-muted italic text-center w-full">Belum ada lencana yang didapat.</p>
+                    )}
+                </div>
+            </div>
+
+            <div className="w-full border-t border-border-main pt-6">
                 <h3 className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Aset Digital AIPet</h3>
                 <div className="bg-background border border-border-main p-4 rounded-lg">
                 {profile.aipet_state && profile.aipet_state.stage !== 'aipod' ? (

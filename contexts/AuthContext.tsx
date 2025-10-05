@@ -4,7 +4,8 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
 import { setMuted, playBGM, stopBGM, unlockAudio, playRandomBGM } from '../services/soundService';
-import type { Profile } from '../types';
+// FIX: Import DailyActions type.
+import type { Profile, DailyActions } from '../types';
 
 export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
 
@@ -49,6 +50,10 @@ interface AuthContextType {
   setShowLevelUpModal: React.Dispatch<React.SetStateAction<boolean>>;
   unlockedAchievement: Achievement | null;
   setUnlockedAchievement: React.Dispatch<React.SetStateAction<Achievement | null>>;
+  // FIX: Added dailyActions, incrementDailyAction, and claimMissionReward to type.
+  dailyActions: DailyActions | null;
+  incrementDailyAction: (actionId: string) => Promise<void>;
+  claimMissionReward: (missionId: string, xpReward: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,6 +71,14 @@ const ACHIEVEMENTS_MAP: { [key: string]: Achievement } = {
   SANG_KOLEKTOR: { id: 'SANG_KOLEKTOR', name: 'Sang Kolektor', description: 'Berhasil menyelesaikan 5 project branding.', icon: '🥈' },
   SULTAN_KONTEN: { id: 'SULTAN_KONTEN', name: 'Sultan Konten', description: 'Berhasil menyelesaikan 10 project branding.', icon: '🥉' },
 };
+
+// FIX: Added daily missions constant.
+const DAILY_MISSIONS = [
+  { id: 'created_captions', description: 'Bikin 1 caption di Tools Lanjutan', xp: 10, target: 1 },
+  { id: 'liked_projects', description: "Kasih 'Menyala!' di 3 karya Pameran Brand", xp: 15, target: 3 },
+  { id: 'created_posts', description: 'Bales 1 topik di WarKop Juragan', xp: 5, target: 1 },
+];
+
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -115,6 +128,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 xp: 0, level: 1, achievements: [], total_projects_completed: 0,
                 last_daily_xp_claim: getTodaysDateWIB(),
                 completed_first_steps: [],
+                // FIX: Initialize daily_actions for new users.
+                daily_actions: { claimed_missions: [] },
             })
             .select()
             .single();
@@ -159,6 +174,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         total_projects_completed: data.total_projects_completed ?? 0,
         last_daily_xp_claim: data.last_daily_xp_claim ?? '2000-01-01',
         completed_first_steps: data.completed_first_steps ?? [],
+        // FIX: Initialize daily_actions from fetched data.
+        daily_actions: data.daily_actions ?? { claimed_missions: [] },
     };
     
     const todayWIB = getTodaysDateWIB();
@@ -180,6 +197,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const DAILY_XP = 10;
         updates.xp = (profileData.xp ?? 0) + DAILY_XP;
         updates.last_daily_xp_claim = todayWIB;
+        // FIX: Reset daily actions on a new day.
+        updates.daily_actions = { claimed_missions: [] };
         shouldUpdate = true;
     }
     
@@ -451,6 +470,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
   }, [profile, user, addCredits]);
 
+  // FIX: Implement incrementDailyAction.
+  const incrementDailyAction = useCallback(async (actionId: string) => {
+    if (!profile || !user) return;
+    const todayWIB = getTodaysDateWIB();
+    let currentActions = profile.daily_actions ?? { claimed_missions: [] };
+    if (profile.last_daily_xp_claim !== todayWIB) {
+        currentActions = { claimed_missions: [] };
+    }
+    const newCount = ((currentActions[actionId] as number) || 0) + 1;
+    const newActions = { ...currentActions, [actionId]: newCount };
+    const { data, error } = await supabase.from('profiles').update({ daily_actions: newActions }).eq('id', user.id).select().single();
+    if (error) setAuthError(`Gagal update aksi harian: ${error.message}`);
+    else setProfile(data as Profile);
+  }, [profile, user]);
+
+  // FIX: Implement claimMissionReward.
+  const claimMissionReward = useCallback(async (missionId: string, xpReward: number) => {
+    if (!profile || !user) return;
+    const currentActions = profile.daily_actions ?? { claimed_missions: [] };
+    const claimed = currentActions.claimed_missions ?? [];
+    if (claimed.includes(missionId)) return;
+
+    const progress = (currentActions[missionId] as number) || 0;
+    const mission = DAILY_MISSIONS.find(m => m.id === missionId);
+    if (!mission || progress < mission.target) return;
+
+    await addXp(xpReward);
+    const newActions = { ...currentActions, claimed_missions: [...claimed, missionId] };
+    const { data, error } = await supabase.from('profiles').update({ daily_actions: newActions }).eq('id', user.id).select().single();
+    if (error) setAuthError(`Gagal klaim hadiah: ${error.message}`);
+    else setProfile(data as Profile);
+  }, [profile, user, addXp]);
+
 
   const value: AuthContextType = {
     session, user, profile, loading, authError, isMuted,
@@ -461,6 +513,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Gamification
     addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal,
     unlockedAchievement, setUnlockedAchievement,
+    // FIX: Expose dailyActions, incrementDailyAction, and claimMissionReward in context value.
+    dailyActions: profile?.daily_actions ?? null,
+    incrementDailyAction,
+    claimMissionReward,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

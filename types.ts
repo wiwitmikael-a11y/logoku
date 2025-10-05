@@ -158,6 +158,11 @@ export interface AIPetState {
   colors: AIPetColors | null;
 }
 
+// FIX: Added DailyActions interface for gamification.
+export interface DailyActions {
+  claimed_missions?: string[];
+  [actionId: string]: number | string[] | undefined;
+}
 
 export interface Profile {
   id: string;
@@ -173,6 +178,8 @@ export interface Profile {
   last_daily_xp_claim: string;
   completed_first_steps: string[];
   aipet_state?: AIPetState | null;
+  // FIX: Added daily_actions to profile type.
+  daily_actions?: DailyActions | null;
 }
 
 export interface GeneratedCaption {

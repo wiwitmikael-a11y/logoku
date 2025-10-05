@@ -65,6 +65,7 @@ const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
 const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
 const AIPetContextualBubble = React.lazy(() => import('./components/AIPetContextualBubble'));
 const AIPetInteractionBubble = React.lazy(() => import('./components/AIPetInteractionBubble'));
+const TokenomicsModal = React.lazy(() => import('./components/common/TokenomicsModal'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
@@ -419,6 +420,7 @@ const MainApp: React.FC = () => {
     const [showAIPetLab, setShowAIPetLab] = useState(false);
     const [isFirstActivation, setIsFirstActivation] = useState(false);
     const [showAipodWelcome, setShowAipodWelcome] = useState(false);
+    const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -434,6 +436,9 @@ const MainApp: React.FC = () => {
     const showStepper = currentStepIndex !== -1;
     
     const showToast = useCallback((message: string) => { setToast({ message, show: true }); }, []);
+
+    // --- Smart Preloading ---
+    const preloadBrandPersona = () => import('./components/BrandPersonaGenerator');
 
     // --- Theme Management ---
     useEffect(() => {
@@ -641,7 +646,7 @@ const MainApp: React.FC = () => {
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} addXp={addXp} onShareToForum={() => handleShareToForum(project)} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
-            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onShowAIPetLab={() => setShowAIPetLab(true)} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onShowAIPetLab={() => setShowAIPetLab(true)} onPreloadNewProject={preloadBrandPersona} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
@@ -659,7 +664,11 @@ const MainApp: React.FC = () => {
                     <h1 className="text-3xl md:text-4xl font-extrabold tracking-wider cursor-pointer transition-transform hover:scale-105" onClick={handleReturnToDashboard} style={{fontFamily: 'var(--font-display)'}}>
                         <span className="text-primary">desain</span><span className="text-text-header">.fun</span>
                     </h1>
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <button onClick={() => setShowTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1.5 p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                            <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span>
+                        </button>
                         <ThemeToggle theme={theme} onToggle={toggleTheme} />
                         <div ref={userMenuRef} className="relative">
                             <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-3 bg-background hover:bg-border-light transition-colors border border-transparent hover:border-border-main">
@@ -668,7 +677,7 @@ const MainApp: React.FC = () => {
                             </button>
                             {showXpGain && <div className="xp-gain-animation">+XP!</div>}
                             {isUserMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-64 bg-surface/90 backdrop-blur-lg border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in">
+                                <div className="absolute right-0 mt-2 w-64 bg-surface border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in">
                                     <div className="px-4 py-3 border-b border-border-main">
                                         <p className="font-bold text-sm text-text-header truncate">{profile?.full_name}</p>
                                         <p className="text-xs text-text-muted flex items-center gap-1.5 mt-1">
@@ -785,6 +794,7 @@ const MainApp: React.FC = () => {
                 setShowOutOfCreditsModal={setShowOutOfCreditsModal}
                 addXp={addXp}
             />
+            <TokenomicsModal show={showTokenomicsModal} onClose={() => setShowTokenomicsModal(false)} />
         </Suspense>
       </>
     );

@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import LoadingMessage from '../common/LoadingMessage';
 import ErrorMessage from '../common/ErrorMessage';
 import Card from '../common/Card';
+import Button from '../common/Button';
 
 const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; icon: string; } } = {
   BRAND_PERTAMA_LAHIR: { name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
@@ -15,9 +16,9 @@ const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; ic
 };
 
 const DAILY_MISSIONS = [
-  { id: 'CREATE_CAPTION', description: 'Bikin 1 caption di Tools Lanjutan', xp: 10, progress: 0, target: 1 },
-  { id: 'GIVE_LIKES', description: "Kasih 'Menyala!' di 3 karya Pameran Brand", xp: 15, progress: 0, target: 3 },
-  { id: 'CREATE_POST', description: 'Bales 1 topik di WarKop Juragan', xp: 5, progress: 0, target: 1 },
+  { id: 'created_captions', description: 'Bikin 1 caption di Tools Lanjutan', xp: 10, target: 1 },
+  { id: 'liked_projects', description: "Kasih 'Menyala!' di 3 karya Pameran Brand", xp: 15, target: 3 },
+  { id: 'created_posts', description: 'Bales 1 topik di WarKop Juragan', xp: 5, target: 1 },
 ];
 
 const PUSAT_JURAGAN_TIPS = [
@@ -65,7 +66,7 @@ const LeaderboardSkeleton: React.FC = () => (
 
 
 const PusatJuragan: React.FC = () => {
-    const { profile } = useAuth();
+    const { profile, dailyActions, claimMissionReward } = useAuth();
     const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -112,19 +113,30 @@ const PusatJuragan: React.FC = () => {
                 {/* Left Column: Missions & Badges */}
                 <div className="space-y-8">
                     <Card title="🎯 Misi Harian">
-                        <p className="text-xs text-text-muted mb-4">Selesaikan misi ini setiap hari buat dapet bonus XP! (Fitur progres & klaim hadiah segera hadir)</p>
                         <div className="space-y-4">
-                            {DAILY_MISSIONS.map(mission => (
+                            {DAILY_MISSIONS.map(mission => {
+                                const progress = dailyActions ? (dailyActions[mission.id] || 0) : 0;
+                                const isCompleted = progress >= mission.target;
+                                const isClaimed = dailyActions?.claimed_missions?.includes(mission.id);
+                                return (
                                 <div key={mission.id}>
-                                    <div className="flex justify-between items-center mb-1 text-sm">
-                                        <p className="text-text-body">{mission.description}</p>
-                                        <p className="font-bold text-accent">+{mission.xp} XP</p>
+                                    <div className="flex justify-between items-start mb-1 text-sm">
+                                        <div className="flex-grow pr-4">
+                                            <p className="text-text-body">{mission.description}</p>
+                                            <p className="font-bold text-accent text-xs">+{mission.xp} XP</p>
+                                        </div>
+                                        {isClaimed ? (
+                                            <Button size="small" variant="secondary" disabled>Terklaim</Button>
+                                        ) : (
+                                            <Button size="small" onClick={() => claimMissionReward(mission.id, mission.xp)} disabled={!isCompleted}>Klaim</Button>
+                                        )}
                                     </div>
                                     <div className="w-full bg-border-main rounded-full h-2.5">
-                                        <div className="bg-accent h-2.5 rounded-full" style={{ width: `${(mission.progress / mission.target) * 100}%` }}></div>
+                                        <div className="bg-accent h-2.5 rounded-full" style={{ width: `${Math.min(100, (progress / mission.target) * 100)}%` }}></div>
                                     </div>
                                 </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     </Card>
 

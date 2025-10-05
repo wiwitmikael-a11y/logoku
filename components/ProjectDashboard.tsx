@@ -24,6 +24,7 @@ interface ProjectDashboardProps {
   onShowBrandGallery: () => void;
   onShowSotoshop: () => void;
   onShowAIPetLab: () => void;
+  onPreloadNewProject: () => void;
 }
 
 const DYNAMIC_INFO_TIPS = [
@@ -142,10 +143,11 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
 interface TemplateCardProps {
   template: { name: string; description: string; imageUrl: string; data: Partial<BrandInputs>; };
   onClick: (data: Partial<BrandInputs>) => void;
+  onMouseEnter: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => (
-  <div onClick={() => onClick(template.data)} className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg shadow-black/30 transition-transform duration-300 hover:scale-105">
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onMouseEnter }) => (
+  <div onClick={() => onClick(template.data)} onMouseEnter={onMouseEnter} className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg shadow-black/30 transition-transform duration-300 hover:scale-105">
     <img src={template.imageUrl} alt={template.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" loading="lazy" />
     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
     <div className="absolute bottom-0 left-0 p-4 text-white"><h4 className="text-xl font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4></div>
@@ -157,7 +159,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => (
   </div>
 );
 
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'onShowAIPetLab'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'onShowAIPetLab'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
@@ -194,7 +196,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'o
         <div className="flex flex-col gap-8 items-center text-center">
             <DynamicInfoBox />
             <div className="relative mt-12">
-                <Button onClick={() => onNewProject()} size="large" variant="splash">+ Bikin Project Branding Baru</Button>
+                <Button onClick={() => onNewProject()} onMouseEnter={onPreloadNewProject} size="large" variant="splash">+ Bikin Project Branding Baru</Button>
                 {showOnboarding && (
                     <div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max cursor-pointer animate-bounce">
                         <CalloutPopup>Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup>
@@ -204,7 +206,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'o
             
             <div className="w-full text-center mt-6">
                 <h2 className="text-2xl md:text-3xl font-bold mb-4 mt-2 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Atau Pake Jalan Pintas 🚀</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">{templates.map(t => (<TemplateCard key={t.name} template={t} onClick={onNewProject} />))}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">{templates.map(t => (<TemplateCard key={t.name} template={t} onClick={onNewProject} onMouseEnter={onPreloadNewProject} />))}</div>
             </div>
 
             <div className="w-full border-t border-border-main my-8"></div>

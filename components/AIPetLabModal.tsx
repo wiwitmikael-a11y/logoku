@@ -1,12 +1,14 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIPet } from '../contexts/AIPetContext';
 import AIPetVisual from './AIPetVisual';
 import Button from './common/Button';
 import type { AIPetState } from '../types';
 import { playSound } from '../services/soundService';
+
+const AIPetCard = React.lazy(() => import('./gamification/AIPetCard'));
 
 interface Props {
   show: boolean;
@@ -125,30 +127,37 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose, isFirstActivation }) =>
     );
 
     const renderLabView = (pet: AIPetState) => (
-        <div className="space-y-6">
-            <div>
-                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Cerita Asal</h4>
-                <div className="bg-background p-4 rounded-lg border border-border-main">
+        <div className="space-y-1">
+            <details open>
+                <summary className="font-semibold text-splash uppercase tracking-wider text-xs py-2 cursor-pointer">Cerita Asal</summary>
+                <div className="bg-background p-4 rounded-lg border border-border-main mb-4">
                     <p className="text-sm text-text-body italic selectable-text">{pet.narrative || "Asal-usulnya masih menjadi misteri..."}</p>
                 </div>
-            </div>
-            <div>
-                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Statistik Pertempuran</h4>
-                {pet.battleStats ? (
-                    <>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3"><BattleStatDisplay label="HP" value={pet.battleStats.hp} icon="❤️" /><BattleStatDisplay label="ATK" value={pet.battleStats.atk} icon="⚔️" /><BattleStatDisplay label="DEF" value={pet.battleStats.def} icon="🛡️" /><BattleStatDisplay label="SPD" value={pet.battleStats.spd} icon="💨" /></div>
-                        {pet.buffs && pet.buffs.length > 0 && (<div className="mt-3 text-center text-xs font-bold text-sky-300 bg-sky-900/50 rounded-lg py-1">Buffs: {pet.buffs.join(', ')}</div>)}
-                    </>
-                ) : <p className="text-sm text-text-muted italic">Statistik tempur belum ada.</p>}
-            </div>
-            <div>
-                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Statistik Kepribadian</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><StatBar label="⚡ Energi" value={pet.stats.energy} color="bg-green-500" /><StatBar label="🎨 Kreativitas" value={pet.stats.creativity} color="bg-sky-400" /><StatBar label="🧠 Kecerdasan" value={pet.stats.intelligence} color="bg-fuchsia-500" /><StatBar label="😎 Karisma" value={pet.stats.charisma} color="bg-yellow-400" /></div>
-            </div>
-            <div>
-                <h4 className="font-semibold text-splash mb-3 uppercase tracking-wider">Aktivitas (Segera Hadir)</h4>
-                <div className="grid grid-cols-2 gap-3"><Button size="small" variant="secondary" disabled>Beri Makan</Button><Button size="small" variant="secondary" disabled>Ajak Main</Button></div>
-            </div>
+            </details>
+            <details open>
+                <summary className="font-semibold text-splash uppercase tracking-wider text-xs py-2 cursor-pointer">Statistik Pertempuran</summary>
+                <div className="mb-4">
+                    {pet.battleStats ? (
+                        <>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3"><BattleStatDisplay label="HP" value={pet.battleStats.hp} icon="❤️" /><BattleStatDisplay label="ATK" value={pet.battleStats.atk} icon="⚔️" /><BattleStatDisplay label="DEF" value={pet.battleStats.def} icon="🛡️" /><BattleStatDisplay label="SPD" value={pet.battleStats.spd} icon="💨" /></div>
+                            {pet.buffs && pet.buffs.length > 0 && (<div className="mt-3 text-center text-xs font-bold text-sky-300 bg-sky-900/50 rounded-lg py-1">Buffs: {pet.buffs.join(', ')}</div>)}
+                        </>
+                    ) : <p className="text-sm text-text-muted italic bg-background p-4 rounded-lg border border-border-main">Statistik tempur belum ada.</p>}
+                </div>
+            </details>
+             <details open>
+                <summary className="font-semibold text-splash uppercase tracking-wider text-xs py-2 cursor-pointer">Statistik Kepribadian</summary>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <StatBar label="⚡ Energi" value={pet.stats.energy} color="bg-green-500" />
+                    <StatBar label="🎨 Kreativitas" value={pet.stats.creativity} color="bg-sky-400" />
+                    <StatBar label="🧠 Kecerdasan" value={pet.stats.intelligence} color="bg-fuchsia-500" />
+                    <StatBar label="😎 Karisma" value={pet.stats.charisma} color="bg-yellow-400" />
+                </div>
+            </details>
+            <details>
+                <summary className="font-semibold text-splash uppercase tracking-wider text-xs py-2 cursor-pointer">Aktivitas (Segera Hadir)</summary>
+                <div className="grid grid-cols-2 gap-3 mb-4"><Button size="small" variant="secondary" disabled>Beri Makan</Button><Button size="small" variant="secondary" disabled>Ajak Main</Button></div>
+            </details>
         </div>
     );
 
@@ -163,18 +172,18 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose, isFirstActivation }) =>
                 </button>
 
                 {/* Left Panel: Visual */}
-                <div className="w-full md:w-1/2 flex-shrink-0 flex flex-col items-center justify-center p-8 bg-background/50 rounded-t-2xl md:rounded-t-none md:rounded-l-2xl overflow-hidden">
+                <div className="w-full md:w-1/2 flex-shrink-0 flex flex-col items-center justify-center p-4 bg-background/50 rounded-t-2xl md:rounded-t-none md:rounded-l-2xl overflow-hidden">
                     {isPetLoading ? <p>Loading Pet...</p> : (
                         <div className={`w-full max-w-sm aspect-square ${activationStep === 'reveal' ? 'animate-pet-reveal' : ''}`}>
-                             {(petState && petState.stage === 'active') ? <AIPetVisual petState={petState} /> : <AIPetVisual petState={dummyPodState} />}
+                             {(petState && petState.stage === 'active') ? (
+                                <Suspense fallback={<p>Loading card...</p>}>
+                                    <AIPetCard petState={petState} />
+                                </Suspense>
+                             ) : (
+                                <AIPetVisual petState={dummyPodState} />
+                            )}
                         </div>
                     )}
-                     {petState && petState.stage === 'active' && (
-                        <div className={`text-center transition-opacity duration-500 ${activationStep === 'reveal' ? 'opacity-0' : 'opacity-100'}`}>
-                            <h2 className="text-4xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>{petState.name}</h2>
-                            <div className="mt-1 text-sm font-semibold bg-yellow-400 text-black px-3 py-0.5 rounded-full capitalize">{petState.tier}</div>
-                        </div>
-                     )}
                 </div>
 
                 {/* Right Panel: Info & Actions */}

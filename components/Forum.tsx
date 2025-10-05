@@ -120,7 +120,7 @@ const getOfficialDisplayData = (profile: { full_name?: string | null, avatar_url
 
 // --- Main Forum Component ---
 const Forum: React.FC = () => {
-    const { user, profile, addXp } = useAuth();
+    const { user, profile, addXp, incrementDailyAction } = useAuth();
     const { notifyPetOfActivity } = useAIPet();
     const [view, setView] = useState<ForumView>('list');
     const [threads, setThreads] = useState<ForumThread[]>([]);
@@ -349,6 +349,7 @@ const Forum: React.FC = () => {
             if (insertError) throw insertError;
 
             await addXp(5); // +5 XP for reply
+            await incrementDailyAction('created_posts');
             notifyPetOfActivity('forum_interaction');
             setCooldown(POST_COOLDOWN_SECONDS);
             setNewPostContent('');

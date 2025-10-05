@@ -16,6 +16,7 @@ interface State {
   isCopied: boolean;
 }
 
+// FIX: Extended React.Component to make this a valid React class component, resolving errors with `this.props`, `this.state`, and `this.setState`.
 class ErrorBoundary extends React.Component<Props, State> {
   // FIX: Refactored to use class property for state initialization and an arrow function for handleCopy.
   // This is a more modern and robust way to handle state and `this` context in React class components,
