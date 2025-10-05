@@ -17,12 +17,12 @@ const AIPodVisual: React.FC = () => {
         @keyframes pod-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @keyframes core-pulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
         @keyframes rock-orbit-1 { 
-            0% { transform: translate(0, 0) rotate(0deg) translateX(45px) rotate(0deg); } 
-            100% { transform: translate(0, 0) rotate(360deg) translateX(45px) rotate(-360deg); } 
+            0% { transform: translate(0, 0) rotate(0deg) translateX(38px) rotate(0deg); } 
+            100% { transform: translate(0, 0) rotate(360deg) translateX(38px) rotate(-360deg); } 
         }
         @keyframes rock-orbit-2 { 
-            0% { transform: translate(0, 0) rotate(0deg) translateX(55px) translateY(5px) rotate(0deg); } 
-            100% { transform: translate(0, 0) rotate(-360deg) translateX(55px) translateY(5px) rotate(360deg); } 
+            0% { transform: translate(0, 0) rotate(0deg) translateX(42px) translateY(2px) rotate(0deg); } 
+            100% { transform: translate(0, 0) rotate(-360deg) translateX(42px) translateY(2px) rotate(360deg); } 
         }
         @keyframes rock-float-3 { 
             0%, 100% { transform: translateY(0px) rotate(0deg); } 
@@ -48,13 +48,13 @@ const AIPodVisual: React.FC = () => {
                 {/* Floating Rocks */}
                 <g filter="url(#runeGlow)">
                     <g style={{ animation: `rock-orbit-1 10s linear infinite`, transformOrigin: '60px 65px' }}>
-                        <path d="M0,0 l5,2 l-2,5 l-4,-3 Z" fill="rgb(var(--c-primary))" />
+                        <path d="M0,0 l8,3 l-3,8 l-6,-5 Z" fill="rgb(var(--c-primary))" />
                     </g>
                     <g style={{ animation: `rock-orbit-2 15s linear infinite reverse`, transformOrigin: '60px 65px' }}>
-                         <path d="M0,0 l-6,1 l2,4 l5,-2 Z" fill="rgb(var(--c-primary))" />
+                         <path d="M0,0 l-9,2 l3,6 l8,-3 Z" fill="rgb(var(--c-primary))" />
                     </g>
-                    <g transform="translate(20, 50)" style={{ animation: `rock-float-3 7s ease-in-out infinite 0.5s` }}>
-                         <path d="M0,0 l4,4 l-5,3 l-1,-6 Z" fill="rgb(var(--c-primary))" />
+                    <g transform="translate(85, 40)" style={{ animation: `rock-float-3 7s ease-in-out infinite 0.5s` }}>
+                         <path d="M0,0 l6,6 l-8,5 l-2,-9 Z" fill="rgb(var(--c-primary))" />
                     </g>
                 </g>
                 
