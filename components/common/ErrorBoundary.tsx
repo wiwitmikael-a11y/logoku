@@ -17,11 +17,17 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Using a constructor to initialize state and bind event handlers.
+  // This is a more traditional and robust pattern for React class components that avoids potential issues with class field syntax in some build environments.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.
@@ -29,12 +35,13 @@ class ErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error };
   }
 
-  // FIX: Reverted to an arrow function to ensure 'this' is correctly typed within the class, resolving potential misconfigurations in the TypeScript environment.
-  public componentDidCatch = (error: Error, errorInfo: ErrorInfo) => {
+  // FIX: Converted to a standard class method. React correctly binds `this` for lifecycle methods.
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  // FIX: Converted to a standard class method and explicitly bound in the constructor to ensure `this` context.
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -42,8 +49,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: Reverted to an arrow function to ensure 'this' is correctly typed. This resolves errors where inherited properties like 'this.props' and methods like 'this.setState' were not found on the component type.
-  public render = (): ReactNode => {
+  // FIX: Converted to a standard class method. React correctly binds `this` for lifecycle methods.
+  public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

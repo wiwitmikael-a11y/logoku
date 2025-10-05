@@ -144,7 +144,7 @@ const FloatingAIPet: React.FC<{
                     transition: 'transform 0.3s ease-in-out',
                 }}
             >
-                <Suspense fallback={null}><AIPetVisual petState={petState} /></Suspense>
+                <Suspense fallback={null}><AIPetVisual petState={petState} behavior={behavior} /></Suspense>
             </div>
             
             {petState.stage === 'active' && (

@@ -6,6 +6,7 @@ import type { AIPetState } from '../types';
 interface AIPetVisualProps {
   petState: AIPetState;
   className?: string;
+  behavior?: 'idle' | 'walking';
 }
 
 // --- NEW AIPOD VISUAL ---
@@ -122,7 +123,7 @@ interface PartCacheEntry {
 }
 
 
-const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
+const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior = 'idle' }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationFrameId = useRef<number>(0);
     const partCache = useRef<Map<string, PartCacheEntry>>(new Map());
@@ -191,10 +192,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                     if (x < 0 || x >= CANVAS_SIZE || y < 0 || y >= CANVAS_SIZE) continue;
                     const idx = y * CANVAS_SIZE + x;
                     const dataIdx = idx * 4;
-                    if (data[dataIdx + 3] < 128) continue;
-                    const luminance = 0.2126 * data[dataIdx] + 0.7152 * data[dataIdx + 1] + 0.0722 * data[dataIdx + 2];
-                    if (luminance < LUMINANCE_OUTLINE_THRESHOLD) continue;
-                    if (segData[idx] > 0) continue;
+                    if (data[dataIdx + 3] < 128) continue; // Stop at transparent
+                    if (segData[idx] > 0) continue; // Stop if already segmented
                     segData[idx] = partId;
                     queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
                 }
@@ -245,7 +244,6 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         const ctx = canvas?.getContext('2d');
         if (!ctx || !blueprint) return;
         
-        // FIX: Used spread syntax to convert the Map keys iterator to an array, which provides better type inference.
         const sortedPartNames = [...partCache.current.keys()].sort((a, b) => {
             const partA = partCache.current.get(a)?.def.z || 0;
             const partB = partCache.current.get(b)?.def.z || 0;
@@ -264,7 +262,27 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                 interactY = -Math.sin(progress * Math.PI) * 10;
             }
             
-            const torsoBobY = Math.sin(time / 450) * 1.5 + interactY;
+            const animations: Record<string, { y: number; rot: number }> = {};
+            const walkCycle = time / 250;
+            const idleCycle = time / 600;
+
+            if (behavior === 'walking') {
+                const bob = Math.sin(walkCycle) * 3;
+                animations['torso'] = { y: bob, rot: 0 };
+                animations['head'] = { y: bob, rot: Math.sin(walkCycle / 2) * 2 };
+                animations['left_arm'] = { y: 0, rot: Math.sin(walkCycle + Math.PI) * 35 };
+                animations['right_arm'] = { y: 0, rot: Math.sin(walkCycle) * 35 };
+                animations['left_leg'] = { y: 0, rot: Math.sin(walkCycle) * 25 };
+                animations['right_leg'] = { y: 0, rot: Math.sin(walkCycle + Math.PI) * 25 };
+            } else { // idle
+                const bob = Math.sin(idleCycle) * 1.5;
+                animations['torso'] = { y: bob, rot: 0 };
+                animations['head'] = { y: bob, rot: Math.sin(idleCycle * 0.7) * 2 };
+                animations['left_arm'] = { y: 0, rot: Math.sin(idleCycle) * 3 };
+                animations['right_arm'] = { y: 0, rot: Math.sin(idleCycle) * 3 };
+                animations['left_leg'] = { y: 0, rot: 0 };
+                animations['right_leg'] = { y: 0, rot: 0 };
+            }
             
             for (const partName of sortedPartNames) {
                 const part = partCache.current.get(partName);
@@ -272,19 +290,16 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
 
                 ctx.save();
                 
-                const partX = (canvas.width - 256) / 2 + part.x;
-                let partY = (canvas.height - 256) / 2 + part.y;
-                let animRot = 0;
+                const anim = animations[partName] || { y: 0, rot: 0 };
                 
-                if (partName.includes('arm')) {
-                    partY += torsoBobY;
-                    animRot = Math.sin(time / 500 + (partName.includes('left') ? Math.PI : 0)) * 5;
-                } else if (partName.includes('leg')) {
-                    partY += torsoBobY;
-                } else {
-                    partY += torsoBobY + (partName === 'head' ? Math.sin(time / 400) * 1 : 0);
-                }
+                const partX = (canvas.width - 256) / 2 + part.x;
+                let partY = (canvas.height - 256) / 2 + part.y + anim.y + interactY;
+                let animRot = anim.rot;
 
+                if (partName.includes('arm') || partName.includes('leg') || partName.includes('head')) {
+                    partY += animations['torso']?.y || 0;
+                }
+                
                 const pivotX = partX + part.def.pivot.x;
                 const pivotY = partY + part.def.pivot.y;
                 
@@ -302,7 +317,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         
         animationFrameId.current = requestAnimationFrame(draw);
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [blueprint, interactionTs]);
+    }, [blueprint, interactionTs, behavior]);
     
     const filterStyle: React.CSSProperties = {
         filter: stats.energy < 30 ? `saturate(${stats.energy + 20}%) opacity(0.8)` : 'none',
