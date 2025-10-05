@@ -4,6 +4,7 @@ import React, { useEffect, useRef, Suspense } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
 import { User, Profile } from '../../types';
 import Button from './Button';
+import { BgmSelection } from '../../contexts/AuthContext';
 
 const AIPetCard = React.lazy(() => import('../gamification/AIPetCard'));
 
@@ -23,9 +24,13 @@ interface Props {
   onDeleteAccount: () => void;
   onShowToS: () => void;
   onShowContact: () => void;
+  isMuted: boolean;
+  handleToggleMute: () => void;
+  bgmSelection: BgmSelection;
+  handleBgmChange: (selection: BgmSelection) => void;
 }
 
-const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, onLogout, onDeleteAccount, onShowToS, onShowContact }) => {
+const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, onLogout, onDeleteAccount, onShowToS, onShowContact, isMuted, handleToggleMute, bgmSelection, handleBgmChange }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,6 +87,24 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
                     <Button onClick={handleLogoutClick} size="small" variant="secondary">Logout</Button>
                     <Button onClick={handleTosClick} size="small" variant="secondary">Ketentuan Layanan</Button>
                     <Button onClick={handleContactClick} size="small" variant="secondary">Info Dev</Button>
+                </div>
+            </div>
+            
+            <div className="w-full border-t border-border-main pt-6">
+                <h3 className="text-sm font-semibold text-text-muted mb-3 uppercase tracking-wider">Pengaturan Audio</h3>
+                <div className="bg-background border border-border-main p-4 rounded-lg space-y-3">
+                    <div className="flex justify-between items-center">
+                        <label htmlFor="bgm-select" className="text-sm text-text-body">Musik Latar</label>
+                        <select id="bgm-select" value={bgmSelection} onChange={(e) => handleBgmChange(e.target.value as BgmSelection)} className="bg-surface border border-border-main rounded-md text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-splash">
+                            {(['Mute', 'Random', 'Jingle', 'Acoustic', 'Uplifting', 'LoFi', 'Bamboo', 'Ethnic', 'Cozy'] as BgmSelection[]).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm text-text-body">Master Mute</span>
+                        <button onClick={handleToggleMute} role="switch" aria-checked={isMuted} className={`relative inline-flex items-center h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-splash focus:ring-offset-2 focus:ring-offset-surface ${isMuted ? 'bg-background' : 'bg-primary'}`}>
+                            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isMuted ? 'translate-x-0' : 'translate-x-5'}`}/>
+                        </button>
+                    </div>
                 </div>
             </div>
 

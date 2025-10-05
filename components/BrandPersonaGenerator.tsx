@@ -143,7 +143,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
 
     try {
       const result = await generateBrandPersona(
-        formState.businessName, combinedIndustry, combinedAudience, formState.valueProposition
+        formState.businessName, combinedIndustry, combinedAudience, formState.valueProposition, petState
       );
       setPersonas(result);
       playSound('success');
@@ -153,7 +153,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     } finally {
       setIsLoadingPersona(false);
     }
-  }, [formState]);
+  }, [formState, petState]);
   
   const handleSelectPersona = useCallback((index: number) => {
       if (selectedPersonaIndex !== index) {
@@ -182,7 +182,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     playSound('start');
 
     try {
-        const result = await generateSlogans(formState.businessName, personas[selectedPersonaIndex], formState.competitors);
+        const result = await generateSlogans(formState.businessName, personas[selectedPersonaIndex], formState.competitors, petState);
         setSlogans(result);
         playSound('success');
     } catch (err) {
@@ -191,7 +191,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     } finally {
         setIsLoadingSlogan(false);
     }
-  }, [selectedPersonaIndex, personas, formState]);
+  }, [selectedPersonaIndex, personas, formState, petState]);
 
   const handleContinue = () => {
     if (selectedPersonaIndex === null || !selectedSlogan || !personas[selectedPersonaIndex]) return;

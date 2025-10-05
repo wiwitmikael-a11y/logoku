@@ -4,6 +4,8 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions, generateSocialMediaPostImage } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+// FIX: Import useAIPet to get petState for the generateCaptions function.
+import { useAIPet } from '../contexts/AIPetContext';
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -29,6 +31,7 @@ interface GeneratedContent {
 
 const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [topic, setTopic] = useState('');
@@ -55,7 +58,8 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
     try {
       const [imageResult, captionsResult] = await Promise.all([
         generateSocialMediaPostImage(topic, selectedPersona.kata_kunci),
-        generateCaptions(brandInputs.businessName, selectedPersona, topic, "Promosi")
+        // FIX: Added the missing petState argument to the generateCaptions function call.
+        generateCaptions(brandInputs.businessName, selectedPersona, topic, "Promosi", petState)
       ]);
       if (!imageResult || imageResult.length === 0) throw new Error("Mang AI gagal membuat gambar.");
       
@@ -69,7 +73,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, credits, deductCredits, setShowOutOfCreditsModal, addXp]);
+  }, [projectData, topic, credits, deductCredits, setShowOutOfCreditsModal, addXp, petState]);
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">

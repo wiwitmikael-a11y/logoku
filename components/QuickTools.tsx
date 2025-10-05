@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { generateBusinessNames, generateQuickSlogans, generateMoodboardText, generateMoodboardImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
+import { useAIPet } from '../contexts/AIPetContext';
 import { playSound } from '../services/soundService';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -47,6 +48,7 @@ const QuickToolsInfoBox: React.FC = () => {
 
 const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
     const { profile, deductCredits, addXp, setShowOutOfCreditsModal } = useAuth();
+    const { petState } = useAIPet();
     const credits = profile?.credits ?? 0;
     
     const [activeTool, setActiveTool] = useState<'name' | 'slogan' | 'moodboard' | 'sotoshop'>('name');
@@ -93,22 +95,22 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
         if (credits < NAME_GEN_COST) { setShowOutOfCreditsModal(true); return; }
         setIsLoading(true); setError(null); setResults(null); playSound('start');
         try {
-            const resultItems = await generateBusinessNames(nameCategory, nameKeywords);
+            const resultItems = await generateBusinessNames(nameCategory, nameKeywords, petState);
             await deductCredits(NAME_GEN_COST); await addXp(XP_REWARD);
             setResults({ title: `IDEAS FOR "${nameCategory.toUpperCase()}"`, items: resultItems });
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
-    }, [nameCategory, nameKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
+    }, [nameCategory, nameKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal, petState]);
     
     const handleGenerateSlogans = useCallback(async () => {
         if (!sloganBusinessName) { setError('BUSINESS NAME CANNOT BE EMPTY!'); return; }
         if (credits < SLOGAN_GEN_COST) { setShowOutOfCreditsModal(true); return; }
         setIsLoading(true); setError(null); setResults(null); playSound('start');
         try {
-            const resultItems = await generateQuickSlogans(sloganBusinessName, sloganKeywords);
+            const resultItems = await generateQuickSlogans(sloganBusinessName, sloganKeywords, petState);
             await deductCredits(SLOGAN_GEN_COST); await addXp(XP_REWARD);
             setResults({ title: `SLOGANS FOR "${sloganBusinessName.toUpperCase()}"`, items: resultItems });
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
-    }, [sloganBusinessName, sloganKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
+    }, [sloganBusinessName, sloganKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal, petState]);
     
     const handleGenerateMoodboard = useCallback(async () => {
         if (!moodboardKeywords) { setError('KEYWORDS CANNOT BE EMPTY!'); return; }
@@ -116,14 +118,14 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
         setIsLoading(true); setError(null); setMoodboardResult(null); playSound('start');
         try {
             const [textData, images] = await Promise.all([
-                generateMoodboardText(moodboardKeywords),
+                generateMoodboardText(moodboardKeywords, petState),
                 generateMoodboardImages(moodboardKeywords),
             ]);
             await deductCredits(MOODBOARD_GEN_COST); await addXp(XP_REWARD + 10);
             setMoodboardResult({ ...textData, images });
             playSound('success');
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
-    }, [moodboardKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
+    }, [moodboardKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal, petState]);
 
     const handleToolChange = (tool: 'name' | 'slogan' | 'moodboard' | 'sotoshop') => {
         setActiveTool(tool); setError(null); setResults(null); setDisplayedItems([]); setMoodboardResult(null);

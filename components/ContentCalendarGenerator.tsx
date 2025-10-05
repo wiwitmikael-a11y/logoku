@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateContentCalendar, generateSocialMediaPostImage } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+import { useAIPet } from '../contexts/AIPetContext';
 import type { ContentCalendarEntry, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -21,6 +22,7 @@ const GENERATION_COST = 1;
 
 const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [calendar, setCalendar] = useState<ContentCalendarEntry[]>(projectData.contentCalendar || []);
@@ -48,7 +50,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
     playSound('start');
 
     try {
-      const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona);
+      const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona, petState);
       setCalendar(result.calendar);
       setSources(result.sources);
       setShowNextStepNudge(true);
@@ -59,7 +61,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
     } finally {
       setIsLoading(false);
     }
-  }, [projectData]);
+  }, [projectData, petState]);
   
   const handleGenerateImage = useCallback(async (index: number) => {
     if (credits < GENERATION_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }

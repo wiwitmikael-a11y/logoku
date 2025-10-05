@@ -56,6 +56,8 @@ class ErrorBoundary extends React.Component<Props, State> {
   public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
+      // FIX: Added the missing `return` statement. The render method must return a value.
+      // The original code had a parenthesis `(` without `return`, which is a syntax error.
       return (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
             <img 

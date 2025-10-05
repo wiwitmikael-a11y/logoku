@@ -60,7 +60,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
 
     try {
       await deductCredits(1);
-      const result = await generateCaptions(projectData.brandInputs.businessName, projectData.selectedPersona, topic, tone);
+      const result = await generateCaptions(projectData.brandInputs.businessName, projectData.selectedPersona, topic, tone, petState);
       await addXp(10);
       await incrementDailyAction('created_captions');
       setCaptions(result);

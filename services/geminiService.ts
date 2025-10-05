@@ -94,6 +94,17 @@ const cleanJsonString = (rawText: string, expectedType: 'object' | 'array' = 'ar
 };
 
 
+// --- NEW HELPER FOR AIPET INTEGRATION ---
+const enhancePromptWithPetStats = (prompt: string, petState: AIPetState | null): string => {
+    if (!petState || petState.stage === 'aipod') {
+        return prompt;
+    }
+    const { creativity, intelligence, charisma } = petState.stats;
+    const petHeader = `As an AI assistant, your response MUST be influenced by your digital pet's personality stats: Creativity is ${Math.round(creativity)}/100, Intelligence is ${Math.round(intelligence)}/100, and Charisma is ${Math.round(charisma)}/100. A high creativity score means more unique, out-of-the-box ideas. High intelligence means more structured, detailed, and insightful responses. High charisma means a more persuasive, friendly, and engaging tone.\n\n---\n\n`;
+    return petHeader + prompt;
+};
+
+
 // --- NEW MASTER IMAGE GENERATION LOGIC ---
 
 /**
@@ -277,7 +288,7 @@ export const generateAIPetNarrative = async (name: string, tier: AIPetTier, domi
 
 
 // --- Text Generation Functions ---
-export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string): Promise<BrandPersona[]> => {
+export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string, petState: AIPetState | null): Promise<BrandPersona[]> => {
   const ai = getAiClient();
   const prompt = `Based on the following business details, create 3 distinct brand personas. Each persona should be a complete JSON object.
   
@@ -305,9 +316,10 @@ export const generateBrandPersona = async (businessName: string, industry: strin
   Return an array of exactly 3 complete BrandPersona JSON objects.`;
 
   try {
+    const finalPrompt = enhancePromptWithPetStats(prompt, petState);
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: finalPrompt,
         config: {
             responseMimeType: "application/json",
             responseSchema: {
@@ -353,7 +365,7 @@ export const generateBrandPersona = async (businessName: string, industry: strin
     throw handleApiError(error, "Brand Persona");
   }
 };
-export const generateSlogans = async (businessName: string, persona: BrandPersona, competitors: string): Promise<string[]> => {
+export const generateSlogans = async (businessName: string, persona: BrandPersona, competitors: string, petState: AIPetState | null): Promise<string[]> => {
     const ai = getAiClient();
     const prompt = `Create 5 short, catchy, and memorable slogans for a business named "${businessName}".
 
@@ -365,9 +377,10 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
     The slogans should align with the brand persona and be distinct from the competitors. Return a JSON array of 5 strings.`;
     
     try {
+        const finalPrompt = enhancePromptWithPetStats(prompt, petState);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: finalPrompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -382,7 +395,7 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
     }
 };
 
-export const generateQuickSlogans = async (businessName: string, keywords: string): Promise<string[]> => {
+export const generateQuickSlogans = async (businessName: string, keywords: string, petState: AIPetState | null): Promise<string[]> => {
     const ai = getAiClient();
     const prompt = `Act as a creative branding expert for Indonesian small businesses (UMKM). Generate 10 short, catchy, and memorable slogans.
 
@@ -398,9 +411,10 @@ export const generateQuickSlogans = async (businessName: string, keywords: strin
     Return a single JSON array of 10 strings.`;
     
     try {
+        const finalPrompt = enhancePromptWithPetStats(prompt, petState);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: finalPrompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -416,7 +430,7 @@ export const generateQuickSlogans = async (businessName: string, keywords: strin
 };
 
 // NEW: For Quick Tools
-export const generateBusinessNames = async (category: string, keywords: string): Promise<string[]> => {
+export const generateBusinessNames = async (category: string, keywords: string, petState: AIPetState | null): Promise<string[]> => {
     const ai = getAiClient();
     const prompt = `Act as a creative branding expert for Indonesian small businesses (UMKM). Generate 15 unique, catchy, and modern business name ideas.
 
@@ -433,9 +447,10 @@ export const generateBusinessNames = async (category: string, keywords: string):
     Return a single JSON array of 15 strings.`;
     
     try {
+        const finalPrompt = enhancePromptWithPetStats(prompt, petState);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: finalPrompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -451,7 +466,7 @@ export const generateBusinessNames = async (category: string, keywords: string):
 };
 
 // NEW: For Moodboard Generator in Quick Tools
-export const generateMoodboardText = async (keywords: string): Promise<{ description: string; palette: string[] }> => {
+export const generateMoodboardText = async (keywords: string, petState: AIPetState | null): Promise<{ description: string; palette: string[] }> => {
     const ai = getAiClient();
     const prompt = `Act as a senior brand strategist. Based on the following keywords, create a brand moodboard concept.
 
@@ -464,9 +479,10 @@ export const generateMoodboardText = async (keywords: string): Promise<{ descrip
     Return a single JSON object with two keys: "description" (a string) and "palette" (an array of 5 hex strings).`;
 
     try {
+        const finalPrompt = enhancePromptWithPetStats(prompt, petState);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: finalPrompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -520,7 +536,7 @@ export const generateMoodboardImages = async (keywords: string): Promise<string[
 };
 
 
-export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string): Promise<GeneratedCaption[]> => {
+export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string, petState: AIPetState | null): Promise<GeneratedCaption[]> => {
     const ai = getAiClient();
     const prompt = `Create 3 social media captions for a business named "${businessName}".
 
@@ -539,9 +555,10 @@ export const generateCaptions = async (businessName: string, persona: BrandPerso
     Return a JSON array containing these 3 objects.`;
 
     try {
+        const finalPrompt = enhancePromptWithPetStats(prompt, petState);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: finalPrompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -562,7 +579,7 @@ export const generateCaptions = async (businessName: string, persona: BrandPerso
         throw handleApiError(error, "Caption");
     }
 };
-export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
+export const generateContentCalendar = async (businessName: string, persona: BrandPersona, petState: AIPetState | null): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
     const ai = getAiClient();
     const prompt = `Act as a creative and savvy social media manager for an Indonesian small business (UMKM). Your task is to create a highly engaging 7-day content calendar for a business named "${businessName}". Use Google Search to find current trends and relevant topics in Indonesia for this industry.
 
@@ -589,9 +606,10 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
     - "rekomendasi_hashtag": An array of 5-7 relevant and trending hashtags.`;
 
     try {
+        const finalPrompt = enhancePromptWithPetStats(prompt, petState);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: finalPrompt,
             config: {
                 tools: [{ googleSearch: {} }],
             },
@@ -890,7 +908,7 @@ export const generateMerchandiseMockup = async (prompt: string, logoBase64: stri
 };
 
 // --- NEW Social Media Centric Functions ---
-export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: BrandPersona): Promise<SocialProfileData> => {
+export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: BrandPersona, petState: AIPetState | null): Promise<SocialProfileData> => {
     const ai = getAiClient();
     const prompt = `Generate social media and marketplace profiles for a business.
 
@@ -907,9 +925,10 @@ export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: 
     Ensure the tone matches the brand persona.`;
     
     try {
+        const finalPrompt = enhancePromptWithPetStats(prompt, petState);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: finalPrompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -928,7 +947,7 @@ export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: 
         throw handleApiError(error, "Social Profiles");
     }
 };
-export const generateSocialAds = async (brandInputs: BrandInputs, persona: BrandPersona, slogan: string): Promise<SocialAdsData> => {
+export const generateSocialAds = async (brandInputs: BrandInputs, persona: BrandPersona, slogan: string, petState: AIPetState | null): Promise<SocialAdsData> => {
     const ai = getAiClient();
     const prompt = `Generate 2 distinct social media ad variations for a business.
 
@@ -946,9 +965,10 @@ export const generateSocialAds = async (brandInputs: BrandInputs, persona: Brand
     Return the result as a JSON array of these 2 ad objects.`;
     
     try {
+        const finalPrompt = enhancePromptWithPetStats(prompt, petState);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: finalPrompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
