@@ -251,8 +251,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         const ctx = canvas?.getContext('2d');
         if (!ctx || !blueprint) return;
         
-        // FIX: Explicitly type the array to ensure correct type inference for its elements.
-        const sortedPartNames: string[] = Array.from(partCache.current.keys()).sort((a, b) => {
+        // FIX: Used spread syntax to convert the Map keys iterator to an array, which provides better type inference.
+        const sortedPartNames = [...partCache.current.keys()].sort((a, b) => {
             const partA = partCache.current.get(a)?.def.z || 0;
             const partB = partCache.current.get(b)?.def.z || 0;
             return partA - partB;
@@ -282,7 +282,6 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
                 let partY = (canvas.height - 256) / 2 + part.y;
                 let animRot = 0;
                 
-                // FIX: partName is now correctly inferred as a string, so '.includes' can be called.
                 if (partName.includes('arm')) {
                     partY += torsoBobY;
                     animRot = Math.sin(time / 500 + (partName.includes('left') ? Math.PI : 0)) * 5;
