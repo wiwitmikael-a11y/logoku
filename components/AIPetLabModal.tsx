@@ -53,7 +53,6 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                                 <AIPetVisual petState={petState} />
                             </div>
                             <h2 className="text-3xl font-bold text-primary" style={{ fontFamily: 'var(--font-display)' }}>{petState.name}</h2>
-                            {/* FIX: The 'narrative' property does not exist on the AIPetState type and has been removed. */}
                         </>
                     )}
                 </div>
@@ -61,10 +60,10 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                 {/* Right Panel: Info & Actions */}
                 <div className="flex-grow p-6 overflow-y-auto">
                     <h3 className="text-2xl font-bold text-text-header mb-4" style={{ fontFamily: 'var(--font-display)' }}>AIPet Lab</h3>
-                    {isLoading || !petState ? <p>Loading stats...</p> : petState.stage === 'stasis_pod' ? (
+                    {isLoading || !petState ? <p>Loading stats...</p> : petState.stage === 'aipod' ? (
                         <div className="text-center p-8 border border-dashed border-border-main rounded-lg">
                             <p className="text-lg">🧬</p>
-                            <p className="text-text-body">Pod Stasis masih dalam mode tidur.</p>
+                            <p className="text-text-body">AIPod masih dalam mode tidur.</p>
                             <p className="text-sm text-text-muted mt-2">Buka menu AIPet di pojok kanan bawah dashboard untuk mengaktifkannya.</p>
                         </div>
                     ) : (

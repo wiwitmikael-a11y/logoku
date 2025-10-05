@@ -113,7 +113,7 @@ export interface AIPetStats {
 }
 
 export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
-export type AIPetStage = 'stasis_pod' | 'active';
+export type AIPetStage = 'aipod' | 'active';
 
 // --- New Blueprint System Types ---
 export interface AIPetBlueprint {

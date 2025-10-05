@@ -8,64 +8,69 @@ interface AIPetVisualProps {
   className?: string;
 }
 
-// --- NEW STASIS POD VISUAL ---
-const StasisPodVisual: React.FC = () => {
+// --- NEW AIPOD VISUAL ---
+const AIPodVisual: React.FC = () => {
     const podAnimation = `
-        @keyframes pod-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        @keyframes divine-glow { 0%, 100% { filter: drop-shadow(0 0 10px rgb(var(--c-splash) / 0.4)) drop-shadow(0 0 20px rgb(var(--c-splash) / 0.2)); } 50% { filter: drop-shadow(0 0 20px rgb(var(--c-splash) / 0.7)) drop-shadow(0 0 40px rgb(var(--c-splash) / 0.4)); } }
-        @keyframes bubble-rise { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-60px); opacity: 0; } }
+        @keyframes pod-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes core-pulse { 0%, 100% { r: 8; opacity: 0.8; } 50% { r: 10; opacity: 1; } }
+        @keyframes ring-rotate { 0% { transform: rotateY(0deg) rotateZ(-10deg); } 100% { transform: rotateY(360deg) rotateZ(-10deg); } }
     `;
     return (
-        <div className="w-full h-full" style={{ animation: `pod-float 3s ease-in-out infinite` }}>
+        <div className="w-full h-full" style={{ animation: `pod-float 3.5s ease-in-out infinite` }}>
             <style>{podAnimation}</style>
-            <svg viewBox="0 0 100 130" className="w-full h-full">
+            <svg viewBox="0 0 120 120" className="w-full h-full">
                 <defs>
-                    <linearGradient id="glassGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="rgba(255,255,255,0.1)" />
-                        <stop offset="50%" stopColor="rgba(255,255,255,0.05)" />
-                        <stop offset="100%" stopColor="rgba(255,255,255,0.1)" />
+                    <linearGradient id="podMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#555" />
+                        <stop offset="50%" stopColor="#333" />
+                        <stop offset="100%" stopColor="#444" />
                     </linearGradient>
-                     <linearGradient id="metalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#404040" />
-                        <stop offset="50%" stopColor="#2a2a2e" />
-                        <stop offset="100%" stopColor="#404040" />
+                    <linearGradient id="podGlass" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="rgba(var(--c-primary), 0.2)" />
+                        <stop offset="100%" stopColor="rgba(var(--c-primary), 0.1)" />
                     </linearGradient>
-                    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="rgb(var(--c-splash) / 0.8)" />
-                        <stop offset="100%" stopColor="rgb(var(--c-splash) / 0)" />
+                     <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stopColor="rgb(var(--c-splash))" />
+                        <stop offset="100%" stopColor="rgba(var(--c-splash), 0)" />
                     </radialGradient>
-                    <filter id="glow">
-                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <filter id="podGlow">
+                        <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
                         <feMerge>
-                            <feMergeNode in="coloredBlur"/>
-                            <feMergeNode in="SourceGraphic"/>
+                            <feMergeNode in="coloredBlur" />
+                            <feMergeNode in="SourceGraphic" />
                         </feMerge>
                     </filter>
                 </defs>
-                 {/* Base */}
-                <path d="M 20 125 C 30 135, 70 135, 80 125 L 90 110 L 10 110 Z" fill="url(#metalGradient)" stroke="#18181b" strokeWidth="2" />
-                <rect x="15" y="100" width="70" height="10" rx="2" fill="#2a2a2e" stroke="#18181b" strokeWidth="1.5" />
-                
-                {/* Glass Container */}
-                <path d="M 20 100 C 5 70, 5 30, 20 5 L 80 5 C 95 30, 95 70, 80 100 Z" fill="url(#glassGradient)" stroke="rgb(var(--c-border))" strokeWidth="1.5" />
-                
-                {/* Core & Bubbles */}
-                <g style={{ animation: `divine-glow 3.5s ease-in-out infinite` }}>
-                    <circle cx="50" cy="75" r="12" fill="url(#coreGlow)" />
-                    <circle cx="50" cy="75" r="4" fill="rgb(var(--c-splash))" />
-                    
-                    {/* Bubbles */}
-                    <circle cx="45" cy="80" r="1.5" fill="rgb(var(--c-splash)/0.5)" style={{ animation: `bubble-rise 3s ease-in infinite`, animationDelay: '0s' }}/>
-                    <circle cx="55" cy="85" r="2" fill="rgb(var(--c-splash)/0.5)" style={{ animation: `bubble-rise 2.5s ease-in infinite`, animationDelay: '0.5s' }}/>
-                    <circle cx="48" cy="90" r="1" fill="rgb(var(--c-splash)/0.5)" style={{ animation: `bubble-rise 4s ease-in infinite`, animationDelay: '1s' }}/>
-                </g>
 
-                {/* Glass Shine */}
-                <path d="M 25 10 C 20 50, 25 90, 30 95" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" />
+                <g transform="translate(10, 0)">
+                    {/* Base */}
+                    <path d="M 20,115 H 80 L 75,120 H 25 Z" fill="url(#podMetal)" />
+                    <rect x="30" y="110" width="40" height="5" fill="#222" />
+
+                    {/* Main Body */}
+                    <path d="M 10,110 C 0,80 0,40 10,10 H 90 C 100,40 100,80 90,110 Z" fill="url(#podGlass)" stroke="rgba(var(--c-primary), 0.4)" strokeWidth="1" />
+                    <path d="M 10,110 C 0,80 0,40 10,10 H 90 C 100,40 100,80 90,110 Z" stroke="rgba(var(--c-splash), 0.1)" strokeWidth="3" fill="none" />
+
+                    {/* Core */}
+                    <g style={{ filter: 'url(#podGlow)' }}>
+                        <circle cx="50" cy="65" r="15" fill="url(#coreGlow)" />
+                        <circle cx="50" cy="65" fill="rgb(var(--c-splash))">
+                            <animate attributeName="r" values="8;10;8" dur="2s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite" />
+                        </circle>
+                    </g>
+                    
+                    {/* Floating Ring */}
+                    <ellipse cx="50" cy="75" rx="35" ry="10" fill="none" stroke="rgba(var(--c-primary), 0.7)" strokeWidth="1.5" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'ring-rotate 8s linear infinite' }} />
+
+                     {/* Glass Highlight */}
+                    <path d="M 20 20 C 30 50, 25 80, 22 100" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none" />
+                </g>
             </svg>
         </div>
     );
 };
+
 
 // --- NEW CANVAS-BASED BLUEPRINT RENDERER ---
 const imageCache: { [key: string]: HTMLImageElement } = {};
@@ -230,8 +235,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className }) => {
         cursor: stage === 'active' ? 'pointer' : 'default',
     };
 
-    if (stage === 'stasis_pod') {
-        return <div style={filterStyle} className={`w-full h-full ${className || ''}`}><StasisPodVisual /></div>;
+    if (stage === 'aipod') {
+        return <div style={filterStyle} className={`w-full h-full ${className || ''}`}><AIPodVisual /></div>;
     }
 
     if (!blueprint || !colors) {

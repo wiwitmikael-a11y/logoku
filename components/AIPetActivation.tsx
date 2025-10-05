@@ -71,8 +71,8 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
     `;
 
     const dummyPodState: AIPetState = {
-        name: 'Pod Stasis',
-        stage: 'stasis_pod',
+        name: 'AIPod',
+        stage: 'aipod',
         tier: 'common',
         stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
         lastFed: Date.now(),
@@ -89,7 +89,7 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
             <style>{podAnimation}</style>
             <div className="relative max-w-sm w-full bg-surface rounded-2xl shadow-xl p-8 flex flex-col items-center text-center" onClick={e => e.stopPropagation()}>
                 
-                <h2 className="text-3xl font-bold text-primary mb-2" style={{ fontFamily: 'var(--font-display)' }}>Aktifkan Pod Stasis?</h2>
+                <h2 className="text-3xl font-bold text-primary mb-2" style={{ fontFamily: 'var(--font-display)' }}>Aktifkan AIPod?</h2>
 
                 <div className={`w-40 h-48 my-4 ${isLoading ? 'animate-pod-wobble' : ''}`}>
                     <AIPetVisual petState={dummyPodState} />
@@ -104,7 +104,7 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
                     </div>
                 ) : (
                     <>
-                        <p className="text-text-body mb-6 text-sm">Mengaktifkan pod ini akan mereplikasi wujud fisik dan statistik dasar AIPet-mu. Proses ini membutuhkan <strong className="text-text-header">{ACTIVATION_COST} token</strong>.</p>
+                        <p className="text-text-body mb-6 text-sm">Mengaktifkan AIPod ini akan mereplikasi wujud fisik dan statistik dasar AIPet-mu. Proses ini membutuhkan <strong className="text-text-header">{ACTIVATION_COST} token</strong>.</p>
                         <div className="flex flex-col items-center gap-3">
                             <Button onClick={handleActivate} isLoading={isLoading} disabled={isLoading}>Ya, Aktifkan Sekarang! ({ACTIVATION_COST} Token)</Button>
                             <Button onClick={onClose} variant="secondary" size="small">Nanti Aja Deh</Button>

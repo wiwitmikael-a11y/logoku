@@ -18,7 +18,6 @@ const statusMessages = [
     "Mensintesis matriks kepribadian...",
     "Memilih blueprint dasar dari database...",
     "Meracik palet warna dinamis...",
-    "Meminta narasi genetik dari Gemini...",
     "Menyusun sekuens data digital...",
     "Finalisasi... Inisiasi protokol aktivasi!",
 ];
@@ -72,7 +71,8 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
 
     const dummyPodState: AIPetState = {
         name: 'Pod Stasis',
-        stage: 'stasis_pod',
+        // FIX: The 'stage' type 'stasis_pod' is invalid. Corrected to 'aipod' to match the AIPetStage type definition.
+        stage: 'aipod',
         tier: 'common',
         stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
         lastFed: Date.now(),

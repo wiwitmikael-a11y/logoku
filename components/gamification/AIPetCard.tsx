@@ -21,7 +21,7 @@ const StatBar: React.FC<{ label: string; value: number; color: string }> = ({ la
 
 
 const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
-    if (petState.stage === 'stasis_pod' || !petState.blueprint) {
+    if (petState.stage === 'aipod' || !petState.blueprint) {
         return <p className="text-sm text-text-muted italic">AIPet belum diaktifkan.</p>;
     }
 

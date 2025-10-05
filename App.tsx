@@ -71,6 +71,64 @@ const AIPetContextualBubble = React.lazy(() => import('./components/AIPetContext
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
+const FloatingAIPet: React.FC<{ petState: AIPetState, isVisible: boolean, onClick: () => void }> = ({ petState, isVisible, onClick }) => {
+    const [position, setPosition] = useState({ x: 50, direction: 1 }); // x in vw, direction 1 is right, -1 is left
+    const [behavior, setBehavior] = useState<'idle' | 'walking'>('idle');
+    const animationFrameRef = useRef<number>();
+    const behaviorTimeoutRef = useRef<number>();
+
+    // Main animation loop for movement
+    useEffect(() => {
+        const move = () => {
+            if (behavior === 'walking') {
+                setPosition(prev => {
+                    let newX = prev.x + 0.05 * prev.direction;
+                    let newDirection = prev.direction;
+                    if (newX > 95) { newDirection = -1; setBehavior('idle'); }
+                    if (newX < 5) { newDirection = 1; setBehavior('idle'); }
+                    return { x: newX, direction: newDirection };
+                });
+            }
+            animationFrameRef.current = requestAnimationFrame(move);
+        };
+        animationFrameRef.current = requestAnimationFrame(move);
+        return () => cancelAnimationFrame(animationFrameRef.current!);
+    }, [behavior]);
+
+    // Behavior state machine (idle <-> walking)
+    useEffect(() => {
+        clearTimeout(behaviorTimeoutRef.current);
+        const setNextBehavior = () => {
+            if (behavior === 'idle') {
+                setBehavior('walking');
+                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 5000 + 5000); // Walk for 5-10s
+            } else {
+                setBehavior('idle');
+                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 3000 + 2000); // Idle for 2-5s
+            }
+        };
+        behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 2000 + 1000); // Initial delay
+        return () => clearTimeout(behaviorTimeoutRef.current);
+    }, [behavior]);
+    
+    const animationClass = isVisible ? 'animate-aipet-blip-in' : 'animate-aipet-blink-out';
+
+    return (
+        <div 
+            onClick={onClick}
+            className={`fixed bottom-0 w-24 h-24 z-40 cursor-pointer group ${animationClass}`}
+            style={{
+                left: `${position.x}vw`,
+                transform: `translateX(-50%) scaleX(${position.direction})`,
+                transition: 'transform 0.3s ease-in-out',
+            }}
+        >
+            <Suspense fallback={null}><AIPetVisual petState={petState} /></Suspense>
+        </div>
+    );
+};
+
+
 const AiAssistant: React.FC<{ petName: string, isOpen: boolean, onToggle: (isOpen: boolean) => void }> = ({ petName, isOpen, onToggle }) => {
     const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
     const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
@@ -251,6 +309,7 @@ const MainApp: React.FC = () => {
     // UX Enhancements
     const [showXpGain, setShowXpGain] = useState(false);
     const prevXp = useRef(profile?.xp ?? 0);
+    const [isPetVisible, setIsPetVisible] = useState(true);
 
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'social_kit', 'profiles', 'packaging', 'print_media', 'content_calendar', 'social_ads', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
@@ -293,7 +352,13 @@ const MainApp: React.FC = () => {
     };
 
     useEffect(() => {
-        if (previousAppState.current !== appState) { playSound('transition'); window.scrollTo(0, 0); }
+        if (previousAppState.current !== appState) {
+            playSound('transition');
+            window.scrollTo(0, 0);
+            setIsPetVisible(false);
+            const timer = setTimeout(() => setIsPetVisible(true), 500); // Blip in after a delay
+            return () => clearTimeout(timer);
+        }
         previousAppState.current = appState;
     }, [appState]);
 
@@ -538,12 +603,11 @@ const MainApp: React.FC = () => {
         {/* --- Floating Pet Assistant & Panels --- */}
         {user && !aipetContext.isLoading && petState && (
             <>
-                <div 
+                <FloatingAIPet 
+                    petState={petState} 
+                    isVisible={isPetVisible}
                     onClick={() => setPetPanelOpen(p => !p)}
-                    className="fixed bottom-8 right-8 w-24 h-24 z-40 cursor-pointer group"
-                >
-                    <Suspense fallback={null}><AIPetVisual petState={petState} /></Suspense>
-                </div>
+                />
 
                 <Suspense fallback={null}>
                     <AiAssistant 

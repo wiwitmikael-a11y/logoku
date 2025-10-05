@@ -103,7 +103,7 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     };
 
     const headerContent = () => {
-        if (petState.stage === 'stasis_pod') {
+        if (petState.stage === 'aipod') {
             return <h3 className="font-bold text-text-header">{petState.name}</h3>;
         }
         if (isEditingName) {
@@ -132,15 +132,15 @@ const AIPetWidget: React.FC<Props> = ({ petState, isLoading, onGameWin, isOpen, 
     };
 
     const mainContent = () => {
-        if (petState.stage === 'stasis_pod' || !petState.blueprint) {
-            const isPod = petState.stage === 'stasis_pod';
+        if (petState.stage === 'aipod' || !petState.blueprint) {
+            const isPod = petState.stage === 'aipod';
             return (
                 <div className="text-center p-4">
                     <p className="text-sm text-text-body mb-4">
-                        {isPod ? "Pod Stasis terdeteksi. Siap untuk aktivasi?" : "AIPet-mu siap untuk diwujudkan wujud fisiknya!"}
+                        {isPod ? "AIPod terdeteksi. Siap untuk aktivasi?" : "AIPet-mu siap untuk diwujudkan wujud fisiknya!"}
                     </p>
                     <button onClick={() => setShowActivationModal(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover">
-                        {isPod ? "Aktifkan Pod" : "Wujudkan Visual"} (1 Token)
+                        {isPod ? "Aktifkan AIPod" : "Wujudkan Visual"} (5 Token)
                     </button>
                 </div>
             );

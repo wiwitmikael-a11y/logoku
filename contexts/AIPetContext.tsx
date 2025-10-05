@@ -114,15 +114,14 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 needsDbUpdate = true;
             }
 
-            // Backwards compatibility: simplify stage from child/teen/adult/hatched to 'active' and 'egg' to 'stasis_pod'
+            // Backwards compatibility: simplify stage from child/teen/adult/hatched to 'active' and 'egg'/'stasis_pod' to 'aipod'
             if (['child', 'teen', 'adult', 'hatched'].includes(existingState.stage)) {
                 existingState.stage = 'active';
                 needsDbUpdate = true;
-// FIX: The comparison `existingState.stage === 'egg'` was causing a type error. Casting to `any` for this specific backward-compatibility check allows the migration logic to function without affecting the strict `AIPetStage` type elsewhere.
-            } else if ((existingState.stage as any) === 'egg') {
-                existingState.stage = 'stasis_pod';
-                if (existingState.name === 'Telur AI') {
-                    existingState.name = 'Pod Stasis';
+            } else if ((existingState.stage as any) === 'egg' || (existingState.stage as any) === 'stasis_pod') {
+                existingState.stage = 'aipod';
+                if (existingState.name === 'Telur AI' || existingState.name === 'Pod Stasis') {
+                    existingState.name = 'AIPod';
                 }
                 needsDbUpdate = true;
             }
@@ -133,11 +132,11 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 savePetStateToDb(existingState);
             }
         } else {
-            // NEW PET: Starts as an stasis_pod.
+            // NEW PET: Starts as an aipod.
             const newPet: AIPetState = {
-                name: 'Pod Stasis',
-                stage: 'stasis_pod',
-                tier: 'common', // Default tier for an stasis_pod
+                name: 'AIPod',
+                stage: 'aipod',
+                tier: 'common', // Default tier for an aipod
                 stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
                 lastFed: Date.now(),
                 lastPlayed: Date.now(),
@@ -159,7 +158,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const now = Date.now();
             if (now - lastUpdateRef.current > 5000) { // Update every 5 seconds
                 updatePetState(p => {
-                    if (p.stage === 'stasis_pod') return p;
+                    if (p.stage === 'aipod') return p;
                     const decayRate = 0.1;
                     return {
                         ...p,
@@ -297,7 +296,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {
         updatePetState(p => {
-            if (p.stage === 'stasis_pod') return p; // Pods don't gain stats from activities
+            if (p.stage === 'aipod') return p; // Pods don't gain stats from activities
             let newStats = { ...p.stats };
             let newPersonality = { ...p.personality };
 
@@ -329,7 +328,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const onGameWin = useCallback((game: 'color' | 'pattern' | 'style' | 'slogan') => {
         addXp(15);
         updatePetState(p => {
-             if (p.stage === 'stasis_pod') return p;
+             if (p.stage === 'aipod') return p;
             let statToBoost: keyof AIPetStats = 'creativity';
             if (game === 'color') statToBoost = 'creativity';
             if (game === 'pattern') statToBoost = 'intelligence';

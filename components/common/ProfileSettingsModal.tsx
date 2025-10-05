@@ -69,13 +69,13 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
 
             <div className="bg-background border border-border-main p-4 rounded-lg">
                 <h3 className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Aset Digital AIPet</h3>
-                {profile.aipet_state && profile.aipet_state.stage !== 'egg' ? (
+                {profile.aipet_state && profile.aipet_state.stage !== 'aipod' ? (
                      <Suspense fallback={<div className="h-64 flex items-center justify-center text-sm text-text-muted">Memuat Kartu...</div>}>
                          <AIPetCard petState={profile.aipet_state} />
                      </Suspense>
                  ) : (
                      <div className="text-center text-sm text-text-muted p-4 border border-dashed border-border-main rounded-lg">
-                         <p>AIPet-mu masih di dalam telur! Buka menu AIPet di dashboard untuk menetaskannya.</p>
+                         <p>AIPet-mu masih di dalam AIPod! Buka menu AIPet di dashboard untuk mengaktifkannya.</p>
                      </div>
                  )}
             </div>
