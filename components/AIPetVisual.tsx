@@ -6,7 +6,7 @@ import type { AIPetState } from '../types';
 interface AIPetVisualProps {
   petState: AIPetState;
   className?: string;
-  behavior?: 'idle' | 'walking';
+  behavior?: 'idle' | 'walking' | 'running' | 'jumping' | 'interacting';
 }
 
 // --- NEW AIPOD VISUAL ---
@@ -234,18 +234,44 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             const now = Date.now();
-            let interactY = 0;
-            const INTERACTION_DURATION = 500;
-            if (interactionTs > 0 && now - interactionTs < INTERACTION_DURATION) {
-                const progress = (now - interactionTs) / INTERACTION_DURATION;
-                interactY = -Math.sin(progress * Math.PI) * 10;
-            }
+            const INTERACTION_DURATION = 1200;
+            const isInteracting = interactionTs > 0 && now - interactionTs < INTERACTION_DURATION;
             
             const animations: Record<string, { y: number; rot: number }> = {};
-            const walkCycle = time / 250;
+            const walkCycle = time / (behavior === 'running' ? 150 : 250);
             const idleCycle = time / 600;
+            let jumpY = 0;
 
-            if (behavior === 'walking') {
+            if (isInteracting) {
+                const progress = (now - interactionTs) / INTERACTION_DURATION;
+                const wave = Math.sin(progress * Math.PI * 3) * 60;
+                const bounce = -Math.sin(progress * Math.PI) * 15;
+                animations['torso'] = { y: bounce, rot: 0 };
+                animations['head'] = { y: 0, rot: Math.sin(progress * Math.PI * 3) * 5 };
+                animations['right_arm'] = { y: 0, rot: -20 + wave };
+                animations['left_arm'] = { y: 0, rot: 0 };
+                animations['left_leg'] = { y: 0, rot: 0 };
+                animations['right_leg'] = { y: 0, rot: 0 };
+            } else if (behavior === 'jumping') {
+                const jumpProgress = (time % 800) / 800; // 800ms jump duration
+                jumpY = -Math.sin(jumpProgress * Math.PI) * 40; // 40px jump height
+                const legTuck = Math.sin(jumpProgress * Math.PI) * 30;
+                animations['torso'] = { y: 0, rot: 5 };
+                animations['head'] = { y: 0, rot: -5 };
+                animations['left_arm'] = { y: 0, rot: 45 };
+                animations['right_arm'] = { y: 0, rot: -45 };
+                animations['left_leg'] = { y: 0, rot: legTuck };
+                animations['right_leg'] = { y: 0, rot: legTuck };
+            } else if (behavior === 'running') {
+                const bob = Math.sin(walkCycle) * 5;
+                const lean = 5;
+                animations['torso'] = { y: bob, rot: lean };
+                animations['head'] = { y: bob, rot: Math.sin(walkCycle / 2) * 3 - lean };
+                animations['left_arm'] = { y: 0, rot: Math.sin(walkCycle + Math.PI) * 60 };
+                animations['right_arm'] = { y: 0, rot: Math.sin(walkCycle) * 60 };
+                animations['left_leg'] = { y: 0, rot: Math.sin(walkCycle) * 45 };
+                animations['right_leg'] = { y: 0, rot: Math.sin(walkCycle + Math.PI) * 45 };
+            } else if (behavior === 'walking') {
                 const bob = Math.sin(walkCycle) * 3;
                 animations['torso'] = { y: bob, rot: 0 };
                 animations['head'] = { y: bob, rot: Math.sin(walkCycle / 2) * 2 };
@@ -272,9 +298,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
                 const anim = animations[partName] || { y: 0, rot: 0 };
                 
                 const partX = (canvas.width - 256) / 2 + part.x;
-                let partY = (canvas.height - 256) / 2 + part.y + anim.y + interactY;
-                let animRot = anim.rot;
-
+                let partY = (canvas.height - 256) / 2 + part.y + anim.y + (isInteracting ? 0 : jumpY);
+                
                 if (partName.includes('arm') || partName.includes('leg') || partName.includes('head')) {
                     partY += animations['torso']?.y || 0;
                 }
@@ -283,7 +308,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
                 const pivotY = partY + part.def.pivot.y;
                 
                 ctx.translate(pivotX, pivotY);
-                ctx.rotate(animRot * Math.PI / 180);
+                ctx.rotate(anim.rot * Math.PI / 180);
                 const scale = part.def.scale || 1.0;
                 ctx.scale(scale, scale);
                 ctx.drawImage(part.canvas, -part.def.pivot.x, -part.def.pivot.y);

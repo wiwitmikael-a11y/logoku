@@ -19,18 +19,19 @@ const AIPetContextualBubble: React.FC<Props> = ({ message, onClose }) => {
 
   return (
     <div
-      className="fixed bottom-36 right-8 w-64 bg-surface/90 backdrop-blur-md border border-border-main rounded-xl shadow-lg z-30 p-3 animate-content-fade-in"
+      className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 bg-surface/90 backdrop-blur-md border border-border-main rounded-xl shadow-lg z-30 p-3 animate-bubble-from-pet"
       role="alert"
     >
       <style>{`
         .contextual-bubble::after {
           content: '';
           position: absolute;
-          bottom: -8px;
-          right: 24px;
+          top: 100%; /* at the bottom of the bubble */
+          left: 50%;
+          transform: translateX(-50%);
           border-width: 8px;
           border-style: solid;
-          border-color: rgb(var(--c-surface)/0.9) transparent transparent transparent;
+          border-color: rgb(var(--c-surface)/0.9) transparent transparent transparent; /* points down */
         }
       `}</style>
       <div className="contextual-bubble relative">

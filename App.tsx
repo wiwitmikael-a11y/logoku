@@ -67,7 +67,7 @@ const AIPetInteractionBubble = React.lazy(() => import('./components/AIPetIntera
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+type PetBehavior = 'idle' | 'walking' | 'running' | 'jumping';
 
 const FloatingAIPet: React.FC<{ 
     petState: AIPetState, 
@@ -76,10 +76,13 @@ const FloatingAIPet: React.FC<{
     onShowLab: () => void,
     onActivate: () => void,
 }> = ({ petState, isVisible, onAsk, onShowLab, onActivate }) => {
+    const { contextualMessage, setContextualMessage } = useAIPet();
     const [position, setPosition] = useState({ x: 50, direction: 1 });
-    const [behavior, setBehavior] = useState<'idle' | 'walking'>('idle');
+    const [behavior, setBehavior] = useState<PetBehavior>('idle');
+    const [isInteracting, setIsInteracting] = useState(false);
     const animationFrameRef = useRef<number>();
     const behaviorTimeoutRef = useRef<number>();
+    const interactionTimeoutRef = useRef<number>();
     const [isBubbleOpen, setBubbleOpen] = useState(false);
     const isPod = petState.stage === 'aipod';
 
@@ -87,12 +90,13 @@ const FloatingAIPet: React.FC<{
     useEffect(() => {
         if (isPod) return;
         const move = () => {
-            if (behavior === 'walking') {
+            if (behavior === 'walking' || behavior === 'running') {
+                const speed = behavior === 'running' ? 0.25 : 0.08;
                 setPosition(prev => {
-                    let newX = prev.x + 0.05 * prev.direction;
+                    let newX = prev.x + speed * prev.direction;
                     let newDirection = prev.direction;
-                    if (newX > 95) { newDirection = -1; setBehavior('idle'); }
-                    if (newX < 5) { newDirection = 1; setBehavior('idle'); }
+                    if (newX > 98) { newDirection = -1; setBehavior('idle'); }
+                    if (newX < 2) { newDirection = 1; setBehavior('idle'); }
                     return { x: newX, direction: newDirection };
                 });
             }
@@ -102,28 +106,48 @@ const FloatingAIPet: React.FC<{
         return () => cancelAnimationFrame(animationFrameRef.current!);
     }, [behavior, isPod]);
 
-    // Behavior state machine (idle <-> walking)
+    // Behavior state machine
     useEffect(() => {
         if (isPod) return;
         clearTimeout(behaviorTimeoutRef.current);
         const setNextBehavior = () => {
+            const nextAction = Math.random();
+            if (isInteracting) {
+                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, 1000);
+                return;
+            }
+    
             if (behavior === 'idle') {
                 setBehavior('walking');
-                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 5000 + 5000); // Walk for 5-10s
+                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 4000 + 4000);
+            } else if (behavior === 'walking') {
+                if (nextAction < 0.15) {
+                    setBehavior('running');
+                    behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 2000 + 1500);
+                } else if (nextAction < 0.25) {
+                    setBehavior('jumping');
+                    behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, 800);
+                } else {
+                    setBehavior('idle');
+                    behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 2000 + 2000);
+                }
             } else {
-                setBehavior('idle');
-                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 3000 + 2000); // Idle for 2-5s
+                setBehavior('walking');
+                behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 4000 + 4000);
             }
         };
-        behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 2000 + 1000); // Initial delay
+        behaviorTimeoutRef.current = window.setTimeout(setNextBehavior, Math.random() * 1500 + 1000);
         return () => clearTimeout(behaviorTimeoutRef.current);
-    }, [behavior, isPod]);
+    }, [behavior, isPod, isInteracting]);
     
     const handlePetClick = () => {
         if (isPod) {
             onActivate();
         } else {
+            clearTimeout(interactionTimeoutRef.current);
             setBubbleOpen(p => !p);
+            setIsInteracting(true);
+            interactionTimeoutRef.current = window.setTimeout(() => setIsInteracting(false), 1200);
         }
     };
 
@@ -131,21 +155,32 @@ const FloatingAIPet: React.FC<{
     const containerStyle: React.CSSProperties = isPod
         ? { position: 'fixed', bottom: '1rem', right: '1rem' }
         : { left: `${position.x}vw`, transform: `translateX(-50%)`, transition: 'left 0.1s linear' };
+        
+    const petContainerClass = isPod
+        ? 'w-20 h-20 md:w-24 md:h-24'
+        : 'w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40';
 
     return (
         <div 
             className={`fixed bottom-0 z-40`}
             style={containerStyle}
         >
+            <Suspense fallback={null}>
+                <AIPetContextualBubble
+                    message={contextualMessage}
+                    onClose={() => setContextualMessage(null)}
+                />
+            </Suspense>
+            
             <div 
                 onClick={handlePetClick}
-                className={`cursor-pointer group ${animationClass} ${isPod ? 'w-20 h-20' : 'w-24 h-24'}`}
+                className={`cursor-pointer group relative ${animationClass} ${petContainerClass}`}
                 style={isPod ? {} : {
                     transform: `scaleX(${position.direction})`,
                     transition: 'transform 0.3s ease-in-out',
                 }}
             >
-                <Suspense fallback={null}><AIPetVisual petState={petState} behavior={behavior} /></Suspense>
+                <Suspense fallback={null}><AIPetVisual petState={petState} behavior={isInteracting ? 'interacting' : behavior} /></Suspense>
             </div>
             
             {petState.stage === 'active' && (
@@ -307,7 +342,7 @@ const App: React.FC = () => {
 const MainApp: React.FC = () => {
     const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, imageEditorState, closeImageEditor, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
     const aipetContext = useAIPet();
-    const { petState, contextualMessage, setContextualMessage } = aipetContext;
+    const { petState } = aipetContext;
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -653,10 +688,6 @@ const MainApp: React.FC = () => {
                         isOpen={isAssistantOpen} 
                         onToggle={setAssistantOpen} 
                         petName={petState.name} 
-                    />
-                    <AIPetContextualBubble
-                        message={contextualMessage}
-                        onClose={() => setContextualMessage(null)}
                     />
                 </Suspense>
             </>
