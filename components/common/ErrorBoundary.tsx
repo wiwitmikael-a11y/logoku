@@ -17,8 +17,6 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Refactored to use modern class property syntax to correctly bind 'this'
-  // and resolve errors related to accessing state and props.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -31,7 +29,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  // FIX: Converted to an arrow function to ensure 'this' is correctly bound.
+  public componentDidCatch = (error: Error, errorInfo: ErrorInfo) => {
     console.error("Uncaught error:", error, errorInfo);
   }
 
@@ -43,7 +42,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  public render(): ReactNode {
+  // FIX: Converted to an arrow function to ensure 'this' is correctly bound, fixing access to 'this.props'.
+  public render = (): ReactNode => {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
