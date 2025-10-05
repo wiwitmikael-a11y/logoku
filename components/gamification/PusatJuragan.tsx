@@ -115,7 +115,8 @@ const PusatJuragan: React.FC = () => {
                     <Card title="🎯 Misi Harian">
                         <div className="space-y-4">
                             {DAILY_MISSIONS.map(mission => {
-                                const progress = dailyActions ? (dailyActions[mission.id] || 0) : 0;
+// FIX: The `progress` variable could be typed as `string[]`, which is incompatible with arithmetic/comparison operations. Cast to `number` as the logic expects a numerical count.
+                                const progress = dailyActions ? (dailyActions[mission.id] as number || 0) : 0;
                                 const isCompleted = progress >= mission.target;
                                 const isClaimed = dailyActions?.claimed_missions?.includes(mission.id);
                                 return (

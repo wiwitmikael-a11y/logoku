@@ -662,7 +662,7 @@ const MainApp: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-1.5 accent-stripes"></div>
                 <div className="max-w-7xl mx-auto flex justify-between items-center relative pt-1.5">
                     <h1 className="text-3xl md:text-4xl font-extrabold tracking-wider cursor-pointer transition-transform hover:scale-105" onClick={handleReturnToDashboard} style={{fontFamily: 'var(--font-display)'}}>
-                        <span className="text-primary">desain</span><span className="text-text-header">.fun</span>
+                        <span className="text-primary">des<span className="text-accent">ai</span>n</span><span className="text-text-header">.fun</span>
                     </h1>
                     <div className="flex items-center gap-1 sm:gap-2">
                         <button onClick={() => setShowTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1.5 p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
@@ -806,7 +806,7 @@ const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onSh
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="space-y-4">
-                        <h3 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}><span className="text-primary">desain</span>.fun</h3>
+                        <h3 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}><span className="text-primary">des<span className="text-accent">ai</span>n</span>.fun</h3>
                         <p className="text-sm">Studio branding AI untuk UMKM juara. Ubah ide jadi brand siap tanding dalam hitungan menit.</p>
                         <div className="flex space-x-4">
                             <a href="https://www.instagram.com/rangga.p.h" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-primary transition-colors" title="Instagram Developer">

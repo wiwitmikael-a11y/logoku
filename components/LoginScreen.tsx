@@ -75,7 +75,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
         <div className="relative z-10">
             <div className="inline-flex flex-col items-center mb-6">
               <h1 style={{fontFamily: 'var(--font-display)'}} className="text-6xl md:text-7xl font-extrabold tracking-wider text-primary mb-2">
-                desain<span className="text-text-header">.fun</span>
+                des<span className="text-accent">ai</span>n<span className="text-text-header">.fun</span>
               </h1>
               <p className="text-xl text-text-muted -mt-2" style={{ fontFamily: 'var(--font-hand)' }}>by @rangga.p.h</p>
               <p className="font-semibold text-text-muted mt-2">Studio Branding AI untuk UMKM Juara</p>
