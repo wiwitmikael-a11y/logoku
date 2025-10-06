@@ -46,7 +46,7 @@ const BattleStatDisplay: React.FC<{ label: string; value: number; icon: string }
 
 const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
     const { profile } = useAuth();
-    const { petState, isLoading: isPetLoading, activatePetWithTokens, activatePetWithFragments, dismantlePet } = useAIPet();
+    const { petState, isLoading: isPetLoading, activatePetWithTokens, activatePetWithFragments, dismantlePet, feedPet } = useAIPet();
     
     const [activationStep, setActivationStep] = useState<'idle' | 'loading' | 'reveal' | 'done'>('idle');
     const [error, setError] = useState<string | null>(null);
@@ -109,6 +109,11 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
         }
     };
 
+    const handleFeed = () => {
+        feedPet();
+        playSound('select');
+    };
+
     const podAnimation = `@keyframes pod-wobble { 0%{transform:rotate(0deg)} 25%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} 75%{transform:rotate(-3deg)} 100%{transform:rotate(0deg)} } .animate-pod-wobble { animation: pod-wobble 0.3s linear infinite; } @keyframes pet-reveal { 0% { transform: scale(0) rotate(-180deg); opacity: 0; filter: brightness(3) saturate(0); } 100% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1) saturate(1); } } .animate-pet-reveal { animation: pet-reveal 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards; }`;
 
     const dummyPodState: AIPetState = { name: 'AIPod', stage: 'aipod', tier: 'common', stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 }, lastFed: Date.now(), lastPlayed: Date.now(), personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 }, narrative: null, blueprint: null, colors: null, battleStats: null, buffs: [], };
@@ -143,6 +148,12 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
 
     const renderLabView = (pet: AIPetState) => (
         <div className="space-y-1">
+            <details open>
+                <summary className="font-semibold text-splash uppercase tracking-wider text-xs py-2 cursor-pointer">Aksi</summary>
+                <div className="bg-background p-4 rounded-lg border border-border-main mb-4">
+                     <Button onClick={handleFeed} size="small">Beri Makan (+15 Energi)</Button>
+                </div>
+            </details>
             <details open>
                 <summary className="font-semibold text-splash uppercase tracking-wider text-xs py-2 cursor-pointer">Cerita Asal</summary>
                 <div className="bg-background p-4 rounded-lg border border-border-main mb-4">

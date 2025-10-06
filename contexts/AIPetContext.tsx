@@ -6,6 +6,8 @@ import { useAuth } from './AuthContext';
 import { generateAIPetNarrative } from '../services/geminiService';
 import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint, AIPetTier, AIPetColorPalette, AIPetBattleStats } from '../types';
 
+export type VisualEffect = { type: 'feed', id: number } | null;
+
 export interface AIPetContextType {
   petState: AIPetState | null;
   isLoading: boolean;
@@ -14,12 +16,14 @@ export interface AIPetContextType {
   isPetOnScreen: boolean;
   notifyPetOfActivity: (activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => void;
   handleInteraction: () => void;
-  // FIX: The 'game' parameter type did not include all possible values being checked ('intelligence', 'charisma'), causing a type error. The type has been expanded to include all valid game types.
   onGameWin: (game: 'color' | 'pattern' | 'style' | 'slogan' | 'intelligence' | 'charisma') => void;
   updatePetName: (newName: string) => void;
   activatePetWithTokens: () => Promise<void>;
   activatePetWithFragments: () => Promise<void>;
   dismantlePet: () => Promise<void>;
+  feedPet: () => void;
+  visualEffect: VisualEffect;
+  clearVisualEffect: () => void;
 }
 
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
@@ -73,6 +77,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [isLoading, setIsLoading] = useState(true);
     const [contextualMessage, setContextualMessage] = useState<string | null>(null);
     const [isPetOnScreen, setIsPetOnScreen] = useState(false);
+    const [visualEffect, setVisualEffect] = useState<VisualEffect>(null);
     const petVisibilityTimer = useRef<number | null>(null);
     const lastUpdateRef = useRef(Date.now());
 
@@ -264,14 +269,27 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     const handleInteraction = useCallback(() => { updatePetState(p => ({ ...p, stats: { ...p.stats, energy: Math.min(MAX_STATS.energy, p.stats.energy + 1) } })); }, [updatePetState]);
     
-    // FIX: The 'game' parameter type did not include all possible values being checked ('intelligence', 'charisma'), causing a type error. The type has been expanded to include all valid game types.
     const onGameWin = useCallback((game: 'color' | 'pattern' | 'style' | 'slogan' | 'intelligence' | 'charisma') => {
         addXp(15); updatePetState(p => { if (p.stage === 'aipod') return p; let statToBoost: keyof AIPetStats = 'creativity'; if (game === 'intelligence') statToBoost = 'intelligence'; if (game === 'charisma') statToBoost = 'charisma'; return { ...p, stats: { ...p.stats, [statToBoost]: Math.min(MAX_STATS[statToBoost], p.stats[statToBoost] + 15), energy: Math.max(0, p.stats.energy - 5) }}; });
     }, [updatePetState, addXp]);
 
     const updatePetName = useCallback((newName: string) => { if (newName.trim()) updatePetState(p => ({ ...p, name: newName.trim() }), true); }, [updatePetState]);
 
-    const value: AIPetContextType = { petState, isLoading, contextualMessage, showContextualMessage, isPetOnScreen, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, activatePetWithTokens, activatePetWithFragments, dismantlePet };
+    const feedPet = useCallback(() => {
+        updatePetState(p => {
+            if (p.stage === 'aipod') return p;
+            return {
+                ...p,
+                stats: { ...p.stats, energy: Math.min(MAX_STATS.energy, p.stats.energy + 15) },
+                lastFed: Date.now(),
+            }
+        });
+        setVisualEffect({ type: 'feed', id: Date.now() });
+    }, [updatePetState]);
+
+    const clearVisualEffect = useCallback(() => setVisualEffect(null), []);
+
+    const value: AIPetContextType = { petState, isLoading, contextualMessage, showContextualMessage, isPetOnScreen, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, activatePetWithTokens, activatePetWithFragments, dismantlePet, feedPet, visualEffect, clearVisualEffect };
     
     return <AIPetContext.Provider value={value}>{children}</AIPetContext.Provider>;
 };

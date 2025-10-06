@@ -1,7 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import type { AIPetState, AIPetTier } from '../types';
+import { useAIPet, VisualEffect } from '../contexts/AIPetContext';
 
 // Deklarasi global untuk library Zdog yang dimuat dari CDN
 declare const Zdog: any;
@@ -128,7 +129,10 @@ interface PartCacheEntry {
     height: number;
 }
 
+type VfxState = { id: number; type: 'feed', progress: number; particle: any; } | null;
+
 const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior = 'idle', direction = 1 }) => {
+    const { visualEffect, clearVisualEffect } = useAIPet();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationFrameId = useRef<number>(0);
     const partCache = useRef<Map<string, PartCacheEntry>>(new Map());
@@ -140,12 +144,14 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
     const petAnchorRef = useRef<any>(null);
     const zdogAnchorsRef = useRef<Map<string, any>>(new Map());
     const physicsVelocitiesRef = useRef<Record<string, { translate: any; rotate: any }>>({});
+    const [vfxState, setVfxState] = useState<VfxState>(null);
     
     // New state for advanced animations
     const parallaxRef = useRef({ x: 0, y: 0 });
     const currentYRotationRef = useRef(0);
     const lightSource = useMemo(() => new Zdog.Vector({ x: -0.75, y: -1, z: 1.5 }).normalize(), []);
     const animationStartTime = useRef(0);
+    const [draggedPart, setDraggedPart] = useState<{name: string; offset: {x: number; y: number}} | null>(null);
 
     
     // Initialize Zdog scene
@@ -158,6 +164,11 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
         });
         illoRef.current = illo;
 
+        // Environment
+        new Zdog.Ellipse({ addTo: illo, diameter: 180, rotate: { x: Zdog.TAU/4 }, translate: { y: 60 }, stroke: 4, color: '#404040' });
+        new Zdog.Box({ addTo: illo, width: 20, height: 40, depth: 10, translate: { x: -100, y: 20, z: -100 }, rotate: { y: Zdog.TAU/8 }, color: '#333' });
+        new Zdog.Shape({ addTo: illo, path: [{x: -40, y: -40}, {x: 40, y: -40}], translate: {z: -150}, stroke: 2, color: '#555' });
+        
         const petAnchor = new Zdog.Anchor({ addTo: illo });
         petAnchorRef.current = petAnchor;
         
@@ -182,8 +193,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
     // Parallax effect on mouse move
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            if (!petAnchorRef.current) return;
-            // Store parallax values instead of directly manipulating anchors
+            if (!illoRef.current) return;
             parallaxRef.current.x = (e.clientY / window.innerHeight - 0.5) * -0.4;
             parallaxRef.current.y = (e.clientX / window.innerWidth - 0.5) * 0.5;
         };
@@ -243,9 +253,21 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
         else { const img = new Image(); img.crossOrigin = "anonymous"; img.src = blueprint.url; img.onload = () => { imageCache[blueprint.url] = img; processBlueprint(img); }; img.onerror = () => console.error("Failed to load blueprint:", blueprint.url); }
     }, [blueprint, colors, name, initZdogScene]);
     
-    // Reset animation timer when behavior changes
     useEffect(() => { animationStartTime.current = performance.now(); }, [behavior]);
     
+    // Handle visual effects from context
+    useEffect(() => {
+        if (visualEffect?.type === 'feed' && illoRef.current) {
+            const particle = new Zdog.Shape({
+                addTo: illoRef.current,
+                path: [{ x: -2, y: -2 }, { x: 2, y: -2 }, { x: 2, y: 2 }, { x: -2, y: 2 }],
+                translate: { x: 0, y: -150, z: 200 },
+                stroke: 4, color: colors?.energy.highlight || '#FFF',
+            });
+            setVfxState({ id: visualEffect.id, type: 'feed', progress: 0, particle });
+        }
+    }, [visualEffect, colors]);
+
     // Main animation loop
     useEffect(() => {
         if (!illoRef.current) return;
@@ -257,6 +279,20 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
             if (!canvas || !illo || partCache.current.size === 0) return;
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
+
+            // --- VFX Update ---
+            if (vfxState?.type === 'feed') {
+                const head = zdogAnchorsRef.current.get('head');
+                const target = head ? petAnchorRef.current.localToWorld(head.translate) : petAnchorRef.current.translate;
+                vfxState.progress += 0.05;
+                if (vfxState.progress < 1) {
+                    vfxState.particle.translate.lerp(target, vfxState.progress);
+                } else {
+                    vfxState.particle.remove();
+                    setVfxState(null);
+                    clearVisualEffect();
+                }
+            }
 
             // --- Physics Update ---
             const stiffness = 0.08, damping = 0.8;
@@ -293,6 +329,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
             }
 
             zdogAnchorsRef.current.forEach((anchor, name) => {
+                if (draggedPart?.name === name) return;
                 const target = targetState[name] || { translate: {}, rotate: {} };
                 const vels = physicsVelocitiesRef.current[name];
                 
@@ -309,15 +346,19 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
 
             // --- Rotation & Head Tracking Update ---
             if (petAnchorRef.current && behavior !== 'somersault' && behavior !== 'interacting') {
-                const targetY = direction === 1 ? 0 : Zdog.TAU / 2; // 0 or 180 degrees
-                currentYRotationRef.current += (targetY - currentYRotationRef.current) * 0.1; // Smooth interpolation
-
-                petAnchorRef.current.rotate.x = parallaxRef.current.x;
-                petAnchorRef.current.rotate.y = currentYRotationRef.current + parallaxRef.current.y;
+                const targetY = direction === 1 ? 0 : Zdog.TAU / 2;
+                currentYRotationRef.current += (targetY - currentYRotationRef.current) * 0.1;
             }
+            // Apply parallax to the whole scene for environment
+            illo.rotate.x = parallaxRef.current.x * 0.5;
+            illo.rotate.y = parallaxRef.current.y * 0.5;
+            // Apply stronger parallax to the pet itself
+            petAnchorRef.current.rotate.x = parallaxRef.current.x;
+            petAnchorRef.current.rotate.y = currentYRotationRef.current + parallaxRef.current.y;
+
 
             const headAnchor = zdogAnchorsRef.current.get('head');
-            if (headAnchor) {
+            if (headAnchor && !draggedPart) {
                 headAnchor.rotate.x += (parallaxRef.current.x * 0.5 - headAnchor.rotate.x) * 0.1;
                 headAnchor.rotate.y += (parallaxRef.current.y * 0.5 - headAnchor.rotate.y) * 0.1;
             }
@@ -330,13 +371,18 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
             flatGraph.sort((a: any, b: any) => a.renderOrder - b.renderOrder);
 
             flatGraph.forEach((renderEl: any) => {
+                if (renderEl.element === '#illo-canvas') {
+                    // This is a Zdog shape not tied to our pet parts (e.g., environment)
+                    renderEl.render(ctx);
+                    return;
+                }
                 const partName = [...zdogAnchorsRef.current.entries()].find(([_, anchor]) => anchor === renderEl)?.[0];
                 if (!partName) return;
 
                 const part = partCache.current.get(partName);
                 if (!part) return;
                 
-                const zFactor = 1.2; // Dramatize depth scaling
+                const zFactor = 1.2;
                 const scale = illo.zoom / (illo.zoom + renderEl.renderOrigin.z * zFactor);
 
                 ctx.save();
@@ -344,19 +390,17 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
                 ctx.scale(scale, scale);
                 ctx.rotate(renderEl.renderRotation.z);
 
-                // --- Draw Pet Part ---
                 ctx.drawImage(part.canvas, -part.def.pivot.x, -part.def.pivot.y);
 
-                // --- Apply Dynamic Lighting ---
                 const partNormal = new Zdog.Vector({ z: 1 }).rotate(renderEl.renderRotation);
                 const dotProduct = partNormal.dot(lightSource);
 
                 ctx.globalCompositeOperation = 'source-atop';
-                if (dotProduct > 0.3) { // Highlight
+                if (dotProduct > 0.3) {
                     const alpha = Math.min(0.25, dotProduct * 0.25);
                     ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
                     ctx.fillRect(-part.def.pivot.x, -part.def.pivot.y, part.width, part.height);
-                } else if (dotProduct < -0.3) { // Shadow
+                } else if (dotProduct < -0.3) {
                     const alpha = Math.min(0.3, -dotProduct * 0.3);
                     ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
                     ctx.fillRect(-part.def.pivot.x, -part.def.pivot.y, part.width, part.height);
@@ -370,8 +414,56 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
         
         animationFrameId.current = requestAnimationFrame(draw);
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [blueprint, behavior, direction, initZdogScene, lightSource, stats]);
+    }, [blueprint, behavior, direction, initZdogScene, lightSource, stats, draggedPart, vfxState, clearVisualEffect]);
     
+    // --- Interaction Handlers ---
+    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        const illo = illoRef.current;
+        const canvas = canvasRef.current;
+        if (!illo || !canvas) return;
+        const { offsetX, offsetY } = e.nativeEvent;
+
+        const flatGraph = illo.getflatGraph();
+        for (const renderEl of [...flatGraph].reverse()) {
+            const partName = [...zdogAnchorsRef.current.entries()].find(([_, anchor]) => anchor === renderEl)?.[0];
+            if (!partName) continue;
+            const part = partCache.current.get(partName);
+            if (!part) continue;
+
+            const scale = illo.zoom / (illo.zoom + renderEl.renderOrigin.z * 1.2);
+            const renderX = canvas.width / 2 + renderEl.renderOrigin.x;
+            const renderY = canvas.height / 2 + renderEl.renderOrigin.y;
+            const renderWidth = part.width * scale;
+            const renderHeight = part.height * scale;
+            const pivotX = part.def.pivot.x * scale;
+            const pivotY = part.def.pivot.y * scale;
+
+            if (offsetX > renderX - pivotX && offsetX < renderX - pivotX + renderWidth &&
+                offsetY > renderY - pivotY && offsetY < renderY - pivotY + renderHeight) {
+                
+                const anchor = zdogAnchorsRef.current.get(partName);
+                if (anchor) {
+                    const worldTranslate = petAnchorRef.current.localToWorld(anchor.translate);
+                    setDraggedPart({ name: partName, offset: { x: worldTranslate.x - (offsetX - canvas.width / 2), y: worldTranslate.y - (offsetY - canvas.height / 2) } });
+                }
+                return;
+            }
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!draggedPart || !illoRef.current || !canvasRef.current) return;
+        const { offsetX, offsetY } = e.nativeEvent;
+        const anchor = zdogAnchorsRef.current.get(draggedPart.name);
+        if (anchor) {
+            const newWorldPos = { x: offsetX - canvasRef.current.width / 2 + draggedPart.offset.x, y: offsetY - canvasRef.current.height / 2 + draggedPart.offset.y, z: anchor.translate.z };
+            const newLocalPos = petAnchorRef.current.worldToLocal(newWorldPos);
+            anchor.translate.set(newLocalPos);
+        }
+    };
+    const handleMouseUp = () => setDraggedPart(null);
+
+
     const glowStyle = useMemo(() => {
         if (!colors || stage === 'aipod') return {};
         const baseSize = tier === 'mythic' ? 12 : tier === 'epic' ? 8 : 4; const pulseSize = tier === 'mythic' ? 18 : tier === 'epic' ? 12 : 4;
@@ -381,7 +473,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
     }, [tier, stats.energy, colors, stage]);
 
     const animationClass = tier === 'mythic' ? 'animate-aipet-glow-mythic' : tier === 'epic' ? 'animate-aipet-glow-epic' : '';
-    const filterStyle: React.CSSProperties = { imageRendering: 'pixelated', cursor: stage === 'active' ? 'pointer' : 'default', ...(stage !== 'aipod' ? glowStyle : {}) };
+    const cursorClass = draggedPart ? 'cursor-grabbing' : 'cursor-grab';
+    const filterStyle: React.CSSProperties = { imageRendering: 'pixelated', ...(stage !== 'aipod' ? glowStyle : {}) };
 
     if (stage === 'aipod') { return <div className={`w-full h-full ${className || ''}`}><AIPodVisual /></div>; }
     if (!blueprint || !colors) { return <div className="w-full h-full flex items-center justify-center text-xs text-text-muted">Loading visual...</div> }
@@ -392,8 +485,12 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
             width={300}
             height={300}
             style={filterStyle}
-            className={`w-full h-full object-contain ${animationClass} ${className || ''}`}
+            className={`w-full h-full object-contain ${animationClass} ${cursorClass} ${className || ''}`}
             title={petState.name}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
         />
     );
 };
