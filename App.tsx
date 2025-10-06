@@ -32,6 +32,7 @@ import CalloutPopup from './components/common/CalloutPopup';
 // --- Lazily Loaded Components ---
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
 const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersonaGenerator'));
+const VoiceBrandingWizard = React.lazy(() => import('./components/VoiceBrandingWizard'));
 const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
 const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
@@ -384,6 +385,7 @@ const MainApp: React.FC = () => {
     const [showSotoshop, setShowSotoshop] = useState(false);
     const [showAIPetLab, setShowAIPetLab] = useState(false);
     const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
+    const [showVoiceWizard, setShowVoiceWizard] = useState(false);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -483,6 +485,19 @@ const MainApp: React.FC = () => {
         setProjects(prev => [newProject, ...prev]); setSelectedProjectId(newProject.id);
         if (templateData) saveWorkflowState({ brandInputs: templateData as BrandInputs }); else clearWorkflowState();
         navigateTo('persona');
+    }, [session, profile, projects]);
+    
+    const handleVoiceWizardComplete = useCallback(async (inputs: BrandInputs) => {
+        if (!session?.user || !profile) return;
+        setShowVoiceWizard(false);
+        const { data, error } = await supabase.from('projects').insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' as ProjectStatus }).select().single();
+        if (error) { setGeneralError(`Gagal memulai project baru via suara: ${error.message}`); return; }
+        const newProject: Project = data as any;
+        setProjects(prev => [newProject, ...prev]);
+        setSelectedProjectId(newProject.id);
+        saveWorkflowState({ brandInputs: inputs });
+        // The persona step is skipped, go directly to logo
+        navigateTo('logo'); 
     }, [session, profile, projects]);
     
     const handleReturnToDashboard = useCallback(() => { clearWorkflowState(); setSelectedProjectId(null); navigateTo('dashboard'); }, []);
@@ -594,7 +609,7 @@ const MainApp: React.FC = () => {
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} addXp={addXp} onShareToForum={() => handleShareToForum(project)} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
-            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onPreloadNewProject={preloadBrandPersona} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onNewProjectVoice={() => setShowVoiceWizard(true)} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onPreloadNewProject={preloadBrandPersona} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
@@ -712,9 +727,10 @@ const MainApp: React.FC = () => {
                 </Suspense>
             </>
         )}
-
+        
         {/* Modals and overlays */}
         <Suspense fallback={null}>
+            {showVoiceWizard && <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} onComplete={handleVoiceWizardComplete} />}
             <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={petState} profile={profile} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
             <AIPetLabModal 

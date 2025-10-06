@@ -19,6 +19,7 @@ const PusatJuragan = React.lazy(() => import('./gamification/PusatJuragan'));
 interface ProjectDashboardProps {
   projects: Project[];
   onNewProject: (templateData?: Partial<BrandInputs>) => void;
+  onNewProjectVoice: () => void;
   onSelectProject: (projectId: number) => void;
   onDeleteProject: (projectId: number) => void;
   onShowBrandGallery: () => void;
@@ -163,7 +164,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onMouseE
   </div>
 );
 
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'onNewProjectVoice'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
@@ -321,6 +322,12 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
             atau asah jiwa kompetisimu di menu <strong className="text-green-400 font-semibold">Juara</strong>. 
             Semua alat buat jadi juara ada di sini!
         </p>
+         <div className="mt-6 flex justify-center">
+            <Button onClick={props.onNewProjectVoice} variant="secondary" size="large" className="animate-ai-fab-pulse !border-splash/50 !text-splash hover:!bg-splash/10">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                Mulai dengan Suara
+            </Button>
+        </div>
       </div>
 
       <div className="flex justify-center border-b border-border-main overflow-x-auto">

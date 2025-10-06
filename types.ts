@@ -231,3 +231,14 @@ export interface Session {
   user: User;
   [key: string]: any;
 }
+
+// Type for the new Voice Branding Wizard
+export type VoiceWizardStep = 
+  | 'GREETING'
+  | 'GET_BUSINESS_NAME'
+  | 'GET_BUSINESS_DETAILS'
+  | 'GET_TARGET_AUDIENCE'
+  | 'GET_VALUE_PROPOSITION'
+  | 'GET_COMPETITORS'
+  | 'CONFIRMATION'
+  | 'COMPLETED';
