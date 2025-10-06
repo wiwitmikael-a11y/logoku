@@ -105,6 +105,9 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const petVisibilityTimer = useRef<number | null>(null);
     const lastUpdateRef = useRef(Date.now());
 
+    // ARCHITECTURE FIX: This function is now simplified. It only saves to the DB.
+    // The responsibility of updating local state and refreshing the profile is moved
+    // to the orchestrator functions (`activatePet...`, `dismantlePet`, etc.).
     const savePetStateToDb = useCallback(async (updates: Partial<Pick<Profile, 'aipet_state' | 'aipet_pity_counter' | 'data_fragments'>>) => {
         if (!user) return;
         const { error } = await supabase
@@ -249,29 +252,63 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return { activeState, newPityCounter };
     }, [user, profile]);
 
+    // ARCHITECTURE FIX: This function is now the orchestrator.
     const activatePetWithTokens = useCallback(async () => {
-        if (!await deductCredits(ACTIVATION_COST_TOKENS)) throw new Error("Token tidak cukup.");
+        // Step 1: Deduct credits. The `deductCredits` function in AuthContext is now smart
+        // and updates its own state locally, without a global refresh.
+        const creditsDeducted = await deductCredits(ACTIVATION_COST_TOKENS);
+        if (!creditsDeducted) {
+            throw new Error("Token tidak cukup.");
+        }
+
+        // Step 2: Generate all the new pet data. This is the slow part.
         const { activeState, newPityCounter } = await _generateNewPetData();
-        setPetState(activeState);
+
+        // Step 3: Save the complete new state to the database.
         await savePetStateToDb({ aipet_state: activeState, aipet_pity_counter: newPityCounter });
+        
+        // Step 4: CRITICAL - Update the local state directly with the new data.
+        // This instantly updates the UI without waiting for a slow global refresh.
+        setPetState(activeState);
+
+        // Step 5: Grant XP. This also updates locally now.
         await addXp(50);
+
+        // Step 6 (Optional but good practice): If other parts of the app need a full sync
+        // that isn't related to the pet, you can call it here, AFTER the critical path is complete.
+        // In this case, we don't need it.
+        // await refreshProfile(); 
     }, [deductCredits, _generateNewPetData, savePetStateToDb, addXp]);
     
     const activatePetWithFragments = useCallback(async () => {
         const currentFragments = profile?.data_fragments ?? 0;
         if (currentFragments < ACTIVATION_COST_FRAGMENTS) throw new Error("Data Fragment tidak cukup.");
+
         const { activeState, newPityCounter } = await _generateNewPetData();
+        
+        // Update DB with all changes at once
+        await savePetStateToDb({ 
+            aipet_state: activeState, 
+            aipet_pity_counter: newPityCounter, 
+            data_fragments: currentFragments - ACTIVATION_COST_FRAGMENTS 
+        });
+        
+        // Update local state
         setPetState(activeState);
-        await savePetStateToDb({ aipet_state: activeState, aipet_pity_counter: newPityCounter, data_fragments: currentFragments - ACTIVATION_COST_FRAGMENTS });
+        
         await addXp(50);
+        
+        // Since fragments are part of the main profile, a refresh here is okay to ensure sync.
+        // It happens AFTER the pet state is locally updated, so no race condition.
         await refreshProfile();
     }, [profile, _generateNewPetData, savePetStateToDb, addXp, refreshProfile]);
 
     const dismantlePet = useCallback(async () => {
         if (!profile || !petState || petState.tier !== 'common') throw new Error("Hanya pet Common yang bisa didaur ulang.");
         const newFragmentCount = (profile.data_fragments ?? 0) + DISMANTLE_REWARD_FRAGMENTS;
-        setPetState(defaultAIPodState);
+
         await savePetStateToDb({ aipet_state: defaultAIPodState, data_fragments: newFragmentCount });
+        setPetState(defaultAIPodState);
         await addXp(5);
         await refreshProfile();
     }, [profile, petState, savePetStateToDb, addXp, refreshProfile]);

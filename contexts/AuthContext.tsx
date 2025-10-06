@@ -352,6 +352,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const newCredits = profile.credits - amount;
+    // ARCHITECTURE FIX: Update database AND get the new profile data back in one go.
     const { data, error } = await supabase
         .from('profiles')
         .update({ credits: newCredits })
@@ -361,9 +362,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (error) {
         setAuthError(`Gagal mengurangi token: ${error.message}`);
+        // Do not update local state on failure
         return false;
     }
 
+    // ARCHITECTURE FIX: Update local state with the confirmed data from the server.
+    // This eliminates the need for a global refresh and prevents race conditions.
     setProfile(data as Profile);
     return true;
   }, [profile, user]);
@@ -396,6 +400,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updates.credits = (profile.credits ?? 0) + tokenReward;
     }
 
+    // ARCHITECTURE FIX: Use returned data to update local state immediately.
     const { data, error } = await supabase
         .from('profiles')
         .update(updates)
@@ -414,6 +419,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!profile || !user || profile.achievements.includes(achievementId)) return;
       
       const newAchievements = [...profile.achievements, achievementId];
+      // ARCHITECTURE FIX: Use returned data to update local state immediately.
       const { data, error } = await supabase
           .from('profiles')
           .update({ achievements: newAchievements })
@@ -450,6 +456,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           creditsUpdate += tokenReward; // Combine token rewards
       }
 
+      // ARCHITECTURE FIX: Use returned data to update local state immediately.
       const { data: updatedProfile, error: updateError } = await supabase
           .from('profiles')
           .update({ 
@@ -477,6 +484,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     const newCount = ((currentActions[actionId] as number) || 0) + 1;
     const newActions = { ...currentActions, [actionId]: newCount };
+    // ARCHITECTURE FIX: Use returned data to update local state immediately.
     const { data, error } = await supabase.from('profiles').update({ daily_actions: newActions }).eq('id', user.id).select().single();
     if (error) setAuthError(`Gagal update aksi harian: ${error.message}`);
     else setProfile(data as Profile);
@@ -510,7 +518,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setShowLevelUpModal(true);
         updates.credits = (profile.credits ?? 0) + tokenReward;
     }
-
+    
+    // ARCHITECTURE FIX: Use returned data to update local state immediately.
     const { data, error } = await supabase.from('profiles').update(updates).eq('id', user.id).select().single();
     if (error) {
         setAuthError(`Gagal klaim hadiah: ${error.message}`);

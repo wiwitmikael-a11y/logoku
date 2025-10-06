@@ -48,17 +48,24 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
     const { profile } = useAuth();
     const { petState, isLoading: isPetLoading, activatePetWithTokens, activatePetWithFragments, dismantlePet, feedPet } = useAIPet();
     
+    // ARCHITECTURE FIX: Internal state to manage the activation UI flow within the modal
     const [activationStep, setActivationStep] = useState<'idle' | 'loading' | 'reveal'>('idle');
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
     const [statusText, setStatusText] = useState("Siap aktivasi?");
 
+    // Reset internal state when the modal is closed
     useEffect(() => {
         if (!show) {
-            setTimeout(() => { setActivationStep('idle'); setError(null); setProgress(0); }, 300);
+            setTimeout(() => { 
+                setActivationStep('idle'); 
+                setError(null); 
+                setProgress(0);
+            }, 300); // Delay to allow for closing animation
         }
     }, [show]);
 
+    // Progress bar and status text simulation during loading
     useEffect(() => {
         let interval: number;
         if (activationStep === 'loading') {
@@ -72,10 +79,11 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
         return () => clearInterval(interval);
     }, [activationStep]);
     
+    // ARCHITECTURE FIX: Handle the reveal animation and then transition back to the normal lab view.
     useEffect(() => {
         if (activationStep === 'reveal') {
             const timer = setTimeout(() => {
-                setActivationStep('idle'); // Go back to normal lab view
+                setActivationStep('idle'); // Go back to normal lab view after the animation.
             }, 1200); // Duration of reveal animation + a little extra
             return () => clearTimeout(timer);
         }
@@ -94,14 +102,15 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
             } else {
                 await activatePetWithFragments();
             }
+            // The magic happens here: activatePet... now resolves *after* the local petState is updated.
             setProgress(100);
             setStatusText("Aktivasi Berhasil! AIPet telah lahir!");
             playSound('success');
-            setActivationStep('reveal');
+            setActivationStep('reveal'); // Trigger the reveal animation
         } catch (err) {
             setError(err instanceof Error ? err.message : "Gagal mengaktifkan pet.");
             playSound('error');
-            setActivationStep('idle');
+            setActivationStep('idle'); // Reset on failure
             setProgress(0);
         }
     };
