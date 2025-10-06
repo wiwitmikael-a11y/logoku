@@ -137,8 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     // --- HARDENED PROFILE SANITIZATION ---
-    // After your DB cleansing, some fields for new users might be `null`.
-    // This section explicitly handles every field to prevent sync errors.
+    // This section explicitly handles every field to prevent sync errors from null DB values.
     const rawDailyActions = data.daily_actions;
     const sanitizedDailyActions: DailyActions = {
         claimed_missions: [],
@@ -150,11 +149,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const profileData: Profile = {
         id: data.id,
-        full_name: data.full_name,
-        avatar_url: data.avatar_url,
+        // Fallback to user_metadata and then a default to guarantee it's never null/undefined
+        full_name: data.full_name || user.user_metadata.full_name || 'Juragan Baru',
+        avatar_url: data.avatar_url || user.user_metadata.avatar_url || '',
         credits: data.credits ?? 0,
-        last_credit_reset: data.last_credit_reset,
-        welcome_bonus_claimed: data.welcome_bonus_claimed === true, // Ensure boolean, defaults to false if null
+        last_credit_reset: data.last_credit_reset || '2000-01-01',
+        welcome_bonus_claimed: data.welcome_bonus_claimed === true,
         xp: data.xp ?? 0,
         level: data.level ?? 1,
         achievements: data.achievements ?? [],

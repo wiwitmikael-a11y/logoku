@@ -61,7 +61,8 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
             // Fetch projects with their like count and owner ID
             const { data, error: projectError } = await supabase
                 .from('projects')
-                .select('id, project_data, created_at, user_id, like_count')
+// FIX: Added 'status' to the select query. The Project type requires this field, and its absence caused a type error during state updates.
+                .select('id, project_data, created_at, user_id, like_count, status')
                 .eq('status', 'completed')
                 .order('like_count', { ascending: false })
                 .range(from, to);

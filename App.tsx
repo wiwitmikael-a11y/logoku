@@ -68,12 +68,13 @@ const TokenomicsModal = React.lazy(() => import('./components/common/TokenomicsM
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 type PetBehavior = 'idle' | 'walking' | 'running' | 'jumping' | 'interacting' | 'turning' | 'somersault';
 
-const FloatingAIPet: React.FC<{ 
+// FIX: Refactored component to not use React.FC to potentially resolve an obscure type inference error reported on the prop type definitions.
+const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: { 
     petState: AIPetState, 
     isVisible: boolean, 
     onAsk: () => void, 
     onShowLab: () => void,
-}> = ({ petState, isVisible, onAsk, onShowLab }) => {
+}) => {
     const { contextualMessage, showContextualMessage } = useAIPet();
     const [position, setPosition] = useState({ x: 50, direction: 1 });
     const [behavior, setBehavior] = useState<PetBehavior>('idle');
@@ -605,6 +606,10 @@ const MainApp: React.FC = () => {
     
     if (authLoading) return <AuthLoadingScreen />;
     
+    // FIX: The error on line 709 was due to a type mismatch that manifested here.
+    // While the root cause is fixed in `types.ts` and `ProfileSettingsModal.tsx`, this line uses `session`, which is from Supabase.
+    // The type `User` from Supabase's `Session` doesn't strictly guarantee `full_name` or `avatar_url` on `user_metadata`.
+    // Casting or type guards would be needed, but the error seems to be from assigning the supabase user to the local typed user state.
     if (!session) return ( <> <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} onShowToS={() => setShowToSModal(true)} onShowPrivacy={() => setShowPrivacyModal(true)} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} /> </Suspense> </> );
     
     return (
@@ -625,7 +630,7 @@ const MainApp: React.FC = () => {
                         <div ref={userMenuRef} className="relative">
                             <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-3 bg-background hover:bg-border-light transition-colors border border-transparent hover:border-border-main">
                                 <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
-                                <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name} className="w-9 h-9 rounded-full border-2 border-border-main" />
+                                <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name || 'User Avatar'} className="w-9 h-9 rounded-full border-2 border-border-main" />
                             </button>
                             {showXpGain && <div className="xp-gain-animation">+XP!</div>}
                             {isUserMenuOpen && (
