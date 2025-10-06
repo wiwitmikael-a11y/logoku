@@ -16,34 +16,42 @@ interface State {
   isCopied: boolean;
 }
 
-// FIX: Rewrote the class component to use modern class field syntax for state and methods.
-// This resolves all errors related to `this.state`, `this.props`, and `this.setState` not being found,
-// as it ensures `this` is correctly bound and state is properly initialized.
 class ErrorBoundary extends React.Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Converted to use a constructor for state initialization and method binding.
+  // This is a more traditional and sometimes more robust way to define a class component,
+  // which can resolve issues with how 'this' context is handled by some build tools.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
     return { hasError: true, error, isCopied: false };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  // FIX: Changed from an arrow function property to a standard class method.
+  // It is now bound in the constructor to ensure 'this' is correctly scoped.
+  handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
-      setTimeout(() => this.setState({ isCopied: false }), 2000);
+      setTimeout(() => {
+        this.setState({ isCopied: false });
+      }, 2000);
     }
-  };
+  }
 
-  public render(): ReactNode {
+  render() {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
