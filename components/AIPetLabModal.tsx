@@ -9,7 +9,7 @@ import AIPetVisual from './AIPetVisual';
 import type { AIPetState, AIPetPersonalityVector } from '../types';
 
 // Lazy load heavy components
-const AIPetCard = React.lazy(() => import('../gamification/AIPetCard'));
+const AIPetCard = React.lazy(() => import('./gamification/AIPetCard'));
 const AIPetActivation = React.lazy(() => import('./AIPetActivation'));
 
 interface AIPetLabModalProps {
