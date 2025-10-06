@@ -6,7 +6,9 @@ import Button from './Button';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 interface Props {
-  children: ReactNode;
+  // FIX: Made children optional to resolve a type error in App.tsx where TypeScript
+  // was failing to infer the implicitly passed children prop.
+  children?: ReactNode;
   onReset?: () => void;
 }
 
@@ -17,30 +19,27 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Reverted to a constructor-based implementation. The modern class property syntax was
-  // causing errors where `this.state` and `this.props` were not recognized, possibly due to a
-  // build environment issue. This classic approach explicitly sets up state and binds methods
-  // to ensure the correct `this` context.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  // FIX: Switched to modern class property syntax for state initialization.
+  // This avoids potential issues with `this` context that the constructor-based
+  // approach was experiencing in this project's build environment.
+  public state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
-  static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI.
     return { hasError: true, error: error, isCopied: false };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  handleCopy() {
+  // FIX: Converted to an arrow function to automatically bind `this`.
+  // This ensures `this.state` and `this.setState` are correctly referenced.
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -50,7 +49,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  render() {
+  public render() {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
