@@ -154,7 +154,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }
     
-    // If we are here, 'data' must contain a profile (either from initial select or polling).
+    // --- ROBUST SANITIZATION ---
+    // This logic ensures that `daily_actions` is always a valid object with `claimed_missions` before any other logic runs.
+    // This is the core fix for the "Gagal sinkronisasi" error on new user login.
+    let sanitizedDailyActions: DailyActions = { claimed_missions: [] };
+    if (data.daily_actions && typeof data.daily_actions === 'object' && !Array.isArray(data.daily_actions)) {
+        sanitizedDailyActions = { ...(data.daily_actions as object) };
+        if (!Array.isArray(sanitizedDailyActions.claimed_missions)) {
+            sanitizedDailyActions.claimed_missions = [];
+        }
+    }
+
     const profileData: Profile = {
         ...data,
         xp: data.xp ?? 0,
@@ -166,14 +176,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         aipet_state: data.aipet_state ?? null,
         aipet_pity_counter: data.aipet_pity_counter ?? 0,
         data_fragments: data.data_fragments ?? 0,
-        daily_actions: data.daily_actions, // Keep as is, will be validated next
+        daily_actions: sanitizedDailyActions,
     };
-    
-    // Defensive coding: Ensure daily_actions is a valid object before proceeding.
-    // This handles cases where it's null, undefined, or not an object after a data wipe.
-    if (typeof profileData.daily_actions !== 'object' || profileData.daily_actions === null || !('claimed_missions' in profileData.daily_actions)) {
-        profileData.daily_actions = { claimed_missions: [] };
-    }
     
     const todayWIB = getTodaysDateWIB();
     let updates: Partial<Profile> = {};

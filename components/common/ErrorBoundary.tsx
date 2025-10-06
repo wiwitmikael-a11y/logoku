@@ -17,7 +17,9 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Use class property syntax for state to ensure it's correctly typed on the instance.
+  // FIX: Converted from a constructor-based setup to modern class property initializers.
+  // This resolves TypeScript errors related to accessing `this.state` and `this.props`
+  // by ensuring the component's structure is more clearly defined for the type checker.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -32,7 +34,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Use an arrow function for the method to automatically bind 'this'.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
