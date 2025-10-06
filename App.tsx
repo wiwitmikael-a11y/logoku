@@ -80,9 +80,10 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
     const [behavior, setBehavior] = useState<PetBehavior>('idle');
     const [isInteracting, setIsInteracting] = useState(false);
     
-    const animationFrameRef = useRef<number>();
-    const behaviorTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-    const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+    // FIX: Correctly type useRef with `| null` and initialize with `null` for better type safety.
+    const animationFrameRef = useRef<number | null>(null);
+    const behaviorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [isBubbleOpen, setBubbleOpen] = useState(false);
 
@@ -113,7 +114,8 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
     // The previous implementation had multiple competing setTimeout calls which could lead to unpredictable behavior.
     // This new version uses a switch statement to manage state transitions cleanly.
     useEffect(() => {
-        clearTimeout(behaviorTimeoutRef.current);
+        // FIX: Add a guard to ensure `clearTimeout` receives a valid timer ID.
+        if (behaviorTimeoutRef.current) clearTimeout(behaviorTimeoutRef.current);
 
         if (isInteracting) {
             return;
@@ -167,7 +169,8 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
     }, [behavior, isInteracting]);
     
     const handlePetClick = () => {
-        clearTimeout(interactionTimeoutRef.current);
+        // FIX: Add a guard to ensure `clearTimeout` receives a valid timer ID.
+        if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
         setBubbleOpen(p => !p);
         setIsInteracting(true);
         interactionTimeoutRef.current = setTimeout(() => setIsInteracting(false), 1200);
@@ -630,7 +633,7 @@ const MainApp: React.FC = () => {
                         <div ref={userMenuRef} className="relative">
                             <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-3 bg-background hover:bg-border-light transition-colors border border-transparent hover:border-border-main">
                                 <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
-                                <img src={session.user.user_metadata.avatar_url} alt={session.user.user_metadata.full_name || 'User Avatar'} className="w-9 h-9 rounded-full border-2 border-border-main" />
+                                <img src={session.user.user_metadata.avatar_url || ''} alt={session.user.user_metadata.full_name || 'User Avatar'} className="w-9 h-9 rounded-full border-2 border-border-main" />
                             </button>
                             {showXpGain && <div className="xp-gain-animation">+XP!</div>}
                             {isUserMenuOpen && (
@@ -748,10 +751,10 @@ const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onSh
                     <div className="space-y-2">
                         <h4 className="font-semibold text-text-header">Navigasi</h4>
                         <ul className="space-y-1 text-sm">
-                            <li><button onClick={() => onShowAbout()} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
-                            <li><button onClick={() => onShowContact()} className="hover:text-primary transition-colors">Kontak Developer</button></li>
-                            <li><button onClick={() => onShowToS()} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
-                            <li><button onClick={() => onShowPrivacy()} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
+                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
+                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Kontak Developer</button></li>
+                            <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
+                            <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
                         </ul>
                     </div>
                      <div className="space-y-2">

@@ -57,7 +57,12 @@ const DynamicInfoBox: React.FC = () => {
 };
 
 const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = ({ project, rank, delay }) => {
-    const { brandInputs, selectedLogoUrl } = project.project_data;
+    const { brandInputs, selectedLogoUrl } = project.project_data || {};
+
+    if (!brandInputs?.businessName || !selectedLogoUrl) {
+        return null; // Don't render card if essential data is missing
+    }
+    
     const rankClasses = { 1: 'row-start-1 md:row-start-auto md:col-start-2 z-10 scale-110 transform', 2: 'md:mt-12', 3: 'md:mt-12' };
     const glowClasses = { 1: 'shadow-[0_0_20px_theme(colors.yellow.400)] border-yellow-400', 2: 'shadow-[0_0_15px_theme(colors.slate.400)] border-slate-400', 3: 'shadow-[0_0_15px_#A0522D] border-[#A0522D]' }
     const rankColor = (glowClasses[rank as keyof typeof glowClasses] || '').split(' ')[1].replace('border-', '');
