@@ -154,16 +154,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }
     
-    // --- ROBUST SANITIZATION ---
-    // This logic ensures that `daily_actions` is always a valid object with `claimed_missions` before any other logic runs.
-    // This is the core fix for the "Gagal sinkronisasi" error on new user login.
-    let sanitizedDailyActions: DailyActions = { claimed_missions: [] };
-    if (data.daily_actions && typeof data.daily_actions === 'object' && !Array.isArray(data.daily_actions)) {
-        sanitizedDailyActions = { ...(data.daily_actions as object) };
-        if (!Array.isArray(sanitizedDailyActions.claimed_missions)) {
-            sanitizedDailyActions.claimed_missions = [];
-        }
-    }
+    // --- ROBUST SANITIZATION for daily_actions ---
+    const currentDailyActions = (data.daily_actions && typeof data.daily_actions === 'object' && !Array.isArray(data.daily_actions))
+        ? (data.daily_actions as DailyActions)
+        : {};
+    
+    const sanitizedDailyActions: DailyActions = {
+        ...currentDailyActions,
+        claimed_missions: Array.isArray(currentDailyActions.claimed_missions) ? currentDailyActions.claimed_missions : []
+    };
 
     const profileData: Profile = {
         ...data,

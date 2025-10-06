@@ -737,10 +737,11 @@ const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onSh
                     <div className="space-y-2">
                         <h4 className="font-semibold text-text-header">Navigasi</h4>
                         <ul className="space-y-1 text-sm">
-                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
-                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Kontak Developer</button></li>
-                            <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
-                            <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
+{/* FIX: The onClick handlers were passing the MouseEvent to props that expect no arguments. This wraps them in arrow functions to prevent a type mismatch. */}
+                            <li><button onClick={() => onShowAbout()} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
+                            <li><button onClick={() => onShowContact()} className="hover:text-primary transition-colors">Kontak Developer</button></li>
+                            <li><button onClick={() => onShowToS()} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
+                            <li><button onClick={() => onShowPrivacy()} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
                         </ul>
                     </div>
                      <div className="space-y-2">
