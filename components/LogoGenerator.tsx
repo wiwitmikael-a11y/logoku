@@ -21,7 +21,7 @@ const GENERATION_COST = 4;
 
 const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onGoToDashboard }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
-  const { setContextualMessage, notifyPetOfActivity } = useAIPet();
+  const { showContextualMessage, notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState(`A minimalist and modern logo for "${businessName}", representing ${persona.kata_kunci.join(', ')}.`);
@@ -50,13 +50,13 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
     }
 
     const timerId = setTimeout(() => {
-        setContextualMessage("Lagi mentok, ya? Coba deh pake kata kunci 'geometris', 'abstrak', atau 'simbol alam' di prompt logonya!");
+        showContextualMessage("Lagi mentok, ya? Coba deh pake kata kunci 'geometris', 'abstrak', atau 'simbol alam' di prompt logonya!");
         helpMessageShownRef.current = true;
     }, 20000);
 
     return () => clearTimeout(timerId);
 
-  }, [logoOptions.length, isLoading, setContextualMessage]);
+  }, [logoOptions.length, isLoading, showContextualMessage]);
 
 
   const handleGenerateLogos = useCallback(async () => {

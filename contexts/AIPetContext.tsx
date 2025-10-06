@@ -10,7 +10,8 @@ export interface AIPetContextType {
   petState: AIPetState | null;
   isLoading: boolean;
   contextualMessage: string | null;
-  setContextualMessage: React.Dispatch<React.SetStateAction<string | null>>;
+  showContextualMessage: (message: string | null, duration?: number) => void;
+  isPetOnScreen: boolean;
   notifyPetOfActivity: (activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => void;
   handleInteraction: () => void;
   onGameWin: (game: 'color' | 'pattern' | 'style' | 'slogan') => void;
@@ -65,6 +66,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [petState, setPetState] = useState<AIPetState | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [contextualMessage, setContextualMessage] = useState<string | null>(null);
+    const [isPetOnScreen, setIsPetOnScreen] = useState(false);
+    const petVisibilityTimer = useRef<number | null>(null);
     const lastUpdateRef = useRef(Date.now());
 
     const savePetStateToDb = useCallback(async (stateToSave: AIPetState) => {
@@ -183,6 +186,23 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     useEffect(() => {
         setContextualMessage(null);
     }, [petState?.stage]);
+
+    const showPet = useCallback((duration: number = 20000) => {
+        if (petVisibilityTimer.current) {
+            clearTimeout(petVisibilityTimer.current);
+        }
+        setIsPetOnScreen(true);
+        petVisibilityTimer.current = window.setTimeout(() => {
+            setIsPetOnScreen(false);
+        }, duration);
+    }, []);
+
+    const showContextualMessage = useCallback((message: string | null, duration: number = 20000) => {
+        setContextualMessage(message);
+        if (message) {
+            showPet(duration);
+        }
+    }, [showPet]);
 
     const activatePet = useCallback(async () => {
         if (!user || !profile) throw new Error("User not found");
@@ -318,6 +338,12 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 
     const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {
+        if (activityType === 'user_idle' && Math.random() < 0.3) {
+            showContextualMessage("Zzz... Kayaknya Juragan lagi istirahat, ya? Aku juga ah.", 10000);
+        } else if (activityType === 'project_completed') {
+            showContextualMessage("Wih, project selesai! Keren banget, Juragan! ✨", 15000);
+        }
+
         updatePetState(p => {
             if (p.stage === 'aipod') return p; // Pods don't gain stats from activities
             let newStats = { ...p.stats };
@@ -336,7 +362,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
             return { ...p, stats: newStats, personality: newPersonality };
         });
-    }, [updatePetState]);
+    }, [updatePetState, showContextualMessage]);
     
     const handleInteraction = useCallback(() => {
         updatePetState(p => ({
@@ -375,7 +401,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [updatePetState]);
 
 
-    const value: AIPetContextType = { petState, isLoading, contextualMessage, setContextualMessage, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, activatePet };
+    const value: AIPetContextType = { petState, isLoading, contextualMessage, showContextualMessage, isPetOnScreen, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, activatePet };
     
     return <AIPetContext.Provider value={value}>{children}</AIPetContext.Provider>;
 };

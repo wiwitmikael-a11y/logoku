@@ -23,7 +23,7 @@ const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Intera
 
 const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
   const { profile, deductCredits, setShowOutOfCreditsModal, incrementDailyAction } = useAuth();
-  const { petState, setContextualMessage, notifyPetOfActivity } = useAIPet();
+  const { petState, showContextualMessage, notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
   
   const [topic, setTopic] = useState('');
@@ -69,7 +69,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
       if (petState && petState.stage !== 'aipod' && petState.stats.charisma > 60) {
           const randomOption = Math.floor(Math.random() * 3) + 1;
           setTimeout(() => {
-              setContextualMessage(`Mantap! Caption <strong>nomor ${randomOption}</strong> kayaknya paling nendang dan pas buat target pasar kita, Juragan!`);
+              showContextualMessage(`Mantap! Caption <strong>nomor ${randomOption}</strong> kayaknya paling nendang dan pas buat target pasar kita, Juragan!`);
           }, 1000);
       }
     } catch (err) {
@@ -78,7 +78,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal, petState, setContextualMessage, incrementDailyAction]);
+  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal, petState, showContextualMessage, incrementDailyAction]);
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">

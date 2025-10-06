@@ -13,7 +13,6 @@ const AIPetCard = React.lazy(() => import('./gamification/AIPetCard'));
 interface Props {
   show: boolean;
   onClose: () => void;
-  isFirstActivation: boolean;
 }
 
 const ACTIVATION_COST = 5;
@@ -44,7 +43,7 @@ const BattleStatDisplay: React.FC<{ label: string; value: number; icon: string }
     </div>
 );
 
-const AIPetLabModal: React.FC<Props> = ({ show, onClose, isFirstActivation }) => {
+const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
     const { profile } = useAuth();
     const { petState, isLoading: isPetLoading, activatePet } = useAIPet();
     
@@ -190,7 +189,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose, isFirstActivation }) =>
                 <div className="flex-grow p-6 overflow-y-auto">
                     <h3 className="text-2xl font-bold text-text-header mb-4" style={{ fontFamily: 'var(--font-display)' }}>AIPet Lab</h3>
                     {isPetLoading ? <p>Loading stats...</p> : 
-                        (isFirstActivation && petState?.stage === 'aipod') ? renderActivationView() :
+                        (petState?.stage === 'aipod') ? renderActivationView() :
                         (petState && petState.stage === 'active') ? renderLabView(petState) :
                         (
                             <div className="text-center p-8 border border-dashed border-border-main rounded-lg">

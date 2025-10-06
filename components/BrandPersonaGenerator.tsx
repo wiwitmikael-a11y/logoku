@@ -44,7 +44,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   const [error, setError] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { petState, setContextualMessage, notifyPetOfActivity } = useAIPet();
+  const { petState, showContextualMessage, notifyPetOfActivity } = useAIPet();
   const suggestionShownRef = useRef(false);
 
   const personasRef = useRef<HTMLDivElement>(null);
@@ -110,12 +110,12 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
 
         if (matchedPersona) {
             setTimeout(() => {
-                setContextualMessage(`Psst, Juragan! Persona <strong>"${matchedPersona.nama_persona}"</strong> ini kayaknya cocok banget sama kepribadianku, lho! Mungkin bisa jadi inspirasi?`);
+                showContextualMessage(`Psst, Juragan! Persona <strong>"${matchedPersona.nama_persona}"</strong> ini kayaknya cocok banget sama kepribadianku, lho! Mungkin bisa jadi inspirasi?`);
                 suggestionShownRef.current = true;
             }, 1500); // Delay for a more natural feel
         }
     }
-  }, [personas, petState, setContextualMessage]);
+  }, [personas, petState, showContextualMessage]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

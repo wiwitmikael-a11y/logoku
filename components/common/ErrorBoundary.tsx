@@ -17,25 +17,26 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // Fix: Refactor to use modern class field syntax for state and arrow functions for methods.
-  // This avoids potential 'this' binding issues and resolves type errors where inherited properties were not recognized.
-  public state: State = {
+  // FIX: The explicit public/private access modifiers were likely causing type inference issues with the user's tooling,
+  // preventing inherited properties like 'this.props' and 'this.setState' from being recognized.
+  // Removing them resolves the errors while keeping the modern class field syntax.
+  state: State = {
     hasError: false,
     error: undefined,
     isCopied: false,
   };
 
-  public static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     // This lifecycle method is called after an error has been thrown by a descendant component.
     // It should return an object to update state.
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy = () => {
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -43,7 +44,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  public render(): ReactNode {
+  render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (

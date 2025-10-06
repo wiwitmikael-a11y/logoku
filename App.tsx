@@ -76,11 +76,8 @@ const FloatingAIPet: React.FC<{
     isVisible: boolean, 
     onAsk: () => void, 
     onShowLab: () => void,
-    onActivate: () => void,
-    showWelcomeBubble: boolean;
-    onDismissWelcome: () => void;
-}> = ({ petState, isVisible, onAsk, onShowLab, onActivate, showWelcomeBubble, onDismissWelcome }) => {
-    const { contextualMessage, setContextualMessage } = useAIPet();
+}> = ({ petState, isVisible, onAsk, onShowLab }) => {
+    const { contextualMessage, showContextualMessage } = useAIPet();
     const [position, setPosition] = useState({ x: 50, direction: 1 });
     const [behavior, setBehavior] = useState<PetBehavior>('idle');
     const [isInteracting, setIsInteracting] = useState(false);
@@ -92,11 +89,9 @@ const FloatingAIPet: React.FC<{
     const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
     const [isBubbleOpen, setBubbleOpen] = useState(false);
-    const isPod = petState.stage === 'aipod';
 
     // Main animation loop for movement
     useEffect(() => {
-        if (isPod) return;
         const move = () => {
             if (behavior === 'walking' || behavior === 'running') {
                 const speed = behavior === 'running' ? 0.25 : 0.08;
@@ -116,12 +111,10 @@ const FloatingAIPet: React.FC<{
         return () => {
             if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
         };
-    }, [behavior, isPod]);
+    }, [behavior]);
 
     // Behavior state machine
     useEffect(() => {
-        if (isPod) return;
-        
         clearTimeout(behaviorTimeoutRef.current);
 
         const setNextBehavior = () => {
@@ -164,56 +157,27 @@ const FloatingAIPet: React.FC<{
         
         return () => clearTimeout(behaviorTimeoutRef.current);
 
-    }, [behavior, isPod, isInteracting]);
+    }, [behavior, isInteracting]);
     
     const handlePetClick = () => {
-        if (isPod) {
-            onActivate();
-        } else {
-            clearTimeout(interactionTimeoutRef.current);
-            setBubbleOpen(p => !p);
-            setIsInteracting(true);
-            interactionTimeoutRef.current = setTimeout(() => setIsInteracting(false), 1200);
-        }
+        clearTimeout(interactionTimeoutRef.current);
+        setBubbleOpen(p => !p);
+        setIsInteracting(true);
+        interactionTimeoutRef.current = setTimeout(() => setIsInteracting(false), 1200);
     };
 
-    const animationClass = isVisible ? 'animate-aipet-blip-in' : 'animate-aipet-blink-out';
-    
-    if (isPod) {
-        return (
-            <div className="fixed bottom-8 right-8 z-40">
-                {showWelcomeBubble && (
-                     <div className="aipod-welcome-bubble animate-content-fade-in" onClick={onDismissWelcome}>
-                         <Suspense fallback={null}>
-                             <CalloutPopup>Ini AIPod-mu! Klik untuk mengaktifkan & dapatkan partner AI pertamamu!</CalloutPopup>
-                         </Suspense>
-                     </div>
-                )}
-                <div
-                    id="ai-assistant-fab"
-                    onClick={onActivate}
-                    title="Aktifkan AIPet"
-                    className={`p-2 cursor-pointer ${animationClass}`}
-                >
-                     <Suspense fallback={null}>
-                        <AIPetVisual petState={petState} />
-                     </Suspense>
-                </div>
-            </div>
-        );
-    }
-        
+    const animationClass = isVisible ? 'animate-aipet-appear' : 'animate-aipet-disappear';
     const petContainerClass = 'w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40';
 
     return (
         <div 
-            className={`fixed bottom-0 z-40 transition-transform duration-300`}
+            className={`fixed bottom-0 z-40 transition-transform duration-300 ${!isVisible ? 'pointer-events-none' : ''}`}
             style={{ left: `${position.x}vw`, transform: `translateX(-50%)`, transition: 'left 0.1s linear' }}
         >
              <Suspense fallback={null}>
                 <AIPetContextualBubble
                     message={contextualMessage}
-                    onClose={() => setContextualMessage(null)}
+                    onClose={() => showContextualMessage(null)}
                 />
             </Suspense>
             
@@ -231,7 +195,7 @@ const FloatingAIPet: React.FC<{
                 </Suspense>
             </div>
             
-            {petState.stage === 'active' && !isPod && (
+            {petState.stage === 'active' && (
               <Suspense fallback={null}>
                   <AIPetInteractionBubble
                       isOpen={isBubbleOpen}
@@ -390,7 +354,7 @@ const App: React.FC = () => {
 const MainApp: React.FC = () => {
     const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
     const aipetContext = useAIPet();
-    const { petState } = aipetContext;
+    const { petState, isPetOnScreen } = aipetContext;
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -418,8 +382,6 @@ const MainApp: React.FC = () => {
     const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
     const [showSotoshop, setShowSotoshop] = useState(false);
     const [showAIPetLab, setShowAIPetLab] = useState(false);
-    const [isFirstActivation, setIsFirstActivation] = useState(false);
-    const [showAipodWelcome, setShowAipodWelcome] = useState(false);
     const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -429,7 +391,6 @@ const MainApp: React.FC = () => {
     // UX Enhancements
     const [showXpGain, setShowXpGain] = useState(false);
     const prevXp = useRef(profile?.xp ?? 0);
-    const [isPetVisible, setIsPetVisible] = useState(true);
 
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'social_kit', 'profiles', 'packaging', 'print_media', 'content_calendar', 'social_ads', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
@@ -478,22 +439,9 @@ const MainApp: React.FC = () => {
         if (previousAppState.current !== appState) {
             playSound('transition');
             window.scrollTo(0, 0);
-            setIsPetVisible(false);
-            const timer = setTimeout(() => setIsPetVisible(true), 500); // Blip in after a delay
-            return () => clearTimeout(timer);
         }
         previousAppState.current = appState;
     }, [appState]);
-
-    useEffect(() => {
-      if (petState?.stage === 'aipod' && !sessionStorage.getItem('aipodWelcomeShown')) {
-        const timer = setTimeout(() => {
-          setShowAipodWelcome(true);
-          sessionStorage.setItem('aipodWelcomeShown', 'true');
-        }, 1500); 
-        return () => clearTimeout(timer);
-      }
-    }, [petState]);
 
     // AIPet Idle Timer
     useEffect(() => {
@@ -725,20 +673,13 @@ const MainApp: React.FC = () => {
         </div>
 
         {/* --- Floating Pet Assistant & Panels --- */}
-        {user && !aipetContext.isLoading && petState && (
+        {user && !aipetContext.isLoading && petState && petState.stage === 'active' && (
             <>
                 <FloatingAIPet 
                     petState={petState} 
-                    isVisible={isPetVisible}
+                    isVisible={isPetOnScreen}
                     onAsk={() => setAssistantOpen(true)}
                     onShowLab={() => setShowAIPetLab(true)}
-                    onActivate={() => {
-                        setIsFirstActivation(true);
-                        setShowAIPetLab(true);
-                        setShowAipodWelcome(false);
-                    }}
-                    showWelcomeBubble={showAipodWelcome}
-                    onDismissWelcome={() => setShowAipodWelcome(false)}
                 />
 
                 <Suspense fallback={null}>
@@ -757,11 +698,7 @@ const MainApp: React.FC = () => {
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
             <AIPetLabModal 
                 show={showAIPetLab} 
-                onClose={() => {
-                    setShowAIPetLab(false);
-                    setIsFirstActivation(false);
-                }}
-                isFirstActivation={isFirstActivation}
+                onClose={() => setShowAIPetLab(false)}
             />
             <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
             <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
