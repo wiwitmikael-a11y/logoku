@@ -73,9 +73,9 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
         
         <main className="px-8 py-8 space-y-6 overflow-y-auto">
             <div className="flex items-center gap-4 mb-6">
-                <img src={user.user_metadata.avatar_url || ''} alt={user.user_metadata.full_name || 'User Avatar'} className="w-16 h-16 rounded-full border-2 border-primary/20" />
+                <img src={profile.avatar_url || ''} alt={profile.full_name || 'User Avatar'} className="w-16 h-16 rounded-full border-2 border-primary/20" />
                 <div>
-                    <h2 id="profile-modal-title" className="text-xl font-bold text-text-header">{user.user_metadata.full_name || 'Juragan'}</h2>
+                    <h2 id="profile-modal-title" className="text-xl font-bold text-text-header">{profile.full_name || 'Juragan'}</h2>
                     <p className="text-sm text-text-muted">{user.email}</p>
                 </div>
             </div>

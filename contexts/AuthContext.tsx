@@ -43,7 +43,7 @@ interface AuthContextType {
   executeLogout: () => Promise<void>;
   handleDeleteAccount: () => void;
   authError: string | null;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (userToRefresh: User | null) => Promise<void>;
   addXp: (amount: number) => Promise<void>;
   grantAchievement: (achievementId: string) => Promise<void>;
   grantFirstTimeCompletionBonus: (step: string) => Promise<void>;
@@ -147,8 +147,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [isMuted]);
 
-  const refreshProfile = useCallback(async (localUser = user) => {
-    if (!localUser) {
+  const refreshProfile = useCallback(async (userToRefresh: User | null) => {
+    if (!userToRefresh) {
         setProfile(null);
         setDailyActions(null);
         return;
@@ -157,20 +157,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { data, error, status } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', localUser.id)
+            .eq('id', userToRefresh.id)
             .single();
 
         if (error && status !== 406) throw error;
         
         if (data) {
+            // Profile found in DB, this is the correct state
             setProfile(data);
             setDailyActions(data.daily_actions || { claimed_missions: [] });
+        } else if (profile?.id !== userToRefresh.id) {
+             // FIX: If profile not found in DB (e.g., new user and DB trigger is slow),
+             // and the current profile in state is NOT for this user,
+             // create a temporary profile from the auth metadata. This avoids showing an empty
+             // or incorrect name and provides a smooth experience.
+             setProfile({
+                 id: userToRefresh.id,
+                 full_name: userToRefresh.user_metadata.full_name || 'User',
+                 avatar_url: userToRefresh.user_metadata.avatar_url || '',
+                 credits: 0, // Will be updated when real profile loads with welcome bonus etc.
+                 last_credit_reset: new Date().toISOString(),
+                 welcome_bonus_claimed: false,
+                 xp: 0,
+                 level: 1,
+                 achievements: [],
+                 total_projects_completed: 0,
+                 last_daily_xp_claim: new Date().toISOString(),
+                 completed_first_steps: [],
+                 aipet_state: null,
+                 aipet_pity_counter: 0,
+                 data_fragments: 0,
+                 daily_actions: null,
+             });
+             setDailyActions(null);
         }
     } catch (error: any) {
         setAuthError(`Gagal memuat profil: ${error.message}`);
         console.error("Error loading user profile:", error);
     }
-  }, [user]);
+  }, [profile]);
 
   const addXp = useCallback(async (amount: number) => {
     if (!user || !profile) return;
@@ -232,7 +257,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (error) {
         console.error("Error granting achievement:", error);
     } else {
-        await refreshProfile();
+        await refreshProfile(user);
         setUnlockedAchievement({ id: achievementId, ...ACHIEVEMENTS_MAP[achievementId] });
     }
   }, [user, profile, refreshProfile]);
@@ -258,7 +283,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!user) return;
     const { error } = await supabase.rpc('increment_daily_action', { p_user_id: user.id, p_action_id: actionId, p_amount: amount });
     if (error) console.error(`Error incrementing daily action ${actionId}:`, error);
-    else await refreshProfile();
+    else await refreshProfile(user);
   }, [user, refreshProfile]);
 
   const claimMissionReward = useCallback(async (missionId: string, xp: number) => {
@@ -270,7 +295,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         alert(`Gagal klaim: ${error.message}`);
     } else {
         await addXp(xp);
-        await refreshProfile();
+        await refreshProfile(user);
     }
   }, [user, dailyActions, addXp, refreshProfile]);
   

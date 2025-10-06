@@ -288,8 +288,8 @@ const TabButton: React.FC<{
 );
 
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
-  const { session } = useAuth();
-  const userName = session?.user?.user_metadata?.full_name?.split(' ')[0] || 'Juragan';
+  const { profile } = useAuth();
+  const userName = profile?.full_name?.split(' ')[0] || 'Juragan';
   const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'forum' | 'juragan'>('projects');
   
   useEffect(() => {
