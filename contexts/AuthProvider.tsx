@@ -166,7 +166,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         aipet_state: data.aipet_state ?? null,
         aipet_pity_counter: data.aipet_pity_counter ?? 0,
         data_fragments: data.data_fragments ?? 0,
-        daily_actions: data.daily_actions ?? { claimed_missions: [] },
     };
     
     // Defensive coding: Ensure daily_actions is an object before proceeding.
@@ -181,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // --- Daily Token Top-up System ---
     if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
-        if (profileData.credits < DAILY_TOKENS) {
+        if ((profileData.credits ?? 0) < DAILY_TOKENS) {
             updates.credits = DAILY_TOKENS;
         }
         updates.last_credit_reset = todayWIB;
