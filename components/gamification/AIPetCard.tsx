@@ -70,10 +70,6 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
     `;
 
     const getTierStyling = () => {
-        const p = petState.personality;
-        const sorted = Object.entries(p).sort(([, a], [, b]) => Number(b) - Number(a));
-        const dominant: keyof AIPetPersonalityVector = sorted.length > 0 ? sorted[0][0] as keyof AIPetPersonalityVector : 'playful';
-
         switch(petState.tier) {
             case 'mythic': return { holo: 'holo-mythic', bg: 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/80 via-indigo-900/90 to-black', border: 'border-purple-400', nameplate: 'bg-gradient-to-r from-purple-500 via-fuchsia-600 to-indigo-600' };
             case 'legendary': return { holo: 'holo-legendary', bg: 'bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-amber-800/80 via-yellow-900/90 to-black', border: 'border-yellow-400', nameplate: 'bg-gradient-to-r from-yellow-500 via-amber-600 to-orange-600' };
