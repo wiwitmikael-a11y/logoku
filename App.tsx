@@ -68,7 +68,6 @@ const TokenomicsModal = React.lazy(() => import('./components/common/TokenomicsM
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 type PetBehavior = 'idle' | 'walking' | 'running' | 'jumping' | 'interacting' | 'turning' | 'somersault';
 
-// FIX: Refactored component to not use React.FC to potentially resolve an obscure type inference error reported on the prop type definitions.
 const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: { 
     petState: AIPetState, 
     isVisible: boolean, 
@@ -80,7 +79,6 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
     const [behavior, setBehavior] = useState<PetBehavior>('idle');
     const [isInteracting, setIsInteracting] = useState(false);
     
-    // FIX: Correctly type useRef with `| null` and initialize with `null` for better type safety.
     const animationFrameRef = useRef<number | null>(null);
     const behaviorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,11 +108,7 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
         };
     }, [behavior]);
 
-    // FIX: Refactor the behavior state machine to be clearer and avoid race conditions.
-    // The previous implementation had multiple competing setTimeout calls which could lead to unpredictable behavior.
-    // This new version uses a switch statement to manage state transitions cleanly.
     useEffect(() => {
-        // FIX: Add a guard to ensure `clearTimeout` receives a valid timer ID.
         if (behaviorTimeoutRef.current) clearTimeout(behaviorTimeoutRef.current);
 
         if (isInteracting) {
@@ -157,7 +151,6 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
                 behaviorTimeoutRef.current = setTimeout(() => setBehavior('idle'), 1500);
                 break;
             default:
-                // No-op for 'interacting' or other unknown states
                 break;
         }
         
@@ -169,7 +162,6 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
     }, [behavior, isInteracting]);
     
     const handlePetClick = () => {
-        // FIX: Add a guard to ensure `clearTimeout` receives a valid timer ID.
         if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
         setBubbleOpen(p => !p);
         setIsInteracting(true);
@@ -609,10 +601,6 @@ const MainApp: React.FC = () => {
     
     if (authLoading) return <AuthLoadingScreen />;
     
-    // FIX: The error on line 709 was due to a type mismatch that manifested here.
-    // While the root cause is fixed in `types.ts` and `ProfileSettingsModal.tsx`, this line uses `session`, which is from Supabase.
-    // The type `User` from Supabase's `Session` doesn't strictly guarantee `full_name` or `avatar_url` on `user_metadata`.
-    // Casting or type guards would be needed, but the error seems to be from assigning the supabase user to the local typed user state.
     if (!session) return ( <> <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} onShowToS={() => setShowToSModal(true)} onShowPrivacy={() => setShowPrivacyModal(true)} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} /> </Suspense> </> );
     
     return (
@@ -639,7 +627,7 @@ const MainApp: React.FC = () => {
                             {isUserMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-64 bg-surface border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in">
                                     <div className="px-4 py-3 border-b border-border-main">
-                                        <p className="font-bold text-lg text-text-header truncate">{profile?.full_name}</p>
+                                        <p className="font-bold text-lg text-text-header truncate">{profile?.full_name || ''}</p>
                                         <p className="text-xs text-text-muted flex items-center gap-1.5 mt-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                                             <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span> <span className="text-text-muted">Token</span>

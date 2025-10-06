@@ -218,7 +218,6 @@ export interface User {
   id: string;
   email?: string;
   user_metadata: {
-// FIX: Make full_name and avatar_url optional to match the type from Supabase client, resolving the assignment error.
     full_name?: string;
     avatar_url?: string;
     [key: string]: any;

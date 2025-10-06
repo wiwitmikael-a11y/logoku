@@ -134,11 +134,9 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     useEffect(() => {
         if (profile?.aipet_state) {
-            // FIX: Sanitize the state loaded from DB to ensure all properties exist
             const sanitized = sanitizePetState(profile.aipet_state);
             setPetState(sanitized);
         } else if (user && !profile?.aipet_state) {
-            // NEW PET: Starts as an aipod.
             setPetState(defaultAIPodState);
             savePetStateToDb({ aipet_state: defaultAIPodState });
         }
@@ -181,7 +179,6 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const _generateNewPetData = useCallback(async () => {
         if (!user || !profile) throw new Error("User not found");
         
-        // Use optional chaining for pity counter as a safeguard
         const pity = profile?.aipet_pity_counter ?? 0;
         
         const seed = user.id + new Date().toISOString().slice(0, 10) + Math.random();

@@ -58,7 +58,6 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
         const to = from + PAGE_SIZE - 1;
 
         try {
-            // Fetch projects with their like count and owner ID
             const { data, error: projectError } = await supabase
                 .from('projects')
                 .select('id, project_data, created_at, user_id, like_count, status')
@@ -71,7 +70,6 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
             setProjects(prev => pageNum === 0 ? data : [...prev, ...data]);
             setHasMore(data.length === PAGE_SIZE);
 
-            // If it's the first page load and the user is logged in, fetch their likes
             if (pageNum === 0 && user) {
                 const { data: likesData, error: likesError } = await supabase
                     .from('project_likes')
@@ -116,7 +114,6 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
         const originalProjects = [...projects];
         const originalLikedProjects = new Set(likedProjects);
 
-        // Optimistic UI Update
         const newLikeCount = (projects.find(p => p.id === projectId)?.like_count || 0) + (isCurrentlyLiked ? -1 : 1);
         setProjects(prev => prev.map(p => p.id === projectId ? { ...p, like_count: newLikeCount } : p));
         
@@ -127,25 +124,19 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
         
         try {
             if (isCurrentlyLiked) {
-                // Unlike
                 const { error: deleteError } = await supabase.from('project_likes').delete().match({ project_id: projectId, user_id: user.id });
                 if (deleteError) throw deleteError;
-                // Decrementing count is best done via RPC/trigger, but for now we call it directly for simplicity
                 await supabase.rpc('decrement_like_count', { project_id_in: projectId });
             } else {
-                // Like
                 const { error: insertError } = await supabase.from('project_likes').insert({ project_id: projectId, user_id: user.id });
                 if (insertError) throw insertError;
                 await supabase.rpc('increment_like_count', { project_id_in: projectId });
-                // This +1 XP is for the current user who performed the action of liking.
-                // The +1 XP for the project owner must be handled on the backend via a trigger for security.
                 await addXp(1);
                 await incrementDailyAction('liked_projects');
             }
         } catch (err: any) {
             const msg = `Gagal update 'Menyala!': ${err.message || 'Gagal update.'}`;
             setError(msg);
-            // Revert optimistic update on error
             setProjects(originalProjects);
             setLikedProjects(originalLikedProjects);
         }
