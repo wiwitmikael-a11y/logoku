@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React from 'react';
-import type { AIPetState, AIPetPersonalityVector, AIPetTier } from '../../types';
+import type { AIPetState, AIPetTier } from '../../types';
 import AIPetVisual from '../AIPetVisual';
 
 interface AIPetCardProps {

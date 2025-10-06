@@ -1,5 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
+export type VisualEffect = { type: 'feed', id: number } | null;
+
 export interface BrandInputs {
   businessName: string;
   industry: string;
