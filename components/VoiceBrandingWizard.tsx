@@ -70,6 +70,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permissionState, setPermissionState] = useState<'pending' | 'granted' | 'prompt' | 'denied'>('pending');
+  const [initialGreetingComplete, setInitialGreetingComplete] = useState(false);
 
   const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
@@ -80,6 +81,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const brandInputsRef = useRef(brandInputs);
+  const initialGreetingCompleteRef = useRef(false);
   useEffect(() => { brandInputsRef.current = brandInputs; }, [brandInputs]);
 
   const workflowSteps: VoiceWizardStep[] = ['GET_BUSINESS_NAME', 'GET_BUSINESS_DETAILS', 'GET_TARGET_AUDIENCE', 'GET_VALUE_PROPOSITION', 'GET_COMPETITORS', 'CONFIRMATION'];
@@ -105,12 +107,22 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
         config: {
           responseModalities: [Modality.AUDIO],
           inputAudioTranscription: {},
+          outputAudioTranscription: {},
           tools: [{ functionDeclarations }],
-          systemInstruction: `You are "Mang AI", a friendly and professional branding consultant for Indonesian small businesses (UMKM). Guide the user through a series of questions to gather information for their brand persona. Ask one question at a time. After getting an answer, confirm it by calling the appropriate function, then wait for the tool response before asking the next question. Your tone is helpful, encouraging, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor'. Start by greeting the user and asking for their business name.`,
+          systemInstruction: `You are "Mang AI", a friendly and professional branding consultant for Indonesian small businesses (UMKM). Your primary goal is to have a natural, spoken conversation to help the user build their brand.
+
+**Your First Action:**
+Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian. Welcome the user to the voice consultation and then ask for their business name to begin the process. For example: "Halo Juragan! Selamat datang di konsultasi suara bareng Mang AI. Biar kita bisa mulai, boleh tahu dulu nama bisnisnya apa?".
+
+**Your Process:**
+1. Guide the user through a series of questions to gather information for their brand persona. Ask ONLY ONE question at a time.
+2. After getting an answer, confirm you understood by calling the appropriate function.
+3. Wait for the function call to be processed before asking the next question.
+4. Maintain a helpful, encouraging tone. Use casual Indonesian slang like 'juragan', 'sokin', 'gacor'.`,
         },
         callbacks: {
           onopen: () => {
-            setStatus('Terhubung! Silakan bicara...');
+            setStatus('Menunggu Mang AI memulai...');
             const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
             inputAudioContextRef.current = inputCtx;
             outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
@@ -130,6 +142,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
           },
           onmessage: async (message: LiveServerMessage) => {
             if (message.serverContent?.inputTranscription) { addTranscript('user', message.serverContent.inputTranscription.text); }
+            if (message.serverContent?.outputTranscription) { addTranscript('mang-ai', message.serverContent.outputTranscription.text); }
+            
             if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
               const audioData = message.serverContent.modelTurn.parts[0].inlineData.data;
               const outputCtx = outputAudioContextRef.current;
@@ -146,6 +160,16 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
                 source.onended = () => sourcesRef.current.delete(source);
               }
             }
+
+            if (message.serverContent?.turnComplete) {
+                if (!initialGreetingCompleteRef.current) {
+                    initialGreetingCompleteRef.current = true;
+                    setInitialGreetingComplete(true);
+                    setIsListening(true);
+                    setStatus('Giliranmu! Mang AI sedang mendengarkan...');
+                }
+            }
+            
             if (message.toolCall?.functionCalls) {
               for (const fc of message.toolCall.functionCalls) {
                 let result = 'OK';
@@ -172,7 +196,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
       setPermissionState('denied'); // Explicitly set to denied on catch
       setStatus('Gagal');
     }
-  }, [onComplete, status]);
+  }, [onComplete]);
 
   const checkPermissions = useCallback(async () => {
     if (typeof navigator.permissions === 'undefined') { setPermissionState('prompt'); return; }
@@ -198,7 +222,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
             inputAudioContextRef.current?.close().catch(() => {});
             outputAudioContextRef.current?.close().catch(() => {});
             sessionPromiseRef.current = null; streamRef.current = null; inputAudioContextRef.current = null; outputAudioContextRef.current = null; scriptProcessorRef.current = null;
-            setPermissionState('pending'); setTranscript([]); setIsListening(false); setWizardStep('GREETING'); setBrandInputs({}); setError(null);
+            setPermissionState('pending'); setTranscript([]); setIsListening(false); setWizardStep('GREETING'); setBrandInputs({}); setError(null); setInitialGreetingComplete(false); initialGreetingCompleteRef.current = false;
         }
     };
   }, [show, checkPermissions]);
@@ -207,7 +231,16 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
       if (permissionState === 'granted' && show && !sessionPromiseRef.current) { connectToGemini(); }
   }, [permissionState, show, connectToGemini]);
 
-  const handleToggleListen = () => { playSound('click'); setIsListening(prev => !prev); if (!isListening) { setStatus('Mendengarkan...'); } else { setStatus('Mang AI sedang berpikir...'); } };
+  const handleToggleListen = () => {
+    playSound('click');
+    if (!initialGreetingComplete) return; // Prevent user interaction before AI greets
+    setIsListening(prev => !prev);
+    if (!isListening) {
+        setStatus('Mendengarkan...');
+    } else {
+        setStatus('Mang AI sedang berpikir...');
+    }
+  };
 
   if (!show) return null;
 
@@ -226,11 +259,18 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
                           {transcript.map((t, i) => (<p key={i}><strong className={t.speaker === 'mang-ai' ? 'text-primary' : 'text-accent'}>{t.speaker === 'mang-ai' ? 'Mang AI' : profile?.full_name || 'Anda'}:</strong> {t.text}</p>))}
                           <div ref={transcriptEndRef} />
                       </div>
-                      <button onClick={handleToggleListen} className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-colors ${isListening ? 'bg-red-500' : 'bg-primary'}`}>
+                      <button 
+                        onClick={handleToggleListen} 
+                        className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-colors ${ isListening ? 'bg-red-500' : 'bg-primary' } ${!initialGreetingComplete ? 'bg-gray-500 cursor-not-allowed' : ''}`}
+                        disabled={!initialGreetingComplete}
+                        title={!initialGreetingComplete ? 'Tunggu Mang AI selesai bicara' : isListening ? 'Ketuk untuk berhenti bicara' : 'Ketuk untuk bicara'}
+                      >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                           {isListening && <div className="absolute inset-0 border-4 border-red-400 rounded-full animate-ping"></div>}
                       </button>
-                      <p className="mt-4 text-text-muted">{isListening ? 'Ketuk untuk berhenti' : 'Ketuk untuk bicara'}</p>
+                      <p className="mt-4 text-text-muted">
+                        {!initialGreetingComplete ? 'Tunggu Mang AI selesai bicara...' : isListening ? 'Ketuk untuk berhenti' : 'Ketuk untuk bicara'}
+                      </p>
                       {error && <p className="mt-4 text-red-400 text-center">{error}</p>}
                   </>
               );
