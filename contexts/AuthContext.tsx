@@ -45,7 +45,7 @@ interface AuthContextType {
   executeLogout: () => Promise<void>;
   handleDeleteAccount: () => void;
   authError: string | null;
-  refreshProfile: () => Promise<void>; // Renamed for external use, internally calls fetchInitialUserData
+  refreshProfile: () => Promise<void>;
   addXp: (amount: number) => Promise<void>;
   grantAchievement: (achievementId: string) => Promise<void>;
   grantFirstTimeCompletionBonus: (step: string) => Promise<void>;
