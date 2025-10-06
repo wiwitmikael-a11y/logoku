@@ -17,18 +17,13 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Reverted to a constructor-based setup to ensure `this` context is correctly bound.
-  // The modern class property syntax was causing type errors, suggesting a toolchain incompatibility.
-  // This approach explicitly initializes state and binds methods, resolving all errors related to `this`.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  // FIX: Switched to modern class property syntax for state initialization and arrow function for methods.
+  // This avoids constructor boilerplate and potential 'this' binding issues, which was the root of the TypeScript errors.
+  public state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
@@ -38,7 +33,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy() {
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
