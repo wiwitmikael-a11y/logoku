@@ -23,7 +23,6 @@ interface ProjectDashboardProps {
   onDeleteProject: (projectId: number) => void;
   onShowBrandGallery: () => void;
   onShowSotoshop: () => void;
-  onShowAIPetLab: () => void;
   onPreloadNewProject: () => void;
 }
 
@@ -164,7 +163,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onMouseE
   </div>
 );
 
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'onShowAIPetLab'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
@@ -340,7 +339,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
         {activeTab === 'projects' && <ProjectContent {...props} />}
         {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools onShowSotoshop={props.onShowSotoshop} /></Suspense>)}
         {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
-        {activeTab === 'juragan' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan onShowAIPetLab={props.onShowAIPetLab} /></Suspense>)}
+        {activeTab === 'juragan' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
       </div>
     </div>
   );
