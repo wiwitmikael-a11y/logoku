@@ -81,7 +81,6 @@ const FloatingAIPet: React.FC<{
     const [position, setPosition] = useState({ x: 50, direction: 1 });
     const [behavior, setBehavior] = useState<PetBehavior>('idle');
     const [isInteracting, setIsInteracting] = useState(false);
-    const [isFacingAway, setIsFacingAway] = useState(false);
     
     const animationFrameRef = useRef<number>();
     // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setTimeout> for browser compatibility.
@@ -140,9 +139,8 @@ const FloatingAIPet: React.FC<{
 
         let delay = 2000 + Math.random() * 2000; // Default delay
         if (behavior === 'turning') {
-            delay = 300; // Duration of the turn animation
+            delay = 500; // Duration of the turn animation to feel natural
             setTimeout(() => {
-                setIsFacingAway(p => !p);
                 setBehavior('idle');
             }, delay);
         } else if (behavior === 'jumping') {
@@ -190,7 +188,6 @@ const FloatingAIPet: React.FC<{
                         petState={petState} 
                         behavior={isInteracting ? 'interacting' : behavior}
                         direction={position.direction}
-                        isFacingAway={isFacingAway}
                     />
                 </Suspense>
             </div>

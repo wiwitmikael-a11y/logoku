@@ -11,7 +11,6 @@ interface AIPetVisualProps {
   className?: string;
   behavior?: 'idle' | 'walking' | 'running' | 'jumping' | 'interacting' | 'turning' | 'somersault';
   direction?: number;
-  isFacingAway?: boolean;
 }
 
 // --- NEW AIPOD VISUAL ---
@@ -129,7 +128,7 @@ interface PartCacheEntry {
     height: number;
 }
 
-const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior = 'idle', direction = 1, isFacingAway = false }) => {
+const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior = 'idle', direction = 1 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationFrameId = useRef<number>(0);
     const partCache = useRef<Map<string, PartCacheEntry>>(new Map());
@@ -141,6 +140,12 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
     const petAnchorRef = useRef<any>(null);
     const zdogAnchorsRef = useRef<Map<string, any>>(new Map());
     const physicsVelocitiesRef = useRef<Record<string, { translate: any; rotate: any }>>({});
+    
+    // New state for advanced animations
+    const parallaxRef = useRef({ x: 0, y: 0 });
+    const currentYRotationRef = useRef(0);
+    const lightSource = useMemo(() => new Zdog.Vector({ x: -0.75, y: -1, z: 1.5 }).normalize(), []);
+
     
     // Initialize Zdog scene
     const initZdogScene = useCallback((parts: Map<string, PartCacheEntry>) => {
@@ -177,10 +182,9 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!petAnchorRef.current) return;
-            const rotateX = (e.clientY / window.innerHeight - 0.5) * -0.3;
-            const rotateY = (e.clientX / window.innerWidth - 0.5) * 0.4;
-            petAnchorRef.current.rotate.x = rotateX;
-            petAnchorRef.current.rotate.y = rotateY;
+            // Store parallax values instead of directly manipulating anchors
+            parallaxRef.current.x = (e.clientY / window.innerHeight - 0.5) * -0.4;
+            parallaxRef.current.y = (e.clientX / window.innerWidth - 0.5) * 0.5;
         };
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
@@ -252,9 +256,6 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
 
             // --- Physics Update ---
             const stiffness = 0.08, damping = 0.8;
-            const torsoAnchor = zdogAnchorsRef.current.get('torso');
-            if (!torsoAnchor) return;
-            
             const walkCycle = time / (behavior === 'running' ? 150 : 250);
             const idleCycle = time / 600;
             let jumpY = 0;
@@ -294,14 +295,23 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
                 });
             });
 
-            // --- Rendering ---
-            let scaleX = direction;
-            if (behavior === 'turning') {
-                const turnProgress = (time % 300) / 300;
-                scaleX = Math.cos(turnProgress * Math.PI) * direction;
-            }
-            if (petAnchorRef.current) petAnchorRef.current.scale.x = scaleX;
+            // --- Rotation & Head Tracking Update ---
+            if (petAnchorRef.current) {
+                const targetY = direction === 1 ? 0 : Zdog.TAU / 2; // 0 or 180 degrees
+                currentYRotationRef.current += (targetY - currentYRotationRef.current) * 0.1; // Smooth interpolation
 
+                petAnchorRef.current.rotate.x = parallaxRef.current.x;
+                petAnchorRef.current.rotate.y = currentYRotationRef.current + parallaxRef.current.y;
+            }
+
+            const headAnchor = zdogAnchorsRef.current.get('head');
+            if (headAnchor) {
+                // Apply extra rotation for head tracking, relative to the body's parallax
+                headAnchor.rotate.x = parallaxRef.current.x * 0.5;
+                headAnchor.rotate.y = parallaxRef.current.y * 0.5;
+            }
+
+            // --- Rendering ---
             illo.updateGraph();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
@@ -315,13 +325,32 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
                 const part = partCache.current.get(partName);
                 if (!part) return;
                 
-                const scale = illo.zoom / (illo.zoom + renderEl.renderOrigin.z);
+                const zFactor = 1.2; // Dramatize depth scaling
+                const scale = illo.zoom / (illo.zoom + renderEl.renderOrigin.z * zFactor);
 
                 ctx.save();
                 ctx.translate(canvas.width / 2 + renderEl.renderOrigin.x, canvas.height / 2 + renderEl.renderOrigin.y + jumpY);
                 ctx.scale(scale, scale);
                 ctx.rotate(renderEl.renderRotation.z);
+
+                // --- Draw Pet Part ---
                 ctx.drawImage(part.canvas, -part.def.pivot.x, -part.def.pivot.y);
+
+                // --- Apply Dynamic Lighting ---
+                const partNormal = new Zdog.Vector({ z: 1 }).rotate(renderEl.renderRotation);
+                const dotProduct = partNormal.dot(lightSource);
+
+                ctx.globalCompositeOperation = 'source-atop';
+                if (dotProduct > 0.3) { // Highlight
+                    const alpha = Math.min(0.25, dotProduct * 0.25);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fillRect(-part.def.pivot.x, -part.def.pivot.y, part.width, part.height);
+                } else if (dotProduct < -0.3) { // Shadow
+                    const alpha = Math.min(0.3, -dotProduct * 0.3);
+                    ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+                    ctx.fillRect(-part.def.pivot.x, -part.def.pivot.y, part.width, part.height);
+                }
+                
                 ctx.restore();
             });
             
@@ -330,7 +359,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
         
         animationFrameId.current = requestAnimationFrame(draw);
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [blueprint, behavior, direction, isFacingAway, initZdogScene]);
+    }, [blueprint, behavior, direction, initZdogScene, lightSource]);
     
     const glowStyle = useMemo(() => {
         if (!colors || stage === 'aipod') return {};
