@@ -181,6 +181,9 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const _generateNewPetData = useCallback(async () => {
         if (!user || !profile) throw new Error("User not found");
         
+        // Use optional chaining for pity counter as a safeguard
+        const pity = profile?.aipet_pity_counter ?? 0;
+        
         const seed = user.id + new Date().toISOString().slice(0, 10) + Math.random();
         const hash = stringToHash(seed);
         const seedRandom = createSeededRandom(hash);
@@ -199,7 +202,6 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
     
         let rand = seedRandom();
-        const pity = profile?.aipet_pity_counter ?? 0;
         if (pity >= 5) { rand = 0.65 + (seedRandom() * 0.35); }
 
         let selectedTier: AIPetTier;

@@ -166,12 +166,12 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                     {pet.battleStats ? (
                         <>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                <BattleStatDisplay label="HP" value={pet.battleStats.hp} icon="❤️" />
-                                <BattleStatDisplay label="ATK" value={pet.battleStats.atk} icon="⚔️" />
-                                <BattleStatDisplay label="DEF" value={pet.battleStats.def} icon="🛡️" />
-                                <BattleStatDisplay label="SPD" value={pet.battleStats.spd} icon="💨" />
+                                <BattleStatDisplay label="HP" value={pet.battleStats?.hp ?? 0} icon="❤️" />
+                                <BattleStatDisplay label="ATK" value={pet.battleStats?.atk ?? 0} icon="⚔️" />
+                                <BattleStatDisplay label="DEF" value={pet.battleStats?.def ?? 0} icon="🛡️" />
+                                <BattleStatDisplay label="SPD" value={pet.battleStats?.spd ?? 0} icon="💨" />
                             </div>
-                            {pet.buffs && pet.buffs.length > 0 && (<div className="mt-3 text-center text-xs font-bold text-sky-300 bg-sky-900/50 rounded-lg py-1">Buffs: {pet.buffs.join(', ')}</div>)}
+                            {(pet.buffs || []).length > 0 && (<div className="mt-3 text-center text-xs font-bold text-sky-300 bg-sky-900/50 rounded-lg py-1">Buffs: {(pet.buffs || []).join(', ')}</div>)}
                         </>
                     ) : <p className="text-sm text-text-muted italic bg-background p-4 rounded-lg border border-border-main">Statistik tempur belum ada.</p>}
                 </div>
