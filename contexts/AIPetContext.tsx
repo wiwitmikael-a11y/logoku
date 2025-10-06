@@ -112,8 +112,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .update(updates)
             .eq('id', user.id);
         if (error) console.error("Failed to save AIPet state:", error);
-        await refreshProfile();
-    }, [user, refreshProfile]);
+    }, [user]);
 
     const debouncedSave = useDebounce(savePetStateToDb, 3000);
 
