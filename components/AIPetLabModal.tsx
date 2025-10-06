@@ -45,10 +45,10 @@ const BattleStatDisplay: React.FC<{ label: string; value: number; icon: string }
 );
 
 const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
-    const { profile, refreshProfile } = useAuth();
+    const { profile } = useAuth();
     const { petState, isLoading: isPetLoading, activatePetWithTokens, activatePetWithFragments, dismantlePet, feedPet } = useAIPet();
     
-    const [activationStep, setActivationStep] = useState<'idle' | 'loading' | 'reveal' | 'done'>('idle');
+    const [activationStep, setActivationStep] = useState<'idle' | 'loading' | 'reveal'>('idle');
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
     const [statusText, setStatusText] = useState("Siap aktivasi?");
@@ -70,6 +70,15 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
             }, 800);
         }
         return () => clearInterval(interval);
+    }, [activationStep]);
+    
+    useEffect(() => {
+        if (activationStep === 'reveal') {
+            const timer = setTimeout(() => {
+                setActivationStep('idle'); // Go back to normal lab view
+            }, 1200); // Duration of reveal animation + a little extra
+            return () => clearTimeout(timer);
+        }
     }, [activationStep]);
 
     const handleActivate = async (method: 'tokens' | 'fragments') => {
@@ -210,13 +219,17 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                 {/* Left Panel: Visual */}
                 <div className="w-full md:w-1/2 flex-shrink-0 flex flex-col items-center justify-center p-4 bg-background/50 rounded-t-2xl md:rounded-t-none md:rounded-l-2xl overflow-hidden">
                     {isPetLoading ? <p>Loading Pet...</p> : (
-                        <div className={`w-full max-w-sm aspect-square ${activationStep === 'reveal' ? 'animate-pet-reveal' : ''}`}>
-                             {(petState && petState.stage === 'active') ? (
-                                <Suspense fallback={<p>Loading card...</p>}>
-                                    <AIPetCard petState={petState} />
-                                </Suspense>
+                        <div className="w-full max-w-sm aspect-square">
+                             {(petState && petState.stage === 'active' && activationStep !== 'loading') ? (
+                                <div className={`${activationStep === 'reveal' ? 'animate-pet-reveal' : ''}`}>
+                                    <Suspense fallback={<p>Loading card...</p>}>
+                                        <AIPetCard petState={petState} />
+                                    </Suspense>
+                                </div>
                              ) : (
-                                <AIPetVisual petState={dummyPodState} />
+                                <div className={`${activationStep === 'loading' ? 'animate-pod-wobble' : ''}`}>
+                                    <AIPetVisual petState={dummyPodState} />
+                                </div>
                             )}
                         </div>
                     )}
@@ -226,7 +239,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                 <div className="flex-grow p-6 overflow-y-auto">
                     <h3 className="text-2xl font-bold text-text-header mb-4" style={{ fontFamily: 'var(--font-display)' }}>AIPet Lab</h3>
                     {isPetLoading ? <p>Loading stats...</p> : 
-                        (petState?.stage === 'aipod' || activationStep === 'loading') ? renderActivationView() :
+                        (petState?.stage === 'aipod' || activationStep === 'loading') && activationStep !== 'reveal' ? renderActivationView() :
                         (petState && petState.stage === 'active') ? renderLabView(petState) :
                         (
                             <div className="text-center p-8 border border-dashed border-border-main rounded-lg">

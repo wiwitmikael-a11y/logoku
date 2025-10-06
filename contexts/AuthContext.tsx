@@ -340,7 +340,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [profile, user]);
 
-  const deductCredits = async (amount: number): Promise<boolean> => {
+  const deductCredits = useCallback(async (amount: number): Promise<boolean> => {
     if (!profile || !user) {
         setAuthError("Pengguna tidak terautentikasi untuk mengurangi token.");
         return false;
@@ -366,7 +366,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setProfile(data as Profile);
     return true;
-  };
+  }, [profile, user]);
 
   const refreshProfile = useCallback(async () => {
     if (user) {

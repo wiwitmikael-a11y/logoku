@@ -113,7 +113,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .eq('id', user.id);
         if (error) {
             console.error("Failed to save AIPet state:", error);
-            // We might want to add some user-facing error handling here in the future
+            throw new Error(`Gagal menyimpan state AIPet: ${error.message}`);
         }
     }, [user]);
 
@@ -252,22 +252,19 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const activatePetWithTokens = useCallback(async () => {
         if (!await deductCredits(ACTIVATION_COST_TOKENS)) throw new Error("Token tidak cukup.");
         const { activeState, newPityCounter } = await _generateNewPetData();
-        // Update local state IMMEDIATELY, then save to DB.
         setPetState(activeState);
         await savePetStateToDb({ aipet_state: activeState, aipet_pity_counter: newPityCounter });
         await addXp(50);
-        await refreshProfile(); // Panggil refreshProfile di akhir untuk sinkronisasi data non-pet
-    }, [deductCredits, _generateNewPetData, savePetStateToDb, addXp, refreshProfile]);
+    }, [deductCredits, _generateNewPetData, savePetStateToDb, addXp]);
     
     const activatePetWithFragments = useCallback(async () => {
         const currentFragments = profile?.data_fragments ?? 0;
         if (currentFragments < ACTIVATION_COST_FRAGMENTS) throw new Error("Data Fragment tidak cukup.");
         const { activeState, newPityCounter } = await _generateNewPetData();
-        // Update local state IMMEDIATELY, then save to DB.
         setPetState(activeState);
         await savePetStateToDb({ aipet_state: activeState, aipet_pity_counter: newPityCounter, data_fragments: currentFragments - ACTIVATION_COST_FRAGMENTS });
         await addXp(50);
-        await refreshProfile(); // Panggil refreshProfile di akhir untuk sinkronisasi data non-pet
+        await refreshProfile();
     }, [profile, _generateNewPetData, savePetStateToDb, addXp, refreshProfile]);
 
     const dismantlePet = useCallback(async () => {
@@ -276,7 +273,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setPetState(defaultAIPodState);
         await savePetStateToDb({ aipet_state: defaultAIPodState, data_fragments: newFragmentCount });
         await addXp(5);
-        await refreshProfile(); // Panggil refreshProfile untuk sinkronisasi fragment
+        await refreshProfile();
     }, [profile, petState, savePetStateToDb, addXp, refreshProfile]);
 
     const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {

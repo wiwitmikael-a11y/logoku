@@ -6,8 +6,6 @@ import Button from './Button';
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 interface Props {
-  // FIX: Made children optional to resolve a type error in App.tsx where TypeScript
-  // was failing to infer the implicitly passed children prop.
   children?: ReactNode;
   onReset?: () => void;
 }
@@ -19,14 +17,18 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to modern class property syntax for state initialization.
-  // This avoids potential issues with `this` context that the constructor-based
-  // approach was experiencing in this project's build environment.
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Refactored to a constructor-based approach to explicitly handle 'this' context,
+  // as the modern class property syntax was causing type errors in the build environment.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    // Binding the method to ensure 'this' is correctly referenced when called from an event handler.
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI.
@@ -37,9 +39,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted to an arrow function to automatically bind `this`.
-  // This ensures `this.state` and `this.setState` are correctly referenced.
-  private handleCopy = () => {
+  // FIX: Changed from an arrow function to a standard class method, bound in the constructor.
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
