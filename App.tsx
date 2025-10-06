@@ -5,10 +5,8 @@ import { GoogleGenAI, Chat } from "@google/genai";
 import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
-// FIX: The import for AIPetContext was failing because the file was not a module. This is fixed by adding content to the file.
 import { AIPetProvider, useAIPet } from './contexts/AIPetContext';
 
 // --- API Services ---
@@ -34,7 +32,6 @@ import CalloutPopup from './components/common/CalloutPopup';
 // --- Lazily Loaded Components ---
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
 const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersonaGenerator'));
-// FIX: The import for LogoGenerator was failing because the file was not a module. This is fixed by adding content to the file.
 const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
 const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
 const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
@@ -83,7 +80,6 @@ const FloatingAIPet: React.FC<{
     const [isInteracting, setIsInteracting] = useState(false);
     
     const animationFrameRef = useRef<number>();
-    // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setTimeout> for browser compatibility.
     const behaviorTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
     const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -112,49 +108,61 @@ const FloatingAIPet: React.FC<{
         };
     }, [behavior]);
 
-    // Behavior state machine
+    // FIX: Refactor the behavior state machine to be clearer and avoid race conditions.
+    // The previous implementation had multiple competing setTimeout calls which could lead to unpredictable behavior.
+    // This new version uses a switch statement to manage state transitions cleanly.
     useEffect(() => {
         clearTimeout(behaviorTimeoutRef.current);
 
-        const setNextBehavior = () => {
-            const nextAction = Math.random();
-            if (isInteracting || ['turning', 'somersault', 'jumping'].includes(behavior)) {
-                return; // Don't interrupt special actions
-            }
-    
-            if (behavior === 'idle') {
-                if (nextAction < 0.05) { // 5% chance to do a somersault
-                    setBehavior('somersault');
-                } else {
-                    setBehavior('walking');
-                }
-            } else if (behavior === 'walking') {
-                if (nextAction < 0.15) setBehavior('running');
-                else if (nextAction < 0.25) setBehavior('jumping');
-                else setBehavior('idle');
-            } else { // from running or other states
-                setBehavior('walking');
-            }
-        };
-
-        let delay = 2000 + Math.random() * 2000; // Default delay
-        if (behavior === 'turning') {
-            delay = 1000; // Duration of the turn animation to feel natural
-            setTimeout(() => {
-                setBehavior('idle');
-            }, delay);
-        } else if (behavior === 'jumping') {
-            delay = 800; // Duration of jump
-            setTimeout(() => setBehavior('idle'), delay);
-        } else if (behavior === 'somersault') {
-            delay = 1500; // Duration of somersault
-             setTimeout(() => setBehavior('idle'), delay);
+        if (isInteracting) {
+            return;
         }
 
-        behaviorTimeoutRef.current = setTimeout(setNextBehavior, delay);
-        
-        return () => clearTimeout(behaviorTimeoutRef.current);
+        const randomDelay = () => 2000 + Math.random() * 2000;
 
+        switch (behavior) {
+            case 'idle':
+                behaviorTimeoutRef.current = setTimeout(() => {
+                    const nextAction = Math.random();
+                    if (nextAction < 0.05) {
+                        setBehavior('somersault');
+                    } else {
+                        setBehavior('walking');
+                    }
+                }, randomDelay());
+                break;
+            case 'walking':
+                behaviorTimeoutRef.current = setTimeout(() => {
+                    const nextAction = Math.random();
+                    if (nextAction < 0.15) setBehavior('running');
+                    else if (nextAction < 0.25) setBehavior('jumping');
+                    else setBehavior('idle');
+                }, randomDelay());
+                break;
+            case 'running':
+                behaviorTimeoutRef.current = setTimeout(() => {
+                    setBehavior('walking');
+                }, randomDelay());
+                break;
+            case 'turning':
+                behaviorTimeoutRef.current = setTimeout(() => setBehavior('idle'), 1000);
+                break;
+            case 'jumping':
+                behaviorTimeoutRef.current = setTimeout(() => setBehavior('idle'), 800);
+                break;
+            case 'somersault':
+                behaviorTimeoutRef.current = setTimeout(() => setBehavior('idle'), 1500);
+                break;
+            default:
+                // No-op for 'interacting' or other unknown states
+                break;
+        }
+        
+        return () => {
+            if (behaviorTimeoutRef.current) {
+                clearTimeout(behaviorTimeoutRef.current);
+            }
+        };
     }, [behavior, isInteracting]);
     
     const handlePetClick = () => {
@@ -520,7 +528,6 @@ const MainApp: React.FC = () => {
 
     const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         saveLocalCheckpoint({ brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan });
-        // --- FIX: Immediately save core data to Supabase to prevent progress loss ---
         if (session?.user && selectedProjectId) {
             const currentData = loadWorkflowState();
             const { error: updateError } = await supabase.from('projects').update({ project_data: currentData }).eq('id', selectedProjectId);
@@ -648,7 +655,6 @@ const MainApp: React.FC = () => {
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
                         <ErrorBoundary onReset={handleReturnToDashboard}>
-                            {/* FIX: Removed unnecessary React.Fragment wrapper. An ErrorBoundary can have multiple children. */}
                             {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
                             <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
                                 <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
@@ -737,7 +743,6 @@ const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onSh
                     <div className="space-y-2">
                         <h4 className="font-semibold text-text-header">Navigasi</h4>
                         <ul className="space-y-1 text-sm">
-{/* FIX: The onClick handlers were passing the MouseEvent to props that expect no arguments. This wraps them in arrow functions to prevent a type mismatch. */}
                             <li><button onClick={() => onShowAbout()} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
                             <li><button onClick={() => onShowContact()} className="hover:text-primary transition-colors">Kontak Developer</button></li>
                             <li><button onClick={() => onShowToS()} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>

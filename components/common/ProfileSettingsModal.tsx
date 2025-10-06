@@ -14,7 +14,6 @@ const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; ic
   SULTAN_KONTEN: { name: 'Sultan Konten', description: 'Berhasil menyelesaikan 10 project branding.', icon: '🥇' },
 };
 
-// FIX: Added the missing 'Props' interface definition.
 interface Props {
   show: boolean;
   onClose: () => void;

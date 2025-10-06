@@ -4,7 +4,6 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions, generateSocialMediaPostImage } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-// FIX: Import useAIPet to get petState for the generateCaptions function.
 import { useAIPet } from '../contexts/AIPetContext';
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
@@ -58,7 +57,6 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
     try {
       const [imageResult, captionsResult] = await Promise.all([
         generateSocialMediaPostImage(topic, selectedPersona.kata_kunci),
-        // FIX: Added the missing petState argument to the generateCaptions function call.
         generateCaptions(brandInputs.businessName, selectedPersona, topic, "Promosi", petState)
       ]);
       if (!imageResult || imageResult.length === 0) throw new Error("Mang AI gagal membuat gambar.");

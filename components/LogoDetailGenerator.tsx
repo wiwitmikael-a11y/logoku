@@ -2,7 +2,6 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { LogoVariations } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -99,11 +98,9 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
     setFinalLogoUrl(lastVersion);
     setHistory(prev => prev.slice(0, -1));
     setVariations(null);
-    // FIX: The call to setShowNextStepNudge was missing its argument, causing a syntax error.
     setShowNextStepNudge(false);
   };
 
-  // FIX: Added the missing return statement with JSX to make this a valid React component.
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
@@ -158,5 +155,4 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
   );
 };
 
-// FIX: Added the missing default export to allow React.lazy to import this component correctly.
 export default LogoDetailGenerator;

@@ -4,7 +4,6 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
 import { setMuted, playBGM, stopBGM, unlockAudio, playRandomBGM } from '../services/soundService';
-// FIX: Import DailyActions type.
 import type { Profile, DailyActions } from '../types';
 
 export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
@@ -50,7 +49,6 @@ interface AuthContextType {
   setShowLevelUpModal: React.Dispatch<React.SetStateAction<boolean>>;
   unlockedAchievement: Achievement | null;
   setUnlockedAchievement: React.Dispatch<React.SetStateAction<Achievement | null>>;
-  // FIX: Added dailyActions, incrementDailyAction, and claimMissionReward to type.
   dailyActions: DailyActions | null;
   incrementDailyAction: (actionId: string) => Promise<void>;
   claimMissionReward: (missionId: string, xpReward: number) => Promise<void>;
@@ -72,7 +70,6 @@ const ACHIEVEMENTS_MAP: { [key: string]: Achievement } = {
   SULTAN_KONTEN: { id: 'SULTAN_KONTEN', name: 'Sultan Konten', description: 'Berhasil menyelesaikan 10 project branding.', icon: '🥉' },
 };
 
-// FIX: Added daily missions constant.
 const DAILY_MISSIONS = [
   { id: 'created_captions', description: 'Bikin 1 caption di Tools Lanjutan', xp: 10, target: 1 },
   { id: 'liked_projects', description: "Kasih 'Menyala!' di 3 karya Pameran Brand", xp: 15, target: 3 },
@@ -154,15 +151,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }
     
-    // --- ROBUST SANITIZATION for daily_actions ---
-    const currentDailyActions = (data.daily_actions && typeof data.daily_actions === 'object' && !Array.isArray(data.daily_actions))
-        ? (data.daily_actions as DailyActions)
-        : {};
-    
-    const sanitizedDailyActions: DailyActions = {
-        ...currentDailyActions,
-        claimed_missions: Array.isArray(currentDailyActions.claimed_missions) ? currentDailyActions.claimed_missions : []
-    };
+    // --- ROBUST SANITIZATION ---
+    // This logic ensures that `daily_actions` is always a valid object with `claimed_missions` before any other logic runs.
+    // This is the core fix for the "Gagal sinkronisasi" error on new user login.
+    let sanitizedDailyActions: DailyActions = { claimed_missions: [] };
+    if (data.daily_actions && typeof data.daily_actions === 'object' && !Array.isArray(data.daily_actions)) {
+        sanitizedDailyActions = { ...(data.daily_actions as object) };
+        if (!Array.isArray(sanitizedDailyActions.claimed_missions)) {
+            sanitizedDailyActions.claimed_missions = [];
+        }
+    }
 
     const profileData: Profile = {
         ...data,
@@ -529,7 +527,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Gamification
     addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal,
     unlockedAchievement, setUnlockedAchievement,
-    // FIX: Expose dailyActions, incrementDailyAction, and claimMissionReward in context value.
     dailyActions: profile?.daily_actions ?? null,
     incrementDailyAction,
     claimMissionReward,
