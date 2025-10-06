@@ -27,6 +27,40 @@ const functionDeclarations: FunctionDeclaration[] = [
   { name: 'confirmAllDetails', parameters: { type: Type.OBJECT, properties: {}, required: [] } },
 ];
 
+const PermissionDeniedScreen: React.FC<{ onCheckAgain: () => void }> = ({ onCheckAgain }) => (
+  <div className="text-center p-4">
+    <div className="text-6xl mb-4">🎙️🚫</div>
+    <h3 className="text-2xl font-bold text-red-400">Akses Mikrofon Diblokir</h3>
+    <p className="text-text-muted mt-2 max-w-md mx-auto">
+      Kayaknya kamu belum ngasih izin aplikasi ini buat pake mikrofon. Fitur suara butuh akses ini biar bisa jalan.
+    </p>
+    <div className="mt-6 p-4 bg-black/20 rounded-lg text-left text-sm space-y-2 max-w-md mx-auto">
+      <p className="font-semibold text-text-header">Cara ngasih izin lagi:</p>
+      <ol className="list-decimal list-inside space-y-1">
+        <li>Klik ikon gembok 🔒 di sebelah kiri alamat website di browser-mu.</li>
+        <li>Cari pengaturan "Mikrofon" atau "Microphone".</li>
+        <li>Ubah dari "Blokir" (Block) menjadi "Izinkan" (Allow).</li>
+        <li>Setelah itu, klik tombol di bawah ini buat ngecek ulang.</li>
+      </ol>
+    </div>
+    <Button onClick={onCheckAgain} className="mt-6">Udah, Coba Cek Lagi</Button>
+  </div>
+);
+
+const ReadyToStartScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => (
+    <div className="text-center p-4">
+        <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-40 h-40 animate-breathing-ai mx-auto" style={{ imageRendering: 'pixelated' }} />
+        <h3 className="text-2xl font-bold text-primary mt-4">Siap Mulai Konsultasi Suara?</h3>
+        <p className="text-text-muted mt-2 max-w-md mx-auto">
+            Mang AI akan memandumu mengisi detail brand lewat percakapan. Nanti browser akan minta izin untuk mengakses mikrofonmu.
+        </p>
+        <Button onClick={onStart} size="large" className="mt-8">
+            Oke, Siap!
+        </Button>
+    </div>
+);
+
+
 const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => {
   const { profile } = useAuth();
   const [status, setStatus] = useState('Initializing...');
@@ -35,6 +69,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs>>({});
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [permissionState, setPermissionState] = useState<'pending' | 'granted' | 'prompt' | 'denied'>('pending');
 
   const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
@@ -44,19 +79,18 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const nextStartTimeRef = useRef(0);
   const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
   const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const brandInputsRef = useRef(brandInputs);
+  useEffect(() => { brandInputsRef.current = brandInputs; }, [brandInputs]);
 
   const workflowSteps: VoiceWizardStep[] = ['GET_BUSINESS_NAME', 'GET_BUSINESS_DETAILS', 'GET_TARGET_AUDIENCE', 'GET_VALUE_PROPOSITION', 'GET_COMPETITORS', 'CONFIRMATION'];
   const currentStepIndex = workflowSteps.indexOf(wizardStep);
 
-  const addTranscript = (speaker: 'mang-ai' | 'user', text: string) => {
-    if (!text.trim()) return;
-    setTranscript(prev => [...prev, { speaker, text }]);
-  };
+  const addTranscript = (speaker: 'mang-ai' | 'user', text: string) => { if (!text.trim()) return; setTranscript(prev => [...prev, { speaker, text }]); };
 
   useEffect(() => { transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [transcript]);
 
   const connectToGemini = useCallback(async () => {
-    if (sessionPromiseRef.current) return;
+    if (sessionPromiseRef.current || status.startsWith('Menyambung')) return;
     setStatus('Meminta izin mikrofon...');
     
     try {
@@ -64,7 +98,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
       streamRef.current = stream;
       
       const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_API_KEY});
-      
       setStatus('Menyambungkan ke Mang AI...');
 
       sessionPromiseRef.current = ai.live.connect({
@@ -90,17 +123,13 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
               if (!isListening) return;
               const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
               const pcmBlob: Blob = { data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32767)).buffer)), mimeType: 'audio/pcm;rate=16000' };
-              sessionPromiseRef.current?.then((session) => {
-                session.sendRealtimeInput({ media: pcmBlob });
-              });
+              sessionPromiseRef.current?.then((session) => { session.sendRealtimeInput({ media: pcmBlob }); });
             };
             source.connect(processor);
             processor.connect(inputCtx.destination);
           },
           onmessage: async (message: LiveServerMessage) => {
-            if (message.serverContent?.inputTranscription) {
-              addTranscript('user', message.serverContent.inputTranscription.text);
-            }
+            if (message.serverContent?.inputTranscription) { addTranscript('user', message.serverContent.inputTranscription.text); }
             if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
               const audioData = message.serverContent.modelTurn.parts[0].inlineData.data;
               const outputCtx = outputAudioContextRef.current;
@@ -109,7 +138,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
                 const source = outputCtx.createBufferSource();
                 source.buffer = audioBuffer;
                 source.connect(outputCtx.destination);
-                
                 const currentTime = outputCtx.currentTime;
                 const startTime = Math.max(currentTime, nextStartTimeRef.current);
                 source.start(startTime);
@@ -122,38 +150,16 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
               for (const fc of message.toolCall.functionCalls) {
                 let result = 'OK';
                 let nextStep: VoiceWizardStep | null = null;
-                
                 switch (fc.name) {
-                  case 'saveBusinessName':
-                    setBrandInputs(prev => ({ ...prev, businessName: fc.args.name }));
-                    nextStep = 'GET_BUSINESS_DETAILS';
-                    break;
-                  case 'saveBusinessDetails':
-                    setBrandInputs(prev => ({ ...prev, businessCategory: fc.args.category, businessDetail: fc.args.detail }));
-                    nextStep = 'GET_TARGET_AUDIENCE';
-                    break;
-                  case 'saveTargetAudience':
-                     setBrandInputs(prev => ({ ...prev, targetAudience: `${fc.args.category} usia ${fc.args.age}` }));
-                     nextStep = 'GET_VALUE_PROPOSITION';
-                    break;
-                  case 'saveValueProposition':
-                     setBrandInputs(prev => ({ ...prev, valueProposition: fc.args.value }));
-                     nextStep = 'GET_COMPETITORS';
-                    break;
-                  case 'saveCompetitors':
-                     setBrandInputs(prev => ({ ...prev, competitors: fc.args.competitors }));
-                     nextStep = 'CONFIRMATION';
-                    break;
-                   case 'confirmAllDetails':
-                     setWizardStep('COMPLETED');
-                     onComplete(brandInputs as BrandInputs);
-                     break;
+                  case 'saveBusinessName': setBrandInputs(prev => ({ ...prev, businessName: fc.args.name })); nextStep = 'GET_BUSINESS_DETAILS'; break;
+                  case 'saveBusinessDetails': setBrandInputs(prev => ({ ...prev, businessCategory: fc.args.category, businessDetail: fc.args.detail })); nextStep = 'GET_TARGET_AUDIENCE'; break;
+                  case 'saveTargetAudience': setBrandInputs(prev => ({ ...prev, targetAudience: `${fc.args.category} usia ${fc.args.age}` })); nextStep = 'GET_VALUE_PROPOSITION'; break;
+                  case 'saveValueProposition': setBrandInputs(prev => ({ ...prev, valueProposition: fc.args.value })); nextStep = 'GET_COMPETITORS'; break;
+                  case 'saveCompetitors': setBrandInputs(prev => ({ ...prev, competitors: fc.args.competitors })); nextStep = 'CONFIRMATION'; break;
+                  case 'confirmAllDetails': setWizardStep('COMPLETED'); onComplete(brandInputsRef.current as BrandInputs); break;
                 }
                 if (nextStep) setWizardStep(nextStep);
-
-                sessionPromiseRef.current?.then(session => {
-                  session.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: { result } } });
-                });
+                sessionPromiseRef.current?.then(session => { session.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: { result } } }); });
               }
             }
           },
@@ -163,60 +169,80 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
       });
     } catch (err) {
       setError(`Gagal mengakses mikrofon. Pastikan kamu sudah memberikan izin di browsermu.`);
+      setPermissionState('denied'); // Explicitly set to denied on catch
       setStatus('Gagal');
     }
-  }, [isListening, onComplete, brandInputs]);
+  }, [onComplete, status]);
+
+  const checkPermissions = useCallback(async () => {
+    if (typeof navigator.permissions === 'undefined') { setPermissionState('prompt'); return; }
+    try {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        setPermissionState(permissionStatus.state);
+        permissionStatus.onchange = () => { setPermissionState(permissionStatus.state); };
+    } catch (err) {
+        console.error("Permission API not supported or failed:", err);
+        setPermissionState('prompt');
+    }
+  }, []);
+
+  const handleRequestPermission = useCallback(() => { connectToGemini(); }, [connectToGemini]);
+  const handleCheckPermissionsAgain = useCallback(() => { checkPermissions(); }, [checkPermissions]);
 
   useEffect(() => {
-    if (show) {
-      connectToGemini();
-    }
+    if (show) { checkPermissions(); }
     return () => {
-      sessionPromiseRef.current?.then(session => session.close());
-      streamRef.current?.getTracks().forEach(track => track.stop());
-      inputAudioContextRef.current?.close();
-      outputAudioContextRef.current?.close();
-      sessionPromiseRef.current = null;
+        if (!show) {
+            sessionPromiseRef.current?.then(session => session.close());
+            streamRef.current?.getTracks().forEach(track => track.stop());
+            inputAudioContextRef.current?.close().catch(() => {});
+            outputAudioContextRef.current?.close().catch(() => {});
+            sessionPromiseRef.current = null; streamRef.current = null; inputAudioContextRef.current = null; outputAudioContextRef.current = null; scriptProcessorRef.current = null;
+            setPermissionState('pending'); setTranscript([]); setIsListening(false); setWizardStep('GREETING'); setBrandInputs({}); setError(null);
+        }
     };
-  }, [show, connectToGemini]);
+  }, [show, checkPermissions]);
+  
+  useEffect(() => {
+      if (permissionState === 'granted' && show && !sessionPromiseRef.current) { connectToGemini(); }
+  }, [permissionState, show, connectToGemini]);
 
-  const handleToggleListen = () => {
-    playSound('click');
-    setIsListening(prev => !prev);
-    if (!isListening) {
-      setStatus('Mendengarkan...');
-    } else {
-      setStatus('Mang AI sedang berpikir...');
-    }
-  };
+  const handleToggleListen = () => { playSound('click'); setIsListening(prev => !prev); if (!isListening) { setStatus('Mendengarkan...'); } else { setStatus('Mang AI sedang berpikir...'); } };
 
   if (!show) return null;
 
+  const renderContent = () => {
+      switch (permissionState) {
+          case 'pending': return <p className="text-lg font-semibold text-splash animate-pulse">Mengecek izin mikrofon...</p>;
+          case 'denied': return <PermissionDeniedScreen onCheckAgain={handleCheckPermissionsAgain} />;
+          case 'prompt': return <ReadyToStartScreen onStart={handleRequestPermission} />;
+          case 'granted':
+              return (
+                  <>
+                      <div className="my-8 w-full"> <ProgressStepper currentStep={currentStepIndex} /> </div>
+                      <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-40 h-40 animate-breathing-ai" style={{ imageRendering: 'pixelated' }} />
+                      <p className="mt-4 text-lg font-semibold text-splash animate-pulse">{status}</p>
+                      <div className="w-full h-48 my-6 overflow-y-auto p-4 bg-black/20 rounded-lg text-sm space-y-2">
+                          {transcript.map((t, i) => (<p key={i}><strong className={t.speaker === 'mang-ai' ? 'text-primary' : 'text-accent'}>{t.speaker === 'mang-ai' ? 'Mang AI' : profile?.full_name || 'Anda'}:</strong> {t.text}</p>))}
+                          <div ref={transcriptEndRef} />
+                      </div>
+                      <button onClick={handleToggleListen} className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-colors ${isListening ? 'bg-red-500' : 'bg-primary'}`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                          {isListening && <div className="absolute inset-0 border-4 border-red-400 rounded-full animate-ping"></div>}
+                      </button>
+                      <p className="mt-4 text-text-muted">{isListening ? 'Ketuk untuk berhenti' : 'Ketuk untuk bicara'}</p>
+                      {error && <p className="mt-4 text-red-400 text-center">{error}</p>}
+                  </>
+              );
+          default: return <p>Status tidak diketahui. Coba refresh halaman.</p>;
+      }
+  };
+
   return (
     <div className="fixed inset-0 bg-background/90 backdrop-blur-lg z-50 flex flex-col items-center justify-center p-4 text-white animate-content-fade-in">
-      <div className="absolute top-4 right-4">
-        <Button onClick={onClose} variant="secondary">Keluar</Button>
-      </div>
-      <div className="w-full max-w-4xl mx-auto flex flex-col items-center h-full">
-        <div className="my-8 w-full">
-          <ProgressStepper currentStep={currentStepIndex} />
-        </div>
-        <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-40 h-40 animate-breathing-ai" style={{ imageRendering: 'pixelated' }} />
-        <p className="mt-4 text-lg font-semibold text-splash animate-pulse">{status}</p>
-
-        <div className="w-full h-48 my-6 overflow-y-auto p-4 bg-black/20 rounded-lg text-sm space-y-2">
-            {transcript.map((t, i) => (
-                <p key={i}><strong className={t.speaker === 'mang-ai' ? 'text-primary' : 'text-accent'}>{t.speaker === 'mang-ai' ? 'Mang AI' : profile?.full_name || 'Anda'}:</strong> {t.text}</p>
-            ))}
-            <div ref={transcriptEndRef} />
-        </div>
-
-        <button onClick={handleToggleListen} className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-colors ${isListening ? 'bg-red-500' : 'bg-primary'}`}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-          {isListening && <div className="absolute inset-0 border-4 border-red-400 rounded-full animate-ping"></div>}
-        </button>
-        <p className="mt-4 text-text-muted">{isListening ? 'Ketuk untuk berhenti' : 'Ketuk untuk bicara'}</p>
-        {error && <p className="mt-4 text-red-400 text-center">{error}</p>}
+      <div className="absolute top-4 right-4"> <Button onClick={onClose} variant="secondary">Keluar</Button> </div>
+      <div className="w-full max-w-4xl mx-auto flex flex-col items-center h-full pt-16 sm:pt-0 justify-center">
+          {renderContent()}
       </div>
     </div>
   );
