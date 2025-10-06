@@ -109,10 +109,10 @@ const AIPetCard: React.FC<AIPetCardProps> = ({ petState }) => {
                         <div className="mx-auto mt-2 p-2 w-[95%] border-2 border-black/30 bg-black/20 rounded-md flex-grow flex flex-col justify-between">
                             {/* Personality Stats */}
                             <div className="space-y-1">
-                                <StatBar label="ENR" value={petState.stats.energy} color="bg-green-500" bgColor="bg-green-900" />
-                                <StatBar label="CRT" value={petState.stats.creativity} color="bg-sky-400" bgColor="bg-sky-900" />
-                                <StatBar label="INT" value={petState.stats.intelligence} color="bg-fuchsia-500" bgColor="bg-fuchsia-900" />
-                                <StatBar label="CHA" value={petState.stats.charisma} color="bg-yellow-400" bgColor="bg-yellow-900" />
+                                <StatBar label="ENR" value={petState.stats?.energy ?? 0} color="bg-green-500" bgColor="bg-green-900" />
+                                <StatBar label="CRT" value={petState.stats?.creativity ?? 0} color="bg-sky-400" bgColor="bg-sky-900" />
+                                <StatBar label="INT" value={petState.stats?.intelligence ?? 0} color="bg-fuchsia-500" bgColor="bg-fuchsia-900" />
+                                <StatBar label="CHA" value={petState.stats?.charisma ?? 0} color="bg-yellow-400" bgColor="bg-yellow-900" />
                             </div>
 
                             {/* Narrative Box */}
