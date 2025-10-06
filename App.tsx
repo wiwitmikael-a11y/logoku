@@ -594,7 +594,7 @@ const MainApp: React.FC = () => {
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} addXp={addXp} onShareToForum={() => handleShareToForum(project)} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
-            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onShowAIPetLab={() => setShowAIPetLab(true)} onPreloadNewProject={preloadBrandPersona} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onPreloadNewProject={preloadBrandPersona} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
@@ -618,6 +618,30 @@ const MainApp: React.FC = () => {
                             <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span>
                         </button>
                         <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                        
+                        {!aipetContext.isLoading && petState && (
+                            <button
+                                onClick={() => { playSound('click'); setShowAIPetLab(true); }}
+                                title="Buka AIPet Lab"
+                                className="flex items-center gap-2 rounded-full p-1 pr-3 bg-background hover:bg-border-light transition-colors border border-border-main group"
+                            >
+                                <div className="w-9 h-9 flex items-center justify-center relative transition-transform group-hover:scale-110">
+                                    {petState.stage === 'active' && petState.blueprint ? (
+                                        <div className="absolute inset-0 scale-[1.4] top-1">
+                                            <Suspense fallback={<div className="w-full h-full bg-border-main rounded-full animate-pulse" />}>
+                                                <AIPetVisual petState={petState} behavior="idle" />
+                                            </Suspense>
+                                        </div>
+                                    ) : (
+                                        <div className="text-2xl animate-pulse filter drop-shadow-[0_0_4px_rgb(var(--c-primary))]">💎</div>
+                                    )}
+                                </div>
+                                <span className="text-sm font-semibold text-text-header hidden sm:block">
+                                    {petState.stage === 'active' ? petState.name : 'AIPod'}
+                                </span>
+                            </button>
+                        )}
+
                         <div ref={userMenuRef} className="relative">
                             <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-3 bg-background hover:bg-border-light transition-colors border border-transparent hover:border-border-main">
                                 <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>

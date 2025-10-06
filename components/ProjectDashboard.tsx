@@ -23,7 +23,6 @@ interface ProjectDashboardProps {
   onDeleteProject: (projectId: number) => void;
   onShowBrandGallery: () => void;
   onShowSotoshop: () => void;
-  onShowAIPetLab: () => void;
   onPreloadNewProject: () => void;
 }
 
@@ -164,7 +163,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onMouseE
   </div>
 );
 
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'onShowAIPetLab'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
@@ -291,7 +290,7 @@ const TabButton: React.FC<{
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { session } = useAuth();
   const userName = session?.user?.user_metadata?.full_name?.split(' ')[0] || 'Juragan';
-  const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'forum' | 'juragan' | 'aipetlab'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'forum' | 'juragan'>('projects');
   
   useEffect(() => {
     if (sessionStorage.getItem('openForumTab')) {
@@ -305,12 +304,10 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
     { id: 'tools', name: 'Ide', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg> },
     { id: 'forum', name: 'Forum', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H17z" /></svg> },
     { id: 'juragan', name: 'Juara', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
-    { id: 'aipetlab', name: 'AIPet Lab', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M2 18L5 8c.5-2 2.5-2 3 0l-3 10H2zm5 1l3-14c.5-2 2.5-2 3 0l-3 14H7zm5-1l3-10c.5-2 2.5-2 3 0l-3 10h-3z" clipRule="evenodd" /></svg> },
   ];
 
   const handleTabClick = (id: string) => {
-      if (id === 'aipetlab') props.onShowAIPetLab();
-      else setActiveTab(id as any);
+      setActiveTab(id as any);
   }
 
   return (
