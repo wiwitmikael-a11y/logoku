@@ -4,7 +4,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback, use
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import { generateAIPetNarrative } from '../services/geminiService';
-import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint, AIPetTier, AIPetColorPalette, AIPetBattleStats } from '../types';
+import type { AIPetState, AIPetStats, AIPetPersonalityVector, AIPetStage, AIPetColors, AIPetBlueprint, AIPetTier, AIPetColorPalette, AIPetBattleStats, Profile } from '../types';
 
 export type VisualEffect = { type: 'feed', id: number } | null;
 
@@ -105,13 +105,16 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const petVisibilityTimer = useRef<number | null>(null);
     const lastUpdateRef = useRef(Date.now());
 
-    const savePetStateToDb = useCallback(async (updates: Partial<{aipet_state: AIPetState} & Pick<import('../types').Profile, 'aipet_pity_counter' | 'data_fragments'>>) => {
+    const savePetStateToDb = useCallback(async (updates: Partial<Pick<Profile, 'aipet_state' | 'aipet_pity_counter' | 'data_fragments'>>) => {
         if (!user) return;
         const { error } = await supabase
             .from('profiles')
             .update(updates)
             .eq('id', user.id);
-        if (error) console.error("Failed to save AIPet state:", error);
+        if (error) {
+            console.error("Failed to save AIPet state:", error);
+            // We might want to add some user-facing error handling here in the future
+        }
     }, [user]);
 
     const debouncedSave = useDebounce(savePetStateToDb, 3000);
@@ -136,8 +139,11 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const sanitized = sanitizePetState(profile.aipet_state);
             setPetState(sanitized);
         } else if (user && !profile?.aipet_state) {
-            setPetState(defaultAIPodState);
-            savePetStateToDb({ aipet_state: defaultAIPodState });
+            // This case handles a new user or a user whose pet state was somehow nullified.
+            // It ensures a default AIPod state is created and saved.
+            const initialState = defaultAIPodState;
+            setPetState(initialState);
+            savePetStateToDb({ aipet_state: initialState });
         }
         setIsLoading(false);
     }, [profile, user, savePetStateToDb]);
@@ -246,19 +252,23 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const activatePetWithTokens = useCallback(async () => {
         if (!await deductCredits(ACTIVATION_COST_TOKENS)) throw new Error("Token tidak cukup.");
         const { activeState, newPityCounter } = await _generateNewPetData();
+        // Update local state IMMEDIATELY, then save to DB.
         setPetState(activeState);
         await savePetStateToDb({ aipet_state: activeState, aipet_pity_counter: newPityCounter });
         await addXp(50);
-    }, [deductCredits, _generateNewPetData, savePetStateToDb, addXp]);
+        await refreshProfile(); // Panggil refreshProfile di akhir untuk sinkronisasi data non-pet
+    }, [deductCredits, _generateNewPetData, savePetStateToDb, addXp, refreshProfile]);
     
     const activatePetWithFragments = useCallback(async () => {
         const currentFragments = profile?.data_fragments ?? 0;
         if (currentFragments < ACTIVATION_COST_FRAGMENTS) throw new Error("Data Fragment tidak cukup.");
         const { activeState, newPityCounter } = await _generateNewPetData();
+        // Update local state IMMEDIATELY, then save to DB.
         setPetState(activeState);
         await savePetStateToDb({ aipet_state: activeState, aipet_pity_counter: newPityCounter, data_fragments: currentFragments - ACTIVATION_COST_FRAGMENTS });
         await addXp(50);
-    }, [profile, _generateNewPetData, savePetStateToDb, addXp]);
+        await refreshProfile(); // Panggil refreshProfile di akhir untuk sinkronisasi data non-pet
+    }, [profile, _generateNewPetData, savePetStateToDb, addXp, refreshProfile]);
 
     const dismantlePet = useCallback(async () => {
         if (!profile || !petState || petState.tier !== 'common') throw new Error("Hanya pet Common yang bisa didaur ulang.");
@@ -266,7 +276,8 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setPetState(defaultAIPodState);
         await savePetStateToDb({ aipet_state: defaultAIPodState, data_fragments: newFragmentCount });
         await addXp(5);
-    }, [profile, petState, savePetStateToDb, addXp]);
+        await refreshProfile(); // Panggil refreshProfile untuk sinkronisasi fragment
+    }, [profile, petState, savePetStateToDb, addXp, refreshProfile]);
 
     const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {
         if (activityType === 'user_idle' && Math.random() < 0.3) { showContextualMessage("Zzz... Kayaknya Juragan lagi istirahat, ya? Aku juga ah.", 10000); } 

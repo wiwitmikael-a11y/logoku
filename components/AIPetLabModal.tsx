@@ -45,7 +45,7 @@ const BattleStatDisplay: React.FC<{ label: string; value: number; icon: string }
 );
 
 const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
-    const { profile } = useAuth();
+    const { profile, refreshProfile } = useAuth();
     const { petState, isLoading: isPetLoading, activatePetWithTokens, activatePetWithFragments, dismantlePet, feedPet } = useAIPet();
     
     const [activationStep, setActivationStep] = useState<'idle' | 'loading' | 'reveal' | 'done'>('idle');
@@ -200,10 +200,10 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
     if (!show) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={activationStep === 'loading' ? undefined : onClose}>
             <style>{podAnimation}</style>
             <div className="relative max-w-4xl w-full h-[90vh] bg-surface rounded-2xl shadow-xl flex flex-col md:flex-row" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} title="Tutup" className="absolute top-3 right-3 z-20 p-2 text-primary rounded-full hover:bg-background hover:text-primary-hover transition-colors close-button-glow">
+                <button onClick={onClose} disabled={activationStep === 'loading'} title="Tutup" className="absolute top-3 right-3 z-20 p-2 text-primary rounded-full hover:bg-background hover:text-primary-hover transition-colors close-button-glow disabled:opacity-50">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
 
@@ -226,7 +226,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                 <div className="flex-grow p-6 overflow-y-auto">
                     <h3 className="text-2xl font-bold text-text-header mb-4" style={{ fontFamily: 'var(--font-display)' }}>AIPet Lab</h3>
                     {isPetLoading ? <p>Loading stats...</p> : 
-                        (petState?.stage === 'aipod') ? renderActivationView() :
+                        (petState?.stage === 'aipod' || activationStep === 'loading') ? renderActivationView() :
                         (petState && petState.stage === 'active') ? renderLabView(petState) :
                         (
                             <div className="text-center p-8 border border-dashed border-border-main rounded-lg">
