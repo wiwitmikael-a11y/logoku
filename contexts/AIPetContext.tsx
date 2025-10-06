@@ -70,6 +70,30 @@ const createSeededRandom = (seed: number) => {
     };
 };
 
+const defaultAIPodState: AIPetState = {
+    name: 'AIPod', stage: 'aipod', tier: 'common',
+    stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
+    lastFed: Date.now(), lastPlayed: Date.now(),
+    personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
+    narrative: null, blueprint: null, colors: null, battleStats: null, buffs: [],
+};
+
+// --- NEW: Centralized Sanitization Function ---
+const sanitizePetState = (loadedState: any): AIPetState => {
+    const sanitized: AIPetState = { ...defaultAIPodState, ...loadedState };
+
+    // Ensure nested objects and arrays have default values to prevent crashes
+    sanitized.stats = { ...defaultAIPodState.stats, ...sanitized.stats };
+    sanitized.personality = { ...defaultAIPodState.personality, ...sanitized.personality };
+    sanitized.buffs = Array.isArray(sanitized.buffs) ? sanitized.buffs : [];
+    sanitized.battleStats = sanitized.battleStats || null;
+    sanitized.blueprint = sanitized.blueprint || null;
+    sanitized.colors = sanitized.colors || null;
+    sanitized.narrative = sanitized.narrative || null;
+
+    return sanitized;
+};
+
 
 export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, profile, addXp, deductCredits, refreshProfile } = useAuth();
@@ -110,18 +134,13 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     useEffect(() => {
         if (profile?.aipet_state) {
-            setPetState(profile.aipet_state as AIPetState);
+            // FIX: Sanitize the state loaded from DB to ensure all properties exist
+            const sanitized = sanitizePetState(profile.aipet_state);
+            setPetState(sanitized);
         } else if (user && !profile?.aipet_state) {
             // NEW PET: Starts as an aipod.
-            const newPet: AIPetState = {
-                name: 'AIPod', stage: 'aipod', tier: 'common',
-                stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
-                lastFed: Date.now(), lastPlayed: Date.now(),
-                personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
-                narrative: null, blueprint: null, colors: null, battleStats: null, buffs: [],
-            };
-            setPetState(newPet);
-            savePetStateToDb({ aipet_state: newPet });
+            setPetState(defaultAIPodState);
+            savePetStateToDb({ aipet_state: defaultAIPodState });
         }
         setIsLoading(false);
     }, [profile, user, savePetStateToDb]);
@@ -245,10 +264,9 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const dismantlePet = useCallback(async () => {
         if (!profile || !petState || petState.tier !== 'common') throw new Error("Hanya pet Common yang bisa didaur ulang.");
-        const newAipodState: AIPetState = { name: 'AIPod', stage: 'aipod', tier: 'common', stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 }, lastFed: Date.now(), lastPlayed: Date.now(), personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 }, narrative: null, blueprint: null, colors: null, battleStats: null, buffs: [], };
         const newFragmentCount = (profile.data_fragments ?? 0) + DISMANTLE_REWARD_FRAGMENTS;
-        setPetState(newAipodState);
-        await savePetStateToDb({ aipet_state: newAipodState, data_fragments: newFragmentCount });
+        setPetState(defaultAIPodState);
+        await savePetStateToDb({ aipet_state: defaultAIPodState, data_fragments: newFragmentCount });
         await addXp(5);
     }, [profile, petState, savePetStateToDb, addXp]);
 

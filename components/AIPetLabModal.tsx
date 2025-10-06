@@ -165,7 +165,12 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                 <div className="mb-4">
                     {pet.battleStats ? (
                         <>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3"><BattleStatDisplay label="HP" value={pet.battleStats.hp} icon="❤️" /><BattleStatDisplay label="ATK" value={pet.battleStats.atk} icon="⚔️" /><BattleStatDisplay label="DEF" value={pet.battleStats.def} icon="🛡️" /><BattleStatDisplay label="SPD" value={pet.battleStats.spd} icon="💨" /></div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <BattleStatDisplay label="HP" value={pet.battleStats.hp} icon="❤️" />
+                                <BattleStatDisplay label="ATK" value={pet.battleStats.atk} icon="⚔️" />
+                                <BattleStatDisplay label="DEF" value={pet.battleStats.def} icon="🛡️" />
+                                <BattleStatDisplay label="SPD" value={pet.battleStats.spd} icon="💨" />
+                            </div>
                             {pet.buffs && pet.buffs.length > 0 && (<div className="mt-3 text-center text-xs font-bold text-sky-300 bg-sky-900/50 rounded-lg py-1">Buffs: {pet.buffs.join(', ')}</div>)}
                         </>
                     ) : <p className="text-sm text-text-muted italic bg-background p-4 rounded-lg border border-border-main">Statistik tempur belum ada.</p>}
@@ -174,10 +179,10 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
              <details open>
                 <summary className="font-semibold text-splash uppercase tracking-wider text-xs py-2 cursor-pointer">Statistik Kepribadian</summary>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <StatBar label="⚡ Energi" value={pet.stats.energy} color="bg-green-500" />
-                    <StatBar label="🎨 Kreativitas" value={pet.stats.creativity} color="bg-sky-400" />
-                    <StatBar label="🧠 Kecerdasan" value={pet.stats.intelligence} color="bg-fuchsia-500" />
-                    <StatBar label="😎 Karisma" value={pet.stats.charisma} color="bg-yellow-400" />
+                    <StatBar label="⚡ Energi" value={pet.stats?.energy ?? 0} color="bg-green-500" />
+                    <StatBar label="🎨 Kreativitas" value={pet.stats?.creativity ?? 0} color="bg-sky-400" />
+                    <StatBar label="🧠 Kecerdasan" value={pet.stats?.intelligence ?? 0} color="bg-fuchsia-500" />
+                    <StatBar label="😎 Karisma" value={pet.stats?.charisma ?? 0} color="bg-yellow-400" />
                 </div>
             </details>
             {pet.tier === 'common' && (
