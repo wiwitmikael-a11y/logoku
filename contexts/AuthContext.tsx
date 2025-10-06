@@ -160,7 +160,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-        // Fetch profile and projects in parallel
         const [profileResponse, projectsResponse] = await Promise.all([
             supabase.from('profiles').select('*').eq('id', userToFetch.id).single(),
             supabase.from('projects').select('*').eq('user_id', userToFetch.id).order('created_at', { ascending: false })
@@ -168,15 +167,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const { data: profileData, error: profileError, status } = profileResponse;
 
-        // Handle profile data (including new user creation)
-        if (profileError && status !== 406) {
-            throw profileError;
-        }
+        if (profileError && status !== 406) throw profileError;
 
         if (profileData) {
-            setProfile(profileData);
-            setDailyActions(profileData.daily_actions || { claimed_missions: [] });
-        } else if (status === 406) { // New user, create profile
+            const authName = userToFetch.user_metadata.full_name || 'Juragan Baru';
+            const authAvatar = userToFetch.user_metadata.avatar_url || null;
+            const needsUpdate = profileData.full_name !== authName || profileData.avatar_url !== authAvatar;
+
+            if (needsUpdate) {
+                const updates = { full_name: authName, avatar_url: authAvatar };
+                const syncedProfile = { ...profileData, ...updates };
+                setProfile(syncedProfile);
+                setDailyActions(syncedProfile.daily_actions || { claimed_missions: [] });
+
+                const { error: updateError } = await supabase.from('profiles').update(updates).eq('id', userToFetch.id);
+                if (updateError) console.error("Failed to sync profile to DB:", updateError);
+            } else {
+                setProfile(profileData);
+                setDailyActions(profileData.daily_actions || { claimed_missions: [] });
+            }
+        } else if (status === 406) {
             const { data: newProfileData, error: insertError } = await supabase
               .from('profiles')
               .insert({
@@ -194,7 +204,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setDailyActions(newProfileData.daily_actions || { claimed_missions: [] });
         }
 
-        // Handle projects data
         const { data: projectsData, error: projectsError } = projectsResponse;
         if (projectsError) {
             setAuthError(`Gagal mengambil data project: ${projectsError.message}`);
