@@ -18,7 +18,7 @@ interface State {
 
 class ErrorBoundary extends React.Component<Props, State> {
   // FIX: Refactored to use class property for state initialization. This is more modern and avoids constructor complexities, resolving issues with 'this' context.
-  public state: State = {
+  state: State = {
     hasError: false,
     error: undefined,
     isCopied: false,
@@ -34,7 +34,7 @@ class ErrorBoundary extends React.Component<Props, State> {
   }
 
   // FIX: Converted to an arrow function to automatically bind 'this', removing the need for explicit binding in a constructor.
-  private handleCopy = () => {
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
