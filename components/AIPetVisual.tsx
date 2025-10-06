@@ -145,6 +145,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
     const parallaxRef = useRef({ x: 0, y: 0 });
     const currentYRotationRef = useRef(0);
     const lightSource = useMemo(() => new Zdog.Vector({ x: -0.75, y: -1, z: 1.5 }).normalize(), []);
+    const animationStartTime = useRef(0);
 
     
     // Initialize Zdog scene
@@ -242,6 +243,9 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
         else { const img = new Image(); img.crossOrigin = "anonymous"; img.src = blueprint.url; img.onload = () => { imageCache[blueprint.url] = img; processBlueprint(img); }; img.onerror = () => console.error("Failed to load blueprint:", blueprint.url); }
     }, [blueprint, colors, name, initZdogScene]);
     
+    // Reset animation timer when behavior changes
+    useEffect(() => { animationStartTime.current = performance.now(); }, [behavior]);
+    
     // Main animation loop
     useEffect(() => {
         if (!illoRef.current) return;
@@ -258,26 +262,34 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
             const stiffness = 0.08, damping = 0.8;
             const walkCycle = time / (behavior === 'running' ? 150 : 250);
             const idleCycle = time / 600;
-            let jumpY = 0;
 
             const targetState: Record<string, { translate: any, rotate: any }> = {};
+            const petBody = petAnchorRef.current;
             
-            if (behavior === 'somersault') { /* ... complex animation logic ... */ }
-            else if (behavior === 'jumping') { /* ... complex animation logic ... */ }
-            // Simplified logic for brevity
+            if (behavior === 'somersault' && petBody) {
+                const duration = 1400;
+                const elapsed = time - animationStartTime.current;
+                const progress = Math.min(elapsed / duration, 1);
+                petBody.rotate.x = -Zdog.TAU * progress;
+            } else if (behavior === 'interacting' && petBody) {
+                 petBody.rotate.y += Math.sin(time / 100) * 0.1;
+                 targetState['torso'] = { translate: { y: Math.sin(time / 150) * 4 }, rotate: {} };
+            }
             else if (behavior === 'running' || behavior === 'walking') {
                 const speed = behavior === 'running' ? 2 : 1;
-                targetState['torso'] = { translate: { y: Math.sin(walkCycle) * 3 * speed }, rotate: { y: speed } };
-                targetState['head'] = { translate: {}, rotate: { z: Math.sin(walkCycle * 0.7) * 2 * speed - speed } };
+                targetState['torso'] = { translate: { y: Math.sin(walkCycle) * 3 * speed }, rotate: {} };
+                targetState['head'] = { translate: {}, rotate: { z: Math.sin(walkCycle * 0.7) * 0.5 } };
                 targetState['left_arm'] = { translate: {}, rotate: { x: Math.sin(walkCycle + Math.PI) * 40 * speed } };
                 targetState['right_arm'] = { translate: {}, rotate: { x: Math.sin(walkCycle) * 40 * speed } };
                 targetState['left_leg'] = { translate: {}, rotate: { x: Math.sin(walkCycle) * 30 * speed } };
                 targetState['right_leg'] = { translate: {}, rotate: { x: Math.sin(walkCycle + Math.PI) * 30 * speed } };
             } else { // idle
-                targetState['torso'] = { translate: { y: Math.sin(idleCycle) * 1.5 }, rotate: {} };
-                targetState['head'] = { translate: {}, rotate: { z: Math.sin(idleCycle * 0.7) * 2 } };
-                targetState['left_arm'] = { translate: {}, rotate: { x: Math.sin(idleCycle) * 3 } };
-                targetState['right_arm'] = { translate: {}, rotate: { x: Math.sin(idleCycle) * 3 } };
+                const isTired = (stats?.energy ?? 100) < 20;
+                const tiredSlouch = isTired ? 15 : 0;
+                targetState['torso'] = { translate: { y: Math.sin(idleCycle) * 1.5 }, rotate: { x: tiredSlouch } };
+                targetState['head'] = { translate: {}, rotate: { z: Math.sin(idleCycle * 0.7) * 2, x: tiredSlouch } };
+                targetState['left_arm'] = { translate: {}, rotate: { x: Math.sin(idleCycle) * 3 + tiredSlouch } };
+                targetState['right_arm'] = { translate: {}, rotate: { x: Math.sin(idleCycle) * 3 + tiredSlouch } };
             }
 
             zdogAnchorsRef.current.forEach((anchor, name) => {
@@ -296,7 +308,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
             });
 
             // --- Rotation & Head Tracking Update ---
-            if (petAnchorRef.current) {
+            if (petAnchorRef.current && behavior !== 'somersault' && behavior !== 'interacting') {
                 const targetY = direction === 1 ? 0 : Zdog.TAU / 2; // 0 or 180 degrees
                 currentYRotationRef.current += (targetY - currentYRotationRef.current) * 0.1; // Smooth interpolation
 
@@ -306,9 +318,8 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
 
             const headAnchor = zdogAnchorsRef.current.get('head');
             if (headAnchor) {
-                // Apply extra rotation for head tracking, relative to the body's parallax
-                headAnchor.rotate.x = parallaxRef.current.x * 0.5;
-                headAnchor.rotate.y = parallaxRef.current.y * 0.5;
+                headAnchor.rotate.x += (parallaxRef.current.x * 0.5 - headAnchor.rotate.x) * 0.1;
+                headAnchor.rotate.y += (parallaxRef.current.y * 0.5 - headAnchor.rotate.y) * 0.1;
             }
 
             // --- Rendering ---
@@ -329,7 +340,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
                 const scale = illo.zoom / (illo.zoom + renderEl.renderOrigin.z * zFactor);
 
                 ctx.save();
-                ctx.translate(canvas.width / 2 + renderEl.renderOrigin.x, canvas.height / 2 + renderEl.renderOrigin.y + jumpY);
+                ctx.translate(canvas.width / 2 + renderEl.renderOrigin.x, canvas.height / 2 + renderEl.renderOrigin.y);
                 ctx.scale(scale, scale);
                 ctx.rotate(renderEl.renderRotation.z);
 
@@ -359,7 +370,7 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
         
         animationFrameId.current = requestAnimationFrame(draw);
         return () => cancelAnimationFrame(animationFrameId.current);
-    }, [blueprint, behavior, direction, initZdogScene, lightSource]);
+    }, [blueprint, behavior, direction, initZdogScene, lightSource, stats]);
     
     const glowStyle = useMemo(() => {
         if (!colors || stage === 'aipod') return {};

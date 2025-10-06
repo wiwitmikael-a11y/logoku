@@ -43,6 +43,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
 
   const handleSubmit = useCallback(async () => {
     if (!projectData.brandInputs || !projectData.selectedPersona) return;
+    if (credits < GENERATION_COST) { setShowOutOfCreditsModal(true); return; }
     setIsLoading(true);
     setError(null);
     setCalendar([]);
@@ -50,6 +51,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
     playSound('start');
 
     try {
+      await deductCredits(GENERATION_COST);
       const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona, petState);
       setCalendar(result.calendar);
       setSources(result.sources);
@@ -61,7 +63,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, petState]);
+  }, [projectData, petState, credits, deductCredits, setShowOutOfCreditsModal]);
   
   const handleGenerateImage = useCallback(async (index: number) => {
     if (credits < GENERATION_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }
@@ -102,7 +104,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
       </div>
 
       <div className="self-center">
-        <Button onClick={handleSubmit} isLoading={isLoading} size="large">Kasih Ide Konten, Please!</Button>
+        <Button onClick={handleSubmit} isLoading={isLoading} disabled={credits < GENERATION_COST} size="large">Kasih Ide Konten, Please! ({GENERATION_COST} Token)</Button>
       </div>
 
       {error && <ErrorMessage message={error} onGoToDashboard={onGoToDashboard} />}

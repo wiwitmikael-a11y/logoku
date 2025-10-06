@@ -139,7 +139,7 @@ const FloatingAIPet: React.FC<{
 
         let delay = 2000 + Math.random() * 2000; // Default delay
         if (behavior === 'turning') {
-            delay = 500; // Duration of the turn animation to feel natural
+            delay = 1000; // Duration of the turn animation to feel natural
             setTimeout(() => {
                 setBehavior('idle');
             }, delay);
@@ -648,13 +648,11 @@ const MainApp: React.FC = () => {
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
                         <ErrorBoundary onReset={handleReturnToDashboard}>
-                            {/* The React.Fragment wrapper is necessary here because multiple components are being passed as children. */}
-                            <React.Fragment>
-                                {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
-                                <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
-                                    <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
-                                </Suspense>
-                            </React.Fragment>
+                            {/* FIX: Removed unnecessary React.Fragment wrapper. An ErrorBoundary can have multiple children. */}
+                            {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
+                            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
+                                <div key={appState} className="animate-content-fade-in">{renderContent()}</div>
+                            </Suspense>
                         </ErrorBoundary>
                     )}
                 </div>

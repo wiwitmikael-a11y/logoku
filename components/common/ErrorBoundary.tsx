@@ -17,30 +17,26 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Refactored to use a constructor for state initialization and method binding.
-  // This is a more traditional and robust pattern that avoids potential issues with class field syntax
-  // in certain build environments, which could be the source of the errors where `this.props` and `this.setState` were not found.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  // FIX: Switched to class properties for state and an arrow function for the handler.
+  // This is a more modern and robust pattern that avoids 'this' binding issues,
+  // resolving the errors where 'this.props' and 'this.setState' were not found.
+  public state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  public static getDerivedStateFromError(error: Error): Partial<State> {
     // Metode lifecycle ini dipanggil setelah error dilempar oleh komponen turunan.
     // Ini harus mengembalikan objek untuk memperbarui state.
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  handleCopy() {
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -48,7 +44,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  render(): ReactNode {
+  public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
