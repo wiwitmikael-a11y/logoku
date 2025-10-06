@@ -180,7 +180,7 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
     
         let rand = seedRandom();
-        const pity = profile.aipet_pity_counter ?? 0;
+        const pity = profile?.aipet_pity_counter ?? 0;
         if (pity >= 5) { rand = 0.65 + (seedRandom() * 0.35); }
 
         let selectedTier: AIPetTier;

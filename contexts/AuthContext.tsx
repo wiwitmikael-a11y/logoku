@@ -171,8 +171,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let updates: Partial<Profile> = {};
     let shouldUpdate = false;
 
-    // --- Daily Token Top-up System ---
-    if (profileData.last_credit_reset !== todayWIB) {
+    // --- Welcome Bonus Grant ---
+    if (profileData.welcome_bonus_claimed === false) {
+        updates.credits = WELCOME_BONUS_CREDITS;
+        updates.welcome_bonus_claimed = true;
+        shouldUpdate = true;
+    }
+    // --- Daily Token Top-up System (run only if welcome bonus is not being claimed) ---
+    else if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
         if ((profileData.credits ?? 0) < DAILY_TOKENS) {
             updates.credits = DAILY_TOKENS;
