@@ -354,7 +354,7 @@ const App: React.FC = () => {
 };
 
 const MainApp: React.FC = () => {
-    const { session, user, profile, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
+    const { session, user, profile, loading: authLoading, projects, setProjects, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
     const aipetContext = useAIPet();
     const { petState, isPetOnScreen } = aipetContext;
     
@@ -365,7 +365,6 @@ const MainApp: React.FC = () => {
         return id ? parseInt(id, 10) : null;
     });
 
-    const [projects, setProjects] = useState<Project[]>([]);
     const [generalError, setGeneralError] = useState<string | null>(null);
     const [toast, setToast] = useState({ message: '', show: false });
     
@@ -419,8 +418,6 @@ const MainApp: React.FC = () => {
         }
     }, [appState, selectedProjectId, session]);
     
-    useEffect(() => { if (!authLoading && session) fetchProjects(); }, [session, authLoading]);
-    
     useEffect(() => { if (!session && !authLoading) setShowCaptcha(true); else setShowCaptcha(false); }, [session, authLoading]);
     
     useEffect(() => {
@@ -430,13 +427,6 @@ const MainApp: React.FC = () => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    const fetchProjects = async () => {
-        if (!session?.user) return;
-        const { data, error } = await supabase.from('projects').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false });
-        if (error) { setGeneralError(`Gagal mengambil data project: ${error.message}`); setProjects([]); }
-        else { setProjects(data as Project[]); }
-    };
 
     useEffect(() => {
         if (previousAppState.current !== appState) {
@@ -485,7 +475,7 @@ const MainApp: React.FC = () => {
         setProjects(prev => [newProject, ...prev]); setSelectedProjectId(newProject.id);
         if (templateData) saveWorkflowState({ brandInputs: templateData as BrandInputs }); else clearWorkflowState();
         navigateTo('persona');
-    }, [session, profile, projects]);
+    }, [session, profile, projects, setProjects]);
     
     const handleVoiceWizardComplete = useCallback(async (inputs: BrandInputs) => {
         if (!session?.user || !profile) return;
@@ -498,7 +488,7 @@ const MainApp: React.FC = () => {
         saveWorkflowState({ brandInputs: inputs });
         // The persona step is skipped, go directly to logo
         navigateTo('logo'); 
-    }, [session, profile, projects]);
+    }, [session, profile, projects, setProjects]);
     
     const handleReturnToDashboard = useCallback(() => { clearWorkflowState(); setSelectedProjectId(null); navigateTo('dashboard'); }, []);
     const handleRequestReturnToDashboard = useCallback(() => { if (appState === 'dashboard') { setIsUserMenuOpen(false); handleReturnToDashboard(); return; } setShowDashboardConfirm(true); setIsUserMenuOpen(false); }, [appState, handleReturnToDashboard]);
@@ -527,7 +517,7 @@ const MainApp: React.FC = () => {
         if (error) { setGeneralError(`Gagal menghapus project: ${error.message}`); }
         else { setProjects(prev => prev.filter(p => p.id !== projectToDelete.id)); if (selectedProjectId === projectToDelete.id) handleReturnToDashboard(); playSound('success'); }
         setShowDeleteConfirm(false); setProjectToDelete(null);
-    }, [projectToDelete, user, selectedProjectId, handleReturnToDashboard]);
+    }, [projectToDelete, user, selectedProjectId, handleReturnToDashboard, setProjects]);
 
     const handleShareToForum = useCallback((project: Project) => {
         const { brandInputs } = project.project_data;
@@ -541,13 +531,13 @@ const MainApp: React.FC = () => {
         saveLocalCheckpoint({ brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan });
         if (session?.user && selectedProjectId) {
             const currentData = loadWorkflowState();
-            const { error: updateError } = await supabase.from('projects').update({ project_data: currentData }).eq('id', selectedProjectId);
+            const { data: updatedProject, error: updateError } = await supabase.from('projects').update({ project_data: currentData }).eq('id', selectedProjectId).select().single();
             if (updateError) { setGeneralError(`Gagal menyimpan progres awal: ${updateError.message}`); return; }
-            await fetchProjects(); // Refresh project list to show the new name
+            setProjects(prev => prev.map(p => p.id === selectedProjectId ? (updatedProject as Project) : p));
         }
         await grantFirstTimeCompletionBonus('persona'); 
         navigateTo('logo');
-    }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus, session, selectedProjectId]);
+    }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus, session, selectedProjectId, setProjects]);
     const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => { saveLocalCheckpoint({ selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt }); await grantFirstTimeCompletionBonus('logo'); navigateTo('logo_detail'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
     const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => { saveLocalCheckpoint({ selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations }); await grantFirstTimeCompletionBonus('logo_detail'); navigateTo('social_kit'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
     const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => { saveLocalCheckpoint({ socialMediaKit: data.assets }); await grantFirstTimeCompletionBonus('social_kit'); navigateTo('profiles'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
@@ -565,30 +555,30 @@ const MainApp: React.FC = () => {
         await refreshProfile(); const updatedProject: Project = dbData as any; setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
         aipetContext.notifyPetOfActivity('project_completed');
         handleReturnToDashboard(); showToast("Mantap! Project lo berhasil diselesaikan.");
-    }, [session, user, selectedProjectId, profile, grantFirstTimeCompletionBonus, addXp, grantAchievement, refreshProfile, handleReturnToDashboard, showToast, aipetContext.notifyPetOfActivity]);
+    }, [session, user, selectedProjectId, profile, grantFirstTimeCompletionBonus, addXp, grantAchievement, refreshProfile, handleReturnToDashboard, showToast, aipetContext.notifyPetOfActivity, setProjects]);
 
     const handleRegenerateTextAsset = useCallback(async <T,>(projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<T>, successMessage: string) => {
         setGeneralError(null); if ((profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
         try { const result = await generationFunc(); await deductCredits(cost); const updatedProjectData = { ...project.project_data, [assetKey]: result }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast(successMessage); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
-    }, [profile, projects, deductCredits, setShowOutOfCreditsModal, showToast]);
+    }, [profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
     const handleRegenerateVisualAsset = useCallback(async (projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<string>, successMessage: string) => {
         setGeneralError(null); if (!user || (profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
         try { const resultBase64 = await generationFunc(); await deductCredits(cost); const updatedProjectData = { ...project.project_data, [assetKey]: resultBase64 }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast(successMessage); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
-    }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast]);
+    }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
     const handleRegenerateContentCalendar = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs.businessName, p.project_data.selectedPersona, petState).then(res => res.calendar), "Kalender konten baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset, petState]);
     const handleRegenerateProfiles = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p.project_data.brandInputs, p.project_data.selectedPersona, petState), "Profil sosmed baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset, petState]);
     const handleRegenerateSocialAds = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return; handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs, p.project_data.selectedPersona, p.project_data.selectedSlogan, petState), "Teks iklan baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset, petState]);
     const handleRegenerateSocialKit = useCallback(async (projectId: number) => {
         setGeneralError(null); if (!user || (profile?.credits ?? 0) < 2) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project || !project.project_data.selectedLogoUrl) return;
         try { const assets = await geminiService.generateSocialMediaKitAssets(project.project_data as any); await deductCredits(2); const updatedProjectData = { ...project.project_data, socialMediaKit: assets }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast("Social media kit baru berhasil dibuat!"); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Gagal membuat social media kit.'); }
-    }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast]);
+    }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
     const handleRegeneratePackaging = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return; const { brandInputs, selectedPersona, selectedLogoUrl } = p.project_data; const prompt = `Take the provided logo image. Create a realistic, high-quality product mockup of a generic product box for "${brandInputs.businessDetail}". Place the logo prominently. The brand is "${brandInputs.businessName}". The style is ${selectedPersona.kata_kunci.join(', ')}, modern, and clean. This is a commercial product photo.`; handleRegenerateVisualAsset(projectId, 'selectedPackagingUrl', 1, async () => { const logoBase64 = await fetchImageAsBase64(selectedLogoUrl); return (await geminiService.generatePackagingDesign(prompt, logoBase64))[0]; }, "Desain kemasan baru berhasil dibuat!"); }, [projects, handleRegenerateVisualAsset]);
     const handleRegeneratePrintMedia = useCallback(async (projectId: number, mediaType: 'banner' | 'roll_banner') => {
         const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return; const { selectedPersona, selectedLogoUrl } = p.project_data; let prompt = ''; const colors = selectedPersona.palet_warna_hex.join(', '); const style = selectedPersona.kata_kunci.join(', ');
         if (mediaType === 'banner') prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk, 3:1 aspect ratio). Do NOT create a realistic 3D mockup. Use the brand's color palette: ${colors}. The design should be bold, incorporating the style: ${style}. Place the logo prominently. CRITICAL: DO NOT generate any text.`;
         else prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner (9:16 aspect ratio). Do NOT create a realistic 3D mockup. Use the brand's color palette: ${colors}. The design should be stylish, modern, incorporating the style: ${style}. Place the logo prominently. CRITICAL: DO NOT generate any text.`;
         try { setGeneralError(null); if (!user || (profile?.credits ?? 0) < 1) { setShowOutOfCreditsModal(true); return; } const logoBase64 = await fetchImageAsBase64(selectedLogoUrl); const resultBase64 = (await geminiService.generatePrintMedia(prompt, logoBase64))[0]; await deductCredits(1); const currentAssets = p.project_data.printMediaAssets || {}; const updatedAssets = mediaType === 'banner' ? { ...currentAssets, bannerUrl: resultBase64 } : { ...currentAssets, rollBannerUrl: resultBase64 }; const updatedProjectData = { ...p.project_data, printMediaAssets: updatedAssets }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(proj => proj.id === projectId ? (data as Project) : proj)); showToast(`Template ${mediaType === 'banner' ? 'spanduk' : 'roll banner'} baru berhasil dibuat!`); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
-    }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast]);
+    }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
     const handleRegenerateMerchandise = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.selectedLogoUrl) return; const prompt = 'Take the provided logo image. Create a realistic mockup of a plain colored t-shirt on a clean, neutral background. The t-shirt prominently features the logo. The photo is high-quality, commercial-style, showing the texture of the fabric.'; handleRegenerateVisualAsset(projectId, 'merchandiseUrl', 1, async () => { const logoBase64 = await fetchImageAsBase64(p.project_data.selectedLogoUrl); return (await geminiService.generateMerchandiseMockup(prompt, logoBase64))[0]; }, "Mockup merchandise baru berhasil dibuat!"); }, [projects, handleRegenerateVisualAsset]);
 
     const executeLogout = useCallback(async () => { clearWorkflowState(); sessionStorage.clear(); await authExecuteLogout(); setAppState('dashboard'); setSelectedProjectId(null); }, [authExecuteLogout]);

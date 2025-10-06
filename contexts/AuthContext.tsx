@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '../services/supabaseClient';
-import type { Session, User, Profile, DailyActions } from '../types';
+import type { Session, User, Profile, DailyActions, Project } from '../types';
 import { playBGM, setMuted, stopBGM, playRandomBGM, playSound } from '../services/soundService';
 
 export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
@@ -34,6 +34,8 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
+  projects: Project[];
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   loading: boolean;
   showOutOfCreditsModal: boolean;
   setShowOutOfCreditsModal: (show: boolean) => void;
@@ -43,7 +45,7 @@ interface AuthContextType {
   executeLogout: () => Promise<void>;
   handleDeleteAccount: () => void;
   authError: string | null;
-  refreshProfile: (userToRefresh?: User | null) => Promise<void>;
+  refreshProfile: () => Promise<void>; // Renamed for external use, internally calls fetchInitialUserData
   addXp: (amount: number) => Promise<void>;
   grantAchievement: (achievementId: string) => Promise<void>;
   grantFirstTimeCompletionBonus: (step: string) => Promise<void>;
@@ -68,6 +70,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
@@ -88,6 +91,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setSession(null);
     setUser(null);
     setProfile(null);
+    setProjects([]);
     setShowLogoutConfirm(false);
   };
 
@@ -146,67 +150,71 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         playBGM(selection as any);
     }
   }, [isMuted]);
-
-  const refreshProfile = useCallback(async (userToRefresh: User | null) => {
-    if (!userToRefresh) {
-      setProfile(null);
-      setDailyActions(null);
-      return;
+  
+  const fetchInitialUserData = useCallback(async (userToFetch: User | null) => {
+    if (!userToFetch) {
+        setProfile(null);
+        setProjects([]);
+        setDailyActions(null);
+        return;
     }
 
     try {
-      const { data, error, status } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userToRefresh.id)
-        .single();
+        // Fetch profile and projects in parallel
+        const [profileResponse, projectsResponse] = await Promise.all([
+            supabase.from('profiles').select('*').eq('id', userToFetch.id).single(),
+            supabase.from('projects').select('*').eq('user_id', userToFetch.id).order('created_at', { ascending: false })
+        ]);
 
-      // Handle generic errors first
-      if (error && status !== 406) {
-        throw error;
-      }
-      
-      // Happy path: profile exists
-      if (data) {
-        setProfile(data);
-        setDailyActions(data.daily_actions || { claimed_missions: [] });
-      } 
-      // New user path: profile not found, so we create it
-      else if (status === 406) {
-        console.log("No profile found for user, creating new one...");
-        const { data: newProfileData, error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userToRefresh.id,
-            full_name: userToRefresh.user_metadata.full_name || 'Juragan Baru',
-            avatar_url: userToRefresh.user_metadata.avatar_url || '',
-            credits: 20, // Welcome bonus
-            welcome_bonus_claimed: true,
-            xp: 0,
-            level: 1,
-            achievements: [],
-            total_projects_completed: 0,
-            completed_first_steps: [],
-            aipet_state: null,
-            daily_actions: { claimed_missions: [] },
-          })
-          .select()
-          .single();
+        const { data: profileData, error: profileError, status } = profileResponse;
 
-        if (insertError) {
-          throw insertError;
+        // Handle profile data (including new user creation)
+        if (profileError && status !== 406) {
+            throw profileError;
         }
 
-        if (newProfileData) {
-          setProfile(newProfileData);
-          setDailyActions(newProfileData.daily_actions || { claimed_missions: [] });
+        if (profileData) {
+            setProfile(profileData);
+            setDailyActions(profileData.daily_actions || { claimed_missions: [] });
+        } else if (status === 406) { // New user, create profile
+            const { data: newProfileData, error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userToFetch.id,
+                full_name: userToFetch.user_metadata.full_name || 'Juragan Baru',
+                avatar_url: userToFetch.user_metadata.avatar_url || '',
+                credits: 20, welcome_bonus_claimed: true, xp: 0, level: 1, achievements: [],
+                total_projects_completed: 0, completed_first_steps: [], aipet_state: null,
+                daily_actions: { claimed_missions: [] },
+              })
+              .select()
+              .single();
+            if (insertError) throw insertError;
+            setProfile(newProfileData);
+            setDailyActions(newProfileData.daily_actions || { claimed_missions: [] });
         }
-      }
+
+        // Handle projects data
+        const { data: projectsData, error: projectsError } = projectsResponse;
+        if (projectsError) {
+            setAuthError(`Gagal mengambil data project: ${projectsError.message}`);
+            setProjects([]);
+        } else {
+            setProjects(projectsData as Project[] || []);
+        }
+
     } catch (error: any) {
-      setAuthError(`Gagal memuat atau membuat profil: ${error.message}`);
-      console.error("Error in refreshProfile:", error);
+        setAuthError(`Gagal memuat data pengguna: ${error.message}`);
+        console.error("Error in fetchInitialUserData:", error);
     }
   }, []);
+
+  const refreshProfile = useCallback(async () => {
+    if (user) {
+        await fetchInitialUserData(user);
+    }
+  }, [user, fetchInitialUserData]);
+
 
   const addXp = useCallback(async (amount: number) => {
     if (!user || !profile) return;
@@ -268,7 +276,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (error) {
         console.error("Error granting achievement:", error);
     } else {
-        await refreshProfile(user);
+        await refreshProfile();
         setUnlockedAchievement({ id: achievementId, ...ACHIEVEMENTS_MAP[achievementId] });
     }
   }, [user, profile, refreshProfile]);
@@ -294,7 +302,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!user) return;
     const { error } = await supabase.rpc('increment_daily_action', { p_user_id: user.id, p_action_id: actionId, p_amount: amount });
     if (error) console.error(`Error incrementing daily action ${actionId}:`, error);
-    else await refreshProfile(user);
+    else await refreshProfile();
   }, [user, refreshProfile]);
 
   const claimMissionReward = useCallback(async (missionId: string, xp: number) => {
@@ -306,7 +314,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         alert(`Gagal klaim: ${error.message}`);
     } else {
         await addXp(xp);
-        await refreshProfile(user);
+        await refreshProfile();
     }
   }, [user, dailyActions, addXp, refreshProfile]);
   
@@ -317,28 +325,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [isMuted, bgmSelection, handleBgmChange]);
   
   useEffect(() => {
-    const checkSession = async () => {
+    const initializeSession = async () => {
         setLoading(true);
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        await refreshProfile(currentSession?.user ?? null);
+        const currentUser = currentSession?.user ?? null;
+        setUser(currentUser);
+        await fetchInitialUserData(currentUser);
         setLoading(false);
     };
-    checkSession();
+    initializeSession();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
         setLoading(true);
         setSession(newSession);
         const newUser = newSession?.user ?? null;
         setUser(newUser);
-        await refreshProfile(newUser);
+        await fetchInitialUserData(newUser);
         setLoading(false);
     });
     return () => { subscription?.unsubscribe(); };
-  }, [refreshProfile]);
+  }, [fetchInitialUserData]);
   
-  const value: AuthContextType = { session, user, profile, loading, authError, refreshProfile, addXp, grantAchievement, showOutOfCreditsModal, setShowOutOfCreditsModal, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout, handleDeleteAccount, dailyActions, incrementDailyAction, claimMissionReward };
+  const value: AuthContextType = { session, user, profile, projects, setProjects, loading, authError, refreshProfile, addXp, grantAchievement, showOutOfCreditsModal, setShowOutOfCreditsModal, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout, handleDeleteAccount, dailyActions, incrementDailyAction, claimMissionReward };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

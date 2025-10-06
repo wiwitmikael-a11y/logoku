@@ -19,6 +19,12 @@ interface State {
 class ErrorBoundary extends React.Component<Props, State> {
   // FIX: The original code used modern class fields which might not be correctly configured in the build environment, leading to incorrect `this` context.
   // Reverting to a traditional constructor for state initialization and method binding ensures maximum compatibility and correctly resolves the `this` context for props and state.
+
+  // FIX: Explicitly declare the 'state' property to satisfy strict property initialization rules
+  // often found in TypeScript configurations. This resolves errors where TypeScript
+  // cannot determine that 'this.state' is initialized in the constructor.
+  state: State;
+
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -29,7 +35,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     this.handleCopy = this.handleCopy.bind(this);
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  // FIX: Corrected return type to Partial<State> to match React's type definitions.
+  static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI.
     return { hasError: true, error: error, isCopied: false };
   }
