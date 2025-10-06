@@ -102,11 +102,25 @@ const standardHumanoidRig: Record<string, PartDefinition> = {
 };
 
 const allPetFileNames = [
-    'Common_Beast.png', 'Epic_Vikings.png', 'Common_Samurai.png', 'Epic_Siberian.png',
-    'Common_Dogs.png', 'Epic_Aztec.png', 'Myth_Zodiac.png', 'Common_Animalia.png',
-    'Myth_Predator.png', 'Epic_Transformer.png', 'Common_Insects.png', 'Myth_Desert.png',
-    'Myth_Olympian.png', 'Common_Dinosaurus.png', 'Epic_Masked.png', 'Common_Unggas.png',
-    'Common_Amfibia.png', 'Myth_Archangel.png', 'Myth_Wayang.png'
+    'Common_Amfibia.png',
+    'Common_Animalia.png',
+    'Common_Aves.png',
+    'Common_Beast.png',
+    'Common_Dinosaurs.png',
+    'Common_Dogs.png',
+    'Epic_Aztec.png',
+    'Epic_Desert.png',
+    'Epic_Insects.png',
+    'Epic_Samurai.png',
+    'Epic_Siberian.png',
+    'Epic_Vikings.png',
+    'Legendary_Knights.png',
+    'Legendary_Masked.png',
+    'Legendary_Predator.png',
+    'Legendary_Transformer.png',
+    'Myth_Archangels.png',
+    'Myth_Cosmos.png',
+    'Myth_Daemons.png',
 ];
 
 const partDefinitions: Record<string, Record<string, PartDefinition>> = 
