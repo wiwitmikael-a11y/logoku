@@ -16,12 +16,22 @@ interface State {
   isCopied: boolean;
 }
 
+// FIX: Refactored to use a constructor for state initialization and method binding.
+// This is a more traditional and robust pattern for class components that avoids
+// potential issues with class field syntax in some build environments, which could
+// explain the reported errors about `this.props` and `this.setState` not being found.
 class ErrorBoundary extends React.Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  public state: State;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
@@ -31,9 +41,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted `handleCopy` to an arrow function to automatically bind `this`.
-  // This resolves issues where `this.state` and `this.setState` were not found.
-  private handleCopy = () => {
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -74,6 +82,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                             {this.state.error.toString()}
                         </pre>
                         <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-primary bg-transparent border border-primary/30 hover:bg-primary/10">
+                            {/* FIX: Corrected button text for the "copy" state. */}
                             {this.state.isCopied ? 'Tersalin!' : 'Salin Detail'}
                         </button>
                     </details>

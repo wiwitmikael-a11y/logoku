@@ -105,78 +105,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', userId)
         .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 means "not found", which is fine
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found", which is fine for new users.
         console.error('Error fetching profile:', error);
         setAuthError('Gagal mengambil data profil pengguna.');
         return;
     }
     
+    // If profile doesn't exist (new user), poll a few times for the DB trigger to create it.
     if (!data) {
-        // Profile not found. It's likely being created by the DB trigger.
-        // Poll for a few seconds to wait for it.
         let attempts = 0;
         let profileFromTrigger: Profile | null = null;
-    
         while (attempts < 5 && !profileFromTrigger) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // wait 500ms
-            const { data: refetchedData, error: refetchError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
-    
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const { data: refetchedData, error: refetchError } = await supabase.from('profiles').select('*').eq('id', userId).single();
             if (refetchError && refetchError.code !== 'PGRST116') {
-                // A real error occurred during polling, not just "not found"
                 console.error('Error polling for new user profile:', refetchError);
                 setAuthError('Gagal memverifikasi data profil baru.');
                 return;
             }
-    
-            if (refetchedData) {
-                profileFromTrigger = refetchedData as Profile;
-            }
+            if (refetchedData) profileFromTrigger = refetchedData as Profile;
             attempts++;
         }
     
         if (profileFromTrigger) {
-            // Successfully fetched the profile created by the trigger.
-            // Assign it to 'data' to let the downstream logic (daily updates, etc.) run.
             data = profileFromTrigger;
         } else {
-            // After polling, the profile still doesn't exist. This indicates a real problem,
-            // likely that the database trigger failed to execute.
-            console.error('Profile not found after polling for 2.5 seconds. The on-signup trigger may have failed.');
+            console.error('Profile not found after polling. The on-signup trigger may have failed.');
             setAuthError('Gagal membuat profil baru untuk Juragan. Silakan coba login ulang atau hubungi developer.');
             return;
         }
     }
     
-    // --- ROBUST SANITIZATION for daily_actions ---
-    // This logic ensures `daily_actions` is a valid object, preventing errors from null/malformed data from the DB.
-    let sanitizedDailyActions: DailyActions;
+    // --- HARDENED PROFILE SANITIZATION ---
+    // After your DB cleansing, some fields for new users might be `null`.
+    // This section explicitly handles every field to prevent sync errors.
     const rawDailyActions = data.daily_actions;
-    
-    if (rawDailyActions && typeof rawDailyActions === 'object' && !Array.isArray(rawDailyActions)) {
-        // It's a non-null, non-array object. Start with it.
-        sanitizedDailyActions = { ...rawDailyActions };
-        // Now, ensure the claimed_missions array exists.
-        if (!Array.isArray(sanitizedDailyActions.claimed_missions)) {
-            sanitizedDailyActions.claimed_missions = [];
-        }
-    } else {
-        // If it's null, not an object, or an array, reset it completely to a safe default.
-        sanitizedDailyActions = { claimed_missions: [] };
+    const sanitizedDailyActions: DailyActions = {
+        claimed_missions: [],
+        ...(rawDailyActions && typeof rawDailyActions === 'object' && !Array.isArray(rawDailyActions) ? rawDailyActions : {})
+    };
+    if (!Array.isArray(sanitizedDailyActions.claimed_missions)) {
+        sanitizedDailyActions.claimed_missions = [];
     }
 
     const profileData: Profile = {
-        ...data,
+        id: data.id,
+        full_name: data.full_name,
+        avatar_url: data.avatar_url,
+        credits: data.credits ?? 0,
+        last_credit_reset: data.last_credit_reset,
+        welcome_bonus_claimed: data.welcome_bonus_claimed === true, // Ensure boolean, defaults to false if null
         xp: data.xp ?? 0,
         level: data.level ?? 1,
         achievements: data.achievements ?? [],
         total_projects_completed: data.total_projects_completed ?? 0,
         last_daily_xp_claim: data.last_daily_xp_claim ?? '2000-01-01',
         completed_first_steps: data.completed_first_steps ?? [],
-        welcome_bonus_claimed: data.welcome_bonus_claimed ?? false,
         aipet_state: data.aipet_state ?? null,
         aipet_pity_counter: data.aipet_pity_counter ?? 0,
         data_fragments: data.data_fragments ?? 0,
