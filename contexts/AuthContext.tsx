@@ -210,7 +210,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setAuthError("Gagal sinkronisasi data profil, tapi jangan khawatir, data lama masih aman.");
             setProfile(profileData);
         } else {
-            setProfile({ ...profileData, ...updatedProfileData } as Profile);
+            setProfile(updatedProfileData as Profile);
         }
     } else {
         setProfile(profileData);
@@ -325,7 +325,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) {
         setAuthError(`Gagal menambah token bonus: ${error.message}`);
     } else {
-        setProfile(prev => ({ ...prev!, ...data } as Profile));
+        setProfile(data as Profile);
     }
   }, [profile, user]);
 
@@ -353,7 +353,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
     }
 
-    setProfile(prev => ({ ...prev!, ...data } as Profile));
+    setProfile(data as Profile);
     return true;
   };
 
@@ -395,7 +395,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) {
         setAuthError(`Gagal update XP: ${error.message}`);
     } else {
-        setProfile(prev => ({ ...prev!, ...data } as Profile));
+        setProfile(data as Profile);
     }
   }, [profile, user]);
 
@@ -413,7 +413,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
           setAuthError(`Gagal memberikan pencapaian: ${error.message}`);
       } else {
-          setProfile(prev => ({ ...prev!, ...data } as Profile));
+          setProfile(data as Profile);
           const achievementDetails = ACHIEVEMENTS_MAP[achievementId];
           if (achievementDetails) {
               setUnlockedAchievement(achievementDetails);
@@ -421,20 +421,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
   }, [profile, user]);
   
-  // REWORKED: This now gives XP and REFUNDS 1 token to make first-time steps free.
   const grantFirstTimeCompletionBonus = useCallback(async (stepName: string) => {
       if (!profile || !user || profile.completed_first_steps.includes(stepName)) return;
 
       const newCompletedSteps = [...profile.completed_first_steps, stepName];
-      const newXp = (profile.xp ?? 0) + 25;
-      const newCredits = (profile.credits ?? 0) + 1; // Refund 1 token
+      const currentXp = profile.xp ?? 0;
+      const currentLevel = profile.level ?? 1;
+      const newXp = currentXp + 25;
+      const newLevel = getLevelForXp(newXp);
+
+      let creditsUpdate = (profile.credits ?? 0) + 1; // Refund 1 token
+
+      if (newLevel > currentLevel) {
+          const tokenReward = (newLevel % 5 === 0) ? 5 : 1;
+          setLevelUpInfo({ newLevel, tokenReward });
+          setShowLevelUpModal(true);
+          creditsUpdate += tokenReward; // Combine token rewards
+      }
 
       const { data: updatedProfile, error: updateError } = await supabase
           .from('profiles')
           .update({ 
               completed_first_steps: newCompletedSteps,
               xp: newXp,
-              credits: newCredits
+              credits: creditsUpdate
           })
           .eq('id', user.id)
           .select()
@@ -443,22 +453,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (updateError) {
           setAuthError(`Gagal memberikan bonus langkah: ${updateError.message}`);
       } else {
-          // Check for level up after successful update
-          const oldLevel = profile.level ?? 1;
-          const newLevel = getLevelForXp(newXp);
-          if (newLevel > oldLevel) {
-              const tokenReward = (newLevel % 5 === 0) ? 5 : 1;
-              setLevelUpInfo({ newLevel, tokenReward });
-              setShowLevelUpModal(true);
-              // Add level-up reward tokens
-              await addCredits(tokenReward, 'Level Up Bonus');
-          } else {
-              setProfile(updatedProfile as Profile);
-          }
+          setProfile(updatedProfile as Profile);
       }
-  }, [profile, user, addCredits]);
+  }, [profile, user]);
 
-  // FIX: Implement incrementDailyAction.
   const incrementDailyAction = useCallback(async (actionId: string) => {
     if (!profile || !user) return;
     const todayWIB = getTodaysDateWIB();
@@ -473,7 +471,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     else setProfile(data as Profile);
   }, [profile, user]);
 
-  // FIX: Implement claimMissionReward.
   const claimMissionReward = useCallback(async (missionId: string, xpReward: number) => {
     if (!profile || !user) return;
     const currentActions = profile.daily_actions ?? { claimed_missions: [] };
@@ -484,12 +481,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const mission = DAILY_MISSIONS.find(m => m.id === missionId);
     if (!mission || progress < mission.target) return;
 
-    await addXp(xpReward);
+    // --- Combine updates ---
     const newActions = { ...currentActions, claimed_missions: [...claimed, missionId] };
-    const { data, error } = await supabase.from('profiles').update({ daily_actions: newActions }).eq('id', user.id).select().single();
-    if (error) setAuthError(`Gagal klaim hadiah: ${error.message}`);
-    else setProfile(data as Profile);
-  }, [profile, user, addXp]);
+    const currentXp = profile.xp ?? 0;
+    const currentLevel = profile.level ?? 1;
+    const newXp = currentXp + xpReward;
+    const newLevel = getLevelForXp(newXp);
+    
+    const updates: Partial<Profile> = { 
+        daily_actions: newActions,
+        xp: newXp 
+    };
+
+    if (newLevel > currentLevel) {
+        const tokenReward = (newLevel % 5 === 0) ? 5 : 1;
+        setLevelUpInfo({ newLevel, tokenReward });
+        setShowLevelUpModal(true);
+        updates.credits = (profile.credits ?? 0) + tokenReward;
+    }
+
+    const { data, error } = await supabase.from('profiles').update(updates).eq('id', user.id).select().single();
+    if (error) {
+        setAuthError(`Gagal klaim hadiah: ${error.message}`);
+    } else {
+        setProfile(data as Profile);
+    }
+  }, [profile, user]);
 
 
   const value: AuthContextType = {

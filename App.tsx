@@ -703,7 +703,7 @@ const MainApp: React.FC = () => {
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
                         <ErrorBoundary onReset={handleReturnToDashboard}>
-                            {/* Fix: Wrap children in a React.Fragment to explicitly pass the 'children' prop. */}
+                            {/* The React.Fragment wrapper is necessary here because multiple components are being passed as children. */}
                             <React.Fragment>
                                 {showStepper && <ProgressStepper currentStep={currentStepIndex} />}
                                 <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}>
