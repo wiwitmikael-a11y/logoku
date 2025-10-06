@@ -23,7 +23,8 @@ const statusMessages = [
 ];
 
 const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
-    const { activatePet } = useAIPet();
+    // FIX: The 'activatePet' function does not exist on the AIPetContext. The correct function is 'activatePetWithTokens'.
+    const { activatePetWithTokens } = useAIPet();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
@@ -51,7 +52,7 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
         setStatusText(statusMessages[0]);
         
         try {
-            await activatePet();
+            await activatePetWithTokens();
             setProgress(100);
             setStatusText("Aktivasi Berhasil! AIPet telah lahir!");
             playSound('success');

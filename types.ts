@@ -178,6 +178,8 @@ export interface Profile {
   last_daily_xp_claim: string;
   completed_first_steps: string[];
   aipet_state?: AIPetState | null;
+  aipet_pity_counter?: number;
+  data_fragments?: number;
   // FIX: Added daily_actions to profile type.
   daily_actions?: DailyActions | null;
 }

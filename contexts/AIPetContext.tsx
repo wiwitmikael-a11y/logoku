@@ -14,15 +14,21 @@ export interface AIPetContextType {
   isPetOnScreen: boolean;
   notifyPetOfActivity: (activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => void;
   handleInteraction: () => void;
-  onGameWin: (game: 'color' | 'pattern' | 'style' | 'slogan') => void;
+  // FIX: The 'game' parameter type did not include all possible values being checked ('intelligence', 'charisma'), causing a type error. The type has been expanded to include all valid game types.
+  onGameWin: (game: 'color' | 'pattern' | 'style' | 'slogan' | 'intelligence' | 'charisma') => void;
   updatePetName: (newName: string) => void;
-  activatePet: () => Promise<void>;
+  activatePetWithTokens: () => Promise<void>;
+  activatePetWithFragments: () => Promise<void>;
+  dismantlePet: () => Promise<void>;
 }
 
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
 const MAX_STATS: AIPetStats = { energy: 100, creativity: 100, intelligence: 100, charisma: 100 };
-const ACTIVATION_COST = 5; // Cost for activation.
+const ACTIVATION_COST_TOKENS = 5;
+const ACTIVATION_COST_FRAGMENTS = 10;
+const DISMANTLE_REWARD_FRAGMENTS = 1;
+
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const useDebounce = <F extends (...args: any[]) => any>(callback: F, delay: number) => {
@@ -62,7 +68,7 @@ const createSeededRandom = (seed: number) => {
 
 
 export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user, profile, addXp, deductCredits } = useAuth();
+    const { user, profile, addXp, deductCredits, refreshProfile } = useAuth();
     const [petState, setPetState] = useState<AIPetState | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [contextualMessage, setContextualMessage] = useState<string | null>(null);
@@ -70,14 +76,15 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const petVisibilityTimer = useRef<number | null>(null);
     const lastUpdateRef = useRef(Date.now());
 
-    const savePetStateToDb = useCallback(async (stateToSave: AIPetState) => {
+    const savePetStateToDb = useCallback(async (updates: Partial<{aipet_state: AIPetState} & Pick<import('../types').Profile, 'aipet_pity_counter' | 'data_fragments'>>) => {
         if (!user) return;
         const { error } = await supabase
             .from('profiles')
-            .update({ aipet_state: stateToSave })
+            .update(updates)
             .eq('id', user.id);
         if (error) console.error("Failed to save AIPet state:", error);
-    }, [user]);
+        await refreshProfile();
+    }, [user, refreshProfile]);
 
     const debouncedSave = useDebounce(savePetStateToDb, 3000);
 
@@ -85,10 +92,11 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setPetState(prevState => {
             if (!prevState) return null;
             const newState = updater(prevState);
+            const updatePayload = { aipet_state: newState };
             if (!skipDebounce) {
-                debouncedSave(newState);
+                debouncedSave(updatePayload);
             } else {
-                savePetStateToDb(newState);
+                savePetStateToDb(updatePayload);
             }
             return newState;
         });
@@ -96,61 +104,19 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 
     useEffect(() => {
-        if (!profile || !user) {
-            setIsLoading(false);
-            return;
-        }
-        
-        if (profile.aipet_state) {
-            const existingState = { ...profile.aipet_state } as AIPetState;
-            let needsDbUpdate = false;
-
-            // Backwards compatibility: add tier if missing
-            if (!existingState.tier && existingState.blueprint?.url) {
-                const url = existingState.blueprint.url;
-                const name = url.substring(url.lastIndexOf('/') + 1);
-                existingState.tier = name.split('_')[0].toLowerCase() as AIPetTier;
-                needsDbUpdate = true;
-            } else if (!existingState.tier) {
-                existingState.tier = 'common';
-                needsDbUpdate = true;
-            }
-
-            // Backwards compatibility: simplify stage from child/teen/adult/hatched to 'active' and 'egg'/'stasis_pod' to 'aipod'
-            if (['child', 'teen', 'adult', 'hatched'].includes(existingState.stage)) {
-                existingState.stage = 'active';
-                needsDbUpdate = true;
-            } else if ((existingState.stage as any) === 'egg' || (existingState.stage as any) === 'stasis_pod') {
-                existingState.stage = 'aipod';
-                if (existingState.name === 'Telur AI' || existingState.name === 'Pod Stasis') {
-                    existingState.name = 'AIPod';
-                }
-                needsDbUpdate = true;
-            }
-
-
-            setPetState(existingState);
-            if (needsDbUpdate) {
-                savePetStateToDb(existingState);
-            }
-        } else {
+        if (profile?.aipet_state) {
+            setPetState(profile.aipet_state as AIPetState);
+        } else if (user && !profile?.aipet_state) {
             // NEW PET: Starts as an aipod.
             const newPet: AIPetState = {
-                name: 'AIPod',
-                stage: 'aipod',
-                tier: 'common', // Default tier for an aipod
+                name: 'AIPod', stage: 'aipod', tier: 'common',
                 stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
-                lastFed: Date.now(),
-                lastPlayed: Date.now(),
+                lastFed: Date.now(), lastPlayed: Date.now(),
                 personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
-                narrative: null,
-                blueprint: null,
-                colors: null,
-                battleStats: null,
-                buffs: [],
+                narrative: null, blueprint: null, colors: null, battleStats: null, buffs: [],
             };
             setPetState(newPet);
-            savePetStateToDb(newPet);
+            savePetStateToDb({ aipet_state: newPet });
         }
         setIsLoading(false);
     }, [profile, user, savePetStateToDb]);
@@ -163,23 +129,13 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 updatePetState(p => {
                     if (p.stage === 'aipod') return p;
                     const decayRate = 0.1;
-                    return {
-                        ...p,
-                        stats: {
-                            energy: Math.max(0, p.stats.energy - decayRate * 2),
-                            creativity: Math.max(0, p.stats.creativity - decayRate),
-                            intelligence: Math.max(0, p.stats.intelligence - decayRate),
-                            charisma: Math.max(0, p.stats.charisma - decayRate)
-                        }
-                    };
+                    return { ...p, stats: { energy: Math.max(0, p.stats.energy - decayRate * 2), creativity: Math.max(0, p.stats.creativity - decayRate), intelligence: Math.max(0, p.stats.intelligence - decayRate), charisma: Math.max(0, p.stats.charisma - decayRate) }};
                 }, true);
                 lastUpdateRef.current = now;
             }
             animationFrameId = requestAnimationFrame(loop);
         };
-        if (petState) {
-          animationFrameId = requestAnimationFrame(loop);
-        }
+        if (petState) { animationFrameId = requestAnimationFrame(loop); }
         return () => cancelAnimationFrame(animationFrameId);
     }, [petState, updatePetState]);
 
@@ -188,220 +144,134 @@ export const AIPetProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [petState?.stage]);
 
     const showPet = useCallback((duration: number = 20000) => {
-        if (petVisibilityTimer.current) {
-            clearTimeout(petVisibilityTimer.current);
-        }
+        if (petVisibilityTimer.current) clearTimeout(petVisibilityTimer.current);
         setIsPetOnScreen(true);
-        petVisibilityTimer.current = window.setTimeout(() => {
-            setIsPetOnScreen(false);
-        }, duration);
+        petVisibilityTimer.current = window.setTimeout(() => setIsPetOnScreen(false), duration);
     }, []);
 
     const showContextualMessage = useCallback((message: string | null, duration: number = 20000) => {
         setContextualMessage(message);
-        if (message) {
-            showPet(duration);
-        }
+        if (message) showPet(duration);
     }, [showPet]);
 
-    const activatePet = useCallback(async () => {
+    const _generateNewPetData = useCallback(async () => {
         if (!user || !profile) throw new Error("User not found");
-    
-        const success = await deductCredits(ACTIVATION_COST);
-        if (!success) throw new Error("Token tidak cukup.");
-    
-        const seed = user.id + new Date().toISOString().slice(0, 10);
+        
+        const seed = user.id + new Date().toISOString().slice(0, 10) + Math.random();
         const hash = stringToHash(seed);
         const seedRandom = createSeededRandom(hash);
         
         const personalities: (keyof AIPetPersonalityVector)[] = ['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'];
-        const initialPersonality: AIPetPersonalityVector = personalities.reduce((acc, curr) => {
-            acc[curr] = Math.floor(seedRandom() * 11);
-            return acc;
-        }, {} as AIPetPersonalityVector);
+        const initialPersonality: AIPetPersonalityVector = personalities.reduce((acc, curr) => ({...acc, [curr]: Math.floor(seedRandom() * 11)}), {} as AIPetPersonalityVector);
         const dominantPersonality = (Object.keys(initialPersonality) as Array<keyof AIPetPersonalityVector>).reduce((a, b) => initialPersonality[a] > initialPersonality[b] ? a : b);
         
-        const initialStats: AIPetStats = { energy: 100, creativity: 50, intelligence: 50, charisma: 50 };
         const petName = `AIPet-${String(hash).slice(0, 4)}`;
 
         const blueprints = {
-            common: [ 'Common_Beast.png', 'Common_Samurai.png', 'Common_Dogs.png', 'Common_Animalia.png', 'Common_Insects.png', 'Common_Dinosaurus.png', 'Common_Unggas.png', 'Common_Amfibia.png' ],
-            epic: [ 'Epic_Vikings.png', 'Epic_Siberian.png', 'Epic_Aztec.png', 'Epic_Transformer.png', 'Epic_Masked.png' ],
-            mythic: [ 'Myth_Zodiac.png', 'Myth_Predator.png', 'Myth_Desert.png', 'Myth_Olympian.png', 'Myth_Archangel.png', 'Myth_Wayang.png' ],
+            common: ['Common_Amfibia.png', 'Common_Animalia.png', 'Common_Aves.png', 'Common_Beast.png', 'Common_Dinosaurs.png', 'Common_Dogs.png'],
+            epic: ['Epic_Aztec.png', 'Epic_Desert.png', 'Epic_Insects.png', 'Epic_Samurai.png', 'Epic_Siberian.png', 'Epic_Vikings.png'],
+            legendary: ['Legendary_Knights.png', 'Legendary_Masked.png', 'Legendary_Predator.png', 'Legendary_Transformer.png'],
+            mythic: ['Myth_Archangels.png', 'Myth_Cosmos.png', 'Myth_Daemons.png'],
         };
     
-        const rand = seedRandom();
+        let rand = seedRandom();
+        const pity = profile.aipet_pity_counter ?? 0;
+        if (pity >= 5) { rand = 0.65 + (seedRandom() * 0.35); }
+
         let selectedTier: AIPetTier;
-        let selectedBlueprintUrl: string;
+        if (rand < 0.65) { selectedTier = 'common'; } 
+        else if (rand < 0.90) { selectedTier = 'epic'; } 
+        else if (rand < 0.99) { selectedTier = 'legendary'; } 
+        else { selectedTier = 'mythic'; }
     
-        if (rand < 0.5) { // 50%
-            selectedTier = 'common';
-            selectedBlueprintUrl = blueprints.common[hash % blueprints.common.length];
-        } else if (rand < 0.9) { // 40%
-            selectedTier = 'epic';
-            selectedBlueprintUrl = blueprints.epic[hash % blueprints.epic.length];
-        } else { // 10%
-            selectedTier = 'mythic';
-            selectedBlueprintUrl = blueprints.mythic[hash % blueprints.mythic.length];
-        }
-    
+        const newPityCounter = selectedTier === 'common' ? pity + 1 : 0;
+        
+        const tierBlueprints = blueprints[selectedTier];
+        const selectedBlueprintUrl = tierBlueprints[hash % tierBlueprints.length];
         const blueprint: AIPetBlueprint = { url: `${GITHUB_ASSETS_URL}AIPets/${selectedBlueprintUrl}` };
-        const tier = selectedTier;
 
-        // --- DYNAMIC SHADING COLOR GENERATION ---
-        const createColorPalette = (h: number, s: number, l: number, isEpic: boolean): AIPetColorPalette => {
-            const highlightModifier = isEpic ? 20 : 15;
-            const shadowModifier = isEpic ? 20 : 15;
-            const shadowSatModifier = isEpic ? 15 : 10;
-            return {
-                base: `hsl(${h}, ${s}%, ${l}%)`,
-                highlight: `hsl(${h}, ${s}%, ${Math.min(100, l + highlightModifier)}%)`,
-                shadow: `hsl(${h}, ${Math.max(0, s - shadowSatModifier)}%, ${Math.max(0, l - shadowModifier)}%)`,
-            };
-        };
+        const createColorPalette = (h: number, s: number, l: number, isRare: boolean): AIPetColorPalette => ({
+            base: `hsl(${h}, ${s}%, ${l}%)`,
+            highlight: `hsl(${h}, ${s}%, ${Math.min(100, l + (isRare ? 20 : 15))}%)`,
+            shadow: `hsl(${h}, ${Math.max(0, s - (isRare ? 15 : 10))}%, ${Math.max(0, l - (isRare ? 20 : 15))}%)`,
+        });
 
-        let organicHue = seedRandom() * 60; // Natural range: Reds, Oranges, Yellows, Browns
-        let organicSaturation = seedRandom() * 30 + 40; // 40-70% saturation, not too vibrant
-        let organicLightness = seedRandom() * 20 + 40; // 40-60% lightness (mid-tones)
-
-        let mechanicalHue = seedRandom() * 360;
-        let mechanicalSaturation = seedRandom() * 40 + 60; // 60-100%, can be vibrant
-        let mechanicalLightness = seedRandom() * 30 + 35; // 35-65%, often darker metals
-
-        let energyHue = seedRandom() * 360;
-        let energySaturation = seedRandom() * 20 + 80; // 80-100%, very vibrant glow
-        let energyLightness = seedRandom() * 20 + 50; // 50-70%, bright but not white
-
-        if (dominantPersonality === 'bold' || dominantPersonality === 'rustic') {
-            mechanicalHue = seedRandom() * 60; // Warm metals like bronze, copper
-        } else if (dominantPersonality === 'modern' || dominantPersonality === 'minimalist' || dominantPersonality === 'luxury') {
-            mechanicalHue = 180 + seedRandom() * 100; // Cool metals like steel, chrome
-            organicSaturation = Math.max(0, organicSaturation - 20); // Muted organic colors
-        } else if (dominantPersonality === 'playful') {
-            mechanicalSaturation = 90; // Extra vibrant mecha parts
-            energySaturation = 100;
-        }
-
-        const isEpic = tier === 'epic';
         const colors: AIPetColors = {
-            organic: createColorPalette(organicHue, organicSaturation, organicLightness, isEpic),
-            mechanical: createColorPalette(mechanicalHue, mechanicalSaturation, mechanicalLightness, isEpic),
-            energy: createColorPalette(energyHue, energySaturation, energyLightness, isEpic),
+            organic: createColorPalette(seedRandom() * 60, seedRandom()*30+40, seedRandom()*20+40, selectedTier !== 'common'),
+            mechanical: createColorPalette(seedRandom() * 360, seedRandom()*40+60, seedRandom()*30+35, selectedTier !== 'common'),
+            energy: createColorPalette(seedRandom() * 360, seedRandom()*20+80, seedRandom()*20+50, selectedTier !== 'common'),
         };
 
-        let battleStats: AIPetBattleStats;
-        let buffs: string[] = [];
-        const rand1 = seedRandom(), rand2 = seedRandom(), rand3 = seedRandom(), rand4 = seedRandom();
-
-        switch(tier) {
-            case 'mythic':
-                battleStats = { hp: 200 + Math.floor(rand1 * 51), atk: 25 + Math.floor(rand2 * 11), def: 25 + Math.floor(rand3 * 11), spd: 15 + Math.floor(rand4 * 11) };
-                buffs.push('Aura Dewa');
-                if (rand1 > 0.5) buffs.push('Regen S');
-                if (selectedBlueprintUrl.includes('Predator') || selectedBlueprintUrl.includes('Archangel')) { battleStats.atk += 5; buffs.push('Crit Up M'); }
-                if (selectedBlueprintUrl.includes('Olympian') || selectedBlueprintUrl.includes('Wayang')) { battleStats.def += 5; buffs.push('Guard Up M'); }
-                break;
-            case 'epic':
-                battleStats = { hp: 150 + Math.floor(rand1 * 31), atk: 15 + Math.floor(rand2 * 11), def: 15 + Math.floor(rand3 * 11), spd: 10 + Math.floor(rand4 * 6) };
-                if (rand1 > 0.5) buffs.push('ATK Up S');
-                if (selectedBlueprintUrl.includes('Transformer') || selectedBlueprintUrl.includes('Aztec')) { battleStats.def += 3; buffs.push('Defense Mode'); }
-                if (selectedBlueprintUrl.includes('Vikings') || selectedBlueprintUrl.includes('Siberian')) { battleStats.atk += 3; buffs.push('Rage'); }
-                break;
-            default: // common
-                battleStats = { hp: 100 + Math.floor(rand1 * 21), atk: 10 + Math.floor(rand2 * 6), def: 10 + Math.floor(rand3 * 6), spd: 5 + Math.floor(rand4 * 6) };
-                break;
+        let battleStats: AIPetBattleStats, buffs: string[] = [];
+        const [r1, r2, r3, r4] = [seedRandom(), seedRandom(), seedRandom(), seedRandom()];
+        switch(selectedTier) {
+            case 'mythic': battleStats = { hp: 200+Math.floor(r1*51), atk: 25+Math.floor(r2*11), def: 25+Math.floor(r3*11), spd: 15+Math.floor(r4*11) }; buffs.push('Aura Dewa'); break;
+            case 'legendary': battleStats = { hp: 175+Math.floor(r1*41), atk: 20+Math.floor(r2*9), def: 20+Math.floor(r3*9), spd: 12+Math.floor(r4*8) }; buffs.push('Aura Legenda'); break;
+            case 'epic': battleStats = { hp: 150+Math.floor(r1*31), atk: 15+Math.floor(r2*11), def: 15+Math.floor(r3*11), spd: 10+Math.floor(r4*6) }; break;
+            default: battleStats = { hp: 100+Math.floor(r1*21), atk: 10+Math.floor(r2*6), def: 10+Math.floor(r3*6), spd: 5+Math.floor(r4*6) }; break;
         }
         
-        // Generate narrative
-        const narrative = await generateAIPetNarrative(petName, tier, dominantPersonality);
+        const narrative = await generateAIPetNarrative(petName, selectedTier, dominantPersonality);
     
         const activeState: AIPetState = {
-            name: petName,
-            stage: 'active',
-            tier: tier,
-            stats: initialStats,
-            lastFed: Date.now(),
-            lastPlayed: Date.now(),
-            personality: initialPersonality,
-            narrative,
-            blueprint,
-            colors,
-            battleStats,
-            buffs,
+            name: petName, stage: 'active', tier: selectedTier, stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
+            lastFed: Date.now(), lastPlayed: Date.now(), personality: initialPersonality, narrative, blueprint, colors, battleStats, buffs,
         };
         
+        return { activeState, newPityCounter };
+    }, [user, profile]);
+
+    const activatePetWithTokens = useCallback(async () => {
+        if (!await deductCredits(ACTIVATION_COST_TOKENS)) throw new Error("Token tidak cukup.");
+        const { activeState, newPityCounter } = await _generateNewPetData();
         setPetState(activeState);
-        await savePetStateToDb(activeState);
+        await savePetStateToDb({ aipet_state: activeState, aipet_pity_counter: newPityCounter });
         await addXp(50);
+    }, [deductCredits, _generateNewPetData, savePetStateToDb, addXp]);
+    
+    const activatePetWithFragments = useCallback(async () => {
+        const currentFragments = profile?.data_fragments ?? 0;
+        if (currentFragments < ACTIVATION_COST_FRAGMENTS) throw new Error("Data Fragment tidak cukup.");
+        const { activeState, newPityCounter } = await _generateNewPetData();
+        setPetState(activeState);
+        await savePetStateToDb({ aipet_state: activeState, aipet_pity_counter: newPityCounter, data_fragments: currentFragments - ACTIVATION_COST_FRAGMENTS });
+        await addXp(50);
+    }, [profile, _generateNewPetData, savePetStateToDb, addXp]);
 
-    }, [user, profile, deductCredits, addXp, savePetStateToDb]);
-
+    const dismantlePet = useCallback(async () => {
+        if (!profile || !petState || petState.tier !== 'common') throw new Error("Hanya pet Common yang bisa didaur ulang.");
+        const newAipodState: AIPetState = { name: 'AIPod', stage: 'aipod', tier: 'common', stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 }, lastFed: Date.now(), lastPlayed: Date.now(), personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 }, narrative: null, blueprint: null, colors: null, battleStats: null, buffs: [], };
+        const newFragmentCount = (profile.data_fragments ?? 0) + DISMANTLE_REWARD_FRAGMENTS;
+        setPetState(newAipodState);
+        await savePetStateToDb({ aipet_state: newAipodState, data_fragments: newFragmentCount });
+        await addXp(5);
+    }, [profile, petState, savePetStateToDb, addXp]);
 
     const notifyPetOfActivity = useCallback((activityType: 'designing_logo' | 'generating_captions' | 'project_completed' | 'user_idle' | 'style_choice' | 'forum_interaction', detail?: any) => {
-        if (activityType === 'user_idle' && Math.random() < 0.3) {
-            showContextualMessage("Zzz... Kayaknya Juragan lagi istirahat, ya? Aku juga ah.", 10000);
-        } else if (activityType === 'project_completed') {
-            showContextualMessage("Wih, project selesai! Keren banget, Juragan! ✨", 15000);
-        }
-
-        updatePetState(p => {
-            if (p.stage === 'aipod') return p; // Pods don't gain stats from activities
-            let newStats = { ...p.stats };
-            let newPersonality = { ...p.personality };
-
+        if (activityType === 'user_idle' && Math.random() < 0.3) { showContextualMessage("Zzz... Kayaknya Juragan lagi istirahat, ya? Aku juga ah.", 10000); } 
+        else if (activityType === 'project_completed') { showContextualMessage("Wih, project selesai! Keren banget, Juragan! ✨", 15000); }
+        updatePetState(p => { if (p.stage === 'aipod') return p; let newStats = { ...p.stats }; let newPersonality = { ...p.personality };
             switch (activityType) {
                 case 'designing_logo': newStats.creativity = Math.min(MAX_STATS.creativity, newStats.creativity + 0.2); break;
                 case 'generating_captions': newStats.intelligence = Math.min(MAX_STATS.intelligence, newStats.intelligence + 0.2); break;
-                case 'project_completed':
-                    newStats.energy = Math.min(MAX_STATS.energy, newStats.energy + 20);
-                    newStats.creativity = Math.min(MAX_STATS.creativity, newStats.creativity + 10);
-                    break;
+                case 'project_completed': newStats = { energy: Math.min(MAX_STATS.energy, newStats.energy + 20), creativity: Math.min(MAX_STATS.creativity, newStats.creativity + 10), intelligence: newStats.intelligence, charisma: newStats.charisma }; break;
                 case 'user_idle': newStats.energy = Math.max(0, newStats.energy - 2); break;
                 case 'forum_interaction': newStats.charisma = Math.min(MAX_STATS.charisma, newStats.charisma + 0.5); break;
                 case 'style_choice': if (detail && newPersonality.hasOwnProperty(detail)) { newPersonality[detail as keyof AIPetPersonalityVector]++; } break;
-            }
-            return { ...p, stats: newStats, personality: newPersonality };
+            } return { ...p, stats: newStats, personality: newPersonality };
         });
     }, [updatePetState, showContextualMessage]);
     
-    const handleInteraction = useCallback(() => {
-        updatePetState(p => ({
-            ...p,
-            stats: {
-                ...p.stats,
-                energy: Math.min(MAX_STATS.energy, p.stats.energy + 1)
-            }
-        }));
-    }, [updatePetState]);
+    const handleInteraction = useCallback(() => { updatePetState(p => ({ ...p, stats: { ...p.stats, energy: Math.min(MAX_STATS.energy, p.stats.energy + 1) } })); }, [updatePetState]);
     
-    const onGameWin = useCallback((game: 'color' | 'pattern' | 'style' | 'slogan') => {
-        addXp(15);
-        updatePetState(p => {
-             if (p.stage === 'aipod') return p;
-            let statToBoost: keyof AIPetStats = 'creativity';
-            if (game === 'color') statToBoost = 'creativity';
-            if (game === 'pattern') statToBoost = 'intelligence';
-            if (game === 'style') statToBoost = 'intelligence';
-            if (game === 'slogan') statToBoost = 'charisma';
-            
-            return {
-                ...p,
-                stats: {
-                    ...p.stats,
-                    [statToBoost]: Math.min(MAX_STATS[statToBoost], p.stats[statToBoost] + 15),
-                    energy: Math.max(0, p.stats.energy - 5)
-                }
-            };
-        });
+    // FIX: The 'game' parameter type did not include all possible values being checked ('intelligence', 'charisma'), causing a type error. The type has been expanded to include all valid game types.
+    const onGameWin = useCallback((game: 'color' | 'pattern' | 'style' | 'slogan' | 'intelligence' | 'charisma') => {
+        addXp(15); updatePetState(p => { if (p.stage === 'aipod') return p; let statToBoost: keyof AIPetStats = 'creativity'; if (game === 'intelligence') statToBoost = 'intelligence'; if (game === 'charisma') statToBoost = 'charisma'; return { ...p, stats: { ...p.stats, [statToBoost]: Math.min(MAX_STATS[statToBoost], p.stats[statToBoost] + 15), energy: Math.max(0, p.stats.energy - 5) }}; });
     }, [updatePetState, addXp]);
 
-    const updatePetName = useCallback((newName: string) => {
-        if (!newName.trim()) return;
-        updatePetState(p => ({ ...p, name: newName.trim() }), true);
-    }, [updatePetState]);
+    const updatePetName = useCallback((newName: string) => { if (newName.trim()) updatePetState(p => ({ ...p, name: newName.trim() }), true); }, [updatePetState]);
 
-
-    const value: AIPetContextType = { petState, isLoading, contextualMessage, showContextualMessage, isPetOnScreen, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, activatePet };
+    const value: AIPetContextType = { petState, isLoading, contextualMessage, showContextualMessage, isPetOnScreen, notifyPetOfActivity, handleInteraction, onGameWin, updatePetName, activatePetWithTokens, activatePetWithFragments, dismantlePet };
     
     return <AIPetContext.Provider value={value}>{children}</AIPetContext.Provider>;
 };

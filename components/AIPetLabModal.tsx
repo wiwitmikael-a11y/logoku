@@ -15,7 +15,8 @@ interface Props {
   onClose: () => void;
 }
 
-const ACTIVATION_COST = 5;
+const ACTIVATION_COST_TOKENS = 5;
+const ACTIVATION_COST_FRAGMENTS = 10;
 
 const statusMessages = [
     "Menghubungi Lab Mang AI...", "Mensintesis matriks kepribadian...", "Memilih blueprint dasar...",
@@ -45,7 +46,7 @@ const BattleStatDisplay: React.FC<{ label: string; value: number; icon: string }
 
 const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
     const { profile } = useAuth();
-    const { petState, isLoading: isPetLoading, activatePet } = useAIPet();
+    const { petState, isLoading: isPetLoading, activatePetWithTokens, activatePetWithFragments, dismantlePet } = useAIPet();
     
     const [activationStep, setActivationStep] = useState<'idle' | 'loading' | 'reveal' | 'done'>('idle');
     const [error, setError] = useState<string | null>(null);
@@ -54,12 +55,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
 
     useEffect(() => {
         if (!show) {
-            // Reset state on close
-            setTimeout(() => {
-                setActivationStep('idle');
-                setError(null);
-                setProgress(0);
-            }, 300);
+            setTimeout(() => { setActivationStep('idle'); setError(null); setProgress(0); }, 300);
         }
     }, [show]);
 
@@ -76,7 +72,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
         return () => clearInterval(interval);
     }, [activationStep]);
 
-    const handleActivate = async () => {
+    const handleActivate = async (method: 'tokens' | 'fragments') => {
         setActivationStep('loading');
         setError(null);
         playSound('start');
@@ -84,7 +80,11 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
         setStatusText(statusMessages[0]);
         
         try {
-            await activatePet();
+            if (method === 'tokens') {
+                await activatePetWithTokens();
+            } else {
+                await activatePetWithFragments();
+            }
             setProgress(100);
             setStatusText("Aktivasi Berhasil! AIPet telah lahir!");
             playSound('success');
@@ -94,6 +94,18 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
             playSound('error');
             setActivationStep('idle');
             setProgress(0);
+        }
+    };
+    
+    const handleDismantle = async () => {
+        if (window.confirm("Yakin mau daur ulang pet ini? Kamu akan dapat 1 Data Fragment dan pet-mu akan kembali jadi AIPod.")) {
+            try {
+                await dismantlePet();
+                playSound('success');
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Gagal daur ulang.");
+                playSound('error');
+            }
         }
     };
 
@@ -114,9 +126,13 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                 </div>
             ) : (
                  <>
-                    <p className="text-text-body mb-6 text-sm max-w-xs">Mengaktifkan AIPod ini akan mereplikasi wujud fisik, statistik, dan narasi unik perdana AIPet-mu. Proses ini membutuhkan <strong className="text-text-header">{ACTIVATION_COST} token</strong>.</p>
+                    <p className="text-text-body mb-4 text-sm max-w-xs">
+                        Proses ini akan menggunakan <strong className="text-text-header">{ACTIVATION_COST_TOKENS} token</strong>.
+                        <span className="block mt-2 font-semibold text-primary">Kamu punya: {profile?.data_fragments ?? 0} Data Fragment.</span>
+                    </p>
                     <div className="flex flex-col items-center gap-3">
-                        <Button onClick={handleActivate}>Ya, Aktifkan Sekarang! ({ACTIVATION_COST} Token)</Button>
+                        <Button onClick={() => handleActivate('tokens')}>Ya, Aktifkan Sekarang! ({ACTIVATION_COST_TOKENS} Token)</Button>
+                        <Button onClick={() => handleActivate('fragments')} variant="secondary" disabled={(profile?.data_fragments ?? 0) < ACTIVATION_COST_FRAGMENTS}>Gunakan {ACTIVATION_COST_FRAGMENTS} Fragment</Button>
                         <Button onClick={onClose} variant="secondary" size="small">Nanti Aja Deh</Button>
                     </div>
                     {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
@@ -153,10 +169,15 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                     <StatBar label="😎 Karisma" value={pet.stats.charisma} color="bg-yellow-400" />
                 </div>
             </details>
-            <details>
-                <summary className="font-semibold text-splash uppercase tracking-wider text-xs py-2 cursor-pointer">Aktivitas (Segera Hadir)</summary>
-                <div className="grid grid-cols-2 gap-3 mb-4"><Button size="small" variant="secondary" disabled>Beri Makan</Button><Button size="small" variant="secondary" disabled>Ajak Main</Button></div>
-            </details>
+            {pet.tier === 'common' && (
+                <details>
+                    <summary className="font-semibold text-red-400 uppercase tracking-wider text-xs py-2 cursor-pointer">Zona Daur Ulang</summary>
+                    <div className="bg-background p-4 rounded-lg border border-border-main mb-4">
+                        <p className="text-xs text-text-muted my-2">Punya pet Common dan mau coba peruntungan lagi? Lo bisa daur ulang pet ini untuk mendapatkan <strong className="text-text-header">1 Data Fragment</strong>. Pet-mu akan kembali menjadi AIPod.</p>
+                        <Button onClick={handleDismantle} size="small" variant="secondary" className="!border-red-500/30 !text-red-400 hover:!bg-red-500/10">Daur Ulang AIPet</Button>
+                    </div>
+                </details>
+            )}
         </div>
     );
 
@@ -194,8 +215,7 @@ const AIPetLabModal: React.FC<Props> = ({ show, onClose }) => {
                         (
                             <div className="text-center p-8 border border-dashed border-border-main rounded-lg">
                                 <p className="text-lg">🧬</p>
-                                <p className="text-text-body">AIPod masih dalam mode tidur.</p>
-                                <p className="text-sm text-text-muted mt-2">Buka menu AIPet di pojok kanan bawah dashboard untuk mengaktifkannya.</p>
+                                <p className="text-text-body">Terjadi kesalahan saat memuat data AIPet.</p>
                             </div>
                         )
                     }

@@ -163,6 +163,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         total_projects_completed: data.total_projects_completed ?? 0,
         last_daily_xp_claim: data.last_daily_xp_claim ?? '2000-01-01',
         completed_first_steps: data.completed_first_steps ?? [],
+        aipet_pity_counter: data.aipet_pity_counter ?? 0,
+        data_fragments: data.data_fragments ?? 0,
         daily_actions: data.daily_actions ?? { claimed_missions: [] },
     };
     
