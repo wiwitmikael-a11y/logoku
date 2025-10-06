@@ -1,13 +1,20 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { supabase } from '../../services/supabaseClient';
-import type { Profile } from '../../types';
+import type { Profile, AIPetState } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingMessage from '../common/LoadingMessage';
 import ErrorMessage from '../common/ErrorMessage';
 import Card from '../common/Card';
 import Button from '../common/Button';
+
+const AIPetCard = React.lazy(() => import('./AIPetCard'));
+const AIPetVisual = React.lazy(() => import('../AIPetVisual'));
+
+interface PusatJuraganProps {
+    onShowAIPetLab: () => void;
+}
 
 const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; icon: string; } } = {
   BRAND_PERTAMA_LAHIR: { name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
@@ -65,11 +72,13 @@ const LeaderboardSkeleton: React.FC = () => (
 );
 
 
-const PusatJuragan: React.FC = () => {
+const PusatJuragan: React.FC<PusatJuraganProps> = ({ onShowAIPetLab }) => {
     const { profile, dailyActions, claimMissionReward } = useAuth();
     const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const defaultAIPodState: AIPetState = { name: 'AIPod', stage: 'aipod', tier: 'common', stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 }, lastFed: Date.now(), lastPlayed: Date.now(), personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 }, narrative: null, blueprint: null, colors: null, battleStats: null, buffs: [], };
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
@@ -112,6 +121,28 @@ const PusatJuragan: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                 {/* Left Column: Missions & Badges */}
                 <div className="space-y-8">
+                    <Card title="🐾 Kandang AIPet">
+                        <div className="space-y-4 text-center">
+                            {profile?.aipet_state && profile.aipet_state.stage === 'active' ? (
+                                <Suspense fallback={<div className="h-64 w-full flex items-center justify-center text-sm text-text-muted">Memuat Kartu AIPet...</div>}>
+                                    <AIPetCard petState={profile.aipet_state} />
+                                </Suspense>
+                            ) : (
+                                <div className="flex flex-col items-center">
+                                    <div className="w-40 h-40">
+                                        <Suspense fallback={<div className="w-full h-full bg-background rounded-full animate-pulse" />}>
+                                            <AIPetVisual petState={profile?.aipet_state || defaultAIPodState} />
+                                        </Suspense>
+                                    </div>
+                                    <p className="text-sm text-text-muted mt-2">AIPet-mu masih dalam AIPod. Aktifkan di Lab!</p>
+                                </div>
+                            )}
+                            <Button onClick={onShowAIPetLab} variant="secondary" className="w-full">
+                                {profile?.aipet_state?.stage === 'active' ? 'Buka Lab & Lihat Statistik' : 'Buka Lab & Aktifkan'}
+                            </Button>
+                        </div>
+                    </Card>
+
                     <Card title="🎯 Misi Harian">
                         <div className="space-y-4">
                             {DAILY_MISSIONS.map(mission => {
