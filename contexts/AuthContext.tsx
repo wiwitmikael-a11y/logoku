@@ -151,15 +151,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }
     
-    // --- ROBUST SANITIZATION ---
-    // This logic ensures that `daily_actions` is always a valid object with `claimed_missions` before any other logic runs.
-    // This is the core fix for the "Gagal sinkronisasi" error on new user login.
-    let sanitizedDailyActions: DailyActions = { claimed_missions: [] };
-    if (data.daily_actions && typeof data.daily_actions === 'object' && !Array.isArray(data.daily_actions)) {
-        sanitizedDailyActions = { ...(data.daily_actions as object) };
+    // --- ROBUST SANITIZATION for daily_actions ---
+    // This logic ensures `daily_actions` is a valid object, preventing errors from null/malformed data from the DB.
+    let sanitizedDailyActions: DailyActions;
+    const rawDailyActions = data.daily_actions;
+    
+    if (rawDailyActions && typeof rawDailyActions === 'object' && !Array.isArray(rawDailyActions)) {
+        // It's a non-null, non-array object. Start with it.
+        sanitizedDailyActions = { ...rawDailyActions };
+        // Now, ensure the claimed_missions array exists.
         if (!Array.isArray(sanitizedDailyActions.claimed_missions)) {
             sanitizedDailyActions.claimed_missions = [];
         }
+    } else {
+        // If it's null, not an object, or an array, reset it completely to a safe default.
+        sanitizedDailyActions = { claimed_missions: [] };
     }
 
     const profileData: Profile = {
@@ -170,6 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         total_projects_completed: data.total_projects_completed ?? 0,
         last_daily_xp_claim: data.last_daily_xp_claim ?? '2000-01-01',
         completed_first_steps: data.completed_first_steps ?? [],
+        welcome_bonus_claimed: data.welcome_bonus_claimed ?? false,
         aipet_state: data.aipet_state ?? null,
         aipet_pity_counter: data.aipet_pity_counter ?? 0,
         data_fragments: data.data_fragments ?? 0,
