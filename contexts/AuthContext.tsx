@@ -147,31 +147,66 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [isMuted]);
 
-  const refreshProfile = useCallback(async (userToRefresh?: User | null) => {
-    const targetUser = userToRefresh === undefined ? user : userToRefresh;
-    if (!targetUser) {
-        setProfile(null);
-        setDailyActions(null);
-        return;
+  const refreshProfile = useCallback(async (userToRefresh: User | null) => {
+    if (!userToRefresh) {
+      setProfile(null);
+      setDailyActions(null);
+      return;
     }
-    try {
-        const { data, error, status } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', targetUser.id)
-            .single();
 
-        if (error && status !== 406) throw error;
-        
-        if (data) {
-            setProfile(data);
-            setDailyActions(data.daily_actions || { claimed_missions: [] });
+    try {
+      const { data, error, status } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userToRefresh.id)
+        .single();
+
+      // Handle generic errors first
+      if (error && status !== 406) {
+        throw error;
+      }
+      
+      // Happy path: profile exists
+      if (data) {
+        setProfile(data);
+        setDailyActions(data.daily_actions || { claimed_missions: [] });
+      } 
+      // New user path: profile not found, so we create it
+      else if (status === 406) {
+        console.log("No profile found for user, creating new one...");
+        const { data: newProfileData, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userToRefresh.id,
+            full_name: userToRefresh.user_metadata.full_name || 'Juragan Baru',
+            avatar_url: userToRefresh.user_metadata.avatar_url || '',
+            credits: 20, // Welcome bonus
+            welcome_bonus_claimed: true,
+            xp: 0,
+            level: 1,
+            achievements: [],
+            total_projects_completed: 0,
+            completed_first_steps: [],
+            aipet_state: null,
+            daily_actions: { claimed_missions: [] },
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          throw insertError;
         }
+
+        if (newProfileData) {
+          setProfile(newProfileData);
+          setDailyActions(newProfileData.daily_actions || { claimed_missions: [] });
+        }
+      }
     } catch (error: any) {
-        setAuthError(`Gagal memuat profil: ${error.message}`);
-        console.error("Error loading user profile:", error);
+      setAuthError(`Gagal memuat atau membuat profil: ${error.message}`);
+      console.error("Error in refreshProfile:", error);
     }
-  }, [user]);
+  }, []);
 
   const addXp = useCallback(async (amount: number) => {
     if (!user || !profile) return;
@@ -283,26 +318,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   useEffect(() => {
     const checkSession = async () => {
+        setLoading(true);
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-        if (currentSession?.user) {
-            await refreshProfile(currentSession.user);
-        }
+        await refreshProfile(currentSession?.user ?? null);
         setLoading(false);
     };
     checkSession();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+        setLoading(true);
         setSession(newSession);
         const newUser = newSession?.user ?? null;
         setUser(newUser);
-        if (newUser) {
-            await refreshProfile(newUser);
-        } else {
-            setProfile(null);
-            setDailyActions(null);
-        }
+        await refreshProfile(newUser);
         setLoading(false);
     });
     return () => { subscription?.unsubscribe(); };
