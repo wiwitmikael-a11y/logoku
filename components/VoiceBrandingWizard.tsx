@@ -89,7 +89,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
             processor.onaudioprocess = (audioProcessingEvent) => {
               if (!isListening) return;
               const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
-              const pcmBlob = { data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32767)).buffer)), mimeType: 'audio/pcm;rate=16000' };
+              const pcmBlob: Blob = { data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32767)).buffer)), mimeType: 'audio/pcm;rate=16000' };
               sessionPromiseRef.current?.then((session) => {
                 session.sendRealtimeInput({ media: pcmBlob });
               });
@@ -157,7 +157,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
               }
             }
           },
-          onerror: (e) => { setError(`Koneksi error: ${e.message}`); setStatus('Error'); },
+          onerror: (e) => { setError(`Koneksi error: ${e.type}`); setStatus('Error'); },
           onclose: () => setStatus('Koneksi ditutup.'),
         },
       });
@@ -220,13 +220,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
       </div>
     </div>
   );
-};
-
-// Simple audio utilities
-const createBlob = (data: Float32Array): Blob => {
-  const l = data.length; const int16 = new Int16Array(l);
-  for (let i = 0; i < l; i++) { int16[i] = data[i] * 32768; }
-  return { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' };
 };
 
 export default VoiceBrandingWizard;
