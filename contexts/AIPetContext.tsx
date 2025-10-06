@@ -24,7 +24,7 @@ interface AIPetContextType {
 const AIPetContext = createContext<AIPetContextType | undefined>(undefined);
 
 export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, loading: authLoading } = useAuth();
   const [petState, setPetState] = useState<AIPetState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPetOnScreen, setIsPetOnScreen] = useState(true);
@@ -32,21 +32,24 @@ export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [visualEffect, setVisualEffect] = useState<VisualEffect | null>(null);
 
   useEffect(() => {
-      if (profile) {
-          setPetState(profile.aipet_state || null);
-          setIsLoading(false);
-      } else if (!user) { // If user logs out or auth is loading
-          setPetState(null);
-          setIsLoading(true); // Set to true until we confirm there's no profile
-      }
-      if(user && !profile) {
-          setIsLoading(true); // Loading profile
-      }
-      if(!user) {
-          setIsLoading(false); // No user, so not loading pet
-      }
-
-  }, [profile, user]);
+    // This logic is now driven by the master loading state from AuthContext.
+    // If auth is loading, AIPet is also loading.
+    if (authLoading) {
+        setIsLoading(true);
+        setPetState(null); // Clear pet state while auth is in flux
+        return;
+    }
+    
+    // Auth is done, now we can determine AIPet state.
+    setIsLoading(false);
+    if (profile) {
+        // If a profile exists, use its pet state.
+        setPetState(profile.aipet_state || null);
+    } else {
+        // If no profile (e.g., user logged out), ensure pet state is cleared.
+        setPetState(null);
+    }
+  }, [authLoading, profile]);
 
   const notifyPetOfActivity = useCallback(async (activity: string, detail?: string) => {
     if (!user || !petState || petState.stage === 'aipod') return;
