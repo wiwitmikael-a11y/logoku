@@ -170,19 +170,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const todayWIB = getTodaysDateWIB();
     let updates: Partial<Profile> = {};
     let shouldUpdate = false;
+    let creditsHandled = false;
 
-    // --- Welcome Bonus Grant ---
-    // This block runs ONLY for new users on their very first profile sync.
+    // --- REFACTORED: Welcome Bonus Grant (HIGHEST PRIORITY) ---
+    // This logic now runs first and prevents the daily top-up from running on the same sync.
     if (profileData.welcome_bonus_claimed === false) {
-        updates.credits = WELCOME_BONUS_CREDITS; // Explicitly set to 20
+        updates.credits = WELCOME_BONUS_CREDITS; // Set to 20
         updates.welcome_bonus_claimed = true;
+        updates.last_credit_reset = todayWIB; // Also set the reset date to prevent double-dipping on the same day
+        creditsHandled = true;
         shouldUpdate = true;
     }
-    // --- Daily Token Top-up System (run ONLY if welcome bonus was already claimed) ---
-    else if (profileData.last_credit_reset !== todayWIB) {
+
+    // --- REFACTORED: Daily Token Top-up System (ONLY if welcome bonus was NOT just applied) ---
+    if (!creditsHandled && profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
         if ((profileData.credits ?? 0) < DAILY_TOKENS) {
-            updates.credits = DAILY_TOKENS; // Set to 5 if below threshold
+            updates.credits = DAILY_TOKENS; // Top up to 5
         }
         updates.last_credit_reset = todayWIB;
         shouldUpdate = true;
