@@ -39,7 +39,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  public render = (): ReactNode => {
+  // FIX: Converted `render` from a class property arrow function to a standard class method.
+  // This ensures `this` is correctly bound by React, resolving errors where `this.props` and `this.setState` were not found.
+  public render(): ReactNode {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
