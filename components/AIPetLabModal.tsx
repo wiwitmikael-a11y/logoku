@@ -84,8 +84,6 @@ const AIPetLabModal: React.FC<AIPetLabModalProps> = ({ show, onClose }) => {
         }
 
         const personality = petState.personality;
-        // FIX: `Object.values` returns `unknown[]` in TypeScript, which is not compatible with `Math.max`.
-        // Casting the array to `number[]` ensures type safety and resolves the error.
         const maxPersonalityValue = Math.max(...(Object.values(personality) as number[]));
 
         return (
@@ -102,7 +100,6 @@ const AIPetLabModal: React.FC<AIPetLabModalProps> = ({ show, onClose }) => {
                         <h4 className="text-lg font-bold text-primary mb-3">Analisis Kepribadian</h4>
                         <div className="space-y-2 p-4 bg-background border border-border-main rounded-lg">
                             {Object.entries(personality).map(([trait, value]) => (
-                                // FIX: Cast 'value' to number to resolve TypeScript error where it's inferred as 'unknown'.
                                 <StatDisplay key={trait} label={trait} value={value as number} maxValue={maxPersonalityValue > 0 ? maxPersonalityValue : 1} colorClass="bg-primary" />
                             ))}
                         </div>
