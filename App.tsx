@@ -68,11 +68,11 @@ const TokenomicsModal = React.lazy(() => import('./components/common/TokenomicsM
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 type PetBehavior = 'idle' | 'walking' | 'running' | 'jumping' | 'interacting' | 'turning' | 'somersault';
 
-const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: { 
-    petState: AIPetState, 
-    isVisible: boolean, 
-    onAsk: () => void, 
-    onShowLab: () => void,
+const FloatingAIPet: React.FC<{ petState: AIPetState, isVisible: boolean, onAsk: () => void, onShowLab: () => void }> = ({ 
+    petState, 
+    isVisible, 
+    onAsk, 
+    onShowLab,
 }) => {
     const { contextualMessage, showContextualMessage } = useAIPet();
     const [position, setPosition] = useState({ x: 50, direction: 1 });
@@ -80,8 +80,8 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
     const [isInteracting, setIsInteracting] = useState(false);
     
     const animationFrameRef = useRef<number | null>(null);
-    const behaviorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const behaviorTimeoutRef = useRef<number | null>(null);
+    const interactionTimeoutRef = useRef<number | null>(null);
 
     const [isBubbleOpen, setBubbleOpen] = useState(false);
 
@@ -119,7 +119,7 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
 
         switch (behavior) {
             case 'idle':
-                behaviorTimeoutRef.current = setTimeout(() => {
+                behaviorTimeoutRef.current = window.setTimeout(() => {
                     const nextAction = Math.random();
                     if (nextAction < 0.05) {
                         setBehavior('somersault');
@@ -129,7 +129,7 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
                 }, randomDelay());
                 break;
             case 'walking':
-                behaviorTimeoutRef.current = setTimeout(() => {
+                behaviorTimeoutRef.current = window.setTimeout(() => {
                     const nextAction = Math.random();
                     if (nextAction < 0.15) setBehavior('running');
                     else if (nextAction < 0.25) setBehavior('jumping');
@@ -137,18 +137,18 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
                 }, randomDelay());
                 break;
             case 'running':
-                behaviorTimeoutRef.current = setTimeout(() => {
+                behaviorTimeoutRef.current = window.setTimeout(() => {
                     setBehavior('walking');
                 }, randomDelay());
                 break;
             case 'turning':
-                behaviorTimeoutRef.current = setTimeout(() => setBehavior('idle'), 1000);
+                behaviorTimeoutRef.current = window.setTimeout(() => setBehavior('idle'), 1000);
                 break;
             case 'jumping':
-                behaviorTimeoutRef.current = setTimeout(() => setBehavior('idle'), 800);
+                behaviorTimeoutRef.current = window.setTimeout(() => setBehavior('idle'), 800);
                 break;
             case 'somersault':
-                behaviorTimeoutRef.current = setTimeout(() => setBehavior('idle'), 1500);
+                behaviorTimeoutRef.current = window.setTimeout(() => setBehavior('idle'), 1500);
                 break;
             default:
                 break;
@@ -165,7 +165,7 @@ const FloatingAIPet = ({ petState, isVisible, onAsk, onShowLab }: {
         if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
         setBubbleOpen(p => !p);
         setIsInteracting(true);
-        interactionTimeoutRef.current = setTimeout(() => setIsInteracting(false), 1200);
+        interactionTimeoutRef.current = window.setTimeout(() => setIsInteracting(false), 1200);
     };
 
     const animationClass = isVisible ? 'animate-aipet-appear' : 'animate-aipet-disappear';
