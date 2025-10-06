@@ -154,7 +154,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }
     
-    // If we are here, 'data' must contain a profile (either from initial select or polling).
+    // --- ROBUST SANITIZATION ---
+    // This logic ensures that `daily_actions` is always a valid object with `claimed_missions` before any other logic runs.
+    // This is the core fix for the "Gagal sinkronisasi" error on new user login.
+    let sanitizedDailyActions: DailyActions = { claimed_missions: [] };
+    if (data.daily_actions && typeof data.daily_actions === 'object' && !Array.isArray(data.daily_actions)) {
+        sanitizedDailyActions = { ...(data.daily_actions as object) };
+        if (!Array.isArray(sanitizedDailyActions.claimed_missions)) {
+            sanitizedDailyActions.claimed_missions = [];
+        }
+    }
+
     const profileData: Profile = {
         ...data,
         xp: data.xp ?? 0,
@@ -163,9 +173,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         total_projects_completed: data.total_projects_completed ?? 0,
         last_daily_xp_claim: data.last_daily_xp_claim ?? '2000-01-01',
         completed_first_steps: data.completed_first_steps ?? [],
+        aipet_state: data.aipet_state ?? null,
         aipet_pity_counter: data.aipet_pity_counter ?? 0,
         data_fragments: data.data_fragments ?? 0,
-        daily_actions: data.daily_actions ?? { claimed_missions: [] },
+        daily_actions: sanitizedDailyActions,
     };
     
     const todayWIB = getTodaysDateWIB();
@@ -175,19 +186,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // --- Daily Token Top-up System ---
     if (profileData.last_credit_reset !== todayWIB) {
         const DAILY_TOKENS = 5;
-        if (profileData.credits < DAILY_TOKENS) {
+        if ((profileData.credits ?? 0) < DAILY_TOKENS) {
             updates.credits = DAILY_TOKENS;
         }
         updates.last_credit_reset = todayWIB;
         shouldUpdate = true;
     }
     
-    // Daily XP Claim Logic
+    // Daily XP Claim Logic & Daily Actions Reset
     if (profileData.last_daily_xp_claim !== todayWIB) {
         const DAILY_XP = 10;
         updates.xp = (profileData.xp ?? 0) + DAILY_XP;
         updates.last_daily_xp_claim = todayWIB;
-        // FIX: Reset daily actions on a new day.
         updates.daily_actions = { claimed_missions: [] };
         shouldUpdate = true;
     }
