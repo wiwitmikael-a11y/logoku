@@ -145,26 +145,7 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     );
 };
 
-interface TemplateCardProps {
-  template: { name: string; description: string; imageUrl: string; data: Partial<BrandInputs>; };
-  onClick: (data: Partial<BrandInputs>) => void;
-  onMouseEnter: () => void;
-}
-
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onMouseEnter }) => (
-  <div onClick={() => onClick(template.data)} onMouseEnter={onMouseEnter} className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl cursor-pointer shadow-lg shadow-black/30 transition-transform duration-300 hover:scale-105">
-    <img src={template.imageUrl} alt={template.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" loading="lazy" />
-    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-    <div className="absolute bottom-0 left-0 p-4 text-white"><h4 className="text-xl font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4></div>
-    <div className="absolute bottom-0 left-0 w-full p-4 bg-black/70 backdrop-blur-sm text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
-      <h4 className="text-xl font-bold" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.05em'}}>{template.name}</h4>
-      <p className="text-xs mt-1 mb-3 text-slate-300">{template.description}</p>
-      <p className="text-sm font-semibold text-splash">Gunakan Template &rarr;</p>
-    </div>
-  </div>
-);
-
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'onNewProjectVoice'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onNewProjectVoice, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
     const { profile } = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
@@ -190,28 +171,26 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop' | 'o
         if (!data.contentCalendar) return "Progres: Kalender Konten";
         return "Progres: Iklan Sosmed";
     }
-
-    const templates = [
-        { name: '☕ Coffee Shop Kekinian', description: 'Template untuk kedai kopi modern, fokus pada target pasar anak muda dan mahasiswa.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_kopi.jpeg', data: { businessName: 'Kedai Kopi [Isi Sendiri]', businessCategory: 'Minuman', businessDetail: 'Kopi susu gula aren dan manual brew', targetAudience: 'Mahasiswa usia 18-25', valueProposition: 'Tempat nongkong asik dengan kopi berkualitas dan Wi-Fi kencang.', competitors: 'Janji Jiwa, Kopi Kenangan' } },
-        { name: '🌶️ Warung Seblak Viral', description: 'Template untuk bisnis seblak pedas yang menyasar target pasar remaja dan Gen Z.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_seblak.jpeg', data: { businessName: 'Seblak [Isi Sendiri]', businessCategory: 'Makanan', businessDetail: 'Seblak prasmanan dengan aneka topping pedas level dewa', targetAudience: 'Remaja usia 15-22', valueProposition: 'Seblak paling komplit dan pedasnya nampol, bikin ketagihan.', competitors: 'Seblak Jeletet, Seblak Bloom' } },
-        { name: '👕 Distro Indie', description: 'Template untuk brand fashion streetwear dengan desain orisinal dan eksklusif.', imageUrl: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/templates/temp_distro.jpeg', data: { businessName: '[Isi Sendiri] Supply Co.', businessCategory: 'Fashion', businessDetail: 'T-shirt dan streetwear dengan desain grafis original', targetAudience: 'Anak muda usia 17-28', valueProposition: 'Desain eksklusif yang merepresentasikan kultur anak muda, bahan premium.', competitors: 'Erigo, Thanksinsomnia' } }
-    ];
     
     return (
         <div className="flex flex-col gap-8 items-center text-center">
             <DynamicInfoBox />
-            <div className="relative mt-12">
-                <Button onClick={() => onNewProject()} onMouseEnter={onPreloadNewProject} size="large" variant="splash">+ Bikin Project Branding Baru</Button>
-                {showOnboarding && (
-                    <div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max cursor-pointer animate-bounce">
-                        <CalloutPopup>Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup>
-                    </div>
-                )}
-            </div>
-            
-            <div className="w-full text-center mt-6">
-                <h2 className="text-2xl md:text-3xl font-bold mb-4 mt-2 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Atau Pake Jalan Pintas 🚀</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">{templates.map(t => (<TemplateCard key={t.name} template={t} onClick={onNewProject} onMouseEnter={onPreloadNewProject} />))}</div>
+            <div className="relative mt-12 flex flex-col items-center gap-4 w-full max-w-md">
+                <div className="w-full relative">
+                    <Button onClick={() => onNewProject()} onMouseEnter={onPreloadNewProject} size="large" variant="splash" className="w-full">+ Bikin Project Branding Baru</Button>
+                    {showOnboarding && (
+                        <div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max cursor-pointer animate-bounce">
+                            <CalloutPopup>Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup>
+                        </div>
+                    )}
+                </div>
+                <div className="text-text-muted font-semibold">ATAU</div>
+                <div className="w-full">
+                    <Button onClick={onNewProjectVoice} variant="secondary" size="large" className="w-full animate-ai-fab-pulse !border-splash/50 !text-splash hover:!bg-splash/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                        Konsultasi Suara dengan Mang AI
+                    </Button>
+                </div>
             </div>
 
             <div className="w-full border-t border-border-main my-8"></div>
@@ -322,12 +301,6 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
             atau asah jiwa kompetisimu di menu <strong className="text-green-400 font-semibold">Juara</strong>. 
             Semua alat buat jadi juara ada di sini!
         </p>
-         <div className="mt-6 flex justify-center">
-            <Button onClick={props.onNewProjectVoice} variant="secondary" size="large" className="animate-ai-fab-pulse !border-splash/50 !text-splash hover:!bg-splash/10">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                Mulai dengan Suara
-            </Button>
-        </div>
       </div>
 
       <div className="flex justify-center border-b border-border-main overflow-x-auto">
