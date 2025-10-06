@@ -1,8 +1,9 @@
-// FIX: Created this file to resolve "not a module" errors. It provides the AuthContext, AuthProvider, and useAuth hook.
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '../services/supabaseClient';
-import type { Session, User, Profile } from '../types';
-import { playBGM, setMuted, stopBGM, playRandomBGM } from '../services/soundService';
+import type { Session, User, Profile, DailyActions } from '../types';
+import { playBGM, setMuted, stopBGM, playRandomBGM, playSound } from '../services/soundService';
 
 export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
 
@@ -17,6 +18,17 @@ export interface Achievement {
   description: string;
   icon: string;
 }
+
+const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; icon: string; } } = {
+  BRAND_PERTAMA_LAHIR: { name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
+  SANG_KOLEKTOR: { name: 'Sang Kolektor', description: 'Berhasil menyelesaikan 5 project branding.', icon: '🥈' },
+  SULTAN_KONTEN: { name: 'Sultan Konten', description: 'Berhasil menyelesaikan 10 project branding.', icon: '🥇' },
+};
+
+const getXpForLevel = (level: number): number => (level - 1) * 750;
+const getLevelFromXp = (xp: number): number => Math.floor(xp / 750) + 1;
+const getLevelUpReward = (level: number): number => level % 5 === 0 ? 5 : 2; // Bigger reward every 5 levels
+
 
 interface AuthContextType {
   session: Session | null;
@@ -45,7 +57,7 @@ interface AuthContextType {
   handleToggleMute: () => void;
   bgmSelection: BgmSelection;
   handleBgmChange: (selection: BgmSelection) => void;
-  dailyActions: any; // Simplified
+  dailyActions: DailyActions | null;
   incrementDailyAction: (actionId: string, amount?: number) => Promise<void>;
   claimMissionReward: (missionId: string, xp: number) => Promise<void>;
 }
@@ -63,75 +75,239 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState<LevelUpInfo | null>(null);
   const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
-  const [isMuted, setIsMutedState] = useState(false);
-  const [bgmSelection, setBgmSelection] = useState<BgmSelection>('Random');
-  const [dailyActions, setDailyActions] = useState(null);
-
-  // Mock implementations
-  const refreshProfile = useCallback(async () => { console.log('refreshProfile called'); }, []);
-  const addXp = useCallback(async (amount: number) => { console.log(`addXp called with ${amount}`); }, []);
-  const grantAchievement = useCallback(async (achievementId: string) => { console.log(`grantAchievement called with ${achievementId}`); }, []);
-  const grantFirstTimeCompletionBonus = useCallback(async (step: string) => { console.log(`grantFirstTimeCompletionBonus called for ${step}`); }, []);
-  const deductCredits = useCallback(async (amount: number): Promise<boolean> => { console.log(`deductCredits called with ${amount}`); return true; }, []);
-  const incrementDailyAction = useCallback(async (actionId: string, amount = 1) => { console.log(`incrementDailyAction for ${actionId}`); }, []);
-  const claimMissionReward = useCallback(async (missionId: string, xp: number) => { console.log(`claimMissionReward for ${missionId}`); }, []);
+  
+  const [isMuted, setIsMutedState] = useState(() => localStorage.getItem('desainfun_isMuted') === 'true');
+  const [bgmSelection, setBgmSelection] = useState<BgmSelection>(() => (localStorage.getItem('desainfun_bgmSelection') as BgmSelection) || 'Random');
+  const [dailyActions, setDailyActions] = useState<DailyActions | null>(null);
 
   const handleLogout = () => setShowLogoutConfirm(true);
+
   const executeLogout = async () => {
+    stopBGM();
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
     setProfile(null);
     setShowLogoutConfirm(false);
   };
-  const handleDeleteAccount = () => { alert('Account deletion is not implemented yet.'); };
 
-  const handleToggleMute = () => {
+  const handleDeleteAccount = async () => {
+      if (!user) return;
+      alert("This is a permanent action! We are calling the RPC function to delete your data.");
+      const { error } = await supabase.rpc('delete_user_account');
+      if (error) {
+          alert(`Error deleting account: ${error.message}`);
+      } else {
+          alert("Your account and all associated data have been deleted.");
+          await executeLogout();
+      }
+  };
+
+  const handleToggleMute = useCallback(() => {
     setIsMutedState(prev => {
         const newMuted = !prev;
+        localStorage.setItem('desainfun_isMuted', String(newMuted));
         setMuted(newMuted);
         if (newMuted) {
             stopBGM();
         } else {
-            handleBgmChange(bgmSelection);
+            if (bgmSelection === 'Mute') {
+                const newSelection = 'Random';
+                setBgmSelection(newSelection);
+                localStorage.setItem('desainfun_bgmSelection', newSelection);
+                playRandomBGM();
+            } else if (bgmSelection === 'Random') {
+                playRandomBGM();
+            } else {
+                playBGM(bgmSelection as any);
+            }
         }
         return newMuted;
     });
-  };
+  }, [bgmSelection]);
 
-  const handleBgmChange = (selection: BgmSelection) => {
+  const handleBgmChange = useCallback((selection: BgmSelection) => {
     setBgmSelection(selection);
-    if (isMuted) return;
+    localStorage.setItem('desainfun_bgmSelection', selection);
+    if (isMuted && selection !== 'Mute') {
+        setIsMutedState(false);
+        localStorage.setItem('desainfun_isMuted', 'false');
+        setMuted(false);
+    }
+
     if (selection === 'Mute') {
         stopBGM();
+        setIsMutedState(true);
+        localStorage.setItem('desainfun_isMuted', 'true');
+        setMuted(true);
     } else if (selection === 'Random') {
         playRandomBGM();
     } else {
-        playBGM(selection);
+        playBGM(selection as any);
     }
-  };
+  }, [isMuted]);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-    })
+  const refreshProfile = useCallback(async (localUser = user) => {
+    if (!localUser) {
+        setProfile(null);
+        setDailyActions(null);
+        return;
+    }
+    try {
+        const { data, error, status } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', localUser.id)
+            .single();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+        if (error && status !== 406) throw error;
+        
+        if (data) {
+            setProfile(data);
+            setDailyActions(data.daily_actions || { claimed_missions: [] });
+        }
+    } catch (error: any) {
+        setAuthError(`Gagal memuat profil: ${error.message}`);
+        console.error("Error loading user profile:", error);
+    }
+  }, [user]);
 
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, []);
+  const addXp = useCallback(async (amount: number) => {
+    if (!user || !profile) return;
+
+    const currentLevel = profile.level;
+    const newXp = profile.xp + amount;
+    const newLevel = getLevelFromXp(newXp);
+
+    let newCredits = profile.credits;
+    if (newLevel > currentLevel) {
+        const reward = getLevelUpReward(newLevel);
+        newCredits += reward;
+        setLevelUpInfo({ newLevel, tokenReward: reward });
+        setShowLevelUpModal(true);
+    }
+    
+    const { data, error } = await supabase
+        .from('profiles')
+        .update({ xp: newXp, level: newLevel, credits: newCredits })
+        .eq('id', user.id)
+        .select()
+        .single();
+    
+    if (error) console.error("Error adding XP:", error);
+    else setProfile(data);
+  }, [user, profile]);
+
+  const deductCredits = useCallback(async (amount: number): Promise<boolean> => {
+    if (!user || !profile) return false;
+    if (profile.credits < amount) {
+        setShowOutOfCreditsModal(true);
+        return false;
+    }
+    const newCredits = profile.credits - amount;
+    const { data, error } = await supabase
+        .from('profiles')
+        .update({ credits: newCredits })
+        .eq('id', user.id)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error("Error deducting credits:", error);
+        return false;
+    } else {
+        setProfile(data);
+        return true;
+    }
+  }, [user, profile]);
+
+  const grantAchievement = useCallback(async (achievementId: string) => {
+    if (!user || !profile || profile.achievements.includes(achievementId)) return;
+    const newAchievements = [...profile.achievements, achievementId];
+    const { error } = await supabase
+        .from('profiles')
+        .update({ achievements: newAchievements })
+        .eq('id', user.id);
+    
+    if (error) {
+        console.error("Error granting achievement:", error);
+    } else {
+        await refreshProfile();
+        setUnlockedAchievement({ id: achievementId, ...ACHIEVEMENTS_MAP[achievementId] });
+    }
+  }, [user, profile, refreshProfile]);
+
+  const grantFirstTimeCompletionBonus = useCallback(async (step: string) => {
+    if (!user || !profile || profile.total_projects_completed > 0 || profile.completed_first_steps.includes(step)) return;
+    
+    const newCompletedSteps = [...profile.completed_first_steps, step];
+    const newCredits = profile.credits + 1;
+    
+    const { data, error } = await supabase
+        .from('profiles')
+        .update({ completed_first_steps: newCompletedSteps, credits: newCredits })
+        .eq('id', user.id)
+        .select()
+        .single();
+    
+    if (error) console.error("Error granting first time bonus:", error);
+    else setProfile(data);
+  }, [user, profile]);
+
+  const incrementDailyAction = useCallback(async (actionId: string, amount = 1) => {
+    if (!user) return;
+    const { error } = await supabase.rpc('increment_daily_action', { p_user_id: user.id, p_action_id: actionId, p_amount: amount });
+    if (error) console.error(`Error incrementing daily action ${actionId}:`, error);
+    else await refreshProfile();
+  }, [user, refreshProfile]);
+
+  const claimMissionReward = useCallback(async (missionId: string, xp: number) => {
+    if (!user || dailyActions?.claimed_missions?.includes(missionId)) return;
+    
+    const { error } = await supabase.rpc('claim_daily_mission', { p_user_id: user.id, p_mission_id: missionId });
+    if (error) {
+        console.error('Error claiming mission:', error);
+        alert(`Gagal klaim: ${error.message}`);
+    } else {
+        await addXp(xp);
+        await refreshProfile();
+    }
+  }, [user, dailyActions, addXp, refreshProfile]);
   
-  const value: AuthContextType = {
-    session, user, profile, loading, authError, refreshProfile, addXp, grantAchievement, showOutOfCreditsModal, setShowOutOfCreditsModal, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout, handleDeleteAccount, dailyActions, incrementDailyAction, claimMissionReward
-  };
+  useEffect(() => {
+    setMuted(isMuted);
+    if (!isMuted) handleBgmChange(bgmSelection);
+    else stopBGM();
+  }, [isMuted, bgmSelection, handleBgmChange]);
+  
+  useEffect(() => {
+    const checkSession = async () => {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        if (currentSession?.user) {
+            await refreshProfile(currentSession.user);
+        }
+        setLoading(false);
+    };
+    checkSession();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+        setSession(newSession);
+        const newUser = newSession?.user ?? null;
+        setUser(newUser);
+        if (newUser) {
+            await refreshProfile(newUser);
+        } else {
+            setProfile(null);
+            setDailyActions(null);
+        }
+        setLoading(false);
+    });
+    return () => { subscription?.unsubscribe(); };
+  }, [refreshProfile]);
+  
+  const value: AuthContextType = { session, user, profile, loading, authError, refreshProfile, addXp, grantAchievement, showOutOfCreditsModal, setShowOutOfCreditsModal, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout, handleDeleteAccount, dailyActions, incrementDailyAction, claimMissionReward };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -17,6 +17,12 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
+  // FIX: The errors about 'this' context suggest a potential issue with the build environment.
+  // Adding an explicit constructor, while often redundant, ensures correct component initialization.
+  constructor(props: Props) {
+    super(props);
+  }
+
   // FIX: Refactored to use class property for state initialization. This is more modern and avoids constructor complexities, resolving issues with 'this' context.
   state: State = {
     hasError: false,
@@ -24,12 +30,12 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
-  public static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI.
     return { hasError: true, error: error, isCopied: false };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
@@ -44,7 +50,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  public render() {
+  render() {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
