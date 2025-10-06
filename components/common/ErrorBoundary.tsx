@@ -17,8 +17,7 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Use class property for state initialization.
-  // This is modern syntax and avoids potential 'this' binding issues.
+  // FIX: Use class property syntax for state to ensure it's correctly typed on the instance.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -26,8 +25,6 @@ class ErrorBoundary extends React.Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
-    // Metode lifecycle ini dipanggil setelah error dilempar oleh komponen turunan.
-    // Ini harus mengembalikan objek untuk memperbarui state.
     return { hasError: true, error };
   }
 
@@ -35,7 +32,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Use an arrow function to automatically bind 'this'.
+  // FIX: Use an arrow function for the method to automatically bind 'this'.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());

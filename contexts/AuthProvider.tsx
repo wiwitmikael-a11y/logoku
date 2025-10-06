@@ -166,10 +166,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         aipet_state: data.aipet_state ?? null,
         aipet_pity_counter: data.aipet_pity_counter ?? 0,
         data_fragments: data.data_fragments ?? 0,
+        daily_actions: data.daily_actions, // Keep as is, will be validated next
     };
     
-    // Defensive coding: Ensure daily_actions is an object before proceeding.
-    if (!profileData.daily_actions) {
+    // Defensive coding: Ensure daily_actions is a valid object before proceeding.
+    // This handles cases where it's null, undefined, or not an object after a data wipe.
+    if (typeof profileData.daily_actions !== 'object' || profileData.daily_actions === null || !('claimed_missions' in profileData.daily_actions)) {
         profileData.daily_actions = { claimed_missions: [] };
     }
     
