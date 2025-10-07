@@ -34,11 +34,11 @@ import VoiceBrandingWizard from './components/VoiceBrandingWizard';
 import Tooltip from './components/common/Tooltip';
 
 // --- Lazily Loaded Components ---
-const ProjectDashboard = React.lazy(() => import('./ProjectDashboard'));
+const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
 const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersonaGenerator'));
 const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
 const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
-const ProjectSummary = React.lazy(() => import('./ProjectSummary'));
+const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
 const CaptionGenerator = React.lazy(() => import('./components/CaptionGenerator'));
 const InstantContentGenerator = React.lazy(() => import('./components/InstantContentGenerator'));
 const ContactModal = React.lazy(() => import('./components/common/ContactModal'));
