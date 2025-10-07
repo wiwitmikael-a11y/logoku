@@ -6,11 +6,11 @@ import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
-// FIX: Import context providers
-import { useAuth, AuthProvider } from './contexts/AuthContext';
-import { useAIPet, AIPetProvider } from './contexts/AIPetContext';
-import { useUI, UIProvider } from './contexts/UIContext';
-import { useUserActions, UserActionsProvider } from './contexts/UserActionsContext';
+// FIX: Unused context providers removed. Kept hooks as they are used in MainApp.
+import { useAuth } from './contexts/AuthContext';
+import { useAIPet } from './contexts/AIPetContext';
+import { useUI } from './contexts/UIContext';
+import { useUserActions } from './contexts/UserActionsContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
@@ -303,8 +303,8 @@ const AiAssistant: React.FC<{ petName: string, isOpen: boolean, onToggle: (isOpe
 };
 
 const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> = ({ theme, onToggle }) => (
-    <button onClick={onToggle} title="Ganti Tema" className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
-        <div className="w-6 h-6 relative">
+    <button onClick={onToggle} title="Ganti Tema" className="p-1.5 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
+        <div className="w-5 h-5 relative">
             {/* Sun */}
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`absolute inset-0 transition-all duration-300 ${theme === 'dark' ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
             {/* Moon */}
@@ -352,13 +352,12 @@ const AIPetHomeModal: React.FC<{ show: boolean; onClose: () => void; petState: A
 };
 
 
-const AppWrapper: React.FC = () => {
+// FIX: Renamed AppWrapper to App to solve export error. Removed redundant UIProvider.
+const App: React.FC = () => {
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
     if (!import.meta.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
     return ( 
-        <UIProvider>
-            <MainApp /> 
-        </UIProvider>
+        <MainApp /> 
     );
 };
 
@@ -569,13 +568,13 @@ const MainApp: React.FC = () => {
     return (
       <>
         <div className={`min-h-screen bg-background text-text-body transition-all duration-300`}>
-            <header className="py-3 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300">
-                <div className="absolute top-0 left-0 w-full h-1.5 accent-stripes"></div>
-                <div className="max-w-7xl mx-auto flex justify-between items-center relative pt-1.5">
-                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-wider cursor-pointer transition-transform hover:scale-105" onClick={handleReturnToDashboard} style={{fontFamily: 'var(--font-display)'}}>
+            <header className="py-2 px-4 sm:px-6 lg:px-8 bg-surface/80 backdrop-blur-lg sticky top-0 z-20 border-b border-border-main transition-colors duration-300">
+                <div className="absolute top-0 left-0 w-full h-1 accent-stripes"></div>
+                <div className="max-w-7xl mx-auto flex justify-between items-center relative pt-1">
+                    <h1 className="text-2xl md:text-3xl font-extrabold tracking-wider cursor-pointer transition-transform hover:scale-105" onClick={handleReturnToDashboard} style={{fontFamily: 'var(--font-display)'}}>
                         <span className="text-primary">des<span className="text-accent">ai</span>n</span><span className="text-text-header">.fun</span>
                     </h1>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-0.5 sm:gap-1">
                         <Tooltip content={
                             <div className="space-y-2 text-xs">
                                 <p className="font-bold text-text-header">Ini Token-mu!</p>
@@ -583,9 +582,9 @@ const MainApp: React.FC = () => {
                                 <button onClick={() => setShowTokenomicsModal(true)} className="text-accent hover:underline font-semibold">Pelajari lebih lanjut &rarr;</button>
                             </div>
                         }>
-                            <button onClick={() => setShowTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1.5 p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
-                                <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span>
+                            <button onClick={() => setShowTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1 p-1.5 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                                <span className="font-bold text-sm text-text-header">{profile?.credits ?? 0}</span>
                             </button>
                         </Tooltip>
                         <ThemeToggle theme={theme} onToggle={toggleTheme} />
@@ -596,7 +595,7 @@ const MainApp: React.FC = () => {
                                 title="Buka AIPet Lab"
                                 className="flex items-center gap-2 rounded-full p-1 pr-3 bg-background hover:bg-border-light transition-colors border border-border-main group"
                             >
-                                <div className="w-9 h-9 flex items-center justify-center relative transition-transform group-hover:scale-110">
+                                <div className="w-8 h-8 flex items-center justify-center relative transition-transform group-hover:scale-110">
                                     {petState.petState.stage === 'active' && petState.petState.blueprint ? (
                                         <div className="absolute inset-0 scale-[1.4] top-1">
                                             <Suspense fallback={<div className="w-full h-full bg-border-main rounded-full animate-pulse" />}>
@@ -616,7 +615,7 @@ const MainApp: React.FC = () => {
                         <div className="relative">
                             <button onClick={() => toggleProfileModal(true)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-3 bg-background hover:bg-border-light transition-colors border border-transparent hover:border-border-main">
                                 <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
-                                <img src={session.user.user_metadata.avatar_url || ''} alt={session.user.user_metadata.full_name || 'User Avatar'} className="w-9 h-9 rounded-full border-2 border-border-main" />
+                                <img src={session.user.user_metadata.avatar_url || ''} alt={session.user.user_metadata.full_name || 'User Avatar'} className="w-8 h-8 rounded-full border-2 border-border-main" />
                             </button>
                             {showXpGain && <div className="xp-gain-animation">+XP!</div>}
                         </div>
@@ -723,16 +722,5 @@ const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onSh
         </footer>
     );
 };
-
-const App: React.FC = () => (
-    <AuthProvider>
-        <UserActionsProvider>
-            <AIPetProvider>
-                <AppWrapper />
-            </AIPetProvider>
-        </UserActionsProvider>
-    </AuthProvider>
-);
-
 
 export default App;

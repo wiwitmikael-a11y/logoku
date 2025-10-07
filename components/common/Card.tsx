@@ -45,7 +45,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(({ title, children, onC
       }`}
     >
       <div className="p-4 sm:p-5">
-        <h3 className="text-2xl font-bold text-text-header mb-4" style={{ fontFamily: 'var(--font-display)' }}>{title}</h3>
+        <h3 className="text-xl font-bold text-text-header mb-3" style={{ fontFamily: 'var(--font-display)' }}>{title}</h3>
         <div>{children}</div>
       </div>
     </div>

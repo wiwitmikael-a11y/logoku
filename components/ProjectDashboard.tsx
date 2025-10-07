@@ -65,14 +65,14 @@ const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = 
     const rankColor = (glowClasses[rank as keyof typeof glowClasses] || '').split(' ')[1].replace('border-', '');
 
     return (
-        <div className={`flex flex-col items-center gap-2 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`} style={{ animation: `item-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}>
-            <div className={`relative w-28 h-28 p-2 rounded-xl bg-surface/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
+        <div className={`flex flex-col items-center gap-1 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`} style={{ animation: `item-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}>
+            <div className={`relative w-24 h-24 p-2 rounded-xl bg-surface/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
                 <img src={selectedLogoUrl} alt={`Logo for ${brandInputs.businessName}`} className="max-w-full max-h-full object-contain mx-auto" />
                 <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-surface border-2 flex items-center justify-center text-lg font-bold" style={{ borderColor: rankColor }}>
                     {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
                 </div>
             </div>
-            <p className="text-sm font-semibold text-text-header truncate w-28 text-center">{brandInputs.businessName}</p>
+            <p className="text-sm font-semibold text-text-header truncate w-24 text-center">{brandInputs.businessName}</p>
             <p className="text-xs text-splash font-bold">{project.like_count || 0} Menyala 🔥</p>
         </div>
     );

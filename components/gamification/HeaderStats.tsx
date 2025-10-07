@@ -22,11 +22,11 @@ const HeaderStats: React.FC<HeaderStatsProps> = ({ profile }) => {
 
   return (
     <div className="flex items-center gap-2 text-text-body">
-      <div className="bg-orange-400 text-white rounded-full w-8 h-8 flex flex-col items-center justify-center font-bold flex-shrink-0 p-1" title={`Level ${currentLevel}`}>
+      <div className="bg-orange-400 text-white rounded-full w-7 h-7 flex flex-col items-center justify-center font-bold flex-shrink-0 p-1" title={`Level ${currentLevel}`}>
         <span className="text-[9px] leading-tight -mb-1">LVL</span>
-        <span className="text-base leading-tight">{currentLevel}</span>
+        <span className="text-sm leading-tight">{currentLevel}</span>
       </div>
-      <div className="w-16 hidden sm:block" title={`${xpProgress.toLocaleString()} / ${xpNeededForLevel.toLocaleString()} XP`}>
+      <div className="w-14 hidden sm:block" title={`${xpProgress.toLocaleString()} / ${xpNeededForLevel.toLocaleString()} XP`}>
         <div className="w-full bg-border-main rounded-full h-1.5">
           <div className="bg-orange-400 h-1.5 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
         </div>
