@@ -17,15 +17,14 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
-// FIX: Add `addXp` to the Props interface to match the props passed from App.tsx.
   addXp: (amount: number) => Promise<void>;
 }
 
 const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Interaktif"];
 
-const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
+const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
   const { profile } = useAuth();
-  const { deductCredits, setShowOutOfCreditsModal, addXp, incrementDailyAction } = useUserActions();
+  const { deductCredits, setShowOutOfCreditsModal, incrementDailyAction } = useUserActions();
   const { petState, showContextualMessage, notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
   

@@ -19,7 +19,6 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
-// FIX: Add `addXp` to the Props interface to match the props passed from App.tsx.
   addXp: (amount: number) => Promise<void>;
 }
 
@@ -30,9 +29,9 @@ interface GeneratedContent {
     captions: GeneratedCaption[];
 }
 
-const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
+const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
   const { profile } = useAuth();
-  const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
+  const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 

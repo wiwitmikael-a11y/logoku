@@ -21,11 +21,11 @@ const Tooltip: React.FC<TooltipProps> = ({ children, content, className }) => {
       {isVisible && (
         <div 
           role="tooltip"
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-surface border border-border-main rounded-lg shadow-lg z-50 text-left animate-content-fade-in"
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 p-3 bg-surface border border-border-main rounded-lg shadow-lg z-50 text-left animate-content-fade-in"
           style={{ animationDuration: '0.2s' }}
         >
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-b-8 border-b-surface" />
           {content}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-surface" />
         </div>
       )}
     </div>
