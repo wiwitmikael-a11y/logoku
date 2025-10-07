@@ -361,7 +361,7 @@ const App: React.FC = () => {
 };
 
 const MainApp: React.FC = () => {
-    const { session, user, profile, projects, setProjects, loading: authLoading, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, executeLogout } = useAuth();
+    const { session, user, profile, projects, setProjects, loading: authLoading, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, executeLogout, handleLogout, showLogoutConfirm, setShowLogoutConfirm } = useAuth();
     const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, setShowLevelUpModal, levelUpInfo, unlockedAchievement, setUnlockedAchievement, deductCredits, addXp, grantAchievement, grantFirstTimeCompletionBonus } = useUserActions();
     const { petState, isLoading: isAIPetLoading, isPetOnScreen, notifyPetOfActivity } = useAIPet();
     const { toast, showToast, closeToast, isAssistantOpen, toggleAssistant, showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showBrandGalleryModal, toggleBrandGalleryModal, showSotoshop, toggleSotoshop, showAIPetLab, toggleAIPetLab, showVoiceWizard, toggleVoiceWizard } = useUI();
@@ -382,11 +382,23 @@ const MainApp: React.FC = () => {
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
     const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
     
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
     const previousAppState = useRef<AppState>(appState);
 
     // UX Enhancements
     const [showXpGain, setShowXpGain] = useState(false);
     const prevXp = useRef(profile?.xp ?? 0);
+    
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => { 
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false); 
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // FIX: Define preloadBrandPersona function for preloading the component.
     const preloadBrandPersona = () => import('./components/BrandPersonaGenerator');
@@ -537,7 +549,7 @@ const MainApp: React.FC = () => {
     }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
     const handleRegenerateMerchandise = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.selectedLogoUrl) return; const prompt = 'Take the provided logo image. Create a realistic mockup of a plain colored t-shirt on a clean, neutral background. The t-shirt prominently features the logo. The photo is high-quality, commercial-style, showing the texture of the fabric.'; handleRegenerateVisualAsset(projectId, 'merchandiseUrl', 1, async () => { const logoBase64 = await fetchImageAsBase64(p.project_data.selectedLogoUrl); return (await geminiService.generateMerchandiseMockup(prompt, logoBase64))[0]; }, "Mockup merchandise baru berhasil dibuat!"); }, [projects, handleRegenerateVisualAsset]);
 
-    const executeFullLogout = useCallback(async () => { clearWorkflowState(); sessionStorage.clear(); await executeLogout(); setAppState('dashboard'); setSelectedProjectId(null); }, [executeLogout]);
+    const fullExecuteLogout = useCallback(async () => { clearWorkflowState(); sessionStorage.clear(); await executeLogout(); setAppState('dashboard'); setSelectedProjectId(null); }, [executeLogout]);
 
     const renderContent = () => {
         const workflowData = loadWorkflowState(); const commonProps = { onGoToDashboard: handleReturnToDashboard };
@@ -611,12 +623,27 @@ const MainApp: React.FC = () => {
                             </button>
                         )}
 
-                        <div className="relative">
-                            <button onClick={() => toggleProfileModal(true)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-3 bg-background hover:bg-border-light transition-colors border border-transparent hover:border-border-main">
+                        <div ref={userMenuRef} className="relative">
+                            <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-3 bg-background hover:bg-border-light transition-colors border border-transparent hover:border-border-main">
                                 <Suspense fallback={null}><HeaderStats profile={profile} /></Suspense>
                                 <img src={session.user.user_metadata.avatar_url || ''} alt={session.user.user_metadata.full_name || 'User Avatar'} className="w-8 h-8 rounded-full border-2 border-border-main" />
                             </button>
                             {showXpGain && <div className="xp-gain-animation">+XP!</div>}
+                            {isUserMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-64 bg-surface border border-border-main rounded-lg shadow-lg py-1.5 z-30 animate-content-fade-in" style={{animationDuration: '0.2s'}}>
+                                    <div className="px-4 py-3 border-b border-border-main">
+                                        <p className="font-bold text-lg text-text-header truncate">{profile?.full_name || ''}</p>
+                                        <p className="text-xs text-text-muted">{user?.email || ''}</p>
+                                    </div>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); handleRequestReturnToDashboard(); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Dashboard</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); toggleProfileModal(true); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
+                                    <div className="border-t border-border-main my-1"></div>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); toggleAboutModal(true); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</a>
+                                    <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => { playSound('click'); setIsUserMenuOpen(false); }} className="w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Traktir Kopi</a>
+                                    <div className="border-t border-border-main my-1"></div>
+                                    <a onClick={() => { playSound('click'); handleLogout(); setIsUserMenuOpen(false); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">Logout</a>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -675,6 +702,7 @@ const MainApp: React.FC = () => {
             <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} />
             <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
             <ProfileSettingsModal show={showProfileModal} onClose={() => toggleProfileModal(false)} />
+            <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={fullExecuteLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout" cancelText="Batal">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
             <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
             <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} projectLogoUrl={projectToDelete?.project_data?.selectedLogoUrl} />
             <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
