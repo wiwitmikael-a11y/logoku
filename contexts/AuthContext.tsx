@@ -334,6 +334,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [isMuted, bgmSelection, handleBgmChange]);
   
   useEffect(() => {
+    let isInitialLoad = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
         setSession(newSession);
         const newUser = newSession?.user ?? null;
@@ -341,7 +342,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         await fetchInitialUserData(newUser); 
         
-        setLoading(false); 
+        if (isInitialLoad) {
+          setLoading(false);
+          isInitialLoad = false;
+        }
         
         if (event === 'SIGNED_OUT') {
             stopBGM();
