@@ -149,7 +149,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
       streamRef.current = stream;
       
       const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_API_KEY});
-      setConversationState('CONNECTING');
 
       sessionPromiseRef.current = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
@@ -177,16 +176,26 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             inputAudioContextRef.current = inputCtx;
             outputAudioContextRef.current = outputCtx;
+            
+            if (!streamRef.current) {
+                setError("Gagal mendapatkan stream mikrofon saat koneksi terbuka.");
+                setConversationState('ERROR');
+                return;
+            }
 
             const analyser = outputCtx.createAnalyser();
             analyser.fftSize = 256;
             analyserRef.current = analyser;
 
-            const source = inputCtx.createMediaStreamSource(stream);
+            const source = inputCtx.createMediaStreamSource(streamRef.current);
             const processor = inputCtx.createScriptProcessor(4096, 1, 1);
             scriptProcessorRef.current = processor;
             processor.onaudioprocess = (event) => { if (conversationStateRef.current === 'USER_LISTENING') { const inputData = event.inputBuffer.getChannelData(0); const pcmBlob: Blob = { data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32767)).buffer)), mimeType: 'audio/pcm;rate=16000' }; sessionPromiseRef.current?.then((session) => { session.sendRealtimeInput({ media: pcmBlob }); }); } };
             source.connect(processor); processor.connect(inputCtx.destination);
+            
+            // FIX: Set state to PROCESSING to give feedback that connection is open
+            // and we are waiting for the AI's first response.
+            setConversationState('PROCESSING');
           },
           onmessage: async (message: LiveServerMessage) => {
             if (message.serverContent?.inputTranscription) { setCurrentInputTranscript(message.serverContent.inputTranscription.text); }

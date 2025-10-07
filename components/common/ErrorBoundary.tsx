@@ -17,16 +17,18 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Reverted to using a class property for state initialization.
-  // The constructor-based approach was still causing type resolution errors,
-  // which suggests a possible build toolchain misconfiguration. This class property
-  // syntax is the modern standard for React and directly declares the state shape
-  // to TypeScript, resolving the "property does not exist" errors.
-  state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Replaced class property state initialization with a constructor.
+  // The compiler errors indicate that TypeScript is not correctly inheriting
+  // properties like `props` and `setState` from `React.Component`. Using an
+  // explicit constructor can resolve such type resolution issues in some build environments.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+  }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI.
