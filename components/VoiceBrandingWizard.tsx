@@ -193,8 +193,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             processor.onaudioprocess = (event) => { if (conversationStateRef.current === 'USER_LISTENING') { const inputData = event.inputBuffer.getChannelData(0); const pcmBlob: Blob = { data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32767)).buffer)), mimeType: 'audio/pcm;rate=16000' }; sessionPromiseRef.current?.then((session) => { session.sendRealtimeInput({ media: pcmBlob }); }); } };
             source.connect(processor); processor.connect(inputCtx.destination);
             
-            // FIX: Set state to PROCESSING to give feedback that connection is open
-            // and we are waiting for the AI's first response.
             setConversationState('PROCESSING');
           },
           onmessage: async (message: LiveServerMessage) => {
@@ -202,6 +200,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             if (message.serverContent?.outputTranscription) { if (conversationStateRef.current !== 'AI_SPEAKING') setConversationState('AI_SPEAKING'); setCurrentOutputTranscript(message.serverContent.outputTranscription.text); }
             
             if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
+              if (conversationStateRef.current !== 'AI_SPEAKING') setConversationState('AI_SPEAKING');
               const audioData = message.serverContent.modelTurn.parts[0].inlineData.data; const outputCtx = outputAudioContextRef.current;
               if (audioData && outputCtx && analyserRef.current) {
                 const audioBuffer = await decodeAudioData(decode(audioData), outputCtx, 24000, 1); const source = outputCtx.createBufferSource();
@@ -213,11 +212,19 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
                 nextStartTimeRef.current = startTime + audioBuffer.duration; sourcesRef.current.add(source);
                 source.onended = () => { sourcesRef.current.delete(source); if (sourcesRef.current.size === 0) setConversationState('USER_LISTENING'); };
               }
-            } else if (conversationStateRef.current === 'AI_SPEAKING') { setConversationState('USER_LISTENING'); }
+            }
 
             if (message.serverContent?.turnComplete) {
                 if (currentInputTranscript) { addFinalTranscript('user', currentInputTranscript); setCurrentInputTranscript(''); }
                 if (currentOutputTranscript) { addFinalTranscript('mang-ai', currentOutputTranscript); setCurrentOutputTranscript(''); }
+                // Safety net: If the turn is complete and no audio is playing/queued, transition to listening.
+                // This handles text-only responses and ensures the conversation doesn't stall.
+                // A short timeout ensures this check runs after audio chunks from the same turn are queued.
+                setTimeout(() => {
+                    if (sourcesRef.current.size === 0 && conversationStateRef.current === 'AI_SPEAKING') {
+                        setConversationState('USER_LISTENING');
+                    }
+                }, 150);
             }
             
             if (message.toolCall?.functionCalls) {
