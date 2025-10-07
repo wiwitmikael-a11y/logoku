@@ -15,6 +15,7 @@ interface AIPetActivationProps {
 
 const statusMessages = [
     "Menghubungi Lab Mang AI...",
+    "Menganalisis data project terakhir...",
     "Mensintesis matriks kepribadian...",
     "Memilih blueprint dasar dari database...",
     "Meracik palet warna dinamis...",
@@ -97,14 +98,14 @@ const AIPetActivation: React.FC<AIPetActivationProps> = ({ onClose }) => {
                 
                 {isLoading ? (
                     <div className="w-full">
-                        <p className="text-sm text-splash font-semibold animate-pulse">{statusText}</p>
+                        <p className="text-sm text-splash font-semibold animate-pulse h-10">{statusText}</p>
                         <div className="w-full bg-background rounded-full h-2.5 mt-2 border border-border-main">
                             <div className="bg-splash h-2.5 rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }}></div>
                         </div>
                     </div>
                 ) : (
                     <>
-                        <p className="text-text-body mb-6 text-sm">Mengaktifkan AIPod ini akan mereplikasi wujud visual perdana AIPet-mu. Proses ini membutuhkan <strong className="text-text-header">{ACTIVATION_COST} token</strong>.</p>
+                        <p className="text-text-body mb-6 text-sm">Mengaktifkan AIPod ini akan mereplikasi wujud visual perdana AIPet-mu berdasarkan DNA project terakhirmu. Proses ini membutuhkan <strong className="text-text-header">{ACTIVATION_COST} token</strong>.</p>
                         <div className="flex flex-col items-center gap-3">
                             <Button onClick={handleActivate} isLoading={isLoading} disabled={isLoading}>Ya, Aktifkan Sekarang! ({ACTIVATION_COST} Token)</Button>
                             <Button onClick={onClose} variant="secondary" size="small">Nanti Aja Deh</Button>

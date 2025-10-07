@@ -69,11 +69,29 @@ export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const activatePetWithTokens = useCallback(async () => {
     if (!user || !profile) throw new Error("User not logged in.");
     if (profile.aipet_state && profile.aipet_state.stage !== 'aipod') throw new Error("Pet is already active.");
+    if ((profile.total_projects_completed ?? 0) < 1) {
+        throw new Error("Kamu butuh menyelesaikan minimal 1 project branding dulu sebelum bisa aktivasi AIPod.");
+    }
     if (profile.credits < 5) {
         throw new Error(`Token tidak cukup. Butuh 5, kamu punya ${profile.credits}.`);
     }
 
-    const { data, error } = await supabase.rpc('activate_aipet');
+    const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('project_data')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+    
+    if (projectError || !projectData) {
+        throw new Error(`Gagal mengambil data project terakhirmu untuk dijadikan dasar AIPet. Error: ${projectError?.message}`);
+    }
+
+    const { data, error } = await supabase.rpc('activate_aipet', {
+        project_data_input: projectData.project_data
+    });
 
     if (error) {
         throw new Error(`Gagal aktivasi di server: ${error.message}`);
