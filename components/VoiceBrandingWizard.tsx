@@ -127,9 +127,11 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
                 if (averageVolume > 8) mouthFrame = 2; // High volume, open mouth
                 else if (averageVolume > 2) mouthFrame = 1; // Mid volume, mid mouth
                 
-                mouthRef.current.className = `mang-ai-mouth mang-ai-mouth-${mouthFrame}`;
-            } else if (mouthRef.current) {
-                mouthRef.current.className = 'mang-ai-mouth mang-ai-mouth-0'; // Default to closed
+                const talkingMouth = document.querySelector('.mang-ai-mouth');
+                if(talkingMouth) talkingMouth.className = `mang-ai-mouth mang-ai-mouth-${mouthFrame}`;
+            } else {
+                const talkingMouth = document.querySelector('.mang-ai-mouth');
+                if(talkingMouth) talkingMouth.className = 'mang-ai-mouth mang-ai-mouth-0'; // Default to closed
             }
             animationFrameRef.current = requestAnimationFrame(animate);
         };
@@ -146,6 +148,9 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // FIX: Manually update permission state after successful user grant.
+      // This ensures the UI transitions away from the 'prompt' screen seamlessly.
+      setPermissionState('granted');
       streamRef.current = stream;
       
       const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_API_KEY});
@@ -210,16 +215,13 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
                 
                 const startTime = Math.max(outputCtx.currentTime, nextStartTimeRef.current); source.start(startTime);
                 nextStartTimeRef.current = startTime + audioBuffer.duration; sourcesRef.current.add(source);
-                source.onended = () => { sourcesRef.current.delete(source); if (sourcesRef.current.size === 0) setConversationState('USER_LISTENING'); };
+                source.onended = () => { sourcesRef.current.delete(source); if (sourcesRef.current.size === 0 && conversationStateRef.current === 'AI_SPEAKING') { setConversationState('USER_LISTENING'); } };
               }
             }
 
             if (message.serverContent?.turnComplete) {
                 if (currentInputTranscript) { addFinalTranscript('user', currentInputTranscript); setCurrentInputTranscript(''); }
                 if (currentOutputTranscript) { addFinalTranscript('mang-ai', currentOutputTranscript); setCurrentOutputTranscript(''); }
-                // Safety net: If the turn is complete and no audio is playing/queued, transition to listening.
-                // This handles text-only responses and ensures the conversation doesn't stall.
-                // A short timeout ensures this check runs after audio chunks from the same turn are queued.
                 setTimeout(() => {
                     if (sourcesRef.current.size === 0 && conversationStateRef.current === 'AI_SPEAKING') {
                         setConversationState('USER_LISTENING');
@@ -288,8 +290,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               <div className="my-8 w-full"> <ProgressStepper currentStep={currentStepIndex} /> </div>
               <div className="relative w-40 h-40">
                   <TalkingMangAi conversationState={conversationState} />
-                  {/* The mouth div is now inside TalkingMangAi, but we need a ref to it */}
-                  <div ref={mouthRef} style={{ display: 'none' }} />
               </div>
 
               <p className="mt-4 text-lg font-semibold text-splash h-6">{statusMap[conversationState].text}</p>
