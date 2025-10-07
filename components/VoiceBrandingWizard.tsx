@@ -256,7 +256,40 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
           onclose: () => { if (conversationStateRef.current !== 'COMPLETED') setConversationState('IDLE'); },
         },
       });
-    } catch (err) { setError(`Gagal mengakses mikrofon.`); setPermissionState('denied'); setConversationState('ERROR'); }
+    } catch (err) {
+      let errorMessage = 'Gagal mengakses mikrofon.';
+      let isPermissionError = false;
+
+      if (err instanceof DOMException) {
+          switch (err.name) {
+              case 'NotFoundError':
+              case 'DevicesNotFoundError':
+                  errorMessage = 'Waduh, Mang AI nggak nemu mikrofon di perangkatmu. Coba cek apa mikrofonnya udah dicolok dan berfungsi.';
+                  break;
+              case 'NotAllowedError':
+              case 'PermissionDeniedError':
+                  errorMessage = 'Kamu belum ngasih izin buat pake mikrofon. Coba cek setelan browser.';
+                  isPermissionError = true;
+                  break;
+              case 'NotReadableError':
+              case 'TrackStartError':
+                  errorMessage = 'Mikrofonnya lagi dipake aplikasi lain atau ada error hardware. Coba tutup aplikasi lain atau restart browser.';
+                  break;
+              default:
+                  errorMessage = `Terjadi error tak terduga saat akses mikrofon: ${err.name}`;
+                  break;
+          }
+      } else if (err instanceof Error) {
+          errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      setConversationState('IDLE');
+      
+      if (isPermissionError) {
+          setPermissionState('denied');
+      }
+    }
   }, [onComplete]);
 
   const checkPermissions = useCallback(async () => {
@@ -286,6 +319,12 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     ERROR: { text: "Waduh, ada error.", pulse: false },
   };
 
+  const isMicActionable = ['IDLE', 'USER_LISTENING'].includes(conversationState);
+  const micButtonTitle = 
+      conversationState === 'IDLE' ? 'Mulai Konsultasi' :
+      conversationState === 'USER_LISTENING' ? 'Selesai Bicara' :
+      'Tunggu Giliranmu';
+
   const renderContent = () => {
       if (permissionState === 'pending') return <p className="text-lg font-semibold text-splash animate-pulse">Mengecek izin mikrofon...</p>;
       if (permissionState === 'denied') return <PermissionDeniedScreen onCheckAgain={checkPermissions} />;
@@ -309,16 +348,20 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               
               <button 
                 onClick={handleMicAction} 
-                className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-colors ${ conversationState === 'USER_LISTENING' ? 'bg-red-500' : 'bg-primary' } ${['IDLE', 'AI_SPEAKING', 'PROCESSING', 'COMPLETED', 'ERROR', 'CONNECTING'].includes(conversationState) ? 'bg-gray-500 cursor-not-allowed' : ''}`}
-                disabled={!['USER_LISTENING'].includes(conversationState)}
-                title={conversationState === 'USER_LISTENING' ? 'Selesai bicara' : 'Tunggu giliranmu'}
+                className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-colors ${
+                    conversationState === 'USER_LISTENING' ? 'bg-red-500' : 
+                    isMicActionable ? 'bg-primary' : 'bg-gray-500 cursor-not-allowed'
+                }`}
+                disabled={!isMicActionable}
+                title={micButtonTitle}
               >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                   {statusMap[conversationState].pulse && <div className="absolute inset-0 border-4 border-red-400 rounded-full animate-ping"></div>}
               </button>
               
               <p className="mt-4 text-text-muted h-5">
-                {conversationState === 'USER_LISTENING' ? 'Ketuk jika sudah selesai bicara' : ''}
+                {conversationState === 'IDLE' ? 'Ketuk untuk memulai' :
+                 conversationState === 'USER_LISTENING' ? 'Ketuk jika sudah selesai bicara' : ''}
               </p>
               {error && <p className="mt-4 text-red-400 text-center">{error}</p>}
           </>
