@@ -334,19 +334,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [isMuted, bgmSelection, handleBgmChange]);
   
   useEffect(() => {
-    setLoading(true); // Tampilkan pemuat saat provider pertama kali dimuat
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
         setSession(newSession);
         const newUser = newSession?.user ?? null;
         setUser(newUser);
         
-        // Selalu ambil data terbaru. Ini juga akan menangani kasus logout (newUser akan null),
-        // yang akan membersihkan profile dan projects.
         await fetchInitialUserData(newUser); 
         
-        // PENTING: Hanya set loading ke false. Jangan pernah set ke true lagi di dalam listener ini.
-        // Ini akan menghentikan layar pemuatan muncul kembali saat fokus tab (pembaruan token).
         setLoading(false); 
         
         if (event === 'SIGNED_OUT') {
