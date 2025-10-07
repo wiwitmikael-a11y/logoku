@@ -522,10 +522,7 @@ const MainApp: React.FC = () => {
         }
 
         setProjects(prev => prev.map(p => p.id === (updatedProject as Project).id ? (updatedProject as Project) : p));
-        aipetContext.notifyPetOfActivity('project_completed');
-        handleReturnToDashboard();
-        showToast("Mantap! Project lo berhasil diselesaikan.");
-
+        
         const runPostCompletionTasks = async () => {
             try {
                 await grantFirstTimeCompletionBonus('merchandise');
@@ -539,7 +536,11 @@ const MainApp: React.FC = () => {
             }
         };
 
-        runPostCompletionTasks();
+        await runPostCompletionTasks();
+
+        aipetContext.notifyPetOfActivity('project_completed');
+        handleReturnToDashboard();
+        showToast("Mantap! Project lo berhasil diselesaikan.");
 
     }, [session, user, selectedProjectId, profile, setProjects, handleReturnToDashboard, showToast, aipetContext, grantFirstTimeCompletionBonus, addXp, grantAchievement]);
 
