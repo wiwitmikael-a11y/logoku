@@ -330,7 +330,6 @@ const App: React.FC = () => {
 
 const MainApp: React.FC = () => {
     const { session, user, profile, projects, setProjects, loading: authLoading, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError } = useAuth();
-    // FIX: Destructure setShowOutOfCreditsModal from useUserActions
     const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, grantFirstTimeCompletionBonus, addXp, grantAchievement } = useUserActions();
     const { toast, showToast, closeToast, ...uiToggles } = useUI();
     const aipetContext = useAIPet();
@@ -408,7 +407,8 @@ const MainApp: React.FC = () => {
     const handleNewProject = useCallback(async (templateData?: Partial<BrandInputs>) => {
         if (!session?.user || !profile) return;
         if (profile.total_projects_completed === 0 && projects.length === 0) sessionStorage.setItem('onboardingStep2', 'true');
-        const { data, error } = await supabase.from('projects').insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' as ProjectStatus }).select().single();
+        const initialData = templateData ? { brandInputs: templateData } : {};
+        const { data, error } = await supabase.from('projects').insert({ user_id: session.user.id, project_data: initialData, status: 'in-progress' as ProjectStatus }).select().single();
         if (error) { setGeneralError(`Gagal memulai project baru: ${error.message}`); return; }
         const newProject: Project = data as any;
         setProjects(prev => [newProject, ...prev]); setSelectedProjectId(newProject.id);
@@ -416,6 +416,38 @@ const MainApp: React.FC = () => {
         navigateTo('persona');
     }, [session, profile, projects, setProjects]);
     
+    const handleVoiceWizardComplete = useCallback(async (brandInputs: BrandInputs) => {
+        if (!session?.user) {
+            setGeneralError("Sesi tidak ditemukan. Silakan login ulang.");
+            return;
+        }
+        
+        uiToggles.toggleVoiceWizard(false);
+        showToast("Mantap! Project-mu sedang dibuat...");
+    
+        try {
+            const { data, error } = await supabase.from('projects').insert({
+                user_id: session.user.id,
+                project_data: { brandInputs },
+                status: 'in-progress' as ProjectStatus
+            }).select().single();
+    
+            if (error) throw error;
+    
+            const newProject: Project = data as any;
+            setProjects(prev => [newProject, ...prev]);
+            setSelectedProjectId(newProject.id);
+            saveWorkflowState({ brandInputs });
+            navigateTo('summary');
+            showToast("Project berhasil dibuat dari suara! Selamat datang di Brand Hub.");
+    
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Gagal membuat project dari konsultasi suara.';
+            setGeneralError(errorMessage);
+        }
+    
+    }, [session, setProjects, showToast, uiToggles]);
+
     const handleReturnToDashboard = useCallback(() => { clearWorkflowState(); setSelectedProjectId(null); navigateTo('dashboard'); }, []);
     const handleRequestReturnToDashboard = useCallback(() => { if (appState === 'dashboard') { setIsUserMenuOpen(false); handleReturnToDashboard(); return; } setShowDashboardConfirm(true); setIsUserMenuOpen(false); }, [appState, handleReturnToDashboard]);
     const confirmAndReturnToDashboard = useCallback(() => { handleReturnToDashboard(); setShowDashboardConfirm(false); }, [handleReturnToDashboard]);
@@ -479,7 +511,6 @@ const MainApp: React.FC = () => {
         const currentState = loadWorkflowState() || {};
         const finalProjectData = { ...currentState, merchandiseUrl };
 
-        // Perform critical DB update
         const { data: updatedProject, error: projectError } = await supabase
             .from('projects')
             .update({ project_data: finalProjectData, status: 'completed' as ProjectStatus })
@@ -492,14 +523,11 @@ const MainApp: React.FC = () => {
             return;
         }
 
-        // --- UI is now unblocked ---
-        // Optimistically update local state and navigate away immediately
         setProjects(prev => prev.map(p => p.id === (updatedProject as Project).id ? (updatedProject as Project) : p));
         aipetContext.notifyPetOfActivity('project_completed');
         handleReturnToDashboard();
         showToast("Mantap! Project lo berhasil diselesaikan.");
 
-        // --- Run non-critical background tasks without blocking UI ---
         const runPostCompletionTasks = async () => {
             try {
                 await grantFirstTimeCompletionBonus('merchandise');
@@ -510,11 +538,10 @@ const MainApp: React.FC = () => {
                 else if (newTotalCompleted === 10) await grantAchievement('SULTAN_KONTEN');
             } catch (e) {
                 console.error("Error during post-completion tasks:", e);
-                // Optionally show a non-critical error toast
             }
         };
 
-        runPostCompletionTasks(); // Run without await
+        runPostCompletionTasks();
 
     }, [session, user, selectedProjectId, profile, setProjects, handleReturnToDashboard, showToast, aipetContext, grantFirstTimeCompletionBonus, addXp, grantAchievement]);
 
@@ -557,11 +584,8 @@ const MainApp: React.FC = () => {
             case 'content_calendar': return <ContentCalendarGenerator projectData={workflowData || {}} onComplete={handleContentCalendarComplete} {...commonProps} />;
             case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonProps} />;
             case 'merchandise': return <MerchandiseGenerator projectData={workflowData || {}} onComplete={handleMerchandiseComplete} {...commonProps} />;
-            // FIX: Pass the 'addXp' prop to the ProjectSummary component to satisfy its Props interface.
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} onShareToForum={() => handleShareToForum(project)} addXp={addXp} /> : null;
-            // FIX: Pass the 'addXp' prop to the CaptionGenerator component to satisfy its Props interface.
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonProps} addXp={addXp} /> : null;
-            // FIX: Pass the 'addXp' prop to the InstantContentGenerator component to satisfy its Props interface.
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonProps} addXp={addXp} /> : null;
             case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onPreloadNewProject={preloadBrandPersona} />;
         }
@@ -687,7 +711,7 @@ const MainApp: React.FC = () => {
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
             <Sotoshop show={uiToggles.showSotoshop} onClose={() => uiToggles.toggleSotoshop(false)} />
             <TokenomicsModal show={uiToggles.showTokenomicsModal} onClose={() => uiToggles.toggleTokenomicsModal(false)} />
-            <VoiceBrandingWizard show={uiToggles.showVoiceWizard} onClose={() => uiToggles.toggleVoiceWizard(false)} onComplete={handleNewProject} />
+            <VoiceBrandingWizard show={uiToggles.showVoiceWizard} onClose={() => uiToggles.toggleVoiceWizard(false)} onComplete={handleVoiceWizardComplete} />
         </Suspense>
       </>
     );

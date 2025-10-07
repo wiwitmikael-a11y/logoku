@@ -1,7 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-// FIX: The 'LiveSession' type is not exported from '@google/genai'. It has been removed.
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, FunctionDeclaration, Type } from "@google/genai";
 import { encode, decode, decodeAudioData } from '../utils/audioUtils';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +8,7 @@ import { playSound } from '../services/soundService';
 import type { BrandInputs, VoiceWizardStep } from '../types';
 import ProgressStepper from './common/ProgressStepper';
 import Button from './common/Button';
+import LoadingMessage from './common/LoadingMessage';
 
 interface Props {
   show: boolean;
@@ -16,7 +16,7 @@ interface Props {
   onComplete: (data: BrandInputs) => void;
 }
 
-type ConversationState = 'IDLE' | 'CONNECTING' | 'AI_SPEAKING' | 'USER_LISTENING' | 'PROCESSING' | 'COMPLETED' | 'ERROR';
+type ConversationState = 'IDLE' | 'CONNECTING' | 'AI_SPEAKING' | 'USER_LISTENING' | 'PROCESSING' | 'COMPLETED' | 'FINALIZING' | 'ERROR';
 
 // --- Function Declarations for Gemini ---
 const functionDeclarations: FunctionDeclaration[] = [
@@ -84,7 +84,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const [error, setError] = useState<string | null>(null);
   const [permissionState, setPermissionState] = useState<'pending' | 'granted' | 'prompt' | 'denied'>('pending');
 
-  // FIX: The 'LiveSession' type is not exported. Replaced with 'any' as the guidelines don't specify the return type.
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
@@ -235,17 +234,12 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               for (const fc of message.toolCall.functionCalls) {
                 let result = 'OK'; let nextStep: VoiceWizardStep | null = null;
                 switch (fc.name) {
-                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
                   case 'saveBusinessName': setBrandInputs(p => ({ ...p, businessName: fc.args.name as string })); nextStep = 'GET_BUSINESS_DETAILS'; break;
-                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
                   case 'saveBusinessDetails': setBrandInputs(p => ({ ...p, businessCategory: fc.args.category as string, businessDetail: fc.args.detail as string })); nextStep = 'GET_TARGET_AUDIENCE'; break;
-                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
                   case 'saveTargetAudience': setBrandInputs(p => ({ ...p, targetAudience: `${fc.args.category as string} usia ${fc.args.age as string}` })); nextStep = 'GET_VALUE_PROPOSITION'; break;
-                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
                   case 'saveValueProposition': setBrandInputs(p => ({ ...p, valueProposition: fc.args.value as string })); nextStep = 'GET_COMPETITORS'; break;
-                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
                   case 'saveCompetitors': setBrandInputs(p => ({ ...p, competitors: fc.args.competitors as string })); nextStep = 'CONFIRMATION'; break;
-                  case 'confirmAllDetails': setWizardStep('COMPLETED'); setConversationState('COMPLETED'); onComplete(brandInputsRef.current as BrandInputs); break;
+                  case 'confirmAllDetails': setWizardStep('COMPLETED'); setConversationState('FINALIZING'); onComplete(brandInputsRef.current as BrandInputs); break;
                 }
                 if (nextStep) setWizardStep(nextStep);
                 sessionPromiseRef.current?.then(session => { session.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: { result } } }); });
@@ -253,7 +247,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
           },
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          onclose: () => { if (conversationStateRef.current !== 'COMPLETED') setConversationState('IDLE'); },
+          onclose: () => { if (conversationStateRef.current !== 'COMPLETED' && conversationStateRef.current !== 'FINALIZING') setConversationState('IDLE'); },
         },
       });
     } catch (err) {
@@ -316,6 +310,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     USER_LISTENING: { text: "Giliranmu! Mang AI sedang mendengarkan...", pulse: true },
     PROCESSING: { text: "Mang AI lagi mikir...", pulse: false },
     COMPLETED: { text: "Mantap! Konsultasi selesai.", pulse: false },
+    FINALIZING: { text: "Menyiapkan project...", pulse: false },
     ERROR: { text: "Waduh, ada error.", pulse: false },
   };
 
@@ -329,6 +324,17 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
       if (permissionState === 'pending') return <p className="text-lg font-semibold text-splash animate-pulse">Mengecek izin mikrofon...</p>;
       if (permissionState === 'denied') return <PermissionDeniedScreen onCheckAgain={checkPermissions} />;
       if (permissionState === 'prompt') return <div className="text-center p-4"> <h3 className="text-2xl font-bold text-primary">Izin Mikrofon Diperlukan</h3> <p className="text-text-muted mt-2">Klik 'Mulai' untuk mengizinkan browser menggunakan mikrofon.</p> <Button onClick={connectToGemini} size="large" className="mt-8">Mulai</Button> </div>;
+
+      if (wizardStep === 'COMPLETED') {
+        return (
+            <div className="text-center p-4 flex flex-col items-center">
+                <div className="relative w-40 h-40"><TalkingMangAi conversationState={conversationState} /></div>
+                <h3 className="text-2xl font-bold text-green-400 mt-4">Konsultasi Selesai!</h3>
+                <p className="text-text-muted mt-2">Project-mu sedang dibuat dan kamu akan diarahkan ke Brand Hub...</p>
+                <div className="mt-4"><LoadingMessage /></div>
+            </div>
+        );
+      }
 
       return (
           <>
@@ -370,7 +376,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
 
   return (
     <div className="fixed inset-0 bg-background/90 backdrop-blur-lg z-50 flex flex-col items-center justify-center p-4 text-white animate-content-fade-in">
-      <div className="absolute top-4 right-4"> <Button onClick={onClose} variant="secondary">Keluar</Button> </div>
+      <div className="absolute top-4 right-4"> <Button onClick={onClose} variant="secondary" disabled={conversationState === 'FINALIZING'}>Keluar</Button> </div>
       <div className="w-full max-w-4xl mx-auto flex flex-col items-center h-full pt-16 sm:pt-0 justify-center">
           {renderContent()}
       </div>
