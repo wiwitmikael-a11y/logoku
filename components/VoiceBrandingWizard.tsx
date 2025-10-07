@@ -148,7 +148,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // FIX: Manually update permission state after successful user grant.
+      // Manually update permission state after successful user grant.
       // This ensures the UI transitions away from the 'prompt' screen seamlessly.
       setPermissionState('granted');
       streamRef.current = stream;
@@ -195,7 +195,13 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             const source = inputCtx.createMediaStreamSource(streamRef.current);
             const processor = inputCtx.createScriptProcessor(4096, 1, 1);
             scriptProcessorRef.current = processor;
-            processor.onaudioprocess = (event) => { if (conversationStateRef.current === 'USER_LISTENING') { const inputData = event.inputBuffer.getChannelData(0); const pcmBlob: Blob = { data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32767)).buffer)), mimeType: 'audio/pcm;rate=16000' }; sessionPromiseRef.current?.then((session) => { session.sendRealtimeInput({ media: pcmBlob }); }); } };
+            processor.onaudioprocess = (event) => {
+                const inputData = event.inputBuffer.getChannelData(0);
+                const pcmBlob: Blob = { data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32767)).buffer)), mimeType: 'audio/pcm;rate=16000' };
+                sessionPromiseRef.current?.then((session) => {
+                    session.sendRealtimeInput({ media: pcmBlob });
+                });
+            };
             source.connect(processor); processor.connect(inputCtx.destination);
             
             setConversationState('PROCESSING');

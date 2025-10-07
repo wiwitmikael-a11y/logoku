@@ -17,15 +17,12 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: The component was experiencing TypeScript errors where properties inherited from React.Component (like `props` and `setState`) were not being recognized. This was likely due to a build configuration issue with how class properties are handled. The fix is to revert the state initialization from a class property to the traditional constructor-based method, which is more robust across different build environments and resolves the inheritance issue.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-  }
+  // FIX: Switched to class property for state initialization to resolve issues with property recognition from React.Component in some build environments.
+  public state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI.
