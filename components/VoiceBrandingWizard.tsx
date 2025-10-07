@@ -153,7 +153,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
                 let result = 'OK'; let nextStep: VoiceWizardStep | null = null;
                 switch (fc.name) {
                   case 'saveBusinessName': setBrandInputs(p => ({ ...p, businessName: fc.args.name })); nextStep = 'GET_BUSINESS_DETAILS'; break;
-                  case 'saveBusinessDetails': setBrandInputs(p => ({ ...p, businessCategory: fc.args.category, detail: fc.args.detail })); nextStep = 'GET_TARGET_AUDIENCE'; break;
+                  case 'saveBusinessDetails': setBrandInputs(p => ({ ...p, businessCategory: fc.args.category, businessDetail: fc.args.detail })); nextStep = 'GET_TARGET_AUDIENCE'; break;
                   case 'saveTargetAudience': setBrandInputs(p => ({ ...p, targetAudience: `${fc.args.category} usia ${fc.args.age}` })); nextStep = 'GET_VALUE_PROPOSITION'; break;
                   case 'saveValueProposition': setBrandInputs(p => ({ ...p, valueProposition: fc.args.value })); nextStep = 'GET_COMPETITORS'; break;
                   case 'saveCompetitors': setBrandInputs(p => ({ ...p, competitors: fc.args.competitors })); nextStep = 'CONFIRMATION'; break;
@@ -218,7 +218,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               
               <button 
                 onClick={handleMicAction} 
-                className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-colors ${ conversationState === 'USER_LISTENING' ? 'bg-red-500' : 'bg-primary' } ${['IDLE', 'AI_SPEAKING', 'PROCESSING', 'COMPLETED'].includes(conversationState) ? 'bg-gray-500 cursor-not-allowed' : ''}`}
+                className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-colors ${ conversationState === 'USER_LISTENING' ? 'bg-red-500' : 'bg-primary' } ${['IDLE', 'AI_SPEAKING', 'PROCESSING', 'COMPLETED', 'ERROR', 'CONNECTING'].includes(conversationState) ? 'bg-gray-500 cursor-not-allowed' : ''}`}
                 disabled={!['USER_LISTENING'].includes(conversationState)}
                 title={conversationState === 'USER_LISTENING' ? 'Selesai bicara' : 'Tunggu giliranmu'}
               >
