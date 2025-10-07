@@ -63,7 +63,7 @@ const AchievementToast = React.lazy(() => import('./components/gamification/Achi
 const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
 const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
 const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
-const AIPetLab = React.lazy(() => import('./components/AIPetLab'));
+const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
 const AIPetContextualBubble = React.lazy(() => import('./components/AIPetContextualBubble'));
 const AIPetInteractionBubble = React.lazy(() => import('./components/AIPetInteractionBubble'));
 
@@ -715,7 +715,7 @@ const MainApp: React.FC = () => {
         {/* Modals and overlays */}
         <Suspense fallback={null}>
             <BrandGalleryModal show={uiToggles.showBrandGalleryModal} onClose={() => uiToggles.toggleBrandGalleryModal(false)} />
-            {uiToggles.showAIPetLab && <AIPetLab />}
+            <AIPetLabModal show={uiToggles.showAIPetLab} onClose={() => uiToggles.toggleAIPetLab(false)} />
             <ContactModal show={uiToggles.showContactModal} onClose={() => uiToggles.toggleContactModal(false)} />
             <AboutModal show={uiToggles.showAboutModal} onClose={() => uiToggles.toggleAboutModal(false)} />
             <TermsOfServiceModal show={uiToggles.showToSModal} onClose={() => uiToggles.toggleToSModal(false)} />

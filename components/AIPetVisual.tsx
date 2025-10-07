@@ -148,7 +148,11 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
     // New state for advanced animations
     const parallaxRef = useRef({ x: 0, y: 0 });
     const currentYRotationRef = useRef(0);
-    const lightSource = useMemo(() => new Zdog.Vector({ x: -0.75, y: -1, z: 1.5 }).normalize(), []);
+    const lightSource = useMemo(() => {
+        const vec = new Zdog.Vector({ x: -0.75, y: -1, z: 1.5 });
+        vec.normalize();
+        return vec;
+    }, []);
     const animationStartTime = useRef(0);
     const [draggedPart, setDraggedPart] = useState<{name: string; offset: {x: number; y: number}} | null>(null);
 

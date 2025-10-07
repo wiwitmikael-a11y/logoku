@@ -15,7 +15,6 @@ import CalloutPopup from './common/CalloutPopup';
 const Forum = React.lazy(() => import('./Forum'));
 const QuickTools = React.lazy(() => import('./QuickTools'));
 const PusatJuragan = React.lazy(() => import('./gamification/PusatJuragan'));
-const AIPetLab = React.lazy(() => import('./AIPetLab'));
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -67,7 +66,7 @@ const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = 
 
     return (
         <div className={`flex flex-col items-center gap-2 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`} style={{ animation: `item-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}>
-            <div className={`relative w-28 h-28 p-2 rounded-xl bg-surface/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof rankClasses]}`}>
+            <div className={`relative w-28 h-28 p-2 rounded-xl bg-surface/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
                 <img src={selectedLogoUrl} alt={`Logo for ${brandInputs.businessName}`} className="max-w-full max-h-full object-contain mx-auto" />
                 <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-surface border-2 flex items-center justify-center text-lg font-bold" style={{ borderColor: rankColor }}>
                     {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
@@ -277,9 +276,9 @@ const TabButton: React.FC<{
 
 const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery' | 'onShowSotoshop'>> = (props) => {
   const { profile } = useAuth();
-  const { showAIPetLab, toggleAIPetLab } = useUI();
+  const { toggleSotoshop } = useUI();
   const userName = profile?.full_name?.split(' ')[0] || 'Juragan';
-  const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'forum' | 'juragan' | 'aipetlab'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'forum' | 'juragan'>('projects');
   
   useEffect(() => {
     if (sessionStorage.getItem('openForumTab')) {
@@ -288,17 +287,9 @@ const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery
     }
   }, []);
 
-  useEffect(() => {
-    if (showAIPetLab) {
-        setActiveTab('aipetlab');
-        toggleAIPetLab(false); // Reset the trigger
-    }
-  }, [showAIPetLab, toggleAIPetLab]);
-
   const tabs = [
     { id: 'projects', name: 'Project', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
     { id: 'tools', name: 'Ide', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg> },
-    { id: 'aipetlab', name: 'AIPet Lab', icon: <span className="text-purple-400 text-lg">🐾</span> },
     { id: 'forum', name: 'Forum', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H17z" /></svg> },
     { id: 'juragan', name: 'Juara', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
   ];
@@ -312,9 +303,8 @@ const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery
       <div className="text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userName}! Siap Jadi Juara?</h2>
         <p className="text-text-muted max-w-3xl mx-auto">
-            Ini studio branding pribadimu. Mulai dari <strong className="text-sky-400 font-semibold">Project</strong>, 
-            cari <strong className="text-yellow-400 font-semibold">Ide</strong>, 
-            oprek <strong className="text-purple-400 font-semibold">AIPet</strong>,
+            Ini studio branding pribadimu. Mulai dari <strong className="text-sky-400 font-semibold">Project</strong> baru, 
+            cari <strong className="text-yellow-400 font-semibold">Ide</strong> instan, 
             ngobrol di <strong className="text-orange-400 font-semibold">Forum</strong>, 
             atau asah jiwa kompetisimu di menu <strong className="text-green-400 font-semibold">Juara</strong>. 
             Semua alat buat jadi juara ada di sini!
@@ -335,8 +325,7 @@ const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery
       
       <div className="mt-4">
         {activeTab === 'projects' && <ProjectContent {...props} />}
-        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools /></Suspense>)}
-        {activeTab === 'aipetlab' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><AIPetLab /></Suspense>)}
+        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools onShowSotoshop={() => toggleSotoshop(true)} /></Suspense>)}
         {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
         {activeTab === 'juragan' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
       </div>
