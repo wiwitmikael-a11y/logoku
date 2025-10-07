@@ -1,12 +1,12 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState } from 'react';
-import type { Project } from '../types';
-import Button from './common/Button';
-import Card from './common/Card';
-import ImageModal from './common/ImageModal';
-import CopyButton from './common/CopyButton';
-import LoadingMessage from './common/LoadingMessage';
+import type { Project } from './types';
+import Button from './components/common/Button';
+import Card from './components/common/Card';
+import ImageModal from './components/common/ImageModal';
+import CopyButton from './components/common/CopyButton';
+import LoadingMessage from './components/common/LoadingMessage';
 
 interface Props {
   project: Project;
