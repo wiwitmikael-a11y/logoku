@@ -334,22 +334,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [isMuted, bgmSelection, handleBgmChange]);
   
   useEffect(() => {
-    let isInitialLoad = true;
+    // This handles the initial load. It runs only once.
+    const initialize = async () => {
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+      await fetchInitialUserData(initialSession?.user ?? null);
+      setLoading(false);
+    };
+    
+    initialize();
+
+    // This listener only handles subsequent changes (login, logout, token refresh).
+    // It does NOT manage the initial loading state, preventing the loading screen from reappearing.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-        setSession(newSession);
-        const newUser = newSession?.user ?? null;
-        setUser(newUser);
-        
-        await fetchInitialUserData(newUser); 
-        
-        if (isInitialLoad) {
-          setLoading(false);
-          isInitialLoad = false;
-        }
-        
-        if (event === 'SIGNED_OUT') {
-            stopBGM();
-        }
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      await fetchInitialUserData(newSession?.user ?? null);
+      
+      if (event === 'SIGNED_OUT') {
+        stopBGM();
+      }
     });
 
     return () => {

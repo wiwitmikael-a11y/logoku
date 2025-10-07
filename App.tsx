@@ -394,7 +394,6 @@ const MainApp: React.FC = () => {
     const [showXpGain, setShowXpGain] = useState(false);
     const prevXp = useRef(profile?.xp ?? 0);
 
-    // FIX: Replaced '|' with ',' for correct array initialization.
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'social_kit', 'profiles', 'packaging', 'print_media', 'content_calendar', 'social_ads', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
