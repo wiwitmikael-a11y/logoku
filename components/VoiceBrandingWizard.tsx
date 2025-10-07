@@ -4,13 +4,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, FunctionDeclaration, Type } from "@google/genai";
 import * as geminiService from '../services/geminiService';
 import { encode, decode, decodeAudioData } from '../utils/audioUtils';
-import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
 import type { BrandInputs, VoiceWizardStep, Profile } from '../types';
-import ProgressStepper from './common/ProgressStepper';
 import Button from './common/Button';
 import LoadingMessage from './common/LoadingMessage';
 import VoiceVisualizer from './common/VoiceVisualizer';
+import ConfirmationModal from './common/ConfirmationModal';
+
 
 interface Props {
   show: boolean;
@@ -95,6 +95,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   const [permissionState, setPermissionState] = useState<'pending' | 'granted' | 'prompt' | 'denied'>('pending');
   const [timeLeft, setTimeLeft] = useState(MAX_DURATION_SECONDS);
   const [isWrappingUp, setIsWrappingUp] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
@@ -109,12 +110,10 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   
   const analyserRef = useRef<AnalyserNode | null>(null);
   
-  const conversationStateRef = useRef(conversationState);
+  // FIX: Explicitly type the ref to ensure TypeScript correctly infers its type, resolving the overlap error.
+  const conversationStateRef = useRef<ConversationState>(conversationState);
   useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
   useEffect(() => { brandInputsRef.current = brandInputs; }, [brandInputs]);
-
-  const workflowSteps: VoiceWizardStep[] = ['GET_BUSINESS_NAME', 'GET_BUSINESS_DETAILS', 'GET_TARGET_AUDIENCE', 'GET_VALUE_PROPOSITION', 'GET_COMPETITORS', 'CONFIRMATION'];
-  const currentStepIndex = workflowSteps.indexOf(wizardStep);
 
   const addFinalTranscript = (speaker: 'mang-ai' | 'user', text: string) => { if (!text.trim()) return; setTranscript(prev => [...prev, { speaker, text }]); };
 
@@ -314,8 +313,37 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     playSound('click');
     if (conversationState === 'IDLE') { connectToGemini(); }
   };
+  
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (show) document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [show]);
 
-  useEffect(() => { if (show) checkPermissions(); return () => { if (!show) { sessionPromiseRef.current?.then(s => s.close()); streamRef.current?.getTracks().forEach(t => t.stop()); inputAudioContextRef.current?.close().catch(()=>{}); outputAudioContextRef.current?.close().catch(()=>{}); sessionPromiseRef.current = null; streamRef.current = null; inputAudioContextRef.current = null; outputAudioContextRef.current = null; scriptProcessorRef.current = null; setPermissionState('pending'); setTranscript([]); setConversationState('IDLE'); setWizardStep('GREETING'); setBrandInputs({}); setError(null); } }; }, [show, checkPermissions]);
+  useEffect(() => { 
+    if (show) checkPermissions(); 
+    return () => { 
+      if (!show) { 
+        sessionPromiseRef.current?.then(s => s.close()); 
+        streamRef.current?.getTracks().forEach(t => t.stop()); 
+        inputAudioContextRef.current?.close().catch(()=>{}); 
+        outputAudioContextRef.current?.close().catch(()=>{}); 
+        sessionPromiseRef.current = null; 
+        streamRef.current = null; 
+        inputAudioContextRef.current = null; 
+        outputAudioContextRef.current = null; 
+        scriptProcessorRef.current = null; 
+        setPermissionState('pending'); 
+        setTranscript([]); 
+        setConversationState('IDLE'); 
+        setWizardStep('GREETING'); 
+        setBrandInputs({}); 
+        setError(null); 
+        setShowExitConfirm(false);
+      } 
+    }; 
+  }, [show, checkPermissions]);
+  
   useEffect(() => { if (permissionState === 'granted' && show && conversationState === 'IDLE') { connectToGemini(); } }, [permissionState, show, conversationState, connectToGemini]);
   
   useEffect(() => {
@@ -366,7 +394,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
       if (permissionState === 'denied') return <PermissionDeniedScreen onCheckAgain={checkPermissions} />;
       if (permissionState === 'prompt') return <div className="text-center p-4"> <h3 className="text-2xl font-bold text-primary">Izin Mikrofon Diperlukan</h3> <p className="text-text-muted mt-2">Klik 'Mulai' untuk mengizinkan browser menggunakan mikrofon.</p> <Button onClick={connectToGemini} size="large" className="mt-8">Mulai</Button> </div>;
 
-      if (wizardStep === 'COMPLETED') {
+      if (wizardStep === 'COMPLETED' || conversationState === 'FINALIZING') {
         return (
             <div className="text-center p-4 flex flex-col items-center">
                 <div className="relative w-40 h-40">
@@ -382,20 +410,22 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
 
       return (
           <>
-              <div className="flex justify-between items-center w-full my-4">
-                <div className="w-1/3"></div>
-                <div className={`font-mono text-2xl font-bold ${timerColor}`}>{formatTime(timeLeft)}</div>
-                <div className="w-1/3 text-right text-xs text-text-muted">Biaya: {SESSION_COST} Token</div>
-              </div>
-              <div className="w-full"> <ProgressStepper currentStep={currentStepIndex} /> </div>
-              <div className="relative w-40 h-40 flex items-center justify-center">
+              <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center text-sm">
+                 <div className="w-1/4">
+                    <Button onClick={() => setShowExitConfirm(true)} variant="secondary" size="small" disabled={conversationState === 'FINALIZING'}>Keluar</Button>
+                </div>
+                 <div className={`font-mono text-xl font-bold ${timerColor}`}>{formatTime(timeLeft)}</div>
+                 <div className="w-1/4 text-right text-xs text-text-muted">Biaya: {SESSION_COST} Token</div>
+              </header>
+
+              <div className="relative w-40 h-40 flex items-center justify-center mt-8">
                   <VoiceVisualizer analyser={analyserRef.current} isSpeaking={conversationState === 'AI_SPEAKING'} />
                   <TalkingMangAi conversationState={conversationState} />
               </div>
 
               <p className="mt-4 text-lg font-semibold text-splash h-6">{statusMap[conversationState].text}</p>
               
-              <div className="w-full h-48 my-6 overflow-y-auto p-4 bg-black/20 rounded-lg text-sm space-y-2">
+              <div className="w-full h-40 my-4 overflow-y-auto p-3 bg-black/20 rounded-lg text-sm space-y-2 text-left" style={{'--scrollbar-thumb': '#3f3f46'} as React.CSSProperties}>
                   {transcript.map((t, i) => (<p key={`final-${i}`}><strong className={t.speaker === 'mang-ai' ? 'text-primary' : 'text-accent'}>{t.speaker === 'mang-ai' ? 'Mang AI' : profile?.full_name || 'Anda'}:</strong> {t.text}</p>))}
                   {currentOutputTranscript && <p><strong className="text-primary">Mang AI:</strong> {currentOutputTranscript}</p>}
                   {currentInputTranscript && <p><strong className="text-accent">{profile?.full_name || 'Anda'}:</strong> {currentInputTranscript}</p>}
@@ -404,31 +434,42 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               
               <button 
                 onClick={handleMicAction} 
-                className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-colors ${
+                className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-colors ${
                     conversationState === 'USER_LISTENING' ? 'bg-red-500' : 
                     conversationState === 'IDLE' ? 'bg-primary' : 'bg-gray-500 cursor-not-allowed'
                 }`}
                 disabled={conversationState !== 'IDLE'}
                 title={conversationState === 'IDLE' ? `Mulai Konsultasi (${SESSION_COST} Token)` : 'Tunggu giliranmu'}
               >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                   {statusMap[conversationState].pulse && <div className="absolute inset-0 border-4 border-red-400 rounded-full animate-ping"></div>}
               </button>
               
-              <p className="mt-4 text-text-muted h-5">
-                {conversationState === 'IDLE' ? 'Ketuk untuk memulai' : ''}
-              </p>
               {error && <p className="mt-4 text-red-400 text-center">{error}</p>}
           </>
       );
   };
 
   return (
-    <div className="fixed inset-0 bg-background/90 backdrop-blur-lg z-50 flex flex-col items-center justify-center p-4 text-white animate-content-fade-in">
-      <div className="absolute top-4 right-4"> <Button onClick={onClose} variant="secondary" disabled={conversationState === 'FINALIZING'}>Keluar</Button> </div>
-      <div className="w-full max-w-4xl mx-auto flex flex-col items-center h-full pt-16 sm:pt-0 justify-center">
+    <div 
+      className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4 text-white animate-content-fade-in"
+      style={{backgroundImage: 'radial-gradient(ellipse at center, rgba(var(--c-splash), 0.1) 0%, transparent 70%)'}}
+    >
+      <div className="w-full max-w-3xl mx-auto flex flex-col items-center h-full pt-16 sm:pt-0 justify-center">
           {renderContent()}
       </div>
+      {showExitConfirm && (
+        <ConfirmationModal
+          show={true}
+          onClose={() => setShowExitConfirm(false)}
+          onConfirm={onClose}
+          title="Yakin Mau Keluar?"
+          confirmText="Ya, Keluar Saja"
+          cancelText="Batal"
+        >
+          Sesi konsultasi suara akan berhenti dan progres tidak akan tersimpan. Tetap mau keluar?
+        </ConfirmationModal>
+      )}
     </div>
   );
 };

@@ -1,3 +1,5 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React from 'react';
 
 interface ProgressStepperProps {
@@ -15,7 +17,7 @@ const CheckIcon: React.FC = () => (
 const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
   return (
     <div className="mb-12 overflow-x-auto pb-4 -mx-4 px-4">
-        <ol className="relative flex items-center w-full min-w-[700px]">
+        <ol className="relative flex items-center w-full min-w-[600px] md:min-w-0">
             {steps.map((step, index) => {
                 const isCompleted = index < currentStep;
                 const isActive = index === currentStep;
@@ -23,14 +25,14 @@ const ProgressStepper: React.FC<ProgressStepperProps> = ({ currentStep }) => {
                 return (
                     <li key={step} className="relative flex w-full items-center">
                         <div className="flex items-center w-full">
-                            <div className={`flex z-10 items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-300 flex-shrink-0 ${
+                            <div className={`flex z-10 items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 flex-shrink-0 ${
                                 isCompleted ? 'bg-primary' :
                                 isActive ? 'bg-splash ring-4 ring-splash/20' :
                                 'bg-border-light'
                             }`}>
                                {isCompleted ? <CheckIcon /> : <span className={isActive ? 'text-white' : 'text-text-muted'}>{index + 1}</span>}
                             </div>
-                            <p className={`absolute top-9 left-1/2 -translate-x-1/2 font-medium text-center text-xs md:text-sm whitespace-nowrap ${
+                            <p className={`absolute top-8 left-1/2 -translate-x-1/2 font-medium text-center text-xs whitespace-nowrap ${
                                 isActive ? 'text-splash' : isCompleted ? 'text-primary' : 'text-text-muted'
                             }`}>{step}</p>
                         </div>
