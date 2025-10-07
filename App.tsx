@@ -423,7 +423,7 @@ const MainApp: React.FC = () => {
         }
         
         uiToggles.toggleVoiceWizard(false);
-        showToast("Mantap! Project-mu sedang dibuat...");
+        showToast("Mantap! Project dari konsultasi suara disimpan...");
     
         try {
             const { data, error } = await supabase.from('projects').insert({
@@ -439,7 +439,7 @@ const MainApp: React.FC = () => {
             setSelectedProjectId(newProject.id);
             saveWorkflowState({ brandInputs });
             navigateTo('summary');
-            showToast("Project berhasil dibuat dari suara! Selamat datang di Brand Hub.");
+            showToast("Project berhasil dibuat! Selamat datang di Brand Hub.");
     
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Gagal membuat project dari konsultasi suara.';
@@ -711,7 +711,14 @@ const MainApp: React.FC = () => {
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
             <Sotoshop show={uiToggles.showSotoshop} onClose={() => uiToggles.toggleSotoshop(false)} />
             <TokenomicsModal show={uiToggles.showTokenomicsModal} onClose={() => uiToggles.toggleTokenomicsModal(false)} />
-            <VoiceBrandingWizard show={uiToggles.showVoiceWizard} onClose={() => uiToggles.toggleVoiceWizard(false)} onComplete={handleVoiceWizardComplete} />
+            <VoiceBrandingWizard 
+              show={uiToggles.showVoiceWizard} 
+              onClose={() => uiToggles.toggleVoiceWizard(false)} 
+              onComplete={handleVoiceWizardComplete}
+              profile={profile}
+              deductCredits={deductCredits}
+              setShowOutOfCreditsModal={setShowOutOfCreditsModal}
+            />
         </Suspense>
       </>
     );

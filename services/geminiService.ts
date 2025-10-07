@@ -104,6 +104,34 @@ const enhancePromptWithPetStats = (prompt: string, petState: AIPetState | null):
     return petHeader + prompt;
 };
 
+// --- NEW Auto-complete function for Voice Wizard Timeout ---
+export const generateMissingField = async (existingData: Partial<BrandInputs>, fieldToGenerate: keyof BrandInputs): Promise<string> => {
+    const ai = getAiClient();
+    const prompt = `Based on the following partial brand information for a small Indonesian business (UMKM), generate a creative and plausible value for the missing field: "${fieldToGenerate}".
+
+    Existing Information:
+    ${Object.entries(existingData).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
+
+    Your task:
+    - Generate a concise and relevant value for "${fieldToGenerate}".
+    - Respond ONLY with the generated string value. Do not add any extra text, labels, or explanations.
+    
+    For example, if asked for "competitors", you might respond with "Starbucks, Janji Jiwa". If asked for "businessName", you might respond with "Kopi Senja".
+    
+    Generated value for "${fieldToGenerate}":`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: { temperature: 0.8 }
+        });
+        return response.text.trim().replace(/^"|"$/g, ''); // remove quotes
+    } catch (error) {
+        throw handleApiError(error, `Auto-complete for ${fieldToGenerate}`);
+    }
+};
+
 
 // --- NEW MASTER IMAGE GENERATION LOGIC ---
 

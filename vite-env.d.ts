@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 // FIX: Added explicit type definitions for Vite's environment variables

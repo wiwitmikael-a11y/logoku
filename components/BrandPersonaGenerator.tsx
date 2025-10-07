@@ -22,8 +22,8 @@ interface Props {
 const businessCategories = ["Makanan", "Minuman", "Fashion", "Jasa", "Kecantikan & Perawatan Diri", "Kerajinan Tangan & Dekorasi Rumah", "Agrikultur & Produk Tani", "Lainnya"];
 const targetAudienceCategories = ["Masyarakat Umum", "Mahasiswa", "Pekerja Kantoran", "Keluarga", "Remaja", "Anak-anak"];
 
-// FIX: Changed component definition from `React.FC` to a standard functional component with an explicit `JSX.Element` return type to fix a TypeScript inference error.
-const BrandPersonaGenerator = ({ onComplete, onGoToDashboard }: Props): JSX.Element => {
+// FIX: Changed component definition to `React.FC` for better type safety and consistency, which is now possible after fixing the global JSX namespace.
+const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard }) => {
   const [formState, setFormState] = useState({
     businessName: '',
     businessCategory: 'Makanan',
