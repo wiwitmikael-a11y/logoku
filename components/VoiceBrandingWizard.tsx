@@ -128,6 +128,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   const outputAudioContextRef = useRef<AudioContext | null>(null);
   const outputNodeRef = useRef<GainNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const nextStartTimeRef = useRef(0);
   const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
@@ -140,6 +141,41 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
   useEffect(() => { brandInputsRef.current = brandInputs; }, [brandInputs]);
 
+  const cleanup = useCallback(() => {
+    // Close the Gemini session, which will trigger the onclose callback.
+    sessionPromiseRef.current?.then(s => s.close()).catch(() => {});
+    sessionPromiseRef.current = null;
+
+    // Stop the microphone track. This turns off the browser's mic indicator.
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+
+    // Disconnect and stop the audio processing graph. This is crucial.
+    if (scriptProcessorRef.current) {
+        scriptProcessorRef.current.onaudioprocess = null; // Remove the event listener
+        if (sourceNodeRef.current) {
+            sourceNodeRef.current.disconnect(scriptProcessorRef.current);
+        }
+        scriptProcessorRef.current.disconnect(); // Disconnect from destination
+        scriptProcessorRef.current = null;
+    }
+    sourceNodeRef.current = null;
+    
+    // Close audio contexts to release all resources.
+    inputAudioContextRef.current?.close().catch(()=>{});
+    outputAudioContextRef.current?.close().catch(()=>{});
+    inputAudioContextRef.current = null;
+    outputAudioContextRef.current = null;
+
+    // Reset component state
+    setPermissionState('pending');
+    setConversationState('IDLE');
+    setWizardStep('GREETING');
+    setBrandInputs({});
+    setError(null);
+    setShowExitConfirm(false);
+  }, []);
+
   const handleFinalizeAndComplete = useCallback(async (isAutoCompleted = false) => {
     if (conversationStateRef.current === 'FINALIZING' || conversationStateRef.current === 'COMPLETED') return;
     
@@ -147,8 +183,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
     conversationStateRef.current = 'FINALIZING';
     setWizardStep('FINALIZING_LOGO');
 
+    // Close the Gemini session. The `onclose` callback will handle the full cleanup.
     sessionPromiseRef.current?.then(s => s.close());
-    streamRef.current?.getTracks().forEach(track => track.stop());
 
     let currentInputs = { ...brandInputsRef.current };
     
@@ -174,7 +210,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
 
         const finalBrandInputs = currentInputs as BrandInputs;
 
-        // FIX: Generate Persona and Slogan which were missing
         const personas = await geminiService.generateBrandPersona( finalBrandInputs.businessName, finalBrandInputs.industry, finalBrandInputs.targetAudience, finalBrandInputs.valueProposition, null, petState );
         if (!personas || personas.length === 0) throw new Error("Gagal membuat persona brand.");
         const selectedPersona = personas[0];
@@ -290,6 +325,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
 
             const source = inputCtx.createMediaStreamSource(streamRef.current);
+            sourceNodeRef.current = source;
             const processor = inputCtx.createScriptProcessor(4096, 1, 1);
             scriptProcessorRef.current = processor;
             
@@ -350,12 +386,8 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               }
             }
           },
-          onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          onclose: () => {
-            if (conversationStateRef.current !== 'COMPLETED' && conversationStateRef.current !== 'FINALIZING') {
-                setConversationState('IDLE');
-            }
-          },
+          onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); cleanup(); },
+          onclose: () => { cleanup(); },
         },
       });
     } catch (err) {
@@ -370,7 +402,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
       } else if (err instanceof Error) { errorMessage = err.message; }
       setError(errorMessage); setConversationState('IDLE'); if (isPermissionError) setPermissionState('denied');
     }
-  }, [profile, deductCredits, setShowOutOfCreditsModal, handleFinalizeAndComplete]);
+  }, [profile, deductCredits, setShowOutOfCreditsModal, handleFinalizeAndComplete, cleanup]);
 
   const checkPermissions = useCallback(async () => {
     if (typeof navigator.permissions === 'undefined') { setPermissionState('prompt'); return; }
@@ -383,24 +415,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     if (show) document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'auto'; };
   }, [show]);
-
-  const cleanup = useCallback(() => {
-    sessionPromiseRef.current?.then(s => s.close()).catch(() => {});
-    streamRef.current?.getTracks().forEach(t => t.stop()); 
-    inputAudioContextRef.current?.close().catch(()=>{}); 
-    outputAudioContextRef.current?.close().catch(()=>{}); 
-    sessionPromiseRef.current = null; 
-    streamRef.current = null; 
-    inputAudioContextRef.current = null; 
-    outputAudioContextRef.current = null; 
-    scriptProcessorRef.current = null; 
-    setPermissionState('pending'); 
-    setConversationState('IDLE'); 
-    setWizardStep('GREETING'); 
-    setBrandInputs({}); 
-    setError(null); 
-    setShowExitConfirm(false);
-  }, []);
 
   useEffect(() => { 
     if (show) checkPermissions(); 

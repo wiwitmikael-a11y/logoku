@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { supabase, supabaseError } from '../services/supabaseClient';
 import type { Session, User, Profile, Project } from '../types';
 import { playBGM, setMuted, stopBGM, playRandomBGM } from '../services/soundService';
 
@@ -200,6 +200,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [isMuted, bgmSelection, handleBgmChange]);
   
   useEffect(() => {
+    if (supabaseError) {
+      setAuthError(supabaseError);
+      setLoading(false);
+      return;
+    }
+
     const initialize = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
