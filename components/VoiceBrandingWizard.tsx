@@ -9,8 +9,6 @@ import type { BrandInputs, VoiceWizardStep } from '../types';
 import ProgressStepper from './common/ProgressStepper';
 import Button from './common/Button';
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
-
 interface Props {
   show: boolean;
   onClose: () => void;
@@ -49,6 +47,31 @@ const PermissionDeniedScreen: React.FC<{ onCheckAgain: () => void }> = ({ onChec
   </div>
 );
 
+const TalkingMangAi: React.FC<{ conversationState: ConversationState }> = ({ conversationState }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const mouthRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        if (conversationState === 'AI_SPEAKING') {
+            container.style.animation = 'mang-ai-talking-bounce 0.2s infinite';
+            container.classList.remove('animate-breathing-ai');
+        } else {
+            container.style.animation = 'none';
+            container.classList.add('animate-breathing-ai');
+        }
+    }, [conversationState]);
+
+    return (
+        <div ref={containerRef} className="mang-ai-talking-container animate-breathing-ai">
+            <div className="mang-ai-body"></div>
+            <div ref={mouthRef} className="mang-ai-mouth mang-ai-mouth-0"></div>
+        </div>
+    );
+};
+
 
 const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => {
   const { profile } = useAuth();
@@ -71,6 +94,11 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const brandInputsRef = useRef(brandInputs);
   
+  // New refs for talking animation
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number>(0);
+  const mouthRef = useRef<HTMLDivElement>(null);
+  
   const conversationStateRef = useRef(conversationState);
   useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
   useEffect(() => { brandInputsRef.current = brandInputs; }, [brandInputs]);
@@ -81,6 +109,33 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const addFinalTranscript = (speaker: 'mang-ai' | 'user', text: string) => { if (!text.trim()) return; setTranscript(prev => [...prev, { speaker, text }]); };
 
   useEffect(() => { transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [transcript, currentInputTranscript, currentOutputTranscript]);
+
+    // Animation loop for lip-sync
+    useEffect(() => {
+        const animate = () => {
+            if (analyserRef.current && mouthRef.current && conversationStateRef.current === 'AI_SPEAKING') {
+                const dataArray = new Uint8Array(analyserRef.current.fftSize);
+                analyserRef.current.getByteTimeDomainData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += Math.abs(dataArray[i] - 128); // 128 is the zero-point for PCM audio
+                }
+                const averageVolume = sum / dataArray.length;
+                
+                // Update mouth sprite based on volume
+                let mouthFrame = 0;
+                if (averageVolume > 8) mouthFrame = 2; // High volume, open mouth
+                else if (averageVolume > 2) mouthFrame = 1; // Mid volume, mid mouth
+                
+                mouthRef.current.className = `mang-ai-mouth mang-ai-mouth-${mouthFrame}`;
+            } else if (mouthRef.current) {
+                mouthRef.current.className = 'mang-ai-mouth mang-ai-mouth-0'; // Default to closed
+            }
+            animationFrameRef.current = requestAnimationFrame(animate);
+        };
+        animationFrameRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(animationFrameRef.current);
+    }, []);
 
   const connectToGemini = useCallback(async () => {
     if (sessionPromiseRef.current || conversationStateRef.current === 'CONNECTING') return;
@@ -119,8 +174,14 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
         callbacks: {
           onopen: () => {
             const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+            const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             inputAudioContextRef.current = inputCtx;
-            outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+            outputAudioContextRef.current = outputCtx;
+
+            const analyser = outputCtx.createAnalyser();
+            analyser.fftSize = 256;
+            analyserRef.current = analyser;
+
             const source = inputCtx.createMediaStreamSource(stream);
             const processor = inputCtx.createScriptProcessor(4096, 1, 1);
             scriptProcessorRef.current = processor;
@@ -133,9 +194,12 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             
             if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
               const audioData = message.serverContent.modelTurn.parts[0].inlineData.data; const outputCtx = outputAudioContextRef.current;
-              if (audioData && outputCtx) {
+              if (audioData && outputCtx && analyserRef.current) {
                 const audioBuffer = await decodeAudioData(decode(audioData), outputCtx, 24000, 1); const source = outputCtx.createBufferSource();
-                source.buffer = audioBuffer; source.connect(outputCtx.destination);
+                source.buffer = audioBuffer;
+                source.connect(analyserRef.current);
+                analyserRef.current.connect(outputCtx.destination);
+                
                 const startTime = Math.max(outputCtx.currentTime, nextStartTimeRef.current); source.start(startTime);
                 nextStartTimeRef.current = startTime + audioBuffer.duration; sourcesRef.current.add(source);
                 source.onended = () => { sourcesRef.current.delete(source); if (sourcesRef.current.size === 0) setConversationState('USER_LISTENING'); };
@@ -206,7 +270,12 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
       return (
           <>
               <div className="my-8 w-full"> <ProgressStepper currentStep={currentStepIndex} /> </div>
-              <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-40 h-40 animate-breathing-ai" style={{ imageRendering: 'pixelated' }} />
+              <div className="relative w-40 h-40">
+                  <TalkingMangAi conversationState={conversationState} />
+                  {/* The mouth div is now inside TalkingMangAi, but we need a ref to it */}
+                  <div ref={mouthRef} style={{ display: 'none' }} />
+              </div>
+
               <p className="mt-4 text-lg font-semibold text-splash h-6">{statusMap[conversationState].text}</p>
               
               <div className="w-full h-48 my-6 overflow-y-auto p-4 bg-black/20 rounded-lg text-sm space-y-2">
