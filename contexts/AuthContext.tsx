@@ -47,11 +47,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const executeLogout = async () => {
     stopBGM();
     await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
-    setProfile(null);
-    setProjects([]);
-    setShowLogoutConfirm(false);
+    // Clearing state is now handled by the useEffect hook that depends on `user`
   };
 
   const handleDeleteAccount = async () => {
@@ -199,24 +195,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [isMuted, bgmSelection, handleBgmChange]);
   
+  // Effect to setup auth listeners
   useEffect(() => {
-    const initialize = async () => {
-      try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
-        const currentUser = initialSession?.user ?? null;
-        setUser(currentUser);
-        if (currentUser) {
-            await fetchInitialUserData(currentUser);
-        }
-      } catch (error) {
-        setAuthError(error instanceof Error ? error.message : "Gagal menginisialisasi sesi.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    initialize();
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
@@ -226,7 +210,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
         subscription?.unsubscribe();
     };
-  }, [fetchInitialUserData]);
+  }, []);
+
+  // Effect to fetch data when user object changes
+  useEffect(() => {
+    if (user) {
+        setLoading(true);
+        fetchInitialUserData(user).finally(() => setLoading(false));
+    } else {
+        // No user, clear data and stop loading
+        setProfile(null);
+        setProjects([]);
+        setLoading(false);
+    }
+  }, [user, fetchInitialUserData]);
   
   const value: AuthContextType = { session, user, profile, projects, setProjects, loading, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout, handleDeleteAccount, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange };
 

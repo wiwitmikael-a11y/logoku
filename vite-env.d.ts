@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 
 // FIX: Add type definitions for import.meta.env to resolve TypeScript errors.
 interface ImportMetaEnv {

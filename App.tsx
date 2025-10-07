@@ -363,7 +363,7 @@ const App: React.FC = () => {
 const MainApp: React.FC = () => {
     const { session, user, profile, projects, setProjects, loading: authLoading, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, executeLogout } = useAuth();
     const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, setShowLevelUpModal, levelUpInfo, unlockedAchievement, setUnlockedAchievement, deductCredits, addXp, grantAchievement, grantFirstTimeCompletionBonus } = useUserActions();
-    const { petState, isPetOnScreen, notifyPetOfActivity } = useAIPet();
+    const { petState, isLoading: isAIPetLoading, isPetOnScreen, notifyPetOfActivity } = useAIPet();
     const { toast, showToast, closeToast, isAssistantOpen, toggleAssistant, showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showBrandGalleryModal, toggleBrandGalleryModal, showSotoshop, toggleSotoshop, showAIPetLab, toggleAIPetLab, showVoiceWizard, toggleVoiceWizard } = useUI();
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
@@ -588,17 +588,17 @@ const MainApp: React.FC = () => {
                         </Tooltip>
                         <ThemeToggle theme={theme} onToggle={toggleTheme} />
                         
-                        {!petState.isLoading && petState.petState && (
+                        {!isAIPetLoading && petState && (
                              <button
                                 onClick={() => { playSound('click'); toggleAIPetLab(true); }}
                                 title="Buka AIPet Lab"
                                 className="flex items-center gap-2 rounded-full p-1 pr-3 bg-background hover:bg-border-light transition-colors border border-border-main group"
                             >
                                 <div className="w-8 h-8 flex items-center justify-center relative transition-transform group-hover:scale-110">
-                                    {petState.petState.stage === 'active' && petState.petState.blueprint ? (
+                                    {petState.stage === 'active' && petState.blueprint ? (
                                         <div className="absolute inset-0 scale-[1.4] top-1">
                                             <Suspense fallback={<div className="w-full h-full bg-border-main rounded-full animate-pulse" />}>
-                                                <AIPetVisual petState={petState.petState} behavior="idle" />
+                                                <AIPetVisual petState={petState} behavior="idle" />
                                             </Suspense>
                                         </div>
                                     ) : (
@@ -606,7 +606,7 @@ const MainApp: React.FC = () => {
                                     )}
                                 </div>
                                 <span className="text-sm font-semibold text-text-header hidden sm:block">
-                                    {petState.petState.stage === 'active' ? petState.petState.name : 'AIPod'}
+                                    {petState.stage === 'active' ? petState.name : 'AIPod'}
                                 </span>
                             </button>
                         )}
@@ -645,10 +645,10 @@ const MainApp: React.FC = () => {
         </div>
 
         {/* --- Floating Pet Assistant & Panels --- */}
-        {user && !petState.isLoading && petState.petState && petState.petState.stage === 'active' && (
+        {user && !isAIPetLoading && petState && petState.stage === 'active' && (
             <>
                 <FloatingAIPet 
-                    petState={petState.petState} 
+                    petState={petState} 
                     isVisible={isPetOnScreen}
                     onAsk={() => toggleAssistant(true)}
                     onShowLab={() => toggleAIPetLab(true)}
@@ -658,7 +658,7 @@ const MainApp: React.FC = () => {
                     <AiAssistant 
                         isOpen={isAssistantOpen} 
                         onToggle={toggleAssistant} 
-                        petName={petState.petState.name} 
+                        petName={petState.name} 
                     />
                 </Suspense>
             </>
