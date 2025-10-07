@@ -164,6 +164,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   const handleFinalizeAndComplete = useCallback(async (isAutoCompleted = false) => {
     if (conversationStateRef.current === 'FINALIZING' || wizardStep === 'COMPLETED') return;
 
+    sessionPromiseRef.current?.then(s => s.close()); // Gracefully close the connection.
+
     // FIX: Set conversation state and update ref immediately to prevent race conditions.
     setConversationState('FINALIZING');
     conversationStateRef.current = 'FINALIZING';
@@ -260,8 +262,12 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
 3.  After calling a function, ALWAYS wait for the function's result before proceeding.
 4.  Once you get the result, verbally confirm what you understood and then ask the next question.
 5.  Follow this sequence: get business name -> get business details -> get target audience -> get value proposition -> get competitors.
-6.  **NEW CRITICAL STEP:** After getting competitors, you MUST offer exactly three logo style choices by saying: "Nah, sekarang bagian serunya, nentuin gaya logo. Ada tiga pilihan: gaya 'minimalis modern' yang simpel dan bersih, gaya 'organik natural' yang terinspirasi dari alam, atau gaya 'geometris berani' yang tegas dan pake pola. Mana yang paling sreg di hati, Juragan?". Then, call the \`selectLogoStyle\` function with the user's choice.
-7.  After the user chooses a style, confirm their choice and then call \`confirmAllDetailsAndFinalize\` to end the session. DO NOT ask for any more details after the logo style is selected.`,
+6.  **Logo Style Step:** After getting competitors, you MUST offer exactly three logo style choices by saying: "Nah, sekarang bagian serunya, nentuin gaya logo. Ada tiga pilihan: gaya 'minimalis modern' yang simpel dan bersih, gaya 'organik natural' yang terinspirasi dari alam, atau gaya 'geometris berani' yang tegas dan pake pola. Mana yang paling sreg di hati, Juragan?". Then, call the \`selectLogoStyle\` function with the user's choice.
+7.  **Finalization Step:** After the user chooses a logo style and you have called the \`selectLogoStyle\` function, your next and FINAL action is to finalize. You MUST say something like "Baik, semua detail sudah lengkap. Saya akan finalisasi brand-nya sekarang ya, Juragan!". Immediately after saying this, you MUST call the \`confirmAllDetailsAndFinalize\` function. This ends the consultation.
+
+**Early Completion Rules (CRITICAL):**
+- **If the user expresses satisfaction or wants to finish early** (using phrases like "ok selesai", "sudah cukup", "setuju", "terima kasih", "lanjutkan saja", etc.), you MUST confirm their intent to finish by saying something like "Baik, jika sudah cukup, saya akan finalisasi sekarang ya."
+- After confirming, you MUST IMMEDIATELY call the \`confirmAllDetailsAndFinalize\` function. Do not ask any more questions. This is the final step.`,
         },
         callbacks: {
           onopen: () => {
