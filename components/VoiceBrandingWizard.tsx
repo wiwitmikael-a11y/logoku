@@ -164,14 +164,15 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   const handleFinalizeAndComplete = useCallback(async (isAutoCompleted = false) => {
     if (conversationStateRef.current === 'FINALIZING' || wizardStep === 'COMPLETED') return;
 
+    // FIX: Set conversation state and update ref immediately to prevent race conditions.
     setConversationState('FINALIZING');
+    conversationStateRef.current = 'FINALIZING';
     setWizardStep('FINALIZING_LOGO');
 
     let currentInputs = { ...brandInputsRef.current };
     
     try {
         if (isAutoCompleted) {
-            // FIX: Correctly type `fieldsToGenerate` to only include keys of `BrandInputs`.
             const fieldsToGenerate: (keyof BrandInputs)[] = [];
             if (!currentInputs.businessName) fieldsToGenerate.push('businessName');
             if (!currentInputs.businessDetail) fieldsToGenerate.push('businessDetail');
@@ -352,7 +353,8 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
           },
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          onclose: () => { if (conversationStateRef.current !== 'COMPLETED' && conversationStateRef.current !== 'FINALIZING') setConversationState('IDLE'); },
+          // FIX: Refactor check to be more robust against type errors and handle session closing logic correctly.
+          onclose: () => { if (!['COMPLETED', 'FINALIZING'].includes(conversationStateRef.current)) setConversationState('IDLE'); },
         },
       });
     } catch (err) {
@@ -422,7 +424,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
         setIsWrappingUp(true);
         sessionPromiseRef.current?.then(session => { session.sendToolResponse({ functionResponses: { id: 'timer_update_30s', name: 'timer_update', response: { result: '30 seconds remaining, please finalize' } } }); });
     }
-    // FIX: Removed redundant check. The `handleFinalizeAndComplete` function has its own internal guard.
     if (timeLeft <= 0 && wizardStep !== 'COMPLETED') {
         sessionPromiseRef.current?.then(s => s.close());
         handleFinalizeAndComplete(true);

@@ -278,7 +278,7 @@ const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery
   const { profile } = useAuth();
   const { toggleSotoshop } = useUI();
   const userName = profile?.full_name?.split(' ')[0] || 'Juragan';
-  const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'forum' | 'juragan'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'forum' | 'gamify'>('projects');
   
   useEffect(() => {
     if (sessionStorage.getItem('openForumTab')) {
@@ -291,7 +291,7 @@ const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery
     { id: 'projects', name: 'Project', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
     { id: 'tools', name: 'Ide', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg> },
     { id: 'forum', name: 'Forum', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H17z" /></svg> },
-    { id: 'juragan', name: 'Juara', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
+    { id: 'gamify', name: 'Gamify', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
   ];
 
   const handleTabClick = (id: string) => {
@@ -306,7 +306,7 @@ const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery
             Ini studio branding pribadimu. Mulai dari <strong className="text-sky-400 font-semibold">Project</strong> baru, 
             cari <strong className="text-yellow-400 font-semibold">Ide</strong> instan, 
             ngobrol di <strong className="text-orange-400 font-semibold">Forum</strong>, 
-            atau asah jiwa kompetisimu di menu <strong className="text-green-400 font-semibold">Juara</strong>. 
+            atau asah jiwa kompetisimu di menu <strong className="text-green-400 font-semibold">Gamify</strong>. 
             Semua alat buat jadi juara ada di sini!
         </p>
       </div>
@@ -327,7 +327,7 @@ const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery
         {activeTab === 'projects' && <ProjectContent {...props} />}
         {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools onShowSotoshop={() => toggleSotoshop(true)} /></Suspense>)}
         {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
-        {activeTab === 'juragan' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
+        {activeTab === 'gamify' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
       </div>
     </div>
   );
