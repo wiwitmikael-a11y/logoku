@@ -37,11 +37,11 @@ const QuickToolsInfoBox: React.FC = () => {
     const currentTip = QUICK_TOOLS_TIPS[currentTipIndex];
 
     return (
-        <div key={currentTipIndex} className="w-full bg-surface border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-lg shadow-black/20">
-            <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
+        <div key={currentTipIndex} className="w-full bg-surface border border-border-main rounded-lg p-3 flex items-start gap-3 text-left animate-content-fade-in shadow-lg shadow-black/20">
+            <div className="flex-shrink-0 text-xl pt-1">{currentTip.icon}</div>
             <div>
                 <h4 className="font-bold text-primary">{currentTip.title}</h4>
-                <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+                <p className="text-xs text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
             </div>
         </div>
     );
@@ -136,7 +136,7 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
     return (
         <div className="flex flex-col gap-8 max-w-4xl mx-auto animate-content-fade-in">
             <div className="text-center">
-                <h2 className="text-xl md:text-2xl font-bold text-splash mb-2">Generator Ide Kreatif</h2>
+                <h2 className="text-lg md:text-xl font-bold text-splash mb-2">Generator Ide Kreatif</h2>
                 <p className="text-text-muted">
                     Butuh inspirasi cepat? Di sini tempatnya! Mang AI sediain alat-alat bantu praktis buat kebutuhan branding dadakan lo.
                 </p>
