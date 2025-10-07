@@ -674,7 +674,7 @@ const MainApp: React.FC = () => {
                     </div>
                 </div>
             </header>
-            <main id="main-content" className="py-6 md:py-8 px-4 sm:px-6 lg:px-8">
+            <main id="main-content" className="py-8 md:py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
                     {authError && <ErrorMessage message={authError} onGoToDashboard={handleReturnToDashboard} />}
                     {generalError ? (<ErrorMessage message={`Terjadi error: ${generalError}`} onGoToDashboard={handleReturnToDashboard} />) : (
@@ -726,7 +726,6 @@ const MainApp: React.FC = () => {
               onClose={() => uiToggles.toggleVoiceWizard(false)} 
               onComplete={handleWizardComplete}
               profile={profile}
-              petState={petState}
               deductCredits={deductCredits}
               setShowOutOfCreditsModal={setShowOutOfCreditsModal}
             />

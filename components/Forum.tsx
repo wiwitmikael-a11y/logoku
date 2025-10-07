@@ -83,11 +83,11 @@ const WarKopInfoBox: React.FC = () => {
     }, []);
     const currentTip = WARUNG_INFO_TIPS[currentTipIndex];
     return (
-        <div key={currentTipIndex} className="w-full bg-surface/80 border border-border-main rounded-lg p-3 flex items-start gap-3 text-left animate-content-fade-in mb-8">
-            <div className="flex-shrink-0 text-xl pt-1">{currentTip.icon}</div>
+        <div key={currentTipIndex} className="w-full bg-surface/80 border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in mb-8">
+            <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
             <div>
                 <h4 className="font-bold text-text-header">{currentTip.title}</h4>
-                <p className="text-xs text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+                <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
             </div>
         </div>
     );
@@ -443,7 +443,7 @@ const Forum: React.FC = () => {
                     <div>
                         <WarKopInfoBox />
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg md:text-xl font-bold text-text-header">Diskusi Terbaru</h2>
+                            <h2 className="text-xl md:text-2xl font-bold text-text-header">Diskusi Terbaru</h2>
                             <Button onClick={() => user ? setView('new_thread') : alert('Login dulu, Juragan!')} variant="splash">
                                 + Bikin Topik
                             </Button>

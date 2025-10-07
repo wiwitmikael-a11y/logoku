@@ -43,11 +43,11 @@ const DynamicInfoBox: React.FC = () => {
     const currentTip = DYNAMIC_INFO_TIPS[currentTipIndex];
 
     return (
-        <div key={currentTipIndex} className="w-full max-w-3xl bg-surface border border-border-main rounded-lg p-3 flex items-start gap-3 text-left animate-content-fade-in shadow-lg shadow-black/20">
-            <div className="flex-shrink-0 text-xl pt-1">{currentTip.icon}</div>
+        <div key={currentTipIndex} className="w-full max-w-3xl bg-surface border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-lg shadow-black/20">
+            <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
             <div>
                 <h4 className="font-bold text-primary">{currentTip.title}</h4>
-                <p className="text-xs text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+                <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
             </div>
         </div>
     );
@@ -97,8 +97,8 @@ const BrandGalleryPreview: React.FC = () => {
     const [first, second, third] = topProjects;
 
     return (
-        <div className="w-full text-center mt-8">
-            <h2 className="text-xl md:text-2xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Podium Juara Pameran Brand 🏆</h2>
+        <div className="w-full text-center mt-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Podium Juara Pameran Brand 🏆</h2>
             <div className="group relative bg-surface/80 backdrop-blur-sm border border-border-main rounded-xl p-6 hover:border-primary/50 transition-colors cursor-pointer overflow-hidden shadow-lg shadow-black/20" onClick={() => toggleBrandGalleryModal(true)} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.05) 0%, transparent 60%)' }}>
                 {isLoading ? (<div className="h-40 flex items-center justify-center"><LoadingMessage /></div>) : 
                 topProjects.length === 0 ? (
@@ -174,7 +174,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
     return (
         <div className="flex flex-col gap-8 items-center text-center">
             <DynamicInfoBox />
-            <div className="relative mt-8 flex flex-col items-center gap-4 w-full max-w-md">
+            <div className="relative mt-12 flex flex-col items-center gap-4 w-full max-w-md">
                 <div className="w-full relative">
                     <Button onClick={() => onNewProject()} onMouseEnter={onPreloadNewProject} size="large" variant="splash" className="w-full">+ Bikin Project Branding Baru</Button>
                     {showOnboarding && (
@@ -200,11 +200,11 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
                 </div>
             </div>
 
-            <div className="w-full border-t border-border-main my-6"></div>
+            <div className="w-full border-t border-border-main my-8"></div>
 
             {inProgressProjects.length > 0 && (
                 <div className="w-full text-left">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project yang Sedang Dikerjakan:</h2>
+                <h2 className="text-2xl md:text-3xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project yang Sedang Dikerjakan:</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {inProgressProjects.map(project => (
                         <div key={project.id} className="relative group">
@@ -223,7 +223,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
 
             {completedProjects.length > 0 && (
                 <div className="w-full text-left mt-8">
-                <h2 className="text-xl md:text-2xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project Selesai (Brand Hub):</h2>
+                <h2 className="text-2xl md:text-3xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project Selesai (Brand Hub):</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {completedProjects.map(project => (
                         <div key={project.id} className="relative group">
@@ -247,7 +247,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
 
             {projects.length === 0 && (<div className="mt-8 text-center text-text-muted"><p>Lo belom punya project nih. Klik tombol di atas buat bikin brand pertama lo!</p></div>)}
             
-            <div className="w-full border-t border-border-main my-6"></div>
+            <div className="w-full border-t border-border-main my-8"></div>
             <div className="w-full max-w-4xl space-y-8">
                 <BrandGalleryPreview />
             </div>
@@ -301,7 +301,7 @@ const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userName}! Siap Jadi Juara?</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userName}! Siap Jadi Juara?</h2>
         <p className="text-text-muted max-w-3xl mx-auto">
             Ini studio branding pribadimu. Mulai dari <strong className="text-sky-400 font-semibold">Project</strong> baru, 
             cari <strong className="text-yellow-400 font-semibold">Ide</strong> instan, 

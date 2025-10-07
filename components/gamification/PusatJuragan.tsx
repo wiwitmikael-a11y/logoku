@@ -45,11 +45,11 @@ const PusatJuraganInfoBox: React.FC = () => {
     const currentTip = PUSAT_JURAGAN_TIPS[currentTipIndex];
 
     return (
-        <div key={currentTipIndex} className="w-full bg-surface border border-border-main rounded-lg p-3 flex items-start gap-3 text-left animate-content-fade-in shadow-lg shadow-black/20">
-            <div className="flex-shrink-0 text-xl pt-1">{currentTip.icon}</div>
+        <div key={currentTipIndex} className="w-full bg-surface border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-lg shadow-black/20">
+            <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
             <div>
                 <h4 className="font-bold text-primary">{currentTip.title}</h4>
-                <p className="text-xs text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
+                <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
             </div>
         </div>
     );
@@ -208,7 +208,7 @@ const PusatJuragan: React.FC = () => {
     return (
         <div className="flex flex-col gap-8 max-w-4xl mx-auto animate-content-fade-in">
              <div className="text-center">
-                <h2 className="text-3xl md:text-4xl font-bold text-green-400 mb-2" style={{fontFamily: 'var(--font-display)'}}>Gamify Center</h2>
+                <h2 className="text-4xl md:text-5xl font-bold text-green-400 mb-2" style={{fontFamily: 'var(--font-display)'}}>Gamify Center</h2>
                 <p className="text-text-muted">
                     Ini markas lo buat jadi juragan sejati! Selesaikan misi, koleksi lencana, dan rebut posisi puncak di papan peringkat.
                 </p>
@@ -216,7 +216,7 @@ const PusatJuragan: React.FC = () => {
 
             <PusatJuraganInfoBox />
 
-            <div className="flex justify-center border-b border-border-main mb-6">
+            <div className="flex justify-center border-b border-border-main mb-8">
                 <SubTabButton active={activeSubTab === 'missions'} onClick={() => setActiveSubTab('missions')}>Misi & Lencana</SubTabButton>
                 <SubTabButton active={activeSubTab === 'leaderboard'} onClick={() => setActiveSubTab('leaderboard')}>Papan Peringkat</SubTabButton>
                 <SubTabButton active={activeSubTab === 'aipet'} onClick={() => setActiveSubTab('aipet')}>AIPet Lab</SubTabButton>

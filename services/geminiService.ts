@@ -1147,3 +1147,12 @@ export const generateImageForCanvas = async (prompt: string): Promise<string> =>
         throw handleApiError(error, "AI Image Generator");
     }
 };
+
+export const generateStagedProductImage = async (productBase64: string, scenePrompt: string): Promise<string> => {
+    try {
+        const watermarkedImage = await generateImageWithLogo(productBase64, scenePrompt);
+        return watermarkedImage;
+    } catch (error) {
+        throw handleApiError(error, "AI Product Stager");
+    }
+};
