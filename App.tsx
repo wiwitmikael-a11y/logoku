@@ -31,6 +31,7 @@ import AdBanner from './components/AdBanner';
 import Toast from './components/common/Toast';
 import CalloutPopup from './components/common/CalloutPopup';
 import VoiceBrandingWizard from './components/VoiceBrandingWizard';
+import Tooltip from './components/common/Tooltip';
 
 // --- Lazily Loaded Components ---
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
@@ -65,7 +66,6 @@ const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
 const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
 const AIPetContextualBubble = React.lazy(() => import('./components/AIPetContextualBubble'));
 const AIPetInteractionBubble = React.lazy(() => import('./components/AIPetInteractionBubble'));
-const TokenomicsModal = React.lazy(() => import('./components/common/TokenomicsModal'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
@@ -606,10 +606,22 @@ const MainApp: React.FC = () => {
                         <span className="text-primary">des<span className="text-accent">ai</span>n</span><span className="text-text-header">.fun</span>
                     </h1>
                     <div className="flex items-center gap-1 sm:gap-2">
-                        <button onClick={() => uiToggles.toggleTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1.5 p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
-                            <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span>
-                        </button>
+                        <Tooltip
+                            content={
+                                <div className="text-sm space-y-2">
+                                    <h4 className="font-bold text-splash">Sistem Token Mang AI</h4>
+                                    <p className="text-xs text-text-body"><strong className="text-text-header">🎁 Bonus Sambutan:</strong> 20 Token GRATIS.</p>
+                                    <p className="text-xs text-text-body"><strong className="text-text-header">☀️ Jatah Harian:</strong> Diisi ulang jadi 5 Token tiap pagi jika kurang.</p>
+                                    <p className="text-xs text-text-body"><strong className="text-text-header">🚀 Hadiah Naik Level:</strong> Dapat 2-10 Token setiap naik level.</p>
+                                    <p className="text-xs text-text-muted mt-2 border-t border-border-main pt-2">Biaya setiap aksi tertera jelas di tombolnya. Transparan!</p>
+                                </div>
+                            }
+                        >
+                            <div title="Info Token" className="flex items-center gap-1.5 p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors cursor-help">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                                <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span>
+                            </div>
+                        </Tooltip>
                         <ThemeToggle theme={theme} onToggle={toggleTheme} />
                         
                         {!aipetContext.isLoading && petState && (
@@ -710,7 +722,6 @@ const MainApp: React.FC = () => {
             <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
             <Sotoshop show={uiToggles.showSotoshop} onClose={() => uiToggles.toggleSotoshop(false)} />
-            <TokenomicsModal show={uiToggles.showTokenomicsModal} onClose={() => uiToggles.toggleTokenomicsModal(false)} />
             <VoiceBrandingWizard 
               show={uiToggles.showVoiceWizard} 
               onClose={() => uiToggles.toggleVoiceWizard(false)} 
