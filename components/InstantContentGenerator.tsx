@@ -19,6 +19,8 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
+// FIX: Add `addXp` to the Props interface to match the props passed from App.tsx.
+  addXp: (amount: number) => Promise<void>;
 }
 
 const GENERATION_COST = 2; // 1 for image, 1 for captions
