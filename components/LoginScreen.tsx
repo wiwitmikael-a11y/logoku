@@ -9,15 +9,21 @@ import { useUI } from '../contexts/UIContext';
 const AIPetParade = React.lazy(() => import('./AIPetParade'));
 
 interface Props {
-  onGoogleLogin: () => void;
   isCaptchaSolved: boolean;
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved }) => {
+const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
   const [paradePets, setParadePets] = useState<AIPetState[]>([]);
   const { toggleToSModal, togglePrivacyModal } = useUI();
+
+  const handleGoogleLogin = () => {
+    supabase.auth.signInWithOAuth({ 
+        provider: 'google', 
+        options: { redirectTo: window.location.origin }
+    });
+  };
 
   useEffect(() => {
     const fetchParadePets = async () => {
@@ -87,7 +93,7 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved }) => {
             
             <div className="flex flex-col items-center gap-4">
               <Button 
-                onClick={onGoogleLogin} 
+                onClick={handleGoogleLogin} 
                 disabled={!isCaptchaSolved}
                 title={!isCaptchaSolved ? "Selesaikan puzzle captcha dulu!" : "Masuk dengan akun Google"}
                 size="large"

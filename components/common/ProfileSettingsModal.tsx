@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, Suspense } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
+import { useAuth } from '../../contexts/AuthContext';
 import { User, Profile } from '../../types';
 import Button from './Button';
 import { BgmSelection } from '../../contexts/AuthContext';
@@ -18,18 +19,11 @@ const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; ic
 interface Props {
   show: boolean;
   onClose: () => void;
-  user: User | null;
-  profile: Profile | null;
-  onLogout: () => void;
-  onDeleteAccount: () => void;
-  isMuted: boolean;
-  handleToggleMute: () => void;
-  bgmSelection: BgmSelection;
-  handleBgmChange: (selection: BgmSelection) => void;
 }
 
-const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, onLogout, onDeleteAccount, isMuted, handleToggleMute, bgmSelection, handleBgmChange }) => {
+const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const { user, profile, handleLogout, handleDeleteAccount, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
   const { toggleToSModal, toggleContactModal } = useUI();
 
   useEffect(() => {
@@ -42,7 +36,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
 
   const handleClose = async () => { await unlockAudio(); playSound('click'); onClose(); };
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => { if (e.target === e.currentTarget) handleClose(); }
-  const handleLogoutClick = () => { onLogout(); onClose(); };
+  const handleLogoutClick = () => { handleLogout(); onClose(); };
   const handleTosClick = () => { toggleToSModal(true); onClose(); };
   const handleContactClick = () => { toggleContactModal(true); onClose(); };
 
@@ -159,7 +153,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
             <div className="w-full border-t border-red-500/30 pt-4 mt-6">
                <h3 className="text-sm font-semibold text-red-500 uppercase tracking-wider">Zona Berbahaya</h3>
                {/* FIX: Changed onClick from onDeleteAccount to handleDeleteAccount */}
-               <Button onClick={onDeleteAccount} size="small" variant="secondary" className="mt-3 !border-red-500/30 !text-red-500 hover:!bg-red-500/10 disabled:!border-slate-300 disabled:!text-slate-400 disabled:cursor-not-allowed" disabled={true} title="Fitur ini hanya tersedia untuk user Pro (Segera Hadir)."> Hapus Akun Saya </Button>
+               <Button onClick={handleDeleteAccount} size="small" variant="secondary" className="mt-3 !border-red-500/30 !text-red-500 hover:!bg-red-500/10 disabled:!border-slate-300 disabled:!text-slate-400 disabled:cursor-not-allowed" disabled={true} title="Fitur ini hanya tersedia untuk user Pro (Segera Hadir)."> Hapus Akun Saya </Button>
             </div>
         </main>
       </div>
