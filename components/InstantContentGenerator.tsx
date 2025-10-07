@@ -5,6 +5,7 @@ import { generateCaptions, generateSocialMediaPostImage } from '../services/gemi
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIPet } from '../contexts/AIPetContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -18,7 +19,6 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
-  addXp: (amount: number) => Promise<void>;
 }
 
 const GENERATION_COST = 2; // 1 for image, 1 for captions
@@ -28,8 +28,9 @@ interface GeneratedContent {
     captions: GeneratedCaption[];
 }
 
-const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
-  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
+  const { profile } = useAuth();
+  const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
   const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
@@ -55,13 +56,14 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
     playSound('start');
 
     try {
+      if (!(await deductCredits(GENERATION_COST))) return;
+
       const [imageResult, captionsResult] = await Promise.all([
         generateSocialMediaPostImage(topic, selectedPersona.kata_kunci),
         generateCaptions(brandInputs.businessName, selectedPersona, topic, "Promosi", petState)
       ]);
       if (!imageResult || imageResult.length === 0) throw new Error("Mang AI gagal membuat gambar.");
       
-      await deductCredits(GENERATION_COST);
       await addXp(75);
       setGeneratedContent({ imageUrl: imageResult[0], captions: captionsResult });
       playSound('success');

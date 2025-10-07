@@ -5,6 +5,7 @@ import { generateCaptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIPet } from '../contexts/AIPetContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -16,13 +17,13 @@ interface Props {
   projectData: Partial<ProjectData>;
   onBack: () => void;
   onGoToDashboard: () => void;
-  addXp: (amount: number) => Promise<void>;
 }
 
 const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Interaktif"];
 
-const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard, addXp }) => {
-  const { profile, deductCredits, setShowOutOfCreditsModal, incrementDailyAction } = useAuth();
+const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
+  const { profile } = useAuth();
+  const { deductCredits, setShowOutOfCreditsModal, addXp, incrementDailyAction } = useUserActions();
   const { petState, showContextualMessage, notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
   
@@ -59,7 +60,8 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     playSound('start');
 
     try {
-      await deductCredits(1);
+      if (!(await deductCredits(1))) return;
+      
       const result = await generateCaptions(projectData.brandInputs.businessName, projectData.selectedPersona, topic, tone, petState);
       await addXp(10);
       await incrementDailyAction('created_captions');
@@ -118,7 +120,7 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
                          <CopyButton textToCopy={item.caption} className="absolute top-0 right-0"/>
                     </div>
                     <div className="border-t border-border-main pt-3 relative">
-                        <p className="text-primary text-xs break-words selectable-text pr-10">{item.hashtags.join(' ')}</p>
+                        <p className="text-primary text-xs break-words pr-10 selectable-text">{item.hashtags.join(' ')}</p>
                         <CopyButton textToCopy={item.hashtags.join(' ')} className="absolute top-0 right-0"/>
                     </div>
                  </div>

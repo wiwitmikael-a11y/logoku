@@ -6,6 +6,7 @@ import { playSound } from '../services/soundService';
 import { loadWorkflowState } from '../services/workflowPersistence';
 import type { BrandPersona, BrandInputs, AIPetPersonalityVector } from '../types';
 import { useAIPet } from '../contexts/AIPetContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import Button from './common/Button';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
@@ -45,6 +46,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { petState, showContextualMessage, notifyPetOfActivity } = useAIPet();
+  const { grantFirstTimeCompletionBonus } = useUserActions();
   const suggestionShownRef = useRef(false);
 
   const personasRef = useRef<HTMLDivElement>(null);
@@ -212,8 +214,9 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     }
   }, [selectedPersonaIndex, personas, formState, petState]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedPersonaIndex === null || !selectedSlogan || !personas[selectedPersonaIndex]) return;
+    await grantFirstTimeCompletionBonus('persona'); 
     const combinedIndustry = `${formState.businessCategory} ${formState.businessDetail}`.trim();
     const combinedAudience = `${formState.targetAudienceCat}${formState.targetAudienceAge ? ` usia ${formState.targetAudienceAge}` : ''}`.trim();
     const inputs: BrandInputs = { ...formState, industry: combinedIndustry, targetAudience: combinedAudience, businessCategory: formState.businessCategory, businessDetail: formState.businessDetail, businessName: formState.businessName, competitors: formState.competitors, valueProposition: formState.valueProposition };

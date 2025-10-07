@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIPet } from '../contexts/AIPetContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { ForumThread, ForumPost } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -120,7 +121,8 @@ const getOfficialDisplayData = (profile: { full_name?: string | null, avatar_url
 
 // --- Main Forum Component ---
 const Forum: React.FC = () => {
-    const { user, profile, addXp, incrementDailyAction } = useAuth();
+    const { user, profile } = useAuth();
+    const { addXp, incrementDailyAction } = useUserActions();
     const { notifyPetOfActivity } = useAIPet();
     const [view, setView] = useState<ForumView>('list');
     const [threads, setThreads] = useState<ForumThread[]>([]);

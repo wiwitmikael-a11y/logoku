@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateLogoVariations, editLogo } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { LogoVariations } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -23,7 +24,8 @@ const VARIATION_COST = 3;
 const EDIT_COST = 1;
 
 const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onComplete, onGoToDashboard }) => {
-  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const { profile } = useAuth();
+  const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const credits = profile?.credits ?? 0;
 
   const [finalLogoUrl, setFinalLogoUrl] = useState<string>(baseLogoUrl);

@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIPet } from '../contexts/AIPetContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -20,7 +21,8 @@ interface Props {
 const GENERATION_COST = 4;
 
 const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onGoToDashboard }) => {
-  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  const { profile } = useAuth();
+  const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const { showContextualMessage, notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
 

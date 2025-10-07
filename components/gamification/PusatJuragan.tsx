@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import type { Profile } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUserActions } from '../../contexts/UserActionsContext';
 import LoadingMessage from '../common/LoadingMessage';
 import ErrorMessage from '../common/ErrorMessage';
 import Card from '../common/Card';
@@ -70,7 +71,8 @@ const LeaderboardSkeleton: React.FC = () => (
 
 
 const PusatJuragan: React.FC<PusatJuraganProps> = () => {
-    const { profile, dailyActions, claimMissionReward } = useAuth();
+    const { profile } = useAuth();
+    const { dailyActions, claimMissionReward } = useUserActions();
     const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

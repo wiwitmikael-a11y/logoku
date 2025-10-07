@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { generateBusinessNames, generateQuickSlogans, generateMoodboardText, generateMoodboardImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIPet } from '../contexts/AIPetContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -47,7 +48,8 @@ const QuickToolsInfoBox: React.FC = () => {
 };
 
 const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
-    const { profile, deductCredits, addXp, setShowOutOfCreditsModal } = useAuth();
+    const { profile } = useAuth();
+    const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     const { petState } = useAIPet();
     const credits = profile?.credits ?? 0;
     

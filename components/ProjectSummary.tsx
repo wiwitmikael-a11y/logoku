@@ -7,6 +7,7 @@ import Card from './common/Card';
 import ImageModal from './common/ImageModal';
 import CopyButton from './common/CopyButton';
 import LoadingMessage from './common/LoadingMessage';
+import { useUserActions } from '../contexts/UserActionsContext';
 
 interface Props {
   project: Project;
@@ -21,7 +22,6 @@ interface Props {
   onRegeneratePackaging: () => Promise<void>;
   onRegeneratePrintMedia: (mediaType: 'banner' | 'roll_banner') => Promise<void>;
   onRegenerateMerchandise: () => Promise<void>;
-  addXp: (amount: number) => Promise<void>;
   onShareToForum: (project: Project) => void;
 }
 
