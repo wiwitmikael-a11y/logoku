@@ -5,7 +5,7 @@ import { GoogleGenAI, LiveServerMessage, Modality, Blob, FunctionDeclaration, Ty
 import * as geminiService from '../services/geminiService';
 import { encode, decode, decodeAudioData } from '../utils/audioUtils';
 import { playSound } from '../services/soundService';
-import type { BrandInputs, VoiceWizardStep, Profile, ProjectData } from '../types';
+import type { BrandInputs, VoiceWizardStep, Profile, ProjectData, AIPetState } from '../types';
 import Button from './common/Button';
 import LoadingMessage from './common/LoadingMessage';
 import VoiceVisualizer from './common/VoiceVisualizer';
@@ -17,6 +17,7 @@ interface Props {
   onClose: () => void;
   onComplete: (data: Partial<ProjectData>) => void;
   profile: Profile | null;
+  petState: AIPetState | null;
   deductCredits: (amount: number) => Promise<boolean>;
   setShowOutOfCreditsModal: (show: boolean) => void;
 }
@@ -133,7 +134,7 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs & { log
 };
 
 
-const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profile, deductCredits, setShowOutOfCreditsModal }) => {
+const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profile, petState, deductCredits, setShowOutOfCreditsModal }) => {
   const [conversationState, setConversationState] = useState<ConversationState>('IDLE');
   const [wizardStep, setWizardStep] = useState<ExtendedWizardStep>('GREETING');
   const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs & { logoStyle: string }>>({});
@@ -181,7 +182,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
             if (!currentInputs.targetAudience) fieldsToGenerate.push('targetAudience');
             if (!currentInputs.valueProposition) fieldsToGenerate.push('valueProposition');
             if (!currentInputs.competitors) fieldsToGenerate.push('competitors');
-            if (!currentInputs.logoStyle) currentInputs.logoStyle = "minimalis modern"; // Default style
             
             for (const field of fieldsToGenerate) {
                 const generatedValue = await geminiService.generateMissingField(currentInputs, field);
@@ -189,11 +189,34 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
             }
         }
         
+        if (!currentInputs.logoStyle) currentInputs.logoStyle = "minimalis modern";
         if (!currentInputs.industry) {
             currentInputs.industry = `${currentInputs.businessCategory || 'Bisnis'} ${currentInputs.businessDetail || ''}`.trim();
         }
 
         const finalBrandInputs = currentInputs as BrandInputs;
+
+        // Generate Persona and Slogan
+        const personas = await geminiService.generateBrandPersona(
+            finalBrandInputs.businessName,
+            finalBrandInputs.industry,
+            finalBrandInputs.targetAudience,
+            finalBrandInputs.valueProposition,
+            null, // No direct URL analysis in voice wizard
+            petState
+        );
+        if (!personas || personas.length === 0) throw new Error("Gagal membuat persona brand.");
+        const selectedPersona = personas[0];
+
+        const slogans = await geminiService.generateSlogans(
+            finalBrandInputs.businessName,
+            selectedPersona,
+            finalBrandInputs.competitors,
+            petState
+        );
+        if (!slogans || slogans.length === 0) throw new Error("Gagal membuat slogan.");
+        const selectedSlogan = slogans[0];
+
         const logoPromptText = `A minimalist and modern logo for "${finalBrandInputs.businessName}", representing ${currentInputs.logoStyle}.`;
         const logoOptions = await geminiService.generateLogoOptions(logoPromptText, 1);
         if (!logoOptions || logoOptions.length === 0) throw new Error("Gagal membuat logo master.");
@@ -202,6 +225,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
 
         const projectData: Partial<ProjectData> = {
             brandInputs: finalBrandInputs,
+            selectedPersona,
+            selectedSlogan,
             selectedLogoUrl: masterLogo,
             logoPrompt: logoPromptText,
         };
@@ -214,7 +239,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
         setError(errorMessage);
         setConversationState('ERROR');
     }
-  }, [onComplete, wizardStep]);
+  }, [onComplete, wizardStep, petState]);
 
   const connectToGemini = useCallback(async () => {
     if (sessionPromiseRef.current || conversationStateRef.current === 'CONNECTING') return;
@@ -359,7 +384,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
           },
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          // FIX: The switch statement was causing a type comparison error. Refactoring to an if/else block to handle the logic correctly and avoid the faulty linter check.
           onclose: () => {
             const currentState = conversationStateRef.current;
             if (currentState === 'COMPLETED' || currentState === 'FINALIZING') {

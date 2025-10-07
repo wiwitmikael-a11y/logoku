@@ -726,6 +726,7 @@ const MainApp: React.FC = () => {
               onClose={() => uiToggles.toggleVoiceWizard(false)} 
               onComplete={handleWizardComplete}
               profile={profile}
+              petState={petState}
               deductCredits={deductCredits}
               setShowOutOfCreditsModal={setShowOutOfCreditsModal}
             />
