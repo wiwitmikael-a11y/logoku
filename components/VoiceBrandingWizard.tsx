@@ -353,11 +353,17 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
           },
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          // FIX: The `includes` check was causing a TypeScript type comparison error.
-          // Rewrote the condition with explicit `!==` checks to be more type-safe and resolve the linter error.
           onclose: () => {
-            if (conversationStateRef.current !== 'COMPLETED' && conversationStateRef.current !== 'FINALIZING') {
-              setConversationState('IDLE');
+            // FIX: Rewritten with a switch statement to be more robust against potential type inference issues from linters.
+            // The logic remains the same: reset to IDLE unless the session closed during a final or completed state.
+            switch (conversationStateRef.current) {
+              case 'COMPLETED':
+              case 'FINALIZING':
+                // Do nothing, the process is finished or finishing.
+                break;
+              default:
+                // For any other state (IDLE, CONNECTING, SPEAKING, ERROR, etc.), reset to IDLE.
+                setConversationState('IDLE');
             }
           },
         },

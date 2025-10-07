@@ -84,7 +84,7 @@ const AIPetLabModal: React.FC<AIPetLabModalProps> = ({ show, onClose }) => {
         }
 
         const personality = petState.personality;
-        const maxPersonalityValue = Math.max(...(Object.values(personality) as number[]));
+        const maxPersonalityValue = personality ? Math.max(...(Object.values(personality) as number[])) : 0;
 
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
@@ -96,14 +96,16 @@ const AIPetLabModal: React.FC<AIPetLabModalProps> = ({ show, onClose }) => {
                 </div>
                 {/* Right Column: Details */}
                 <div className="space-y-6">
-                    <div>
-                        <h4 className="text-lg font-bold text-primary mb-3">Analisis Kepribadian</h4>
-                        <div className="space-y-2 p-4 bg-background border border-border-main rounded-lg">
-                            {Object.entries(personality).map(([trait, value]) => (
-                                <StatDisplay key={trait} label={trait} value={value as number} maxValue={maxPersonalityValue > 0 ? maxPersonalityValue : 1} colorClass="bg-primary" />
-                            ))}
+                    {petState.personality && (
+                        <div>
+                            <h4 className="text-lg font-bold text-primary mb-3">Analisis Kepribadian</h4>
+                            <div className="space-y-2 p-4 bg-background border border-border-main rounded-lg">
+                                {Object.entries(petState.personality).map(([trait, value]) => (
+                                    <StatDisplay key={trait} label={trait} value={value as number} maxValue={maxPersonalityValue > 0 ? maxPersonalityValue : 1} colorClass="bg-primary" />
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
                     {petState.battleStats && (
                         <div>
                              <h4 className="text-lg font-bold text-primary mb-3">Statistik Pertarungan <span className="text-xs text-text-muted">(Segera Hadir)</span></h4>

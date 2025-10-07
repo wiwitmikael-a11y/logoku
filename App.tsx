@@ -6,10 +6,10 @@ import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { AIPetProvider, useAIPet } from './contexts/AIPetContext';
-import { UIProvider, useUI } from './contexts/UIContext';
-import { UserActionsProvider, useUserActions } from './contexts/UserActionsContext';
+import { useAuth } from './contexts/AuthContext';
+import { useAIPet } from './contexts/AIPetContext';
+import { useUI } from './contexts/UIContext';
+import { useUserActions } from './contexts/UserActionsContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
@@ -316,15 +316,7 @@ const App: React.FC = () => {
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
     if (!import.meta.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
     return (
-      <AuthProvider>
-        <UserActionsProvider>
-          <UIProvider>
-            <AIPetProvider>
-              <MainApp />
-            </AIPetProvider>
-          </UIProvider>
-        </UserActionsProvider>
-      </AuthProvider>
+      <MainApp />
     );
 };
 

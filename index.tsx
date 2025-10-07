@@ -6,7 +6,7 @@ import App from './App';
 import { UIProvider } from './contexts/UIContext';
 import { UserActionsProvider } from './contexts/UserActionsContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { AIPetProvider } from './contexts/AIPetProvider'; // Assuming this exists
+import { AIPetProvider } from './contexts/AIPetContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -28,6 +28,14 @@ if ('serviceWorker' in navigator) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <UserActionsProvider>
+        <UIProvider>
+          <AIPetProvider>
+            <App />
+          </AIPetProvider>
+        </UIProvider>
+      </UserActionsProvider>
+    </AuthProvider>
   </React.StrictMode>
 );
