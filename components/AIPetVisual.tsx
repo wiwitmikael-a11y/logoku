@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import type { AIPetState, AIPetTier } from '../types';
 
 interface AIPetVisualProps {
@@ -75,28 +75,111 @@ const AIPodVisual: React.FC = () => {
     );
 };
 
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+};
+
 const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior = 'idle', direction = 1 }) => {
     const { stage, blueprint, colors, stats, name, tier } = petState;
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const petSpriteStyle = useMemo(() => {
-        if (!blueprint || !name) return {};
-
-        const petId = parseInt(name.split('-')[1] || '0', 10);
-        const cellIndex = petId % 16;
-        const gridX = cellIndex % 4;
-        const gridY = Math.floor(cellIndex / 4);
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
         
-        // Sprite sheet is 4x4, so each cell is 25% of the width/height.
-        // The background position is calculated as a percentage.
-        const backgroundPositionX = gridX * (100 / (4 - 1));
-        const backgroundPositionY = gridY * (100 / (4 - 1));
+        if (stage === 'aipod' || !blueprint || !colors) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
 
-        return {
-            backgroundImage: `url(${blueprint.url})`,
-            backgroundSize: '400% 400%', // 4x4 grid
-            backgroundPosition: `${backgroundPositionX}% ${backgroundPositionY}%`,
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; // Important for loading images from CDN
+        img.src = blueprint.url;
+        
+        img.onload = () => {
+            const petId = parseInt(name.split('-')[1] || '0', 10);
+            const cellIndex = petId % 16;
+            const gridX = cellIndex % 4;
+            const gridY = Math.floor(cellIndex / 4);
+
+            const sourceSize = 256; // Each cell in the 1024x1024 (4x4) grid is 256x256
+            const sourceX = gridX * sourceSize;
+            const sourceY = gridY * sourceSize;
+
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = sourceSize;
+            offscreenCanvas.height = sourceSize;
+            const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+            if (!offscreenCtx) return;
+
+            offscreenCtx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize, 0, 0, sourceSize, sourceSize);
+            const imageData = offscreenCtx.getImageData(0, 0, sourceSize, sourceSize);
+            const data = imageData.data;
+
+            const armorColor = hexToRgb(colors.mechanical.base);
+            const skinColor = hexToRgb(colors.organic.base);
+            const energyColor = hexToRgb(colors.energy.base);
+
+            if (!armorColor || !skinColor || !energyColor) return;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const a = data[i + 3];
+
+                if (a === 0) continue;
+
+                // White becomes transparent
+                if (r > 240 && g > 240 && b > 240) {
+                    data[i + 3] = 0;
+                    continue;
+                }
+
+                // Black (outline) remains unchanged
+                if (r < 15 && g < 15 && b < 15) {
+                    continue;
+                }
+
+                // Green -> Armor (Mechanical)
+                if (g > r && g > b) {
+                    data[i] = armorColor.r;
+                    data[i + 1] = armorColor.g;
+                    data[i + 2] = armorColor.b;
+                }
+                // Red -> Skin/Flesh (Organic)
+                else if (r > g && r > b) {
+                    data[i] = skinColor.r;
+                    data[i + 1] = skinColor.g;
+                    data[i + 2] = skinColor.b;
+                }
+                // Blue -> Eyes/Energy
+                else if (b > r && b > g) {
+                    data[i] = energyColor.r;
+                    data[i + 1] = energyColor.g;
+                    data[i + 2] = energyColor.b;
+                }
+            }
+
+            offscreenCtx.putImageData(imageData, 0, 0);
+
+            // Draw final colored image to the visible canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.imageSmoothingEnabled = false; // Preserve pixelated style
+            ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
         };
-    }, [blueprint, name]);
+        img.onerror = () => {
+             console.error(`Failed to load blueprint image: ${blueprint.url}`);
+        }
+
+    }, [petState, canvasRef]); // Redraw whenever the petState changes
 
     const glowStyle = useMemo(() => {
         if (!colors || stage === 'aipod') return {};
@@ -143,17 +226,23 @@ const AIPetVisual: React.FC<AIPetVisualProps> = ({ petState, className, behavior
 
     return (
         <div 
-            style={{...glowStyle, imageRendering: 'pixelated'}}
+            style={{ ...glowStyle, imageRendering: 'pixelated' }}
             className={`w-full h-full ${tierGlowClass} ${className || ''}`}
             title={petState.name}
         >
             <div 
-                className={`w-full h-full bg-no-repeat ${animationClass}`}
+                className={`w-full h-full ${animationClass}`}
                 style={{
-                    ...petSpriteStyle,
                     transform: `scaleX(${direction})`,
                 }}
-            />
+            >
+                <canvas 
+                    ref={canvasRef} 
+                    width={256} 
+                    height={256} 
+                    className="w-full h-full"
+                />
+            </div>
         </div>
     );
 };
