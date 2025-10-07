@@ -4,20 +4,20 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Button from './common/Button';
 import { supabase } from '../services/supabaseClient';
 import type { AIPetState } from '../types';
+import { useUI } from '../contexts/UIContext';
 
 const AIPetParade = React.lazy(() => import('./AIPetParade'));
 
 interface Props {
   onGoogleLogin: () => void;
   isCaptchaSolved: boolean;
-  onShowToS: () => void;
-  onShowPrivacy: () => void;
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowToS, onShowPrivacy }) => {
+const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved }) => {
   const [paradePets, setParadePets] = useState<AIPetState[]>([]);
+  const { toggleToSModal, togglePrivacyModal } = useUI();
 
   useEffect(() => {
     const fetchParadePets = async () => {
@@ -107,13 +107,13 @@ const LoginScreen: React.FC<Props> = ({ onGoogleLogin, isCaptchaSolved, onShowTo
             <p className="text-xs text-text-muted mt-4">
               Dengan masuk, lo setuju sama{' '}
               <button 
-                onClick={isCaptchaSolved ? onShowToS : undefined} 
+                onClick={isCaptchaSolved ? () => toggleToSModal(true) : undefined} 
                 disabled={!isCaptchaSolved}
                 className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Ketentuan Layanan
               </button> & <button 
-                onClick={isCaptchaSolved ? onShowPrivacy : undefined} 
+                onClick={isCaptchaSolved ? () => togglePrivacyModal(true) : undefined} 
                 disabled={!isCaptchaSolved}
                 className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >

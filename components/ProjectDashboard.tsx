@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo, Suspense } from 'react';
 // FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { Project, BrandInputs } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useUI } from '../contexts/UIContext';
 import { supabase } from '../services/supabaseClient';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -22,8 +23,6 @@ interface ProjectDashboardProps {
   onNewProjectVoice: () => void;
   onSelectProject: (projectId: number) => void;
   onDeleteProject: (projectId: number) => void;
-  onShowBrandGallery: () => void;
-  onShowSotoshop: () => void;
   onPreloadNewProject: () => void;
 }
 
@@ -81,7 +80,8 @@ const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = 
     );
 };
 
-const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGallery }) => {
+const BrandGalleryPreview: React.FC = () => {
+    const { toggleBrandGalleryModal } = useUI();
     const [topProjects, setTopProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -101,7 +101,7 @@ const BrandGalleryPreview: React.FC<{ onShowGallery: () => void }> = ({ onShowGa
     return (
         <div className="w-full text-center mt-12">
             <h2 className="text-2xl md:text-3xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Podium Juara Pameran Brand 🏆</h2>
-            <div className="group relative bg-surface/80 backdrop-blur-sm border border-border-main rounded-xl p-6 hover:border-primary/50 transition-colors cursor-pointer overflow-hidden shadow-lg shadow-black/20" onClick={onShowGallery} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.05) 0%, transparent 60%)' }}>
+            <div className="group relative bg-surface/80 backdrop-blur-sm border border-border-main rounded-xl p-6 hover:border-primary/50 transition-colors cursor-pointer overflow-hidden shadow-lg shadow-black/20" onClick={() => toggleBrandGalleryModal(true)} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.05) 0%, transparent 60%)' }}>
                 {isLoading ? (<div className="h-40 flex items-center justify-center"><LoadingMessage /></div>) : 
                 topProjects.length === 0 ? (
                     <div className="h-40 flex flex-col items-center justify-center">
@@ -145,8 +145,9 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     );
 };
 
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onNewProjectVoice, onSelectProject, onDeleteProject, onShowBrandGallery, onPreloadNewProject }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onNewProjectVoice, onSelectProject, onDeleteProject, onPreloadNewProject }) => {
     const { profile } = useAuth();
+    const { toggleVoiceWizard } = useUI();
     const [showOnboarding, setShowOnboarding] = useState(false);
     
     useEffect(() => {
@@ -186,7 +187,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
                 </div>
                 <div className="text-text-muted font-semibold">ATAU</div>
                 <div className="w-full">
-                    <Button onClick={onNewProjectVoice} variant="secondary" size="large" className="w-full animate-ai-fab-pulse !border-splash/50 !text-splash hover:!bg-splash/10">
+                    <Button onClick={() => toggleVoiceWizard(true)} variant="secondary" size="large" className="w-full animate-ai-fab-pulse !border-splash/50 !text-splash hover:!bg-splash/10">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                         Konsultasi Suara dengan Mang AI
                     </Button>
@@ -242,7 +243,7 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
             
             <div className="w-full border-t border-border-main my-8"></div>
             <div className="w-full max-w-4xl space-y-8">
-                <BrandGalleryPreview onShowGallery={onShowBrandGallery} />
+                <BrandGalleryPreview />
             </div>
             <div className="w-full max-w-4xl space-y-8 mt-8">
                 <SaweriaWidget />
@@ -267,8 +268,9 @@ const TabButton: React.FC<{
     </button>
 );
 
-const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
+const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery' | 'onShowSotoshop'>> = (props) => {
   const { profile } = useAuth();
+  const { toggleSotoshop } = useUI();
   const userName = profile?.full_name?.split(' ')[0] || 'Juragan';
   const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'forum' | 'juragan'>('projects');
   
@@ -317,7 +319,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
       
       <div className="mt-4">
         {activeTab === 'projects' && <ProjectContent {...props} />}
-        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools onShowSotoshop={props.onShowSotoshop} /></Suspense>)}
+        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><QuickTools onShowSotoshop={() => toggleSotoshop(true)} /></Suspense>)}
         {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
         {activeTab === 'juragan' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
       </div>

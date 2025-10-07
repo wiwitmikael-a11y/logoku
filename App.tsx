@@ -8,6 +8,7 @@ import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './serv
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
 import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
 import { AIPetProvider, useAIPet } from './contexts/AIPetContext';
+import { UIProvider, useUI } from './contexts/UIContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
@@ -350,13 +351,22 @@ const AIPetHomeModal: React.FC<{ show: boolean; onClose: () => void; petState: A
 const App: React.FC = () => {
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
     if (!import.meta.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
-    return ( <AuthProvider> <AIPetProvider> <MainApp /> </AIPetProvider> </AuthProvider> );
+    return (
+        <AuthProvider>
+            <AIPetProvider>
+                <UIProvider>
+                    <MainApp />
+                </UIProvider>
+            </AIPetProvider>
+        </AuthProvider>
+    );
 };
 
 const MainApp: React.FC = () => {
     const { session, user, profile, loading: authLoading, projects, setProjects, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
     const aipetContext = useAIPet();
     const { petState, isPetOnScreen } = aipetContext;
+    const { toast, showToast, closeToast, isAssistantOpen, toggleAssistant, showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showBrandGalleryModal, toggleBrandGalleryModal, showSotoshop, toggleSotoshop, showAIPetLab, toggleAIPetLab, showTokenomicsModal, toggleTokenomicsModal, showVoiceWizard, toggleVoiceWizard } = useUI();
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -366,25 +376,13 @@ const MainApp: React.FC = () => {
     });
 
     const [generalError, setGeneralError] = useState<string | null>(null);
-    const [toast, setToast] = useState({ message: '', show: false });
     
-    const [isAssistantOpen, setAssistantOpen] = useState(false);
     const [showAIPetHome, setShowAIPetHome] = useState(false);
-    const [showContactModal, setShowContactModal] = useState(false);
-    const [showAboutModal, setShowAboutModal] = useState(false);
-    const [showToSModal, setShowToSModal] = useState(false);
-    const [showPrivacyModal, setShowPrivacyModal] = useState(false);
     const [showCaptcha, setShowCaptcha] = useState(true);
-    const [showProfileModal, setShowProfileModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
-    const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
-    const [showSotoshop, setShowSotoshop] = useState(false);
-    const [showAIPetLab, setShowAIPetLab] = useState(false);
-    const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
-    const [showVoiceWizard, setShowVoiceWizard] = useState(false);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -398,8 +396,6 @@ const MainApp: React.FC = () => {
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
     
-    const showToast = useCallback((message: string) => { setToast({ message, show: true }); }, []);
-
     // --- Smart Preloading ---
     const preloadBrandPersona = () => import('./components/BrandPersonaGenerator');
 
@@ -479,7 +475,7 @@ const MainApp: React.FC = () => {
     
     const handleVoiceWizardComplete = useCallback(async (inputs: BrandInputs) => {
         if (!session?.user || !profile) return;
-        setShowVoiceWizard(false);
+        toggleVoiceWizard(false);
         const { data, error } = await supabase.from('projects').insert({ user_id: session.user.id, project_data: {}, status: 'in-progress' as ProjectStatus }).select().single();
         if (error) { setGeneralError(`Gagal memulai project baru via suara: ${error.message}`); return; }
         const newProject: Project = data as any;
@@ -488,7 +484,7 @@ const MainApp: React.FC = () => {
         saveWorkflowState({ brandInputs: inputs });
         // The persona step is skipped, go directly to logo
         navigateTo('logo'); 
-    }, [session, profile, projects, setProjects]);
+    }, [session, profile, projects, setProjects, toggleVoiceWizard]);
     
     const handleReturnToDashboard = useCallback(() => { clearWorkflowState(); setSelectedProjectId(null); navigateTo('dashboard'); }, []);
     const handleRequestReturnToDashboard = useCallback(() => { if (appState === 'dashboard') { setIsUserMenuOpen(false); handleReturnToDashboard(); return; } setShowDashboardConfirm(true); setIsUserMenuOpen(false); }, [appState, handleReturnToDashboard]);
@@ -599,14 +595,14 @@ const MainApp: React.FC = () => {
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} addXp={addXp} onShareToForum={() => handleShareToForum(project)} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} addXp={addXp} {...commonProps} /> : null;
-            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onNewProjectVoice={() => setShowVoiceWizard(true)} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onShowBrandGallery={() => setShowBrandGalleryModal(true)} onShowSotoshop={() => setShowSotoshop(true)} onPreloadNewProject={preloadBrandPersona} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onNewProjectVoice={() => toggleVoiceWizard(true)} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onPreloadNewProject={preloadBrandPersona} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
     
     if (authLoading) return <AuthLoadingScreen />;
     
-    if (!session) return ( <> <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} onShowToS={() => setShowToSModal(true)} onShowPrivacy={() => setShowPrivacyModal(true)} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} /> </Suspense> </> );
+    if (!session) return ( <> <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} /> </Suspense> </> );
     
     return (
       <>
@@ -618,7 +614,7 @@ const MainApp: React.FC = () => {
                         <span className="text-primary">des<span className="text-accent">ai</span>n</span><span className="text-text-header">.fun</span>
                     </h1>
                     <div className="flex items-center gap-1 sm:gap-2">
-                        <button onClick={() => setShowTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1.5 p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
+                        <button onClick={() => toggleTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1.5 p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                             <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span>
                         </button>
@@ -626,7 +622,7 @@ const MainApp: React.FC = () => {
                         
                         {!aipetContext.isLoading && petState && (
                             <button
-                                onClick={() => { playSound('click'); setShowAIPetLab(true); }}
+                                onClick={() => { playSound('click'); toggleAIPetLab(true); }}
                                 title="Buka AIPet Lab"
                                 className="flex items-center gap-2 rounded-full p-1 pr-3 bg-background hover:bg-border-light transition-colors border border-border-main group"
                             >
@@ -663,9 +659,9 @@ const MainApp: React.FC = () => {
                                         </p>
                                     </div>
                                     <a onClick={handleRequestReturnToDashboard} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors">Dashboard</a>
-                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); toggleProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
                                     <div className="border-t border-border-main my-1"></div>
-                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); toggleAboutModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</a>
                                     <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Traktir Kopi</a>
                                     <div className="border-t border-border-main my-1"></div>
                                     <a onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">Logout</a>
@@ -688,14 +684,9 @@ const MainApp: React.FC = () => {
                     )}
                 </div>
             </main>
-             <Footer 
-                onShowAbout={() => setShowAboutModal(true)}
-                onShowContact={() => setShowContactModal(true)}
-                onShowToS={() => setShowToSModal(true)}
-                onShowPrivacy={() => setShowPrivacyModal(true)}
-            />
+             <Footer />
             <AdBanner />
-            <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
+            <Toast message={toast.message} show={toast.show} onClose={closeToast} />
         </div>
 
         {/* --- Floating Pet Assistant & Panels --- */}
@@ -704,14 +695,14 @@ const MainApp: React.FC = () => {
                 <FloatingAIPet 
                     petState={petState} 
                     isVisible={isPetOnScreen}
-                    onAsk={() => setAssistantOpen(true)}
-                    onShowLab={() => setShowAIPetLab(true)}
+                    onAsk={() => toggleAssistant(true)}
+                    onShowLab={() => toggleAIPetLab(true)}
                 />
 
                 <Suspense fallback={null}>
                     <AiAssistant 
                         isOpen={isAssistantOpen} 
-                        onToggle={setAssistantOpen} 
+                        onToggle={toggleAssistant} 
                         petName={petState.name} 
                     />
                 </Suspense>
@@ -720,19 +711,19 @@ const MainApp: React.FC = () => {
         
         {/* Modals and overlays */}
         <Suspense fallback={null}>
-            {showVoiceWizard && <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} onComplete={handleVoiceWizardComplete} />}
+            {showVoiceWizard && <VoiceBrandingWizard show={showVoiceWizard} onClose={() => toggleVoiceWizard(false)} onComplete={handleVoiceWizardComplete} />}
             <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={petState} profile={profile} />
-            <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
+            <BrandGalleryModal show={showBrandGalleryModal} onClose={() => toggleBrandGalleryModal(false)} />
             <AIPetLabModal 
                 show={showAIPetLab} 
-                onClose={() => setShowAIPetLab(false)}
+                onClose={() => toggleAIPetLab(false)}
             />
-            <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
-            <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
-            <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
-            <PrivacyPolicyModal show={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
+            <ContactModal show={showContactModal} onClose={() => toggleContactModal(false)} />
+            <AboutModal show={showAboutModal} onClose={() => toggleAboutModal(false)} />
+            <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} />
+            <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} />
             <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
-            <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onShowToS={() => setShowToSModal(true)} onShowContact={() => setShowContactModal(true)} isMuted={isMuted} handleToggleMute={handleToggleMute} bgmSelection={bgmSelection} handleBgmChange={handleBgmChange} />
+            <ProfileSettingsModal show={showProfileModal} onClose={() => toggleProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} isMuted={isMuted} handleToggleMute={handleToggleMute} bgmSelection={bgmSelection} handleBgmChange={handleBgmChange} />
             <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout" cancelText="Batal">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
             <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
             <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} projectLogoUrl={projectToDelete?.project_data?.selectedLogoUrl} />
@@ -740,19 +731,20 @@ const MainApp: React.FC = () => {
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
             <Sotoshop 
                 show={showSotoshop} 
-                onClose={() => setShowSotoshop(false)} 
+                onClose={() => toggleSotoshop(false)} 
                 profile={profile}
                 deductCredits={deductCredits}
                 setShowOutOfCreditsModal={setShowOutOfCreditsModal}
                 addXp={addXp}
             />
-            <TokenomicsModal show={showTokenomicsModal} onClose={() => setShowTokenomicsModal(false)} />
+            <TokenomicsModal show={showTokenomicsModal} onClose={() => toggleTokenomicsModal(false)} />
         </Suspense>
       </>
     );
 };
 
-const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onShowToS: () => void; onShowPrivacy: () => void;}> = ({ onShowAbout, onShowContact, onShowToS, onShowPrivacy }) => {
+const Footer: React.FC = () => {
+    const { toggleAboutModal, toggleContactModal, toggleToSModal, togglePrivacyModal } = useUI();
     return (
         <footer className="bg-surface border-t border-border-main text-text-muted">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -769,10 +761,10 @@ const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onSh
                     <div className="space-y-2">
                         <h4 className="font-semibold text-text-header">Navigasi</h4>
                         <ul className="space-y-1 text-sm">
-                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
-                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Kontak Developer</button></li>
-                            <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
-                            <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
+                            <li><button onClick={() => toggleAboutModal(true)} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
+                            <li><button onClick={() => toggleContactModal(true)} className="hover:text-primary transition-colors">Kontak Developer</button></li>
+                            <li><button onClick={() => toggleToSModal(true)} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
+                            <li><button onClick={() => togglePrivacyModal(true)} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
                         </ul>
                     </div>
                      <div className="space-y-2">

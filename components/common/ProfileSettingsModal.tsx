@@ -5,6 +5,7 @@ import { playSound, unlockAudio } from '../../services/soundService';
 import { User, Profile } from '../../types';
 import Button from './Button';
 import { BgmSelection } from '../../contexts/AuthContext';
+import { useUI } from '../../contexts/UIContext';
 
 const AIPetCard = React.lazy(() => import('../gamification/AIPetCard'));
 
@@ -21,16 +22,15 @@ interface Props {
   profile: Profile | null;
   onLogout: () => void;
   onDeleteAccount: () => void;
-  onShowToS: () => void;
-  onShowContact: () => void;
   isMuted: boolean;
   handleToggleMute: () => void;
   bgmSelection: BgmSelection;
   handleBgmChange: (selection: BgmSelection) => void;
 }
 
-const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, onLogout, onDeleteAccount, onShowToS, onShowContact, isMuted, handleToggleMute, bgmSelection, handleBgmChange }) => {
+const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, onLogout, onDeleteAccount, isMuted, handleToggleMute, bgmSelection, handleBgmChange }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const { toggleToSModal, toggleContactModal } = useUI();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
@@ -43,8 +43,8 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose, user, profile, o
   const handleClose = async () => { await unlockAudio(); playSound('click'); onClose(); };
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => { if (e.target === e.currentTarget) handleClose(); }
   const handleLogoutClick = () => { onLogout(); onClose(); }
-  const handleTosClick = () => { onShowToS(); onClose(); };
-  const handleContactClick = () => { onShowContact(); onClose(); };
+  const handleTosClick = () => { toggleToSModal(true); onClose(); };
+  const handleContactClick = () => { toggleContactModal(true); onClose(); };
 
   const getXpForLevel = (level: number): number => (level - 1) * 750;
   const currentLevel = profile.level ?? 1;
