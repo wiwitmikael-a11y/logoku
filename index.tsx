@@ -7,6 +7,8 @@ import { UIProvider } from './contexts/UIContext';
 import { UserActionsProvider } from './contexts/UserActionsContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { AIPetProvider } from './contexts/AIPetContext';
+import { supabaseError } from './services/supabaseClient';
+import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -16,7 +18,8 @@ if (!rootElement) {
 // Register Service Worker for PWA capabilities
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').then(registration => {
+    // Use absolute path to be more robust against routing issues.
+    navigator.serviceWorker.register('/sw.js').then(registration => {
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
     }, err => {
       console.log('ServiceWorker registration failed: ', err);
@@ -26,16 +29,27 @@ if ('serviceWorker' in navigator) {
 
 
 const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <AuthProvider>
-      <UserActionsProvider>
-        <UIProvider>
-          <AIPetProvider>
-            <App />
-          </AIPetProvider>
-        </UIProvider>
-      </UserActionsProvider>
-    </AuthProvider>
-  </React.StrictMode>
-);
+
+// Lakukan pengecekan kunci Supabase di level tertinggi untuk mencegah aplikasi crash
+// di dalam provider sebelum layar error bisa ditampilkan.
+if (supabaseError) {
+  root.render(
+    <React.StrictMode>
+      <SupabaseKeyErrorScreen error={supabaseError} />
+    </React.StrictMode>
+  );
+} else {
+  root.render(
+    <React.StrictMode>
+      <AuthProvider>
+        <UserActionsProvider>
+          <UIProvider>
+            <AIPetProvider>
+              <App />
+            </AIPetProvider>
+          </UIProvider>
+        </UserActionsProvider>
+      </AuthProvider>
+    </React.StrictMode>
+  );
+}
