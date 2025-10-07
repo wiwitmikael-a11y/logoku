@@ -23,6 +23,11 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
+  constructor(props: Props) {
+    super(props);
+    this.handleCopy = this.handleCopy.bind(this);
+  }
+
   // FIX: Updated return type to `State` and ensured the returned object matches the full state shape.
   static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
@@ -33,8 +38,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Using an arrow function correctly binds `this`, allowing access to `this.setState` and `this.props`.
-  handleCopy = () => {
+  // FIX: Bound in constructor to correctly bind `this` for accessing state and props.
+  handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });

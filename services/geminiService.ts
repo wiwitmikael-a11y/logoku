@@ -1,7 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import { GoogleGenAI, Type } from "@google/genai";
-import type { BrandPersona, BrandInputs, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, AIPetState, AIPetTier } from '../types';
+// FIX: Add ProjectData to type imports
+import type { BrandPersona, BrandInputs, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, AIPetState, AIPetTier, ProjectData } from '../types';
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 // Initialize the Gemini client using the environment variable specified in the project.
