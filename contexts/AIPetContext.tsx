@@ -73,9 +73,11 @@ export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         throw new Error(`Token tidak cukup. Butuh 5, kamu punya ${profile.credits}.`);
     }
 
-    // The RPC function is likely designed to use auth.uid() on the backend,
-    // so no parameters are needed from the client.
-    const { data, error } = await supabase.rpc('activate_aipet');
+    // After a deep scan of conflicting errors, the most likely cause is a parameter
+    // name mismatch. The backend function requires the user ID, but under the name `user_id`.
+    const { data, error } = await supabase.rpc('activate_aipet', {
+        user_id: user.id
+    });
 
     if (error) {
         throw new Error(`Gagal aktivasi di server: ${error.message}`);
