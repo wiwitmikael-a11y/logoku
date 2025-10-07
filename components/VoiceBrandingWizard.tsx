@@ -1,7 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Blob, FunctionDeclaration, Type } from "@google/genai";
+// FIX: The 'LiveSession' type is not exported from '@google/genai'. It has been removed.
+import { GoogleGenAI, LiveServerMessage, Modality, Blob, FunctionDeclaration, Type } from "@google/genai";
 import { encode, decode, decodeAudioData } from '../utils/audioUtils';
 import { useAuth } from '../contexts/AuthContext';
 import { playSound } from '../services/soundService';
@@ -49,7 +50,6 @@ const PermissionDeniedScreen: React.FC<{ onCheckAgain: () => void }> = ({ onChec
 
 const TalkingMangAi: React.FC<{ conversationState: ConversationState }> = ({ conversationState }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const mouthRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -67,7 +67,7 @@ const TalkingMangAi: React.FC<{ conversationState: ConversationState }> = ({ con
     return (
         <div ref={containerRef} className="mang-ai-talking-container animate-breathing-ai">
             <div className="mang-ai-body"></div>
-            <div ref={mouthRef} className="mang-ai-mouth mang-ai-mouth-0"></div>
+            <div className="mang-ai-mouth mang-ai-mouth-0"></div>
         </div>
     );
 };
@@ -84,7 +84,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const [error, setError] = useState<string | null>(null);
   const [permissionState, setPermissionState] = useState<'pending' | 'granted' | 'prompt' | 'denied'>('pending');
 
-  const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
+  // FIX: The 'LiveSession' type is not exported. Replaced with 'any' as the guidelines don't specify the return type.
+  const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -94,10 +95,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const brandInputsRef = useRef(brandInputs);
   
-  // New refs for talking animation
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number>(0);
-  const mouthRef = useRef<HTMLDivElement>(null);
   
   const conversationStateRef = useRef(conversationState);
   useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
@@ -110,28 +109,26 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
 
   useEffect(() => { transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [transcript, currentInputTranscript, currentOutputTranscript]);
 
-    // Animation loop for lip-sync
     useEffect(() => {
         const animate = () => {
-            if (analyserRef.current && mouthRef.current && conversationStateRef.current === 'AI_SPEAKING') {
+            if (analyserRef.current && conversationStateRef.current === 'AI_SPEAKING') {
                 const dataArray = new Uint8Array(analyserRef.current.fftSize);
                 analyserRef.current.getByteTimeDomainData(dataArray);
                 let sum = 0;
                 for (let i = 0; i < dataArray.length; i++) {
-                    sum += Math.abs(dataArray[i] - 128); // 128 is the zero-point for PCM audio
+                    sum += Math.abs(dataArray[i] - 128);
                 }
                 const averageVolume = sum / dataArray.length;
                 
-                // Update mouth sprite based on volume
                 let mouthFrame = 0;
-                if (averageVolume > 8) mouthFrame = 2; // High volume, open mouth
-                else if (averageVolume > 2) mouthFrame = 1; // Mid volume, mid mouth
+                if (averageVolume > 8) mouthFrame = 2;
+                else if (averageVolume > 2) mouthFrame = 1;
                 
                 const talkingMouth = document.querySelector('.mang-ai-mouth');
                 if(talkingMouth) talkingMouth.className = `mang-ai-mouth mang-ai-mouth-${mouthFrame}`;
             } else {
                 const talkingMouth = document.querySelector('.mang-ai-mouth');
-                if(talkingMouth) talkingMouth.className = 'mang-ai-mouth mang-ai-mouth-0'; // Default to closed
+                if(talkingMouth) talkingMouth.className = 'mang-ai-mouth mang-ai-mouth-0';
             }
             animationFrameRef.current = requestAnimationFrame(animate);
         };
@@ -148,12 +145,10 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Manually update permission state after successful user grant.
-      // This ensures the UI transitions away from the 'prompt' screen seamlessly.
       setPermissionState('granted');
       streamRef.current = stream;
       
-      const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_API_KEY});
+      const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
 
       sessionPromiseRef.current = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
@@ -240,11 +235,16 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               for (const fc of message.toolCall.functionCalls) {
                 let result = 'OK'; let nextStep: VoiceWizardStep | null = null;
                 switch (fc.name) {
-                  case 'saveBusinessName': setBrandInputs(p => ({ ...p, businessName: fc.args.name })); nextStep = 'GET_BUSINESS_DETAILS'; break;
-                  case 'saveBusinessDetails': setBrandInputs(p => ({ ...p, businessCategory: fc.args.category, businessDetail: fc.args.detail })); nextStep = 'GET_TARGET_AUDIENCE'; break;
-                  case 'saveTargetAudience': setBrandInputs(p => ({ ...p, targetAudience: `${fc.args.category} usia ${fc.args.age}` })); nextStep = 'GET_VALUE_PROPOSITION'; break;
-                  case 'saveValueProposition': setBrandInputs(p => ({ ...p, valueProposition: fc.args.value })); nextStep = 'GET_COMPETITORS'; break;
-                  case 'saveCompetitors': setBrandInputs(p => ({ ...p, competitors: fc.args.competitors })); nextStep = 'CONFIRMATION'; break;
+                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
+                  case 'saveBusinessName': setBrandInputs(p => ({ ...p, businessName: fc.args.name as string })); nextStep = 'GET_BUSINESS_DETAILS'; break;
+                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
+                  case 'saveBusinessDetails': setBrandInputs(p => ({ ...p, businessCategory: fc.args.category as string, businessDetail: fc.args.detail as string })); nextStep = 'GET_TARGET_AUDIENCE'; break;
+                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
+                  case 'saveTargetAudience': setBrandInputs(p => ({ ...p, targetAudience: `${fc.args.category as string} usia ${fc.args.age as string}` })); nextStep = 'GET_VALUE_PROPOSITION'; break;
+                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
+                  case 'saveValueProposition': setBrandInputs(p => ({ ...p, valueProposition: fc.args.value as string })); nextStep = 'GET_COMPETITORS'; break;
+                  // FIX: Cast 'unknown' arguments from Gemini to 'string' to satisfy TypeScript types.
+                  case 'saveCompetitors': setBrandInputs(p => ({ ...p, competitors: fc.args.competitors as string })); nextStep = 'CONFIRMATION'; break;
                   case 'confirmAllDetails': setWizardStep('COMPLETED'); setConversationState('COMPLETED'); onComplete(brandInputsRef.current as BrandInputs); break;
                 }
                 if (nextStep) setWizardStep(nextStep);
