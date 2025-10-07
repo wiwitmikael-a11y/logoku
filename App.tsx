@@ -6,8 +6,10 @@ import { supabase, supabaseError } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
-import { AuthProvider, useAuth, BgmSelection } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AIPetProvider, useAIPet } from './contexts/AIPetContext';
+import { UIProvider, useUI } from './contexts/UIContext';
+import { UserActionsProvider, useUserActions } from './contexts/UserActionsContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
@@ -28,6 +30,7 @@ import ProgressStepper from './components/common/ProgressStepper';
 import AdBanner from './components/AdBanner';
 import Toast from './components/common/Toast';
 import CalloutPopup from './components/common/CalloutPopup';
+import VoiceBrandingWizard from './components/VoiceBrandingWizard';
 
 // --- Lazily Loaded Components ---
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
@@ -68,13 +71,12 @@ const TokenomicsModal = React.lazy(() => import('./components/common/TokenomicsM
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 type PetBehavior = 'idle' | 'walking' | 'running' | 'jumping' | 'interacting' | 'turning' | 'somersault';
 
-const FloatingAIPet: React.FC<{ petState: AIPetState, isVisible: boolean, onAsk: () => void, onShowLab: () => void }> = ({ 
+const FloatingAIPet: React.FC<{ petState: AIPetState, isVisible: boolean }> = ({ 
     petState, 
     isVisible, 
-    onAsk, 
-    onShowLab,
 }) => {
     const { contextualMessage, showContextualMessage } = useAIPet();
+    const { toggleAssistant, toggleAIPetLab } = useUI();
     const [position, setPosition] = useState({ x: 50, direction: 1 });
     const [behavior, setBehavior] = useState<PetBehavior>('idle');
     const [isInteracting, setIsInteracting] = useState(false);
@@ -201,8 +203,8 @@ const FloatingAIPet: React.FC<{ petState: AIPetState, isVisible: boolean, onAsk:
                   <AIPetInteractionBubble
                       isOpen={isBubbleOpen}
                       onClose={() => setBubbleOpen(false)}
-                      onAsk={onAsk}
-                      onShowLab={onShowLab}
+                      onAsk={() => toggleAssistant(true)}
+                      onShowLab={() => toggleAIPetLab(true)}
                       petName={petState.name}
                   />
               </Suspense>
@@ -212,8 +214,10 @@ const FloatingAIPet: React.FC<{ petState: AIPetState, isVisible: boolean, onAsk:
 };
 
 
-const AiAssistant: React.FC<{ petName: string, isOpen: boolean, onToggle: (isOpen: boolean) => void }> = ({ petName, isOpen, onToggle }) => {
-    const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+const AiAssistant: React.FC<{ petName: string }> = ({ petName }) => {
+    const { profile } = useAuth();
+    const { isAssistantOpen, toggleAssistant } = useUI();
+    const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
     const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -227,8 +231,8 @@ const AiAssistant: React.FC<{ petName: string, isOpen: boolean, onToggle: (isOpe
     useEffect(scrollToBottom, [messages, isLoading]);
     
     useEffect(() => {
-        if(isOpen && messages.length === 0) setMessages([{ role: 'model', text: `Halo Juragan! Aku ${petName}, siap bantu. Ada yang bisa dibantuin soal branding atau fitur di aplikasi ini?` }]);
-    }, [isOpen, messages.length, petName]);
+        if(isAssistantOpen && messages.length === 0) setMessages([{ role: 'model', text: `Halo Juragan! Aku ${petName}, siap bantu. Ada yang bisa dibantuin soal branding atau fitur di aplikasi ini?` }]);
+    }, [isAssistantOpen, messages.length, petName]);
 
     useEffect(() => {
         const textarea = textareaRef.current;
@@ -258,11 +262,11 @@ const AiAssistant: React.FC<{ petName: string, isOpen: boolean, onToggle: (isOpe
 
     return (
         <>
-            <div id="ai-assistant-overlay" className={isOpen ? 'visible' : ''} onClick={() => onToggle(false)}></div>
-            <div className={`ai-assistant-panel ${isOpen ? 'open' : ''}`}>
+            <div id="ai-assistant-overlay" className={isAssistantOpen ? 'visible' : ''} onClick={() => toggleAssistant(false)}></div>
+            <div className={`ai-assistant-panel ${isAssistantOpen ? 'open' : ''}`}>
                 <header className="p-4 border-b border-border-main flex justify-between items-center flex-shrink-0">
                     <h3 className="text-lg font-bold text-primary">Tanya {petName}</h3>
-                    <button onClick={() => onToggle(false)} title="Tutup" className="p-2 text-primary rounded-full hover:bg-background hover:text-primary-hover close-button-glow">
+                    <button onClick={() => toggleAssistant(false)} title="Tutup" className="p-2 text-primary rounded-full hover:bg-background hover:text-primary-hover close-button-glow">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </header>
@@ -307,53 +311,28 @@ const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> =
     </button>
 );
 
-const AIPetHomeModal: React.FC<{ show: boolean; onClose: () => void; petState: AIPetState | null; profile: Profile | null }> = ({ show, onClose, petState, profile }) => {
-    if (!show || !petState || !profile) return null;
-
-    const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; icon: string; } } = {
-      BRAND_PERTAMA_LAHIR: { name: 'Brand Pertama Lahir!', description: 'Selesaikan 1 project.', icon: '🥉' },
-      SANG_KOLEKTOR: { name: 'Sang Kolektor', description: 'Selesaikan 5 project.', icon: '🥈' },
-      SULTAN_KONTEN: { name: 'Sultan Konten', description: 'Selesaikan 10 project.', icon: '🥇' },
-    };
-    const userAchievements = profile.achievements || [];
-
-    return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={onClose}>
-            <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-xl p-8 flex flex-col items-center" onClick={e => e.stopPropagation()}>
-                <h2 className="text-3xl font-bold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>Rumah {petState.name}</h2>
-                <div className="w-48 h-48 my-4">
-                    <Suspense fallback={null}><AIPetVisual petState={petState} /></Suspense>
-                </div>
-                <p className="text-text-muted text-sm mb-6">Ini adalah tempat {petState.name} beristirahat dan memajang prestasimu!</p>
-                <div className="w-full bg-background p-4 rounded-lg">
-                    <h3 className="font-semibold text-text-header mb-3">Dinding Prestasi</h3>
-                    {userAchievements.length > 0 ? (
-                        <div className="flex justify-center gap-4">
-                            {userAchievements.map(id => ACHIEVEMENTS_MAP[id] && (
-                                <div key={id} className="text-center" title={ACHIEVEMENTS_MAP[id].description}>
-                                    <span className="text-5xl">{ACHIEVEMENTS_MAP[id].icon}</span>
-                                    <p className="text-xs font-semibold">{ACHIEVEMENTS_MAP[id].name}</p>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-xs text-text-muted italic text-center">Dinding masih kosong. Selesaikan project untuk mendapatkan lencana!</p>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
-
 
 const App: React.FC = () => {
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
     if (!import.meta.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
-    return ( <AuthProvider> <AIPetProvider> <MainApp /> </AIPetProvider> </AuthProvider> );
+    return (
+      <AuthProvider>
+        <UserActionsProvider>
+          <UIProvider>
+            <AIPetProvider>
+              <MainApp />
+            </AIPetProvider>
+          </UIProvider>
+        </UserActionsProvider>
+      </AuthProvider>
+    );
 };
 
 const MainApp: React.FC = () => {
-    const { session, user, profile, projects, setProjects, loading: authLoading, showOutOfCreditsModal, setShowOutOfCreditsModal, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError, refreshProfile, addXp, grantAchievement, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
+    const { session, user, profile, projects, setProjects, loading: authLoading, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout: authExecuteLogout, handleDeleteAccount, authError } = useAuth();
+    // FIX: Destructure setShowOutOfCreditsModal from useUserActions
+    const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, grantFirstTimeCompletionBonus, addXp, grantAchievement } = useUserActions();
+    const { toast, showToast, closeToast, ...uiToggles } = useUI();
     const aipetContext = useAIPet();
     const { petState, isPetOnScreen } = aipetContext;
     
@@ -363,52 +342,33 @@ const MainApp: React.FC = () => {
         const id = sessionStorage.getItem('desainfun_project_id');
         return id ? parseInt(id, 10) : null;
     });
-
-    const [generalError, setGeneralError] = useState<string | null>(null);
-    const [toast, setToast] = useState({ message: '', show: false });
     
-    const [isAssistantOpen, setAssistantOpen] = useState(false);
-    const [showAIPetHome, setShowAIPetHome] = useState(false);
-    const [showContactModal, setShowContactModal] = useState(false);
-    const [showAboutModal, setShowAboutModal] = useState(false);
-    const [showToSModal, setShowToSModal] = useState(false);
-    const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-    const [showCaptcha, setShowCaptcha] = useState(true);
-    const [showProfileModal, setShowProfileModal] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [generalError, setGeneralError] = useState<string | null>(null);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
-    const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
-    const [showSotoshop, setShowSotoshop] = useState(false);
-    const [showAIPetLab, setShowAIPetLab] = useState(false);
-    const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
+    const [showCaptcha, setShowCaptcha] = useState(true);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
     const previousAppState = useRef<AppState>(appState);
 
-    // UX Enhancements
     const [showXpGain, setShowXpGain] = useState(false);
     const prevXp = useRef(profile?.xp ?? 0);
 
-    const workflowSteps: AppState[] = ["persona" , "logo" , "logo_detail" , "social_kit" , "profiles" , "packaging" , "print_media" , "content_calendar" , "social_ads" , "merchandise"];
+    const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'social_kit', 'profiles', 'packaging', 'print_media', 'content_calendar', 'social_ads', 'merchandise'];
     const currentStepIndex = workflowSteps.indexOf(appState);
     const showStepper = currentStepIndex !== -1;
     
-    const showToast = useCallback((message: string) => { setToast({ message, show: true }); }, []);
-
-    // --- Smart Preloading ---
     const preloadBrandPersona = () => import('./components/BrandPersonaGenerator');
 
-    // --- Theme Management ---
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('desainfun_theme', theme);
     }, [theme]);
     const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-    // --- Effects for State Persistence & Initial Load ---
     useEffect(() => {
         if (session) {
             if (appState === 'dashboard') { sessionStorage.removeItem('desainfun_app_state'); sessionStorage.removeItem('desainfun_project_id'); }
@@ -419,48 +379,29 @@ const MainApp: React.FC = () => {
     useEffect(() => { if (!session && !authLoading) setShowCaptcha(true); else setShowCaptcha(false); }, [session, authLoading]);
     
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => { 
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false); 
-        };
+        const handleClickOutside = (event: MouseEvent) => { if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false); };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     useEffect(() => {
-        if (previousAppState.current !== appState) {
-            playSound('transition');
-            window.scrollTo(0, 0);
-        }
+        if (previousAppState.current !== appState) { playSound('transition'); window.scrollTo(0, 0); }
         previousAppState.current = appState;
     }, [appState]);
 
-    // AIPet Idle Timer
     useEffect(() => {
         let idleTimeout: number;
-        const resetTimer = () => {
-            clearTimeout(idleTimeout);
-            idleTimeout = window.setTimeout(() => {
-                aipetContext.notifyPetOfActivity('user_idle');
-            }, 120000); // 2 minutes
-        };
+        const resetTimer = () => { clearTimeout(idleTimeout); idleTimeout = window.setTimeout(() => aipetContext.notifyPetOfActivity('user_idle'), 120000); };
         const events = ['mousemove', 'keydown', 'mousedown', 'touchstart'];
         events.forEach(event => window.addEventListener(event, resetTimer));
         resetTimer();
-        return () => {
-            clearTimeout(idleTimeout);
-            events.forEach(event => window.removeEventListener(event, resetTimer));
-        };
+        return () => { clearTimeout(idleTimeout); events.forEach(event => window.removeEventListener(event, resetTimer)); };
     }, [aipetContext.notifyPetOfActivity]);
 
-    // XP Gain Animation
     useEffect(() => {
-        if (profile && profile.xp > prevXp.current) {
-            setShowXpGain(true);
-            setTimeout(() => setShowXpGain(false), 1500);
-        }
+        if (profile && profile.xp > prevXp.current) { setShowXpGain(true); setTimeout(() => setShowXpGain(false), 1500); }
         prevXp.current = profile?.xp ?? 0;
     }, [profile?.xp]);
-
 
     const navigateTo = (state: AppState) => setAppState(state);
 
@@ -523,6 +464,7 @@ const MainApp: React.FC = () => {
         await grantFirstTimeCompletionBonus('persona'); 
         navigateTo('logo');
     }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus, session, selectedProjectId, setProjects]);
+
     const handleLogoComplete = useCallback(async (data: { logoBase64: string; prompt: string }) => { saveLocalCheckpoint({ selectedLogoUrl: data.logoBase64, logoPrompt: data.prompt }); await grantFirstTimeCompletionBonus('logo'); navigateTo('logo_detail'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
     const handleLogoDetailComplete = useCallback(async (data: { finalLogoUrl: string; variations: LogoVariations }) => { saveLocalCheckpoint({ selectedLogoUrl: data.finalLogoUrl, logoVariations: data.variations }); await grantFirstTimeCompletionBonus('logo_detail'); navigateTo('social_kit'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
     const handleSocialKitComplete = useCallback(async (data: { assets: SocialMediaKitAssets }) => { saveLocalCheckpoint({ socialMediaKit: data.assets }); await grantFirstTimeCompletionBonus('social_kit'); navigateTo('profiles'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
@@ -531,19 +473,50 @@ const MainApp: React.FC = () => {
     const handlePrintMediaComplete = useCallback(async (data: { assets: PrintMediaAssets }) => { saveLocalCheckpoint({ printMediaAssets: data.assets }); await grantFirstTimeCompletionBonus('print_media'); navigateTo('content_calendar'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
     const handleContentCalendarComplete = useCallback(async (data: { calendar: ContentCalendarEntry[], sources: any[] }) => { saveLocalCheckpoint({ contentCalendar: data.calendar, searchSources: data.sources }); await grantFirstTimeCompletionBonus('content_calendar'); navigateTo('social_ads'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
     const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => { saveLocalCheckpoint({ socialAds: data.adsData }); await grantFirstTimeCompletionBonus('social_ads'); navigateTo('merchandise'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
+    
     const handleMerchandiseComplete = useCallback(async (merchandiseUrl: string) => {
-        if (!session?.user || !selectedProjectId || !profile) return; const currentState = loadWorkflowState() || {}; const finalProjectData = { ...currentState, merchandiseUrl };
-        await grantFirstTimeCompletionBonus('merchandise'); const { data: dbData, error: projectError } = await supabase.from('projects').update({ project_data: finalProjectData, status: 'completed' as ProjectStatus }).eq('id', selectedProjectId).select().single();
-        if (projectError) { setGeneralError(`Gagal menyimpan finalisasi project: ${projectError.message}`); return; }
-        await addXp(500);
-        if (profile) {
-            const newTotalCompleted = (profile.total_projects_completed ?? 0) + 1;
-            if (newTotalCompleted === 1) await grantAchievement('BRAND_PERTAMA_LAHIR'); else if (newTotalCompleted === 5) await grantAchievement('SANG_KOLEKTOR'); else if (newTotalCompleted === 10) await grantAchievement('SULTAN_KONTEN');
+        if (!session?.user || !selectedProjectId || !profile) return;
+        const currentState = loadWorkflowState() || {};
+        const finalProjectData = { ...currentState, merchandiseUrl };
+
+        // Perform critical DB update
+        const { data: updatedProject, error: projectError } = await supabase
+            .from('projects')
+            .update({ project_data: finalProjectData, status: 'completed' as ProjectStatus })
+            .eq('id', selectedProjectId)
+            .select()
+            .single();
+
+        if (projectError) {
+            setGeneralError(`Gagal menyimpan finalisasi project: ${projectError.message}`);
+            return;
         }
-        const updatedProject: Project = dbData as any; setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+
+        // --- UI is now unblocked ---
+        // Optimistically update local state and navigate away immediately
+        setProjects(prev => prev.map(p => p.id === (updatedProject as Project).id ? (updatedProject as Project) : p));
         aipetContext.notifyPetOfActivity('project_completed');
-        handleReturnToDashboard(); showToast("Mantap! Project lo berhasil diselesaikan.");
-    }, [session, user, selectedProjectId, profile, grantFirstTimeCompletionBonus, addXp, grantAchievement, handleReturnToDashboard, showToast, aipetContext.notifyPetOfActivity, setProjects]);
+        handleReturnToDashboard();
+        showToast("Mantap! Project lo berhasil diselesaikan.");
+
+        // --- Run non-critical background tasks without blocking UI ---
+        const runPostCompletionTasks = async () => {
+            try {
+                await grantFirstTimeCompletionBonus('merchandise');
+                await addXp(500);
+                const newTotalCompleted = (profile.total_projects_completed ?? 0) + 1;
+                if (newTotalCompleted === 1) await grantAchievement('BRAND_PERTAMA_LAHIR');
+                else if (newTotalCompleted === 5) await grantAchievement('SANG_KOLEKTOR');
+                else if (newTotalCompleted === 10) await grantAchievement('SULTAN_KONTEN');
+            } catch (e) {
+                console.error("Error during post-completion tasks:", e);
+                // Optionally show a non-critical error toast
+            }
+        };
+
+        runPostCompletionTasks(); // Run without await
+
+    }, [session, user, selectedProjectId, profile, setProjects, handleReturnToDashboard, showToast, aipetContext, grantFirstTimeCompletionBonus, addXp, grantAchievement]);
 
     const handleRegenerateTextAsset = useCallback(async <T,>(projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<T>, successMessage: string) => {
         if ((profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
@@ -584,13 +557,9 @@ const MainApp: React.FC = () => {
             case 'content_calendar': return <ContentCalendarGenerator projectData={workflowData || {}} onComplete={handleContentCalendarComplete} {...commonProps} />;
             case 'social_ads': return <SocialAdsGenerator projectData={workflowData || {}} onComplete={handleSocialAdsComplete} {...commonProps} />;
             case 'merchandise': return <MerchandiseGenerator projectData={workflowData || {}} onComplete={handleMerchandiseComplete} {...commonProps} />;
-// FIX: Removed incorrect `addXp` prop from ProjectSummary call as it's not defined in the component's props.
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} onShareToForum={() => handleShareToForum(project)} /> : null;
-// FIX: Removed incorrect `addXp` prop from CaptionGenerator call. The component uses the `useUserActions` context to get this function, so the prop is not needed.
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonProps} /> : null;
-// FIX: Removed incorrect `addXp` prop from InstantContentGenerator call. The component uses the `useUserActions` context to get this function, so the prop is not needed.
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonProps} /> : null;
-// FIX: Removed incorrect `onShowBrandGallery` and `onShowSotoshop` props from ProjectDashboard call. The component uses the `useUI` context for this functionality.
             case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onPreloadNewProject={preloadBrandPersona} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
@@ -598,8 +567,7 @@ const MainApp: React.FC = () => {
     
     if (authLoading) return <AuthLoadingScreen />;
     
-// FIX: Removed incorrect `onShowToS` and `onShowPrivacy` props from LoginScreen call. The component uses the `useUI` context for this functionality.
-    if (!session) return ( <> <LoginScreen onGoogleLogin={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }})} isCaptchaSolved={!showCaptcha} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} /> </Suspense> </> );
+    if (!session) return ( <> <LoginScreen isCaptchaSolved={!showCaptcha} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={uiToggles.showToSModal} onClose={() => uiToggles.toggleToSModal(false)} /> <PrivacyPolicyModal show={uiToggles.showPrivacyModal} onClose={() => uiToggles.togglePrivacyModal(false)} /> </Suspense> </> );
     
     return (
       <>
@@ -611,7 +579,7 @@ const MainApp: React.FC = () => {
                         <span className="text-primary">des<span className="text-accent">ai</span>n</span><span className="text-text-header">.fun</span>
                     </h1>
                     <div className="flex items-center gap-1 sm:gap-2">
-                        <button onClick={() => setShowTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1.5 p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
+                        <button onClick={() => uiToggles.toggleTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1.5 p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                             <span className="font-bold text-base text-text-header">{profile?.credits ?? 0}</span>
                         </button>
@@ -619,7 +587,7 @@ const MainApp: React.FC = () => {
                         
                         {!aipetContext.isLoading && petState && (
                             <button
-                                onClick={() => { playSound('click'); setShowAIPetLab(true); }}
+                                onClick={() => { playSound('click'); uiToggles.toggleAIPetLab(true); }}
                                 title="Buka AIPet Lab"
                                 className="flex items-center gap-2 rounded-full p-1 pr-3 bg-background hover:bg-border-light transition-colors border border-border-main group"
                             >
@@ -656,9 +624,9 @@ const MainApp: React.FC = () => {
                                         </p>
                                     </div>
                                     <a onClick={handleRequestReturnToDashboard} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors">Dashboard</a>
-                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); uiToggles.toggleProfileModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
                                     <div className="border-t border-border-main my-1"></div>
-                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); setShowAboutModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); uiToggles.toggleAboutModal(true); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</a>
                                     <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => setIsUserMenuOpen(false)} className="w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Traktir Kopi</a>
                                     <div className="border-t border-border-main my-1"></div>
                                     <a onClick={() => { handleLogout(); setIsUserMenuOpen(false); }} className="cursor-pointer w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">Logout</a>
@@ -681,14 +649,9 @@ const MainApp: React.FC = () => {
                     )}
                 </div>
             </main>
-             <Footer 
-                onShowAbout={() => setShowAboutModal(true)}
-                onShowContact={() => setShowContactModal(true)}
-                onShowToS={() => setShowToSModal(true)}
-                onShowPrivacy={() => setShowPrivacyModal(true)}
-            />
+             <Footer />
             <AdBanner />
-            <Toast message={toast.message} show={toast.show} onClose={() => setToast({ ...toast, show: false })} />
+            <Toast message={toast.message} show={toast.show} onClose={closeToast} />
         </div>
 
         {/* --- Floating Pet Assistant & Panels --- */}
@@ -697,52 +660,38 @@ const MainApp: React.FC = () => {
                 <FloatingAIPet 
                     petState={petState} 
                     isVisible={isPetOnScreen}
-                    onAsk={() => setAssistantOpen(true)}
-                    onShowLab={() => setShowAIPetLab(true)}
                 />
-
                 <Suspense fallback={null}>
-                    <AiAssistant 
-                        isOpen={isAssistantOpen} 
-                        onToggle={setAssistantOpen} 
-                        petName={petState.name} 
-                    />
+                    <AiAssistant petName={petState.name} />
                 </Suspense>
             </>
         )}
 
         {/* Modals and overlays */}
         <Suspense fallback={null}>
-            <AIPetHomeModal show={showAIPetHome} onClose={() => setShowAIPetHome(false)} petState={petState} profile={profile} />
-            <BrandGalleryModal show={showBrandGalleryModal} onClose={() => setShowBrandGalleryModal(false)} />
-            <AIPetLabModal 
-                show={showAIPetLab} 
-                onClose={() => setShowAIPetLab(false)}
-            />
-            <ContactModal show={showContactModal} onClose={() => setShowContactModal(false)} />
-            <AboutModal show={showAboutModal} onClose={() => setShowAboutModal(false)} />
-            <TermsOfServiceModal show={showToSModal} onClose={() => setShowToSModal(false)} />
-            <PrivacyPolicyModal show={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
+            <BrandGalleryModal show={uiToggles.showBrandGalleryModal} onClose={() => uiToggles.toggleBrandGalleryModal(false)} />
+            <AIPetLabModal show={uiToggles.showAIPetLab} onClose={() => uiToggles.toggleAIPetLab(false)} />
+            <ContactModal show={uiToggles.showContactModal} onClose={() => uiToggles.toggleContactModal(false)} />
+            <AboutModal show={uiToggles.showAboutModal} onClose={() => uiToggles.toggleAboutModal(false)} />
+            <TermsOfServiceModal show={uiToggles.showToSModal} onClose={() => uiToggles.toggleToSModal(false)} />
+            <PrivacyPolicyModal show={uiToggles.showPrivacyModal} onClose={() => uiToggles.togglePrivacyModal(false)} />
             <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
-// FIX: Removed incorrect `onShowToS` and `onShowContact` props from ProfileSettingsModal call. The component uses the `useUI` context for this functionality.
-            <ProfileSettingsModal show={showProfileModal} onClose={() => setShowProfileModal(false)} user={user} profile={profile} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} isMuted={isMuted} handleToggleMute={handleToggleMute} bgmSelection={bgmSelection} handleBgmChange={handleBgmChange} />
+            <ProfileSettingsModal show={uiToggles.showProfileModal} onClose={() => uiToggles.toggleProfileModal(false)} />
             <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={executeLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout" cancelText="Batal">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
             <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
             <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} projectLogoUrl={projectToDelete?.project_data?.selectedLogoUrl} />
             <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
-// FIX: Removed incorrect `profile`, `deductCredits`, `setShowOutOfCreditsModal`, and `addXp` props from Sotoshop call. The component uses contexts for this functionality.
-            <Sotoshop 
-                show={showSotoshop} 
-                onClose={() => setShowSotoshop(false)} 
-            />
-            <TokenomicsModal show={showTokenomicsModal} onClose={() => setShowTokenomicsModal(false)} />
+            <Sotoshop show={uiToggles.showSotoshop} onClose={() => uiToggles.toggleSotoshop(false)} />
+            <TokenomicsModal show={uiToggles.showTokenomicsModal} onClose={() => uiToggles.toggleTokenomicsModal(false)} />
+            <VoiceBrandingWizard show={uiToggles.showVoiceWizard} onClose={() => uiToggles.toggleVoiceWizard(false)} onComplete={handleNewProject} />
         </Suspense>
       </>
     );
 };
 
-const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onShowToS: () => void; onShowPrivacy: () => void;}> = ({ onShowAbout, onShowContact, onShowToS, onShowPrivacy }) => {
+const Footer: React.FC = () => {
+    const { toggleAboutModal, toggleContactModal, toggleToSModal, togglePrivacyModal } = useUI();
     return (
         <footer className="bg-surface border-t border-border-main text-text-muted">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -759,10 +708,10 @@ const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onSh
                     <div className="space-y-2">
                         <h4 className="font-semibold text-text-header">Navigasi</h4>
                         <ul className="space-y-1 text-sm">
-                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
-                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Kontak Developer</button></li>
-                            <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
-                            <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
+                            <li><button onClick={() => toggleAboutModal(true)} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
+                            <li><button onClick={() => toggleContactModal(true)} className="hover:text-primary transition-colors">Kontak Developer</button></li>
+                            <li><button onClick={() => toggleToSModal(true)} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
+                            <li><button onClick={() => togglePrivacyModal(true)} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
                         </ul>
                     </div>
                      <div className="space-y-2">

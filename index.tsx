@@ -3,6 +3,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { UIProvider } from './contexts/UIContext';
+import { UserActionsProvider } from './contexts/UserActionsContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { AIPetProvider } from './contexts/AIPetProvider'; // Assuming this exists
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
