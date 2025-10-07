@@ -423,7 +423,7 @@ const MainApp: React.FC = () => {
         }
         
         uiToggles.toggleVoiceWizard(false);
-        showToast("Mantap! Fondasi brand dari konsultasi suara disimpan...");
+        showToast("Mantap! Konsultasi suara selesai, project sedang dibuat...");
     
         try {
             const { data, error } = await supabase.from('projects').insert({
@@ -438,8 +438,14 @@ const MainApp: React.FC = () => {
             setProjects(prev => [newProject, ...prev]);
             setSelectedProjectId(newProject.id);
             saveWorkflowState(projectData);
-            navigateTo('logo');
-            showToast("Fondasi brand berhasil dibuat! Lanjut bikin logo.");
+
+            if (projectData.selectedLogoUrl) {
+                navigateTo('logo_detail');
+                 showToast("Logo master berhasil dibuat! Lanjut finalisasi.");
+            } else {
+                navigateTo('logo');
+                showToast("Fondasi brand berhasil dibuat! Lanjut bikin logo.");
+            }
     
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Gagal membuat project dari konsultasi suara.';

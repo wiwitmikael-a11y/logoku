@@ -22,6 +22,8 @@ interface Props {
 }
 
 type ConversationState = 'IDLE' | 'CONNECTING' | 'AI_SPEAKING' | 'USER_LISTENING' | 'PROCESSING' | 'COMPLETED' | 'FINALIZING' | 'ERROR';
+type ExtendedWizardStep = VoiceWizardStep | 'GET_LOGO_STYLE' | 'FINALIZING_LOGO' | 'FINALIZING';
+
 
 // --- Constants ---
 const SESSION_COST = 5; // 1 token/min for 5 mins
@@ -35,7 +37,8 @@ const functionDeclarations: FunctionDeclaration[] = [
   { name: 'saveTargetAudience', parameters: { type: Type.OBJECT, properties: { category: { type: Type.STRING }, age: { type: Type.STRING } }, required: ['category', 'age'] } },
   { name: 'saveValueProposition', parameters: { type: Type.OBJECT, properties: { value: { type: Type.STRING } }, required: ['value'] } },
   { name: 'saveCompetitors', parameters: { type: Type.OBJECT, properties: { competitors: { type: Type.STRING } }, required: ['competitors'] } },
-  { name: 'confirmAllDetails', parameters: { type: Type.OBJECT, properties: {}, required: [] } },
+  { name: 'selectLogoStyle', parameters: { type: Type.OBJECT, properties: { style: { type: Type.STRING, enum: ["minimalis modern", "organik natural", "geometris berani"] } }, required: ['style'] } },
+  { name: 'confirmAllDetailsAndFinalize', parameters: { type: Type.OBJECT, properties: {}, required: [] } },
   { name: 'timer_update', parameters: { type: Type.OBJECT, properties: {}, required: [] } },
 ];
 
@@ -83,14 +86,15 @@ const TalkingMangAi: React.FC<{ conversationState: ConversationState }> = ({ con
     );
 };
 
-const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs>, currentStep: VoiceWizardStep | 'FINALIZING' }> = ({ brandInputs, currentStep }) => {
+const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs & { logoStyle: string }>, currentStep: ExtendedWizardStep }> = ({ brandInputs, currentStep }) => {
     const checklistItems = [
         { key: 'businessName', label: 'Nama Bisnis', step: 'GET_BUSINESS_NAME' },
         { key: 'businessDetail', label: 'Detail Bisnis', step: 'GET_BUSINESS_DETAILS' },
         { key: 'targetAudience', label: 'Target Audiens', step: 'GET_TARGET_AUDIENCE' },
         { key: 'valueProposition', label: 'Nilai Unik', step: 'GET_VALUE_PROPOSITION' },
         { key: 'competitors', label: 'Kompetitor', step: 'GET_COMPETITORS' },
-        { key: 'finalization', label: 'Finalisasi Persona & Slogan', step: 'FINALIZING' },
+        { key: 'logoStyle', label: 'Pemilihan Gaya Logo', step: 'GET_LOGO_STYLE' },
+        { key: 'finalization', label: 'Finalisasi Master Logo', step: 'FINALIZING_LOGO' },
     ];
 
     const CheckmarkIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>;
@@ -100,7 +104,7 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs>, curre
     return (
         <div className="w-full max-w-md my-4 p-4 bg-black/20 rounded-lg space-y-3 text-left">
             {checklistItems.map((item, index) => {
-                const value = brandInputs[item.key as keyof BrandInputs];
+                const value = brandInputs[item.key as keyof typeof brandInputs];
                 const isCompleted = !!value || (item.key === 'finalization' && currentStep === 'COMPLETED');
                 const isCurrent = currentStep === item.step;
 
@@ -123,8 +127,8 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs>, curre
 
 const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profile, deductCredits, setShowOutOfCreditsModal }) => {
   const [conversationState, setConversationState] = useState<ConversationState>('IDLE');
-  const [wizardStep, setWizardStep] = useState<VoiceWizardStep | 'FINALIZING'>('GREETING');
-  const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs>>({});
+  const [wizardStep, setWizardStep] = useState<ExtendedWizardStep>('GREETING');
+  const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs & { logoStyle: string }>>({});
   const [error, setError] = useState<string | null>(null);
   const [permissionState, setPermissionState] = useState<'pending' | 'granted' | 'prompt' | 'denied'>('pending');
   const [timeLeft, setTimeLeft] = useState(MAX_DURATION_SECONDS);
@@ -151,18 +155,20 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
     if (conversationStateRef.current === 'FINALIZING' || wizardStep === 'COMPLETED') return;
 
     setConversationState('FINALIZING');
-    setWizardStep('FINALIZING');
+    setWizardStep('FINALIZING_LOGO');
 
     let currentInputs = { ...brandInputsRef.current };
     
     try {
         if (isAutoCompleted) {
+            // FIX: Correctly type `fieldsToGenerate` to only include keys of `BrandInputs`.
             const fieldsToGenerate: (keyof BrandInputs)[] = [];
             if (!currentInputs.businessName) fieldsToGenerate.push('businessName');
             if (!currentInputs.businessDetail) fieldsToGenerate.push('businessDetail');
             if (!currentInputs.targetAudience) fieldsToGenerate.push('targetAudience');
             if (!currentInputs.valueProposition) fieldsToGenerate.push('valueProposition');
             if (!currentInputs.competitors) fieldsToGenerate.push('competitors');
+            if (!currentInputs.logoStyle) currentInputs.logoStyle = "minimalis modern"; // Default style
             
             for (const field of fieldsToGenerate) {
                 const generatedValue = await geminiService.generateMissingField(currentInputs, field);
@@ -175,19 +181,16 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
         }
 
         const finalBrandInputs = currentInputs as BrandInputs;
-        const personas = await geminiService.generateBrandPersona(finalBrandInputs.businessName, finalBrandInputs.industry, finalBrandInputs.targetAudience, finalBrandInputs.valueProposition, null, null);
-        if (!personas || personas.length === 0) throw new Error("Gagal membuat persona brand.");
-        
-        const selectedPersona = personas[0];
-        const slogans = await geminiService.generateSlogans(finalBrandInputs.businessName, selectedPersona, finalBrandInputs.competitors, null);
-        if (!slogans || slogans.length === 0) throw new Error("Gagal membuat slogan.");
-        
-        const selectedSlogan = slogans[0];
+        const logoPromptText = `A minimalist and modern logo for "${finalBrandInputs.businessName}", representing ${currentInputs.logoStyle}.`;
+        const logoOptions = await geminiService.generateLogoOptions(logoPromptText, 1);
+        if (!logoOptions || logoOptions.length === 0) throw new Error("Gagal membuat logo master.");
+
+        const masterLogo = logoOptions[0];
 
         const projectData: Partial<ProjectData> = {
             brandInputs: finalBrandInputs,
-            selectedPersona: selectedPersona,
-            selectedSlogan: selectedSlogan,
+            selectedLogoUrl: masterLogo,
+            logoPrompt: logoPromptText,
         };
         
         onComplete(projectData);
@@ -244,8 +247,9 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
 2.  After the user answers, you MUST call the appropriate function to save their answer (e.g., call \`saveBusinessName\`).
 3.  After calling a function, ALWAYS wait for the function's result before proceeding.
 4.  Once you get the result, verbally confirm what you understood and then ask the next question.
-5.  Follow this sequence: get business name -> get business details -> get target audience -> get value proposition -> get competitors -> then confirm all details by reciting them back to the user and call \`confirmAllDetails\`.
-6.  Maintain a helpful, encouraging tone. Use casual Indonesian slang like 'juragan', 'sokin', 'gacor'.`,
+5.  Follow this sequence: get business name -> get business details -> get target audience -> get value proposition -> get competitors.
+6.  **NEW CRITICAL STEP:** After getting competitors, you MUST offer exactly three logo style choices by saying: "Nah, sekarang bagian serunya, nentuin gaya logo. Ada tiga pilihan: gaya 'minimalis modern' yang simpel dan bersih, gaya 'organik natural' yang terinspirasi dari alam, atau gaya 'geometris berani' yang tegas dan pake pola. Mana yang paling sreg di hati, Juragan?". Then, call the \`selectLogoStyle\` function with the user's choice.
+7.  After the user chooses a style, confirm their choice and then call \`confirmAllDetailsAndFinalize\` to end the session. DO NOT ask for any more details after the logo style is selected.`,
         },
         callbacks: {
           onopen: () => {
@@ -313,14 +317,15 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             if (message.toolCall?.functionCalls) {
               setConversationState('PROCESSING');
               for (const fc of message.toolCall.functionCalls) {
-                let result = 'OK'; let nextStep: VoiceWizardStep | null = null;
+                let result = 'OK'; let nextStep: ExtendedWizardStep | null = null;
                 switch (fc.name) {
                   case 'saveBusinessName': setBrandInputs(p => ({ ...p, businessName: fc.args.name as string })); nextStep = 'GET_BUSINESS_DETAILS'; break;
                   case 'saveBusinessDetails': setBrandInputs(p => ({ ...p, businessCategory: fc.args.category as string, businessDetail: fc.args.detail as string })); nextStep = 'GET_TARGET_AUDIENCE'; break;
                   case 'saveTargetAudience': setBrandInputs(p => ({ ...p, targetAudience: `${fc.args.category as string} usia ${fc.args.age as string}` })); nextStep = 'GET_VALUE_PROPOSITION'; break;
                   case 'saveValueProposition': setBrandInputs(p => ({ ...p, valueProposition: fc.args.value as string })); nextStep = 'GET_COMPETITORS'; break;
-                  case 'saveCompetitors': setBrandInputs(p => ({ ...p, competitors: fc.args.competitors as string })); nextStep = 'CONFIRMATION'; break;
-                  case 'confirmAllDetails': handleFinalizeAndComplete(false); break;
+                  case 'saveCompetitors': setBrandInputs(p => ({ ...p, competitors: fc.args.competitors as string })); nextStep = 'GET_LOGO_STYLE'; break;
+                  case 'selectLogoStyle': setBrandInputs(p => ({...p, logoStyle: fc.args.style as string })); nextStep = 'FINALIZING_LOGO'; break;
+                  case 'confirmAllDetailsAndFinalize': handleFinalizeAndComplete(false); break;
                 }
                 if (nextStep) setWizardStep(nextStep);
                 sessionPromiseRef.current?.then(session => { session.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: { result } } }); });
@@ -398,8 +403,8 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
         setIsWrappingUp(true);
         sessionPromiseRef.current?.then(session => { session.sendToolResponse({ functionResponses: { id: 'timer_update_30s', name: 'timer_update', response: { result: '30 seconds remaining, please finalize' } } }); });
     }
-    // FIX: Fix type overlap error by checking against `wizardStep` state, which correctly reflects the finalization process.
-    if (timeLeft <= 0 && wizardStep !== 'COMPLETED' && wizardStep !== 'FINALIZING') {
+    // FIX: Removed redundant check. The `handleFinalizeAndComplete` function has its own internal guard.
+    if (timeLeft <= 0 && wizardStep !== 'COMPLETED') {
         sessionPromiseRef.current?.then(s => s.close());
         handleFinalizeAndComplete(true);
     }
@@ -414,7 +419,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     USER_LISTENING: { text: "Giliranmu! Mang AI sedang mendengarkan...", pulse: true },
     PROCESSING: { text: "Mang AI lagi mikir...", pulse: false },
     COMPLETED: { text: "Mantap! Konsultasi selesai.", pulse: false },
-    FINALIZING: { text: "Memfinalisasi persona & slogan...", pulse: false },
+    FINALIZING: { text: "Memfinalisasi logo master...", pulse: false },
     ERROR: { text: "Waduh, ada error.", pulse: false },
   };
 
