@@ -17,23 +17,23 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to class property for state initialization to resolve issues with property recognition from React.Component in some build environments.
   public state: State = {
     hasError: false,
     error: undefined,
     isCopied: false,
   };
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  // FIX: Updated return type to `State` and ensured the returned object matches the full state shape.
+  static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
-    return { hasError: true, error: error };
+    return { hasError: true, error: error, isCopied: false };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted to an arrow function to correctly bind `this` and allow access to `this.setState` and `this.props`.
+  // FIX: Using an arrow function correctly binds `this`, allowing access to `this.setState` and `this.props`.
   handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());

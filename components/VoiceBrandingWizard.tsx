@@ -31,8 +31,8 @@ const MAX_DURATION_SECONDS = 5 * 60; // 5 minutes
 const WRAP_UP_TIME_SECONDS = 30; // 30 seconds
 
 const voiceOptions = [
-  { id: 'Zephyr', name: 'Zephyr', description: 'Suara pria yang ramah, jernih, dan profesional.' },
   { id: 'Puck', name: 'Puck', description: 'Suara pria yang ceria, enerjik, dan bersemangat.' },
+  { id: 'Zephyr', name: 'Zephyr', description: 'Suara pria yang ramah, jernih, dan profesional.' },
   { id: 'Charon', name: 'Charon', description: 'Suara pria yang dalam, tenang, dan berwibawa.' },
   { id: 'Kore', name: 'Kore', description: 'Suara wanita yang hangat, lembut, dan menenangkan.' },
   { id: 'Fenrir', name: 'Fenrir', description: 'Suara wanita yang tegas, kuat, dan meyakinkan.' },
@@ -142,7 +142,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   const [timeLeft, setTimeLeft] = useState(MAX_DURATION_SECONDS);
   const [isWrappingUp, setIsWrappingUp] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('Zephyr');
+  const [selectedVoice, setSelectedVoice] = useState('Puck');
 
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
@@ -154,7 +154,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
   const brandInputsRef = useRef(brandInputs);
   
-  const analyserRef = useRef<AnalyserNode | null>(null);
+  const outputAnalyserRef = useRef<AnalyserNode | null>(null);
+  const inputAnalyserRef = useRef<AnalyserNode | null>(null);
   
   const conversationStateRef = useRef<ConversationState>(conversationState);
   useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
@@ -274,9 +275,14 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             gainNode.connect(outputCtx.destination);
             outputNodeRef.current = gainNode;
 
-            const analyser = outputCtx.createAnalyser();
-            analyser.fftSize = 256;
-            analyserRef.current = analyser;
+            const outputAnalyser = outputCtx.createAnalyser();
+            outputAnalyser.fftSize = 256;
+            outputAnalyserRef.current = outputAnalyser;
+            
+            const inputAnalyser = inputCtx.createAnalyser();
+            inputAnalyser.fftSize = 256;
+            inputAnalyserRef.current = inputAnalyser;
+
 
             if (!streamRef.current) {
                 setError("Gagal mendapatkan stream mikrofon saat koneksi terbuka.");
@@ -287,6 +293,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             const source = inputCtx.createMediaStreamSource(streamRef.current);
             const processor = inputCtx.createScriptProcessor(4096, 1, 1);
             scriptProcessorRef.current = processor;
+            
             processor.onaudioprocess = (event) => {
                 const inputData = event.inputBuffer.getChannelData(0);
                 const pcmBlob: Blob = { data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32767)).buffer)), mimeType: 'audio/pcm;rate=16000' };
@@ -294,7 +301,9 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
                     session.sendRealtimeInput({ media: pcmBlob });
                 });
             };
-            source.connect(processor); processor.connect(inputCtx.destination);
+            source.connect(processor);
+            source.connect(inputAnalyser); // Also connect source to the input analyser
+            processor.connect(inputCtx.destination);
             
             setConversationState('PROCESSING');
           },
@@ -303,12 +312,12 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               if (conversationStateRef.current !== 'AI_SPEAKING') setConversationState('AI_SPEAKING');
               const audioData = message.serverContent.modelTurn.parts[0].inlineData.data;
               const outputCtx = outputAudioContextRef.current;
-              if (audioData && outputCtx && analyserRef.current && outputNodeRef.current) {
+              if (audioData && outputCtx && outputAnalyserRef.current && outputNodeRef.current) {
                 const audioBuffer = await decodeAudioData(decode(audioData), outputCtx, 24000, 1); 
                 const source = outputCtx.createBufferSource();
                 source.buffer = audioBuffer;
-                source.connect(analyserRef.current);
-                analyserRef.current.connect(outputNodeRef.current);
+                source.connect(outputAnalyserRef.current);
+                outputAnalyserRef.current.connect(outputNodeRef.current);
                 
                 const startTime = Math.max(outputCtx.currentTime, nextStartTimeRef.current); source.start(startTime);
                 nextStartTimeRef.current = startTime + audioBuffer.duration; sourcesRef.current.add(source);
@@ -440,6 +449,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
   };
 
   const timerColor = timeLeft <= WRAP_UP_TIME_SECONDS ? 'text-red-500' : timeLeft <= 60 ? 'text-yellow-400' : 'text-text-header';
+  const activeAnalyser = conversationState === 'USER_LISTENING' ? inputAnalyserRef.current : outputAnalyserRef.current;
 
   const renderContent = () => {
       if (permissionState === 'pending') return <p className="text-lg font-semibold text-splash animate-pulse">Mengecek izin mikrofon...</p>;
@@ -472,7 +482,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
         return (
             <div className="text-center p-4 flex flex-col items-center">
                 <div className="relative w-40 h-40">
-                  <VoiceVisualizer analyser={analyserRef.current} isSpeaking={conversationState === 'AI_SPEAKING'} />
+                  <VoiceVisualizer analyser={activeAnalyser} isSpeaking={conversationState === 'AI_SPEAKING'} />
                   <TalkingMangAi conversationState={conversationState} />
                 </div>
                 <h3 className="text-2xl font-bold text-green-400 mt-4">Konsultasi Selesai!</h3>
@@ -493,7 +503,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               </header>
 
               <div className="relative w-40 h-40 flex items-center justify-center mt-8">
-                  <VoiceVisualizer analyser={analyserRef.current} isSpeaking={conversationState === 'AI_SPEAKING'} />
+                  <VoiceVisualizer analyser={activeAnalyser} isSpeaking={conversationState === 'AI_SPEAKING' || conversationState === 'USER_LISTENING'} />
                   <TalkingMangAi conversationState={conversationState} />
               </div>
 
