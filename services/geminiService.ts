@@ -1,13 +1,23 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import { GoogleGenAI, Type } from "@google/genai";
-// FIX: Add ProjectData to type imports
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandPersona, BrandInputs, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, AIPetState, AIPetTier, ProjectData } from '../types';
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 
-// Initialize the Gemini client using the environment variable specified in the project.
-// As per guidelines, this is expected to be configured and available at runtime.
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+// DEFERRED INITIALIZATION of GoogleGenAI client to prevent startup crash
+let ai: GoogleGenAI | null = null;
+
+function getAiClient(): GoogleGenAI {
+  if (!ai) {
+    const apiKey = import.meta.env.VITE_API_KEY;
+    if (!apiKey) {
+      // This error is a safeguard. The main App component should catch the missing key before this is ever called.
+      throw new Error("VITE_API_KEY is not defined. Please check your environment variables.");
+    }
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+}
 
 // --- Text Generation Services ---
 
@@ -15,7 +25,7 @@ export const generateBrandPersona = async (businessName: string, industry: strin
   const petInfluence = petState ? `The user has an AI Pet with these personality traits: ${JSON.stringify(petState.personality)}. Subtly favor brand personas that align with the pet's dominant traits if possible.` : '';
   const competitorContext = competitorAnalysis ? `Here's an analysis of a competitor: ${competitorAnalysis}. Use this to create a differentiated persona.` : '';
 
-  const response = await ai.models.generateContent({
+  const response = await getAiClient().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `You are a professional brand strategist for Indonesian UMKM. Create 3 distinct, actionable brand persona options for a business. The output must be a JSON array.
     
@@ -44,7 +54,7 @@ export const generateBrandPersona = async (businessName: string, industry: strin
 
 export const generateSlogans = async (businessName: string, persona: BrandPersona, competitors: string, petState: AIPetState | null): Promise<string[]> => {
     const petInfluence = petState ? `The user's AI Pet, ${petState.name}, has a high ${Object.keys(petState.personality).reduce((a, b) => petState.personality[a as keyof typeof petState.personality] > petState.personality[b as keyof typeof petState.personality] ? a : b)} trait. Try to reflect this in some slogans.` : '';
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Generate 5 creative and catchy slogan options for a business named "${businessName}".
         - The brand persona is: "${persona.nama_persona}".
@@ -60,7 +70,7 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
 };
 
 export const generateContentCalendar = async (businessName: string, persona: BrandPersona, petState: AIPetState | null): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create a 7-day social media content calendar for an Indonesian business named "${businessName}". The brand persona is "${persona.nama_persona}". Use Google Search to find relevant trending topics or holidays in Indonesia for the upcoming week.
         For each day, provide: 'hari', 'tipe_konten' (e.g., Edukasi, Promosi, Interaksi), 'ide_konten', 'draf_caption' (in Indonesian, using the brand voice: ${persona.brand_voice.deskripsi}), and 'rekomendasi_hashtag' (array of strings).`,
@@ -88,7 +98,7 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
 };
 
 export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona, petState: AIPetState | null): Promise<SocialProfileData> => {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create social media profile descriptions for "${inputs.businessName}". The persona is "${persona.nama_persona}".
         Provide:
@@ -112,7 +122,7 @@ export const generateSocialProfiles = async (inputs: BrandInputs, persona: Brand
 };
 
 export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string, petState: AIPetState | null): Promise<SocialAdsData> => {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create 2 social media ad copy options for "${inputs.businessName}", a business that sells "${inputs.businessDetail}".
         The persona is "${persona.nama_persona}" and the slogan is "${slogan}".
@@ -139,7 +149,7 @@ export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPerso
 };
 
 export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string, petState: AIPetState | null): Promise<{ caption: string; hashtags: string[] }[]> => {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Generate 3 distinct social media caption options for "${businessName}".
         - Persona: "${persona.nama_persona}" (Voice: ${persona.brand_voice.deskripsi})
@@ -165,7 +175,7 @@ export const generateCaptions = async (businessName: string, persona: BrandPerso
 };
 
 export const analyzeCompetitorUrl = async (url: string, businessName: string, petState: AIPetState | null): Promise<string> => {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Analyze the competitor at this URL: ${url}. Provide a concise summary of their brand identity (style, tone, apparent target audience). Based on this, suggest 2-3 key differentiation strategies for a new business named "${businessName}". Format as a simple text summary.`,
         config: {
@@ -178,7 +188,7 @@ export const analyzeCompetitorUrl = async (url: string, businessName: string, pe
 // --- Image Generation Services ---
 
 export const generateLogoOptions = async (prompt: string, count: number = 4): Promise<string[]> => {
-    const response = await ai.models.generateImages({
+    const response = await getAiClient().models.generateImages({
         model: 'imagen-4.0-generate-001',
         prompt: `${prompt}, vector logo, minimalist, clean, on a white background, no text unless specified`,
         config: {
@@ -192,7 +202,7 @@ export const generateLogoOptions = async (prompt: string, count: number = 4): Pr
 
 export const generatePackagingDesign = async (prompt: string, logoBase64: string): Promise<string[]> => {
     const logoDataUrl = await fetchImageAsBase64(logoBase64);
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: {
             parts: [
@@ -201,7 +211,7 @@ export const generatePackagingDesign = async (prompt: string, logoBase64: string
             ],
         },
         config: {
-            responseModalities: [Type.IMAGE, Type.TEXT],
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
         },
     });
     // Assuming the API returns image parts for this model
@@ -223,7 +233,7 @@ export const generatePrintMedia = async (prompt: string, logoBase64: string): Pr
 };
 
 export const generateSocialMediaPostImage = async (topic: string, keywords: string[]): Promise<string[]> => {
-    const response = await ai.models.generateImages({
+    const response = await getAiClient().models.generateImages({
         model: 'imagen-4.0-generate-001',
         prompt: `Create a vibrant, eye-catching social media post image for an Indonesian audience about "${topic}". The style should be modern, clean, and related to these keywords: ${keywords.join(', ')}. Flat graphic illustration style.`,
         config: {
@@ -236,13 +246,13 @@ export const generateSocialMediaPostImage = async (topic: string, keywords: stri
 };
 
 export const generateSocialMediaKitAssets = async (projectData: ProjectData): Promise<SocialMediaKitAssets> => {
-    const profilePicPromise = ai.models.generateImages({
+    const profilePicPromise = getAiClient().models.generateImages({
         model: 'imagen-4.0-generate-001',
         prompt: `A simple, clean profile picture icon using the main elements of this logo. The style is ${projectData.selectedPersona.kata_kunci.join(', ')}. Use the color palette: ${projectData.selectedPersona.palet_warna_hex.join(', ')}. White background.`,
         config: { numberOfImages: 1, aspectRatio: '1:1', outputMimeType: 'image/png' },
     });
 
-    const bannerPromise = ai.models.generateImages({
+    const bannerPromise = getAiClient().models.generateImages({
         model: 'imagen-4.0-generate-001',
         prompt: `A minimalist social media banner (e.g., for Facebook, Twitter header) for "${projectData.brandInputs.businessName}". The style is ${projectData.selectedPersona.kata_kunci.join(', ')}. Use the color palette: ${projectData.selectedPersona.palet_warna_hex.join(', ')}. It should be abstract and have empty space for text.`,
         config: { numberOfImages: 1, aspectRatio: '16:9', outputMimeType: 'image/png' },
@@ -259,7 +269,7 @@ export const generateSocialMediaKitAssets = async (projectData: ProjectData): Pr
 // --- Image Editing Services ---
 
 export const editLogo = async (base64Data: string, mimeType: string, prompt: string): Promise<string> => {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: {
             parts: [
@@ -268,7 +278,7 @@ export const editLogo = async (base64Data: string, mimeType: string, prompt: str
             ]
         },
         config: {
-            responseModalities: [Type.IMAGE, Type.TEXT],
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
         }
     });
 
@@ -298,7 +308,7 @@ export const generateLogoVariations = async (logoUrl: string, businessName: stri
 // --- Other Services ---
 
 export const generateAIPetNarrative = async (name: string, tier: AIPetTier, dominantTrait: string): Promise<string> => {
-  const response = await ai.models.generateContent({
+  const response = await getAiClient().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `Create a short, mysterious, one-sentence origin story (in Indonesian) for a newly activated digital creature named "${name}".
     - Its rarity tier is: ${tier}.
@@ -330,7 +340,7 @@ export const generateQuickSlogans = (businessName: string, keywords: string, pet
 };
 
 export const generateMoodboardText = async (keywords: string, petState: AIPetState | null): Promise<{ description: string; palette: string[] }> => {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Based on the keywords "${keywords}", create a brand moodboard concept. Provide a 'description' (a short paragraph) and a 'palette' (an array of 5 hex color codes).`,
         config: { responseMimeType: "application/json", responseSchema: { type: Type.OBJECT, properties: { description: { type: Type.STRING }, palette: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["description", "palette"] } }
@@ -343,7 +353,7 @@ export const generateMoodboardImages = (keywords: string): Promise<string[]> => 
 };
 
 export const generateMissingField = async (currentInputs: Partial<BrandInputs>, fieldToGenerate: keyof BrandInputs): Promise<string> => {
-    const response = await ai.models.generateContent({
+    const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Based on the following partial business details, please generate a suitable value for the missing field '${fieldToGenerate}'.
         Current Details: ${JSON.stringify(currentInputs)}

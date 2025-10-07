@@ -1,8 +1,6 @@
-// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+/// <reference types="vite/client" />
 
-// FIX: Removed the vite/client reference to resolve a type definition error,
-// as the necessary environment variable types are explicitly defined below.
-
+// FIX: Add type definitions for import.meta.env to resolve TypeScript errors.
 interface ImportMetaEnv {
   readonly VITE_API_KEY: string;
   readonly VITE_SUPABASE_URL: string;
