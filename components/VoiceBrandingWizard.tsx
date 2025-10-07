@@ -353,8 +353,13 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
           },
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          // FIX: Refactor check to be more robust against type errors and handle session closing logic correctly.
-          onclose: () => { if (!['COMPLETED', 'FINALIZING'].includes(conversationStateRef.current)) setConversationState('IDLE'); },
+          // FIX: The `includes` check was causing a TypeScript type comparison error.
+          // Rewrote the condition with explicit `!==` checks to be more type-safe and resolve the linter error.
+          onclose: () => {
+            if (conversationStateRef.current !== 'COMPLETED' && conversationStateRef.current !== 'FINALIZING') {
+              setConversationState('IDLE');
+            }
+          },
         },
       });
     } catch (err) {
