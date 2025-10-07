@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { Project } from '../types';
 import Button from './common/Button';
 import LoadingMessage from './common/LoadingMessage';
@@ -37,7 +38,9 @@ const SkeletonCard: React.FC = () => (
 
 
 const BrandGallery: React.FC<Props> = ({ onClose }) => {
-    const { user, addXp, incrementDailyAction } = useAuth();
+    // FIX: Destructure user from useAuth and other actions from useUserActions
+    const { user } = useAuth();
+    const { addXp, incrementDailyAction } = useUserActions();
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);

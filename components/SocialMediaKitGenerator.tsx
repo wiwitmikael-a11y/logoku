@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateSocialMediaKitAssets } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { ProjectData, SocialMediaKitAssets } from '../types';
 import Button from './common/Button';
 import ImageModal from './common/ImageModal';
@@ -18,7 +19,9 @@ interface Props {
 const GENERATION_COST = 2;
 
 const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  // FIX: Destructure profile from useAuth and other actions from useUserActions
+  const { profile } = useAuth();
+  const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const credits = profile?.credits ?? 0;
 
   const [assets, setAssets] = useState<SocialMediaKitAssets | null>(null);
@@ -51,7 +54,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onG
 
     try {
         const resultAssets = await generateSocialMediaKitAssets(projectData as ProjectData);
-        await deductCredits(GENERATION_COST);
+        if (!(await deductCredits(GENERATION_COST))) return;
         setAssets(resultAssets);
         setShowNextStepNudge(true);
         playSound('success');

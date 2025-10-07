@@ -20,7 +20,6 @@ const PusatJuragan = React.lazy(() => import('./gamification/PusatJuragan'));
 interface ProjectDashboardProps {
   projects: Project[];
   onNewProject: (templateData?: Partial<BrandInputs>) => void;
-  onNewProjectVoice: () => void;
   onSelectProject: (projectId: number) => void;
   onDeleteProject: (projectId: number) => void;
   onPreloadNewProject: () => void;
@@ -145,7 +144,7 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     );
 };
 
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onNewProjectVoice, onSelectProject, onDeleteProject, onPreloadNewProject }) => {
+const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onPreloadNewProject }) => {
     const { profile } = useAuth();
     const { toggleVoiceWizard } = useUI();
     const [showOnboarding, setShowOnboarding] = useState(false);

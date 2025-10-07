@@ -3,6 +3,7 @@ import { generateSocialProfiles } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIPet } from '../contexts/AIPetContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { SocialProfileData, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -19,7 +20,9 @@ interface Props {
 const GENERATION_COST = 1;
 
 const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  const { deductCredits, setShowOutOfCreditsModal, profile } = useAuth();
+  // FIX: Destructure profile from useAuth and other actions from useUserActions
+  const { profile } = useAuth();
+  const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
@@ -49,7 +52,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
 
     try {
       const result = await generateSocialProfiles(brandInputs, selectedPersona, petState);
-      await deductCredits(GENERATION_COST);
+      if (!(await deductCredits(GENERATION_COST))) return;
       setProfileData(result);
       setShowNextStepNudge(true);
       playSound('success');

@@ -117,4 +117,88 @@ const Sotoshop: React.FC<SotoshopProps> = ({ show, onClose }) => {
     }, [show, width, height]);
 
 
-    const handleGenerateAiImage = useCallback(async () => { if (!aiPrompt) return; if ((profile?.credits ?? 0) < AI_IMAGE_GEN_COST) { setShowOutOfCreditsModal(true); return; } setIsGeneratingAiImage(true); setError(null); playSound('start'); try { if (!(await deductCredits(AI_IMAGE_GEN_COST))) throw new Error("Gagal mengurangi token."); const base64 = await geminiService.generateImageForCanvas(aiPrompt); const img = new Image(); img.src = base64; img.onload = () => { const aspectRatio = img.width / img.height; const newWidth = Math.min(img.width, width * 0.5); addLayer({ type: 'image', image: img, name: aiPrompt.substring
+    const handleGenerateAiImage = useCallback(async () => {
+        if (!aiPrompt) return;
+        if ((profile?.credits ?? 0) < AI_IMAGE_GEN_COST) {
+            setShowOutOfCreditsModal(true);
+            return;
+        }
+        setIsGeneratingAiImage(true);
+        setError(null);
+        playSound('start');
+        try {
+            if (!(await deductCredits(AI_IMAGE_GEN_COST))) {
+                throw new Error("Gagal mengurangi token.");
+            }
+            const base64 = await geminiService.generateImageForCanvas(aiPrompt);
+            const img = new Image();
+            img.src = base64;
+            img.onload = () => {
+                const aspectRatio = img.width / img.height;
+                const newWidth = Math.min(img.width, width * 0.5);
+                const newHeight = newWidth / aspectRatio;
+                addLayer({
+                    type: 'image',
+                    image: img,
+                    name: aiPrompt.substring(0, 30),
+                    x: (width - newWidth) / 2,
+                    y: (height - newHeight) / 2,
+                    width: newWidth,
+                    height: newHeight,
+                    rotation: 0,
+                    isVisible: true,
+                    isLocked: false,
+                    opacity: 1,
+                    shadow: { offsetX: 0, offsetY: 0, blur: 0, color: '#000000' },
+                    blendMode: 'source-over',
+                    filters: { brightness: 100, contrast: 100, saturate: 100, grayscale: 0 },
+                    originalSrc: base64
+                });
+                playSound('success');
+                addXp(10);
+                setAiPrompt('');
+            };
+            img.onerror = () => {
+                throw new Error("Gagal memuat gambar yang di-generate AI.");
+            };
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Gagal membuat gambar AI.');
+            playSound('error');
+        } finally {
+            setIsGeneratingAiImage(false);
+        }
+    }, [aiPrompt, profile, deductCredits, setShowOutOfCreditsModal, addLayer, width, height, addXp]);
+
+    if (!show) {
+        return null;
+    }
+
+    return (
+        <div className="fixed inset-0 bg-background z-50 p-1 sm:p-4">
+            <div className="w-full h-full bg-surface rounded-lg flex flex-col">
+                <header className="p-2 sm:p-4 border-b border-border-main flex justify-between items-center flex-shrink-0">
+                    <h2 className="text-lg sm:text-xl font-bold text-primary">Sotoshop Editor</h2>
+                    <Button onClick={onClose} variant="secondary" size="small">Tutup</Button>
+                </header>
+                <main className="flex-grow p-2 sm:p-4 overflow-hidden relative" ref={viewportRef}>
+                    <p className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-text-muted">
+                        Fungsionalitas Sotoshop sedang dalam perbaikan.
+                    </p>
+                    <canvas ref={canvasRef} className="shadow-lg absolute" style={{ 
+                        left: pan.x, 
+                        top: pan.y, 
+                        width: width * zoom, 
+                        height: height * zoom, 
+                        backgroundColor: backgroundColor 
+                    }} width={width} height={height} />
+                </main>
+                <footer className="p-2 sm:p-4 border-t border-border-main flex-shrink-0">
+                    {error && <div className="p-2 bg-red-500/10 text-red-400 rounded text-sm">{error}</div>}
+                    {isGeneratingAiImage && <div className="p-2"><LoadingMessage /></div>}
+                </footer>
+            </div>
+        </div>
+    );
+};
+
+export default Sotoshop;

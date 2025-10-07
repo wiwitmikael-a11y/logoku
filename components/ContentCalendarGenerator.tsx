@@ -3,6 +3,7 @@ import { generateContentCalendar, generateSocialMediaPostImage } from '../servic
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIPet } from '../contexts/AIPetContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { ContentCalendarEntry, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -21,7 +22,9 @@ interface Props {
 const GENERATION_COST = 1;
 
 const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  // FIX: Destructure profile from useAuth and other actions from useUserActions
+  const { profile } = useAuth();
+  const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
@@ -51,7 +54,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
     playSound('start');
 
     try {
-      await deductCredits(GENERATION_COST);
+      if (!(await deductCredits(GENERATION_COST))) return;
       const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona, petState);
       setCalendar(result.calendar);
       setSources(result.sources);
@@ -80,7 +83,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
         const { ide_konten } = calendar[index];
         const { kata_kunci } = projectData.selectedPersona;
         const imageResults = await generateSocialMediaPostImage(ide_konten, kata_kunci);
-        await deductCredits(GENERATION_COST);
+        if (!(await deductCredits(GENERATION_COST))) return;
         const newCalendar = [...calendar];
         newCalendar[index] = { ...newCalendar[index], imageUrl: imageResults[0] };
         setCalendar(newCalendar);

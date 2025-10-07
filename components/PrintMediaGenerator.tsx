@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePrintMedia } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { ProjectData, PrintMediaAssets } from '../types';
 import Button from './common/Button';
 import ImageModal from './common/ImageModal';
@@ -22,7 +23,9 @@ type MediaTab = 'roll_banner' | 'banner';
 const GENERATION_COST = 1;
 
 const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  // FIX: Destructure profile from useAuth and other actions from useUserActions
+  const { profile } = useAuth();
+  const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const credits = profile?.credits ?? 0;
 
   const [activeTab, setActiveTab] = useState<MediaTab>('banner');
@@ -92,7 +95,7 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
       const logoBase64 = await fetchImageAsBase64(logoToUseUrl);
       const results = await generatePrintMedia(prompt, logoBase64);
       
-      await deductCredits(GENERATION_COST);
+      if (!(await deductCredits(GENERATION_COST))) return;
       setDesigns(results);
       
       if (activeTab === 'roll_banner') setGeneratedAssets(prev => ({ ...prev, rollBannerUrl: results[0] }));

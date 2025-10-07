@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateMerchandiseMockup } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserActions } from '../contexts/UserActionsContext';
 import type { ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -27,7 +28,9 @@ const merchandiseTypes: { id: MerchType; name: string; prompt: string }[] = [
 ];
 
 const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  const { profile, deductCredits, setShowOutOfCreditsModal } = useAuth();
+  // FIX: Destructure profile from useAuth and other actions from useUserActions
+  const { profile } = useAuth();
+  const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const credits = profile?.credits ?? 0;
 
   const [activeTab, setActiveTab] = useState<MerchType>('t-shirt');
@@ -64,7 +67,7 @@ const MerchandiseGenerator: React.FC<Props> = ({ projectData, onComplete, onGoTo
     try {
       const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
       const results = await generateMerchandiseMockup(prompt, logoBase64);
-      await deductCredits(GENERATION_COST);
+      if (!(await deductCredits(GENERATION_COST))) return;
       setDesigns(results);
       setSelectedDesignBase64(results[0]);
       setShowNextStepNudge(true);
