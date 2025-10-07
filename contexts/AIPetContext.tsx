@@ -73,7 +73,7 @@ export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         throw new Error(`Token tidak cukup. Butuh 5, kamu punya ${profile.credits}.`);
     }
 
-    const { data, error } = await supabase.rpc('activate_aipet');
+    const { data, error } = await supabase.rpc('activate_aipet', { p_user_id: user.id });
 
     if (error) {
         throw new Error(`Gagal aktivasi di server: ${error.message}`);

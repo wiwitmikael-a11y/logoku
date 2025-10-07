@@ -353,17 +353,11 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
           },
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
+          // FIX: This switch statement was causing a type error. Re-written to be more explicit.
           onclose: () => {
-            // FIX: Rewritten with a switch statement to be more robust against potential type inference issues from linters.
-            // The logic remains the same: reset to IDLE unless the session closed during a final or completed state.
-            switch (conversationStateRef.current) {
-              case 'COMPLETED':
-              case 'FINALIZING':
-                // Do nothing, the process is finished or finishing.
-                break;
-              default:
-                // For any other state (IDLE, CONNECTING, SPEAKING, ERROR, etc.), reset to IDLE.
-                setConversationState('IDLE');
+            const currentState = conversationStateRef.current;
+            if (currentState !== 'COMPLETED' && currentState !== 'FINALIZING') {
+              setConversationState('IDLE');
             }
           },
         },
