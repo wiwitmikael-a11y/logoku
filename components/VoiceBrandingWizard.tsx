@@ -9,6 +9,7 @@ import type { BrandInputs, VoiceWizardStep } from '../types';
 import ProgressStepper from './common/ProgressStepper';
 import Button from './common/Button';
 import LoadingMessage from './common/LoadingMessage';
+import VoiceVisualizer from './common/VoiceVisualizer';
 
 interface Props {
   show: boolean;
@@ -65,7 +66,7 @@ const TalkingMangAi: React.FC<{ conversationState: ConversationState }> = ({ con
     }, [conversationState]);
 
     return (
-        <div ref={containerRef} className="mang-ai-talking-container animate-breathing-ai">
+        <div ref={containerRef} className="mang-ai-talking-container animate-breathing-ai z-10">
             <div className="mang-ai-body"></div>
             <div className="mang-ai-mouth mang-ai-mouth-0"></div>
         </div>
@@ -87,6 +88,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
+  const outputNodeRef = useRef<GainNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const nextStartTimeRef = useRef(0);
@@ -176,15 +178,19 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             inputAudioContextRef.current = inputCtx;
             outputAudioContextRef.current = outputCtx;
             
+            const gainNode = outputCtx.createGain();
+            gainNode.connect(outputCtx.destination);
+            outputNodeRef.current = gainNode;
+
+            const analyser = outputCtx.createAnalyser();
+            analyser.fftSize = 256;
+            analyserRef.current = analyser;
+
             if (!streamRef.current) {
                 setError("Gagal mendapatkan stream mikrofon saat koneksi terbuka.");
                 setConversationState('ERROR');
                 return;
             }
-
-            const analyser = outputCtx.createAnalyser();
-            analyser.fftSize = 256;
-            analyserRef.current = analyser;
 
             const source = inputCtx.createMediaStreamSource(streamRef.current);
             const processor = inputCtx.createScriptProcessor(4096, 1, 1);
@@ -206,12 +212,14 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             
             if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
               if (conversationStateRef.current !== 'AI_SPEAKING') setConversationState('AI_SPEAKING');
-              const audioData = message.serverContent.modelTurn.parts[0].inlineData.data; const outputCtx = outputAudioContextRef.current;
-              if (audioData && outputCtx && analyserRef.current) {
-                const audioBuffer = await decodeAudioData(decode(audioData), outputCtx, 24000, 1); const source = outputCtx.createBufferSource();
+              const audioData = message.serverContent.modelTurn.parts[0].inlineData.data;
+              const outputCtx = outputAudioContextRef.current;
+              if (audioData && outputCtx && analyserRef.current && outputNodeRef.current) {
+                const audioBuffer = await decodeAudioData(decode(audioData), outputCtx, 24000, 1); 
+                const source = outputCtx.createBufferSource();
                 source.buffer = audioBuffer;
                 source.connect(analyserRef.current);
-                analyserRef.current.connect(outputCtx.destination);
+                analyserRef.current.connect(outputNodeRef.current);
                 
                 const startTime = Math.max(outputCtx.currentTime, nextStartTimeRef.current); source.start(startTime);
                 nextStartTimeRef.current = startTime + audioBuffer.duration; sourcesRef.current.add(source);
@@ -328,7 +336,10 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
       if (wizardStep === 'COMPLETED') {
         return (
             <div className="text-center p-4 flex flex-col items-center">
-                <div className="relative w-40 h-40"><TalkingMangAi conversationState={conversationState} /></div>
+                <div className="relative w-40 h-40">
+                  <VoiceVisualizer analyser={analyserRef.current} isSpeaking={conversationState === 'AI_SPEAKING'} />
+                  <TalkingMangAi conversationState={conversationState} />
+                </div>
                 <h3 className="text-2xl font-bold text-green-400 mt-4">Konsultasi Selesai!</h3>
                 <p className="text-text-muted mt-2">Project-mu sedang dibuat dan kamu akan diarahkan ke Brand Hub...</p>
                 <div className="mt-4"><LoadingMessage /></div>
@@ -339,7 +350,8 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
       return (
           <>
               <div className="my-8 w-full"> <ProgressStepper currentStep={currentStepIndex} /> </div>
-              <div className="relative w-40 h-40">
+              <div className="relative w-40 h-40 flex items-center justify-center">
+                  <VoiceVisualizer analyser={analyserRef.current} isSpeaking={conversationState === 'AI_SPEAKING'} />
                   <TalkingMangAi conversationState={conversationState} />
               </div>
 

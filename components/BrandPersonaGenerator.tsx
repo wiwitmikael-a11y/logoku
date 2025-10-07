@@ -22,8 +22,8 @@ interface Props {
 const businessCategories = ["Makanan", "Minuman", "Fashion", "Jasa", "Kecantikan & Perawatan Diri", "Kerajinan Tangan & Dekorasi Rumah", "Agrikultur & Produk Tani", "Lainnya"];
 const targetAudienceCategories = ["Masyarakat Umum", "Mahasiswa", "Pekerja Kantoran", "Keluarga", "Remaja", "Anak-anak"];
 
-// FIX: Removed React.FC<Props> type annotation to fix incorrect type inference by TypeScript.
-const BrandPersonaGenerator = ({ onComplete, onGoToDashboard }: Props) => {
+// FIX: Added React.FC<Props> type annotation to fix incorrect type inference by TypeScript and align with project conventions.
+const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard }) => {
   const [formState, setFormState] = useState({
     businessName: '',
     businessCategory: 'Makanan',
