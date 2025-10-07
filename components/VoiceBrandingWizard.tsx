@@ -5,7 +5,7 @@ import { GoogleGenAI, LiveServerMessage, Modality, Blob, FunctionDeclaration, Ty
 import * as geminiService from '../services/geminiService';
 import { encode, decode, decodeAudioData } from '../utils/audioUtils';
 import { playSound } from '../services/soundService';
-import type { BrandInputs, VoiceWizardStep, Profile } from '../types';
+import type { BrandInputs, VoiceWizardStep, Profile, ProjectData } from '../types';
 import Button from './common/Button';
 import LoadingMessage from './common/LoadingMessage';
 import VoiceVisualizer from './common/VoiceVisualizer';
@@ -15,13 +15,12 @@ import ConfirmationModal from './common/ConfirmationModal';
 interface Props {
   show: boolean;
   onClose: () => void;
-  onComplete: (data: BrandInputs) => void;
+  onComplete: (data: Partial<ProjectData>) => void;
   profile: Profile | null;
   deductCredits: (amount: number) => Promise<boolean>;
   setShowOutOfCreditsModal: (show: boolean) => void;
 }
 
-// FIX: Corrected the ConversationState type to include 'FINALIZING', resolving a type comparison error.
 type ConversationState = 'IDLE' | 'CONNECTING' | 'AI_SPEAKING' | 'USER_LISTENING' | 'PROCESSING' | 'COMPLETED' | 'FINALIZING' | 'ERROR';
 
 // --- Constants ---
@@ -84,13 +83,14 @@ const TalkingMangAi: React.FC<{ conversationState: ConversationState }> = ({ con
     );
 };
 
-const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs>, currentStep: VoiceWizardStep }> = ({ brandInputs, currentStep }) => {
+const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs>, currentStep: VoiceWizardStep | 'FINALIZING' }> = ({ brandInputs, currentStep }) => {
     const checklistItems = [
         { key: 'businessName', label: 'Nama Bisnis', step: 'GET_BUSINESS_NAME' },
         { key: 'businessDetail', label: 'Detail Bisnis', step: 'GET_BUSINESS_DETAILS' },
         { key: 'targetAudience', label: 'Target Audiens', step: 'GET_TARGET_AUDIENCE' },
         { key: 'valueProposition', label: 'Nilai Unik', step: 'GET_VALUE_PROPOSITION' },
         { key: 'competitors', label: 'Kompetitor', step: 'GET_COMPETITORS' },
+        { key: 'finalization', label: 'Finalisasi Persona & Slogan', step: 'FINALIZING' },
     ];
 
     const CheckmarkIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>;
@@ -101,7 +101,7 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs>, curre
         <div className="w-full max-w-md my-4 p-4 bg-black/20 rounded-lg space-y-3 text-left">
             {checklistItems.map((item, index) => {
                 const value = brandInputs[item.key as keyof BrandInputs];
-                const isCompleted = !!value;
+                const isCompleted = !!value || (item.key === 'finalization' && currentStep === 'COMPLETED');
                 const isCurrent = currentStep === item.step;
 
                 return (
@@ -111,7 +111,7 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs>, curre
                         </div>
                         <div>
                             <p className={`font-semibold ${isCompleted ? 'text-text-header' : 'text-text-muted'}`}>{item.label}</p>
-                            {isCompleted && <p className="text-sm text-primary animate-item-appear">{value}</p>}
+                            {isCompleted && item.key !== 'finalization' && <p className="text-sm text-primary animate-item-appear">{value as string}</p>}
                         </div>
                     </div>
                 );
@@ -123,7 +123,7 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs>, curre
 
 const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profile, deductCredits, setShowOutOfCreditsModal }) => {
   const [conversationState, setConversationState] = useState<ConversationState>('IDLE');
-  const [wizardStep, setWizardStep] = useState<VoiceWizardStep>('GREETING');
+  const [wizardStep, setWizardStep] = useState<VoiceWizardStep | 'FINALIZING'>('GREETING');
   const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs>>({});
   const [error, setError] = useState<string | null>(null);
   const [permissionState, setPermissionState] = useState<'pending' | 'granted' | 'prompt' | 'denied'>('pending');
@@ -147,21 +147,23 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
   useEffect(() => { brandInputsRef.current = brandInputs; }, [brandInputs]);
 
-  const handleAutoCompleteAndSave = useCallback(async () => {
-    if (wizardStep === 'COMPLETED' || conversationStateRef.current === 'FINALIZING') return;
+  const handleFinalizeAndComplete = useCallback(async (isAutoCompleted = false) => {
+    if (conversationStateRef.current === 'FINALIZING' || wizardStep === 'COMPLETED') return;
 
     setConversationState('FINALIZING');
-    let currentInputs = { ...brandInputsRef.current };
+    setWizardStep('FINALIZING');
 
+    let currentInputs = { ...brandInputsRef.current };
+    
     try {
-        const fieldsToGenerate: (keyof BrandInputs)[] = [];
-        if (!currentInputs.businessName) fieldsToGenerate.push('businessName');
-        if (!currentInputs.businessDetail) fieldsToGenerate.push('businessDetail');
-        if (!currentInputs.targetAudience) fieldsToGenerate.push('targetAudience');
-        if (!currentInputs.valueProposition) fieldsToGenerate.push('valueProposition');
-        if (!currentInputs.competitors) fieldsToGenerate.push('competitors');
-        
-        if (fieldsToGenerate.length > 0) {
+        if (isAutoCompleted) {
+            const fieldsToGenerate: (keyof BrandInputs)[] = [];
+            if (!currentInputs.businessName) fieldsToGenerate.push('businessName');
+            if (!currentInputs.businessDetail) fieldsToGenerate.push('businessDetail');
+            if (!currentInputs.targetAudience) fieldsToGenerate.push('targetAudience');
+            if (!currentInputs.valueProposition) fieldsToGenerate.push('valueProposition');
+            if (!currentInputs.competitors) fieldsToGenerate.push('competitors');
+            
             for (const field of fieldsToGenerate) {
                 const generatedValue = await geminiService.generateMissingField(currentInputs, field);
                 currentInputs = { ...currentInputs, [field]: generatedValue };
@@ -172,8 +174,25 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
             currentInputs.industry = `${currentInputs.businessCategory || 'Bisnis'} ${currentInputs.businessDetail || ''}`.trim();
         }
 
-        onComplete(currentInputs as BrandInputs);
+        const finalBrandInputs = currentInputs as BrandInputs;
+        const personas = await geminiService.generateBrandPersona(finalBrandInputs.businessName, finalBrandInputs.industry, finalBrandInputs.targetAudience, finalBrandInputs.valueProposition, null, null);
+        if (!personas || personas.length === 0) throw new Error("Gagal membuat persona brand.");
+        
+        const selectedPersona = personas[0];
+        const slogans = await geminiService.generateSlogans(finalBrandInputs.businessName, selectedPersona, finalBrandInputs.competitors, null);
+        if (!slogans || slogans.length === 0) throw new Error("Gagal membuat slogan.");
+        
+        const selectedSlogan = slogans[0];
+
+        const projectData: Partial<ProjectData> = {
+            brandInputs: finalBrandInputs,
+            selectedPersona: selectedPersona,
+            selectedSlogan: selectedSlogan,
+        };
+        
+        onComplete(projectData);
         setWizardStep('COMPLETED');
+
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Gagal menyelesaikan project secara otomatis.";
         setError(errorMessage);
@@ -301,7 +320,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
                   case 'saveTargetAudience': setBrandInputs(p => ({ ...p, targetAudience: `${fc.args.category as string} usia ${fc.args.age as string}` })); nextStep = 'GET_VALUE_PROPOSITION'; break;
                   case 'saveValueProposition': setBrandInputs(p => ({ ...p, valueProposition: fc.args.value as string })); nextStep = 'GET_COMPETITORS'; break;
                   case 'saveCompetitors': setBrandInputs(p => ({ ...p, competitors: fc.args.competitors as string })); nextStep = 'CONFIRMATION'; break;
-                  case 'confirmAllDetails': setWizardStep('COMPLETED'); handleAutoCompleteAndSave(); break;
+                  case 'confirmAllDetails': handleFinalizeAndComplete(false); break;
                 }
                 if (nextStep) setWizardStep(nextStep);
                 sessionPromiseRef.current?.then(session => { session.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: { result } } }); });
@@ -324,7 +343,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
       } else if (err instanceof Error) { errorMessage = err.message; }
       setError(errorMessage); setConversationState('IDLE'); if (isPermissionError) setPermissionState('denied');
     }
-  }, [profile, deductCredits, setShowOutOfCreditsModal, handleAutoCompleteAndSave]);
+  }, [profile, deductCredits, setShowOutOfCreditsModal, handleFinalizeAndComplete]);
 
   const checkPermissions = useCallback(async () => {
     if (typeof navigator.permissions === 'undefined') { setPermissionState('prompt'); return; }
@@ -379,11 +398,12 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
         setIsWrappingUp(true);
         sessionPromiseRef.current?.then(session => { session.sendToolResponse({ functionResponses: { id: 'timer_update_30s', name: 'timer_update', response: { result: '30 seconds remaining, please finalize' } } }); });
     }
-    if (timeLeft <= 0 && wizardStep !== 'COMPLETED' && conversationStateRef.current !== 'FINALIZING') {
+    // FIX: Fix type overlap error by checking against `wizardStep` state, which correctly reflects the finalization process.
+    if (timeLeft <= 0 && wizardStep !== 'COMPLETED' && wizardStep !== 'FINALIZING') {
         sessionPromiseRef.current?.then(s => s.close());
-        handleAutoCompleteAndSave();
+        handleFinalizeAndComplete(true);
     }
-}, [timeLeft, isWrappingUp, wizardStep, handleAutoCompleteAndSave]);
+}, [timeLeft, isWrappingUp, wizardStep, handleFinalizeAndComplete]);
 
   if (!show) return null;
 
@@ -394,7 +414,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     USER_LISTENING: { text: "Giliranmu! Mang AI sedang mendengarkan...", pulse: true },
     PROCESSING: { text: "Mang AI lagi mikir...", pulse: false },
     COMPLETED: { text: "Mantap! Konsultasi selesai.", pulse: false },
-    FINALIZING: { text: "Menyiapkan project...", pulse: false },
+    FINALIZING: { text: "Memfinalisasi persona & slogan...", pulse: false },
     ERROR: { text: "Waduh, ada error.", pulse: false },
   };
 
@@ -419,7 +439,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
                   <TalkingMangAi conversationState={conversationState} />
                 </div>
                 <h3 className="text-2xl font-bold text-green-400 mt-4">Konsultasi Selesai!</h3>
-                <p className="text-text-muted mt-2">Project-mu sedang dibuat dan kamu akan diarahkan ke Brand Hub...</p>
+                <p className="text-text-muted mt-2">Project-mu sedang dibuat dan kamu akan diarahkan ke langkah selanjutnya...</p>
                 <div className="mt-4"><LoadingMessage /></div>
             </div>
         );

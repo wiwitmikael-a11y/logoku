@@ -404,7 +404,7 @@ const MainApp: React.FC = () => {
 
     const navigateTo = (state: AppState) => setAppState(state);
 
-    const handleNewProject = useCallback(async (templateData?: Partial<BrandInputs>) => {
+    const handleStartManualProject = useCallback(async (templateData?: Partial<BrandInputs>) => {
         if (!session?.user || !profile) return;
         if (profile.total_projects_completed === 0 && projects.length === 0) sessionStorage.setItem('onboardingStep2', 'true');
         const initialData = templateData ? { brandInputs: templateData } : {};
@@ -416,19 +416,19 @@ const MainApp: React.FC = () => {
         navigateTo('persona');
     }, [session, profile, projects, setProjects]);
     
-    const handleVoiceWizardComplete = useCallback(async (brandInputs: BrandInputs) => {
+    const handleWizardComplete = useCallback(async (projectData: Partial<ProjectData>) => {
         if (!session?.user) {
             setGeneralError("Sesi tidak ditemukan. Silakan login ulang.");
             return;
         }
         
         uiToggles.toggleVoiceWizard(false);
-        showToast("Mantap! Project dari konsultasi suara disimpan...");
+        showToast("Mantap! Fondasi brand dari konsultasi suara disimpan...");
     
         try {
             const { data, error } = await supabase.from('projects').insert({
                 user_id: session.user.id,
-                project_data: { brandInputs },
+                project_data: projectData,
                 status: 'in-progress' as ProjectStatus
             }).select().single();
     
@@ -437,9 +437,9 @@ const MainApp: React.FC = () => {
             const newProject: Project = data as any;
             setProjects(prev => [newProject, ...prev]);
             setSelectedProjectId(newProject.id);
-            saveWorkflowState({ brandInputs });
-            navigateTo('summary');
-            showToast("Project berhasil dibuat! Selamat datang di Brand Hub.");
+            saveWorkflowState(projectData);
+            navigateTo('logo');
+            showToast("Fondasi brand berhasil dibuat! Lanjut bikin logo.");
     
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Gagal membuat project dari konsultasi suara.';
@@ -587,7 +587,7 @@ const MainApp: React.FC = () => {
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} onShareToForum={() => handleShareToForum(project)} addXp={addXp} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonProps} addXp={addXp} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonProps} addXp={addXp} /> : null;
-            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onPreloadNewProject={preloadBrandPersona} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleStartManualProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onPreloadNewProject={preloadBrandPersona} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
@@ -725,7 +725,7 @@ const MainApp: React.FC = () => {
             <VoiceBrandingWizard 
               show={uiToggles.showVoiceWizard} 
               onClose={() => uiToggles.toggleVoiceWizard(false)} 
-              onComplete={handleNewProject}
+              onComplete={handleWizardComplete}
               profile={profile}
               deductCredits={deductCredits}
               setShowOutOfCreditsModal={setShowOutOfCreditsModal}

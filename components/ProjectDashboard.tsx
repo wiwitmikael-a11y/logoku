@@ -186,18 +186,17 @@ const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = 
                 </div>
                 <div className="text-text-muted font-semibold">ATAU</div>
                 <div className="w-full text-center">
-                    <button 
+                    <Button
                         onClick={() => toggleVoiceWizard(true)}
-                        className="w-full relative inline-flex items-center justify-center p-1 mb-2 overflow-hidden text-lg font-bold text-text-header rounded-lg group bg-gradient-to-br from-fuchsia-600 to-sky-500 group-hover:from-fuchsia-600 group-hover:to-sky-500 hover:text-white focus:ring-4 focus:outline-none focus:ring-fuchsia-300 dark:focus:ring-fuchsia-800 animate-ai-fab-pulse"
+                        size="large"
+                        className="w-full p-[3px] bg-gradient-to-r from-fuchsia-600 to-sky-500 rounded-lg group animate-ai-fab-pulse !shadow-none"
                     >
-                        <span className="w-full relative px-5 py-3 transition-all ease-in duration-150 bg-surface dark:bg-gray-900 rounded-md group-hover:bg-opacity-0">
-                            <span className="flex items-center justify-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                                Mulai Konsultasi Suara
-                            </span>
+                        <span className="w-full h-full bg-surface text-text-header group-hover:bg-transparent group-hover:text-white rounded-md flex items-center justify-center gap-3 transition-all duration-200">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                             Konsultasi Suara (5 Menit)
                         </span>
-                    </button>
-                    <p className="text-xs text-text-muted px-4">Ngobrol langsung 5 menit sama Mang AI buat bikin fondasi brand.</p>
+                    </Button>
+                    <p className="text-xs text-text-muted px-4 mt-2">Ngobrol langsung sama Mang AI buat bikin fondasi brand.</p>
                 </div>
             </div>
 
