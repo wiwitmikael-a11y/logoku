@@ -334,26 +334,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [isMuted, bgmSelection, handleBgmChange]);
   
   useEffect(() => {
-    const initializeSession = async () => {
-        setLoading(true);
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        setSession(currentSession);
-        const currentUser = currentSession?.user ?? null;
-        setUser(currentUser);
-        await fetchInitialUserData(currentUser);
-        setLoading(false);
-    };
-    initializeSession();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-        setLoading(true);
+    setLoading(true); // Tampilkan pemuat saat provider pertama kali dimuat
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
         setSession(newSession);
         const newUser = newSession?.user ?? null;
         setUser(newUser);
-        await fetchInitialUserData(newUser);
-        setLoading(false);
+        
+        // Selalu ambil data terbaru. Ini juga akan menangani kasus logout (newUser akan null),
+        // yang akan membersihkan profile dan projects.
+        await fetchInitialUserData(newUser); 
+        
+        // PENTING: Hanya set loading ke false. Jangan pernah set ke true lagi di dalam listener ini.
+        // Ini akan menghentikan layar pemuatan muncul kembali saat fokus tab (pembaruan token).
+        setLoading(false); 
+        
+        if (event === 'SIGNED_OUT') {
+            stopBGM();
+        }
     });
-    return () => { subscription?.unsubscribe(); };
+
+    return () => {
+        subscription?.unsubscribe();
+    };
   }, [fetchInitialUserData]);
   
   const value: AuthContextType = { session, user, profile, projects, setProjects, loading, authError, refreshProfile, addXp, grantAchievement, showOutOfCreditsModal, setShowOutOfCreditsModal, grantFirstTimeCompletionBonus, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement, deductCredits, isMuted, handleToggleMute, bgmSelection, handleBgmChange, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout, handleDeleteAccount, dailyActions, incrementDailyAction, claimMissionReward };
