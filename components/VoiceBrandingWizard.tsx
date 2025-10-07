@@ -97,7 +97,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const brandInputsRef = useRef(brandInputs);
   
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const animationFrameRef = useRef<number>(0);
   
   const conversationStateRef = useRef(conversationState);
   useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
@@ -109,33 +108,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const addFinalTranscript = (speaker: 'mang-ai' | 'user', text: string) => { if (!text.trim()) return; setTranscript(prev => [...prev, { speaker, text }]); };
 
   useEffect(() => { transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [transcript, currentInputTranscript, currentOutputTranscript]);
-
-    useEffect(() => {
-        const animate = () => {
-            if (analyserRef.current && conversationStateRef.current === 'AI_SPEAKING') {
-                const dataArray = new Uint8Array(analyserRef.current.fftSize);
-                analyserRef.current.getByteTimeDomainData(dataArray);
-                let sum = 0;
-                for (let i = 0; i < dataArray.length; i++) {
-                    sum += Math.abs(dataArray[i] - 128);
-                }
-                const averageVolume = sum / dataArray.length;
-                
-                let mouthFrame = 0;
-                if (averageVolume > 8) mouthFrame = 2;
-                else if (averageVolume > 2) mouthFrame = 1;
-                
-                const talkingMouth = document.querySelector('.mang-ai-mouth');
-                if(talkingMouth) talkingMouth.className = `mang-ai-mouth mang-ai-mouth-${mouthFrame}`;
-            } else {
-                const talkingMouth = document.querySelector('.mang-ai-mouth');
-                if(talkingMouth) talkingMouth.className = 'mang-ai-mouth mang-ai-mouth-0';
-            }
-            animationFrameRef.current = requestAnimationFrame(animate);
-        };
-        animationFrameRef.current = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(animationFrameRef.current);
-    }, []);
 
   const connectToGemini = useCallback(async () => {
     if (sessionPromiseRef.current || conversationStateRef.current === 'CONNECTING') return;
