@@ -353,11 +353,18 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
           },
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          // FIX: This switch statement was causing a type error. Re-written to be more explicit.
+          // FIX: Refactored `onclose` to use a switch statement to avoid a TypeScript type comparison error where the linter was incorrectly flagging a valid check.
           onclose: () => {
             const currentState = conversationStateRef.current;
-            if (currentState !== 'COMPLETED' && currentState !== 'FINALIZING') {
-              setConversationState('IDLE');
+            switch (currentState) {
+              case 'COMPLETED':
+              case 'FINALIZING':
+                // Do nothing, the session closed as expected after completion.
+                break;
+              default:
+                // If the session closes unexpectedly in any other state, reset to idle.
+                setConversationState('IDLE');
+                break;
             }
           },
         },
