@@ -21,6 +21,7 @@ interface Props {
   setShowOutOfCreditsModal: (show: boolean) => void;
 }
 
+// FIX: Corrected the ConversationState type to include 'FINALIZING', resolving a type comparison error.
 type ConversationState = 'IDLE' | 'CONNECTING' | 'AI_SPEAKING' | 'USER_LISTENING' | 'PROCESSING' | 'COMPLETED' | 'FINALIZING' | 'ERROR';
 
 // --- Constants ---
@@ -83,13 +84,46 @@ const TalkingMangAi: React.FC<{ conversationState: ConversationState }> = ({ con
     );
 };
 
+const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs>, currentStep: VoiceWizardStep }> = ({ brandInputs, currentStep }) => {
+    const checklistItems = [
+        { key: 'businessName', label: 'Nama Bisnis', step: 'GET_BUSINESS_NAME' },
+        { key: 'businessDetail', label: 'Detail Bisnis', step: 'GET_BUSINESS_DETAILS' },
+        { key: 'targetAudience', label: 'Target Audiens', step: 'GET_TARGET_AUDIENCE' },
+        { key: 'valueProposition', label: 'Nilai Unik', step: 'GET_VALUE_PROPOSITION' },
+        { key: 'competitors', label: 'Kompetitor', step: 'GET_COMPETITORS' },
+    ];
+
+    const CheckmarkIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>;
+    const PendingIcon = () => <div className="w-4 h-4 rounded-full border-2 border-text-muted" />;
+    const CurrentIcon = () => <div className="w-4 h-4 rounded-full bg-splash animate-pulse" />;
+
+    return (
+        <div className="w-full max-w-md my-4 p-4 bg-black/20 rounded-lg space-y-3 text-left">
+            {checklistItems.map((item, index) => {
+                const value = brandInputs[item.key as keyof BrandInputs];
+                const isCompleted = !!value;
+                const isCurrent = currentStep === item.step;
+
+                return (
+                    <div key={item.key} className={`flex items-start gap-3 transition-opacity duration-500 ${isCompleted ? 'opacity-100' : 'opacity-60'}`} style={{ animationDelay: `${index * 100}ms` }}>
+                        <div className="mt-1 flex-shrink-0">
+                            {isCompleted ? <CheckmarkIcon /> : isCurrent ? <CurrentIcon /> : <PendingIcon />}
+                        </div>
+                        <div>
+                            <p className={`font-semibold ${isCompleted ? 'text-text-header' : 'text-text-muted'}`}>{item.label}</p>
+                            {isCompleted && <p className="text-sm text-primary animate-item-appear">{value}</p>}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 
 const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profile, deductCredits, setShowOutOfCreditsModal }) => {
   const [conversationState, setConversationState] = useState<ConversationState>('IDLE');
   const [wizardStep, setWizardStep] = useState<VoiceWizardStep>('GREETING');
-  const [transcript, setTranscript] = useState<{ speaker: 'mang-ai' | 'user', text: string }[]>([]);
-  const [currentOutputTranscript, setCurrentOutputTranscript] = useState('');
-  const [currentInputTranscript, setCurrentInputTranscript] = useState('');
   const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs>>({});
   const [error, setError] = useState<string | null>(null);
   const [permissionState, setPermissionState] = useState<'pending' | 'granted' | 'prompt' | 'denied'>('pending');
@@ -105,19 +139,13 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const nextStartTimeRef = useRef(0);
   const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
-  const transcriptEndRef = useRef<HTMLDivElement>(null);
   const brandInputsRef = useRef(brandInputs);
   
   const analyserRef = useRef<AnalyserNode | null>(null);
   
-  // FIX: Explicitly type the ref to ensure TypeScript correctly infers its type, resolving the overlap error.
   const conversationStateRef = useRef<ConversationState>(conversationState);
   useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
   useEffect(() => { brandInputsRef.current = brandInputs; }, [brandInputs]);
-
-  const addFinalTranscript = (speaker: 'mang-ai' | 'user', text: string) => { if (!text.trim()) return; setTranscript(prev => [...prev, { speaker, text }]); };
-
-  useEffect(() => { transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [transcript, currentInputTranscript, currentOutputTranscript]);
 
   const handleAutoCompleteAndSave = useCallback(async () => {
     if (wizardStep === 'COMPLETED' || conversationStateRef.current === 'FINALIZING') return;
@@ -164,7 +192,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
     
     setConversationState('CONNECTING');
     setError(null);
-    setTranscript([]);
 
     try {
       const deducted = await deductCredits(SESSION_COST);
@@ -204,6 +231,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
         callbacks: {
           onopen: () => {
             setTimeLeft(MAX_DURATION_SECONDS); // Start timer
+            setWizardStep('GET_BUSINESS_NAME');
             const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
             const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             inputAudioContextRef.current = inputCtx;
@@ -238,9 +266,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             setConversationState('PROCESSING');
           },
           onmessage: async (message: LiveServerMessage) => {
-            if (message.serverContent?.inputTranscription) { setCurrentInputTranscript(message.serverContent.inputTranscription.text); }
-            if (message.serverContent?.outputTranscription) { if (conversationStateRef.current !== 'AI_SPEAKING') setConversationState('AI_SPEAKING'); setCurrentOutputTranscript(message.serverContent.outputTranscription.text); }
-            
             if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
               if (conversationStateRef.current !== 'AI_SPEAKING') setConversationState('AI_SPEAKING');
               const audioData = message.serverContent.modelTurn.parts[0].inlineData.data;
@@ -259,8 +284,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
 
             if (message.serverContent?.turnComplete) {
-                if (currentInputTranscript) { addFinalTranscript('user', currentInputTranscript); setCurrentInputTranscript(''); }
-                if (currentOutputTranscript) { addFinalTranscript('mang-ai', currentOutputTranscript); setCurrentOutputTranscript(''); }
                 setTimeout(() => {
                     if (sourcesRef.current.size === 0 && conversationStateRef.current === 'AI_SPEAKING') {
                         setConversationState('USER_LISTENING');
@@ -308,11 +331,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     try { const status = await navigator.permissions.query({ name: 'microphone' as PermissionName }); setPermissionState(status.state); status.onchange = () => { setPermissionState(status.state); }; }
     catch { setPermissionState('prompt'); }
   }, []);
-
-  const handleMicAction = () => {
-    playSound('click');
-    if (conversationState === 'IDLE') { connectToGemini(); }
-  };
   
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -334,7 +352,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
         outputAudioContextRef.current = null; 
         scriptProcessorRef.current = null; 
         setPermissionState('pending'); 
-        setTranscript([]); 
         setConversationState('IDLE'); 
         setWizardStep('GREETING'); 
         setBrandInputs({}); 
@@ -425,25 +442,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
 
               <p className="mt-4 text-lg font-semibold text-splash h-6">{statusMap[conversationState].text}</p>
               
-              <div className="w-full h-40 my-4 overflow-y-auto p-3 bg-black/20 rounded-lg text-sm space-y-2 text-left" style={{'--scrollbar-thumb': '#3f3f46'} as React.CSSProperties}>
-                  {transcript.map((t, i) => (<p key={`final-${i}`}><strong className={t.speaker === 'mang-ai' ? 'text-primary' : 'text-accent'}>{t.speaker === 'mang-ai' ? 'Mang AI' : profile?.full_name || 'Anda'}:</strong> {t.text}</p>))}
-                  {currentOutputTranscript && <p><strong className="text-primary">Mang AI:</strong> {currentOutputTranscript}</p>}
-                  {currentInputTranscript && <p><strong className="text-accent">{profile?.full_name || 'Anda'}:</strong> {currentInputTranscript}</p>}
-                  <div ref={transcriptEndRef} />
-              </div>
-              
-              <button 
-                onClick={handleMicAction} 
-                className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-colors ${
-                    conversationState === 'USER_LISTENING' ? 'bg-red-500' : 
-                    conversationState === 'IDLE' ? 'bg-primary' : 'bg-gray-500 cursor-not-allowed'
-                }`}
-                disabled={conversationState !== 'IDLE'}
-                title={conversationState === 'IDLE' ? `Mulai Konsultasi (${SESSION_COST} Token)` : 'Tunggu giliranmu'}
-              >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                  {statusMap[conversationState].pulse && <div className="absolute inset-0 border-4 border-red-400 rounded-full animate-ping"></div>}
-              </button>
+              <ConsultationChecklist brandInputs={brandInputs} currentStep={wizardStep} />
               
               {error && <p className="mt-4 text-red-400 text-center">{error}</p>}
           </>
@@ -467,7 +466,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
           confirmText="Ya, Keluar Saja"
           cancelText="Batal"
         >
-          Sesi konsultasi suara akan berhenti dan progres tidak akan tersimpan. Tetap mau keluar?
+          Sesi konsultasi suara akan berhenti dan progres tidak akan tersimpan. Token yang sudah terpakai tidak akan dikembalikan. Tetap mau keluar?
         </ConfirmationModal>
       )}
     </div>

@@ -22,8 +22,7 @@ interface Props {
 const businessCategories = ["Makanan", "Minuman", "Fashion", "Jasa", "Kecantikan & Perawatan Diri", "Kerajinan Tangan & Dekorasi Rumah", "Agrikultur & Produk Tani", "Lainnya"];
 const targetAudienceCategories = ["Masyarakat Umum", "Mahasiswa", "Pekerja Kantoran", "Keluarga", "Remaja", "Anak-anak"];
 
-// FIX: Changed component definition to `React.FC` for better type safety and consistency, which is now possible after fixing the global JSX namespace.
-const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard }) => {
+const BrandPersonaGenerator = ({ onComplete, onGoToDashboard }: Props) => {
   const [formState, setFormState] = useState({
     businessName: '',
     businessCategory: 'Makanan',

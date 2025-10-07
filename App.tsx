@@ -725,7 +725,7 @@ const MainApp: React.FC = () => {
             <VoiceBrandingWizard 
               show={uiToggles.showVoiceWizard} 
               onClose={() => uiToggles.toggleVoiceWizard(false)} 
-              onComplete={handleVoiceWizardComplete}
+              onComplete={handleNewProject}
               profile={profile}
               deductCredits={deductCredits}
               setShowOutOfCreditsModal={setShowOutOfCreditsModal}
