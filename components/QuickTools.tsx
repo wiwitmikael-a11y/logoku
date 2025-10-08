@@ -50,6 +50,11 @@ interface QuickToolsProps {
     onShowSotoshop: () => void;
 }
 
+interface SceneImage {
+  src: string;
+  instruction: string;
+}
+
 const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
     const { profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
@@ -71,7 +76,7 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
     const [moodboardResult, setMoodboardResult] = useState<{description: string; palette: string[]; images: string[]} | null>(null);
     
     // Scene Mixer State
-    const [sceneImages, setSceneImages] = useState<string[]>([]);
+    const [sceneImages, setSceneImages] = useState<SceneImage[]>([]);
     const [scenePrompt, setScenePrompt] = useState('');
     const [sceneResult, setSceneResult] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -149,19 +154,38 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
             }
             const reader = new FileReader();
             reader.onload = (e) => {
-                setSceneImages(prev => [...prev, e.target?.result as string]);
+                setSceneImages(prev => [...prev, { src: e.target?.result as string, instruction: '' }]);
             };
             reader.readAsDataURL(file);
         });
     };
+
+    const handleInstructionChange = (index: number, instruction: string) => {
+        setSceneImages(prev => {
+            const newImages = [...prev];
+            newImages[index].instruction = instruction;
+            return newImages;
+        });
+    };
     
     const handleGenerateScene = useCallback(async () => {
-        if (sceneImages.length < 2) { setError('BUTUH MINIMAL 2 GAMBAR!'); return; }
-        if (!scenePrompt) { setError('PROMPT TIDAK BOLEH KOSONG!'); return; }
+        if (sceneImages.length === 0) { setError('UPLOAD MINIMAL 1 GAMBAR!'); return; }
+        if (!scenePrompt) { setError('PROMPT UTAMA TIDAK BOLEH KOSONG!'); return; }
         if (credits < SCENE_MIXER_COST) { setShowOutOfCreditsModal(true); return; }
+
         setIsLoading(true); setError(null); setSceneResult(null); playSound('start');
+
         try {
-            const resultImage = await generateSceneFromImages(sceneImages, scenePrompt);
+            let combinedPrompt = `${scenePrompt}\n\n--- Instruksi Spesifik untuk Setiap Gambar ---\n`;
+            sceneImages.forEach((image, index) => {
+                if (image.instruction.trim()) {
+                    combinedPrompt += `Gambar ${index + 1}: Fokus pada "${image.instruction.trim()}".\n`;
+                } else {
+                    combinedPrompt += `Gambar ${index + 1}: Gunakan elemen yang paling relevan dari gambar ini.\n`;
+                }
+            });
+
+            const resultImage = await generateSceneFromImages(sceneImages.map(img => img.src), combinedPrompt);
             await deductCredits(SCENE_MIXER_COST); await addXp(XP_REWARD + 10);
             setSceneResult(resultImage);
             playSound('success');
@@ -227,7 +251,7 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                             onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                                             onDragLeave={() => setIsDragging(false)}
                                             onDrop={e => { e.preventDefault(); setIsDragging(false); handleFileChange(e.dataTransfer.files); }}
-                                            className={`p-4 border-2 border-dashed border-splash/50 rounded-none min-h-[100px] flex flex-col justify-center items-center transition-colors ${isDragging ? 'dropzone-active' : ''}`}
+                                            className={`p-4 border-2 border-dashed border-splash/50 rounded-none min-h-[80px] flex flex-col justify-center items-center transition-colors ${isDragging ? 'dropzone-active' : ''}`}
                                         >
                                             <p className="text-splash font-bold text-sm">DROP YOUR IMAGES HERE</p>
                                             <p className="text-xs text-text-muted">or</p>
@@ -235,17 +259,18 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                             <input id="file-upload" type="file" multiple accept="image/*" className="hidden" onChange={e => e.target.files && handleFileChange(e.target.files)} />
                                         </div>
                                         {sceneImages.length > 0 && (
-                                            <div className="flex flex-wrap gap-2 p-2 bg-black/50 border border-splash/30">
-                                                {sceneImages.map((src, i) => (
-                                                    <div key={i} className="relative w-16 h-16">
-                                                        <img src={src} className="w-full h-full object-cover" />
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 bg-black/50 border border-splash/30 max-h-48 overflow-y-auto">
+                                                {sceneImages.map((img, i) => (
+                                                    <div key={i} className="relative bg-black/30 p-1 space-y-1">
+                                                        <img src={img.src} className="w-full h-16 object-cover" />
+                                                        <input value={img.instruction} onChange={(e) => handleInstructionChange(i, e.target.value)} placeholder="e.g., 'the cat'" className="w-full text-xs font-mono bg-black/50 border border-splash/50 rounded-none p-1 text-white focus:outline-none focus:border-splash" />
                                                         <button onClick={() => setSceneImages(prev => prev.filter((_, idx) => idx !== i))} className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 text-xs font-bold leading-none">&times;</button>
                                                     </div>
                                                 ))}
                                             </div>
                                         )}
-                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">INSTRUCTIONS:</label><textarea value={scenePrompt} onChange={(e) => setScenePrompt(e.target.value)} placeholder="e.g., Gabungkan kucing dari gambar 1 ke pantai di gambar 2..." required rows={3} className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
-                                        <button onClick={handleGenerateScene} disabled={sceneImages.length < 2 || !scenePrompt || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'MIXING...' : `START MIXER (${SCENE_MIXER_COST} TOKEN)`}</button>
+                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">PROMPT UTAMA:</label><textarea value={scenePrompt} onChange={(e) => setScenePrompt(e.target.value)} placeholder="e.g., Gabungkan kucing ke pantai..." required rows={2} className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
+                                        <button onClick={handleGenerateScene} disabled={sceneImages.length === 0 || !scenePrompt || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'MIXING...' : `START MIXER (${SCENE_MIXER_COST} TOKEN)`}</button>
                                     </div>
                                 ) : ( // Moodboard
                                      <div className="animate-content-fade-in space-y-4">
