@@ -289,6 +289,33 @@ export const editLogo = async (base64Data: string, mimeType: string, prompt: str
     return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
 };
 
+export const generateSceneFromImages = async (base64Images: string[], prompt: string): Promise<string> => {
+    const imageParts = base64Images.map(imgStr => {
+        const [header, data] = imgStr.split(',');
+        const mimeType = header.match(/data:(.*);base64/)?.[1] || 'image/jpeg'; // Default to jpeg
+        return { inlineData: { data, mimeType } };
+    });
+
+    const textPart = { text: prompt };
+
+    const response = await getAiClient().models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+            parts: [...imageParts, textPart],
+        },
+        config: {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        },
+    });
+    
+    const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+    if (!imagePart || !imagePart.inlineData) {
+        const textResponse = response.text || "No text response provided.";
+        throw new Error(`AI did not return an image. Response: ${textResponse}`);
+    }
+    return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+};
+
 export const generateLogoVariations = async (logoUrl: string, businessName: string): Promise<{ main: string; stacked: string; horizontal: string; monochrome: string }> => {
     const base64 = await fetchImageAsBase64(logoUrl);
     const base64Data = base64.split(',')[1];
