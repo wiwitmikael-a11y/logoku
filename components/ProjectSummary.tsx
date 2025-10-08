@@ -22,7 +22,6 @@ interface Props {
   onRegeneratePackaging: () => Promise<void>;
   onRegeneratePrintMedia: (mediaType: 'banner' | 'roll_banner') => Promise<void>;
   onRegenerateMerchandise: () => Promise<void>;
-  addXp: (amount: number) => Promise<void>;
   onShareToForum: (project: Project) => void;
 }
 

@@ -32,7 +32,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Convert to arrow function to automatically bind `this`, fixing type errors with `this.setState`.
+  // FIX: Converted `handleCopy` to an arrow function to correctly bind `this` and allow access to `this.setState`.
   handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
@@ -63,7 +63,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
-                    {/* FIX: Correctly access props via `this.props` */}
+                    {/* FIX: In a class component, props are accessed via `this.props`. */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -86,7 +86,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: Correctly access props via `this.props`
+    // FIX: In a class component, props are accessed via `this.props`.
     return this.props.children;
   }
 }

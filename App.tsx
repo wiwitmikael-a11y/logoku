@@ -715,7 +715,7 @@ const MainApp: React.FC = () => {
 
         {/* Modals and overlays */}
         <Suspense fallback={null}>
-            <VoiceBrandingWizard show={showVoiceWizard} onClose={() => toggleVoiceWizard(false)} onComplete={(data) => { handleNewProject(); saveWorkflowState(data); }} profile={profile} deductCredits={deductCredits} setShowOutOfCreditsModal={setShowOutOfCreditsModal} />
+            <VoiceBrandingWizard show={showVoiceWizard} onClose={() => toggleVoiceWizard(false)} onComplete={(data) => { handleNewProject(); saveWorkflowState(data); }} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => toggleBrandGalleryModal(false)} />
             <AIPetLabModal show={showAIPetLab} onClose={() => toggleAIPetLab(false)} />
             <ContactModal show={showContactModal} onClose={() => toggleContactModal(false)} />
