@@ -23,12 +23,6 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
-  constructor(props: Props) {
-    super(props);
-    // FIX: Bind the 'this' context for the handleCopy method in the constructor.
-    this.handleCopy = this.handleCopy.bind(this);
-  }
-
   static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
     return { hasError: true, error: error, isCopied: false };
@@ -38,7 +32,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  handleCopy() {
+  // FIX: Convert to arrow function to automatically bind `this`, fixing type errors with `this.setState`.
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -68,6 +63,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
+                    {/* FIX: Correctly access props via `this.props` */}
                     {this.props.onReset && (
                         <Button onClick={this.props.onReset} variant="secondary">
                             &larr; Kembali ke Menu
@@ -90,6 +86,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
+    // FIX: Correctly access props via `this.props`
     return this.props.children;
   }
 }

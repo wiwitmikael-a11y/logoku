@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { GoogleGenAI, Chat } from "@google/genai";
 import { supabase } from './services/supabaseClient';
-import { playSound } from './services/soundService';
+import { playSound, stopBGM, playRandomBGM, playBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
 // FIX: Unused context providers removed. Kept hooks as they are used in MainApp.
@@ -385,10 +385,32 @@ const MainApp: React.FC = () => {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
     const previousAppState = useRef<AppState>(appState);
+    const isWizardOpen = useRef(false);
 
     // UX Enhancements
     const [showXpGain, setShowXpGain] = useState(false);
     const prevXp = useRef(profile?.xp ?? 0);
+    
+    useEffect(() => {
+        if (showVoiceWizard && !isWizardOpen.current) {
+            // Wizard is opening
+            isWizardOpen.current = true;
+            if (!isMuted) {
+                stopBGM();
+            }
+        } else if (!showVoiceWizard && isWizardOpen.current) {
+            // Wizard is closing
+            isWizardOpen.current = false;
+            if (!isMuted) {
+                // Restore music based on user's saved preference
+                if (bgmSelection === 'Random') {
+                    playRandomBGM();
+                } else if (bgmSelection !== 'Mute') {
+                    playBGM(bgmSelection as any);
+                }
+            }
+        }
+    }, [showVoiceWizard, isMuted, bgmSelection]);
     
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => { 

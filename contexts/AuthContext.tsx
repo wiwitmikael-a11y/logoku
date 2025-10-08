@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
-  const [isMuted, setIsMutedState] = useState(() => localStorage.getItem('desainfun_isMuted') === 'true');
+  const [isMuted, setIsMutedState] = useState(() => localStorage.getItem('desainfun_isMuted') !== 'false');
   const [bgmSelection, setBgmSelection] = useState<BgmSelection>(() => (localStorage.getItem('desainfun_bgmSelection') as BgmSelection) || 'Random');
 
   const handleLogout = () => setShowLogoutConfirm(true);
