@@ -1,6 +1,5 @@
 /// <reference types="vite/client" />
 
-// FIX: Add type definitions for import.meta.env to resolve TypeScript errors.
 interface ImportMetaEnv {
   readonly VITE_API_KEY: string;
   readonly VITE_SUPABASE_URL: string;

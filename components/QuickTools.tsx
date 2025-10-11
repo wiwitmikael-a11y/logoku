@@ -273,4 +273,73 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                 ) : ( // Moodboard
                                      <div className="animate-content-fade-in space-y-4">
                                         <div className="space-y-2"><label className="text-splash font-bold text-sm block">KEYWORDS/VIBE:</label><input value={moodboardKeywords} onChange={(e) => setMoodboardKeywords(e.target.value)} placeholder="e.g., rustic coffee shop, sunset, warm" required className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
-                                        <button onClick={handleGenerateMoodboard} disabled={!moodboardKeywords || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? '
+                                        <button onClick={handleGenerateMoodboard} disabled={!moodboardKeywords || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `START GAME (${MOODBOARD_GEN_COST} TOKEN)`}</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex-grow min-h-[200px] border-t-2 border-splash/30 pt-4 overflow-y-auto">
+                                {isLoading && <p className="text-center text-yellow-400">MANG AI IS THINKING<span className="blinking-cursor">...</span></p>}
+                                {error && <p className="text-red-500 font-bold animate-pulse">ERROR: {error}</p>}
+                                
+                                {activeTool !== 'moodboard' && activeTool !== 'sotoshop' && activeTool !== 'scenemixer' && results && <p className="text-yellow-400 font-bold mb-2">{results.title}<span className="blinking-cursor">_</span></p>}
+                                {activeTool !== 'moodboard' && activeTool !== 'sotoshop' && activeTool !== 'scenemixer' && displayedItems.length > 0 && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                                        {displayedItems.map((item, index) => (
+                                            <div key={index} className="flex items-center gap-2 animate-content-fade-in">
+                                                <span className="text-splash font-bold">&gt;</span>
+                                                <span className="text-white flex-grow selectable-text">{item}</span>
+                                                <CopyButton textToCopy={item} className="!bg-black/50 !text-splash hover:!bg-splash/20" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {activeTool === 'moodboard' && moodboardResult && (
+                                    <div className="space-y-4 animate-content-fade-in">
+                                        <div>
+                                            <p className="text-yellow-400 font-bold">MOOD & FEEL:</p>
+                                            <p className="text-white text-sm italic selectable-text">{moodboardResult.description}</p>
+                                        </div>
+                                         <div>
+                                            <p className="text-yellow-400 font-bold">COLOR PALETTE:</p>
+                                            <div className="flex gap-2 mt-1">{moodboardResult.palette.map(hex => <div key={hex} title={hex} className="w-6 h-6 border-2 border-splash/50" style={{backgroundColor: hex}}/>)}</div>
+                                        </div>
+                                         <div>
+                                            <p className="text-yellow-400 font-bold">VISUAL INSPIRATION:</p>
+                                            <div className="grid grid-cols-2 gap-2 mt-2">{moodboardResult.images.map((img, i) => <img key={i} src={img} alt={`Moodboard image ${i+1}`} className="w-full aspect-square object-cover border-2 border-splash/50"/>)}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {activeTool === 'scenemixer' && sceneResult && (
+                                    <div className="space-y-4 animate-content-fade-in">
+                                        <div>
+                                            <p className="text-yellow-400 font-bold">MIXED SCENE RESULT:</p>
+                                            <img src={sceneResult} alt="Generated scene" className="w-full mt-2 border-2 border-splash/50 cursor-pointer" onClick={() => setModalImageUrl(sceneResult)} />
+                                        </div>
+                                    </div>
+                                )}
+
+                            </div>
+                            <p className="text-center text-xs text-splash/50">MANG AI SYSTEMS - READY PLAYER ONE - +{XP_REWARD} XP</p>
+                        </div>
+                    </div>
+                    <div className="console-controls">
+                       <div className="control-group">
+                            <div className="toggle-switch"><div className="switch-lever"></div></div>
+                            <div className="toggle-switch on"><div className="switch-lever"></div></div>
+                            <div className="toggle-switch"><div className="switch-lever"></div></div>
+                        </div>
+                        <div className="control-group">
+                            <div className="chunky-button red"></div>
+                            <div className="chunky-button blue"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             {modalImageUrl && (<ImageModal imageUrl={modalImageUrl} altText="Generated Scene" onClose={() => setModalImageUrl(null)} />)}
+        </div>
+    );
+};
+
+export default QuickTools;
