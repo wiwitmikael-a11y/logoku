@@ -32,6 +32,8 @@ interface UIContextType {
   toggleSotoshop: (show?: boolean) => void;
   showVoiceWizard: boolean;
   toggleVoiceWizard: (show?: boolean) => void;
+  showTokenomicsModal: boolean;
+  toggleTokenomicsModal: (show?: boolean) => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -48,6 +50,7 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
   const [showSotoshop, setShowSotoshop] = useState(false);
   const [showVoiceWizard, setShowVoiceWizard] = useState(false);
+  const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
 
   const showToast = useCallback((message: string) => {
     setToast({ message, show: true });
@@ -85,6 +88,8 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     toggleSotoshop: createToggle(setShowSotoshop),
     showVoiceWizard,
     toggleVoiceWizard: createToggle(setShowVoiceWizard),
+    showTokenomicsModal,
+    toggleTokenomicsModal: createToggle(setShowTokenomicsModal),
   };
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

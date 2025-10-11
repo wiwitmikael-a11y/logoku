@@ -6,7 +6,6 @@ import { supabase } from './services/supabaseClient';
 import { playSound, stopBGM, playRandomBGM, playBGM } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile } from './types';
-// FIX: Unused context providers removed. Kept hooks as they are used in MainApp.
 import { useAuth } from './contexts/AuthContext';
 import { useUI } from './contexts/UIContext';
 import { useUserActions } from './contexts/UserActionsContext';
@@ -77,16 +76,7 @@ const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> =
     </button>
 );
 
-// FIX: Renamed AppWrapper to App to solve export error. Removed redundant UIProvider.
 const App: React.FC = () => {
-    // Pengecekan supabaseError dipindahkan ke index.tsx untuk mencegah crash sebelum komponen ini dirender.
-    if (!import.meta.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
-    return ( 
-        <MainApp /> 
-    );
-};
-
-const MainApp: React.FC = () => {
     const { session, user, profile, projects, setProjects, loading: authLoading, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, executeLogout, handleLogout, showLogoutConfirm, setShowLogoutConfirm } = useAuth();
     const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, setShowLevelUpModal, levelUpInfo, unlockedAchievement, setUnlockedAchievement, deductCredits, addXp, grantAchievement, grantFirstTimeCompletionBonus } = useUserActions();
     const { toast, showToast, closeToast, showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showBrandGalleryModal, toggleBrandGalleryModal, showSotoshop, toggleSotoshop, showVoiceWizard, toggleVoiceWizard } = useUI();
@@ -147,7 +137,6 @@ const MainApp: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // FIX: Define preloadBrandPersona function for preloading the component.
     const preloadBrandPersona = () => import('./components/BrandPersonaGenerator');
 
     const workflowSteps: AppState[] = ['persona', 'logo', 'logo_detail', 'social_kit', 'profiles', 'packaging', 'print_media', 'content_calendar', 'social_ads', 'merchandise'];
@@ -396,7 +385,7 @@ const MainApp: React.FC = () => {
 
         {/* Modals and overlays */}
         <Suspense fallback={null}>
-            <VoiceBrandingWizard show={showVoiceWizard} onClose={() => toggleVoiceWizard(false)} onComplete={(data) => { handleNewProject(); saveWorkflowState(data); }} />
+            <VoiceBrandingWizard show={showVoiceWizard} onClose={() => toggleVoiceWizard(false)} onComplete={(data) => { handleNewProject(); saveWorkflowState(data); }} profile={profile} deductCredits={deductCredits} setShowOutOfCreditsModal={setShowOutOfCreditsModal} />
             <BrandGalleryModal show={showBrandGalleryModal} onClose={() => toggleBrandGalleryModal(false)} />
             <ContactModal show={showContactModal} onClose={() => toggleContactModal(false)} />
             <AboutModal show={showAboutModal} onClose={() => toggleAboutModal(false)} />

@@ -101,6 +101,51 @@ export interface DailyActions {
   [actionId: string]: number | string[] | undefined;
 }
 
+// FIX: Added missing AIPet types
+export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
+export type AIPetStage = 'aipod' | 'active';
+
+export interface AIPetPersonalityVector {
+  minimalist: number;
+  rustic: number;
+  playful: number;
+  modern: number;
+  luxury: number;
+  feminine: number;
+  bold: number;
+  creative: number;
+}
+
+export interface AIPetState {
+  name: string;
+  stage: AIPetStage;
+  tier: AIPetTier;
+  stats: {
+    energy: number;
+    creativity: number;
+    intelligence: number;
+    charisma: number;
+  };
+  lastFed: number;
+  lastPlayed: number;
+  personality: AIPetPersonalityVector;
+  narrative: string | null;
+  blueprint: { url: string; } | null;
+  colors: {
+    mechanical: { base: string; };
+    organic: { base: string; };
+    energy: { base: string; };
+  } | null;
+  battleStats: {
+    hp: number;
+    atk: number;
+    def: number;
+    spd: number;
+  } | null;
+  buffs: any[];
+}
+
+
 export interface Profile {
   id: string;
   full_name: string;
@@ -116,6 +161,7 @@ export interface Profile {
   completed_first_steps: string[];
   data_fragments?: number;
   daily_actions?: DailyActions | null;
+  aipet_state?: AIPetState | null;
 }
 
 export interface GeneratedCaption {
