@@ -103,7 +103,6 @@ export interface DailyActions {
 
 // FIX: Added missing AIPet types
 export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
-export type AIPetStage = 'aipod' | 'active';
 
 export interface AIPetPersonalityVector {
   minimalist: number;
@@ -116,33 +115,44 @@ export interface AIPetPersonalityVector {
   creative: number;
 }
 
+export interface AIPetBlueprint {
+  id: string;
+  url: string;
+}
+
+export interface AIPetColors {
+  mechanical: { base: string; highlights: string };
+  organic: { base: string; highlights: string };
+  energy: { base: string; highlights: string };
+}
+
+export interface AIPetStats {
+  energy: number;
+  creativity: number;
+  intelligence: number;
+  charisma: number;
+}
+
+export interface AIPetBattleStats {
+  hp: number;
+  atk: number;
+  def: number;
+  spd: number;
+}
+
 export interface AIPetState {
   name: string;
-  stage: AIPetStage;
+  stage: 'aipod' | 'active';
   tier: AIPetTier;
-  stats: {
-    energy: number;
-    creativity: number;
-    intelligence: number;
-    charisma: number;
-  };
+  stats: AIPetStats;
   lastFed: number;
   lastPlayed: number;
   personality: AIPetPersonalityVector;
   narrative: string | null;
-  blueprint: { url: string; } | null;
-  colors: {
-    mechanical: { base: string; };
-    organic: { base: string; };
-    energy: { base: string; };
-  } | null;
-  battleStats: {
-    hp: number;
-    atk: number;
-    def: number;
-    spd: number;
-  } | null;
-  buffs: any[];
+  blueprint: AIPetBlueprint | null;
+  colors: AIPetColors | null;
+  battleStats: AIPetBattleStats | null;
+  buffs: string[];
 }
 
 
@@ -161,6 +171,7 @@ export interface Profile {
   completed_first_steps: string[];
   data_fragments?: number;
   daily_actions?: DailyActions | null;
+  // FIX: Added aipet_state to Profile
   aipet_state?: AIPetState | null;
 }
 

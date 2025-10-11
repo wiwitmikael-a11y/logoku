@@ -47,7 +47,6 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
                         <li><strong className="text-text-header">WarKop Juragan:</strong> Forum komunitas untuk pamer karya, minta masukan, dan ngobrol santai bareng sesama pejuang UMKM.</li>
                         <li><strong className="text-text-header">Pusat Juragan & Gamifikasi:</strong> Naikkan level, selesaikan misi, kumpulkan lencana, dan rebut posisi puncak di papan peringkat.</li>
                         <li><strong className="text-text-header">Generator Ide & Sotoshop:</strong> Butuh inspirasi cepat? Gunakan generator nama/slogan instan atau poles gambarmu di editor Sotoshop.</li>
-                        <li><strong className="text-text-header">Asisten Digital AIPet:</strong> Teman digital yang hidup, bergerak, dan bereaksi terhadap progresmu.</li>
                     </ul>
                 </div>
             );

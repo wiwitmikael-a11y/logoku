@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { GoogleGenAI, Chat } from "@google/genai";
 import { supabase } from './services/supabaseClient';
-import { playSound, stopBGM, playRandomBGM, playBGM } from './services/soundService';
+import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile } from './types';
 import { useAuth } from './contexts/AuthContext';
@@ -111,7 +111,7 @@ const App: React.FC = () => {
             // Wizard is opening
             isWizardOpen.current = true;
             if (!isMuted) {
-                stopBGM();
+                //stopBGM();
             }
         } else if (!showVoiceWizard && isWizardOpen.current) {
             // Wizard is closing
@@ -119,9 +119,9 @@ const App: React.FC = () => {
             if (!isMuted) {
                 // Restore music based on user's saved preference
                 if (bgmSelection === 'Random') {
-                    playRandomBGM();
+                   // playRandomBGM();
                 } else if (bgmSelection !== 'Mute') {
-                    playBGM(bgmSelection as any);
+                   // playBGM(bgmSelection as any);
                 }
             }
         }

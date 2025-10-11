@@ -29,7 +29,7 @@ interface GeneratedContent {
 
 const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
   const { profile } = useAuth();
-  const { deductCredits, setShowOutOfCreditsModal, addXp } = useUserActions();
+  const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
   const credits = profile?.credits ?? 0;
 
   const [topic, setTopic] = useState('');

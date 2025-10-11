@@ -1,8 +1,9 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateContentCalendar, generateSocialMediaPostImage } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-import { useAIPet } from '../contexts/AIPetContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import type { ContentCalendarEntry, ProjectData } from '../types';
 import Button from './common/Button';
@@ -22,10 +23,8 @@ interface Props {
 const GENERATION_COST = 1;
 
 const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  // FIX: Destructure profile from useAuth and other actions from useUserActions
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
-  const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [calendar, setCalendar] = useState<ContentCalendarEntry[]>(projectData.contentCalendar || []);
@@ -55,7 +54,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
 
     try {
       if (!(await deductCredits(GENERATION_COST))) return;
-      const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona, petState);
+      const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona);
       setCalendar(result.calendar);
       setSources(result.sources);
       setShowNextStepNudge(true);
@@ -66,7 +65,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, petState, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal]);
   
   const handleGenerateImage = useCallback(async (index: number) => {
     if (credits < GENERATION_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }
