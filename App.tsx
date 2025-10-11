@@ -9,6 +9,7 @@ import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, C
 import { useAuth } from './contexts/AuthContext';
 import { useUI } from './contexts/UIContext';
 import { useUserActions } from './contexts/UserActionsContext';
+import { useTranslation } from './contexts/LanguageContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
@@ -65,8 +66,8 @@ const TokenomicsModal = React.lazy(() => import('./components/common/TokenomicsM
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 
-const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> = ({ theme, onToggle }) => (
-    <button onClick={onToggle} title="Ganti Tema" className="p-1.5 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
+const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void, t: (translations: any) => string }> = ({ theme, onToggle, t }) => (
+    <button onClick={onToggle} title={t({ id: "Ganti Tema", en: "Change Theme" })} className="p-1.5 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
         <div className="w-5 h-5 relative">
             {/* Sun */}
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`absolute inset-0 transition-all duration-300 ${theme === 'dark' ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'}`}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
@@ -76,10 +77,23 @@ const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> =
     </button>
 );
 
+const LanguageToggle: React.FC = () => {
+    const { language, setLanguage, t } = useTranslation();
+    const toggleLanguage = () => {
+        setLanguage(language === 'id' ? 'en' : 'id');
+    };
+    return (
+        <button onClick={toggleLanguage} title={t({ id: "Ganti Bahasa", en: "Switch Language" })} className="p-1.5 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors font-bold text-sm w-8 h-8 flex items-center justify-center">
+            {language.toUpperCase()}
+        </button>
+    );
+};
+
 const App: React.FC = () => {
     const { session, user, profile, projects, setProjects, loading: authLoading, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, executeLogout, handleLogout, showLogoutConfirm, setShowLogoutConfirm } = useAuth();
     const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, setShowLevelUpModal, levelUpInfo, unlockedAchievement, setUnlockedAchievement, deductCredits, addXp, grantAchievement, grantFirstTimeCompletionBonus } = useUserActions();
     const { toast, showToast, closeToast, showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showBrandGalleryModal, toggleBrandGalleryModal, showSotoshop, toggleSotoshop, showVoiceWizard, toggleVoiceWizard } = useUI();
+    const { t } = useTranslation();
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -323,9 +337,9 @@ const App: React.FC = () => {
                     <div className="flex items-center gap-0.5 sm:gap-1">
                         <Tooltip content={
                             <div className="space-y-2 text-xs">
-                                <p className="font-bold text-text-header">Ini Token-mu!</p>
-                                <p>Token adalah "amunisi" buat ngejalanin fitur AI. Tenang, tiap pagi Mang AI bakal <strong className="text-primary">isiin ulang jadi 5</strong> kalo token-mu abis!</p>
-                                <button onClick={() => setShowTokenomicsModal(true)} className="text-accent hover:underline font-semibold">Pelajari lebih lanjut &rarr;</button>
+                                <p className="font-bold text-text-header">{t({ id: "Ini Token-mu!", en: "These are your Tokens!" })}</p>
+                                <p>{t({ id: `Token adalah "amunisi" buat ngejalanin fitur AI. Tenang, tiap pagi Mang AI bakal`, en: `Tokens are the "ammo" for running AI features. Don't worry, every morning Mang AI will` })} <strong className="text-primary">{t({ id: "isiin ulang jadi 5", en: "refill it to 5" })}</strong> {t({ id: "kalo token-mu abis!", en: "if you run out!" })}</p>
+                                <button onClick={() => setShowTokenomicsModal(true)} className="text-accent hover:underline font-semibold">{t({ id: "Pelajari lebih lanjut &rarr;", en: "Learn more &rarr;" })}</button>
                             </div>
                         }>
                             <button onClick={() => setShowTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1 p-1.5 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
@@ -333,7 +347,8 @@ const App: React.FC = () => {
                                 <span className="font-bold text-sm text-text-header">{profile?.credits ?? 0}</span>
                             </button>
                         </Tooltip>
-                        <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                        <LanguageToggle />
+                        <ThemeToggle theme={theme} onToggle={toggleTheme} t={t} />
                         
                         <div ref={userMenuRef} className="relative">
                             <button onClick={() => setIsUserMenuOpen(p => !p)} title="User Menu" className="flex items-center gap-2 rounded-full p-1 pl-3 bg-background hover:bg-border-light transition-colors border border-transparent hover:border-border-main">
@@ -347,11 +362,11 @@ const App: React.FC = () => {
                                         <p className="font-bold text-lg text-text-header truncate">{profile?.full_name || ''}</p>
                                         <p className="text-xs text-text-muted">{user?.email || ''}</p>
                                     </div>
-                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); handleRequestReturnToDashboard(); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Dashboard</a>
-                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); toggleProfileModal(true); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Pengaturan & Lencana</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); handleRequestReturnToDashboard(); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">{t({ id: "Dashboard", en: "Dashboard" })}</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); toggleProfileModal(true); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">{t({ id: "Pengaturan & Lencana", en: "Settings & Badges" })}</a>
                                     <div className="border-t border-border-main my-1"></div>
-                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); toggleAboutModal(true); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Tentang Aplikasi</a>
-                                    <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => { playSound('click'); setIsUserMenuOpen(false); }} className="w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">Traktir Kopi</a>
+                                    <a onClick={() => { playSound('click'); setIsUserMenuOpen(false); toggleAboutModal(true); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">{t({ id: "Tentang Aplikasi", en: "About App" })}</a>
+                                    <a href="https://saweria.co/logoku" target="_blank" rel="noopener noreferrer" onClick={() => { playSound('click'); setIsUserMenuOpen(false); }} className="w-full text-left block px-4 py-2 text-sm text-text-body hover:bg-background transition-colors">{t({ id: "Traktir Kopi", en: "Buy me a coffee" })}</a>
                                     <div className="border-t border-border-main my-1"></div>
                                     <a onClick={() => { playSound('click'); handleLogout(); setIsUserMenuOpen(false); }} className="cursor-pointer w-full text-left block px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors">Logout</a>
                                 </div>
@@ -393,8 +408,8 @@ const App: React.FC = () => {
             <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} />
             <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
             <ProfileSettingsModal show={showProfileModal} onClose={() => toggleProfileModal(false)} />
-            <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={fullExecuteLogout} title="Yakin Mau Logout?" confirmText="Ya, Logout" cancelText="Batal">Progres yang belum final bakal ilang lho. Tetep mau lanjut?</ConfirmationModal>
-            <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title="Kembali ke Dashboard?" confirmText="Ya, Kembali" cancelText="Batal">Progres di tahap ini bakal hilang. Yakin mau kembali?</ConfirmationModal>
+            <ConfirmationModal show={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={fullExecuteLogout} title={t({ id: "Yakin Mau Logout?", en: "Sure you want to log out?" })} confirmText={t({ id: "Ya, Logout", en: "Yes, Logout" })} cancelText={t({ id: "Batal", en: "Cancel" })}>{t({ id: "Progres yang belum final bakal ilang lho. Tetep mau lanjut?", en: "Unsaved progress will be lost. Still want to continue?" })}</ConfirmationModal>
+            <ConfirmationModal show={showDashboardConfirm} onClose={() => setShowDashboardConfirm(false)} onConfirm={confirmAndReturnToDashboard} title={t({ id: "Kembali ke Dashboard?", en: "Return to Dashboard?" })} confirmText={t({ id: "Ya, Kembali", en: "Yes, Return" })} cancelText={t({ id: "Batal", en: "Cancel" })}>{t({ id: "Progres di tahap ini bakal hilang. Yakin mau kembali?", en: "Progress on this step will be lost. Are you sure?" })}</ConfirmationModal>
             <DeleteProjectSliderModal show={showDeleteConfirm} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} isConfirmLoading={isDeleting} projectNameToDelete={projectToDelete?.project_data?.brandInputs?.businessName || 'Project Ini'} projectLogoUrl={projectToDelete?.project_data?.selectedLogoUrl} />
             <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
@@ -406,13 +421,14 @@ const App: React.FC = () => {
 };
 
 const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onShowToS: () => void; onShowPrivacy: () => void;}> = ({ onShowAbout, onShowContact, onShowToS, onShowPrivacy }) => {
+    const { t } = useTranslation();
     return (
         <footer className="bg-surface border-t border-border-main text-text-muted">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="space-y-4">
                         <h3 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}><span className="text-primary">des<span className="text-accent">ai</span>n</span>.fun</h3>
-                        <p className="text-sm">Studio branding AI untuk UMKM juara. Ubah ide jadi brand siap tanding dalam hitungan menit.</p>
+                        <p className="text-sm">{t({ id: "Studio branding AI untuk UMKM juara. Ubah ide jadi brand siap tanding dalam hitungan menit.", en: "AI branding studio for champion SMEs. Turn ideas into competitive brands in minutes." })}</p>
                         <div className="flex space-x-4">
                             <a href="https://www.instagram.com/rangga.p.h" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-primary transition-colors" title="Instagram Developer">
                                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" /></svg>
@@ -420,21 +436,21 @@ const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onSh
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <h4 className="font-semibold text-text-header">Navigasi</h4>
+                        <h4 className="font-semibold text-text-header">{t({ id: "Navigasi", en: "Navigation" })}</h4>
                         <ul className="space-y-1 text-sm">
-                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
-                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Kontak Developer</button></li>
-                            <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
-                            <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
+                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">{t({ id: "Tentang Aplikasi", en: "About App" })}</button></li>
+                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">{t({ id: "Kontak Developer", en: "Contact Developer" })}</button></li>
+                            <li><button onClick={onShowToS} className="hover:text-primary transition-colors">{t({ id: "Ketentuan Layanan", en: "Terms of Service" })}</button></li>
+                            <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">{t({ id: "Kebijakan Privasi", en: "Privacy Policy" })}</button></li>
                         </ul>
                     </div>
                      <div className="space-y-2">
                         <h4 className="font-semibold text-text-header">Legal</h4>
-                        <p className="text-sm">Aplikasi ini disediakan "sebagaimana adanya". Pengguna bertanggung jawab penuh untuk melakukan pengecekan merek dagang sebelum penggunaan komersial.</p>
+                        <p className="text-sm">{t({ id: `Aplikasi ini disediakan "sebagaimana adanya". Pengguna bertanggung jawab penuh untuk melakukan pengecekan merek dagang sebelum penggunaan komersial.`, en: `This application is provided "as is". Users are fully responsible for conducting trademark checks before commercial use.` })}</p>
                     </div>
                 </div>
                 <div className="mt-8 pt-4 border-t border-border-main text-center text-xs">
-                    <p>&copy; {new Date().getFullYear()} Atharrazka Core oleh Rangga.P.H. Dibangun dengan ❤️ untuk UMKM Indonesia.</p>
+                    <p>&copy; {new Date().getFullYear()} Atharrazka Core by Rangga.P.H. {t({ id: "Dibangun dengan ❤️ untuk UMKM Indonesia.", en: "Built with ❤️ for Indonesian SMEs." })}</p>
                 </div>
             </div>
         </footer>

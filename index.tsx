@@ -6,6 +6,7 @@ import App from './App';
 import { UIProvider } from './contexts/UIContext';
 import { UserActionsProvider } from './contexts/UserActionsContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { supabaseError } from './services/supabaseClient';
 import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
 
@@ -40,13 +41,15 @@ if (supabaseError) {
 } else {
   root.render(
     <React.StrictMode>
-      <AuthProvider>
-        <UserActionsProvider>
-          <UIProvider>
-            <App />
-          </UIProvider>
-        </UserActionsProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <UserActionsProvider>
+            <UIProvider>
+              <App />
+            </UIProvider>
+          </UserActionsProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </React.StrictMode>
   );
 }
