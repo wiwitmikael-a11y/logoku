@@ -96,70 +96,6 @@ export interface Project {
   like_count?: number;
 }
 
-export type AIPetPersonalityVector = {
-  minimalist: number;
-  rustic: number;
-  playful: number;
-  modern: number;
-  luxury: number;
-  feminine: number;
-  bold: number;
-  creative: number;
-};
-
-export interface AIPetStats {
-  energy: number;
-  creativity: number;
-  intelligence: number;
-  charisma: number;
-}
-
-export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
-export type AIPetStage = 'aipod' | 'active';
-
-// --- New Blueprint System Types ---
-export interface AIPetBlueprint {
-  url: string; // e.g., 'Common_Beast.png'
-}
-
-export interface AIPetColorPalette {
-  base: string;
-  highlight: string;
-  shadow: string;
-}
-
-export interface AIPetColors {
-  organic: AIPetColorPalette;
-  mechanical: AIPetColorPalette;
-  energy: AIPetColorPalette;
-}
-
-export interface AIPetBattleStats {
-  hp: number;
-  atk: number;
-  def: number;
-  spd: number;
-}
-
-export interface AIPetState {
-  name: string;
-  stage: AIPetStage;
-  tier: AIPetTier;
-  stats: AIPetStats; // This is now "personality stats"
-  lastFed: number;
-  lastPlayed: number;
-  personality: AIPetPersonalityVector;
-  narrative: string | null; // Re-added for origin story/lore
-  
-  // New battle system
-  battleStats: AIPetBattleStats | null;
-  buffs: string[];
-
-  // New blueprint system
-  blueprint: AIPetBlueprint | null;
-  colors: AIPetColors | null;
-}
-
 export interface DailyActions {
   claimed_missions?: string[];
   [actionId: string]: number | string[] | undefined;
@@ -178,8 +114,6 @@ export interface Profile {
   total_projects_completed: number;
   last_daily_xp_claim: string;
   completed_first_steps: string[];
-  aipet_state?: AIPetState | null;
-  aipet_pity_counter?: number;
   data_fragments?: number;
   daily_actions?: DailyActions | null;
 }

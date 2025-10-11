@@ -2,19 +2,14 @@
 
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { supabase } from '../../services/supabaseClient';
-import type { Profile, AIPetState, AIPetPersonalityVector, AIPetTier } from '../../types';
+import type { Profile } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserActions } from '../../contexts/UserActionsContext';
-import { useAIPet } from '../../contexts/AIPetContext';
 import LoadingMessage from '../common/LoadingMessage';
 import ErrorMessage from '../common/ErrorMessage';
 import Card from '../common/Card';
 import Button from '../common/Button';
 
-// Lazy load heavy components
-const AIPetCard = React.lazy(() => import('../gamification/AIPetCard'));
-const AIPetActivation = React.lazy(() => import('../AIPetActivation'));
-const AIPetVisual = React.lazy(() => import('../AIPetVisual'));
 
 const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; icon: string; } } = {
   BRAND_PERTAMA_LAHIR: { name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
@@ -80,28 +75,15 @@ const SubTabButton: React.FC<{ active: boolean; onClick: () => void; children: R
     </button>
 );
 
-const StatDisplay: React.FC<{ label: string; value: number; maxValue: number, colorClass: string }> = ({ label, value, maxValue, colorClass }) => {
-    const percentage = (value / maxValue) * 100;
-    return (
-        <div className="grid grid-cols-3 gap-2 items-center text-sm">
-            <span className="font-semibold text-text-muted capitalize">{label}</span>
-            <div className="col-span-2 bg-background rounded-full h-3 border border-border-main">
-                <div className={`${colorClass} h-full rounded-full`} style={{ width: `${percentage}%` }}></div>
-            </div>
-        </div>
-    );
-};
 
 const PusatJuragan: React.FC = () => {
     const { profile } = useAuth();
     const { dailyActions, claimMissionReward } = useUserActions();
-    const { petState, isLoading: isAIPetLoading } = useAIPet();
     
     const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
     const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeSubTab, setActiveSubTab] = useState<'missions' | 'leaderboard' | 'aipet'>('missions');
-    const [showActivation, setShowActivation] = useState(false);
+    const [activeSubTab, setActiveSubTab] = useState<'missions' | 'leaderboard'>('missions');
 
     useEffect(() => {
         if (activeSubTab !== 'leaderboard' || leaderboard.length > 0) return;
@@ -130,81 +112,6 @@ const PusatJuragan: React.FC = () => {
     
     const userAchievements = profile?.achievements || [];
 
-    const renderAIPetLabContent = () => {
-        if (isAIPetLoading) return <div className="flex justify-center p-8"><LoadingMessage /></div>;
-
-        if (!petState || petState.stage === 'aipod') {
-            const dummyPodState: AIPetState = {
-                name: 'AIPod', stage: 'aipod', tier: 'common',
-                stats: { energy: 100, creativity: 50, intelligence: 50, charisma: 50 },
-                lastFed: Date.now(), lastPlayed: Date.now(),
-                personality: { minimalist: 5, rustic: 5, playful: 5, modern: 5, luxury: 5, feminine: 5, bold: 5, creative: 5 },
-                narrative: null, blueprint: null, colors: null, battleStats: null, buffs: []
-            };
-            return (
-                <>
-                    <Card title="AIPet Lab">
-                        <div className="flex flex-col items-center">
-                            <div className="w-40 h-48">
-                                <Suspense fallback={null}><AIPetVisual petState={dummyPodState} /></Suspense>
-                            </div>
-                            <h3 className="text-xl font-bold text-text-header mt-4">AIPod Terdeteksi!</h3>
-                            <p className="text-text-body mt-2 text-sm max-w-sm text-center">Di dalam artefak digital ini tersimpan data untuk mereplikasi wujud visual perdana AIPet-mu.</p>
-                            <Button
-                                onClick={() => setShowActivation(true)}
-                                className="mt-6"
-                                disabled={(profile?.credits ?? 0) < 5}
-                                title={(profile?.credits ?? 0) < 5 ? 'Butuh 5 token untuk aktivasi' : 'Aktifkan wujud pet-mu!'}
-                            >
-                                Aktifkan AIPod (5 Token)
-                            </Button>
-                        </div>
-                    </Card>
-                    {showActivation && (
-                        <Suspense fallback={null}>
-                            <AIPetActivation onClose={() => setShowActivation(false)} />
-                        </Suspense>
-                    )}
-                </>
-            );
-        }
-
-        const personality = petState.personality;
-        const maxPersonalityValue = personality ? Math.max(...(Object.values(personality) as number[])) : 0;
-
-        return (
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <div className="w-full max-w-xs mx-auto">
-                    <Suspense fallback={<div className="h-96 flex items-center justify-center"><LoadingMessage /></div>}>
-                        <AIPetCard petState={petState} />
-                    </Suspense>
-                </div>
-                <div className="space-y-6">
-                    {petState.personality && (
-                        <Card title="Analisis Kepribadian">
-                            <div className="space-y-2">
-                                {Object.entries(petState.personality).map(([trait, value]) => (
-                                    <StatDisplay key={trait} label={trait} value={value as number} maxValue={maxPersonalityValue > 0 ? maxPersonalityValue : 1} colorClass="bg-primary" />
-                                ))}
-                            </div>
-                        </Card>
-                    )}
-                    {petState.battleStats && (
-                        <Card title="Statistik Pertarungan">
-                             <div className="space-y-2">
-                                <p className="text-xs text-text-muted text-center mb-2">(Fitur pertarungan segera hadir!)</p>
-                                <StatDisplay label="HP" value={petState.battleStats.hp} maxValue={100} colorClass="bg-green-500" />
-                                <StatDisplay label="ATK" value={petState.battleStats.atk} maxValue={100} colorClass="bg-red-500" />
-                                <StatDisplay label="DEF" value={petState.battleStats.def} maxValue={100} colorClass="bg-blue-500" />
-                                <StatDisplay label="SPD" value={petState.battleStats.spd} maxValue={100} colorClass="bg-yellow-500" />
-                             </div>
-                        </Card>
-                    )}
-                </div>
-            </div>
-        );
-    };
-
     return (
         <div className="flex flex-col gap-8 max-w-4xl mx-auto animate-content-fade-in">
              <div className="text-center">
@@ -219,7 +126,6 @@ const PusatJuragan: React.FC = () => {
             <div className="flex justify-center border-b border-border-main mb-8">
                 <SubTabButton active={activeSubTab === 'missions'} onClick={() => setActiveSubTab('missions')}>Misi & Lencana</SubTabButton>
                 <SubTabButton active={activeSubTab === 'leaderboard'} onClick={() => setActiveSubTab('leaderboard')}>Papan Peringkat</SubTabButton>
-                <SubTabButton active={activeSubTab === 'aipet'} onClick={() => setActiveSubTab('aipet')}>AIPet Lab</SubTabButton>
             </div>
             
             {error && <ErrorMessage message={error} />}
@@ -298,12 +204,6 @@ const PusatJuragan: React.FC = () => {
                             </div>
                         )}
                     </Card>
-                </div>
-            )}
-
-            {activeSubTab === 'aipet' && (
-                 <div className="animate-content-fade-in">
-                    {renderAIPetLabContent()}
                 </div>
             )}
         </div>

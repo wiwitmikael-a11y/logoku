@@ -1,12 +1,9 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import Button from './common/Button';
 import { supabase } from '../services/supabaseClient';
-import type { AIPetState } from '../types';
 import { useUI } from '../contexts/UIContext';
-
-const AIPetParade = React.lazy(() => import('./AIPetParade'));
 
 interface Props {
   isCaptchaSolved: boolean;
@@ -15,7 +12,6 @@ interface Props {
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
-  const [paradePets, setParadePets] = useState<AIPetState[]>([]);
   const { toggleToSModal, togglePrivacyModal } = useUI();
 
   const handleGoogleLogin = () => {
@@ -25,50 +21,9 @@ const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
     });
   };
 
-  useEffect(() => {
-    const fetchParadePets = async () => {
-      try {
-        // We will create an RPC function in Supabase called 'get_random_hatched_aipets'
-        // This is more efficient than fetching all pets and randomizing on the client.
-        // SQL for the function:
-        // CREATE OR REPLACE FUNCTION get_random_hatched_aipets(count integer)
-        // RETURNS TABLE(aipet_state jsonb) AS $$
-        // BEGIN
-        //   RETURN QUERY
-        //   SELECT a.aipet_state
-        //   FROM profiles AS a
-        //   WHERE a.aipet_state IS NOT NULL AND a.aipet_state->>'stage' != 'egg'
-        //   ORDER BY random()
-        //   LIMIT count;
-        // END;
-        // $$ LANGUAGE plpgsql;
-        const { data, error } = await supabase.rpc('get_random_hatched_aipets', { count: 7 });
-
-        if (error) {
-          console.error("Error fetching parade pets:", error);
-          return;
-        }
-
-        if (data) {
-          const pets = data.map((item: any) => item.aipet_state as AIPetState);
-          setParadePets(pets);
-        }
-      } catch (e) {
-        console.error("Client-side error fetching parade pets:", e);
-      }
-    };
-
-    fetchParadePets();
-  }, []);
-
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-background text-text-body transition-colors duration-300 overflow-hidden">
       <div className="max-w-xl w-full relative">
-        <Suspense fallback={null}>
-          <AIPetParade pets={paradePets} />
-        </Suspense>
-
         <div className="relative h-40 mb-4 z-10">
             <img
             src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
@@ -88,7 +43,7 @@ const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
             </div>
 
             <p className="text-text-body mb-8 max-w-lg mx-auto">
-              Pusing mikirin logo, konten sosmed, atau kemasan produk? Tenang, Juragan! Mang AI siap jadi partner setia lo. Ubah ide sederhana jadi <strong className="text-text-header">paket branding lengkap</strong>: mulai dari <strong className="text-primary">logo</strong>, <strong className="text-primary">persona brand</strong>, <strong className="text-primary">kalender konten</strong>, sampai <strong className="text-primary">desain kemasan</strong>. Asah kreativitasmu di <strong className="text-splash">Sotoshop</strong>, ngobrol bareng sesama UMKM di <strong className="text-splash">Forum</strong>, dan pelihara <strong className="text-splash">AIPet</strong>-mu biar makin gacor! Siap naik kelas?
+              Pusing mikirin logo, konten sosmed, atau kemasan produk? Tenang, Juragan! Mang AI siap jadi partner setia lo. Ubah ide sederhana jadi <strong className="text-text-header">paket branding lengkap</strong>: mulai dari <strong className="text-primary">logo</strong>, <strong className="text-primary">persona brand</strong>, <strong className="text-primary">kalender konten</strong>, sampai <strong className="text-primary">desain kemasan</strong>. Asah kreativitasmu di <strong className="text-splash">Sotoshop</strong> dan ngobrol bareng sesama UMKM di <strong className="text-splash">Forum</strong>. Siap naik kelas?
             </p>
             
             <div className="flex flex-col items-center gap-4">

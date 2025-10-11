@@ -3,7 +3,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateBusinessNames, generateQuickSlogans, generateMoodboardText, generateMoodboardImages, generateSceneFromImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
-import { useAIPet } from '../contexts/AIPetContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { useUI } from '../contexts/UIContext';
 import { playSound } from '../services/soundService';
@@ -58,7 +57,6 @@ interface SceneImage {
 const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
     const { profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
-    const { petState } = useAIPet();
     const credits = profile?.credits ?? 0;
     
     const [activeTool, setActiveTool] = useState<'name' | 'slogan' | 'moodboard' | 'sotoshop' | 'scenemixer'>('name');
@@ -113,22 +111,22 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
         if (credits < NAME_GEN_COST) { setShowOutOfCreditsModal(true); return; }
         setIsLoading(true); setError(null); setResults(null); playSound('start');
         try {
-            const resultItems = await generateBusinessNames(nameCategory, nameKeywords, petState);
+            const resultItems = await generateBusinessNames(nameCategory, nameKeywords);
             await deductCredits(NAME_GEN_COST); await addXp(XP_REWARD);
             setResults({ title: `IDEAS FOR "${nameCategory.toUpperCase()}"`, items: resultItems });
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
-    }, [nameCategory, nameKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal, petState]);
+    }, [nameCategory, nameKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
     
     const handleGenerateSlogans = useCallback(async () => {
         if (!sloganBusinessName) { setError('BUSINESS NAME CANNOT BE EMPTY!'); return; }
         if (credits < SLOGAN_GEN_COST) { setShowOutOfCreditsModal(true); return; }
         setIsLoading(true); setError(null); setResults(null); playSound('start');
         try {
-            const resultItems = await generateQuickSlogans(sloganBusinessName, sloganKeywords, petState);
+            const resultItems = await generateQuickSlogans(sloganBusinessName, sloganKeywords);
             await deductCredits(SLOGAN_GEN_COST); await addXp(XP_REWARD);
             setResults({ title: `SLOGANS FOR "${sloganBusinessName.toUpperCase()}"`, items: resultItems });
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
-    }, [sloganBusinessName, sloganKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal, petState]);
+    }, [sloganBusinessName, sloganKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
     
     const handleGenerateMoodboard = useCallback(async () => {
         if (!moodboardKeywords) { setError('KEYWORDS CANNOT BE EMPTY!'); return; }
@@ -136,14 +134,14 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
         setIsLoading(true); setError(null); setMoodboardResult(null); playSound('start');
         try {
             const [textData, images] = await Promise.all([
-                generateMoodboardText(moodboardKeywords, petState),
+                generateMoodboardText(moodboardKeywords),
                 generateMoodboardImages(moodboardKeywords),
             ]);
             await deductCredits(MOODBOARD_GEN_COST); await addXp(XP_REWARD + 10);
             setMoodboardResult({ ...textData, images });
             playSound('success');
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
-    }, [moodboardKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal, petState]);
+    }, [moodboardKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
 
     const handleFileChange = (files: FileList) => {
         setError(null);

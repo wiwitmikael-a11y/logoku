@@ -1,8 +1,9 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateSocialProfiles } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-import { useAIPet } from '../contexts/AIPetContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import type { SocialProfileData, ProjectData } from '../types';
 import Button from './common/Button';
@@ -20,10 +21,8 @@ interface Props {
 const GENERATION_COST = 1;
 
 const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  // FIX: Destructure profile from useAuth and other actions from useUserActions
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
-  const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [profileData, setProfileData] = useState<SocialProfileData | null>(null);
@@ -51,7 +50,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
     playSound('start');
 
     try {
-      const result = await generateSocialProfiles(brandInputs, selectedPersona, petState);
+      const result = await generateSocialProfiles(brandInputs, selectedPersona);
       if (!(await deductCredits(GENERATION_COST))) return;
       setProfileData(result);
       setShowNextStepNudge(true);
@@ -62,7 +61,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, petState]);
+  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal]);
   
   const handleContinue = () => {
     if (profileData) {

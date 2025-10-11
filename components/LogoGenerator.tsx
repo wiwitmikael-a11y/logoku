@@ -1,9 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
-import { useAIPet } from '../contexts/AIPetContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import type { BrandPersona } from '../types';
 import Button from './common/Button';
@@ -23,7 +22,6 @@ const GENERATION_COST = 4;
 const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onGoToDashboard }) => {
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
-  const { showContextualMessage, notifyPetOfActivity } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [prompt, setPrompt] = useState(`A minimalist and modern logo for "${businessName}", representing ${persona.kata_kunci.join(', ')}.`);
@@ -32,34 +30,6 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
-  const helpMessageShownRef = useRef(false);
-
-  useEffect(() => {
-    let activityInterval: number | undefined;
-    if (isLoading) {
-      activityInterval = window.setInterval(() => notifyPetOfActivity('designing_logo'), 3000);
-    }
-    return () => {
-      if (activityInterval) {
-        clearInterval(activityInterval);
-      }
-    };
-  }, [isLoading, notifyPetOfActivity]);
-  
-  useEffect(() => {
-    if (logoOptions.length > 0 || helpMessageShownRef.current || isLoading) {
-        return;
-    }
-
-    const timerId = setTimeout(() => {
-        showContextualMessage("Lagi mentok, ya? Coba deh pake kata kunci 'geometris', 'abstrak', atau 'simbol alam' di prompt logonya!");
-        helpMessageShownRef.current = true;
-    }, 20000);
-
-    return () => clearTimeout(timerId);
-
-  }, [logoOptions.length, isLoading, showContextualMessage]);
-
 
   const handleGenerateLogos = useCallback(async () => {
     if (credits < GENERATION_COST) {

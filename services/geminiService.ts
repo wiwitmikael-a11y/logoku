@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { BrandPersona, BrandInputs, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, AIPetState, AIPetTier, ProjectData } from '../types';
+import type { BrandPersona, BrandInputs, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, ProjectData } from '../types';
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 // DEFERRED INITIALIZATION of GoogleGenAI client to prevent startup crash
@@ -21,8 +21,7 @@ function getAiClient(): GoogleGenAI {
 
 // --- Text Generation Services ---
 
-export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string, competitorAnalysis: string | null, petState: AIPetState | null): Promise<BrandPersona[]> => {
-  const petInfluence = petState ? `The user has an AI Pet with these personality traits: ${JSON.stringify(petState.personality)}. Subtly favor brand personas that align with the pet's dominant traits if possible.` : '';
+export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string, competitorAnalysis: string | null): Promise<BrandPersona[]> => {
   const competitorContext = competitorAnalysis ? `Here's an analysis of a competitor: ${competitorAnalysis}. Use this to create a differentiated persona.` : '';
 
   const response = await getAiClient().models.generateContent({
@@ -35,7 +34,6 @@ export const generateBrandPersona = async (businessName: string, industry: strin
     - Target Audience: "${targetAudience}"
     - Value Proposition: "${valueProposition}"
     ${competitorContext}
-    ${petInfluence}
     
     For each persona, provide:
     1.  'nama_persona': A catchy name in Indonesian (e.g., "Sang Modernis Minimalis", "Si Petualang Alami").
@@ -52,15 +50,13 @@ export const generateBrandPersona = async (businessName: string, industry: strin
   return JSON.parse(response.text);
 };
 
-export const generateSlogans = async (businessName: string, persona: BrandPersona, competitors: string, petState: AIPetState | null): Promise<string[]> => {
-    const petInfluence = petState ? `The user's AI Pet, ${petState.name}, has a high ${Object.keys(petState.personality).reduce((a, b) => petState.personality[a as keyof typeof petState.personality] > petState.personality[b as keyof typeof petState.personality] ? a : b)} trait. Try to reflect this in some slogans.` : '';
+export const generateSlogans = async (businessName: string, persona: BrandPersona, competitors: string): Promise<string[]> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Generate 5 creative and catchy slogan options for a business named "${businessName}".
         - The brand persona is: "${persona.nama_persona}".
         - Keywords: ${persona.kata_kunci.join(', ')}.
         - Competitor slogans to avoid being too similar to: "${competitors}".
-        ${petInfluence}
         The output must be a JSON array of strings.`,
         config: {
             responseMimeType: "application/json",
@@ -69,7 +65,7 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
     return JSON.parse(response.text);
 };
 
-export const generateContentCalendar = async (businessName: string, persona: BrandPersona, petState: AIPetState | null): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
+export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create a 7-day social media content calendar for an Indonesian business named "${businessName}". The brand persona is "${persona.nama_persona}". Use Google Search to find relevant trending topics or holidays in Indonesia for the upcoming week.
@@ -97,7 +93,7 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
     return { calendar: JSON.parse(response.text), sources: groundingMetadata?.groundingChunks || [] };
 };
 
-export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona, petState: AIPetState | null): Promise<SocialProfileData> => {
+export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona): Promise<SocialProfileData> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create social media profile descriptions for "${inputs.businessName}". The persona is "${persona.nama_persona}".
@@ -121,7 +117,7 @@ export const generateSocialProfiles = async (inputs: BrandInputs, persona: Brand
     return JSON.parse(response.text);
 };
 
-export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string, petState: AIPetState | null): Promise<SocialAdsData> => {
+export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string): Promise<SocialAdsData> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create 2 social media ad copy options for "${inputs.businessName}", a business that sells "${inputs.businessDetail}".
@@ -148,7 +144,7 @@ export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPerso
     return JSON.parse(response.text);
 };
 
-export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string, petState: AIPetState | null): Promise<{ caption: string; hashtags: string[] }[]> => {
+export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string): Promise<{ caption: string; hashtags: string[] }[]> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Generate 3 distinct social media caption options for "${businessName}".
@@ -174,7 +170,7 @@ export const generateCaptions = async (businessName: string, persona: BrandPerso
     return JSON.parse(response.text);
 };
 
-export const analyzeCompetitorUrl = async (url: string, businessName: string, petState: AIPetState | null): Promise<string> => {
+export const analyzeCompetitorUrl = async (url: string, businessName: string): Promise<string> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Analyze the competitor at this URL: ${url}. Provide a concise summary of their brand identity (style, tone, apparent target audience). Based on this, suggest 2-3 key differentiation strategies for a new business named "${businessName}". Format as a simple text summary.`,
@@ -334,17 +330,6 @@ export const generateLogoVariations = async (logoUrl: string, businessName: stri
 
 // --- Other Services ---
 
-export const generateAIPetNarrative = async (name: string, tier: AIPetTier, dominantTrait: string): Promise<string> => {
-  const response = await getAiClient().models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: `Create a short, mysterious, one-sentence origin story (in Indonesian) for a newly activated digital creature named "${name}".
-    - Its rarity tier is: ${tier}.
-    - Its most dominant personality trait is: ${dominantTrait}.
-    The story should be intriguing but brief, like a Pokedex entry. Example: 'Lahir dari anomali data, ${name} menjelajahi dunia digital untuk mencari esensi kreativitas murni.'`,
-  });
-  return response.text.trim();
-};
-
 export const moderateContent = async (text: string): Promise<{ isAppropriate: boolean, reason: string }> => {
   // This is a simplified, client-side moderation check.
   // For production, a dedicated moderation model or service is recommended.
@@ -359,14 +344,14 @@ export const generateImageForCanvas = (prompt: string): Promise<string> => {
     return generateLogoOptions(prompt, 1).then(res => res[0]);
 };
 
-export const generateBusinessNames = (category: string, keywords: string, petState: AIPetState | null): Promise<string[]> => {
-    return generateSlogans(category, { nama_persona: '', kata_kunci: keywords.split(',').map(k => k.trim()) } as any, '', petState);
+export const generateBusinessNames = (category: string, keywords: string): Promise<string[]> => {
+    return generateSlogans(category, { nama_persona: '', kata_kunci: keywords.split(',').map(k => k.trim()) } as any, '');
 };
-export const generateQuickSlogans = (businessName: string, keywords: string, petState: AIPetState | null): Promise<string[]> => {
-    return generateSlogans(businessName, { nama_persona: '', kata_kunci: keywords.split(',').map(k => k.trim()) } as any, '', petState);
+export const generateQuickSlogans = (businessName: string, keywords: string): Promise<string[]> => {
+    return generateSlogans(businessName, { nama_persona: '', kata_kunci: keywords.split(',').map(k => k.trim()) } as any, '');
 };
 
-export const generateMoodboardText = async (keywords: string, petState: AIPetState | null): Promise<{ description: string; palette: string[] }> => {
+export const generateMoodboardText = async (keywords: string): Promise<{ description: string; palette: string[] }> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Based on the keywords "${keywords}", create a brand moodboard concept. Provide a 'description' (a short paragraph) and a 'palette' (an array of 5 hex color codes).`,
