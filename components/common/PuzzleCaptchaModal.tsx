@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
-import { playSound, playBGM } from '../../services/soundService';
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-const BrandingTipModal = React.lazy(() => import('./BrandingTipModal'));
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { playSound, playBGM } from '../../services/soundService';
+import Button from './Button';
 
 interface Props {
   show: boolean;
@@ -10,11 +11,10 @@ interface Props {
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
+const PuzzleCaptchaModal: React.FC<Props> = ({ show, onSuccess }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [sliderLeft, setSliderLeft] = useState(0);
   const [isSolved, setIsSolved] = useState(false);
-  const [showBrandingTip, setShowBrandingTip] = useState(false);
   
   const sliderRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -27,12 +27,18 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   }, []);
 
   const resetSlider = useCallback(() => {
-    if (sliderRef.current) { sliderRef.current.style.transition = 'left 0.3s ease-out'; setSliderLeft(0); }
+    if (sliderRef.current) {
+      sliderRef.current.style.transition = 'left 0.3s ease-out';
+      setSliderLeft(0);
+    }
   }, []);
 
   const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (isSolved) return;
-    if (!jinglePlayedRef.current) { playBGM('welcome'); jinglePlayedRef.current = true; }
+    if (!jinglePlayedRef.current) {
+      playBGM('welcome');
+      jinglePlayedRef.current = true;
+    }
     if (sliderRef.current) sliderRef.current.style.transition = 'none';
     setIsDragging(true);
   }, [isSolved]);
@@ -49,60 +55,91 @@ const SliderCaptcha: React.FC<Props> = ({ show, onSuccess }) => {
   const handleTouchDragMove = useCallback((e: TouchEvent) => e.touches[0] && handleDragMove(e.touches[0].clientX), [handleDragMove]);
 
   const handleDragEnd = useCallback(() => {
-    if (!isDragging) return; setIsDragging(false);
+    if (!isDragging) return;
+    setIsDragging(false);
     const { maxSliderLeft } = getTrackBounds();
     if (sliderLeft >= maxSliderLeft - 5) {
-      playSound('puzzle_drop'); setSliderLeft(maxSliderLeft); setIsSolved(true);
-      setTimeout(() => setShowBrandingTip(true), 500); 
-    } else { playSound('puzzle_fail'); resetSlider(); }
+      playSound('puzzle_drop');
+      setSliderLeft(maxSliderLeft);
+      setIsSolved(true);
+    } else {
+      playSound('puzzle_fail');
+      resetSlider();
+    }
   }, [isDragging, sliderLeft, getTrackBounds, resetSlider]);
   
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseDragMove); window.addEventListener('mouseup', handleDragEnd);
-      window.addEventListener('touchmove', handleTouchDragMove); window.addEventListener('touchend', handleDragEnd);
+      window.addEventListener('mousemove', handleMouseDragMove);
+      window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchmove', handleTouchDragMove);
+      window.addEventListener('touchend', handleDragEnd);
     }
     return () => {
-      window.removeEventListener('mousemove', handleMouseDragMove); window.removeEventListener('mouseup', handleDragEnd);
-      window.removeEventListener('touchmove', handleTouchDragMove); window.removeEventListener('touchend', handleDragEnd);
+      window.removeEventListener('mousemove', handleMouseDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleTouchDragMove);
+      window.removeEventListener('touchend', handleDragEnd);
     };
   }, [isDragging, handleMouseDragMove, handleTouchDragMove, handleDragEnd]);
 
   useEffect(() => {
-    if (show) modalRef.current?.focus();
-    else { setTimeout(() => { setIsSolved(false); setShowBrandingTip(false); resetSlider(); jinglePlayedRef.current = false; }, 300); }
+    if (show) {
+        modalRef.current?.focus();
+    } else {
+        // Reset state after closing animation
+        setTimeout(() => {
+            setIsSolved(false);
+            resetSlider();
+            jinglePlayedRef.current = false;
+        }, 300);
+    }
   }, [show, resetSlider]);
 
   if (!show) return null;
 
   return (
-    <>
-      <div
-        ref={modalRef}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="captcha-title"
-        tabIndex={-1}
-      >
-        <div className={`relative max-w-sm w-full bg-surface border rounded-2xl shadow-xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-400 ring-4 ring-green-400/20' : 'border-border-main'} ${showBrandingTip ? 'filter blur-sm' : ''}`}>
-          <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 mb-4 animate-breathing-ai" style={{ imageRendering: 'pixelated' }} />
-          <h2 id="captcha-title" className="text-xl font-bold text-primary mb-2">Eits, Tahan Dulu, Juragan!</h2>
-          <p className="text-text-body mb-8 text-center text-sm">Buktikan kalo lo pejuang UMKM sejati dengan geser slider ini sampe mentok!</p>
-
-          <div ref={trackRef} className="w-full h-14 bg-background border border-border-main rounded-full flex items-center p-2 relative">
-            <div className="absolute left-0 top-0 h-full bg-primary/20 rounded-full" style={{ width: `${sliderLeft + 40}px` }} />
-            <div ref={sliderRef} onMouseDown={handleDragStart} onTouchStart={handleDragStart} className={`w-10 h-10 bg-primary rounded-full absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none shadow-md ${isSolved ? '!bg-green-500' : ''}`} style={{ left: `${sliderLeft}px` }} aria-label="Geser untuk verifikasi" role="slider">
-              {isSolved ? <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg> : <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
+    <div
+      ref={modalRef}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="captcha-title"
+      tabIndex={-1}
+    >
+      <div className={`relative max-w-sm w-full bg-surface border rounded-2xl shadow-xl p-8 flex flex-col items-center transition-all duration-300 ${isSolved ? 'border-green-400 ring-4 ring-green-400/20' : 'border-border-main'}`}>
+        {isSolved ? (
+            <div className="animate-content-fade-in text-center">
+                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 mb-4" style={{ imageRendering: 'pixelated' }} />
+                <h2 id="tip-modal-title" className="text-3xl font-bold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>Selamat Datang di Studio!</h2>
+                <div className="text-text-body text-center space-y-3 mb-8">
+                    <p>
+                        Sebagai juragan baru, Mang AI udah siapin amunisi awal buat lo: <strong className="text-splash text-xl">20 Token GRATIS!</strong>
+                    </p>
+                    <p className="text-sm">
+                        Gunakan buat ngeracik brand-mu dari nol, dari persona sampai konten sosmed. Ayo mulai petualangan branding ini!
+                    </p>
+                </div>
+                <Button onClick={onSuccess}>Gas, Mang! Kita Mulai!</Button>
             </div>
-            <span className={`text-center w-full font-semibold transition-opacity duration-300 ${isDragging || isSolved ? 'opacity-0' : 'opacity-100 text-text-muted'}`}> Geser ke Kanan </span>
-          </div>
-          {isSolved && !showBrandingTip && <p className="text-green-600 font-bold animate-pulse mt-6">Mantap! Lanjut, Juragan!</p>}
-        </div>
+        ) : (
+            <>
+                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 mb-4 animate-breathing-ai" style={{ imageRendering: 'pixelated' }} />
+                <h2 id="captcha-title" className="text-xl font-bold text-primary mb-2">Eits, Tahan Dulu, Juragan!</h2>
+                <p className="text-text-body mb-8 text-center text-sm">Buktikan kalo lo pejuang UMKM sejati dengan geser slider ini sampe mentok!</p>
+
+                <div ref={trackRef} className="w-full h-14 bg-background border border-border-main rounded-full flex items-center p-2 relative">
+                    <div className="absolute left-0 top-0 h-full bg-primary/20 rounded-full" style={{ width: `${sliderLeft + 40}px` }} />
+                    <div ref={sliderRef} onMouseDown={handleDragStart} onTouchStart={handleDragStart} className={`w-10 h-10 bg-primary rounded-full absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none shadow-md`} style={{ left: `${sliderLeft}px` }} aria-label="Geser untuk verifikasi" role="slider">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </div>
+                    <span className={`text-center w-full font-semibold transition-opacity duration-300 ${isDragging ? 'opacity-0' : 'opacity-100 text-text-muted'}`}> Geser ke Kanan </span>
+                </div>
+            </>
+        )}
       </div>
-      <Suspense fallback={null}> <BrandingTipModal show={showBrandingTip} onConfirm={onSuccess} /> </Suspense>
-    </>
+    </div>
   );
 };
 
-export default SliderCaptcha;
+export default PuzzleCaptchaModal;
