@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { generateBusinessNames, generateQuickSlogans, generateMoodboardText, generateMoodboardImages, generateSceneFromImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
@@ -207,39 +207,39 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
             <div className="creative-console-wrapper">
                 <div className="creative-console">
                     <div className="console-header">
-                        <h2 className="console-title">Generator Ide Kreatif</h2>
+                        <h2 className="console-title">Generator Ide Cepat</h2>
                     </div>
                     <div className="console-monitor-frame">
                         <div className="crt-screen p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto">
                             
                             {/* --- TABS --- */}
                             <div className="flex border-b-2 border-splash/50">
-                                <button onClick={() => handleToolChange('name')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'name' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>NAME GEN</button>
-                                <button onClick={() => handleToolChange('slogan')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'slogan' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SLOGAN GEN</button>
-                                <button onClick={() => handleToolChange('moodboard')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'moodboard' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>MOODBOARD</button>
-                                <button onClick={() => handleToolChange('scenemixer')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'scenemixer' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SCENE MIXER</button>
-                                <button onClick={() => handleToolChange('sotoshop')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'sotoshop' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SOTOSHOP</button>
+                                <button onClick={() => handleToolChange('name')} className={`flex-1 font-mono font-bold py-2 text-sm sm:text-base transition-colors ${activeTool === 'name' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>NAME GEN</button>
+                                <button onClick={() => handleToolChange('slogan')} className={`flex-1 font-mono font-bold py-2 text-sm sm:text-base transition-colors ${activeTool === 'slogan' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SLOGAN GEN</button>
+                                <button onClick={() => handleToolChange('moodboard')} className={`flex-1 font-mono font-bold py-2 text-sm sm:text-base transition-colors ${activeTool === 'moodboard' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>MOODBOARD</button>
+                                <button onClick={() => handleToolChange('scenemixer')} className={`flex-1 font-mono font-bold py-2 text-sm sm:text-base transition-colors ${activeTool === 'scenemixer' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SCENE MIXER</button>
+                                <button onClick={() => handleToolChange('sotoshop')} className={`flex-1 font-mono font-bold py-2 text-sm sm:text-base transition-colors ${activeTool === 'sotoshop' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SOTOSHOP</button>
                             </div>
                             
                             <div className="flex-grow space-y-4">
                                 {activeTool === 'name' ? (
                                     <div className="animate-content-fade-in space-y-4">
-                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">PRODUCT/SERVICE:</label><input value={nameCategory} onChange={(e) => setNameCategory(e.target.value)} placeholder="e.g., Kopi Susu Gula Aren" required className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
-                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">KEYWORDS (OPTIONAL):</label><input value={nameKeywords} onChange={(e) => setNameKeywords(e.target.value)} placeholder="e.g., senja, santai, modern" className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
-                                        <button onClick={handleGenerateNames} disabled={!nameCategory || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `START GAME (${NAME_GEN_COST} TOKEN)`}</button>
+                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">PRODUK/JASA:</label><input value={nameCategory} onChange={(e) => setNameCategory(e.target.value)} placeholder="cth: Kopi Susu Gula Aren" required className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
+                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">KATA KUNCI (OPSIONAL):</label><input value={nameKeywords} onChange={(e) => setNameKeywords(e.target.value)} placeholder="cth: senja, santai, modern" className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
+                                        <button onClick={handleGenerateNames} disabled={!nameCategory || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `GENERATE (${NAME_GEN_COST} TOKEN)`}</button>
                                     </div>
                                 ) : activeTool === 'slogan' ? (
                                     <div className="animate-content-fade-in space-y-4">
-                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">BUSINESS NAME:</label><input value={sloganBusinessName} onChange={(e) => setSloganBusinessName(e.target.value)} placeholder="e.g., Kopi Senja" required className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
-                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">KEYWORDS (OPTIONAL):</label><input value={sloganKeywords} onChange={(e) => setSloganKeywords(e.target.value)} placeholder="e.g., santai, temen ngobrol" className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
-                                        <button onClick={handleGenerateSlogans} disabled={!sloganBusinessName || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `START GAME (${SLOGAN_GEN_COST} TOKEN)`}</button>
+                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">NAMA BISNIS:</label><input value={sloganBusinessName} onChange={(e) => setSloganBusinessName(e.target.value)} placeholder="cth: Kopi Senja" required className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
+                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">KATA KUNCI (OPSIONAL):</label><input value={sloganKeywords} onChange={(e) => setSloganKeywords(e.target.value)} placeholder="cth: santai, teman ngobrol" className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
+                                        <button onClick={handleGenerateSlogans} disabled={!sloganBusinessName || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `GENERATE (${SLOGAN_GEN_COST} TOKEN)`}</button>
                                     </div>
                                 ) : activeTool === 'sotoshop' ? (
                                     <div className="animate-content-fade-in space-y-4">
                                         <p className="text-splash font-bold text-sm">SOTOSHOP (IMAGE EDITOR):</p>
                                         <p className="text-white text-sm">Editor gambar ringan yang powerful, terintegrasi langsung dengan Mang AI. Gunakan untuk memoles logo, menambah teks ke gambar postingan, atau bahkan membuat desain sederhana dari nol.</p>
                                         <p className="text-xs text-text-muted">Fitur unggulannya termasuk background removal dan AI image generation langsung di kanvas.</p>
-                                        {/* FIX: Use onShowSotoshop from props instead of the undefined toggleSotoshop */}
+                                        {/* FIX: Changed onClick handler from undefined 'toggleSotoshop' to the correct prop 'onShowSotoshop'. */}
                                         <button onClick={onShowSotoshop} className="w-full font-mono text-lg font-bold bg-fuchsia-500 text-white p-3 my-2 hover:bg-fuchsia-400 transition-colors">
                                             BUKA SOTOSHOP
                                         </button>
@@ -249,13 +249,13 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                         <div 
                                             onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                                             onDragLeave={() => setIsDragging(false)}
-                                            onDrop={e => { e.preventDefault(); setIsDragging(false); handleFileChange(e.dataTransfer.files); }}
+                                            onDrop={e => { e.preventDefault(); setIsDragging(false); handleFileChange(e.dataTransfer.files, 'scenemixer'); }}
                                             className={`p-4 border-2 border-dashed border-splash/50 rounded-none min-h-[80px] flex flex-col justify-center items-center transition-colors ${isDragging ? 'dropzone-active' : ''}`}
                                         >
                                             <p className="text-splash font-bold text-sm">DROP YOUR IMAGES HERE</p>
                                             <p className="text-xs text-text-muted">or</p>
                                             <label htmlFor="file-upload" className="cursor-pointer text-yellow-400 hover:underline font-semibold">CHOOSE FILES</label>
-                                            <input id="file-upload" type="file" multiple accept="image/*" className="hidden" onChange={e => e.target.files && handleFileChange(e.target.files)} />
+                                            <input id="file-upload" type="file" multiple accept="image/*" className="hidden" onChange={e => e.target.files && handleFileChange(e.target.files, 'scenemixer')} />
                                         </div>
                                         {sceneImages.length > 0 && (
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 bg-black/50 border border-splash/30 max-h-48 overflow-y-auto">

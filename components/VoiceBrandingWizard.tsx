@@ -30,14 +30,6 @@ const SESSION_COST = 5; // 1 token/min for 5 mins
 const MAX_DURATION_SECONDS = 5 * 60; // 5 minutes
 const WRAP_UP_TIME_SECONDS = 30; // 30 seconds
 
-const voiceOptions = [
-  { id: 'Puck', name: 'Puck', description: 'Suara pria yang ceria, enerjik, dan bersemangat.' },
-  { id: 'Zephyr', name: 'Zephyr', description: 'Suara pria yang ramah, jernih, dan profesional.' },
-  { id: 'Charon', name: 'Charon', description: 'Suara pria yang dalam, tenang, dan berwibawa.' },
-  { id: 'Kore', name: 'Kore', description: 'Suara wanita yang hangat, lembut, dan menenangkan.' },
-  { id: 'Fenrir', name: 'Fenrir', description: 'Suara wanita yang tegas, kuat, dan meyakinkan.' },
-];
-
 // --- Function Declarations for Gemini ---
 const functionDeclarations: FunctionDeclaration[] = [
   { name: 'saveBusinessName', parameters: { type: Type.OBJECT, properties: { name: { type: Type.STRING } }, required: ['name'] } },
@@ -142,7 +134,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   const [timeLeft, setTimeLeft] = useState(MAX_DURATION_SECONDS);
   const [isWrappingUp, setIsWrappingUp] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('Puck');
 
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
@@ -243,7 +234,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         config: {
           responseModalities: [Modality.AUDIO],
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: String(selectedVoice) } } },
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } } },
           inputAudioTranscription: {},
           outputAudioTranscription: {},
           tools: [{ functionDeclarations }],
@@ -384,7 +375,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
       } else if (err instanceof Error) { errorMessage = err.message; }
       setError(errorMessage); setConversationState('IDLE'); if (isPermissionError) setPermissionState('denied');
     }
-  }, [profile, deductCredits, setShowOutOfCreditsModal, handleFinalizeAndComplete, selectedVoice]);
+  }, [profile, deductCredits, setShowOutOfCreditsModal, handleFinalizeAndComplete]);
 
   const checkPermissions = useCallback(async () => {
     if (typeof navigator.permissions === 'undefined') { setPermissionState('prompt'); return; }
@@ -474,21 +465,12 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
       if (permissionState === 'prompt' || conversationState === 'IDLE') {
         return (
             <div className="text-center p-4 w-full"> 
-                <h3 className="text-3xl font-bold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>Pilih Karakter Suara Mang AI</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 my-6">
-                    {voiceOptions.map(voice => (
-                        <div
-                            key={voice.id}
-                            onClick={() => setSelectedVoice(voice.id)}
-                            className={`p-4 rounded-lg cursor-pointer transition-all duration-200 ${selectedVoice === voice.id ? 'bg-primary/20 border-2 border-primary ring-4 ring-primary/20' : 'bg-surface/50 border-2 border-border-main hover:border-splash/50'}`}
-                        >
-                            <p className="font-bold text-text-header">{voice.name}</p>
-                            <p className="text-xs text-text-muted mt-1">{voice.description}</p>
-                        </div>
-                    ))}
-                </div>
+                <h3 className="text-3xl font-bold text-primary mb-4" style={{ fontFamily: 'var(--font-display)' }}>Mulai Konsultasi Suara</h3>
+                <p className="text-text-muted mb-6 max-w-md mx-auto">
+                    Ngobrol santai bareng Mang AI selama 5 menit untuk ngebangun fondasi brand-mu, mulai dari ide sampai dapet logo master.
+                </p>
                 <Button onClick={connectToGemini} size="large" className="mt-4">
-                    Mulai Konsultasi ({SESSION_COST} Token)
+                    Mulai Sesi ({SESSION_COST} Token)
                 </Button> 
             </div>
         );

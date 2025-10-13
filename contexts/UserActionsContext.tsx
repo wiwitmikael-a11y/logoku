@@ -5,9 +5,13 @@ import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import type { DailyActions } from '../types';
 
-// Constants from AuthContext
+// Constants
 const getLevelFromXp = (xp: number): number => Math.floor(xp / 750) + 1;
-const getLevelUpReward = (level: number): number => level % 5 === 0 ? 5 : 2; // Bigger reward every 5 levels
+const getLevelUpReward = (level: number): number => {
+    if (level % 10 === 0) return 5; // Major milestone reward
+    if (level % 5 === 0) return 3;  // Minor milestone reward
+    return 1;                       // Standard level up reward
+};
 
 export interface LevelUpInfo {
   newLevel: number;

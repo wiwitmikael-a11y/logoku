@@ -32,7 +32,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: The `handleCopy` method was not an arrow function, causing `this` to be undefined. Converting it to an arrow function correctly binds `this`.
+  // FIX: The `handleCopy` method is defined as an arrow function to lexically bind `this`. This ensures that `this.state` and `this.setState` refer to the component instance when this method is called as an event handler, preventing errors where `this` would otherwise be undefined.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
@@ -43,7 +43,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: The `render` method was not an arrow function. Converting it to an arrow function ensures `this.props` and `this.state` are always available.
+  // FIX: The `render` method is defined as an arrow function to ensure `this` is always the component instance. This prevents errors where `this.props` might be undefined, providing stable access to props like `onReset` and `children`.
   render = () => {
     if (this.state.hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
