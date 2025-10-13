@@ -5,8 +5,6 @@ import { generateCaptions, generateSocialMediaPostImage } from '../services/gemi
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
-// FIX: Import useAIPet to access petState
-import { useAIPet } from '../contexts/AIPetContext';
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -32,8 +30,6 @@ interface GeneratedContent {
 const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
   const { profile } = useAuth();
   const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
-  // FIX: Get petState from the AIPetContext
-  const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [topic, setTopic] = useState('');
@@ -62,8 +58,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
 
       const [imageResult, captionsResult] = await Promise.all([
         generateSocialMediaPostImage(topic, selectedPersona.kata_kunci),
-        // FIX: Pass petState as the fifth argument to generateCaptions
-        generateCaptions(brandInputs.businessName, selectedPersona, topic, "Promosi", petState)
+        generateCaptions(brandInputs.businessName, selectedPersona, topic, "Promosi")
       ]);
       if (!imageResult || imageResult.length === 0) throw new Error("Mang AI gagal membuat gambar.");
       
@@ -76,8 +71,7 @@ const InstantContentGenerator: React.FC<Props> = ({ projectData, onBack, onGoToD
     } finally {
       setIsLoading(false);
     }
-    // FIX: Add petState to the dependency array
-  }, [projectData, topic, credits, deductCredits, setShowOutOfCreditsModal, addXp, petState]);
+  }, [projectData, topic, credits, deductCredits, setShowOutOfCreditsModal, addXp]);
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">

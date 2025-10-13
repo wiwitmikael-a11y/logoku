@@ -5,7 +5,6 @@ import { generateSocialAds } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
-import { useAIPet } from '../contexts/AIPetContext';
 import type { SocialAdsData, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -24,7 +23,6 @@ const GENERATION_COST = 1;
 const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
-  const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [adsData, setAdsData] = useState<SocialAdsData | null>(null);
@@ -49,8 +47,7 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
     playSound('start');
 
     try {
-      // FIX: Pass petState to generateSocialAds
-      const result = await generateSocialAds(brandInputs, selectedPersona, selectedSlogan, petState);
+      const result = await generateSocialAds(brandInputs, selectedPersona, selectedSlogan);
       if (!(await deductCredits(GENERATION_COST))) return;
       setAdsData(result);
       setShowNextStepNudge(true);
@@ -61,7 +58,7 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, petState]);
+  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal]);
   
   const handleContinue = () => { if (adsData) onComplete({ adsData }); };
   

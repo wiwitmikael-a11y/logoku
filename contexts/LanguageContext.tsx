@@ -16,60 +16,52 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user, profile } = useAuth();
+
   const [language, setLanguageState] = useState<Language>(() => {
     return (localStorage.getItem('desainfun_language') as Language) || 'id';
   });
 
-  // Fungsi `useAuth` hanya akan dipanggil di dalam `useEffect` atau `useCallback`
-  // yang bergantung pada `user`, untuk memastikan konteksnya sudah tersedia.
-  const AuthConsumer = () => {
-    const { user, profile } = useAuth();
+  // Effect for setting the initial language from the profile or local storage
+  useEffect(() => {
+    const initialLang = profile?.language || localStorage.getItem('desainfun_language') || 'id';
+    setLanguageState(initialLang as Language);
+    document.documentElement.lang = initialLang;
+  }, [profile?.language]);
 
-    // Efek untuk sinkronisasi dari database saat profil dimuat atau berubah
-    useEffect(() => {
-      if (profile?.language && profile.language !== language) {
-        const dbLang = profile.language as Language;
-        setLanguageState(dbLang);
-        localStorage.setItem('desainfun_language', dbLang);
-        document.documentElement.lang = dbLang;
-      }
-    }, [profile?.language]);
+  const setLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem('desainfun_language', lang);
+    document.documentElement.lang = lang;
 
-    // Fungsi setLanguage sekarang juga menyimpan ke database
-    const setLanguage = useCallback((lang: Language) => {
-      setLanguageState(lang);
-      localStorage.setItem('desainfun_language', lang);
-      document.documentElement.lang = lang;
+    if (user) {
+      supabase
+        .from('profiles')
+        .update({ language: lang })
+        .eq('id', user.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error('Gagal menyimpan preferensi bahasa:', error);
+          }
+        });
+    }
+  }, [user]);
 
-      if (user) {
-        supabase
-          .from('profiles')
-          .update({ language: lang })
-          .eq('id', user.id)
-          .then(({ error }) => {
-            if (error) {
-              console.error('Gagal menyimpan preferensi bahasa:', error);
-            }
-          });
-      }
-    }, [user]);
+  const t = useCallback((translations: Translations): string => {
+    return translations[language] || translations['id'];
+  }, [language]);
 
-    const contextValue = React.useMemo(() => ({
-      language,
-      setLanguage,
-      t: (translations: Translations): string => translations[language] || translations['id'],
-    }), [language, setLanguage]);
+  const contextValue = React.useMemo<LanguageContextType>(() => ({
+    language,
+    setLanguage,
+    t,
+  }), [language, setLanguage, t]);
 
-    return (
-      <LanguageContext.Provider value={contextValue}>
-        {children}
-      </LanguageContext.Provider>
-    );
-  };
-
-  // Komponen wrapper ini memastikan bahwa AuthConsumer hanya dirender
-  // sebagai anak dari AuthProvider, sehingga useAuth() akan selalu berhasil.
-  return <AuthConsumer />;
+  return (
+    <LanguageContext.Provider value={contextValue}>
+      {children}
+    </LanguageContext.Provider>
+  );
 };
 
 export const useTranslation = () => {

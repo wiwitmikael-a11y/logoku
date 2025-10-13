@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { BrandPersona, BrandInputs, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, ProjectData, AIPetState } from '../types';
+import type { BrandPersona, BrandInputs, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, ProjectData } from '../types';
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 // DEFERRED INITIALIZATION of GoogleGenAI client to prevent startup crash
@@ -18,15 +18,6 @@ function getAiClient(): GoogleGenAI {
   }
   return ai;
 }
-
-const getPetContext = (petState: AIPetState | null): string => {
-    if (petState && petState.stage === 'active') {
-        const dominantTrait = (Object.keys(petState.personality) as Array<keyof typeof petState.personality>).reduce((a, b) => petState.personality[a] > petState.personality[b] ? a : b);
-        return `\n\n(Catatan untuk AI: Saat ini kamu didampingi oleh asisten AI Pet bernama "${petState.name}". Kepribadian dominannya adalah ${String(dominantTrait)}. Sesuaikan nadamu sedikit agar terasa ada interaksi antara kamu dan pet-mu saat memberikan respons.)`;
-    }
-    return '';
-}
-
 
 // --- Text Generation Services ---
 
@@ -74,12 +65,11 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
     return JSON.parse(response.text);
 };
 
-export const generateContentCalendar = async (businessName: string, persona: BrandPersona, petState: AIPetState | null): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
-    const petContext = getPetContext(petState);
+export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create a 7-day social media content calendar for an Indonesian business named "${businessName}". The brand persona is "${persona.nama_persona}". Use Google Search to find relevant trending topics or holidays in Indonesia for the upcoming week.
-        For each day, provide: 'hari', 'tipe_konten' (e.g., Edukasi, Promosi, Interaksi), 'ide_konten', 'draf_caption' (in Indonesian, using the brand voice: ${persona.brand_voice.deskripsi}), and 'rekomendasi_hashtag' (array of strings). The output must be a valid JSON array of objects.${petContext}`,
+        For each day, provide: 'hari', 'tipe_konten' (e.g., Edukasi, Promosi, Interaksi), 'ide_konten', 'draf_caption' (in Indonesian, using the brand voice: ${persona.brand_voice.deskripsi}), and 'rekomendasi_hashtag' (array of strings). The output must be a valid JSON array of objects.`,
         config: {
             tools: [{ googleSearch: {} }],
         }
@@ -100,15 +90,14 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
     }
 };
 
-export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona, petState: AIPetState | null): Promise<SocialProfileData> => {
-    const petContext = getPetContext(petState);
+export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona): Promise<SocialProfileData> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create social media profile descriptions for "${inputs.businessName}". The persona is "${persona.nama_persona}".
         Provide:
         1. 'instagramBio': A concise, engaging Instagram bio with emojis and a call-to-action.
         2. 'tiktokBio': A short, punchy TikTok bio.
-        3. 'marketplaceDescription': A detailed and persuasive shop description for platforms like Tokopedia or Shopee.${petContext}`,
+        3. 'marketplaceDescription': A detailed and persuasive shop description for platforms like Tokopedia or Shopee.`,
         config: {
             responseMimeType: "application/json",
             responseSchema: {
@@ -125,15 +114,14 @@ export const generateSocialProfiles = async (inputs: BrandInputs, persona: Brand
     return JSON.parse(response.text);
 };
 
-export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string, petState: AIPetState | null): Promise<SocialAdsData> => {
-    const petContext = getPetContext(petState);
+export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string): Promise<SocialAdsData> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create 2 social media ad copy options for "${inputs.businessName}", a business that sells "${inputs.businessDetail}".
         The persona is "${persona.nama_persona}" and the slogan is "${slogan}".
         - One for Instagram, focusing on visuals and engagement.
         - One for TikTok, focusing on trends and a strong hook.
-        For each, provide 'platform', 'adCopy', and 'hashtags' (array).${petContext}`,
+        For each, provide 'platform', 'adCopy', and 'hashtags' (array).`,
         config: {
             responseMimeType: "application/json",
             responseSchema: {
@@ -153,15 +141,14 @@ export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPerso
     return JSON.parse(response.text);
 };
 
-export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string, petState: AIPetState | null): Promise<{ caption: string; hashtags: string[] }[]> => {
-    const petContext = getPetContext(petState);
+export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string): Promise<{ caption: string; hashtags: string[] }[]> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Generate 3 distinct social media caption options for "${businessName}".
         - Persona: "${persona.nama_persona}" (Voice: ${persona.brand_voice.deskripsi})
         - Topic: "${topic}"
         - Tone: "${tone}"
-        For each option, provide a 'caption' (in Indonesian) and a 'hashtags' array.${petContext}`,
+        For each option, provide a 'caption' (in Indonesian) and a 'hashtags' array.`,
         config: {
             responseMimeType: "application/json",
             responseSchema: {
@@ -433,20 +420,6 @@ export const generateMissingField = async (currentInputs: Partial<BrandInputs>, 
     return response.text.trim();
 };
 
-export const generateAIPetNarrative = async (name: string, tier: string, dominantTrait: string): Promise<string> => {
-    const response = await getAiClient().models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `Create a short, one-paragraph origin story for a digital AI Pet. The story should be imaginative and give the pet a bit of personality.
-        - Pet's Name: "${name}"
-        - Rarity Tier: "${tier}"
-        - Dominant Personality Trait: "${dominantTrait}"
-        
-        Write in Indonesian. The narrative should be no more than 3 sentences. Be creative!
-        Example: "Lahir dari anomali data di server arsip kuno, ${name} adalah jiwa yang penasaran. Sifatnya yang ${dominantTrait} membuatnya selalu ingin tahu, menjelajahi setiap sudut digital dengan semangat."`,
-    });
-    return response.text.trim();
-};
-
 // --- New AI Creator Services ---
 
 export const generatePattern = async (prompt: string): Promise<string[]> => {
@@ -482,4 +455,17 @@ export const generateMascot = async (prompt: string): Promise<string[]> => {
         config: { numberOfImages: 2, outputMimeType: 'image/png', aspectRatio: '1:1' },
     });
     return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
+};
+
+// FIX: Add missing generateAIPetNarrative function
+export const generateAIPetNarrative = async (petName: string, petTier: string, dominantTrait: string): Promise<string> => {
+    const response = await getAiClient().models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Create a very short, one-sentence origin story or quirky fact for a digital pet.
+        - Name: "${petName}"
+        - Tier/Rarity: ${petTier}
+        - Dominant Trait: ${dominantTrait}
+        The tone should be mysterious, cool, and a bit futuristic. Output only the single sentence. Example: 'Data fragments suggest ${petName} was born from a glitch in the main server during a solar flare.'`,
+    });
+    return response.text.trim();
 };

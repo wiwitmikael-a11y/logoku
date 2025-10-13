@@ -101,11 +101,18 @@ export interface DailyActions {
   [actionId: string]: number | string[] | undefined;
 }
 
-// FIX: Add AIPet-related types that were missing.
+// FIX: Add missing AI Pet types
 export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
 
 export interface AIPetPersonalityVector {
-  [trait: string]: number;
+  minimalist: number;
+  rustic: number;
+  playful: number;
+  modern: number;
+  luxury: number;
+  feminine: number;
+  bold: number;
+  creative: number;
 }
 
 export interface AIPetState {
@@ -122,7 +129,9 @@ export interface AIPetState {
   lastPlayed: number;
   personality: AIPetPersonalityVector;
   narrative: string | null;
-  blueprint: { url: string } | null;
+  blueprint: {
+    url: string;
+  } | null;
   colors: {
     mechanical: { base: string };
     organic: { base: string };
@@ -136,7 +145,6 @@ export interface AIPetState {
   } | null;
   buffs: any[];
 }
-
 
 export interface Profile {
   id: string;
@@ -154,7 +162,7 @@ export interface Profile {
   data_fragments?: number;
   daily_actions?: DailyActions | null;
   language?: 'id' | 'en';
-  // FIX: Add aipet_state to Profile type.
+  // FIX: Add aipet_state to Profile type
   aipet_state?: AIPetState | null;
 }
 

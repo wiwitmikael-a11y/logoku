@@ -9,8 +9,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
 import { UserActionsProvider, useUserActions } from './contexts/UserActionsContext';
 import { LanguageProvider, useTranslation } from './contexts/LanguageContext';
-// FIX: Add AIPetProvider and useAIPet to pass petState to Gemini services.
-import { AIPetProvider, useAIPet } from './contexts/AIPetContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
@@ -95,8 +93,6 @@ const AppContent: React.FC = () => {
     const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, setShowLevelUpModal, levelUpInfo, unlockedAchievement, setUnlockedAchievement, deductCredits, addXp, grantAchievement, grantFirstTimeCompletionBonus } = useUserActions();
     const { toast, showToast, closeToast, showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showBrandGalleryModal, toggleBrandGalleryModal, showSotoshop, toggleSotoshop, showVoiceWizard, toggleVoiceWizard } = useUI();
     const { t } = useTranslation();
-    // FIX: Add useAIPet hook to get petState
-    const { petState } = useAIPet();
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
@@ -285,12 +281,9 @@ const AppContent: React.FC = () => {
         setGeneralError(null); if (!user || (profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
         try { const resultBase64 = await generationFunc(); await deductCredits(cost); const updatedProjectData = { ...project.project_data, [assetKey]: resultBase64 }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast(successMessage); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
     }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
-    // FIX: Pass petState to geminiService call
-    const handleRegenerateContentCalendar = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs.businessName, p.project_data.selectedPersona, petState).then(res => res.calendar), "Kalender konten baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset, petState]);
-    // FIX: Pass petState to geminiService call
-    const handleRegenerateProfiles = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p.project_data.brandInputs, p.project_data.selectedPersona, petState), "Profil sosmed baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset, petState]);
-    // FIX: Pass petState to geminiService call
-    const handleRegenerateSocialAds = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return; handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs, p.project_data.selectedPersona, p.project_data.selectedSlogan, petState), "Teks iklan baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset, petState]);
+    const handleRegenerateContentCalendar = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs.businessName, p.project_data.selectedPersona).then(res => res.calendar), "Kalender konten baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
+    const handleRegenerateProfiles = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p.project_data.brandInputs, p.project_data.selectedPersona), "Profil sosmed baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
+    const handleRegenerateSocialAds = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return; handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs, p.project_data.selectedPersona, p.project_data.selectedSlogan), "Teks iklan baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
     const handleRegenerateSocialKit = useCallback(async (projectId: number) => {
         setGeneralError(null); if (!user || (profile?.credits ?? 0) < 2) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project || !project.project_data.selectedLogoUrl) return;
         try { const assets = await geminiService.generateSocialMediaKitAssets(project.project_data as any); await deductCredits(2); const updatedProjectData = { ...project.project_data, socialMediaKit: assets }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast("Social media kit baru berhasil dibuat!"); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Gagal membuat social media kit.'); }
@@ -476,9 +469,7 @@ const App: React.FC = () => {
       <LanguageProvider>
         <UserActionsProvider>
           <UIProvider>
-            <AIPetProvider>
-              <AppContent />
-            </AIPetProvider>
+            <AppContent />
           </UIProvider>
         </UserActionsProvider>
       </LanguageProvider>
