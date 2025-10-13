@@ -150,7 +150,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 full_name: userToFetch.user_metadata.full_name || 'Juragan Baru',
                 avatar_url: userToFetch.user_metadata.avatar_url || '',
                 credits: 20, welcome_bonus_claimed: true, xp: 0, level: 1, achievements: [],
-                total_projects_completed: 0, completed_first_steps: [], aipet_state: null
+                total_projects_completed: 0, completed_first_steps: []
               })
               .select()
               .single();

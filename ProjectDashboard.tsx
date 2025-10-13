@@ -28,7 +28,6 @@ const DYNAMIC_INFO_TIPS = [
     { icon: '🎉', title: 'Project Pertama Lebih Hemat!', text: 'Rancang brand pertamamu dan dapatkan <strong class="text-text-header">cashback 1 token</strong> di setiap langkah generator utamanya! Ini cara Mang AI bilang \'selamat datang\' dan bantu lo hemat di awal.' },
     { icon: '🎁', title: 'Bonus Sambutan 20 Token', text: 'Sebagai juragan baru, lo juga langsung dapet bonus sambutan <span class="font-bold text-splash">20 token</span> di hari pertama! Manfaatin buat eksplorasi sepuasnya, ya!' },
     { icon: '☀️', title: 'Jatah Harian Anti Rugi', text: 'Tiap pagi, kalo token lo kurang dari 5, Mang AI bakal <strong class="text-text-header">isi ulang sampe jadi 5</strong>, gratis! Kalo sisa token lo banyak (misal 12), jumlahnya <strong class="text-text-header">nggak akan direset</strong>. Aman!' },
-    { icon: '🐾', title: 'AIPet Hidup & Bergerak!', text: 'Mang AI sekarang punya teman, si AIPet! Dia bukan cuma gambar, tapi teman digital yang <strong class="text-text-header">berjalan, melompat, dan bereaksi</strong> terhadap progresmu. Cek statistiknya di Lab AIPet!' },
     { icon: '💾', title: 'WAJIB: Amankan Aset Visual!', text: 'Untuk menjaga layanan ini gratis, semua gambar (logo, mockup) <strong class="text-text-header">hanya disimpan sementara</strong> di browser. Setelah project selesai, jangan lupa <span class="font-bold text-splash">unduh semua asetmu</span> lewat Brand Hub!' },
     { icon: '🚀', title: 'Kekuatan Brand Hub', text: 'Project yang udah selesai masuk ke <strong class="text-text-header">Brand Hub</strong>. Dari sana, lo bisa generate ulang teks iklan atau kalender konten kapan aja tanpa ngulang dari nol.' },
 ];
@@ -65,14 +64,14 @@ const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = 
     const rankColor = (glowClasses[rank as keyof typeof glowClasses] || '').split(' ')[1].replace('border-', '');
 
     return (
-        <div className={`flex flex-col items-center gap-2 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`} style={{ animation: `item-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}>
-            <div className={`relative w-28 h-28 p-2 rounded-xl bg-surface/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof rankClasses]}`}>
+        <div className={`flex flex-col items-center gap-1 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`} style={{ animation: `item-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}>
+            <div className={`relative w-24 h-24 p-2 rounded-xl bg-surface/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
                 <img src={selectedLogoUrl} alt={`Logo for ${brandInputs.businessName}`} className="max-w-full max-h-full object-contain mx-auto" />
                 <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-surface border-2 flex items-center justify-center text-lg font-bold" style={{ borderColor: rankColor }}>
                     {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
                 </div>
             </div>
-            <p className="text-sm font-semibold text-text-header truncate w-28 text-center">{brandInputs.businessName}</p>
+            <p className="text-sm font-semibold text-text-header truncate w-24 text-center">{brandInputs.businessName}</p>
             <p className="text-xs text-splash font-bold">{project.like_count || 0} Menyala 🔥</p>
         </div>
     );
@@ -143,7 +142,7 @@ const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
     );
 };
 
-const ProjectContent: React.FC<Omit<ProjectDashboardProps, 'onShowSotoshop'>> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onPreloadNewProject }) => {
+const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onPreloadNewProject }) => {
     const { profile } = useAuth();
     const { toggleVoiceWizard } = useUI();
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -274,11 +273,10 @@ const TabButton: React.FC<{
     </button>
 );
 
-const ProjectDashboard: React.FC<Omit<ProjectDashboardProps, 'onShowBrandGallery' | 'onShowSotoshop'>> = (props) => {
+const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { profile } = useAuth();
   const { toggleSotoshop } = useUI();
   const userName = profile?.full_name?.split(' ')[0] || 'Juragan';
-  // FIX: Renamed 'juragan' tab to 'gamify' to match type definition and component name.
   const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'forum' | 'gamify'>('projects');
   
   useEffect(() => {

@@ -1,10 +1,9 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { generateBusinessNames, generateQuickSlogans, generateMoodboardText, generateMoodboardImages, generateSceneFromImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
-import { useUI } from '../contexts/UIContext';
 import { playSound } from '../services/soundService';
 import Button from './common/Button';
 import ErrorMessage from './common/ErrorMessage';
@@ -45,6 +44,7 @@ const QuickToolsInfoBox: React.FC = () => {
     );
 };
 
+// FIX: Define props interface to accept onShowSotoshop
 interface QuickToolsProps {
     onShowSotoshop: () => void;
 }
@@ -239,7 +239,8 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                         <p className="text-splash font-bold text-sm">SOTOSHOP (IMAGE EDITOR):</p>
                                         <p className="text-white text-sm">Editor gambar ringan yang powerful, terintegrasi langsung dengan Mang AI. Gunakan untuk memoles logo, menambah teks ke gambar postingan, atau bahkan membuat desain sederhana dari nol.</p>
                                         <p className="text-xs text-text-muted">Fitur unggulannya termasuk background removal dan AI image generation langsung di kanvas.</p>
-                                        <button onClick={() => onShowSotoshop()} className="w-full font-mono text-lg font-bold bg-fuchsia-500 text-white p-3 my-2 hover:bg-fuchsia-400 transition-colors">
+                                        {/* FIX: Use the onShowSotoshop prop passed into the component */}
+                                        <button onClick={onShowSotoshop} className="w-full font-mono text-lg font-bold bg-fuchsia-500 text-white p-3 my-2 hover:bg-fuchsia-400 transition-colors">
                                             BUKA SOTOSHOP
                                         </button>
                                     </div>
@@ -273,7 +274,7 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                 ) : ( // Moodboard
                                      <div className="animate-content-fade-in space-y-4">
                                         <div className="space-y-2"><label className="text-splash font-bold text-sm block">KEYWORDS/VIBE:</label><input value={moodboardKeywords} onChange={(e) => setMoodboardKeywords(e.target.value)} placeholder="e.g., rustic coffee shop, sunset, warm" required className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
-                                        <button onClick={handleGenerateMoodboard} disabled={!moodboardKeywords || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `START GAME (${MOODBOARD_GEN_COST} TOKEN)`}</button>
+                                        <button onClick={handleGenerateMoodboard} disabled={!moodboardKeywords || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `GENERATE (${MOODBOARD_GEN_COST} TOKEN)`}</button>
                                     </div>
                                 )}
                             </div>

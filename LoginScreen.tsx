@@ -1,12 +1,10 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import Button from './common/Button';
 import { supabase } from '../services/supabaseClient';
-import type { AIPetState } from '../types';
 import { useUI } from '../contexts/UIContext';
-
-const AIPetParade = React.lazy(() => import('./AIPetParade'));
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface Props {
   isCaptchaSolved: boolean;
@@ -15,8 +13,8 @@ interface Props {
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
-  const [paradePets, setParadePets] = useState<AIPetState[]>([]);
   const { toggleToSModal, togglePrivacyModal } = useUI();
+  const { t } = useTranslation();
 
   const handleGoogleLogin = () => {
     supabase.auth.signInWithOAuth({ 
@@ -25,36 +23,9 @@ const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
     });
   };
 
-  useEffect(() => {
-    const fetchParadePets = async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_random_hatched_aipets', { count: 7 });
-
-        if (error) {
-          console.error("Error fetching parade pets:", error);
-          return;
-        }
-
-        if (data) {
-          const pets = data.map((item: any) => item.aipet_state as AIPetState);
-          setParadePets(pets);
-        }
-      } catch (e) {
-        console.error("Client-side error fetching parade pets:", e);
-      }
-    };
-
-    fetchParadePets();
-  }, []);
-
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-background text-text-body transition-colors duration-300 overflow-hidden">
       <div className="max-w-xl w-full relative">
-        <Suspense fallback={null}>
-          <AIPetParade pets={paradePets} />
-        </Suspense>
-
         <div className="relative h-40 mb-4 z-10">
             <img
             src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
@@ -70,18 +41,21 @@ const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
                 des<span className="text-accent">ai</span>n<span className="text-text-header">.fun</span>
               </h1>
               <p className="text-xl text-text-muted -mt-2" style={{ fontFamily: 'var(--font-hand)' }}>by @rangga.p.h</p>
-              <p className="font-semibold text-text-muted mt-2">Studio Branding AI untuk UMKM Juara</p>
+              <p className="font-semibold text-text-muted mt-2">{t({ id: "Studio Branding AI untuk UMKM Juara", en: "AI Branding Studio for Champion SMEs" })}</p>
             </div>
 
             <p className="text-text-body mb-8 max-w-lg mx-auto">
-              Pusing mikirin logo, konten sosmed, atau kemasan produk? Tenang, Juragan! Mang AI siap jadi partner setia lo. Ubah ide sederhana jadi <strong className="text-text-header">paket branding lengkap</strong>: mulai dari <strong className="text-primary">logo</strong>, <strong className="text-primary">persona brand</strong>, <strong className="text-primary">kalender konten</strong>, sampai <strong className="text-primary">desain kemasan</strong>. Asah kreativitasmu di <strong className="text-splash">Sotoshop</strong>, ngobrol bareng sesama UMKM di <strong className="text-splash">Forum</strong>, dan pelihara <strong className="text-splash">AIPet</strong>-mu biar makin gacor! Siap naik kelas?
+              {t({ 
+                id: "Pusing mikirin logo, konten sosmed, atau kemasan produk? Tenang, Juragan! Mang AI siap jadi partner setia lo. Ubah ide sederhana jadi", 
+                en: "Struggling with logos, social media content, or product packaging? Relax, Boss! Mang AI is here to be your loyal partner. Turn simple ideas into a" 
+              })} <strong className="text-text-header">{t({ id: "paket branding lengkap", en: "complete branding package" })}</strong>: {t({ id: "mulai dari", en: "from" })} <strong className="text-primary">{t({ id: "logo", en: "logos" })}</strong>, <strong className="text-primary">{t({ id: "persona brand", en: "brand personas" })}</strong>, <strong className="text-primary">{t({ id: "kalender konten", en: "content calendars" })}</strong>, {t({ id: "sampai", en: "to" })} <strong className="text-primary">{t({ id: "desain kemasan", en: "packaging designs" })}</strong>. {t({ id: "Asah kreativitasmu di", en: "Hone your creativity in" })} <strong className="text-splash">Sotoshop</strong> {t({ id: "dan ngobrol bareng sesama UMKM di", en: "and chat with fellow SMEs in the" })} <strong className="text-splash">Forum</strong>. {t({ id: "Siap naik kelas?", en: "Ready to level up?" })}
             </p>
             
             <div className="flex flex-col items-center gap-4">
               <Button 
                 onClick={handleGoogleLogin} 
                 disabled={!isCaptchaSolved}
-                title={!isCaptchaSolved ? "Selesaikan puzzle captcha dulu!" : "Masuk dengan akun Google"}
+                title={!isCaptchaSolved ? t({ id: "Selesaikan puzzle captcha dulu!", en: "Solve the captcha puzzle first!" }) : t({ id: "Masuk dengan akun Google", en: "Sign in with Google" })}
                 size="large"
                 className="!bg-[rgb(var(--c-bg-inverse))] !text-[rgb(var(--c-text-inverse))] border-2 border-border-main hover:!bg-border-light shadow-lg"
               >
@@ -92,26 +66,26 @@ const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
                   <path fill="none" d="M0 0h48v48H0z"></path>
                 </svg>
-                Masuk dengan Google
+                {t({ id: "Masuk dengan Google", en: "Sign in with Google" })}
               </Button>
             </div>
             
             <p className="text-xs text-text-muted mt-4">
-              Dengan masuk, lo setuju sama{' '}
+              {t({ id: "Dengan masuk, lo setuju sama", en: "By signing in, you agree to the" })}{' '}
               <button 
                 onClick={isCaptchaSolved ? () => toggleToSModal(true) : undefined} 
                 disabled={!isCaptchaSolved}
                 className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Ketentuan Layanan
+                {t({ id: "Ketentuan Layanan", en: "Terms of Service" })}
               </button> & <button 
                 onClick={isCaptchaSolved ? () => togglePrivacyModal(true) : undefined} 
                 disabled={!isCaptchaSolved}
                 className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Kebijakan Privasi
+                {t({ id: "Kebijakan Privasi", en: "Privacy Policy" })}
               </button>.
-               {!isCaptchaSolved && <span className="block text-accent font-semibold text-sm mt-2">Selesaikan puzzle di atas dulu, Juragan!</span>}
+               {!isCaptchaSolved && <span className="block text-accent font-semibold text-sm mt-2">{t({ id: "Selesaikan puzzle di atas dulu, Juragan!", en: "Solve the puzzle above first, Boss!" })}</span>}
             </p>
         </div>
       </div>

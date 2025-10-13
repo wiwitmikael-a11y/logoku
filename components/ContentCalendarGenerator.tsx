@@ -5,6 +5,7 @@ import { generateContentCalendar, generateSocialMediaPostImage } from '../servic
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
+import { useAIPet } from '../contexts/AIPetContext';
 import type { ContentCalendarEntry, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -25,6 +26,7 @@ const GENERATION_COST = 1;
 const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
+  const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [calendar, setCalendar] = useState<ContentCalendarEntry[]>(projectData.contentCalendar || []);
@@ -54,7 +56,8 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
 
     try {
       if (!(await deductCredits(GENERATION_COST))) return;
-      const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona);
+      // FIX: Pass petState to generateContentCalendar
+      const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona, petState);
       setCalendar(result.calendar);
       setSources(result.sources);
       setShowNextStepNudge(true);
@@ -65,7 +68,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, petState]);
   
   const handleGenerateImage = useCallback(async (index: number) => {
     if (credits < GENERATION_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }

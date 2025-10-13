@@ -5,6 +5,7 @@ import { generateSocialProfiles } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
+import { useAIPet } from '../contexts/AIPetContext';
 import type { SocialProfileData, ProjectData } from '../types';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -23,6 +24,7 @@ const GENERATION_COST = 1;
 const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
+  const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
 
   const [profileData, setProfileData] = useState<SocialProfileData | null>(null);
@@ -50,7 +52,8 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
     playSound('start');
 
     try {
-      const result = await generateSocialProfiles(brandInputs, selectedPersona);
+      // FIX: Pass petState to generateSocialProfiles
+      const result = await generateSocialProfiles(brandInputs, selectedPersona, petState);
       if (!(await deductCredits(GENERATION_COST))) return;
       setProfileData(result);
       setShowNextStepNudge(true);
@@ -61,7 +64,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [projectData, credits, deductCredits, setShowOutOfCreditsModal, petState]);
   
   const handleContinue = () => {
     if (profileData) {

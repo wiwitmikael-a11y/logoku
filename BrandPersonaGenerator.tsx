@@ -4,8 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateBrandPersona, generateSlogans, analyzeCompetitorUrl } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { loadWorkflowState } from '../services/workflowPersistence';
-import type { BrandPersona, BrandInputs, AIPetPersonalityVector } from '../types';
-import { useAIPet } from '../contexts/AIPetContext';
+import type { BrandPersona, BrandInputs } from '../types';
 import { useUserActions } from '../contexts/UserActionsContext';
 import Button from './common/Button';
 import Input from './common/Input';
@@ -22,7 +21,6 @@ interface Props {
 const businessCategories = ["Makanan", "Minuman", "Fashion", "Jasa", "Kecantikan & Perawatan Diri", "Kerajinan Tangan & Dekorasi Rumah", "Agrikultur & Produk Tani", "Lainnya"];
 const targetAudienceCategories = ["Masyarakat Umum", "Mahasiswa", "Pekerja Kantoran", "Keluarga", "Remaja", "Anak-anak"];
 
-// FIX: Changed component definition to `React.FC` for better type safety and consistency, which is now possible after fixing the global JSX namespace.
 const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard }) => {
   const [formState, setFormState] = useState({
     businessName: '',
@@ -46,9 +44,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   const [error, setError] = useState<string | null>(null);
   const [showNextStepNudge, setShowNextStepNudge] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { petState, showContextualMessage, notifyPetOfActivity } = useAIPet();
   const { grantFirstTimeCompletionBonus } = useUserActions();
-  const suggestionShownRef = useRef(false);
 
   const personasRef = useRef<HTMLDivElement>(null);
   const slogansRef = useRef<HTMLDivElement>(null);
@@ -98,28 +94,6 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     }
   }, [selectedSlogan]);
 
-  useEffect(() => {
-    if (personas.length > 0 && petState && petState.stage !== 'aipod' && !suggestionShownRef.current) {
-        const getDominantTrait = (p: AIPetPersonalityVector): keyof AIPetPersonalityVector => {
-            return (Object.keys(p) as Array<keyof AIPetPersonalityVector>).reduce((a, b) => p[a] > p[b] ? a : b);
-        };
-
-        const dominantTrait = getDominantTrait(petState.personality);
-        
-        const matchedPersona = personas.find(p => 
-            p.nama_persona.toLowerCase().includes(dominantTrait) ||
-            p.kata_kunci.some(k => k.toLowerCase().includes(dominantTrait))
-        );
-
-        if (matchedPersona) {
-            setTimeout(() => {
-                showContextualMessage(`Psst, Juragan! Persona <strong>"${matchedPersona.nama_persona}"</strong> ini kayaknya cocok banget sama kepribadianku, lho! Mungkin bisa jadi inspirasi?`);
-                suggestionShownRef.current = true;
-            }, 1500); // Delay for a more natural feel
-        }
-    }
-  }, [personas, petState, showContextualMessage]);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormState(prev => ({ ...prev, [name]: value }));
@@ -158,13 +132,13 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     try {
       if (formState.competitorUrl.trim()) {
         setIsAnalyzing(true);
-        competitorAnalysis = await analyzeCompetitorUrl(formState.competitorUrl, formState.businessName, petState);
+        competitorAnalysis = await analyzeCompetitorUrl(formState.competitorUrl, formState.businessName);
         setAnalysisResult(competitorAnalysis);
         setIsAnalyzing(false);
       }
 
       const result = await generateBrandPersona(
-        formState.businessName, combinedIndustry, combinedAudience, formState.valueProposition, competitorAnalysis, petState
+        formState.businessName, combinedIndustry, combinedAudience, formState.valueProposition, competitorAnalysis
       );
       setPersonas(result);
       playSound('success');
@@ -175,7 +149,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
       setIsLoadingPersona(false);
       setIsAnalyzing(false);
     }
-  }, [formState, petState]);
+  }, [formState]);
   
   const handleSelectPersona = useCallback((index: number) => {
       if (selectedPersonaIndex !== index) {
@@ -183,18 +157,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
         setSlogans([]);
         setSelectedSlogan(null);
         setShowNextStepNudge(false);
-
-        const selected = personas[index];
-        if (selected) {
-            selected.kata_kunci.forEach(keyword => {
-                const personalityKey = keyword.toLowerCase().trim();
-                if (['minimalist', 'rustic', 'playful', 'modern', 'luxury', 'feminine', 'bold', 'creative'].includes(personalityKey)) {
-                    notifyPetOfActivity('style_choice', personalityKey);
-                }
-            });
-        }
       }
-  }, [selectedPersonaIndex, personas, notifyPetOfActivity]);
+  }, [selectedPersonaIndex]);
   
   const handleGenerateSlogans = useCallback(async () => {
     if (selectedPersonaIndex === null || !personas[selectedPersonaIndex]) return;
@@ -204,7 +168,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     playSound('start');
 
     try {
-        const result = await generateSlogans(formState.businessName, personas[selectedPersonaIndex], formState.competitors, petState);
+        const result = await generateSlogans(formState.businessName, personas[selectedPersonaIndex], formState.competitors);
         setSlogans(result);
         playSound('success');
     } catch (err) {
@@ -213,7 +177,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
     } finally {
         setIsLoadingSlogan(false);
     }
-  }, [selectedPersonaIndex, personas, formState, petState]);
+  }, [selectedPersonaIndex, personas, formState]);
 
   const handleContinue = async () => {
     if (selectedPersonaIndex === null || !selectedSlogan || !personas[selectedPersonaIndex]) return;

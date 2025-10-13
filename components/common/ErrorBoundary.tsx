@@ -16,23 +16,24 @@ interface State {
   isCopied: boolean;
 }
 
+// FIX: Refactored to use class properties for state and method binding to ensure `this` context is correct.
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched to public field initializer for state, which is a more modern and less error-prone syntax for React class components. This resolves issues with 'this' context.
-  state: State = {
+  public state: State = {
     hasError: false,
     error: undefined,
     isCopied: false,
   };
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI.
-    return { hasError: true, error: error, isCopied: false };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
+  // FIX: Converted to arrow function to correctly bind `this`.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());

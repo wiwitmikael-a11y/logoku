@@ -1,19 +1,20 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { generateBusinessNames, generateQuickSlogans, generateMoodboardText, generateMoodboardImages } from '../services/geminiService';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { generateBusinessNames, generateQuickSlogans, generateMoodboardText, generateMoodboardImages, generateSceneFromImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
-import { useAIPet } from '../contexts/AIPetContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { useUI } from '../contexts/UIContext';
 import { playSound } from '../services/soundService';
 import Button from './common/Button';
 import ErrorMessage from './common/ErrorMessage';
 import CopyButton from './common/CopyButton';
+import ImageModal from './common/ImageModal';
 
 const NAME_GEN_COST = 1;
 const SLOGAN_GEN_COST = 1;
 const MOODBOARD_GEN_COST = 3;
+const SCENE_MIXER_COST = 2;
 const XP_REWARD = 15;
 
 const QUICK_TOOLS_TIPS = [
@@ -21,6 +22,7 @@ const QUICK_TOOLS_TIPS = [
     { icon: '🎨', title: 'Ciptakan Nuansa Brand', text: "Bingung nentuin nuansa visual brand? Coba 'Moodboard Generator'. Dapetin deskripsi, palet warna, dan 4 gambar inspirasi instan." },
     { icon: '🖼️', title: 'Editor Gambar Simpel', text: "Udah punya gambar tapi mau ditambahin teks atau logo? Buka 'Sotoshop', editor gambar ringan yang terintegrasi dengan AI." },
     { icon: '🚀', title: 'Naik Level Sambil Cari Ide', text: 'Setiap generator di sini ngasih <strong class="text-text-header">+15 XP</strong>. Cara gampang buat naikin level sambil nyari inspirasi!' },
+    { icon: '🧩', title: 'Gabungkan Imajinasimu!', text: 'Pakai <strong class="text-text-header">Scene Mixer</strong> buat gabungin beberapa gambar jadi satu. Upload gambar-gambarmu, kasih perintah, dan biarkan Mang AI yang menyatukannya!' },
 ];
 
 const QuickToolsInfoBox: React.FC = () => {
@@ -43,14 +45,21 @@ const QuickToolsInfoBox: React.FC = () => {
     );
 };
 
-const QuickTools: React.FC = () => {
+interface QuickToolsProps {
+    onShowSotoshop: () => void;
+}
+
+interface SceneImage {
+  src: string;
+  instruction: string;
+}
+
+const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
     const { profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
-    const { toggleSotoshop } = useUI();
-    const { petState } = useAIPet();
     const credits = profile?.credits ?? 0;
     
-    const [activeTool, setActiveTool] = useState<'name' | 'slogan' | 'moodboard' | 'sotoshop'>('name');
+    const [activeTool, setActiveTool] = useState<'name' | 'slogan' | 'moodboard' | 'sotoshop' | 'scenemixer'>('name');
 
     // Name Gen State
     const [nameCategory, setNameCategory] = useState('');
@@ -63,6 +72,14 @@ const QuickTools: React.FC = () => {
     // Moodboard Gen State
     const [moodboardKeywords, setMoodboardKeywords] = useState('');
     const [moodboardResult, setMoodboardResult] = useState<{description: string; palette: string[]; images: string[]} | null>(null);
+    
+    // Scene Mixer State
+    const [sceneImages, setSceneImages] = useState<SceneImage[]>([]);
+    const [scenePrompt, setScenePrompt] = useState('');
+    const [sceneResult, setSceneResult] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
 
     // Shared State
     const [results, setResults] = useState<{ title: string; items: string[] } | null>(null);
@@ -94,22 +111,22 @@ const QuickTools: React.FC = () => {
         if (credits < NAME_GEN_COST) { setShowOutOfCreditsModal(true); return; }
         setIsLoading(true); setError(null); setResults(null); playSound('start');
         try {
-            const resultItems = await generateBusinessNames(nameCategory, nameKeywords, petState);
+            const resultItems = await generateBusinessNames(nameCategory, nameKeywords);
             await deductCredits(NAME_GEN_COST); await addXp(XP_REWARD);
             setResults({ title: `IDEAS FOR "${nameCategory.toUpperCase()}"`, items: resultItems });
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
-    }, [nameCategory, nameKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal, petState]);
+    }, [nameCategory, nameKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
     
     const handleGenerateSlogans = useCallback(async () => {
         if (!sloganBusinessName) { setError('BUSINESS NAME CANNOT BE EMPTY!'); return; }
         if (credits < SLOGAN_GEN_COST) { setShowOutOfCreditsModal(true); return; }
         setIsLoading(true); setError(null); setResults(null); playSound('start');
         try {
-            const resultItems = await generateQuickSlogans(sloganBusinessName, sloganKeywords, petState);
+            const resultItems = await generateQuickSlogans(sloganBusinessName, sloganKeywords);
             await deductCredits(SLOGAN_GEN_COST); await addXp(XP_REWARD);
             setResults({ title: `SLOGANS FOR "${sloganBusinessName.toUpperCase()}"`, items: resultItems });
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
-    }, [sloganBusinessName, sloganKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal, petState]);
+    }, [sloganBusinessName, sloganKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
     
     const handleGenerateMoodboard = useCallback(async () => {
         if (!moodboardKeywords) { setError('KEYWORDS CANNOT BE EMPTY!'); return; }
@@ -117,23 +134,69 @@ const QuickTools: React.FC = () => {
         setIsLoading(true); setError(null); setMoodboardResult(null); playSound('start');
         try {
             const [textData, images] = await Promise.all([
-                generateMoodboardText(moodboardKeywords, petState),
+                generateMoodboardText(moodboardKeywords),
                 generateMoodboardImages(moodboardKeywords),
             ]);
             await deductCredits(MOODBOARD_GEN_COST); await addXp(XP_REWARD + 10);
             setMoodboardResult({ ...textData, images });
             playSound('success');
         } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
-    }, [moodboardKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal, petState]);
+    }, [moodboardKeywords, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
 
-    const handleToolChange = (tool: 'name' | 'slogan' | 'moodboard' | 'sotoshop') => {
-        setActiveTool(tool); setError(null); setResults(null); setDisplayedItems([]); setMoodboardResult(null);
+    const handleFileChange = (files: FileList) => {
+        setError(null);
+        Array.from(files).forEach(file => {
+            if (!file.type.startsWith('image/')) {
+                setError(`File ${file.name} bukan gambar!`);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setSceneImages(prev => [...prev, { src: e.target?.result as string, instruction: '' }]);
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const handleInstructionChange = (index: number, instruction: string) => {
+        setSceneImages(prev => {
+            const newImages = [...prev];
+            newImages[index].instruction = instruction;
+            return newImages;
+        });
+    };
+    
+    const handleGenerateScene = useCallback(async () => {
+        if (sceneImages.length === 0) { setError('UPLOAD MINIMAL 1 GAMBAR!'); return; }
+        if (!scenePrompt) { setError('PROMPT UTAMA TIDAK BOLEH KOSONG!'); return; }
+        if (credits < SCENE_MIXER_COST) { setShowOutOfCreditsModal(true); return; }
+
+        setIsLoading(true); setError(null); setSceneResult(null); playSound('start');
+
+        try {
+            let combinedPrompt = `${scenePrompt}\n\n--- Instruksi Spesifik untuk Setiap Gambar ---\n`;
+            sceneImages.forEach((image, index) => {
+                if (image.instruction.trim()) {
+                    combinedPrompt += `Gambar ${index + 1}: Fokus pada "${image.instruction.trim()}".\n`;
+                } else {
+                    combinedPrompt += `Gambar ${index + 1}: Gunakan elemen yang paling relevan dari gambar ini.\n`;
+                }
+            });
+
+            const resultImage = await generateSceneFromImages(sceneImages.map(img => img.src), combinedPrompt);
+            await deductCredits(SCENE_MIXER_COST); await addXp(XP_REWARD + 10);
+            setSceneResult(resultImage);
+            playSound('success');
+        } catch (err) { setError(err instanceof Error ? err.message : 'SYSTEM_ERROR'); } finally { setIsLoading(false); }
+    }, [sceneImages, scenePrompt, credits, deductCredits, addXp, setShowOutOfCreditsModal]);
+
+    const handleToolChange = (tool: 'name' | 'slogan' | 'moodboard' | 'sotoshop' | 'scenemixer') => {
+        setActiveTool(tool); setError(null); setResults(null); setDisplayedItems([]); setMoodboardResult(null); setSceneImages([]); setScenePrompt(''); setSceneResult(null);
     }
 
     return (
         <div className="flex flex-col gap-8 max-w-4xl mx-auto animate-content-fade-in">
             <div className="text-center">
-                <h2 className="text-xl md:text-2xl font-bold text-splash mb-2">Generator Ide Kreatif</h2>
                 <p className="text-text-muted">
                     Butuh inspirasi cepat? Di sini tempatnya! Mang AI sediain alat-alat bantu praktis buat kebutuhan branding dadakan lo.
                 </p>
@@ -154,6 +217,7 @@ const QuickTools: React.FC = () => {
                                 <button onClick={() => handleToolChange('name')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'name' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>NAME GEN</button>
                                 <button onClick={() => handleToolChange('slogan')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'slogan' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SLOGAN GEN</button>
                                 <button onClick={() => handleToolChange('moodboard')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'moodboard' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>MOODBOARD</button>
+                                <button onClick={() => handleToolChange('scenemixer')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'scenemixer' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SCENE MIXER</button>
                                 <button onClick={() => handleToolChange('sotoshop')} className={`flex-1 font-mono font-bold py-2 text-xs sm:text-base transition-colors ${activeTool === 'sotoshop' ? 'bg-splash/20 text-splash' : 'text-text-muted hover:bg-splash/10'}`}>SOTOSHOP</button>
                             </div>
                             
@@ -179,6 +243,33 @@ const QuickTools: React.FC = () => {
                                             BUKA SOTOSHOP
                                         </button>
                                     </div>
+                                ) : activeTool === 'scenemixer' ? (
+                                    <div className="animate-content-fade-in space-y-4">
+                                        <div 
+                                            onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                                            onDragLeave={() => setIsDragging(false)}
+                                            onDrop={e => { e.preventDefault(); setIsDragging(false); handleFileChange(e.dataTransfer.files); }}
+                                            className={`p-4 border-2 border-dashed border-splash/50 rounded-none min-h-[80px] flex flex-col justify-center items-center transition-colors ${isDragging ? 'dropzone-active' : ''}`}
+                                        >
+                                            <p className="text-splash font-bold text-sm">DROP YOUR IMAGES HERE</p>
+                                            <p className="text-xs text-text-muted">or</p>
+                                            <label htmlFor="file-upload" className="cursor-pointer text-yellow-400 hover:underline font-semibold">CHOOSE FILES</label>
+                                            <input id="file-upload" type="file" multiple accept="image/*" className="hidden" onChange={e => e.target.files && handleFileChange(e.target.files)} />
+                                        </div>
+                                        {sceneImages.length > 0 && (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 bg-black/50 border border-splash/30 max-h-48 overflow-y-auto">
+                                                {sceneImages.map((img, i) => (
+                                                    <div key={i} className="relative bg-black/30 p-1 space-y-1">
+                                                        <img src={img.src} className="w-full h-16 object-cover" />
+                                                        <input value={img.instruction} onChange={(e) => handleInstructionChange(i, e.target.value)} placeholder="e.g., 'the cat'" className="w-full text-xs font-mono bg-black/50 border border-splash/50 rounded-none p-1 text-white focus:outline-none focus:border-splash" />
+                                                        <button onClick={() => setSceneImages(prev => prev.filter((_, idx) => idx !== i))} className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 text-xs font-bold leading-none">&times;</button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <div className="space-y-2"><label className="text-splash font-bold text-sm block">PROMPT UTAMA:</label><textarea value={scenePrompt} onChange={(e) => setScenePrompt(e.target.value)} placeholder="e.g., Gabungkan kucing ke pantai..." required rows={2} className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
+                                        <button onClick={handleGenerateScene} disabled={sceneImages.length === 0 || !scenePrompt || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'MIXING...' : `START MIXER (${SCENE_MIXER_COST} TOKEN)`}</button>
+                                    </div>
                                 ) : ( // Moodboard
                                      <div className="animate-content-fade-in space-y-4">
                                         <div className="space-y-2"><label className="text-splash font-bold text-sm block">KEYWORDS/VIBE:</label><input value={moodboardKeywords} onChange={(e) => setMoodboardKeywords(e.target.value)} placeholder="e.g., rustic coffee shop, sunset, warm" required className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
@@ -191,8 +282,8 @@ const QuickTools: React.FC = () => {
                                 {isLoading && <p className="text-center text-yellow-400">MANG AI IS THINKING<span className="blinking-cursor">...</span></p>}
                                 {error && <p className="text-red-500 font-bold animate-pulse">ERROR: {error}</p>}
                                 
-                                {activeTool !== 'moodboard' && activeTool !== 'sotoshop' && results && <p className="text-yellow-400 font-bold mb-2">{results.title}<span className="blinking-cursor">_</span></p>}
-                                {activeTool !== 'moodboard' && activeTool !== 'sotoshop' && displayedItems.length > 0 && (
+                                {activeTool !== 'moodboard' && activeTool !== 'sotoshop' && activeTool !== 'scenemixer' && results && <p className="text-yellow-400 font-bold mb-2">{results.title}<span className="blinking-cursor">_</span></p>}
+                                {activeTool !== 'moodboard' && activeTool !== 'sotoshop' && activeTool !== 'scenemixer' && displayedItems.length > 0 && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                                         {displayedItems.map((item, index) => (
                                             <div key={index} className="flex items-center gap-2 animate-content-fade-in">
@@ -220,6 +311,14 @@ const QuickTools: React.FC = () => {
                                         </div>
                                     </div>
                                 )}
+                                {activeTool === 'scenemixer' && sceneResult && (
+                                    <div className="space-y-4 animate-content-fade-in">
+                                        <div>
+                                            <p className="text-yellow-400 font-bold">MIXED SCENE RESULT:</p>
+                                            <img src={sceneResult} alt="Generated scene" className="w-full mt-2 border-2 border-splash/50 cursor-pointer" onClick={() => setModalImageUrl(sceneResult)} />
+                                        </div>
+                                    </div>
+                                )}
 
                             </div>
                             <p className="text-center text-xs text-splash/50">MANG AI SYSTEMS - READY PLAYER ONE - +{XP_REWARD} XP</p>
@@ -238,6 +337,7 @@ const QuickTools: React.FC = () => {
                     </div>
                 </div>
             </div>
+             {modalImageUrl && (<ImageModal imageUrl={modalImageUrl} altText="Generated Scene" onClose={() => setModalImageUrl(null)} />)}
         </div>
     );
 };

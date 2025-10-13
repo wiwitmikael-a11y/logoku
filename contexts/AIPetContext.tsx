@@ -3,7 +3,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
+// FIX: Import missing AIPet types.
 import type { AIPetState, AIPetPersonalityVector } from '../types';
+// FIX: Import missing geminiService function.
 import { generateAIPetNarrative } from '../services/geminiService';
 
 export type VisualEffect = { type: 'feed', id: number } | null;
@@ -88,7 +90,8 @@ export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       return (Object.keys(p) as Array<keyof AIPetPersonalityVector>).reduce((a, b) => p[a] > p[b] ? a : b);
     };
     const dominantTrait = getDominantTrait(newPetState.personality);
-    const narrative = await generateAIPetNarrative(newPetState.name, newPetState.tier, dominantTrait);
+    // FIX: `dominantTrait` can be inferred as `string | number`. Explicitly cast to string.
+    const narrative = await generateAIPetNarrative(newPetState.name, newPetState.tier, String(dominantTrait));
     
     const { error: narrativeError } = await supabase
         .from('profiles')

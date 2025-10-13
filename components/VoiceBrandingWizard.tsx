@@ -45,7 +45,7 @@ const functionDeclarations: FunctionDeclaration[] = [
   { name: 'saveTargetAudience', parameters: { type: Type.OBJECT, properties: { category: { type: Type.STRING }, age: { type: Type.STRING } }, required: ['category', 'age'] } },
   { name: 'saveValueProposition', parameters: { type: Type.OBJECT, properties: { value: { type: Type.STRING } }, required: ['value'] } },
   { name: 'saveCompetitors', parameters: { type: Type.OBJECT, properties: { competitors: { type: Type.STRING } }, required: ['competitors'] } },
-  { name: 'selectLogoStyle', parameters: { type: Type.OBJECT, properties: { style: { type: Type.STRING, enum: ["minimalis modern", "organik natural", "geometris berani"] } }, required: ['style'] } },
+  { name: 'selectLogoStyle', parameters: { type: Type.OBJECT, properties: { style: { type: Type.STRING, enum: ["minimalis_modern", "ilustrasi_ceria", "klasik_retro", "elegan_mewah", "khas_nusantara", "cap_stempel", "tulisan_tangan", "geometris_abstrak"] } }, required: ['style'] } },
   { name: 'confirmAllDetailsAndFinalize', parameters: { type: Type.OBJECT, properties: {}, required: [] } },
   { name: 'timer_update', parameters: { type: Type.OBJECT, properties: {}, required: [] } },
 ];
@@ -166,7 +166,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
 
     sessionPromiseRef.current?.then(s => s.close()); // Gracefully close the connection.
 
-    // FIX: Set conversation state and update ref immediately to prevent race conditions.
     setConversationState('FINALIZING');
     conversationStateRef.current = 'FINALIZING';
     setWizardStep('FINALIZING_LOGO');
@@ -181,7 +180,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
             if (!currentInputs.targetAudience) fieldsToGenerate.push('targetAudience');
             if (!currentInputs.valueProposition) fieldsToGenerate.push('valueProposition');
             if (!currentInputs.competitors) fieldsToGenerate.push('competitors');
-            if (!currentInputs.logoStyle) currentInputs.logoStyle = "minimalis modern"; // Default style
+            if (!currentInputs.logoStyle) currentInputs.logoStyle = "minimalis_modern"; // Default style
             
             for (const field of fieldsToGenerate) {
                 const generatedValue = await geminiService.generateMissingField(currentInputs, field);
@@ -195,7 +194,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
 
         const finalBrandInputs = currentInputs as BrandInputs;
         const logoPromptText = `A minimalist and modern logo for "${finalBrandInputs.businessName}", representing ${currentInputs.logoStyle}.`;
-        const logoOptions = await geminiService.generateLogoOptions(logoPromptText, 1);
+        const logoOptions = await geminiService.generateLogoOptions(logoPromptText, currentInputs.logoStyle || 'minimalis_modern', 1);
         if (!logoOptions || logoOptions.length === 0) throw new Error("Gagal membuat logo master.");
 
         const masterLogo = logoOptions[0];
@@ -244,7 +243,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         config: {
           responseModalities: [Modality.AUDIO],
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: selectedVoice } } },
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: String(selectedVoice) } } },
           inputAudioTranscription: {},
           outputAudioTranscription: {},
           tools: [{ functionDeclarations }],
@@ -262,8 +261,11 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
 3.  After calling a function, ALWAYS wait for the function's result before proceeding.
 4.  Once you get the result, verbally confirm what you understood and then ask the next question.
 5.  Follow this sequence: get business name -> get business details -> get target audience -> get value proposition -> get competitors.
-6.  **Logo Style Step:** After getting competitors, you MUST offer exactly three logo style choices by saying: "Nah, sekarang bagian serunya, nentuin gaya logo. Ada tiga pilihan: gaya 'minimalis modern' yang simpel dan bersih, gaya 'organik natural' yang terinspirasi dari alam, atau gaya 'geometris berani' yang tegas dan pake pola. Mana yang paling sreg di hati, Juragan?". Then, call the \`selectLogoStyle\` function with the user's choice.
-7.  **Finalization Step:** After the user chooses a logo style and you have called the \`selectLogoStyle\` function, your next and FINAL action is to finalize. You MUST say something like "Baik, semua detail sudah lengkap. Saya akan finalisasi brand-nya sekarang ya, Juragan!". Immediately after saying this, you MUST call the \`confirmAllDetailsAndFinalize\` function. This ends the consultation.
+6.  **Logo Style Step (CRITICAL):** After getting competitors, your next step is to determine the logo style. 
+    - **First, analyze the entire conversation** (business name, details, audience, etc.).
+    - Based on your analysis, **propose ONE style** that you think is best. For example, say "Nah, dari obrolan kita, kayaknya gaya **minimalis modern** bakal paling pas. Gimana, setuju? Atau kamu mau gaya lain? Atau mau Mang AI aja yang pilihin gaya terbaik buat brand-mu?".
+    - **Then, listen to the user's response.** Based on their answer (if they agree, choose another style, or ask you to decide), you MUST then call the \`selectLogoStyle\` function with the final chosen style.
+7.  **Finalization Step:** After the user's logo style choice is confirmed and you have called the \`selectLogoStyle\` function, your next and FINAL action is to finalize. You MUST say something like "Baik, semua detail sudah lengkap. Saya akan finalisasi brand-nya sekarang ya, Juragan!". Immediately after saying this, you MUST call the \`confirmAllDetailsAndFinalize\` function. This ends the consultation.
 
 **Early Completion Rules (CRITICAL):**
 - **If the user expresses satisfaction or wants to finish early** (using phrases like "ok selesai", "sudah cukup", "setuju", "terima kasih", "lanjutkan saja", etc.), you MUST confirm their intent to finish by saying something like "Baik, jika sudah cukup, saya akan finalisasi sekarang ya."
@@ -359,7 +361,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
             }
           },
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          // FIX: The switch statement was causing a type comparison error. Refactoring to an if/else block to handle the logic correctly and avoid the faulty linter check.
           onclose: () => {
             const currentState = conversationStateRef.current;
             if (currentState === 'COMPLETED' || currentState === 'FINALIZING') {

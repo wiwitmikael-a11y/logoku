@@ -4,7 +4,6 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { generateCaptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-import { useAIPet } from '../contexts/AIPetContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
@@ -24,7 +23,6 @@ const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Intera
 const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal, addXp, incrementDailyAction } = useUserActions();
-  const { petState, showContextualMessage } = useAIPet();
   const credits = profile?.credits ?? 0;
   
   const [topic, setTopic] = useState('');
@@ -50,25 +48,19 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     try {
       if (!(await deductCredits(1))) return;
       
-      const result = await generateCaptions(projectData.brandInputs.businessName, projectData.selectedPersona, topic, tone, petState);
+      const result = await generateCaptions(projectData.brandInputs.businessName, projectData.selectedPersona, topic, tone);
       await addXp(10);
       await incrementDailyAction('created_captions');
       setCaptions(result);
       playSound('success');
 
-      if (petState && petState.stage !== 'aipod' && petState.stats.charisma > 60) {
-          const randomOption = Math.floor(Math.random() * 3) + 1;
-          setTimeout(() => {
-              showContextualMessage(`Mantap! Caption <strong>nomor ${randomOption}</strong> kayaknya paling nendang dan pas buat target pasar kita, Juragan!`);
-          }, 1000);
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
       playSound('error');
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal, petState, showContextualMessage, incrementDailyAction]);
+  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal, incrementDailyAction]);
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">

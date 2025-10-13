@@ -101,58 +101,40 @@ export interface DailyActions {
   [actionId: string]: number | string[] | undefined;
 }
 
-// FIX: Added missing AIPet types
+// FIX: Add AIPet-related types that were missing.
 export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
 
 export interface AIPetPersonalityVector {
-  minimalist: number;
-  rustic: number;
-  playful: number;
-  modern: number;
-  luxury: number;
-  feminine: number;
-  bold: number;
-  creative: number;
-}
-
-export interface AIPetBlueprint {
-  id: string;
-  url: string;
-}
-
-export interface AIPetColors {
-  mechanical: { base: string; highlights: string };
-  organic: { base: string; highlights: string };
-  energy: { base: string; highlights: string };
-}
-
-export interface AIPetStats {
-  energy: number;
-  creativity: number;
-  intelligence: number;
-  charisma: number;
-}
-
-export interface AIPetBattleStats {
-  hp: number;
-  atk: number;
-  def: number;
-  spd: number;
+  [trait: string]: number;
 }
 
 export interface AIPetState {
   name: string;
   stage: 'aipod' | 'active';
   tier: AIPetTier;
-  stats: AIPetStats;
+  stats: {
+    energy: number;
+    creativity: number;
+    intelligence: number;
+    charisma: number;
+  };
   lastFed: number;
   lastPlayed: number;
   personality: AIPetPersonalityVector;
   narrative: string | null;
-  blueprint: AIPetBlueprint | null;
-  colors: AIPetColors | null;
-  battleStats: AIPetBattleStats | null;
-  buffs: string[];
+  blueprint: { url: string } | null;
+  colors: {
+    mechanical: { base: string };
+    organic: { base: string };
+    energy: { base: string };
+  } | null;
+  battleStats: {
+    hp: number;
+    atk: number;
+    def: number;
+    spd: number;
+  } | null;
+  buffs: any[];
 }
 
 
@@ -171,7 +153,8 @@ export interface Profile {
   completed_first_steps: string[];
   data_fragments?: number;
   daily_actions?: DailyActions | null;
-  // FIX: Added aipet_state to Profile
+  language?: 'id' | 'en';
+  // FIX: Add aipet_state to Profile type.
   aipet_state?: AIPetState | null;
 }
 

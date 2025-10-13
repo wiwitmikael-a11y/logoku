@@ -5,6 +5,8 @@ import { generateCaptions } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
+// FIX: Import useAIPet to access petState
+import { useAIPet } from '../contexts/AIPetContext';
 import type { ProjectData, GeneratedCaption } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
@@ -23,6 +25,8 @@ const toneOptions = ["Promosi", "Informatif", "Menghibur", "Inspiratif", "Intera
 const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboard }) => {
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal, addXp, incrementDailyAction } = useUserActions();
+  // FIX: Get petState from the AIPetContext
+  const { petState } = useAIPet();
   const credits = profile?.credits ?? 0;
   
   const [topic, setTopic] = useState('');
@@ -48,7 +52,8 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     try {
       if (!(await deductCredits(1))) return;
       
-      const result = await generateCaptions(projectData.brandInputs.businessName, projectData.selectedPersona, topic, tone);
+      // FIX: Pass petState as the fifth argument to generateCaptions
+      const result = await generateCaptions(projectData.brandInputs.businessName, projectData.selectedPersona, topic, tone, petState);
       await addXp(10);
       await incrementDailyAction('created_captions');
       setCaptions(result);
@@ -60,7 +65,8 @@ const CaptionGenerator: React.FC<Props> = ({ projectData, onBack, onGoToDashboar
     } finally {
       setIsLoading(false);
     }
-  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal, incrementDailyAction]);
+    // FIX: Add petState to the dependency array
+  }, [projectData, topic, tone, addXp, credits, deductCredits, setShowOutOfCreditsModal, incrementDailyAction, petState]);
 
   return (
     <div className="flex flex-col gap-8 max-w-4xl mx-auto">

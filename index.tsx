@@ -3,12 +3,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { UIProvider } from './contexts/UIContext';
-import { UserActionsProvider } from './contexts/UserActionsContext';
-import { AuthProvider } from './contexts/AuthContext';
-import { LanguageProvider } from './contexts/LanguageContext';
-import { supabaseError } from './services/supabaseClient';
-import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -27,29 +21,9 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-
 const root = ReactDOM.createRoot(rootElement);
-
-// Lakukan pengecekan kunci Supabase di level tertinggi untuk mencegah aplikasi crash
-// di dalam provider sebelum layar error bisa ditampilkan.
-if (supabaseError) {
-  root.render(
-    <React.StrictMode>
-      <SupabaseKeyErrorScreen error={supabaseError} />
-    </React.StrictMode>
-  );
-} else {
-  root.render(
-    <React.StrictMode>
-      <LanguageProvider>
-        <AuthProvider>
-          <UserActionsProvider>
-            <UIProvider>
-              <App />
-            </UIProvider>
-          </UserActionsProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </React.StrictMode>
-  );
-}
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
