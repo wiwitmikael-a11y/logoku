@@ -16,7 +16,6 @@ interface State {
   isCopied: boolean;
 }
 
-// FIX: Refactored to use class properties for state and method binding to ensure `this` context is correct.
 class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
@@ -33,7 +32,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted to arrow function to correctly bind `this`.
+  // FIX: Converted to an arrow function to correctly bind `this` and resolve context issues.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());

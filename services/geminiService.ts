@@ -190,9 +190,14 @@ export const analyzeCompetitorUrl = async (url: string, businessName: string): P
     });
     // FIX: A googleSearch tool call may not return valid JSON. Handle this gracefully.
     try {
+      // This is an incorrect way to check for JSON. A valid text response might be a single word.
+      // The goal is to avoid crashing on JSON.parse. If it's not JSON, it's text.
       JSON.parse(response.text);
+      // If parsing succeeds, it's likely an incomplete or weird JSON response from the model.
+      // We should return a user-friendly error instead of the raw, possibly confusing JSON.
       return "Gagal menganalisis URL, coba lagi dengan URL lain atau gunakan analisis via teks.";
     } catch {
+      // If parsing fails, it's a normal text response, which is what we want.
       return response.text;
     }
 };

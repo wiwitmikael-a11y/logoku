@@ -472,8 +472,8 @@ const App: React.FC = () => {
     return <ApiKeyErrorScreen />;
   }
   return (
-    <LanguageProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <LanguageProvider>
         <UserActionsProvider>
           <UIProvider>
             <AIPetProvider>
@@ -481,8 +481,8 @@ const App: React.FC = () => {
             </AIPetProvider>
           </UIProvider>
         </UserActionsProvider>
-      </AuthProvider>
-    </LanguageProvider>
+      </LanguageProvider>
+    </AuthProvider>
   );
 };
 
