@@ -37,7 +37,7 @@ const functionDeclarations: FunctionDeclaration[] = [
   { name: 'saveTargetAudience', parameters: { type: Type.OBJECT, properties: { category: { type: Type.STRING }, age: { type: Type.STRING } }, required: ['category', 'age'] } },
   { name: 'saveValueProposition', parameters: { type: Type.OBJECT, properties: { value: { type: Type.STRING } }, required: ['value'] } },
   { name: 'saveCompetitors', parameters: { type: Type.OBJECT, properties: { competitors: { type: Type.STRING } }, required: ['competitors'] } },
-  { name: 'selectLogoStyle', parameters: { type: Type.OBJECT, properties: { style: { type: Type.STRING, enum: ["minimalis_modern", "ilustrasi_ceria", "klasik_retro", "elegan_mewah", "khas_nusantara", "cap_stempel", "tulisan_tangan", "geometris_abstrak"] } }, required: ['style'] } },
+  { name: 'selectLogoStyle', parameters: { type: Type.OBJECT, properties: { style: { type: Type.STRING, enum: ["minimalis_modern", "wordmark_logotype", "lettermark_monogram", "pictorial_ilustrasi", "emblem_cap_stempel", "badge_potong", "line_art", "geometris_abstrak", "khas_nusantara", "klasik_retro", "elegan_mewah"] } }, required: ['style'] } },
   { name: 'confirmAllDetailsAndFinalize', parameters: { type: Type.OBJECT, properties: {}, required: [] } },
   { name: 'timer_update', parameters: { type: Type.OBJECT, properties: {}, required: [] } },
 ];
@@ -205,7 +205,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
 
         const finalBrandInputs = currentInputs as BrandInputs;
         const logoPromptText = `A minimalist and modern logo for "${finalBrandInputs.businessName}", representing ${currentInputs.logoStyle}.`;
-        // FIX: The `businessName` argument was missing, causing a type mismatch where a number (the count) was passed instead of a string.
         const logoOptions = await geminiService.generateLogoOptions(logoPromptText, currentInputs.logoStyle || 'minimalis_modern', finalBrandInputs.businessName, 1);
         if (!logoOptions || logoOptions.length === 0) throw new Error("Gagal membuat logo master.");
 
@@ -453,7 +452,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
 
   const statusMap: Record<ConversationState, { text: string; pulse: boolean }> = {
     IDLE: { text: `Siap? Biayanya ${SESSION_COST} Token`, pulse: false },
-    CONNECTING: { text: "Menyambungkan ke Mang AI...", pulse: false },
+    CONNECTING: { text: "Menghubungkan ke Mang AI... (Bisa sampai 30 detik). Siapkan ide-ide kerenmu!", pulse: false },
     AI_SPEAKING: { text: "Mang AI lagi ngomong...", pulse: false },
     USER_LISTENING: { text: "Giliranmu! Mang AI sedang mendengarkan...", pulse: true },
     PROCESSING: { text: "Mang AI lagi mikir...", pulse: false },

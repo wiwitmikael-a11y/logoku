@@ -27,7 +27,6 @@ class ErrorBoundary extends React.Component<Props, State> {
       error: undefined,
       isCopied: false,
     };
-    this.handleCopy = this.handleCopy.bind(this);
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
@@ -39,8 +38,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Changed to a standard class method. 'this' is bound in the constructor.
-  private handleCopy() {
+  // FIX: Changed to an arrow function to guarantee the correct `this` context,
+  // resolving errors where `this.setState` and `this.props` were not found.
+  private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
