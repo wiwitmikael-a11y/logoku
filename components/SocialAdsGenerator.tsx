@@ -47,7 +47,8 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
     playSound('start');
 
     try {
-      const result = await generateSocialAds(brandInputs, selectedPersona, selectedSlogan);
+      // FIX: Pass null for the petState argument to match the function signature.
+      const result = await generateSocialAds(brandInputs, selectedPersona, selectedSlogan, null);
       if (!(await deductCredits(GENERATION_COST))) return;
       setAdsData(result);
       setShowNextStepNudge(true);

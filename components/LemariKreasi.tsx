@@ -115,8 +115,8 @@ const LemariKreasi: React.FC = () => {
             const images = asset.asset_data?.images;
             preview = (
                 <div className="grid grid-cols-2 gap-px h-32 bg-background">
-                    {/* FIX: Add Array.isArray check to ensure `images` is an array before calling .map(). This acts as a type guard and prevents runtime errors if `images` is not an array. */}
-                    {Array.isArray(images) && images.slice(0, 4).map((img: string, i: number) => (
+                    {/* FIX: Check if 'images' is an array and cast it to prevent type errors. */}
+                    {Array.isArray(images) && (images as string[]).slice(0, 4).map((img: string, i: number) => (
                         <img key={i} src={img} className={`w-full h-full object-cover ${i === 0 ? 'rounded-tl-lg' : ''} ${i === 1 ? 'rounded-tr-lg' : ''}`} loading="lazy" />
                     ))}
                 </div>

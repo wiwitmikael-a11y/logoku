@@ -21,15 +21,18 @@ const GENERATION_COST = 4;
 
 const logoStyles = [
     { id: 'minimalis_modern', name: 'Minimalis Modern', description: 'Simpel, bersih, dan kekinian.', icon: '✨', badge: 'Populer' },
-    { id: 'badge_potong', name: 'Badge Potong', description: 'Nama brand memotong/menjadi bagian dari bentuk dasar (lingkaran, kotak).', icon: '📛', badge: 'Populer' },
-    { id: 'khas_nusantara', name: 'Khas Nusantara', description: 'Artistik dengan sentuhan budaya lokal.', icon: '🎨', badge: 'Populer' },
-    { id: 'ilustrasi_ceria', name: 'Ilustrasi Ceria', description: 'Ramah, menarik, dengan karakter.', icon: '😊' },
-    { id: 'klasik_retro', name: 'Klasik / Retro', description: 'Nostalgia, otentik, dan bergaya.', icon: '📜' },
+    { id: 'wordmark_logotype', name: 'Wordmark / Logotype', description: 'Fokus pada tipografi nama brand yang unik dan khas.', icon: '🔤', badge: 'Populer' },
+    { id: 'lettermark_monogram', name: 'Lettermark / Monogram', description: 'Logo dari inisial brand (2-3 huruf), ringkas & modern.', icon: '🔠', badge: 'Populer' },
+    { id: 'pictorial_ilustrasi', name: 'Pictorial / Ilustrasi', description: 'Logo berupa ikon/gambar literal atau maskot brand.', icon: '😊' },
+    { id: 'emblem_cap_stempel', name: 'Emblem / Cap Stempel', description: 'Nama brand di dalam sebuah bentuk (perisai, lingkaran). Otentik & terpercaya.', icon: '🛡️' },
+    { id: 'badge_potong', name: 'Badge Potong (Negative Space)', description: 'Nama brand "memotong" bentuk dasar. Kuat & solid.', icon: '📛' },
+    { id: 'line_art', name: 'Ilustrasi Garis (Line Art)', description: 'Chic & kontemporer, dibentuk dari garis-garis tipis.', icon: '〰️' },
+    { id: 'geometris_abstrak', name: 'Geometris / Abstrak', description: 'Modern & inovatif, dari bentuk-bentuk dasar.', icon: '📐' },
+    { id: 'khas_nusantara', name: 'Khas Nusantara', description: 'Artistik dengan sentuhan budaya lokal Indonesia.', icon: '🎨' },
+    { id: 'klasik_retro', name: 'Klasik / Retro', description: 'Nostalgia, otentik, dan bergaya "jadul".', icon: '📜' },
     { id: 'elegan_mewah', name: 'Elegan & Mewah', description: 'Premium, berkelas, dengan garis tipis.', icon: '💎' },
-    { id: 'cap_stempel', name: 'Cap / Stempel', description: 'Otentik, handmade, cocok untuk F&B.', icon: '🏷️' },
-    { id: 'tulisan_tangan', name: 'Tulisan Tangan', description: 'Personal, unik, dan artistik.', icon: '✍️' },
-    { id: 'geometris_abstrak', name: 'Geometris / Abstrak', description: 'Modern, inovatif, dan profesional.', icon: '📐' },
 ];
+
 
 const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onGoToDashboard }) => {
   const { profile } = useAuth();
@@ -103,7 +106,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
                 <div 
                   key={style.id} 
                   onClick={() => setSelectedStyle(style.id)}
-                  className={`relative p-3 border rounded-lg cursor-pointer transition-all duration-200 flex flex-col items-center justify-start text-center ${selectedStyle === style.id ? 'border-primary ring-2 ring-primary/30 bg-primary/10' : 'border-border-main bg-background/50 hover:border-splash/50'}`}
+                  className={`relative p-3 border rounded-lg cursor-pointer transition-all duration-200 flex flex-col items-center justify-start text-center h-full ${selectedStyle === style.id ? 'border-primary ring-2 ring-primary/30 bg-primary/10' : 'border-border-main bg-background/50 hover:border-splash/50'}`}
                 >
                   {style.badge && <span className="absolute -top-2 -right-2 bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md z-10">{style.badge}</span>}
                   <div className="text-2xl mb-1">{style.icon}</div>

@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { BrandPersona, BrandInputs, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, ProjectData } from '../types';
+import type { BrandPersona, BrandInputs, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, ProjectData, AIPetState } from '../types';
 import { fetchImageAsBase64 } from '../utils/imageUtils';
 
 // DEFERRED INITIALIZATION of GoogleGenAI client to prevent startup crash
@@ -65,10 +65,12 @@ export const generateSlogans = async (businessName: string, persona: BrandPerson
     return JSON.parse(response.text);
 };
 
-export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
+export const generateContentCalendar = async (businessName: string, persona: BrandPersona, petState: AIPetState | null): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
+    const petContext = petState && petState.stage === 'active' ? `My AI Pet assistant, ${petState.name}, who is ${petState.tier} and has a ${Object.keys(petState.personality).reduce((a, b) => petState.personality[a as keyof typeof petState.personality] > petState.personality[b as keyof typeof petState.personality] ? a : b)} personality, might have some creative ideas.` : '';
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create a 7-day social media content calendar for an Indonesian business named "${businessName}". The brand persona is "${persona.nama_persona}". Use Google Search to find relevant trending topics or holidays in Indonesia for the upcoming week.
+        ${petContext}
         For each day, provide: 'hari', 'tipe_konten' (e.g., Edukasi, Promosi, Interaksi), 'ide_konten', 'draf_caption' (in Indonesian, using the brand voice: ${persona.brand_voice.deskripsi}), and 'rekomendasi_hashtag' (array of strings). The output must be a valid JSON array of objects.`,
         config: {
             tools: [{ googleSearch: {} }],
@@ -90,10 +92,11 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
     }
 };
 
-export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona): Promise<SocialProfileData> => {
+export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona, petState: AIPetState | null): Promise<SocialProfileData> => {
+    const petContext = petState && petState.stage === 'active' ? `My AI Pet assistant, ${petState.name}, who is ${petState.tier} and has a ${Object.keys(petState.personality).reduce((a, b) => petState.personality[a as keyof typeof petState.personality] > petState.personality[b as keyof typeof petState.personality] ? a : b)} personality, can help make this more creative.` : '';
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: `Create social media profile descriptions for "${inputs.businessName}". The persona is "${persona.nama_persona}".
+        contents: `Create social media profile descriptions for "${inputs.businessName}". The persona is "${persona.nama_persona}". ${petContext}
         Provide:
         1. 'instagramBio': A concise, engaging Instagram bio with emojis and a call-to-action.
         2. 'tiktokBio': A short, punchy TikTok bio.
@@ -114,11 +117,12 @@ export const generateSocialProfiles = async (inputs: BrandInputs, persona: Brand
     return JSON.parse(response.text);
 };
 
-export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string): Promise<SocialAdsData> => {
+export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string, petState: AIPetState | null): Promise<SocialAdsData> => {
+    const petContext = petState && petState.stage === 'active' ? `My AI Pet assistant, ${petState.name}, who is ${petState.tier}, might have a unique perspective for these ads.` : '';
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Create 2 social media ad copy options for "${inputs.businessName}", a business that sells "${inputs.businessDetail}".
-        The persona is "${persona.nama_persona}" and the slogan is "${slogan}".
+        The persona is "${persona.nama_persona}" and the slogan is "${slogan}". ${petContext}
         - One for Instagram, focusing on visuals and engagement.
         - One for TikTok, focusing on trends and a strong hook.
         For each, provide 'platform', 'adCopy', and 'hashtags' (array).`,
@@ -129,7 +133,7 @@ export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPerso
                 items: {
                     type: Type.OBJECT,
                     properties: {
-                        platform: { type: Type.STRING, enum: ["Instagram", "TikTok"] },
+                        platform: { type: Type.STRING },
                         adCopy: { type: Type.STRING },
                         hashtags: { type: Type.ARRAY, items: { type: Type.STRING } }
                     },
@@ -175,18 +179,7 @@ export const analyzeCompetitorUrl = async (url: string, businessName: string): P
             tools: [{ googleSearch: {} }]
         }
     });
-    // FIX: A googleSearch tool call may not return valid JSON. Handle this gracefully.
-    try {
-      // This is an incorrect way to check for JSON. A valid text response might be a single word.
-      // The goal is to avoid crashing on JSON.parse. If it's not JSON, it's text.
-      JSON.parse(response.text);
-      // If parsing succeeds, it's likely an incomplete or weird JSON response from the model.
-      // We should return a user-friendly error instead of the raw, possibly confusing JSON.
-      return "Gagal menganalisis URL, coba lagi dengan URL lain atau gunakan analisis via teks.";
-    } catch {
-      // If parsing fails, it's a normal text response, which is what we want.
-      return response.text;
-    }
+    return response.text;
 };
 
 
@@ -196,14 +189,12 @@ export const generateLogoOptions = async (prompt: string, style: string, busines
     
     let stylePrompt = `A modern, clean, minimalist abstract mark or wordmark with an Indonesian touch.`;
     switch (style) {
+        // --- KEEPING ---
         case 'minimalis_modern':
             stylePrompt = `A modern, elegant, simple, memorable, and professional abstract mark or wordmark. It has a clean, minimalist feel.`;
             break;
         case 'badge_potong':
             stylePrompt = `A bold and impactful logo where the business name is cleverly integrated into a solid shape (like a circle, badge, or rectangle) using negative space. The text appears to 'cut through' the shape. This is a popular 'badge' style for modern Indonesian local brands. The design must be clean, easy to read, and often works well in a single color.`;
-            break;
-        case 'ilustrasi_ceria':
-            stylePrompt = `A fun, cheerful, and friendly illustrated mascot or character logo. The style is simple, bold, and cartoonish, suitable for a brand targeting families or young audiences.`;
             break;
         case 'klasik_retro':
             stylePrompt = `A classic, retro, or vintage style logo, perhaps in an emblem or badge format. It should evoke nostalgia and a sense of heritage and authenticity.`;
@@ -214,14 +205,27 @@ export const generateLogoOptions = async (prompt: string, style: string, busines
         case 'khas_nusantara':
             stylePrompt = `An artistic logo with a distinct Indonesian 'Nusantara' ethnic touch. Incorporate elements of traditional patterns (like batik or ikat), local culture, or natural Indonesian flora/fauna in a modern way.`;
             break;
-        case 'cap_stempel':
-            stylePrompt = `A logo in a stamp or seal style ('cap'/'stempel'), often circular. It should have a slightly distressed, rustic, or grunge texture to give an authentic, handcrafted feel. Often monochromatic.`;
-            break;
-        case 'tulisan_tangan':
-            stylePrompt = `A logo centered around beautiful, elegant handwritten calligraphy or a custom script font ('tulisan tangan'). The focus is on unique and personal typography representing the name '${businessName}'.`;
-            break;
         case 'geometris_abstrak':
             stylePrompt = `A logo using clean geometric shapes like circles, squares, triangles, or lines to create an abstract and modern mark. It should feel balanced, professional, and innovative.`;
+            break;
+        
+        // --- RENAMED & UPDATED ---
+        case 'wordmark_logotype': // was 'tulisan_tangan'
+            stylePrompt = `A 'wordmark' or 'logotype' style logo. The entire logo is the business name "${businessName}" itself, rendered in a unique and memorable custom typography. The font choice and styling are the primary focus. It could be a script, serif, or sans-serif, but it must be distinctive.`;
+            break;
+        case 'pictorial_ilustrasi': // was 'ilustrasi_ceria'
+            stylePrompt = `A 'pictorial mark' logo. It is a simple, easily recognizable icon or graphic symbol that represents the business literally or abstractly. This could be a friendly illustrated mascot, a character, or an icon of a relevant object (e.g., a coffee bean for a cafe). The style should be clean and bold.`;
+            break;
+        case 'emblem_cap_stempel': // was 'cap_stempel'
+            stylePrompt = `An 'emblem' logo. The business name "${businessName}" is placed inside a containing shape like a seal, crest, or badge. This gives it a traditional, authentic, and solid feel. It can have a slightly distressed, rustic, or clean texture.`;
+            break;
+        
+        // --- NEW ---
+        case 'lettermark_monogram':
+            stylePrompt = `A 'lettermark' or 'monogram' style logo. The logo is created from the initials of the business name "${businessName}". It should be a clever and graphically interesting arrangement of 2-3 letters. The design must be simple, memorable, and modern.`;
+            break;
+        case 'line_art':
+            stylePrompt = `A chic and contemporary logo made using a single, thin, continuous line (line art style) or simple flat design shapes. The result should feel minimalist, elegant, and light.`;
             break;
     }
 
@@ -229,7 +233,7 @@ export const generateLogoOptions = async (prompt: string, style: string, busines
 - Main Subject/Concept: "${prompt}".
 - Style: ${stylePrompt}
 - Technical requirements: Vector graphic style. Clean lines. White background. The main logo element must occupy approximately 80% of the total image area for prominence and detail.
-- Text Rule: For styles like 'badge_potong' or 'tulisan_tangan', the business name "${businessName}" MUST be integrated into the logo. For other styles, avoid adding text unless it is part of the core logo concept itself.`;
+- Text Rule: For styles like 'wordmark_logotype', 'lettermark_monogram', 'badge_potong', or 'emblem_cap_stempel', the business name "${businessName}" (or its initials) MUST be integrated into the logo. For other styles, avoid adding text unless it is part of the core logo concept itself.`;
     
     const response = await getAiClient().models.generateImages({
         model: 'imagen-4.0-generate-001',
@@ -296,9 +300,13 @@ export const generateSocialMediaPostImage = async (topic: string, keywords: stri
 };
 
 export const generateSocialMediaKitAssets = async (projectData: ProjectData): Promise<SocialMediaKitAssets> => {
+    if (!projectData.selectedPersona || !projectData.brandInputs) {
+      throw new Error("Data persona atau brand inputs tidak lengkap untuk generate social media kit.");
+    }
+
     const profilePicPromise = getAiClient().models.generateImages({
         model: 'imagen-4.0-generate-001',
-        prompt: `A simple, clean profile picture icon using the main elements of this logo. The style is ${projectData.selectedPersona.kata_kunci.join(', ')}. Use the color palette: ${projectData.selectedPersona.palet_warna_hex.join(', ')}. White background.`,
+        prompt: `A simple, clean profile picture icon using the main elements or colors from the brand style. The style is ${projectData.selectedPersona.kata_kunci.join(', ')}. Use the color palette: ${projectData.selectedPersona.palet_warna_hex.join(', ')}. White background.`,
         config: { numberOfImages: 1, aspectRatio: '1:1', outputMimeType: 'image/png' },
     });
 
@@ -336,7 +344,6 @@ export const generateLogoVariations = async (logoUrl: string, businessName: stri
     return { main: logoUrl, stacked, horizontal, monochrome };
 };
 
-// FIX: Add missing editLogo function for LogoDetailGenerator
 export const editLogo = async (base64Data: string, mimeType: string, prompt: string): Promise<string> => {
     const dataUrl = `data:${mimeType};base64,${base64Data}`;
     return generateWithImagesAndText([dataUrl], prompt);
@@ -391,7 +398,6 @@ export const generateMissingField = async (currentInputs: Partial<BrandInputs>, 
     return response.text.trim();
 };
 
-// --- FIX: Add missing generateAIPetNarrative function ---
 export const generateAIPetNarrative = async (name: string, tier: string, dominantTrait: string): Promise<string> => {
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash',
