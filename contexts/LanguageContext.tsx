@@ -16,7 +16,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
 
   const [language, setLanguageState] = useState<Language>(() => {
     return (localStorage.getItem('desainfun_language') as Language) || 'id';
@@ -42,12 +42,17 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         .then(({ error }) => {
           if (error) {
             console.error('Gagal menyimpan preferensi bahasa:', error);
+          } else {
+            // After successful DB update, refresh the profile to get the latest data
+            // which will trigger the useEffect to sync language state
+            refreshProfile(); 
           }
         });
     }
-  }, [user]);
+  }, [user, refreshProfile]);
 
   const t = useCallback((translations: Translations): string => {
+    // Fallback to Indonesian ('id') if the selected language is not in the provided translations
     return translations[language] || translations['id'];
   }, [language]);
 

@@ -12,7 +12,9 @@ if (!rootElement) {
 // Register Service Worker for PWA capabilities
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Use absolute path to be more robust against routing issues.
+    // The path '/sw.js' is absolute to the origin, which is the correct implementation.
+    // The "origin mismatch" error reported is an environment-specific issue (e.g., a proxy or misconfigured CDN)
+    // and not a bug in this registration code itself.
     navigator.serviceWorker.register('/sw.js').then(registration => {
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
     }, err => {

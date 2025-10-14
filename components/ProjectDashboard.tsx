@@ -175,13 +175,18 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
         <div className="flex flex-col gap-8 items-center text-center">
             <DynamicInfoBox />
             <div className="relative mt-12 flex flex-col items-center gap-4 w-full max-w-md">
-                <div className="w-full relative">
-                    <Button onClick={() => onNewProject()} onMouseEnter={onPreloadNewProject} size="large" variant="splash" className="w-full">+ Bikin Project Branding Baru</Button>
-                    {showOnboarding && (
-                        <div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max cursor-pointer animate-bounce">
-                            <CalloutPopup>Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup>
-                        </div>
-                    )}
+                <div className="w-full text-center">
+                    <div className="relative">
+                        <Button onClick={() => onNewProject()} onMouseEnter={onPreloadNewProject} size="large" variant="splash" className="w-full">+ Bikin Project Branding Baru</Button>
+                        {showOnboarding && (
+                            <div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max cursor-pointer animate-bounce">
+                                <CalloutPopup>Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup>
+                            </div>
+                        )}
+                    </div>
+                     <div className="text-xs text-text-muted px-4 mt-2 bg-background/50 rounded-md p-2 border border-border-main">
+                        <strong className="text-splash">MANUAL!</strong> Isi formulir singkat untuk memandu AI meracik brand-mu langkah demi langkah. Cocok buat yang suka kontrol penuh.
+                    </div>
                 </div>
                 <div className="text-text-muted font-semibold">ATAU</div>
                 <div className="w-full text-center">
@@ -196,7 +201,9 @@ const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProjec
                             Mulai Konsultasi Suara
                          </span>
                     </Button>
-                    <p className="text-xs text-text-muted px-4 mt-2">Ngobrol langsung sama Mang AI buat bikin fondasi & logo brand.</p>
+                    <div className="text-xs text-text-muted px-4 mt-2 bg-background/50 rounded-md p-2 border border-border-main">
+                        <strong className="text-splash">BARU!</strong> Coba ngobrol santai 5 menit bareng Mang AI. Jawab pertanyaannya, dan di akhir sesi, lo bakal langsung dapet fondasi brand & logo master.
+                    </div>
                 </div>
             </div>
 
@@ -289,7 +296,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
 
   const tabs = [
     { id: 'projects', name: 'Project', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
-    { id: 'tools', name: 'AI Creator', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg> },
+    { id: 'tools', name: 'CreAItor', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg> },
     { id: 'lemari', name: 'Lemari', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-fuchsia-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg> },
     { id: 'forum', name: 'Forum', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H17z" /></svg> },
     { id: 'gamify', name: 'Gamify', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
@@ -305,7 +312,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
         <h2 className="text-3xl md:text-4xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userName}! Siap Jadi Juara?</h2>
         <p className="text-text-muted max-w-3xl mx-auto">
             Ini studio branding pribadimu. Mulai dari <strong className="text-sky-400 font-semibold">Project</strong>, 
-            berkreasi di <strong className="text-yellow-400 font-semibold">AI Creator</strong>, 
+            berkreasi di <strong className="text-yellow-400 font-semibold">CreAItor</strong>, 
             simpan aset di <strong className="text-fuchsia-400 font-semibold">Lemari</strong>,
             ngobrol di <strong className="text-orange-400 font-semibold">Forum</strong>, 
             atau asah jiwa kompetisimu di menu <strong className="text-green-400 font-semibold">Gamify</strong>. 

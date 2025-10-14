@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { Session, User, Profile, Project } from '../types';
 import { playBGM, setMuted, stopBGM, playRandomBGM } from '../services/soundService';
@@ -36,6 +36,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const fetchInProgress = useRef(false);
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
@@ -215,8 +216,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Effect to fetch data when user object changes
   useEffect(() => {
     if (user) {
+        if (fetchInProgress.current) return;
         setLoading(true);
-        fetchInitialUserData(user).finally(() => setLoading(false));
+        fetchInProgress.current = true;
+        fetchInitialUserData(user).finally(() => {
+            setLoading(false);
+            fetchInProgress.current = false;
+        });
     } else {
         // No user, clear data and stop loading
         setProfile(null);
