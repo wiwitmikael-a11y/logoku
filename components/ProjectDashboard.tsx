@@ -13,7 +13,7 @@ import LoadingMessage from './common/LoadingMessage';
 import CalloutPopup from './common/CalloutPopup';
 
 const Forum = React.lazy(() => import('./Forum'));
-const AICreator = React.lazy(() => import('./QuickTools')); // QuickTools is now AICreator
+const AICreator = React.lazy(() => import('./AICreator'));
 const LemariKreasi = React.lazy(() => import('./LemariKreasi'));
 const PusatJuragan = React.lazy(() => import('./gamification/PusatJuragan'));
 

@@ -106,18 +106,18 @@ const LemariKreasi: React.FC = () => {
         case 'pattern':
         case 'scene_mixer':
         case 'photo_studio':
-            preview = <img src={asset.asset_data.url} alt={asset.name} className="w-full h-32 object-cover rounded-t-lg bg-background" />;
+            preview = <img src={asset.asset_data.url} alt={asset.name} className="w-full h-32 object-cover rounded-t-lg bg-background" loading="lazy" />;
             break;
         case 'mascot':
-            preview = <div className="grid grid-cols-2 gap-1 h-32"><img src={asset.asset_data.urls[0]} className="w-full h-full object-cover rounded-tl-lg bg-background" /><img src={asset.asset_data.urls[1]} className="w-full h-full object-cover rounded-tr-lg bg-background" /></div>
+            preview = <div className="grid grid-cols-2 gap-1 h-32"><img src={asset.asset_data.urls[0]} className="w-full h-full object-cover rounded-tl-lg bg-background" loading="lazy" /><img src={asset.asset_data.urls[1]} className="w-full h-full object-cover rounded-tr-lg bg-background" loading="lazy" /></div>
             break;
         case 'moodboard':
             const images = asset.asset_data.images;
             preview = (
                 <div className="grid grid-cols-2 gap-px h-32 bg-background">
-                    {/* FIX: Removed faulty type assertion and let Array.isArray handle type narrowing */}
+                    {/* FIX: Add Array.isArray check to prevent crash if images is not an array. */}
                     {Array.isArray(images) && images.slice(0, 4).map((img: string, i: number) => (
-                        <img key={i} src={img} className={`w-full h-full object-cover ${i === 0 ? 'rounded-tl-lg' : ''} ${i === 1 ? 'rounded-tr-lg' : ''}`} />
+                        <img key={i} src={img} className={`w-full h-full object-cover ${i === 0 ? 'rounded-tl-lg' : ''} ${i === 1 ? 'rounded-tr-lg' : ''}`} loading="lazy" />
                     ))}
                 </div>
             );
@@ -147,7 +147,7 @@ const LemariKreasi: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-content-fade-in">
-        <h2 className="text-3xl md:text-4xl font-bold text-primary mb-2 text-center" style={{fontFamily: 'var(--font-display)'}}>Lemari Kreasi</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-fuchsia-400 mb-2 text-center" style={{fontFamily: 'var(--font-display)'}}>Lemari Kreasi</h2>
         <p className="text-center text-text-muted max-w-2xl mx-auto -mt-6">Semua aset yang kamu simpan dari 'AI Creator' ada di sini. Kelola, unduh, atau edit lagi kapan aja.</p>
         
         {assets.length === 0 ? (
