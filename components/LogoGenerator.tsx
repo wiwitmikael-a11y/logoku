@@ -20,11 +20,12 @@ interface Props {
 const GENERATION_COST = 4;
 
 const logoStyles = [
-    { id: 'minimalis_modern', name: 'Minimalis Modern', description: 'Simpel, bersih, dan kekinian.', icon: '✨' },
+    { id: 'minimalis_modern', name: 'Minimalis Modern', description: 'Simpel, bersih, dan kekinian.', icon: '✨', badge: 'Populer' },
+    { id: 'badge_potong', name: 'Badge Potong', description: 'Nama brand memotong/menjadi bagian dari bentuk dasar (lingkaran, kotak).', icon: '📛', badge: 'Populer' },
+    { id: 'khas_nusantara', name: 'Khas Nusantara', description: 'Artistik dengan sentuhan budaya lokal.', icon: '🎨', badge: 'Populer' },
     { id: 'ilustrasi_ceria', name: 'Ilustrasi Ceria', description: 'Ramah, menarik, dengan karakter.', icon: '😊' },
     { id: 'klasik_retro', name: 'Klasik / Retro', description: 'Nostalgia, otentik, dan bergaya.', icon: '📜' },
     { id: 'elegan_mewah', name: 'Elegan & Mewah', description: 'Premium, berkelas, dengan garis tipis.', icon: '💎' },
-    { id: 'khas_nusantara', name: 'Khas Nusantara', description: 'Artistik dengan sentuhan budaya lokal.', icon: '🎨' },
     { id: 'cap_stempel', name: 'Cap / Stempel', description: 'Otentik, handmade, cocok untuk F&B.', icon: '🏷️' },
     { id: 'tulisan_tangan', name: 'Tulisan Tangan', description: 'Personal, unik, dan artistik.', icon: '✍️' },
     { id: 'geometris_abstrak', name: 'Geometris / Abstrak', description: 'Modern, inovatif, dan profesional.', icon: '📐' },
@@ -53,7 +54,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
     setLogoOptions([]);
     setSelectedLogo(null);
     try {
-      const results = await generateLogoOptions(prompt, selectedStyle);
+      const results = await generateLogoOptions(prompt, selectedStyle, businessName);
       await deductCredits(GENERATION_COST);
       setLogoOptions(results);
     } catch (err) {
@@ -61,7 +62,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, selectedStyle, credits, deductCredits, setShowOutOfCreditsModal]);
+  }, [prompt, selectedStyle, businessName, credits, deductCredits, setShowOutOfCreditsModal]);
 
   const handleSelectLogo = (logoBase64: string) => {
     setSelectedLogo(logoBase64);
@@ -97,13 +98,14 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
           </div>
           <div>
             <h4 className="block mb-3 text-sm font-medium text-text-muted">Pilih Gaya Logo</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {logoStyles.map(style => (
                 <div 
                   key={style.id} 
                   onClick={() => setSelectedStyle(style.id)}
-                  className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 flex flex-col items-center justify-start text-center ${selectedStyle === style.id ? 'border-primary ring-2 ring-primary/30 bg-primary/10' : 'border-border-main bg-background/50 hover:border-splash/50'}`}
+                  className={`relative p-3 border rounded-lg cursor-pointer transition-all duration-200 flex flex-col items-center justify-start text-center ${selectedStyle === style.id ? 'border-primary ring-2 ring-primary/30 bg-primary/10' : 'border-border-main bg-background/50 hover:border-splash/50'}`}
                 >
+                  {style.badge && <span className="absolute -top-2 -right-2 bg-accent text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md z-10">{style.badge}</span>}
                   <div className="text-2xl mb-1">{style.icon}</div>
                   <p className="font-semibold text-sm text-text-header">{style.name}</p>
                   <p className="text-xs text-text-muted mt-1 flex-grow">{style.description}</p>

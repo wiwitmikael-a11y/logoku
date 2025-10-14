@@ -205,7 +205,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
 
         const finalBrandInputs = currentInputs as BrandInputs;
         const logoPromptText = `A minimalist and modern logo for "${finalBrandInputs.businessName}", representing ${currentInputs.logoStyle}.`;
-        const logoOptions = await geminiService.generateLogoOptions(logoPromptText, currentInputs.logoStyle || 'minimalis_modern', 1);
+        // FIX: The `businessName` argument was missing, causing a type mismatch where a number (the count) was passed instead of a string.
+        const logoOptions = await geminiService.generateLogoOptions(logoPromptText, currentInputs.logoStyle || 'minimalis_modern', finalBrandInputs.businessName, 1);
         if (!logoOptions || logoOptions.length === 0) throw new Error("Gagal membuat logo master.");
 
         const masterLogo = logoOptions[0];

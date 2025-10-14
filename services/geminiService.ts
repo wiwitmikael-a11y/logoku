@@ -192,12 +192,15 @@ export const analyzeCompetitorUrl = async (url: string, businessName: string): P
 
 // --- Image Generation Services ---
 
-export const generateLogoOptions = async (prompt: string, style: string, count: number = 4): Promise<string[]> => {
+export const generateLogoOptions = async (prompt: string, style: string, businessName: string, count: number = 4): Promise<string[]> => {
     
     let stylePrompt = `A modern, clean, minimalist abstract mark or wordmark with an Indonesian touch.`;
     switch (style) {
         case 'minimalis_modern':
             stylePrompt = `A modern, elegant, simple, memorable, and professional abstract mark or wordmark. It has a clean, minimalist feel.`;
+            break;
+        case 'badge_potong':
+            stylePrompt = `A bold and impactful logo where the business name is cleverly integrated into a solid shape (like a circle, badge, or rectangle) using negative space. The text appears to 'cut through' the shape. This is a popular 'badge' style for modern Indonesian local brands. The design must be clean, easy to read, and often works well in a single color.`;
             break;
         case 'ilustrasi_ceria':
             stylePrompt = `A fun, cheerful, and friendly illustrated mascot or character logo. The style is simple, bold, and cartoonish, suitable for a brand targeting families or young audiences.`;
@@ -215,17 +218,18 @@ export const generateLogoOptions = async (prompt: string, style: string, count: 
             stylePrompt = `A logo in a stamp or seal style ('cap'/'stempel'), often circular. It should have a slightly distressed, rustic, or grunge texture to give an authentic, handcrafted feel. Often monochromatic.`;
             break;
         case 'tulisan_tangan':
-            stylePrompt = `A logo centered around beautiful, elegant handwritten calligraphy or a custom script font ('tulisan tangan'). The focus is on unique and personal typography.`;
+            stylePrompt = `A logo centered around beautiful, elegant handwritten calligraphy or a custom script font ('tulisan tangan'). The focus is on unique and personal typography representing the name '${businessName}'.`;
             break;
         case 'geometris_abstrak':
             stylePrompt = `A logo using clean geometric shapes like circles, squares, triangles, or lines to create an abstract and modern mark. It should feel balanced, professional, and innovative.`;
             break;
     }
 
-    const enhancedPrompt = `A professional logo for a small Indonesian business (UMKM). 
-    - Subject: "${prompt}".
-    - Style: ${stylePrompt}
-    - Technical requirements: Vector graphic style. Clean lines. White background. No text unless it is part of the logo concept itself. The main logo element must occupy approximately 80% of the total image area for prominence and detail.`;
+    const enhancedPrompt = `A professional logo for an Indonesian small business (UMKM) named "${businessName}".
+- Main Subject/Concept: "${prompt}".
+- Style: ${stylePrompt}
+- Technical requirements: Vector graphic style. Clean lines. White background. The main logo element must occupy approximately 80% of the total image area for prominence and detail.
+- Text Rule: For styles like 'badge_potong' or 'tulisan_tangan', the business name "${businessName}" MUST be integrated into the logo. For other styles, avoid adding text unless it is part of the core logo concept itself.`;
     
     const response = await getAiClient().models.generateImages({
         model: 'imagen-4.0-generate-001',
@@ -352,7 +356,7 @@ export const moderateContent = async (text: string): Promise<{ isAppropriate: bo
 
 export const generateImageForCanvas = (prompt: string): Promise<string> => {
     // Pass a default style for generic canvas generation
-    return generateLogoOptions(prompt, 'minimalis_modern', 1).then(res => res[0]);
+    return generateLogoOptions(prompt, 'minimalis_modern', 'Canvas Image', 1).then(res => res[0]);
 };
 
 export const generateBusinessNames = (category: string, keywords: string): Promise<string[]> => {
@@ -374,7 +378,7 @@ export const generateMoodboardText = async (keywords: string): Promise<{ descrip
 };
 
 export const generateMoodboardImages = (keywords: string): Promise<string[]> => {
-    return generateLogoOptions(`Photorealistic, aesthetic photo representing the vibe of: ${keywords}. No text, no logos.`, 'minimalis_modern', 4);
+    return generateLogoOptions(`Photorealistic, aesthetic photo representing the vibe of: ${keywords}. No text, no logos.`, 'minimalis_modern', 'Moodboard Image', 4);
 };
 
 export const generateMissingField = async (currentInputs: Partial<BrandInputs>, fieldToGenerate: keyof BrandInputs): Promise<string> => {
