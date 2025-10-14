@@ -114,8 +114,15 @@ const LemariKreasi: React.FC<LemariKreasiProps> = ({ onShowSotoshop }) => {
             preview = <div className="grid grid-cols-2 gap-1 h-32"><img src={asset.asset_data.urls[0]} className="w-full h-full object-cover rounded-tl-lg bg-background" /><img src={asset.asset_data.urls[1]} className="w-full h-full object-cover rounded-tr-lg bg-background" /></div>
             break;
         case 'moodboard':
-            // FIX: Cast asset.asset_data.images to string[] to resolve the 'map does not exist on type unknown' error.
-            preview = <div className="grid grid-cols-2 gap-px h-32 bg-background">{(asset.asset_data.images as string[]).slice(0, 4).map((img:string, i:number) => <img key={i} src={img} className={`w-full h-full object-cover ${i===0 ? 'rounded-tl-lg' : ''} ${i===1 ? 'rounded-tr-lg' : ''}`}/>)}</div>
+            // FIX: Add Array.isArray check to prevent runtime errors if asset_data.images is not an array.
+            const images = asset.asset_data.images;
+            preview = (
+                <div className="grid grid-cols-2 gap-px h-32 bg-background">
+                    {Array.isArray(images) && (images as string[]).slice(0, 4).map((img: string, i: number) => (
+                        <img key={i} src={img} className={`w-full h-full object-cover ${i === 0 ? 'rounded-tl-lg' : ''} ${i === 1 ? 'rounded-tr-lg' : ''}`} />
+                    ))}
+                </div>
+            );
             break;
         default:
             preview = <div className="h-32 bg-background flex items-center justify-center text-text-muted">No Preview</div>

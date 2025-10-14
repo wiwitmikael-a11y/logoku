@@ -94,7 +94,6 @@ const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop }) => {
         setIsLoading(true); setError(null); playSound('start');
         
         const toolMap: { [K in CreatorTool]?: { cost: number; xp: number; handler: () => Promise<void> } } = {
-            // FIX: Corrected typo from MOODBOARD_COST to MOODBOARD_GEN_COST
             moodboard: { cost: MOODBOARD_GEN_COST, xp: XP_REWARD + 10, handler: async () => { if (!moodboardKeywords) throw new Error('KEYWORDS CANNOT BE EMPTY!'); const [textData, images] = await Promise.all([generateMoodboardText(moodboardKeywords), generateMoodboardImages(moodboardKeywords)]); setMoodboardResult({ ...textData, images }); } },
             scenemixer: { cost: SCENE_MIXER_COST, xp: XP_REWARD + 10, handler: async () => { if (sceneImages.length === 0) throw new Error('UPLOAD MINIMAL 1 GAMBAR!'); if (!scenePrompt) throw new Error('PROMPT UTAMA TIDAK BOLEH KOSONG!'); let p = `${scenePrompt}\n\n`; sceneImages.forEach((img, i) => { p += `Gambar ${i + 1}: ${img.instruction.trim() || 'Gunakan elemen relevan'}.\n`; }); const res = await generateSceneFromImages(sceneImages.map(i => i.src), p); setSceneResult(res); } },
             pattern: { cost: PATTERN_COST, xp: XP_REWARD, handler: async () => { if (!patternPrompt) throw new Error('PROMPT CANNOT BE EMPTY!'); const res = await generatePattern(patternPrompt); setPatternResult(res[0]); } },

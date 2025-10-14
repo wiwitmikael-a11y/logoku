@@ -4,10 +4,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { generateBusinessNames, generateQuickSlogans, generateMoodboardText, generateMoodboardImages, generateSceneFromImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
-import { useUI } from '../contexts/UIContext';
 import { playSound } from '../services/soundService';
 import Button from './common/Button';
-import ErrorMessage from './common/ErrorMessage';
 import CopyButton from './common/CopyButton';
 import ImageModal from './common/ImageModal';
 
@@ -239,7 +237,7 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                         <p className="text-splash font-bold text-sm">SOTOSHOP (IMAGE EDITOR):</p>
                                         <p className="text-white text-sm">Editor gambar ringan yang powerful, terintegrasi langsung dengan Mang AI. Gunakan untuk memoles logo, menambah teks ke gambar postingan, atau bahkan membuat desain sederhana dari nol.</p>
                                         <p className="text-xs text-text-muted">Fitur unggulannya termasuk background removal dan AI image generation langsung di kanvas.</p>
-                                        {/* FIX: Replaced call to undefined `toggleSotoshop` with the `onShowSotoshop` prop. */}
+                                        {/* FIX: Use onShowSotoshop prop instead of undefined toggleSotoshop function */}
                                         <button onClick={onShowSotoshop} className="w-full font-mono text-lg font-bold bg-fuchsia-500 text-white p-3 my-2 hover:bg-fuchsia-400 transition-colors">
                                             BUKA SOTOSHOP
                                         </button>
@@ -249,14 +247,12 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                         <div 
                                             onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                                             onDragLeave={() => setIsDragging(false)}
-                                            // FIX: Removed the extra 'scenemixer' argument from the handleFileChange call.
                                             onDrop={e => { e.preventDefault(); setIsDragging(false); handleFileChange(e.dataTransfer.files); }}
                                             className={`p-4 border-2 border-dashed border-splash/50 rounded-none min-h-[80px] flex flex-col justify-center items-center transition-colors ${isDragging ? 'dropzone-active' : ''}`}
                                         >
                                             <p className="text-splash font-bold text-sm">DROP YOUR IMAGES HERE</p>
                                             <p className="text-xs text-text-muted">or</p>
                                             <label htmlFor="file-upload" className="cursor-pointer text-yellow-400 hover:underline font-semibold">CHOOSE FILES</label>
-                                            {/* FIX: Removed the extra 'scenemixer' argument from the handleFileChange call. */}
                                             <input id="file-upload" type="file" multiple accept="image/*" className="hidden" onChange={e => e.target.files && handleFileChange(e.target.files)} />
                                         </div>
                                         {sceneImages.length > 0 && (
@@ -276,7 +272,7 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                 ) : ( // Moodboard
                                      <div className="animate-content-fade-in space-y-4">
                                         <div className="space-y-2"><label className="text-splash font-bold text-sm block">KEYWORDS/VIBE:</label><input value={moodboardKeywords} onChange={(e) => setMoodboardKeywords(e.target.value)} placeholder="e.g., rustic coffee shop, sunset, warm" required className="w-full font-mono bg-black/50 border-2 border-splash/50 rounded-none p-2 text-white focus:outline-none focus:border-splash focus:ring-2 focus:ring-splash/50" /></div>
-                                        <button onClick={handleGenerateMoodboard} disabled={!moodboardKeywords || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `START GAME (${MOODBOARD_GEN_COST} TOKEN)`}</button>
+                                        <button onClick={handleGenerateMoodboard} disabled={!moodboardKeywords || isLoading} className="w-full font-mono text-lg font-bold bg-yellow-400 text-black p-3 my-2 hover:bg-yellow-300 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">{isLoading ? 'LOADING...' : `GENERATE (${MOODBOARD_GEN_COST} TOKEN)`}</button>
                                     </div>
                                 )}
                             </div>
