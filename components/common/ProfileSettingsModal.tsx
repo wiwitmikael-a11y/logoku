@@ -135,7 +135,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
 
             <div className="w-full border-t border-red-500/30 pt-4 mt-6">
                <h3 className="text-sm font-semibold text-red-500 uppercase tracking-wider">Zona Berbahaya</h3>
-               {/* FIX: Corrected onClick handler to use `handleDeleteAccount` from the useAuth hook. */}
+               {/* FIX: Corrected onClick handler to use `handleDeleteAccount` from the useAuth hook instead of the undefined `onDeleteAccount`. */}
                <Button onClick={handleDeleteAccount} size="small" variant="secondary" className="mt-3 !border-red-500/30 !text-red-500 hover:!bg-red-500/10 disabled:!border-slate-300 disabled:!text-slate-400 disabled:cursor-not-allowed" disabled={true} title="Fitur ini hanya tersedia untuk user Pro (Segera Hadir)."> Hapus Akun Saya </Button>
             </div>
         </main>

@@ -420,6 +420,18 @@ export const generateMissingField = async (currentInputs: Partial<BrandInputs>, 
     return response.text.trim();
 };
 
+// --- FIX: Add missing generateAIPetNarrative function ---
+export const generateAIPetNarrative = async (name: string, tier: string, dominantTrait: string): Promise<string> => {
+    const response = await getAiClient().models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Create a short, mysterious, one-paragraph origin story for a digital creature named "${name}". 
+        - Its rarity/tier is "${tier}".
+        - Its most dominant personality trait is "${dominantTrait}".
+        The narrative should be intriguing and hint at its capabilities. Keep it under 50 words. Write in Indonesian.`,
+    });
+    return response.text.trim();
+};
+
 // --- New AI Creator Services ---
 
 export const generatePattern = async (prompt: string): Promise<string[]> => {
@@ -455,17 +467,4 @@ export const generateMascot = async (prompt: string): Promise<string[]> => {
         config: { numberOfImages: 2, outputMimeType: 'image/png', aspectRatio: '1:1' },
     });
     return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
-};
-
-// FIX: Add missing generateAIPetNarrative function
-export const generateAIPetNarrative = async (petName: string, petTier: string, dominantTrait: string): Promise<string> => {
-    const response = await getAiClient().models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `Create a very short, one-sentence origin story or quirky fact for a digital pet.
-        - Name: "${petName}"
-        - Tier/Rarity: ${petTier}
-        - Dominant Trait: ${dominantTrait}
-        The tone should be mysterious, cool, and a bit futuristic. Output only the single sentence. Example: 'Data fragments suggest ${petName} was born from a glitch in the main server during a solar flare.'`,
-    });
-    return response.text.trim();
 };

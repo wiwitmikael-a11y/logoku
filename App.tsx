@@ -91,7 +91,7 @@ const LanguageToggle: React.FC = () => {
 const AppContent: React.FC = () => {
     const { session, user, profile, projects, setProjects, loading: authLoading, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, executeLogout, handleLogout, showLogoutConfirm, setShowLogoutConfirm } = useAuth();
     const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, setShowLevelUpModal, levelUpInfo, unlockedAchievement, setUnlockedAchievement, deductCredits, addXp, grantAchievement, grantFirstTimeCompletionBonus } = useUserActions();
-    const { toast, showToast, closeToast, showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showBrandGalleryModal, toggleBrandGalleryModal, showSotoshop, toggleSotoshop, showVoiceWizard, toggleVoiceWizard } = useUI();
+    const { toast, showToast, closeToast, showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showBrandGalleryModal, toggleBrandGalleryModal, showSotoshop, toggleSotoshop, showVoiceWizard, toggleVoiceWizard, showTokenomicsModal, toggleTokenomicsModal } = useUI();
     const { t } = useTranslation();
     
     const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('desainfun_theme') as 'light' | 'dark') || 'dark');
@@ -108,7 +108,6 @@ const AppContent: React.FC = () => {
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
-    const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
     
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -338,10 +337,10 @@ const AppContent: React.FC = () => {
                             <div className="space-y-2 text-xs">
                                 <p className="font-bold text-text-header">{t({ id: "Ini Token-mu!", en: "These are your Tokens!" })}</p>
                                 <p>{t({ id: `Token adalah "amunisi" buat ngejalanin fitur AI. Tenang, tiap pagi Mang AI bakal`, en: `Tokens are the "ammo" for running AI features. Don't worry, every morning Mang AI will` })} <strong className="text-primary">{t({ id: "isiin ulang jadi 5", en: "refill it to 5" })}</strong> {t({ id: "kalo token-mu abis!", en: "if you run out!" })}</p>
-                                <button onClick={() => setShowTokenomicsModal(true)} className="text-accent hover:underline font-semibold">{t({ id: "Pelajari lebih lanjut &rarr;", en: "Learn more &rarr;" })}</button>
+                                <button onClick={() => toggleTokenomicsModal(true)} className="text-accent hover:underline font-semibold">{t({ id: "Pelajari lebih lanjut &rarr;", en: "Learn more &rarr;" })}</button>
                             </div>
                         }>
-                            <button onClick={() => setShowTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1 p-1.5 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
+                            <button onClick={() => toggleTokenomicsModal(true)} title="Info Token" className="flex items-center gap-1 p-1.5 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-splash" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
                                 <span className="font-bold text-sm text-text-header">{profile?.credits ?? 0}</span>
                             </button>
@@ -413,7 +412,7 @@ const AppContent: React.FC = () => {
             <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
             <AchievementToast achievement={unlockedAchievement} onClose={() => setUnlockedAchievement(null)} />
             <Sotoshop show={showSotoshop} onClose={() => toggleSotoshop(false)} />
-            <TokenomicsModal show={showTokenomicsModal} onClose={() => setShowTokenomicsModal(false)} />
+            <TokenomicsModal show={showTokenomicsModal} onClose={() => toggleTokenomicsModal(false)} />
         </Suspense>
       </>
     );

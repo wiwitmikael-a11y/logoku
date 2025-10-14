@@ -3,18 +3,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useUI } from '../contexts/UIContext';
 import type { LemariAsset } from '../types';
 import Button from './common/Button';
 import LoadingMessage from './common/LoadingMessage';
 import ErrorMessage from './common/ErrorMessage';
 import { playSound } from '../services/soundService';
 
-interface LemariKreasiProps {
-  onShowSotoshop: () => void;
-}
-
-const LemariKreasi: React.FC<LemariKreasiProps> = ({ onShowSotoshop }) => {
+const LemariKreasi: React.FC = () => {
   const { user } = useAuth();
+  const { toggleSotoshop } = useUI();
   const [assets, setAssets] = useState<LemariAsset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +87,7 @@ const LemariKreasi: React.FC<LemariKreasiProps> = ({ onShowSotoshop }) => {
     
     if (base64Url) {
         sessionStorage.setItem('sotoshop_preload_image', base64Url);
-        onShowSotoshop();
+        toggleSotoshop(true);
     } else {
         alert("Aset ini tidak bisa dikirim ke Sotoshop.");
     }
@@ -114,11 +112,11 @@ const LemariKreasi: React.FC<LemariKreasiProps> = ({ onShowSotoshop }) => {
             preview = <div className="grid grid-cols-2 gap-1 h-32"><img src={asset.asset_data.urls[0]} className="w-full h-full object-cover rounded-tl-lg bg-background" /><img src={asset.asset_data.urls[1]} className="w-full h-full object-cover rounded-tr-lg bg-background" /></div>
             break;
         case 'moodboard':
-            // FIX: Add Array.isArray check to prevent runtime errors if asset_data.images is not an array.
             const images = asset.asset_data.images;
             preview = (
                 <div className="grid grid-cols-2 gap-px h-32 bg-background">
-                    {Array.isArray(images) && (images as string[]).slice(0, 4).map((img: string, i: number) => (
+                    {/* FIX: Removed faulty type assertion and let Array.isArray handle type narrowing */}
+                    {Array.isArray(images) && images.slice(0, 4).map((img: string, i: number) => (
                         <img key={i} src={img} className={`w-full h-full object-cover ${i === 0 ? 'rounded-tl-lg' : ''} ${i === 1 ? 'rounded-tr-lg' : ''}`} />
                     ))}
                 </div>
@@ -150,13 +148,13 @@ const LemariKreasi: React.FC<LemariKreasiProps> = ({ onShowSotoshop }) => {
   return (
     <div className="space-y-8 animate-content-fade-in">
         <h2 className="text-3xl md:text-4xl font-bold text-primary mb-2 text-center" style={{fontFamily: 'var(--font-display)'}}>Lemari Kreasi</h2>
-        <p className="text-center text-text-muted max-w-2xl mx-auto -mt-6">Semua aset yang kamu simpan dari 'Generator Ide Cepat' ada di sini. Kelola, unduh, atau edit lagi kapan aja.</p>
+        <p className="text-center text-text-muted max-w-2xl mx-auto -mt-6">Semua aset yang kamu simpan dari 'AI Creator' ada di sini. Kelola, unduh, atau edit lagi kapan aja.</p>
         
         {assets.length === 0 ? (
             <div className="text-center text-text-muted border-2 border-dashed border-border-main rounded-lg p-12">
                 <p className="text-4xl mb-4">📦</p>
                 <h3 className="font-bold text-text-header text-lg">Lemarimu Masih Kosong!</h3>
-                <p className="mt-1">Buka tab 'Ide Cepat', buat aset keren, lalu klik 'Simpan ke Lemari' buat ngumpulin di sini.</p>
+                <p className="mt-1">Buka tab 'AI Creator', buat aset keren, lalu klik 'Simpan ke Lemari' buat ngumpulin di sini.</p>
             </div>
         ) : (
             Object.entries(groupedAssets).map(([type, assetList]) => (
