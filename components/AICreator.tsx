@@ -1,38 +1,15 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    generateMoodboardText, 
-    generateMoodboardImages, 
-    generateSceneFromImages,
-    generatePattern,
-    generateProductPhoto,
-    generateMascot,
-    applyPatternToMockup,
-    generateMascotPose,
-    removeBackground
-} from '../services/geminiService';
-import { supabase } from '../services/supabaseClient';
-import { useAuth } from '../contexts/AuthContext';
-import { useUserActions } from '../contexts/UserActionsContext';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useUI } from '../contexts/UIContext';
 import { playSound } from '../services/soundService';
 import Button from './common/Button';
-import ErrorMessage from './common/ErrorMessage';
-import ImageModal from './common/ImageModal';
 import LoadingMessage from './common/LoadingMessage';
 
-const MOODBOARD_COST = 3;
-const PATTERN_COST = 2;
-const MASCOT_COST = 2;
-const PHOTO_STUDIO_COST = 1;
-const AI_POSTER_MAKER_COST = 2;
-const BG_REMOVAL_COST = 1;
-const POSE_PACK_COST = 2;
-const MOCKUP_PREVIEW_COST = 1;
-const XP_REWARD = 25;
+const VideoGenerator = React.lazy(() => import('./VideoGenerator'));
 
 const AI_CREATOR_TIPS = [
+    { icon: '🎬', title: 'Baru! AI Video Generator!', text: 'Sekarang kamu bisa bikin video pendek dari teks atau gambar. Cukup kasih ide, dan Mang AI akan meraciknya jadi klip video sinematik! Prosesnya butuh beberapa menit, jadi sabar ya.' },
     { icon: '🎨', title: 'Ciptakan Nuansa Brand', text: "Bingung nentuin nuansa visual brand? Coba 'Moodboard Generator'. Dapetin deskripsi, palet warna, dan 4 gambar inspirasi instan." },
     { icon: '🧩', title: 'Gabungkan Imajinasimu!', text: 'Pakai <strong class="text-text-header">AI Poster Maker</strong> buat gabungin beberapa gambar jadi satu. Upload gambar-gambarmu, kasih perintah, dan biarkan Mang AI yang menyatukannya!' },
     { icon: '🌀', title: 'Desain Pola Unik!', text: 'Butuh motif buat kemasan atau background? Pakai <strong class="text-text-header">Pattern Generator</strong> buat bikin pola seamless yang keren, lengkap dengan pratinjau 3D.'},
@@ -64,77 +41,22 @@ const AICreatorInfoBox: React.FC = () => {
 interface AICreatorProps {
     onShowSotoshop: () => void;
 }
-type CreatorTool = 'moodboard' | 'pattern' | 'mascot' | 'photostudio' | 'poster' | 'sotoshop';
+type CreatorTool = 'moodboard' | 'pattern' | 'mascot' | 'photostudio' | 'poster' | 'video' | 'sotoshop';
 
-const ToolContainer: React.FC<{ children: React.ReactNode, title: string, description: string, cost?: number, xp?: number }> = ({ children, title, description, cost, xp }) => (
+const ToolContainer: React.FC<{ children: React.ReactNode, title: string, description: string }> = ({ children, title, description }) => (
     <div className="animate-content-fade-in space-y-2">
         <p className="text-splash font-bold text-sm">{title.toUpperCase()}:</p>
         <p className="text-white text-sm">{description}</p>
-        {(cost || xp) && (
-            <p className="text-xs text-text-muted">
-                {cost && `Biaya: ${cost} Token`}
-                {cost && xp && ' | '}
-                {xp && `Hadiah: +${xp} XP`}
-            </p>
-        )}
         <div className="pt-2">{children}</div>
     </div>
 );
 
-const MoodboardGenerator: React.FC = () => (
-    <ToolContainer 
-        title="Moodboard Generator"
-        description="Bingung nentuin nuansa visual brand? Cukup kasih beberapa kata kunci (misal: 'kopi senja, hangat, tenang'), dan Mang AI akan meracik sebuah moodboard lengkap dengan deskripsi, palet warna, dan gambar inspirasi."
-        cost={3}
-        xp={25}
-    >
-        <p className="text-sm text-text-muted italic">(Fungsionalitas Moodboard Generator sedang dalam pengembangan)</p>
+const UnderConstructionTool: React.FC<{ title: string, description: string }> = ({ title, description }) => (
+     <ToolContainer title={title} description={description}>
+        <p className="text-sm text-text-muted italic">(Fungsionalitas {title} sedang dalam pengembangan)</p>
     </ToolContainer>
 );
 
-const PatternGenerator: React.FC = () => (
-    <ToolContainer 
-        title="Pattern Generator"
-        description="Butuh motif unik buat kemasan, background, atau kain? Masukkan idemu (misal: 'batik modern warna pastel'), dan Mang AI akan membuatkan pola seamless (tanpa sambungan) yang bisa kamu pakai."
-        cost={2}
-        xp={25}
-    >
-        <p className="text-sm text-text-muted italic">(Fungsionalitas Pattern Generator sedang dalam pengembangan)</p>
-    </ToolContainer>
-);
-
-const MascotGenerator: React.FC = () => (
-    <ToolContainer
-        title="Mascot Generator"
-        description="Ciptakan karakter yang ikonik dan mudah diingat untuk brand-mu. Deskripsikan maskot impianmu (misal: 'beruang madu imut pakai blangkon'), dan Mang AI akan menggambarkannya dalam 2 opsi gaya."
-        cost={2}
-        xp={25}
-    >
-        <p className="text-sm text-text-muted italic">(Fungsionalitas Mascot Generator sedang dalam pengembangan)</p>
-    </ToolContainer>
-);
-
-const PhotoStudio: React.FC = () => (
-    <ToolContainer
-        title="Photo Studio AI"
-        description="Ubah foto produk biasa jadi luar biasa! Upload fotomu (usahakan dengan background polos), lalu tulis suasana yang kamu mau. Mang AI akan menempatkan produkmu di scene yang realistis."
-        cost={1}
-        xp={25}
-    >
-        <p className="text-sm text-text-muted italic">(Fungsionalitas Photo Studio sedang dalam pengembangan)</p>
-    </ToolContainer>
-);
-
-const AIPosterMaker: React.FC = () => (
-    <ToolContainer
-        title="AI Poster Maker"
-        description="Gabungkan beberapa gambar jadi satu karya baru! Upload 2-3 gambar, kasih instruksi, dan tulis prompt utama untuk menyatukannya. Cocok untuk bikin poster atau konten visual unik."
-        cost={2}
-        xp={25}
-    >
-        <p className="text-sm text-text-muted italic">(Fungsionalitas AI Poster Maker sedang dalam pengembangan)</p>
-    </ToolContainer>
-);
 
 const SotoshopTool: React.FC<{onShowSotoshop: () => void}> = ({onShowSotoshop}) => (
     <ToolContainer
@@ -146,13 +68,15 @@ const SotoshopTool: React.FC<{onShowSotoshop: () => void}> = ({onShowSotoshop}) 
 );
 
 const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop }) => {
-    const [activeTool, setActiveTool] = useState<CreatorTool>('moodboard');
+    const [activeTool, setActiveTool] = useState<CreatorTool>('video');
 
     const handleToolChange = (tool: CreatorTool) => {
+        playSound('select');
         setActiveTool(tool);
     };
 
     const toolsConfig = [
+        { id: 'video', icon: '🎬', label: 'Video' },
         { id: 'moodboard', icon: '🎨', label: 'Moodboard' },
         { id: 'pattern', icon: '🌀', label: 'Pattern' },
         { id: 'mascot', icon: '🐻', label: 'Mascot' },
@@ -163,11 +87,12 @@ const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop }) => {
 
     const renderActiveTool = () => {
         switch(activeTool) {
-            case 'moodboard': return <MoodboardGenerator />;
-            case 'pattern': return <PatternGenerator />;
-            case 'mascot': return <MascotGenerator />;
-            case 'photostudio': return <PhotoStudio />;
-            case 'poster': return <AIPosterMaker />;
+            case 'video': return <Suspense fallback={<LoadingMessage />}><VideoGenerator /></Suspense>;
+            case 'moodboard': return <UnderConstructionTool title="Moodboard Generator" description="Bingung nentuin nuansa visual brand? Cukup kasih beberapa kata kunci, dan Mang AI akan meracik sebuah moodboard lengkap." />;
+            case 'pattern': return <UnderConstructionTool title="Pattern Generator" description="Butuh motif unik buat kemasan atau background? Masukkan idemu, dan Mang AI akan membuatkan pola seamless (tanpa sambungan)." />;
+            case 'mascot': return <UnderConstructionTool title="Mascot Generator" description="Ciptakan karakter yang ikonik untuk brand-mu. Deskripsikan maskot impianmu, dan Mang AI akan menggambarkannya." />;
+            case 'photostudio': return <UnderConstructionTool title="Photo Studio AI" description="Upload foto produkmu (background polos), lalu tulis suasana yang kamu mau. Mang AI akan menempatkan produkmu di scene yang realistis." />;
+            case 'poster': return <UnderConstructionTool title="AI Poster Maker" description="Gabungkan beberapa gambar jadi satu karya baru! Upload 2-3 gambar, kasih instruksi, dan tulis prompt utama untuk menyatukannya." />;
             case 'sotoshop': return <SotoshopTool onShowSotoshop={onShowSotoshop} />;
             default: return null;
         }

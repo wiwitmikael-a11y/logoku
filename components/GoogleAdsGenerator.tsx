@@ -115,7 +115,7 @@ const LemariKreasi: React.FC = () => {
             const images = asset.asset_data?.images;
             preview = (
                 <div className="grid grid-cols-2 gap-px h-32 bg-background">
-                    {/* FIX: Added type assertion `(images as string[])` to inform TypeScript that `images` is an array of strings, resolving the '.map' error. */}
+                    {/* FIX: Explicitly cast `images` to a string array after the `Array.isArray` check to satisfy stricter type rules and resolve the `.map` error. */}
                     {Array.isArray(images) && (images as string[]).slice(0, 4).map((img: string, i: number) => (
                         <img key={i} src={img} className={`w-full h-full object-cover ${i === 0 ? 'rounded-tl-lg' : ''} ${i === 1 ? 'rounded-tr-lg' : ''}`} loading="lazy" />
                     ))}

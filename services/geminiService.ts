@@ -349,6 +349,47 @@ export const editLogo = async (base64Data: string, mimeType: string, prompt: str
     return generateWithImagesAndText([dataUrl], prompt);
 };
 
+// --- Video Generation Service ---
+export const generateVideo = async (prompt: string, imageBase64?: string | null): Promise<string> => {
+    const ai = getAiClient();
+    let payload: any = {
+        model: 'veo-2.0-generate-001',
+        prompt: prompt,
+        config: { numberOfVideos: 1 }
+    };
+
+    if (imageBase64) {
+        const [header, data] = imageBase64.split(',');
+        payload.image = {
+            imageBytes: data,
+            mimeType: header.match(/data:(.*);base64/)?.[1] || 'image/png',
+        };
+    }
+
+    let operation = await ai.models.generateVideos(payload);
+    
+    // Poll for the result
+    while (!operation.done) {
+        await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
+        operation = await ai.operations.getVideosOperation({ operation: operation });
+    }
+
+    const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+    if (!downloadLink) {
+        throw new Error("Gagal mendapatkan link unduhan video dari API.");
+    }
+
+    const apiKey = import.meta.env.VITE_API_KEY;
+    const response = await fetch(`${downloadLink}&key=${apiKey}`);
+    if (!response.ok) {
+        throw new Error(`Gagal mengunduh video: ${response.statusText}`);
+    }
+    
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+};
+
+
 // --- Other Services ---
 
 export const moderateContent = async (text: string): Promise<{ isAppropriate: boolean, reason: string }> => {
