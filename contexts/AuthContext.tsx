@@ -115,7 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-        const { data: profileData, error: profileError, status } = await supabase
+        let { data: profileData, error: profileError, status } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', userToFetch.id)
@@ -126,32 +126,73 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         let finalProfile: Profile | null = null;
 
         if (profileData) {
+            // Profile exists, handle updates (daily reset, sync)
+            let needsDBUpdate = false;
+            let updates: Partial<Profile> = {};
+            let currentProfile = { ...profileData };
+
+            // 1. Daily Reset Logic
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const lastReset = currentProfile.last_credit_reset ? new Date(currentProfile.last_credit_reset) : null;
+
+            if (!lastReset || lastReset < today) {
+                needsDBUpdate = true;
+                updates.last_credit_reset = today.toISOString();
+                updates.daily_actions = {}; // Reset daily missions
+                if (currentProfile.credits < 5) {
+                    updates.credits = 5;
+                }
+            }
+
+            // 2. Sync with Auth provider info
             const authName = userToFetch.user_metadata.full_name || 'Juragan Baru';
             const authAvatar = userToFetch.user_metadata.avatar_url || null;
-            const needsUpdate = profileData.full_name !== authName || profileData.avatar_url !== authAvatar;
+            if (currentProfile.full_name !== authName || currentProfile.avatar_url !== authAvatar) {
+                needsDBUpdate = true;
+                updates.full_name = authName;
+                updates.avatar_url = authAvatar;
+            }
 
-            if (needsUpdate) {
-                const updates = { full_name: authName, avatar_url: authAvatar };
-                const { data: syncedProfile, error: updateError } = await supabase
+            // 3. Perform update if needed
+            if (needsDBUpdate) {
+                const { data: updatedProfile, error: updateError } = await supabase
                     .from('profiles')
                     .update(updates)
                     .eq('id', userToFetch.id)
                     .select()
                     .single();
-                if (updateError) console.error("Failed to sync profile to DB:", updateError);
-                finalProfile = syncedProfile;
+                
+                if (updateError) {
+                    console.error("Failed to apply profile updates:", updateError);
+                    finalProfile = currentProfile; // Use stale data on failure
+                } else {
+                    finalProfile = updatedProfile; // Use fresh data
+                }
             } else {
-                finalProfile = profileData;
+                finalProfile = currentProfile; // No updates needed
             }
+
         } else if (status === 406) {
+            // Profile does not exist, create it with welcome bonus
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const { data: newProfileData, error: insertError } = await supabase
               .from('profiles')
               .insert({
                 id: userToFetch.id,
                 full_name: userToFetch.user_metadata.full_name || 'Juragan Baru',
                 avatar_url: userToFetch.user_metadata.avatar_url || '',
-                credits: 20, welcome_bonus_claimed: true, xp: 0, level: 1, achievements: [],
-                total_projects_completed: 0, completed_first_steps: []
+                credits: 20, // Welcome bonus
+                welcome_bonus_claimed: true,
+                last_credit_reset: today.toISOString(),
+                xp: 0,
+                level: 1,
+                achievements: [],
+                total_projects_completed: 0,
+                completed_first_steps: [],
+                daily_actions: {},
+                aipet_state: null
               })
               .select()
               .single();

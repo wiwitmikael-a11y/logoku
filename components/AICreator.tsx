@@ -1,13 +1,36 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+    generateMoodboardText, 
+    generateMoodboardImages, 
+    generateSceneFromImages,
+    generatePattern,
+    generateProductPhoto,
+    generateMascot,
+    applyPatternToMockup,
+    generateMascotPose,
+    removeBackground
+} from '../services/geminiService';
+import { supabase } from '../services/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
+import { useUserActions } from '../contexts/UserActionsContext';
+import { useUI } from '../contexts/UIContext';
+import { playSound } from '../services/soundService';
 import Button from './common/Button';
+import ErrorMessage from './common/ErrorMessage';
+import ImageModal from './common/ImageModal';
+import LoadingMessage from './common/LoadingMessage';
 
-interface AICreatorProps {
-    onShowSotoshop: () => void;
-}
-
-type CreatorTool = 'moodboard' | 'pattern' | 'mascot' | 'photostudio' | 'poster' | 'sotoshop';
+const MOODBOARD_COST = 3;
+const PATTERN_COST = 2;
+const MASCOT_COST = 2;
+const PHOTO_STUDIO_COST = 1;
+const AI_POSTER_MAKER_COST = 2;
+const BG_REMOVAL_COST = 1;
+const POSE_PACK_COST = 2;
+const MOCKUP_PREVIEW_COST = 1;
+const XP_REWARD = 25;
 
 const AI_CREATOR_TIPS = [
     { icon: '🎨', title: 'Ciptakan Nuansa Brand', text: "Bingung nentuin nuansa visual brand? Coba 'Moodboard Generator'. Dapetin deskripsi, palet warna, dan 4 gambar inspirasi instan." },
@@ -37,6 +60,11 @@ const AICreatorInfoBox: React.FC = () => {
         </div>
     );
 };
+
+interface AICreatorProps {
+    onShowSotoshop: () => void;
+}
+type CreatorTool = 'moodboard' | 'pattern' | 'mascot' | 'photostudio' | 'poster' | 'sotoshop';
 
 const ToolContainer: React.FC<{ children: React.ReactNode, title: string, description: string, cost?: number, xp?: number }> = ({ children, title, description, cost, xp }) => (
     <div className="animate-content-fade-in space-y-2">

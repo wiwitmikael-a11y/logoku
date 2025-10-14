@@ -148,13 +148,13 @@ const LemariKreasi: React.FC = () => {
   return (
     <div className="space-y-8 animate-content-fade-in">
         <h2 className="text-3xl md:text-4xl font-bold text-fuchsia-400 mb-2 text-center" style={{fontFamily: 'var(--font-display)'}}>Lemari Kreasi</h2>
-        <p className="text-center text-text-muted max-w-2xl mx-auto -mt-6">Semua aset yang kamu simpan dari 'AI Creator' ada di sini. Kelola, unduh, atau edit lagi kapan aja.</p>
+        <p className="text-center text-text-muted max-w-2xl mx-auto -mt-6">Semua aset yang kamu simpan dari 'CreAItor' ada di sini. Kelola, unduh, atau edit lagi kapan aja.</p>
         
         {assets.length === 0 ? (
             <div className="text-center text-text-muted border-2 border-dashed border-border-main rounded-lg p-12">
                 <p className="text-4xl mb-4">📦</p>
                 <h3 className="font-bold text-text-header text-lg">Lemarimu Masih Kosong!</h3>
-                <p className="mt-1">Buka tab 'AI Creator', buat aset keren, lalu klik 'Simpan ke Lemari' buat ngumpulin di sini.</p>
+                <p className="mt-1">Buka tab 'CreAItor', buat aset keren, lalu klik 'Simpan ke Lemari' buat ngumpulin di sini.</p>
             </div>
         ) : (
             Object.entries(groupedAssets).map(([type, assetList]) => (
