@@ -152,10 +152,30 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
   useEffect(() => { brandInputsRef.current = brandInputs; }, [brandInputs]);
 
+  const cleanupSession = useCallback(() => {
+    sessionPromiseRef.current?.then(s => s.close());
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    inputAudioContextRef.current?.close().catch(() => {});
+    outputAudioContextRef.current?.close().catch(() => {});
+    if (scriptProcessorRef.current) {
+        scriptProcessorRef.current.disconnect();
+    }
+    sourcesRef.current.forEach(s => {
+        try { s.stop(); } catch (e) {}
+    });
+    sourcesRef.current.clear();
+    
+    sessionPromiseRef.current = null;
+    streamRef.current = null;
+    inputAudioContextRef.current = null;
+    outputAudioContextRef.current = null;
+    scriptProcessorRef.current = null;
+  }, []);
+
   const handleFinalizeAndComplete = useCallback(async (isAutoCompleted = false) => {
     if (conversationStateRef.current === 'FINALIZING' || wizardStep === 'COMPLETED') return;
-
-    sessionPromiseRef.current?.then(s => s.close()); // Gracefully close the connection.
+    
+    cleanupSession();
 
     setConversationState('FINALIZING');
     conversationStateRef.current = 'FINALIZING';
@@ -204,7 +224,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
         setError(errorMessage);
         setConversationState('ERROR');
     }
-  }, [onComplete, wizardStep]);
+  }, [onComplete, wizardStep, cleanupSession]);
 
   const connectToGemini = useCallback(async () => {
     if (sessionPromiseRef.current || conversationStateRef.current === 'CONNECTING') return;
@@ -393,15 +413,8 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     if (show) checkPermissions(); 
     return () => { 
       if (!show) { 
-        sessionPromiseRef.current?.then(s => s.close()); 
-        streamRef.current?.getTracks().forEach(t => t.stop()); 
-        inputAudioContextRef.current?.close().catch(()=>{}); 
-        outputAudioContextRef.current?.close().catch(()=>{}); 
-        sessionPromiseRef.current = null; 
-        streamRef.current = null; 
-        inputAudioContextRef.current = null; 
-        outputAudioContextRef.current = null; 
-        scriptProcessorRef.current = null; 
+        cleanupSession();
+        // Reset all component states
         setPermissionState('pending'); 
         setConversationState('IDLE'); 
         setWizardStep('GREETING'); 
@@ -410,7 +423,7 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
         setShowExitConfirm(false);
       } 
     }; 
-  }, [show, checkPermissions]);
+  }, [show, checkPermissions, cleanupSession]);
   
   useEffect(() => { if (permissionState === 'granted' && show && conversationState === 'IDLE') { connectToGemini(); } }, [permissionState, show, conversationState, connectToGemini]);
   
@@ -431,7 +444,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
         sessionPromiseRef.current?.then(session => { session.sendToolResponse({ functionResponses: { id: 'timer_update_30s', name: 'timer_update', response: { result: '30 seconds remaining, please finalize' } } }); });
     }
     if (timeLeft <= 0 && wizardStep !== 'COMPLETED') {
-        sessionPromiseRef.current?.then(s => s.close());
         handleFinalizeAndComplete(true);
     }
 }, [timeLeft, isWrappingUp, wizardStep, handleFinalizeAndComplete]);

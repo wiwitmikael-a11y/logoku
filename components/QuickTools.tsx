@@ -239,7 +239,7 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                         <p className="text-splash font-bold text-sm">SOTOSHOP (IMAGE EDITOR):</p>
                                         <p className="text-white text-sm">Editor gambar ringan yang powerful, terintegrasi langsung dengan Mang AI. Gunakan untuk memoles logo, menambah teks ke gambar postingan, atau bahkan membuat desain sederhana dari nol.</p>
                                         <p className="text-xs text-text-muted">Fitur unggulannya termasuk background removal dan AI image generation langsung di kanvas.</p>
-                                        {/* FIX: Changed onClick handler from undefined 'toggleSotoshop' to the correct prop 'onShowSotoshop'. */}
+                                        {/* FIX: Replaced call to undefined `toggleSotoshop` with the `onShowSotoshop` prop. */}
                                         <button onClick={onShowSotoshop} className="w-full font-mono text-lg font-bold bg-fuchsia-500 text-white p-3 my-2 hover:bg-fuchsia-400 transition-colors">
                                             BUKA SOTOSHOP
                                         </button>

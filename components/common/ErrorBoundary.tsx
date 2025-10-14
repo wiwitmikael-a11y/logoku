@@ -23,6 +23,14 @@ class ErrorBoundary extends React.Component<Props, State> {
     isCopied: false,
   };
 
+  // FIX: Add constructor to explicitly bind `this` for the handleCopy method.
+  // This classic React pattern ensures `this.setState` is available and avoids potential issues
+  // with class property arrow functions in some build environments.
+  constructor(props: Props) {
+    super(props);
+    this.handleCopy = this.handleCopy.bind(this);
+  }
+
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so the next render will show the fallback UI.
     return { hasError: true, error };
@@ -32,8 +40,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: The `handleCopy` method is defined as an arrow function to lexically bind `this`. This ensures that `this.state` and `this.setState` refer to the component instance when this method is called as an event handler, preventing errors where `this` would otherwise be undefined.
-  private handleCopy = () => {
+  // FIX: Converted from an arrow function to a standard class method, which is now bound in the constructor. This ensures `this` context is correctly set.
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -43,9 +51,12 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  // FIX: The `render` method is defined as an arrow function to ensure `this` is always the component instance. This prevents errors where `this.props` might be undefined, providing stable access to props like `onReset` and `children`.
-  render = () => {
-    if (this.state.hasError) {
+  render() {
+    // FIX: Destructure props and state to avoid repeated `this` access and improve readability. This resolves type errors related to accessing `this.props`.
+    const { hasError, error, isCopied } = this.state;
+    const { onReset, children } = this.props;
+
+    if (hasError) {
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-8 my-8 flex flex-col items-center gap-4 text-center">
@@ -64,20 +75,20 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
                     </Button>
-                    {this.props.onReset && (
-                        <Button onClick={this.props.onReset} variant="secondary">
+                    {onReset && (
+                        <Button onClick={onReset} variant="secondary">
                             &larr; Kembali ke Menu
                         </Button>
                     )}
                 </div>
-                {this.state.error && (
+                {error && (
                     <details className="mt-6 text-left text-xs text-text-muted">
                         <summary className="cursor-pointer">Detail Error (untuk developer)</summary>
                         <pre className="mt-2 p-2 bg-background rounded overflow-auto selectable-text">
-                            {this.state.error.toString()}
+                            {error.toString()}
                         </pre>
                         <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-primary bg-transparent border border-primary/30 hover:bg-primary/10">
-                            {this.state.isCopied ? 'Tersalin!' : 'Salin Detail'}
+                            {isCopied ? 'Tersalin!' : 'Salin Detail'}
                         </button>
                     </details>
                 )}
@@ -86,7 +97,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return children;
   }
 }
 
