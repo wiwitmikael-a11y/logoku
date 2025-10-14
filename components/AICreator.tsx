@@ -5,6 +5,7 @@ import { useUI } from '../contexts/UIContext';
 import { playSound } from '../services/soundService';
 import Button from './common/Button';
 import LoadingMessage from './common/LoadingMessage';
+import type { Project } from '../types';
 
 const VideoGenerator = React.lazy(() => import('./VideoGenerator'));
 
@@ -40,6 +41,7 @@ const AICreatorInfoBox: React.FC = () => {
 
 interface AICreatorProps {
     onShowSotoshop: () => void;
+    projects: Project[];
 }
 type CreatorTool = 'moodboard' | 'pattern' | 'mascot' | 'photostudio' | 'poster' | 'video' | 'sotoshop';
 
@@ -67,7 +69,7 @@ const SotoshopTool: React.FC<{onShowSotoshop: () => void}> = ({onShowSotoshop}) 
     </ToolContainer>
 );
 
-const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop }) => {
+const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop, projects }) => {
     const [activeTool, setActiveTool] = useState<CreatorTool>('video');
 
     const handleToolChange = (tool: CreatorTool) => {
@@ -87,7 +89,7 @@ const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop }) => {
 
     const renderActiveTool = () => {
         switch(activeTool) {
-            case 'video': return <Suspense fallback={<LoadingMessage />}><VideoGenerator /></Suspense>;
+            case 'video': return <Suspense fallback={<LoadingMessage />}><VideoGenerator projects={projects} /></Suspense>;
             case 'moodboard': return <UnderConstructionTool title="Moodboard Generator" description="Bingung nentuin nuansa visual brand? Cukup kasih beberapa kata kunci, dan Mang AI akan meracik sebuah moodboard lengkap." />;
             case 'pattern': return <UnderConstructionTool title="Pattern Generator" description="Butuh motif unik buat kemasan atau background? Masukkan idemu, dan Mang AI akan membuatkan pola seamless (tanpa sambungan)." />;
             case 'mascot': return <UnderConstructionTool title="Mascot Generator" description="Ciptakan karakter yang ikonik untuk brand-mu. Deskripsikan maskot impianmu, dan Mang AI akan menggambarkannya." />;

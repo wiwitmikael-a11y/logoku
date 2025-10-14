@@ -350,11 +350,22 @@ export const editLogo = async (base64Data: string, mimeType: string, prompt: str
 };
 
 // --- Video Generation Service ---
-export const generateVideo = async (prompt: string, imageBase64?: string | null): Promise<string> => {
+export const generateVideo = async (prompt: string, imageBase64?: string | null, aspectRatio?: '9:16' | '16:9' | '1:1'): Promise<string> => {
     const ai = getAiClient();
+    let finalPrompt = prompt;
+
+    // Prepend aspect ratio instruction to the prompt as Veo API might not have a direct config for it.
+    if (aspectRatio === '9:16') {
+        finalPrompt = `A vertical video (9:16 aspect ratio). ${prompt}`;
+    } else if (aspectRatio === '16:9') {
+        finalPrompt = `A wide cinematic video (16:9 aspect ratio). ${prompt}`;
+    } else if (aspectRatio === '1:1') {
+        finalPrompt = `A square video (1:1 aspect ratio). ${prompt}`;
+    }
+    
     let payload: any = {
         model: 'veo-2.0-generate-001',
-        prompt: prompt,
+        prompt: finalPrompt,
         config: { numberOfVideos: 1 }
     };
 
