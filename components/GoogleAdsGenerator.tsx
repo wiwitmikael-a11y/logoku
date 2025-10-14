@@ -112,7 +112,7 @@ const LemariKreasi: React.FC = () => {
             preview = <div className="grid grid-cols-2 gap-1 h-32"><img src={asset.asset_data.urls[0]} className="w-full h-full object-cover rounded-tl-lg bg-background" loading="lazy" /><img src={asset.asset_data.urls[1]} className="w-full h-full object-cover rounded-tr-lg bg-background" loading="lazy" /></div>
             break;
         case 'moodboard':
-            const images = asset.asset_data.images;
+            const images = asset.asset_data?.images;
             preview = (
                 <div className="grid grid-cols-2 gap-px h-32 bg-background">
                     {/* FIX: Add Array.isArray check to prevent crash if images is not an array. */}

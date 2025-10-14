@@ -239,28 +239,35 @@ export const generateLogoOptions = async (prompt: string, style: string, count: 
     return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
 };
 
-export const generatePackagingDesign = async (prompt: string, logoBase64: string): Promise<string[]> => {
-    const logoDataUrl = await fetchImageAsBase64(logoBase64);
+// Generic helper for multi-modal generation with one or more images and text.
+const generateWithImagesAndText = async (base64Images: string[], prompt: string): Promise<string> => {
+    const imageParts = base64Images.map(imgStr => {
+        const [header, data] = imgStr.split(',');
+        const mimeType = header.match(/data:(.*);base64/)?.[1] || 'image/png';
+        return { inlineData: { data, mimeType } };
+    });
+
+    const textPart = { text: prompt };
+
     const response = await getAiClient().models.generateContent({
         model: 'gemini-2.5-flash-image',
-        contents: {
-            parts: [
-                { inlineData: { mimeType: 'image/png', data: logoDataUrl.split(',')[1] } },
-                { text: prompt },
-            ],
-        },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
+        contents: { parts: [...imageParts, textPart] },
+        config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
     });
-    // Assuming the API returns image parts for this model
-    const images: string[] = [];
-    for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-            images.push(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
-        }
+
+    const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+    if (!imagePart || !imagePart.inlineData) {
+        const textResponse = response.text || "No text response provided.";
+        throw new Error(`AI tidak mengembalikan gambar. Respons: ${textResponse}`);
     }
-    return images;
+    return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+};
+
+
+export const generatePackagingDesign = async (prompt: string, logoBase64: string): Promise<string[]> => {
+    const logoDataUrl = await fetchImageAsBase64(logoBase64);
+    const result = await generateWithImagesAndText([logoDataUrl], prompt);
+    return [result]; // Return as an array to match other functions
 };
 
 export const generateMerchandiseMockup = async (prompt: string, logoBase64: string): Promise<string[]> => {
@@ -307,68 +314,28 @@ export const generateSocialMediaKitAssets = async (projectData: ProjectData): Pr
 
 // --- Image Editing Services ---
 
-export const editLogo = async (base64Data: string, mimeType: string, prompt: string): Promise<string> => {
-    const response = await getAiClient().models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-            parts: [
-                { inlineData: { data: base64Data, mimeType } },
-                { text: prompt },
-            ]
-        },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        }
-    });
-
-    const imagePart = response.candidates[0].content.parts.find(p => p.inlineData);
-    if (!imagePart || !imagePart.inlineData) {
-        throw new Error("AI did not return an image. It might have refused the request.");
-    }
-    return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-};
-
 export const generateSceneFromImages = async (base64Images: string[], prompt: string): Promise<string> => {
-    const imageParts = base64Images.map(imgStr => {
-        const [header, data] = imgStr.split(',');
-        const mimeType = header.match(/data:(.*);base64/)?.[1] || 'image/jpeg'; // Default to jpeg
-        return { inlineData: { data, mimeType } };
-    });
-
-    const textPart = { text: prompt };
-
-    const response = await getAiClient().models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-            parts: [...imageParts, textPart],
-        },
-        config: {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
-        },
-    });
-    
-    const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-    if (!imagePart || !imagePart.inlineData) {
-        const textResponse = response.text || "No text response provided.";
-        throw new Error(`AI did not return an image. Response: ${textResponse}`);
-    }
-    return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+   return generateWithImagesAndText(base64Images, prompt);
 };
 
 export const generateLogoVariations = async (logoUrl: string, businessName: string): Promise<{ main: string; stacked: string; horizontal: string; monochrome: string }> => {
     const base64 = await fetchImageAsBase64(logoUrl);
-    const base64Data = base64.split(',')[1];
-    const mimeType = base64.match(/data:(.*);base64/)?.[1] || 'image/png';
 
     const commonPrompt = `The business name is "${businessName}". Use a clean, modern sans-serif font like Montserrat or Poppins. The output must be a high-resolution PNG with a transparent background.`;
 
-    const stackedPromise = editLogo(base64Data, mimeType, `Create a stacked logo variation. Place the business name in one or two lines below the provided logo icon. ${commonPrompt}`);
-    const horizontalPromise = editLogo(base64Data, mimeType, `Create a horizontal logo variation. Place the business name to the right of the provided logo icon. ${commonPrompt}`);
-    const monochromePromise = editLogo(base64Data, mimeType, `Convert the provided logo icon to a single solid black color. Do not add any text. Ensure the output is a high-resolution PNG with a transparent background.`);
+    const stackedPromise = generateWithImagesAndText([base64], `Create a stacked logo variation. Place the business name in one or two lines below the provided logo icon. ${commonPrompt}`);
+    const horizontalPromise = generateWithImagesAndText([base64], `Create a horizontal logo variation. Place the business name to the right of the provided logo icon. ${commonPrompt}`);
+    const monochromePromise = generateWithImagesAndText([base64], `Convert the provided logo icon to a single solid black color. Do not add any text. Ensure the output is a high-resolution PNG with a transparent background.`);
 
     const [stacked, horizontal, monochrome] = await Promise.all([stackedPromise, horizontalPromise, monochromePromise]);
 
     return { main: logoUrl, stacked, horizontal, monochrome };
+};
+
+// FIX: Add missing editLogo function for LogoDetailGenerator
+export const editLogo = async (base64Data: string, mimeType: string, prompt: string): Promise<string> => {
+    const dataUrl = `data:${mimeType};base64,${base64Data}`;
+    return generateWithImagesAndText([dataUrl], prompt);
 };
 
 // --- Other Services ---
@@ -432,7 +399,7 @@ export const generateAIPetNarrative = async (name: string, tier: string, dominan
     return response.text.trim();
 };
 
-// --- New AI Creator Services ---
+// --- New AI Creator Services from User Request ---
 
 export const generatePattern = async (prompt: string): Promise<string[]> => {
     const response = await getAiClient().models.generateImages({
@@ -444,20 +411,9 @@ export const generatePattern = async (prompt: string): Promise<string[]> => {
 };
 
 export const generateProductPhoto = async (productImageBase64: string, scenePrompt: string): Promise<string> => {
-    const imagePart = { inlineData: { data: productImageBase64.split(',')[1], mimeType: 'image/png' } };
-    const textPart = { text: `Take the provided product image, which has a plain background. Place this product realistically into the following scene: "${scenePrompt}". This should be a high-quality, commercial product photograph. The product should be the main focus. Maintain the original product's appearance and details perfectly.` };
-    
-    const response = await getAiClient().models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts: [imagePart, textPart] },
-        config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
-    });
-
-    const imageResultPart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-    if (!imageResultPart || !imageResultPart.inlineData) {
-        throw new Error("AI tidak mengembalikan gambar. Coba prompt yang berbeda.");
-    }
-    return `data:${imageResultPart.inlineData.mimeType};base64,${imageResultPart.inlineData.data}`;
+    const prompt = `Take the provided product image, which has a transparent or plain background. Place this product realistically into the following scene: "${scenePrompt}". This should be a high-quality, commercial product photograph. The product should be the main focus. Maintain the original product's appearance and details perfectly. Add realistic lighting and shadows to make it blend in naturally.`;
+    const result = await generateWithImagesAndText([productImageBase64], prompt);
+    return result;
 };
 
 export const generateMascot = async (prompt: string): Promise<string[]> => {
@@ -468,3 +424,26 @@ export const generateMascot = async (prompt: string): Promise<string[]> => {
     });
     return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
 };
+
+export const generateMascotPose = async (baseMascotUrl: string, poseDescription: string): Promise<string> => {
+    const base64 = await fetchImageAsBase64(baseMascotUrl);
+    const prompt = `Using the exact same character, art style, and colors from the provided image, redraw the character in a new pose: "${poseDescription}". The background must be solid white. Maintain all original character details precisely.`
+    return generateWithImagesAndText([base64], prompt);
+}
+
+export const removeBackground = async (imageUrl: string): Promise<string> => {
+    const base64 = await fetchImageAsBase64(imageUrl);
+    const prompt = `Analyze the provided image. Isolate the main subject. Remove the background completely, making it transparent. Output the result as a PNG with a transparent background.`
+    return generateWithImagesAndText([base64], prompt);
+}
+
+export const applyPatternToMockup = async (patternUrl: string, mockupUrl: string): Promise<string> => {
+    const [patternBase64, mockupBase64] = await Promise.all([
+        fetchImageAsBase64(patternUrl),
+        fetchImageAsBase64(mockupUrl),
+    ]);
+    
+    const prompt = "Take the first image (the pattern) and apply it as a texture to the second image (the object, which is a white mockup). The pattern should wrap around the object realistically, respecting its shape, lighting, and shadows. The result should be a photorealistic mockup photo. Do not change the original object's shape or the background."
+    
+    return generateWithImagesAndText([patternBase64, mockupBase64], prompt);
+}
