@@ -171,6 +171,15 @@ export interface GeneratedCaption {
   hashtags: string[];
 }
 
+export interface LemariAsset {
+  id: number;
+  user_id: string;
+  created_at: string;
+  asset_type: 'moodboard' | 'pattern' | 'mascot' | 'scene_mixer' | 'photo_studio';
+  asset_data: any; 
+  name: string;
+}
+
 export interface ForumThread {
   id: string;
   created_at: string;

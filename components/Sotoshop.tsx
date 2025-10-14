@@ -113,8 +113,30 @@ const Sotoshop: React.FC<SotoshopProps> = ({ show, onClose }) => {
             const initialZoom = Math.min(clientWidth / (width + 100), clientHeight / (height + 100));
             setZoom(initialZoom);
             setPan({ x: (clientWidth - width * initialZoom) / 2, y: (clientHeight - height * initialZoom) / 2 });
+
+            const preloadImage = sessionStorage.getItem('sotoshop_preload_image');
+            if (preloadImage) {
+                const img = new Image();
+                img.src = preloadImage;
+                img.onload = () => {
+                     const aspectRatio = img.width / img.height;
+                    const newWidth = Math.min(img.width, width * 0.75);
+                    const newHeight = newWidth / aspectRatio;
+                    addLayer({
+                        type: 'image', image: img, name: 'Aset dari Lemari',
+                        x: (width - newWidth) / 2, y: (height - newHeight) / 2,
+                        width: newWidth, height: newHeight,
+                        rotation: 0, isVisible: true, isLocked: false, opacity: 1,
+                        shadow: { offsetX: 0, offsetY: 0, blur: 0, color: '#000000' },
+                        blendMode: 'source-over',
+                        filters: { brightness: 100, contrast: 100, saturate: 100, grayscale: 0 },
+                        originalSrc: preloadImage
+                    });
+                };
+                sessionStorage.removeItem('sotoshop_preload_image');
+            }
         }
-    }, [show, width, height]);
+    }, [show, width, height, addLayer]);
 
 
     const handleGenerateAiImage = useCallback(async () => {

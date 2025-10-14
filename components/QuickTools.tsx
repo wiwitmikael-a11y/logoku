@@ -249,13 +249,15 @@ const QuickTools: React.FC<QuickToolsProps> = ({ onShowSotoshop }) => {
                                         <div 
                                             onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                                             onDragLeave={() => setIsDragging(false)}
-                                            onDrop={e => { e.preventDefault(); setIsDragging(false); handleFileChange(e.dataTransfer.files, 'scenemixer'); }}
+                                            // FIX: Removed the extra 'scenemixer' argument from the handleFileChange call.
+                                            onDrop={e => { e.preventDefault(); setIsDragging(false); handleFileChange(e.dataTransfer.files); }}
                                             className={`p-4 border-2 border-dashed border-splash/50 rounded-none min-h-[80px] flex flex-col justify-center items-center transition-colors ${isDragging ? 'dropzone-active' : ''}`}
                                         >
                                             <p className="text-splash font-bold text-sm">DROP YOUR IMAGES HERE</p>
                                             <p className="text-xs text-text-muted">or</p>
                                             <label htmlFor="file-upload" className="cursor-pointer text-yellow-400 hover:underline font-semibold">CHOOSE FILES</label>
-                                            <input id="file-upload" type="file" multiple accept="image/*" className="hidden" onChange={e => e.target.files && handleFileChange(e.target.files, 'scenemixer')} />
+                                            {/* FIX: Removed the extra 'scenemixer' argument from the handleFileChange call. */}
+                                            <input id="file-upload" type="file" multiple accept="image/*" className="hidden" onChange={e => e.target.files && handleFileChange(e.target.files)} />
                                         </div>
                                         {sceneImages.length > 0 && (
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 bg-black/50 border border-splash/30 max-h-48 overflow-y-auto">
