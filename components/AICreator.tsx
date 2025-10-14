@@ -1,33 +1,13 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { supabase } from '../services/supabaseClient';
-import { 
-    generateMoodboardText, 
-    generateMoodboardImages, 
-    generateSceneFromImages,
-    generatePattern,
-    generateProductPhoto,
-    generateMascot,
-    applyPatternToMockup,
-    generateMascotPose,
-    removeBackground,
-} from '../services/geminiService';
-import { useAuth } from '../contexts/AuthContext';
-import { useUserActions } from '../contexts/UserActionsContext';
-import { useUI } from '../contexts/UIContext';
-import { playSound } from '../services/soundService';
+import React, { useState, useEffect } from 'react';
 import Button from './common/Button';
-import ErrorMessage from './common/ErrorMessage';
-import ImageModal from './common/ImageModal';
-import LoadingMessage from './common/LoadingMessage';
 
-const MOODBOARD_COST = 3;
-const PATTERN_COST = 2;
-const MASCOT_COST = 2;
-const PHOTO_STUDIO_COST = 1;
-const AI_POSTER_MAKER_COST = 2;
-const XP_REWARD = 25;
+interface AICreatorProps {
+    onShowSotoshop: () => void;
+}
+
+type CreatorTool = 'moodboard' | 'pattern' | 'mascot' | 'photostudio' | 'poster' | 'sotoshop';
 
 const AI_CREATOR_TIPS = [
     { icon: '🎨', title: 'Ciptakan Nuansa Brand', text: "Bingung nentuin nuansa visual brand? Coba 'Moodboard Generator'. Dapetin deskripsi, palet warna, dan 4 gambar inspirasi instan." },
@@ -58,15 +38,89 @@ const AICreatorInfoBox: React.FC = () => {
     );
 };
 
-interface AICreatorProps { onShowSotoshop: () => void; }
-type CreatorTool = 'moodboard' | 'pattern' | 'mascot' | 'photostudio' | 'poster' | 'sotoshop';
+const ToolContainer: React.FC<{ children: React.ReactNode, title: string, description: string, cost?: number, xp?: number }> = ({ children, title, description, cost, xp }) => (
+    <div className="animate-content-fade-in space-y-2">
+        <p className="text-splash font-bold text-sm">{title.toUpperCase()}:</p>
+        <p className="text-white text-sm">{description}</p>
+        {(cost || xp) && (
+            <p className="text-xs text-text-muted">
+                {cost && `Biaya: ${cost} Token`}
+                {cost && xp && ' | '}
+                {xp && `Hadiah: +${xp} XP`}
+            </p>
+        )}
+        <div className="pt-2">{children}</div>
+    </div>
+);
 
-// --- Main Component ---
+const MoodboardGenerator: React.FC = () => (
+    <ToolContainer 
+        title="Moodboard Generator"
+        description="Bingung nentuin nuansa visual brand? Cukup kasih beberapa kata kunci (misal: 'kopi senja, hangat, tenang'), dan Mang AI akan meracik sebuah moodboard lengkap dengan deskripsi, palet warna, dan gambar inspirasi."
+        cost={3}
+        xp={25}
+    >
+        <p className="text-sm text-text-muted italic">(Fungsionalitas Moodboard Generator sedang dalam pengembangan)</p>
+    </ToolContainer>
+);
+
+const PatternGenerator: React.FC = () => (
+    <ToolContainer 
+        title="Pattern Generator"
+        description="Butuh motif unik buat kemasan, background, atau kain? Masukkan idemu (misal: 'batik modern warna pastel'), dan Mang AI akan membuatkan pola seamless (tanpa sambungan) yang bisa kamu pakai."
+        cost={2}
+        xp={25}
+    >
+        <p className="text-sm text-text-muted italic">(Fungsionalitas Pattern Generator sedang dalam pengembangan)</p>
+    </ToolContainer>
+);
+
+const MascotGenerator: React.FC = () => (
+    <ToolContainer
+        title="Mascot Generator"
+        description="Ciptakan karakter yang ikonik dan mudah diingat untuk brand-mu. Deskripsikan maskot impianmu (misal: 'beruang madu imut pakai blangkon'), dan Mang AI akan menggambarkannya dalam 2 opsi gaya."
+        cost={2}
+        xp={25}
+    >
+        <p className="text-sm text-text-muted italic">(Fungsionalitas Mascot Generator sedang dalam pengembangan)</p>
+    </ToolContainer>
+);
+
+const PhotoStudio: React.FC = () => (
+    <ToolContainer
+        title="Photo Studio AI"
+        description="Ubah foto produk biasa jadi luar biasa! Upload fotomu (usahakan dengan background polos), lalu tulis suasana yang kamu mau. Mang AI akan menempatkan produkmu di scene yang realistis."
+        cost={1}
+        xp={25}
+    >
+        <p className="text-sm text-text-muted italic">(Fungsionalitas Photo Studio sedang dalam pengembangan)</p>
+    </ToolContainer>
+);
+
+const AIPosterMaker: React.FC = () => (
+    <ToolContainer
+        title="AI Poster Maker"
+        description="Gabungkan beberapa gambar jadi satu karya baru! Upload 2-3 gambar, kasih instruksi, dan tulis prompt utama untuk menyatukannya. Cocok untuk bikin poster atau konten visual unik."
+        cost={2}
+        xp={25}
+    >
+        <p className="text-sm text-text-muted italic">(Fungsionalitas AI Poster Maker sedang dalam pengembangan)</p>
+    </ToolContainer>
+);
+
+const SotoshopTool: React.FC<{onShowSotoshop: () => void}> = ({onShowSotoshop}) => (
+    <ToolContainer
+        title="Sotoshop (Image Editor)"
+        description="Editor gambar ringan yang powerful. Gunakan untuk memoles logo, menambah teks, atau bahkan membuat desain sederhana dari nol. Fitur unggulannya termasuk background removal dan AI image generation langsung di kanvas."
+    >
+        <Button onClick={onShowSotoshop} className="w-full" variant="splash">BUKA SOTOSHOP</Button>
+    </ToolContainer>
+);
+
 const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop }) => {
     const [activeTool, setActiveTool] = useState<CreatorTool>('moodboard');
 
     const handleToolChange = (tool: CreatorTool) => {
-        playSound('select');
         setActiveTool(tool);
     };
 
@@ -96,7 +150,7 @@ const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop }) => {
             <AICreatorInfoBox />
             <div className="creative-console-wrapper">
                 <div className="creative-console">
-                    <div className="console-header"><h2 className="console-title">AI Creator</h2></div>
+                    <div className="console-header"><h2 className="console-title">CreAItor</h2></div>
                     <div className="console-monitor-frame">
                         <div className="crt-screen p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto">
                             <div className="flex border-b-2 border-splash/50 overflow-x-auto">
@@ -120,26 +174,5 @@ const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop }) => {
         </div>
     );
 };
-
-// --- Tool Implementations ---
-const ToolContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="animate-content-fade-in space-y-4">{children}</div>
-);
-
-const MoodboardGenerator: React.FC = () => { return <ToolContainer><p className="text-white text-sm">Bingung nentuin nuansa visual brand? Cukup kasih beberapa kata kunci (misal: 'kopi senja, hangat, tenang'), dan Mang AI akan meracik sebuah moodboard lengkap dengan deskripsi, palet warna, dan gambar inspirasi.</p><p className="text-sm text-text-muted italic">(Fungsionalitas Moodboard Generator sedang dalam pengembangan)</p></ToolContainer>; }
-const PatternGenerator: React.FC = () => { return <ToolContainer><p className="text-white text-sm">Butuh motif unik buat kemasan, background, atau kain? Masukkan idemu (misal: 'batik modern warna pastel'), dan Mang AI akan membuatkan pola seamless (tanpa sambungan) yang bisa kamu pakai.</p><p className="text-sm text-text-muted italic">(Fungsionalitas Pattern Generator sedang dalam pengembangan)</p></ToolContainer>; }
-const MascotGenerator: React.FC = () => { return <ToolContainer><p className="text-white text-sm">Ciptakan karakter yang ikonik dan mudah diingat untuk brand-mu. Deskripsikan maskot impianmu (misal: 'beruang madu imut pakai blangkon'), dan Mang AI akan menggambarkannya dalam 2 opsi gaya.</p><p className="text-sm text-text-muted italic">(Fungsionalitas Mascot Generator sedang dalam pengembangan)</p></ToolContainer>; }
-const PhotoStudio: React.FC = () => { return <ToolContainer><p className="text-white text-sm">Ubah foto produk biasa jadi luar biasa! Upload fotomu (usahakan dengan background polos), lalu tulis suasana yang kamu mau. Mang AI akan menempatkan produkmu di scene yang realistis.</p><p className="text-sm text-text-muted italic">(Fungsionalitas Photo Studio sedang dalam pengembangan)</p></ToolContainer>; }
-const AIPosterMaker: React.FC = () => { return <ToolContainer><p className="text-white text-sm">Gabungkan beberapa gambar jadi satu karya baru! Upload 2-3 gambar, kasih instruksi untuk masing-masing gambar, dan tulis prompt utama untuk menyatukannya. Cocok untuk bikin poster atau konten visual unik.</p><p className="text-sm text-text-muted italic">(Fungsionalitas AI Poster Maker sedang dalam pengembangan)</p></ToolContainer>; }
-const SotoshopTool: React.FC<{onShowSotoshop: () => void}> = ({onShowSotoshop}) => {
-    return (
-        <ToolContainer>
-            <p className="text-splash font-bold text-sm">SOTOSHOP (IMAGE EDITOR):</p>
-            <p className="text-white text-sm">Editor gambar ringan yang powerful. Gunakan untuk memoles logo, menambah teks, atau bahkan membuat desain sederhana dari nol.</p>
-            <p className="text-xs text-text-muted">Fitur unggulannya termasuk background removal dan AI image generation langsung di kanvas.</p>
-            <Button onClick={onShowSotoshop} className="w-full" variant="splash">BUKA SOTOSHOP</Button>
-        </ToolContainer>
-    );
-}
 
 export default AICreator;

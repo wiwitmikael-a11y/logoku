@@ -32,7 +32,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted to an arrow function to automatically bind `this`, fixing issues with `setState` and other class properties.
+  // FIX: Changed to an arrow function to automatically bind 'this' and resolve context-related errors with 'this.setState'.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
