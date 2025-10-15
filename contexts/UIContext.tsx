@@ -30,8 +30,6 @@ interface UIContextType {
   toggleBrandGalleryModal: (show?: boolean) => void;
   showSotoshop: boolean;
   toggleSotoshop: (show?: boolean) => void;
-  showAIPetLab: boolean;
-  toggleAIPetLab: (show?: boolean) => void;
   showTokenomicsModal: boolean;
   toggleTokenomicsModal: (show?: boolean) => void;
   showVoiceWizard: boolean;
@@ -51,7 +49,6 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
   const [showSotoshop, setShowSotoshop] = useState(false);
-  const [showAIPetLab, setShowAIPetLab] = useState(false);
   const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
   const [showVoiceWizard, setShowVoiceWizard] = useState(false);
 
@@ -89,8 +86,6 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     toggleBrandGalleryModal: createToggle(setShowBrandGalleryModal),
     showSotoshop,
     toggleSotoshop: createToggle(setShowSotoshop),
-    showAIPetLab,
-    toggleAIPetLab: createToggle(setShowAIPetLab),
     showTokenomicsModal,
     toggleTokenomicsModal: createToggle(setShowTokenomicsModal),
     showVoiceWizard,

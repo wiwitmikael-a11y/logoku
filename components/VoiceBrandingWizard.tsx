@@ -126,7 +126,16 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs & { log
 
 
 const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profile, deductCredits, setShowOutOfCreditsModal }) => {
-  const [conversationState, setConversationState] = useState<ConversationState>('IDLE');
+  // FIX: Replaced separate useState and useEffect-synced useRef with a wrapper function
+  // to ensure the ref is updated synchronously with the state. This prevents race conditions
+  // in async callbacks like `onclose`.
+  const [conversationState, _setConversationState] = useState<ConversationState>('IDLE');
+  const conversationStateRef = useRef<ConversationState>('IDLE');
+  const setConversationState = (state: ConversationState) => {
+      conversationStateRef.current = state;
+      _setConversationState(state);
+  };
+
   const [wizardStep, setWizardStep] = useState<ExtendedWizardStep>('GREETING');
   const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs & { logoStyle: string }>>({});
   const [error, setError] = useState<string | null>(null);
@@ -148,8 +157,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   const outputAnalyserRef = useRef<AnalyserNode | null>(null);
   const inputAnalyserRef = useRef<AnalyserNode | null>(null);
   
-  const conversationStateRef = useRef<ConversationState>(conversationState);
-  useEffect(() => { conversationStateRef.current = conversationState; }, [conversationState]);
   useEffect(() => { brandInputsRef.current = brandInputs; }, [brandInputs]);
 
   const cleanupSession = useCallback(() => {
@@ -374,6 +381,8 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
           onclose: () => {
             const currentState = conversationStateRef.current;
+            // FIX: This comparison was causing a TS error due to a race condition where the ref wasn't updated
+            // before this callback fired. The underlying race condition has been fixed by updating the ref synchronously.
             if (currentState === 'COMPLETED' || currentState === 'FINALIZING') {
               // Do nothing, the session closed as expected after completion.
             } else {

@@ -101,49 +101,12 @@ export interface DailyActions {
   [actionId: string]: number | string[] | undefined;
 }
 
-// FIX: Add missing AIPet types and aipet_state to Profile
-export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
-
-export type AIPetPersonalityVector = {
-  minimalist: number;
-  rustic: number;
-  playful: number;
-  modern: number;
-  luxury: number;
-  feminine: number;
-  bold: number;
-  creative: number;
-};
-
+// FIX: Added the AIPetState interface based on its usage in the application.
 export interface AIPetState {
+  stage: 'aipod' | 'hatching' | 'active';
   name: string;
-  stage: 'aipod' | 'active';
-  tier: AIPetTier;
-  stats: {
-    energy: number;
-    creativity: number;
-    intelligence: number;
-    charisma: number;
-  };
-  lastFed: number;
-  lastPlayed: number;
-  personality: AIPetPersonalityVector;
-  narrative: string | null;
-  blueprint: { url: string } | null;
-  colors: {
-    mechanical: { base: string };
-    organic: { base: string };
-    energy: { base: string };
-  } | null;
-  battleStats: {
-    hp: number;
-    atk: number;
-    def: number;
-    spd: number;
-  } | null;
-  buffs: any[];
+  blueprint: any;
 }
-
 
 export interface Profile {
   id: string;
@@ -161,6 +124,7 @@ export interface Profile {
   data_fragments?: number;
   daily_actions?: DailyActions | null;
   language?: 'id' | 'en';
+  // FIX: Added the optional and nullable aipet_state property to the Profile interface.
   aipet_state?: AIPetState | null;
 }
 

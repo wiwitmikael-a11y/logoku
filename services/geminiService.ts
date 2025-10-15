@@ -437,12 +437,6 @@ export const generateMissingField = async (currentInputs: Partial<BrandInputs>, 
     return response.text.replace(/["*]/g, '').trim();
 };
 
-export const generateAIPetNarrative = async (name: string, tier: string, dominantTrait: string): Promise<string> => {
-    const prompt = `Buat narasi latar belakang singkat (1-2 kalimat) untuk sebuah AI Pet. Nama: ${name}. Tingkat kelangkaan: ${tier}. Sifat dominan: ${dominantTrait}. Buatlah narasi yang keren dan imajinatif.`;
-    const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-    return response.text.trim();
-};
-
 export const applyPatternToMockup = (patternB64: string, mockupB64: string): Promise<string> => {
     const prompt = "Terapkan pola dari gambar pertama ke area putih di gambar kedua (mockup).";
     return generateImageForCanvas(prompt, patternB64); // This might not work as intended, Gemini vision may not be that precise. A more complex prompt might be needed.
