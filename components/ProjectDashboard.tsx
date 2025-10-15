@@ -23,6 +23,7 @@ interface ProjectDashboardProps {
   onSelectProject: (projectId: number) => void;
   onDeleteProject: (projectId: number) => void;
   onPreloadNewProject: () => void;
+  onShowSotoshop: () => void;
 }
 
 const DYNAMIC_INFO_TIPS = [
@@ -333,7 +334,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
       
       <div className="mt-4">
         {activeTab === 'projects' && <ProjectContent {...props} />}
-        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><AICreator projects={props.projects} /></Suspense>)}
+        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><AICreator projects={props.projects} onShowSotoshop={props.onShowSotoshop} /></Suspense>)}
         {activeTab === 'lemari' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><LemariKreasi /></Suspense>)}
         {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
         {activeTab === 'gamify' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}

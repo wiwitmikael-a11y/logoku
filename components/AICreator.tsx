@@ -18,7 +18,12 @@ const MascotGenerator = React.lazy(() => import('./MascotGenerator'));
 
 type CreatorTool = 'photo_studio' | 'scene_mixer' | 'moodboard' | 'pattern' | 'mascot';
 
-const AICreator: React.FC<{ projects: Project[] }> = ({ projects }) => {
+interface AICreatorProps {
+    projects: Project[];
+    onShowSotoshop: () => void;
+}
+
+const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
     const [activeTool, setActiveTool] = useState<CreatorTool>('photo_studio');
     const [selectedProjectId, setSelectedProjectId] = useState<string>('freestyle');
 
@@ -121,6 +126,11 @@ const AICreator: React.FC<{ projects: Project[] }> = ({ projects }) => {
                             </button>
                         ))}
                     </nav>
+                     <div className="mt-4 pt-4 border-t border-border-main">
+                        <button onClick={onShowSotoshop} className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors text-left text-text-body hover:bg-background">
+                            <span>✨</span><span>Buka Sotoshop</span>
+                        </button>
+                    </div>
                 </div>
                 <div className="p-4 bg-surface rounded-lg border border-border-main space-y-3">
                     <h3 className="font-bold text-text-header">Konteks Brand</h3>

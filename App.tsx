@@ -243,7 +243,7 @@ const AiAssistant: React.FC<{ petName: string, isOpen: boolean, onToggle: (isOpe
         setIsLoading(true); setInput(''); setMessages(prev => [...prev, { role: 'user', text: messageText }]);
         try {
             if (!chatRef.current) {
-                const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_API_KEY});
+                const ai = new GoogleGenAI({apiKey: import.meta.env?.VITE_API_KEY || ''});
                 chatRef.current = ai.chats.create({ model: 'gemini-2.5-flash', config: { systemInstruction: `You are an AI Pet assistant named ${petName}. You are a friendly and expert branding assistant for Indonesian small businesses (UMKM). Your tone is encouraging, helpful, and uses some casual Indonesian slang like 'juragan', 'sokin', 'gacor', 'keren', 'mantap'. You answer questions about branding, social media, and how to use the 'desain.fun' application. Your goal is to make branding feel fun and easy. Keep answers concise, actionable, and formatted with markdown (like **bold** or lists) for readability.`, }, });
             }
             const response = await chatRef.current.sendMessage({ message: messageText });
