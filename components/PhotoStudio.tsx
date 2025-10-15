@@ -101,8 +101,8 @@ const PhotoStudio: React.FC = () => {
 
     return (
         <div className="space-y-4">
-            <p className="text-splash font-bold text-sm">STUDIO FOTO VIRTUAL:</p>
-            <p className="text-white text-sm">Upload foto produkmu dengan background polos, lalu biarkan Mang AI menempatkannya di berbagai suasana profesional. Gak perlu sewa studio mahal!</p>
+            <h3 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Studio Foto Virtual</h3>
+            <p className="text-sm text-text-body">Upload foto produkmu dengan background polos, lalu biarkan Mang AI menempatkannya di berbagai suasana profesional. Gak perlu sewa studio mahal!</p>
             
             {error && <ErrorMessage message={error} />}
 
@@ -125,16 +125,16 @@ const PhotoStudio: React.FC = () => {
             {originalImage && (
                 <div className="space-y-4 animate-content-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-2 bg-black/20 rounded-lg border border-border-main text-center">
+                        <div className="p-2 bg-background rounded-lg border border-border-main text-center">
                             <h4 className="text-xs font-bold text-text-muted mb-2">1. FOTO ASLI</h4>
                             <img src={originalImage} alt="Original" className="w-full aspect-square object-contain rounded" />
                         </div>
-                        <div className="p-2 bg-black/20 rounded-lg border border-border-main text-center">
+                        <div className="p-2 bg-background rounded-lg border border-border-main text-center">
                             <h4 className="text-xs font-bold text-text-muted mb-2">2. HAPUS BACKGROUND (OPSIONAL)</h4>
                             {isLoading && !editedImage ? <div className="aspect-square flex items-center justify-center"><LoadingMessage/></div> : editedImage ? (
                                 <img src={editedImage} alt="BG Removed" className="w-full aspect-square object-contain rounded" />
                             ) : (
-                                <div className="aspect-square flex flex-col items-center justify-center bg-background rounded p-4">
+                                <div className="aspect-square flex flex-col items-center justify-center bg-surface rounded p-4">
                                     <p className="text-sm text-text-body">Hapus background biar hasilnya lebih bagus.</p>
                                     <Button onClick={handleRemoveBackground} isLoading={isLoading} size="small" variant="secondary" className="mt-2">Hapus BG ({BG_REMOVAL_COST} Token)</Button>
                                 </div>
@@ -142,7 +142,7 @@ const PhotoStudio: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="p-4 bg-black/20 rounded-lg border border-border-main space-y-3">
+                    <div className="p-4 bg-background rounded-lg border border-border-main space-y-3">
                         <h4 className="font-bold text-text-header">3. Pilih Suasana</h4>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                            {SCENE_TEMPLATES.map(s => (
@@ -157,7 +157,7 @@ const PhotoStudio: React.FC = () => {
                     {isLoading && !finalImage && <div className="flex justify-center p-4"><LoadingMessage /></div>}
 
                     {finalImage && (
-                        <div className="p-4 bg-black/20 rounded-lg border border-border-main space-y-3">
+                        <div className="p-4 bg-background rounded-lg border border-border-main space-y-3">
                             <h4 className="font-bold text-text-header">4. HASIL AKHIR</h4>
                             <img src={finalImage} onClick={() => setModalImageUrl(finalImage)} alt="Final Product" className="w-full aspect-square object-contain rounded cursor-pointer" />
                              <div className="flex gap-4">

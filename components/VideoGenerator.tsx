@@ -14,15 +14,13 @@ import Input from './common/Input';
 const VIDEO_GENERATION_COST = 5;
 const XP_REWARD = 50;
 
-type AspectRatio = '9:16' | '16:9' | '1:1';
+type AspectRatio = '16:9' | '9:16' | '1:1';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
 const LOADING_MESSAGES = [
     "Sabar, Mang AI lagi ngerakit kamera...", "Mencari lokasi syuting yang pas...", "Lagi casting pemeran utama...", "Rendering frame 1 dari 120...", "Menambahkan efek sinematik...", "Proses color grading...", "Menyusun adegan demi adegan...", "Lagi bikin kopi buat kru film...", "Finalisasi, nambahin scoring musik...", "Dikit lagi kelar, jangan tinggalin ya!",
 ];
-
-// ... (previous components inside VideoGenerator)
 
 interface InteractivePromptBuilderProps {
     onGenerate: (prompt: string) => void;
@@ -52,13 +50,13 @@ const InteractivePromptBuilder: React.FC<InteractivePromptBuilderProps> = ({ onG
     };
 
     return (
-        <div className="space-y-3 p-3 bg-black/20 border border-splash/20 rounded-lg">
+        <div className="space-y-3 p-3 bg-background rounded-lg border border-border-main">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div> <label className="text-xs font-semibold text-text-muted">Jenis Video</label> <select name="type" value={state.type} onChange={handleChange} className="w-full bg-surface border border-border-main rounded p-1 text-sm"><option>Promosi Produk</option><option>Iklan Sosmed</option><option>Cerita Brand</option><option>Gaya Hidup</option></select> </div>
                 <div> <label className="text-xs font-semibold text-text-muted">Suasana Video</label> <select name="vibe" value={state.vibe} onChange={handleChange} className="w-full bg-surface border border-border-main rounded p-1 text-sm"><option>Modern & Bersih</option><option>Sinematik & Dramatis</option><option>Hangat & Natural</option><option>Energik & Ceria</option></select> </div>
             </div>
-            <Input label="Nama Produk/Jasa" name="product" value={state.product} onChange={handleChange} placeholder="cth: Kopi Susu Gula Aren" className="!text-sm" />
-            <Input label="Keunggulan/Fitur Utama" name="feature" value={state.feature} onChange={handleChange} placeholder="cth: Dibuat dari biji kopi pilihan" className="!text-sm" />
+            <Input label="Nama Produk/Jasa" name="product" value={state.product} onChange={handleChange} placeholder="cth: Kopi Susu Gula Aren" />
+            <Input label="Keunggulan/Fitur Utama" name="feature" value={state.feature} onChange={handleChange} placeholder="cth: Dibuat dari biji kopi pilihan" />
             <Button onClick={generate} size="small" variant="secondary" className="w-full">Buatkan Prompt Canggih!</Button>
         </div>
     );
@@ -71,160 +69,25 @@ interface PostProductionPanelProps {
     onRenderComplete: (newUrl: string) => void;
 }
 const PostProductionPanel: React.FC<PostProductionPanelProps> = ({ projects, videoUrl, onRenderComplete }) => {
-    const [selectedProjectId, setSelectedProjectId] = useState<string>('');
-    const [config, setConfig] = useState({ addLogo: true, title: '', subtitle: '' });
+    // This is a placeholder for a complex feature. For now, it will be a simplified UI.
     const [isRendering, setIsRendering] = useState(false);
-    const [progress, setProgress] = useState(0);
-
-    const completedProjects = useMemo(() => projects.filter(p => p.status === 'completed' && p.project_data.selectedLogoUrl), [projects]);
-    const selectedProject = useMemo(() => completedProjects.find(p => p.id.toString() === selectedProjectId), [completedProjects, selectedProjectId]);
-
-    const handleRender = async () => {
-        setIsRendering(true);
-        setProgress(0);
-
-        try {
-            const video = document.createElement('video');
-            video.muted = true;
-            video.src = videoUrl;
-            video.crossOrigin = "anonymous";
-
-            await new Promise((resolve, reject) => { 
-                video.onloadedmetadata = resolve;
-                video.onerror = reject;
-            });
-
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) throw new Error("Canvas context not available");
-            
-            let logoImage: HTMLImageElement | null = null;
-            if (config.addLogo && selectedProject?.project_data.selectedLogoUrl) {
-                logoImage = new Image();
-                logoImage.crossOrigin = "anonymous";
-                logoImage.src = selectedProject.project_data.selectedLogoUrl;
-                await new Promise((resolve, reject) => { 
-                    logoImage!.onload = resolve;
-                    logoImage!.onerror = reject;
-                });
-            }
-
-            const stream = canvas.captureStream(30);
-            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
-            const chunks: Blob[] = [];
-            recorder.ondataavailable = e => chunks.push(e.data);
-            recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: 'video/webm' });
-                const newUrl = URL.createObjectURL(blob);
-                onRenderComplete(newUrl);
-                setIsRendering(false);
-            };
-            recorder.start();
-            
-            await video.play();
-
-            const drawFrame = () => {
-                if (video.paused || video.ended) {
-                    if (recorder.state === 'recording') recorder.stop();
-                    return;
-                }
-                
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                // Draw Logo & Watermark
-                if (logoImage) {
-                    const logoHeight = canvas.height * 0.1;
-                    const logoWidth = (logoImage.width / logoImage.height) * logoHeight;
-                    const padding = canvas.width * 0.02;
-                    ctx.globalAlpha = 0.9;
-                    ctx.drawImage(logoImage, padding, padding, logoWidth, logoHeight);
-                    
-                    // Add "by desain.fun" text below the logo
-                    const watermarkFontSize = Math.max(10, canvas.height * 0.015);
-                    ctx.font = `500 ${watermarkFontSize}px "Plus Jakarta Sans"`;
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    ctx.shadowColor = 'black';
-                    ctx.shadowBlur = 2;
-                    ctx.textAlign = 'center';
-                    ctx.fillText('by desain.fun', padding + logoWidth / 2, padding + logoHeight + (canvas.height * 0.01) + watermarkFontSize);
-                    
-                    ctx.globalAlpha = 1.0;
-                    ctx.shadowBlur = 0;
-                    ctx.textAlign = 'left'; // Reset for other text
-                }
-
-                // Draw Text
-                if (config.title || config.subtitle) {
-                    const padding = canvas.width * 0.05;
-                    ctx.textBaseline = 'bottom';
-                    
-                    if (config.title) {
-                        const titleFontSize = Math.max(24, canvas.height * 0.05);
-                        ctx.font = `bold ${titleFontSize}px "Plus Jakarta Sans"`;
-                        ctx.fillStyle = 'white';
-                        ctx.shadowColor = 'black';
-                        ctx.shadowBlur = 5;
-                        ctx.fillText(config.title, padding, canvas.height - padding - (config.subtitle ? titleFontSize * 0.5 : 0));
-                    }
-                    if (config.subtitle) {
-                        const subFontSize = Math.max(16, canvas.height * 0.03);
-                        ctx.font = `normal ${subFontSize}px "Plus Jakarta Sans"`;
-                        ctx.fillStyle = 'white';
-                        ctx.shadowColor = 'black';
-                        ctx.shadowBlur = 3;
-                        ctx.fillText(config.subtitle, padding, canvas.height - padding);
-                    }
-                    ctx.shadowBlur = 0;
-                }
-                
-                setProgress((video.currentTime / video.duration) * 100);
-                requestAnimationFrame(drawFrame);
-            };
-
-            drawFrame();
-        } catch (err) {
-            console.error("Rendering error:", err);
-            setIsRendering(false);
-            alert("Waduh, gagal merender video. Coba muat ulang halaman dan ulangi. Pastikan project yang dipilih punya logo yang valid.");
-        }
-    };
     
     return (
-        <div className="space-y-4 p-4 bg-black/20 border border-splash/20 rounded-lg">
-            <h4 className="text-lg font-bold text-splash">Studio Pasca-Produksi</h4>
-            {isRendering ? (
-                <div className="text-center">
-                    <p className="text-sm font-semibold text-text-header animate-pulse">Merender video baru...</p>
-                    <div className="w-full bg-background rounded-full h-2.5 mt-2"><div className="bg-splash h-2.5 rounded-full" style={{ width: `${progress}%` }}></div></div>
-                </div>
-            ) : (
-                <>
-                     {completedProjects.length > 0 && (
-                        <div>
-                            <label className="text-xs font-semibold text-text-muted">Pilih Project (untuk Ambil Logo)</label>
-                            <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)} className="w-full bg-surface border border-border-main rounded p-1 text-sm">
-                                <option value="">-- Tanpa Logo --</option>
-                                {completedProjects.map(p => <option key={p.id} value={p.id}>{p.project_data.brandInputs?.businessName}</option>)}
-                            </select>
-                        </div>
-                    )}
-                    <Input label="Judul (Opsional)" value={config.title} onChange={e => setConfig(p => ({...p, title: e.target.value}))} placeholder="cth: PROMO SPESIAL!" />
-                    <Input label="Subtitle (Opsional)" value={config.subtitle} onChange={e => setConfig(p => ({...p, subtitle: e.target.value}))} placeholder="cth: Beli 1 Gratis 1" />
-                    <Button onClick={handleRender} disabled={isRendering} className="w-full">Terapkan & Render Ulang Video</Button>
-                </>
-            )}
+        <div className="space-y-4 p-4 bg-background border border-border-main rounded-lg">
+            <h4 className="text-lg font-bold text-text-header">Studio Pasca-Produksi</h4>
+            <div className="text-center p-6 border-2 border-dashed border-border-main rounded-lg">
+                <p className="font-bold text-text-header">Segera Hadir!</p>
+                <p className="text-sm text-text-muted mt-1">Fitur untuk menambahkan logo, teks, dan musik ke videomu akan segera tersedia di sini.</p>
+            </div>
         </div>
     );
 };
 
 
-interface Props {
-  projects: Project[];
+interface VideoGeneratorProps {
+    projects: Project[];
 }
-
-const VideoGenerator: React.FC<Props> = ({ projects }) => {
+const VideoGenerator: React.FC<VideoGeneratorProps> = ({ projects }) => {
     const { profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     const credits = profile?.credits ?? 0;
@@ -283,15 +146,15 @@ const VideoGenerator: React.FC<Props> = ({ projects }) => {
     };
 
     const aspectRatioOptions = [
-        { id: '16:9', label: 'YouTube / Web', icon: 'YT' },
-        { id: '9:16', label: 'Reels / TikTok', icon: 'IG' },
-        { id: '1:1', label: 'Feed Instagram', icon: 'Feed' },
+        { id: '16:9', label: 'Landscape', icon: '■' },
+        { id: '9:16', label: 'Portrait', icon: '▮' },
+        { id: '1:1', label: 'Square', icon: '■' },
     ];
 
     return (
-        <div className="space-y-4 animate-content-fade-in">
-            <p className="text-splash font-bold text-sm">VIDEO GENERATOR:</p>
-            <p className="text-white text-sm">Ubah idemu jadi video pendek sinematik! Cukup tuliskan prompt, atau tambahkan gambar sebagai referensi visual. Proses ini butuh waktu beberapa menit, jadi mohon bersabar ya, Juragan.</p>
+        <div className="space-y-4">
+            <h3 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>AI Video Generator</h3>
+            <p className="text-sm text-text-body">Ubah idemu jadi video pendek sinematik! Cukup tuliskan prompt, atau tambahkan gambar sebagai referensi visual. Proses ini butuh waktu beberapa menit, jadi mohon bersabar ya, Juragan.</p>
             <p className="text-xs text-text-muted">Biaya: {VIDEO_GENERATION_COST} Token | Hadiah: +{XP_REWARD} XP. <strong className="text-yellow-400">Catatan: Video yang dihasilkan akan memiliki watermark dari Google.</strong></p>
 
             {!isLoading && !videoUrl && (
@@ -300,8 +163,8 @@ const VideoGenerator: React.FC<Props> = ({ projects }) => {
                         <label className="text-text-header font-semibold text-sm block">1. Pilih Format Video</label>
                         <div className="grid grid-cols-3 gap-3">
                             {aspectRatioOptions.map(opt => (
-                                <button key={opt.id} onClick={() => setAspectRatio(opt.id as AspectRatio)} className={`p-3 border rounded-lg transition-colors ${aspectRatio === opt.id ? 'bg-primary/20 border-primary' : 'bg-background/50 border-border-main hover:border-splash/50'}`}>
-                                    <div className="font-bold text-lg text-primary">{opt.icon}</div>
+                                <button key={opt.id} onClick={() => setAspectRatio(opt.id as AspectRatio)} className={`p-3 border rounded-lg transition-colors flex flex-col items-center gap-1 ${aspectRatio === opt.id ? 'bg-primary/20 border-primary' : 'bg-background hover:border-splash/50'}`}>
+                                    <div className={`font-bold text-lg text-primary ${opt.id === '9:16' ? '' : 'transform rotate-90'}`}>{opt.icon}</div>
                                     <div className={`font-semibold text-xs ${aspectRatio === opt.id ? 'text-text-header' : 'text-text-muted'}`}>{opt.label}</div>
                                 </button>
                             ))}
@@ -354,7 +217,7 @@ const VideoGenerator: React.FC<Props> = ({ projects }) => {
                         <p className="mt-1">Video ini TIDAK disimpan di server. <strong className="text-white">Segera UNDUH video ini</strong>, karena akan HILANG jika kamu me-refresh atau menutup halaman.</p>
                     </div>
                     <h3 className="text-lg font-bold text-green-400">Video Berhasil Dibuat!</h3>
-                    <video key={videoUrl} src={videoUrl} controls controlsList="nodownload" className="w-full rounded-lg border border-border-main" />
+                    <video key={videoUrl} src={videoUrl} controls className="w-full rounded-lg border border-border-main" />
                     <PostProductionPanel projects={projects} videoUrl={videoUrl} onRenderComplete={setVideoUrl} />
                     <div className="flex gap-4">
                         <a href={videoUrl} download={`${prompt.substring(0, 20).replace(/\s/g, '_')}.webm`} className="w-full">

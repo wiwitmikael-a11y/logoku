@@ -69,13 +69,14 @@ const MoodboardGenerator: React.FC = () => {
 
     return (
         <div className="space-y-4">
-            <p className="text-splash font-bold text-sm">ASISTEN VIBE BRAND:</p>
-            <p className="text-white text-sm">Bingung nentuin nuansa visual brand? Cukup kasih beberapa kata kunci, dan Mang AI akan meracik sebuah moodboard lengkap dengan deskripsi, palet warna, dan gambar inspirasi.</p>
+            <h3 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Asisten Vibe Brand</h3>
+            <p className="text-sm text-text-body">Bingung nentuin nuansa visual brand? Cukup kasih beberapa kata kunci, dan Mang AI akan meracik sebuah moodboard lengkap dengan deskripsi, palet warna, dan gambar inspirasi.</p>
 
             <div className="space-y-2">
-                <Textarea label="" name="keywords" value={keywords} onChange={e => setKeywords(e.target.value)} placeholder="Contoh: Kopi senja, hangat, rustic" rows={2} />
+                <Textarea label="Masukkan Kata Kunci / Vibe" name="keywords" value={keywords} onChange={e => setKeywords(e.target.value)} placeholder="Contoh: Kopi senja, hangat, rustic" rows={2} />
                 <div className="flex flex-wrap gap-2">
-                    {VIBE_SUGGESTIONS.map(s => <button key={s} onClick={() => setKeywords(s)} className="text-xs bg-surface/50 text-text-muted px-2 py-1 rounded hover:bg-surface">{s}</button>)}
+                    <span className="text-xs text-text-muted my-auto">Saran:</span>
+                    {VIBE_SUGGESTIONS.map(s => <button key={s} onClick={() => setKeywords(s)} className="text-xs bg-background text-text-body px-2 py-1 rounded-md hover:bg-border-light">{s}</button>)}
                 </div>
             </div>
 
@@ -89,18 +90,18 @@ const MoodboardGenerator: React.FC = () => {
 
             {result && (
                 <div className="space-y-4 animate-content-fade-in mt-4">
-                    <div className="p-4 bg-black/20 rounded-lg border border-border-main">
+                    <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Deskripsi Vibe</h4>
                         <p className="text-sm text-text-body italic selectable-text">"{result.description}"</p>
                     </div>
-                     <div className="p-4 bg-black/20 rounded-lg border border-border-main">
+                     <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Palet Warna</h4>
                         <div className="flex items-center gap-2">
                             {result.palette.map(hex => <div key={hex} className="w-10 h-10 rounded-full border-2 border-surface" style={{backgroundColor: hex}} title={hex}/>)}
                             <CopyButton textToCopy={result.palette.join(', ')} />
                         </div>
                     </div>
-                    <div className="p-4 bg-black/20 rounded-lg border border-border-main">
+                    <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Gambar Inspirasi</h4>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             {result.images.map((img, i) => (

@@ -17,7 +17,6 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Initialized state directly as a class property to avoid potential `this` context issues.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -33,8 +32,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Changed to an arrow function to guarantee the correct `this` context,
-  // resolving errors where `this.setState` and `this.props` were not found.
+  // FIX: Converted `handleCopy` to an arrow function. This ensures that `this` refers to the class instance
+  // when the method is passed as an event handler, resolving errors where `this.setState` was not found.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
@@ -47,6 +46,7 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     const { hasError, error, isCopied } = this.state;
+    // FIX: `this.props` is correctly accessed within the `render` method, as `this` is properly bound by React in class component lifecycle methods. The reported error likely stemmed from incorrect `this` context in other methods.
     const { onReset, children } = this.props;
 
     if (hasError) {

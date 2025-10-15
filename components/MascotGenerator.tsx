@@ -28,7 +28,6 @@ const MascotGenerator: React.FC = () => {
     const [initialOptions, setInitialOptions] = useState<string[]>([]);
     const [selectedMascot, setSelectedMascot] = useState<string | null>(null);
     const [poses, setPoses] = useState<string[]>([]);
-    const [finalMascot, setFinalMascot] = useState<string | null>(null);
     
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -39,7 +38,7 @@ const MascotGenerator: React.FC = () => {
         if (!prompt.trim()) { setError('Deskripsi maskot tidak boleh kosong!'); return; }
         if ((profile?.credits ?? 0) < INITIAL_COST) { setShowOutOfCreditsModal(true); return; }
 
-        setIsLoading(true); setError(null); setInitialOptions([]); setSelectedMascot(null); setPoses([]); setFinalMascot(null); playSound('start');
+        setIsLoading(true); setError(null); setInitialOptions([]); setSelectedMascot(null); setPoses([]); playSound('start');
         try {
             if (!(await deductCredits(INITIAL_COST))) throw new Error("Gagal mengurangi token.");
             const results = await generateMascot(prompt);
@@ -69,15 +68,22 @@ const MascotGenerator: React.FC = () => {
         finally { setIsLoading(false); }
     };
     
-    const handleRemoveBackground = async (url: string) => {
-        if (!url) return;
+    const handleRemoveBackground = async (url: string, index: number) => {
+        if (!url || isLoading) return;
         if ((profile?.credits ?? 0) < BG_REMOVAL_COST) { setShowOutOfCreditsModal(true); return; }
         
         setIsLoading(true); setError(null); playSound('start');
         try {
             if (!(await deductCredits(BG_REMOVAL_COST))) throw new Error("Gagal mengurangi token.");
             const transparentUrl = await removeBackground(url);
-            setFinalMascot(transparentUrl);
+            
+            // Update the correct image state
+            if (index === -1) { // This is the main selected mascot
+                setSelectedMascot(transparentUrl);
+            } else { // This is one of the poses
+                setPoses(currentPoses => currentPoses.map((p, i) => i === index ? transparentUrl : p));
+            }
+
             setModalImageUrl(transparentUrl); // Show the result in modal
             playSound('success');
         } catch (err) { setError(err instanceof Error ? err.message : 'Gagal menghapus background.'); playSound('error'); }
@@ -99,16 +105,16 @@ const MascotGenerator: React.FC = () => {
         else { playSound('success'); alert('Paket maskot berhasil disimpan ke Lemari Kreasi!'); }
     };
     
-    const reset = () => { setStep('prompt'); setInitialOptions([]); setSelectedMascot(null); setPoses([]); setFinalMascot(null); setError(null); }
+    const reset = () => { setStep('prompt'); setInitialOptions([]); setSelectedMascot(null); setPoses([]); setError(null); }
 
     return (
         <div className="space-y-4">
-            <p className="text-splash font-bold text-sm">PABRIK MASKOT INTERAKTIF:</p>
-            <p className="text-white text-sm">Ciptakan karakter yang mudah diingat untuk brand-mu. Cukup deskripsikan, pilih favoritmu, lalu Mang AI akan buatkan pose tambahan. Setiap langkah punya biayanya sendiri.</p>
+            <h3 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Pabrik Maskot Interaktif</h3>
+            <p className="text-sm text-text-body">Ciptakan karakter yang mudah diingat untuk brand-mu. Cukup deskripsikan, pilih favoritmu, lalu Mang AI akan buatkan pose tambahan. Setiap langkah punya biayanya sendiri.</p>
 
             {step === 'prompt' && (
                 <div className="space-y-4 animate-content-fade-in">
-                    <Textarea label="" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: beruang madu imut pakai blangkon, gaya kartun 2D" rows={3} />
+                    <Textarea label="Deskripsi Maskot" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: beruang madu imut pakai blangkon, gaya kartun 2D" rows={3} />
                     <Button onClick={handleGenerateInitial} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">Buat 2 Opsi Awal ({INITIAL_COST} Token, +{XP_REWARD} XP)</Button>
                 </div>
             )}
@@ -135,10 +141,14 @@ const MascotGenerator: React.FC = () => {
                 <div className="space-y-4 animate-content-fade-in">
                     <h4 className="font-bold text-text-header">Paket Pose Lengkap:</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[selectedMascot, ...poses].map((img, i) => (
+                        <div className="text-center">
+                            <img src={selectedMascot} onClick={() => setModalImageUrl(selectedMascot)} alt="Pose utama" className="w-full aspect-square object-contain rounded-lg cursor-pointer bg-background" />
+                            <Button onClick={() => handleRemoveBackground(selectedMascot, -1)} isLoading={isLoading} size="small" variant="secondary" className="mt-2 w-full text-xs">Hapus BG ({BG_REMOVAL_COST}T)</Button>
+                        </div>
+                        {poses.map((img, i) => (
                             <div key={i} className="text-center">
-                                <img src={img} onClick={() => setModalImageUrl(img)} alt={`Pose ${i}`} className="w-full aspect-square object-contain rounded-lg cursor-pointer bg-surface" />
-                                <Button onClick={() => handleRemoveBackground(img)} isLoading={isLoading} size="small" variant="secondary" className="mt-2 w-full text-xs">Hapus BG ({BG_REMOVAL_COST}T)</Button>
+                                <img src={img} onClick={() => setModalImageUrl(img)} alt={`Pose ${i}`} className="w-full aspect-square object-contain rounded-lg cursor-pointer bg-background" />
+                                <Button onClick={() => handleRemoveBackground(img, i)} isLoading={isLoading} size="small" variant="secondary" className="mt-2 w-full text-xs">Hapus BG ({BG_REMOVAL_COST}T)</Button>
                             </div>
                         ))}
                     </div>

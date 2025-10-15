@@ -40,14 +40,19 @@ const SceneMixer: React.FC = () => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const newImages = [...images];
+            // Ensure array is long enough
+            while (newImages.length <= index) {
+                newImages.push({ src: '', instruction: '' });
+            }
             newImages[index] = { src: e.target?.result as string, instruction: '' };
-            setImages(newImages);
+            setImages(newImages.filter(img => img.src)); // Clean up empty slots if any were skipped
         };
         reader.readAsDataURL(file);
     };
 
     const handleGenerate = async () => {
-        if (images.length === 0) { setError('Upload minimal 1 gambar!'); return; }
+        const validImages = images.filter(img => img.src);
+        if (validImages.length === 0) { setError('Upload minimal 1 gambar!'); return; }
         if (!mainPrompt.trim()) { setError('Prompt utama tidak boleh kosong!'); return; }
         if ((profile?.credits ?? 0) < SCENE_MIXER_COST) { setShowOutOfCreditsModal(true); return; }
 
@@ -56,13 +61,13 @@ const SceneMixer: React.FC = () => {
             if (!(await deductCredits(SCENE_MIXER_COST))) throw new Error("Gagal mengurangi token.");
             
             let combinedPrompt = `${mainPrompt}\n\n`;
-            images.forEach((img, i) => {
+            validImages.forEach((img, i) => {
                 if (img.instruction.trim()) {
                     combinedPrompt += `Untuk gambar ${i + 1}, fokus pada: "${img.instruction.trim()}".\n`;
                 }
             });
 
-            const resultUrl = await generateSceneFromImages(images.map(i => i.src), combinedPrompt);
+            const resultUrl = await generateSceneFromImages(validImages.map(i => i.src), combinedPrompt);
             setResult(resultUrl);
             await addXp(XP_REWARD);
             playSound('success');
@@ -91,15 +96,15 @@ const SceneMixer: React.FC = () => {
     const reset = () => { setImages([]); setMainPrompt(''); setResult(null); setError(null); }
 
     const ImageSlot: React.FC<{index: number}> = ({ index }) => (
-        <div className="bg-black/20 p-2 rounded-lg border border-border-main space-y-2">
-            {images[index] ? (
+        <div className="bg-background p-2 rounded-lg border border-border-main space-y-2">
+            {images[index]?.src ? (
                 <>
                     <img src={images[index].src} alt={`Input ${index+1}`} className="w-full h-24 object-cover rounded"/>
-                    <input value={images[index].instruction} onChange={e => { const newImages = [...images]; newImages[index].instruction = e.target.value; setImages(newImages); }} placeholder="Instruksi..." className="w-full text-xs font-mono bg-black/50 border border-splash/50 rounded-none p-1 text-white focus:outline-none focus:border-splash" />
+                    <input value={images[index].instruction} onChange={e => { const newImages = [...images]; newImages[index].instruction = e.target.value; setImages(newImages); }} placeholder="Instruksi (cth: kucingnya)" className="w-full text-xs bg-surface border border-border-main rounded p-1" />
                 </>
             ) : (
-                <label htmlFor={`mixer-upload-${index}`} className="w-full h-32 flex flex-col items-center justify-center border-2 border-dashed border-border-main rounded-lg cursor-pointer hover:bg-background">
-                    <p className="text-2xl">+</p>
+                <label htmlFor={`mixer-upload-${index}`} className="w-full h-32 flex flex-col items-center justify-center border-2 border-dashed border-border-main rounded-lg cursor-pointer hover:bg-border-light">
+                    <p className="text-2xl text-text-muted">+</p>
                     <p className="text-xs text-text-muted">Upload Gambar {index+1}</p>
                 </label>
             )}
@@ -109,8 +114,8 @@ const SceneMixer: React.FC = () => {
 
     return (
         <div className="space-y-4">
-            <p className="text-splash font-bold text-sm">SCENE MIXER:</p>
-            <p className="text-white text-sm">Gabungkan beberapa gambar jadi satu karya baru! Upload hingga 3 gambar, kasih instruksi untuk tiap gambar, dan tulis prompt utama untuk menyatukannya.</p>
+            <h3 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Scene Mixer</h3>
+            <p className="text-sm text-text-body">Gabungkan beberapa gambar jadi satu karya baru! Upload hingga 3 gambar, kasih instruksi untuk tiap gambar, dan tulis prompt utama untuk menyatukannya.</p>
 
             <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-3">
@@ -119,7 +124,7 @@ const SceneMixer: React.FC = () => {
                     <ImageSlot index={2} />
                 </div>
                 <Textarea label="Prompt Utama" name="mainPrompt" value={mainPrompt} onChange={e => setMainPrompt(e.target.value)} placeholder="Contoh: Gabungkan kucing (gambar 1) ke pantai (gambar 2) sambil minum kopi (gambar 3)." rows={3} />
-                <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.length === 0 || !mainPrompt.trim()} variant="accent" className="w-full">
+                <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.filter(i=>i.src).length === 0 || !mainPrompt.trim()} variant="accent" className="w-full">
                     Campur Aduk Gambarnya! ({SCENE_MIXER_COST} Token, +{XP_REWARD} XP)
                 </Button>
             </div>
@@ -129,9 +134,9 @@ const SceneMixer: React.FC = () => {
 
             {result && (
                 <div className="space-y-4 animate-content-fade-in mt-4">
-                    <div className="p-4 bg-black/20 rounded-lg border border-border-main">
+                    <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Hasil Gabungan</h4>
-                        <img src={result} onClick={() => setModalImageUrl(result)} alt="Hasil Scene Mixer" className="w-full aspect-square object-contain rounded-md cursor-pointer bg-background" />
+                        <img src={result} onClick={() => setModalImageUrl(result)} alt="Hasil Scene Mixer" className="w-full aspect-square object-contain rounded-md cursor-pointer bg-surface" />
                     </div>
                     <div className="flex gap-4">
                         <Button onClick={handleSaveToLemari} isLoading={isSaving} variant="secondary">Simpan ke Lemari</Button>

@@ -23,11 +23,11 @@ const MOCKUP_ASSETS = {
     shirt: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/mockup_shirt_white.png',
 };
 
-interface Props {
+interface PatternGeneratorProps {
     projects: Project[];
 }
 
-const PatternGenerator: React.FC<Props> = ({ projects }) => {
+const PatternGenerator: React.FC<PatternGeneratorProps> = ({ projects }) => {
     const { user, profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
@@ -103,12 +103,12 @@ const PatternGenerator: React.FC<Props> = ({ projects }) => {
 
     return (
         <div className="space-y-4">
-            <p className="text-splash font-bold text-sm">STUDIO MOTIF BRAND:</p>
-            <p className="text-white text-sm">Butuh motif unik buat kemasan, background, atau merchandise? Masukkan idemu, dan Mang AI akan membuatkan pola seamless (tanpa sambungan) yang bisa langsung dicoba di berbagai mockup.</p>
+            <h3 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Studio Motif Brand</h3>
+            <p className="text-sm text-text-body">Butuh motif unik buat kemasan, background, atau merchandise? Masukkan idemu, dan Mang AI akan membuatkan pola seamless (tanpa sambungan) yang bisa langsung dicoba di berbagai mockup.</p>
 
             <div className="space-y-2">
-                <Textarea label="" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: batik megamendung modern, warna pastel" rows={3} />
-                <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)} className="w-full bg-surface border border-border-main rounded p-2 text-sm text-text-body">
+                <Textarea label="Deskripsi Pola" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: batik megamendung modern, warna pastel" rows={3} />
+                <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)} className="w-full bg-background border border-border-main rounded-lg p-2 text-sm text-text-body">
                     <option value="">-- Gunakan Warna Bebas --</option>
                     {completedProjects.map(p => <option key={p.id} value={p.id}>Gunakan Palet Warna dari "{p.project_data.brandInputs?.businessName}"</option>)}
                 </select>
@@ -124,11 +124,11 @@ const PatternGenerator: React.FC<Props> = ({ projects }) => {
 
             {result && (
                 <div className="space-y-4 animate-content-fade-in mt-4">
-                    <div className="p-4 bg-black/20 rounded-lg border border-border-main">
+                    <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Pola Hasil Generate</h4>
                         <div onClick={() => setModalImageUrl(result)} className="w-full h-48 rounded-md cursor-pointer border-2 border-surface" style={{backgroundImage: `url(${result})`, backgroundSize: '100px 100px'}} />
                     </div>
-                    <div className="p-4 bg-black/20 rounded-lg border border-border-main">
+                    <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Pratinjau di Mockup</h4>
                         <div className="grid grid-cols-3 gap-3">
                             {['mug', 'bag', 'shirt'].map(type => (
@@ -136,7 +136,7 @@ const PatternGenerator: React.FC<Props> = ({ projects }) => {
                                     {mockupPreviews[type as keyof typeof mockupPreviews] ? (
                                         <img src={mockupPreviews[type as keyof typeof mockupPreviews]} onClick={() => setModalImageUrl(mockupPreviews[type as keyof typeof mockupPreviews]!)} alt={`${type} mockup`} className="w-full aspect-square object-cover rounded-md cursor-pointer" />
                                     ) : (
-                                        <div className="w-full aspect-square bg-background rounded-md flex items-center justify-center">
+                                        <div className="w-full aspect-square bg-border-light rounded-md flex items-center justify-center">
                                             {loadingMockup === type ? <LoadingMessage/> : <Button size="small" variant="secondary" onClick={() => handleGenerateMockup(type as any)}>Coba di {type} ({MOCKUP_COST}T)</Button>}
                                         </div>
                                     )}
