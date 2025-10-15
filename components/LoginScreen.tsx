@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import Button from './common/Button';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useUI } from '../contexts/UIContext';
 import { useTranslation } from '../contexts/LanguageContext';
 
@@ -17,10 +17,16 @@ const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
   const { t } = useTranslation();
 
   const handleGoogleLogin = () => {
-    supabase.auth.signInWithOAuth({ 
-        provider: 'google', 
-        options: { redirectTo: window.location.origin }
-    });
+    try {
+      const supabase = getSupabaseClient();
+      supabase.auth.signInWithOAuth({ 
+          provider: 'google', 
+          options: { redirectTo: window.location.origin }
+      });
+    } catch (error) {
+        console.error("Supabase client could not be initialized:", error);
+        alert(`Gagal memulai proses login: ${(error as Error).message}`);
+    }
   };
 
   return (

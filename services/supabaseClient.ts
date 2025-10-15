@@ -1,28 +1,42 @@
-import { createClient } from '@supabase/supabase-js';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Access environment variables using import.meta.env for Vite compatibility.
-// This optional chaining is robust against missing variables.
-const supabaseUrl = import.meta?.env?.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
+// Variabel untuk menampung instance Supabase (Singleton pattern)
+let supabaseInstance: SupabaseClient | null = null;
 
-let supabase: SupabaseClient;
-let supabaseError: string | null = null;
+/**
+ * Mengambil atau membuat instance Supabase client.
+ * Ini adalah 'lazy initialization' untuk memastikan environment variables
+ * sudah tersedia saat client dibuat.
+ * @throws {Error} Jika environment variables untuk Supabase tidak ditemukan.
+ * @returns {SupabaseClient} Instance dari Supabase client.
+ */
+export const getSupabaseClient = (): SupabaseClient => {
+  // Jika instance sudah ada, langsung kembalikan
+  if (supabaseInstance) {
+    return supabaseInstance;
+  }
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    // If keys are missing, set a user-friendly error message. The app will display this.
-    supabaseError = "Inisialisasi Supabase gagal: environment variable VITE_SUPABASE_URL atau VITE_SUPABASE_ANON_KEY tidak ditemukan.";
-    // To prevent runtime errors, we assign a dummy object, but the app should halt based on supabaseError.
-    supabase = {} as SupabaseClient; 
-} else {
-    // If keys are present, create the client.
-    try {
-        supabase = createClient(supabaseUrl, supabaseAnonKey);
-    } catch (e) {
-        supabaseError = `Gagal membuat Supabase client: ${(e as Error).message}`;
-        supabase = {} as SupabaseClient;
-    }
-}
+  // Jika belum ada, coba buat instance baru
+  const supabaseUrl = import.meta?.env?.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
 
-// Export both the client (which may be null) and the error message.
-export { supabase, supabaseError };
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // Lemparkan error jika keys tidak ditemukan.
+    // Error ini akan ditangkap oleh komponen yang memanggilnya, bukan saat startup.
+    throw new Error("Inisialisasi Supabase gagal: environment variable VITE_SUPABASE_URL atau VITE_SUPABASE_ANON_KEY tidak ditemukan.");
+  }
+
+  try {
+    // Buat dan simpan instance baru
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+    return supabaseInstance;
+  } catch (e) {
+    // Lemparkan error jika proses pembuatan client gagal
+    throw new Error(`Gagal membuat Supabase client: ${(e as Error).message}`);
+  }
+};
+
+// Ekspor instance dengan nama 'supabase' untuk kompatibilitas minimal,
+// namun best practice-nya adalah menggunakan getSupabaseClient().
+// Ini akan 'undefined' pada awalnya.
+export const supabase = supabaseInstance;

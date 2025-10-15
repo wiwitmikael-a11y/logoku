@@ -31,9 +31,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Reverted to a class property arrow function to automatically bind 'this'.
-  // This resolves issues where 'this.setState' might be undefined when called as an event handler.
-  private handleCopy = () => {
+  // FIX: Converted to a standard class method. The 'this' context is now bound at the call site in the render method.
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
       this.setState({ isCopied: true });
@@ -77,7 +76,8 @@ class ErrorBoundary extends React.Component<Props, State> {
                         <pre className="mt-2 p-2 bg-background rounded overflow-auto selectable-text">
                             {error.toString()}
                         </pre>
-                        <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-primary bg-transparent border border-primary/30 hover:bg-primary/10">
+                        {/* FIX: Used an arrow function in onClick to ensure 'this.handleCopy' has the correct 'this' context when called. */}
+                        <button onClick={() => this.handleCopy()} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-primary bg-transparent border border-primary/30 hover:bg-primary/10">
                             {isCopied ? 'Tersalin!' : 'Salin Detail'}
                         </button>
                     </details>

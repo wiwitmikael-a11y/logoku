@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import type { Session, User, Profile, Project } from '../types';
 import { playBGM, setMuted, stopBGM, playRandomBGM } from '../services/soundService';
 
@@ -38,21 +38,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [bgmSelection, setBgmSelection] = useState<BgmSelection>(() => (localStorage.getItem('desainfun_bgmSelection') as BgmSelection) || 'Random');
 
   const executeLogout = async () => {
-    stopBGM();
-    await supabase.auth.signOut();
-    // State will be cleared by the onAuthStateChange listener
+    try {
+      const supabase = getSupabaseClient();
+      stopBGM();
+      await supabase.auth.signOut();
+      // State will be cleared by the onAuthStateChange listener
+    } catch (error) {
+      setAuthError((error as Error).message);
+    }
   };
 
   const handleDeleteAccount = async () => {
       if (!user) return;
       if (!window.confirm("Ini adalah tindakan permanen! Semua data proyek, profil, dan progres Anda akan dihapus selamanya. Yakin mau lanjut?")) return;
-
-      const { error } = await supabase.rpc('delete_user_account');
-      if (error) {
-          alert(`Error menghapus akun: ${error.message}`);
-      } else {
-          alert("Akun Anda dan semua data terkait telah dihapus.");
-          await executeLogout();
+      
+      try {
+        const supabase = getSupabaseClient();
+        const { error } = await supabase.rpc('delete_user_account');
+        if (error) {
+            alert(`Error menghapus akun: ${error.message}`);
+        } else {
+            alert("Akun Anda dan semua data terkait telah dihapus.");
+            await executeLogout();
+        }
+      } catch (error) {
+        setAuthError((error as Error).message);
       }
   };
 
@@ -104,78 +114,86 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const refreshProfile = useCallback(async () => {
     if (user) {
+      try {
+        const supabase = getSupabaseClient();
         const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
         if (error) setAuthError(error.message);
         else setProfile(data);
+      } catch (error) {
+        setAuthError((error as Error).message);
+      }
     }
   }, [user]);
 
   useEffect(() => {
-    setLoading(true);
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setAuthError(null);
-      setSession(session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      
-      if (currentUser) {
-        try {
-          const { data: profileData, error: profileError, status } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
-
-          let finalProfile = profileData;
-
-          if (profileError && status === 406) {
-            const { data: newProfileData, error: insertError } = await supabase
+    try {
+      setLoading(true);
+      const supabase = getSupabaseClient();
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        setAuthError(null);
+        setSession(session);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        
+        if (currentUser) {
+          try {
+            const { data: profileData, error: profileError, status } = await supabase
               .from('profiles')
-              .insert({
-                id: currentUser.id,
-                full_name: currentUser.user_metadata.full_name || 'Juragan Baru',
-                avatar_url: currentUser.user_metadata.avatar_url || '',
-                credits: 20,
-                welcome_bonus_claimed: true,
-                last_credit_reset: new Date().toISOString(),
-              })
-              .select()
+              .select('*')
+              .eq('id', currentUser.id)
               .single();
-            if (insertError) throw insertError;
-            finalProfile = newProfileData;
-          } else if (profileError) {
-            throw profileError;
+
+            let finalProfile = profileData;
+
+            if (profileError && status === 406) {
+              const { data: newProfileData, error: insertError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: currentUser.id,
+                  full_name: currentUser.user_metadata.full_name || 'Juragan Baru',
+                  avatar_url: currentUser.user_metadata.avatar_url || '',
+                  credits: 20,
+                  welcome_bonus_claimed: true,
+                  last_credit_reset: new Date().toISOString(),
+                })
+                .select()
+                .single();
+              if (insertError) throw insertError;
+              finalProfile = newProfileData;
+            } else if (profileError) {
+              throw profileError;
+            }
+            
+            const { data: projectsData, error: projectsError } = await supabase
+              .from('projects')
+              .select('*')
+              .eq('user_id', currentUser.id)
+              .order('created_at', { ascending: false });
+
+            if (projectsError) throw projectsError;
+            
+            setProfile(finalProfile);
+            setProjects(projectsData || []);
+
+          } catch (error: any) {
+            setAuthError(`Gagal memuat data pengguna: ${error.message}`);
+            setProfile(null);
+            setProjects([]);
           }
-          
-          const { data: projectsData, error: projectsError } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .order('created_at', { ascending: false });
-
-          if (projectsError) throw projectsError;
-          
-          // Set state only after all data is fetched
-          setProfile(finalProfile);
-          setProjects(projectsData || []);
-
-        } catch (error: any) {
-          setAuthError(`Gagal memuat data pengguna: ${error.message}`);
+        } else {
           setProfile(null);
           setProjects([]);
         }
-      } else {
-        setProfile(null);
-        setProjects([]);
-      }
-      // This is now guaranteed to run only after all async operations are done
-      setLoading(false);
-    });
+        setLoading(false);
+      });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+      return () => {
+        subscription.unsubscribe();
+      };
+    } catch (error) {
+      setAuthError((error as Error).message);
+      setLoading(false);
+    }
   }, []);
 
   const value: AuthContextType = { session, user, profile, projects, setProjects, loading, executeLogout, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, handleDeleteAccount };

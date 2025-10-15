@@ -9,9 +9,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 
 // Import error screens and config checks
-import { supabaseError } from './services/supabaseClient';
 import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
-import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -31,10 +29,9 @@ if ('serviceWorker' in navigator) {
 
 const root = ReactDOM.createRoot(rootElement);
 
-// Perform startup checks here, before rendering the main app tree. This is the core fix.
-if (supabaseError) {
-  root.render(<SupabaseKeyErrorScreen error={supabaseError} />);
-} else if (!import.meta?.env?.VITE_API_KEY) {
+// Perform startup checks here, before rendering the main app tree.
+// Supabase check is removed to allow lazy initialization.
+if (!import.meta?.env?.VITE_API_KEY) {
   root.render(<ApiKeyErrorScreen />);
 } else {
   root.render(
