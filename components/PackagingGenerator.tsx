@@ -89,6 +89,11 @@ const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Preload next step
+    import('./PrintMediaGenerator');
+  }, []);
+
+  useEffect(() => {
     const currentOptions = packagingConfigs[mappedCategory] || [];
     const selectionExists = currentOptions.some(opt => opt.id === selectedPackagingTypeId);
     if (!selectionExists && currentOptions.length > 0) setSelectedPackagingTypeId(currentOptions[0].id);

@@ -51,6 +51,11 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
+    // Preload next step
+    import('./LogoGenerator');
+  }, []);
+
+  useEffect(() => {
     const onboardingFlag = sessionStorage.getItem('onboardingStep2');
     if (onboardingFlag) {
         setShowOnboarding(true);

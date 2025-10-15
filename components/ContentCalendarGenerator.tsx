@@ -40,6 +40,11 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Preload next step
+    import('./SocialAdsGenerator');
+  }, []);
+
+  useEffect(() => {
     if (calendar.length > 0 && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [calendar]);
 

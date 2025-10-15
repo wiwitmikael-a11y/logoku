@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
-import Button from './common/Button';
 
 interface Props {
   show: boolean;

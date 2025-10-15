@@ -31,6 +31,11 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onG
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Preload next step
+    import('./ProfileOptimizer');
+  }, []);
+
+  useEffect(() => {
       if (assets && resultsRef.current) {
           resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }

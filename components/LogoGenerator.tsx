@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { generateLogoOptions } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
@@ -46,6 +46,11 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+
+  useEffect(() => {
+    // Preload next step
+    import('./LogoDetailGenerator');
+  }, []);
 
   const handleGenerateLogos = useCallback(async () => {
     if (credits < GENERATION_COST) {

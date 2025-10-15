@@ -32,6 +32,11 @@ const SocialAdsGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDa
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Preload next step
+    import('./MerchandiseGenerator');
+  }, []);
+
+  useEffect(() => {
     if (adsData && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [adsData]);
 

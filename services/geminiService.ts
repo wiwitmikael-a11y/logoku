@@ -2,7 +2,7 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, GeneratedCaption, LogoVariations, SocialAdsData, SocialMediaKitAssets, SocialProfileData, ProjectData } from '../types';
-import { fetchImageAsBase64 } from "../utils/imageUtils";
+import { fetchImageAsBase64, compressAndConvertToWebP } from "../utils/imageUtils";
 
 const ai = new GoogleGenAI({ apiKey: import.meta?.env?.VITE_API_KEY || '' });
 
@@ -130,7 +130,8 @@ export const generateLogoOptions = async (prompt: string, style: string, busines
         },
     });
 
-    return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
+    const base64Images = response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
+    return Promise.all(base64Images.map(b64 => compressAndConvertToWebP(b64, 0.85)));
 };
 
 export const editLogo = async (base64Data: string, mimeType: string, prompt: string): Promise<string> => {
@@ -148,7 +149,8 @@ export const editLogo = async (base64Data: string, mimeType: string, prompt: str
     });
     const part = response.candidates?.[0]?.content?.parts?.[0];
     if (part?.inlineData) {
-        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        const resultB64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        return compressAndConvertToWebP(resultB64);
     }
     throw new Error("Gagal mengedit logo: tidak ada gambar yang dihasilkan.");
 };
@@ -171,7 +173,10 @@ export const generateLogoVariations = async (baseLogoUrl: string, businessName: 
             },
         });
         const part = response.candidates?.[0]?.content?.parts?.[0];
-        if (part?.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        if (part?.inlineData) {
+             const resultB64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+             return compressAndConvertToWebP(resultB64);
+        }
         throw new Error(`Gagal membuat variasi logo: ${prompt}`);
     };
 
@@ -253,15 +258,18 @@ Buatkan untuk: bio Instagram (termasuk call to action), bio TikTok (lebih pendek
 };
 
 export const generatePackagingDesign = async (prompt: string, logoBase64: string): Promise<string[]> => {
-    return [await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`)];
+    const result = await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`);
+    return [result];
 };
 
 export const generatePrintMedia = async (prompt: string, logoBase64: string): Promise<string[]> => {
-     return [await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`)];
+     const result = await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`);
+     return [result];
 };
 
 export const generateMerchandiseMockup = async (prompt: string, logoBase64: string): Promise<string[]> => {
-     return [await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`)];
+     const result = await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`);
+     return [result];
 };
 
 export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
@@ -319,7 +327,8 @@ Sertakan juga 5-7 hashtag relevan untuk setiap platform.`;
 
 export const generateSocialMediaPostImage = async (topic: string, keywords: string[]): Promise<string[]> => {
     const prompt = `Buat sebuah gambar ilustrasi yang menarik secara visual untuk postingan media sosial dengan topik: "${topic}". Gaya visualnya harus: ${keywords.join(', ')}, cerah, dan cocok untuk platform seperti Instagram.`;
-    return [await generateImageForCanvas(prompt)];
+    const result = await generateImageForCanvas(prompt);
+    return [result];
 };
 
 export const moderateContent = async (content: string): Promise<{ isAppropriate: boolean; reason: string }> => {
@@ -385,7 +394,8 @@ export const generateMoodboardText = async (keywords: string): Promise<{ descrip
 
 export const generateMoodboardImages = async (keywords: string): Promise<string[]> => {
     const prompt = `4 gambar foto-realistis yang merepresentasikan vibe: ${keywords}.`;
-    return Promise.all(Array(4).fill(0).map(() => generateImageForCanvas(prompt)));
+    const results = await Promise.all(Array(4).fill(0).map(() => generateImageForCanvas(prompt)));
+    return results;
 };
 
 export const generateSceneFromImages = async (base64Images: string[], prompt: string): Promise<string> => {
@@ -404,7 +414,10 @@ export const generateSceneFromImages = async (base64Images: string[], prompt: st
     });
 
     const part = response.candidates?.[0]?.content?.parts?.[0];
-    if (part?.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    if (part?.inlineData) {
+        const resultB64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        return compressAndConvertToWebP(resultB64);
+    }
     throw new Error("Gagal menggabungkan gambar.");
 };
 
@@ -426,7 +439,10 @@ export const generateImageForCanvas = async (prompt: string, baseImageB64?: stri
     });
 
     const part = response.candidates?.[0]?.content?.parts?.[0];
-    if (part?.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+    if (part?.inlineData) {
+        const resultB64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        return compressAndConvertToWebP(resultB64);
+    }
     throw new Error("Gagal membuat gambar.");
 };
 
@@ -437,9 +453,10 @@ export const generateMissingField = async (currentInputs: Partial<BrandInputs>, 
     return response.text.replace(/["*]/g, '').trim();
 };
 
-export const applyPatternToMockup = (patternB64: string, mockupB64: string): Promise<string> => {
+export const applyPatternToMockup = async (patternB64: string, mockupB64: string): Promise<string> => {
     const prompt = "Terapkan pola dari gambar pertama ke area putih di gambar kedua (mockup).";
-    return generateImageForCanvas(prompt, patternB64); // This might not work as intended, Gemini vision may not be that precise. A more complex prompt might be needed.
+    const result = await generateImageForCanvas(prompt, patternB64);
+    return compressAndConvertToWebP(result);
 };
 
 export const generateMascot = async (prompt: string, imageB64?: string): Promise<string[]> => {
@@ -461,7 +478,7 @@ export const generateMascot = async (prompt: string, imageB64?: string): Promise
         if (part1?.inlineData) results.push(`data:${part1.inlineData.mimeType};base64,${part1.inlineData.data}`);
         const part2 = response2.candidates?.[0]?.content?.parts?.[0];
         if (part2?.inlineData) results.push(`data:${part2.inlineData.mimeType};base64,${part2.inlineData.data}`);
-        if(results.length > 0) return results;
+        if(results.length > 0) return Promise.all(results.map(r => compressAndConvertToWebP(r)));
         throw new Error("Gagal membuat maskot dari gambar.");
         
     } else {
@@ -471,27 +488,29 @@ export const generateMascot = async (prompt: string, imageB64?: string): Promise
             prompt: fullPrompt,
             config: { numberOfImages: 2, aspectRatio: '1:1', outputMimeType: 'image/png' },
         });
-        return response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
+        const base64Images = response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
+        return Promise.all(base64Images.map(b64 => compressAndConvertToWebP(b64)));
     }
 };
 
 
-export const generateMascotPose = (mascotB64: string, poseDescription: string): Promise<string> => {
+export const generateMascotPose = async (mascotB64: string, poseDescription: string): Promise<string> => {
     const prompt = `Ubah pose karakter di gambar ini menjadi: ${poseDescription}.`;
-    return generateImageForCanvas(prompt, mascotB64);
+    return await generateImageForCanvas(prompt, mascotB64);
 };
 
-export const removeBackground = (imageB64: string): Promise<string> => {
+export const removeBackground = async (imageB64: string): Promise<string> => {
     const prompt = "Hapus total latar belakang gambar ini. Sisakan hanya objek utamanya. Latar belakang harus transparan.";
-    return generateImageForCanvas(prompt, imageB64);
+    return await generateImageForCanvas(prompt, imageB64);
 };
 
 export const generatePattern = async (prompt: string): Promise<string[]> => {
     const fullPrompt = `pola seamless (tanpa sambungan) dari: ${prompt}. gaya vektor datar.`;
-    return [await generateImageForCanvas(fullPrompt)];
+    const result = await generateImageForCanvas(fullPrompt);
+    return [result];
 };
 
-export const generateProductPhoto = (productB64: string, scenePrompt: string): Promise<string> => {
+export const generateProductPhoto = async (productB64: string, scenePrompt: string): Promise<string> => {
     const prompt = `Hapus background gambar produk ini dan letakkan di suasana baru: ${scenePrompt}. Buat seperti foto produk komersial yang realistis.`;
-    return generateImageForCanvas(prompt, productB64);
+    return await generateImageForCanvas(prompt, productB64);
 };

@@ -38,6 +38,11 @@ const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToD
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Preload next step
+    import('./ContentCalendarGenerator');
+  }, []);
+
+  useEffect(() => {
     if (designs.length > 0 && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [designs]);
 

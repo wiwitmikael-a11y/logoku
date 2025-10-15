@@ -32,6 +32,11 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Preload next step
+    import('./PackagingGenerator');
+  }, []);
+
+  useEffect(() => {
     if (profileData && resultsRef.current) {
         resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }

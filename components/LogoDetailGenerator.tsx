@@ -40,6 +40,11 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
   const variationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Preload next step
+    import('./SocialMediaKitGenerator');
+  }, []);
+
+  useEffect(() => {
     if (variations && variationsRef.current) {
       variationsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
