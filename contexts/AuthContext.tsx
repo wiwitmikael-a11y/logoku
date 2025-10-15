@@ -112,71 +112,69 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     setLoading(true);
-    setAuthError(null);
-
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        setSession(session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
+      setAuthError(null);
+      setSession(session);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      
+      if (currentUser) {
+        try {
+          const { data: profileData, error: profileError, status } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
 
-        if (currentUser) {
-            try {
-                // --- Fetch Profile, Create if not exists ---
-                const { data: profileData, error: profileError, status } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', currentUser.id)
-                    .single();
-                
-                let finalProfile = profileData;
+          let finalProfile = profileData;
 
-                if (profileError && status === 406) { // status 406 = Not Found for .single()
-                    const { data: newProfileData, error: insertError } = await supabase
-                        .from('profiles')
-                        .insert({
-                            id: currentUser.id,
-                            full_name: currentUser.user_metadata.full_name || 'Juragan Baru',
-                            avatar_url: currentUser.user_metadata.avatar_url || '',
-                            credits: 20,
-                            welcome_bonus_claimed: true,
-                            last_credit_reset: new Date().toISOString(),
-                        })
-                        .select()
-                        .single();
-                    if (insertError) throw insertError;
-                    finalProfile = newProfileData;
-                } else if (profileError) {
-                    throw profileError;
-                }
-                setProfile(finalProfile);
+          if (profileError && status === 406) {
+            const { data: newProfileData, error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: currentUser.id,
+                full_name: currentUser.user_metadata.full_name || 'Juragan Baru',
+                avatar_url: currentUser.user_metadata.avatar_url || '',
+                credits: 20,
+                welcome_bonus_claimed: true,
+                last_credit_reset: new Date().toISOString(),
+              })
+              .select()
+              .single();
+            if (insertError) throw insertError;
+            finalProfile = newProfileData;
+          } else if (profileError) {
+            throw profileError;
+          }
+          
+          const { data: projectsData, error: projectsError } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
 
-                // --- Fetch Projects ---
-                const { data: projectsData, error: projectsError } = await supabase
-                    .from('projects')
-                    .select('*')
-                    .eq('user_id', currentUser.id)
-                    .order('created_at', { ascending: false });
+          if (projectsError) throw projectsError;
+          
+          // Set state only after all data is fetched
+          setProfile(finalProfile);
+          setProjects(projectsData || []);
 
-                if (projectsError) throw projectsError;
-                setProjects(projectsData || []);
-
-            } catch (error: any) {
-                setAuthError(`Gagal memuat data pengguna: ${error.message}`);
-                setProfile(null);
-                setProjects([]);
-            }
-        } else {
-            // User is logged out, clear all data
-            setProfile(null);
-            setProjects([]);
+        } catch (error: any) {
+          setAuthError(`Gagal memuat data pengguna: ${error.message}`);
+          setProfile(null);
+          setProjects([]);
         }
-        
-        // Finish loading ONLY after all data is fetched/cleared
-        setLoading(false);
+      } else {
+        setProfile(null);
+        setProjects([]);
+      }
+      // This is now guaranteed to run only after all async operations are done
+      setLoading(false);
     });
 
     return () => {
-        subscription?.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
