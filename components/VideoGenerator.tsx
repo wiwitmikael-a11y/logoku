@@ -87,8 +87,12 @@ const PostProductionPanel: React.FC<PostProductionPanelProps> = ({ projects, vid
             const video = document.createElement('video');
             video.muted = true;
             video.src = videoUrl;
+            video.crossOrigin = "anonymous";
 
-            await new Promise(resolve => { video.onloadedmetadata = resolve; });
+            await new Promise((resolve, reject) => { 
+                video.onloadedmetadata = resolve;
+                video.onerror = reject;
+            });
 
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
@@ -101,7 +105,10 @@ const PostProductionPanel: React.FC<PostProductionPanelProps> = ({ projects, vid
                 logoImage = new Image();
                 logoImage.crossOrigin = "anonymous";
                 logoImage.src = selectedProject.project_data.selectedLogoUrl;
-                await new Promise(resolve => { logoImage!.onload = resolve; });
+                await new Promise((resolve, reject) => { 
+                    logoImage!.onload = resolve;
+                    logoImage!.onerror = reject;
+                });
             }
 
             const stream = canvas.captureStream(30);
@@ -115,30 +122,42 @@ const PostProductionPanel: React.FC<PostProductionPanelProps> = ({ projects, vid
                 setIsRendering(false);
             };
             recorder.start();
-            video.play();
+            
+            await video.play();
 
             const drawFrame = () => {
                 if (video.paused || video.ended) {
-                    recorder.stop();
+                    if (recorder.state === 'recording') recorder.stop();
                     return;
                 }
                 
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
-                // Draw Logo
+                // Draw Logo & Watermark
                 if (logoImage) {
                     const logoHeight = canvas.height * 0.1;
                     const logoWidth = (logoImage.width / logoImage.height) * logoHeight;
                     const padding = canvas.width * 0.02;
                     ctx.globalAlpha = 0.9;
                     ctx.drawImage(logoImage, padding, padding, logoWidth, logoHeight);
+                    
+                    // Add "by desain.fun" text below the logo
+                    const watermarkFontSize = Math.max(10, canvas.height * 0.015);
+                    ctx.font = `500 ${watermarkFontSize}px "Plus Jakarta Sans"`;
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.shadowColor = 'black';
+                    ctx.shadowBlur = 2;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('by desain.fun', padding + logoWidth / 2, padding + logoHeight + (canvas.height * 0.01) + watermarkFontSize);
+                    
                     ctx.globalAlpha = 1.0;
+                    ctx.shadowBlur = 0;
+                    ctx.textAlign = 'left'; // Reset for other text
                 }
 
                 // Draw Text
                 if (config.title || config.subtitle) {
                     const padding = canvas.width * 0.05;
-                    ctx.textAlign = 'left';
                     ctx.textBaseline = 'bottom';
                     
                     if (config.title) {
@@ -166,8 +185,9 @@ const PostProductionPanel: React.FC<PostProductionPanelProps> = ({ projects, vid
 
             drawFrame();
         } catch (err) {
-            console.error(err);
+            console.error("Rendering error:", err);
             setIsRendering(false);
+            alert("Waduh, gagal merender video. Coba muat ulang halaman dan ulangi. Pastikan project yang dipilih punya logo yang valid.");
         }
     };
     
@@ -334,7 +354,7 @@ const VideoGenerator: React.FC<Props> = ({ projects }) => {
                         <p className="mt-1">Video ini TIDAK disimpan di server. <strong className="text-white">Segera UNDUH video ini</strong>, karena akan HILANG jika kamu me-refresh atau menutup halaman.</p>
                     </div>
                     <h3 className="text-lg font-bold text-green-400">Video Berhasil Dibuat!</h3>
-                    <video key={videoUrl} src={videoUrl} controls className="w-full rounded-lg border border-border-main" />
+                    <video key={videoUrl} src={videoUrl} controls controlsList="nodownload" className="w-full rounded-lg border border-border-main" />
                     <PostProductionPanel projects={projects} videoUrl={videoUrl} onRenderComplete={setVideoUrl} />
                     <div className="flex gap-4">
                         <a href={videoUrl} download={`${prompt.substring(0, 20).replace(/\s/g, '_')}.webm`} className="w-full">
