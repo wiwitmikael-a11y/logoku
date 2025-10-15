@@ -8,14 +8,20 @@ import LoadingMessage from './common/LoadingMessage';
 import type { Project } from '../types';
 
 const VideoGenerator = React.lazy(() => import('./VideoGenerator'));
+const MoodboardGenerator = React.lazy(() => import('./MoodboardGenerator'));
+const PatternGenerator = React.lazy(() => import('./PatternGenerator'));
+const MascotGenerator = React.lazy(() => import('./MascotGenerator'));
+const PhotoStudio = React.lazy(() => import('./PhotoStudio'));
+const SceneMixer = React.lazy(() => import('./SceneMixer'));
+
 
 const AI_CREATOR_TIPS = [
     { icon: '🎬', title: 'Baru! AI Video Generator!', text: 'Sekarang kamu bisa bikin video pendek dari teks atau gambar. Cukup kasih ide, dan Mang AI akan meraciknya jadi klip video sinematik! Prosesnya butuh beberapa menit, jadi sabar ya.' },
-    { icon: '🎨', title: 'Ciptakan Nuansa Brand', text: "Bingung nentuin nuansa visual brand? Coba 'Moodboard Generator'. Dapetin deskripsi, palet warna, dan 4 gambar inspirasi instan." },
-    { icon: '🧩', title: 'Gabungkan Imajinasimu!', text: 'Pakai <strong class="text-text-header">AI Poster Maker</strong> buat gabungin beberapa gambar jadi satu. Upload gambar-gambarmu, kasih perintah, dan biarkan Mang AI yang menyatukannya!' },
-    { icon: '🌀', title: 'Desain Pola Unik!', text: 'Butuh motif buat kemasan atau background? Pakai <strong class="text-text-header">Pattern Generator</strong> buat bikin pola seamless yang keren, lengkap dengan pratinjau 3D.'},
-    { icon: '📸', title: 'Foto Produk Profesional', text: 'Upload foto produkmu, hapus background-nya, dan biarkan <strong class="text-text-header">Photo Studio AI</strong> menempatkannya di berbagai suasana. Gak perlu sewa studio mahal!'},
-    { icon: '🐻', title: 'Lahirkan Maskot Brand-mu', text: 'Ciptakan karakter yang mudah diingat untuk brand-mu dengan <strong class="text-text-header">Mascot Generator</strong>. Cukup deskripsikan, dan Mang AI akan menggambarnya, plus bisa dibuatkan pose tambahan!'},
+    { icon: '🎨', title: 'Ciptakan Nuansa Brand', text: "Bingung nentuin nuansa visual brand? Coba 'Asisten Vibe Brand'. Dapetin deskripsi, palet warna, dan 4 gambar inspirasi instan." },
+    { icon: '🧩', title: 'Gabungkan Imajinasimu!', text: 'Pakai <strong class="text-text-header">Scene Mixer</strong> buat gabungin beberapa gambar jadi satu. Upload gambar-gambarmu, kasih perintah, dan biarkan Mang AI yang menyatukannya!' },
+    { icon: '🌀', title: 'Desain Pola Unik!', text: 'Butuh motif buat kemasan atau background? Pakai <strong class="text-text-header">Studio Motif Brand</strong> buat bikin pola seamless yang keren, lengkap dengan pratinjau mockup.'},
+    { icon: '📸', title: 'Foto Produk Profesional', text: 'Upload foto produkmu, hapus background-nya, dan biarkan <strong class="text-text-header">Studio Foto Virtual</strong> menempatkannya di berbagai suasana. Gak perlu sewa studio mahal!'},
+    { icon: '🐻', title: 'Lahirkan Maskot Brand-mu', text: 'Ciptakan karakter yang mudah diingat untuk brand-mu dengan <strong class="text-text-header">Pabrik Maskot Interaktif</strong>. Cukup deskripsikan, dan Mang AI akan menggambarnya, plus bisa dibuatkan pose tambahan!'},
     { icon: '💾', title: 'Simpan Karyamu!', text: 'Setiap hasil generator bisa kamu <strong class="text-text-header">simpan ke Lemari Kreasi</strong>. Kumpulin semua asetmu di sana biar gampang diakses lagi nanti!' },
 ];
 
@@ -43,7 +49,7 @@ interface AICreatorProps {
     onShowSotoshop: () => void;
     projects: Project[];
 }
-type CreatorTool = 'moodboard' | 'pattern' | 'mascot' | 'photostudio' | 'poster' | 'video' | 'sotoshop';
+type CreatorTool = 'moodboard' | 'pattern' | 'mascot' | 'photostudio' | 'scenemixer' | 'video' | 'sotoshop';
 
 const ToolContainer: React.FC<{ children: React.ReactNode, title: string, description: string }> = ({ children, title, description }) => (
     <div className="animate-content-fade-in space-y-2">
@@ -52,13 +58,6 @@ const ToolContainer: React.FC<{ children: React.ReactNode, title: string, descri
         <div className="pt-2">{children}</div>
     </div>
 );
-
-const UnderConstructionTool: React.FC<{ title: string, description: string }> = ({ title, description }) => (
-     <ToolContainer title={title} description={description}>
-        <p className="text-sm text-text-muted italic">(Fungsionalitas {title} sedang dalam pengembangan)</p>
-    </ToolContainer>
-);
-
 
 const SotoshopTool: React.FC<{onShowSotoshop: () => void}> = ({onShowSotoshop}) => (
     <ToolContainer
@@ -79,22 +78,23 @@ const AICreator: React.FC<AICreatorProps> = ({ onShowSotoshop, projects }) => {
 
     const toolsConfig = [
         { id: 'video', icon: '🎬', label: 'Video' },
-        { id: 'moodboard', icon: '🎨', label: 'Moodboard' },
-        { id: 'pattern', icon: '🌀', label: 'Pattern' },
-        { id: 'mascot', icon: '🐻', label: 'Mascot' },
-        { id: 'photostudio', icon: '📸', label: 'Photo Studio' },
-        { id: 'poster', icon: '🧩', label: 'AI Poster Maker' },
+        { id: 'moodboard', icon: '🎨', label: 'Vibe Brand' },
+        { id: 'pattern', icon: '🌀', label: 'Motif Brand' },
+        { id: 'mascot', icon: '🐻', label: 'Maskot' },
+        { id: 'photostudio', icon: '📸', label: 'Foto Produk' },
+        { id: 'scenemixer', icon: '🧩', label: 'Scene Mixer' },
         { id: 'sotoshop', icon: '✨', label: 'Sotoshop' },
     ];
 
     const renderActiveTool = () => {
+        const fallback = <div className="min-h-[200px] flex items-center justify-center"><LoadingMessage /></div>;
         switch(activeTool) {
-            case 'video': return <Suspense fallback={<LoadingMessage />}><VideoGenerator projects={projects} /></Suspense>;
-            case 'moodboard': return <UnderConstructionTool title="Moodboard Generator" description="Bingung nentuin nuansa visual brand? Cukup kasih beberapa kata kunci, dan Mang AI akan meracik sebuah moodboard lengkap." />;
-            case 'pattern': return <UnderConstructionTool title="Pattern Generator" description="Butuh motif unik buat kemasan atau background? Masukkan idemu, dan Mang AI akan membuatkan pola seamless (tanpa sambungan)." />;
-            case 'mascot': return <UnderConstructionTool title="Mascot Generator" description="Ciptakan karakter yang ikonik untuk brand-mu. Deskripsikan maskot impianmu, dan Mang AI akan menggambarkannya." />;
-            case 'photostudio': return <UnderConstructionTool title="Photo Studio AI" description="Upload foto produkmu (background polos), lalu tulis suasana yang kamu mau. Mang AI akan menempatkan produkmu di scene yang realistis." />;
-            case 'poster': return <UnderConstructionTool title="AI Poster Maker" description="Gabungkan beberapa gambar jadi satu karya baru! Upload 2-3 gambar, kasih instruksi, dan tulis prompt utama untuk menyatukannya." />;
+            case 'video': return <Suspense fallback={fallback}><VideoGenerator projects={projects} /></Suspense>;
+            case 'moodboard': return <Suspense fallback={fallback}><MoodboardGenerator /></Suspense>;
+            case 'pattern': return <Suspense fallback={fallback}><PatternGenerator projects={projects} /></Suspense>;
+            case 'mascot': return <Suspense fallback={fallback}><MascotGenerator /></Suspense>;
+            case 'photostudio': return <Suspense fallback={fallback}><PhotoStudio /></Suspense>;
+            case 'scenemixer': return <Suspense fallback={fallback}><SceneMixer /></Suspense>;
             case 'sotoshop': return <SotoshopTool onShowSotoshop={onShowSotoshop} />;
             default: return null;
         }
