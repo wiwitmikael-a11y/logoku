@@ -115,7 +115,7 @@ const LemariKreasi: React.FC = () => {
             const images = asset.asset_data?.images;
             preview = (
                 <div className="grid grid-cols-2 gap-px h-32 bg-background">
-                    {/* FIX: Add an Array.isArray check before calling .map() to prevent runtime errors if `images` is not an array. */}
+                    {/* FIX: Added Array.isArray check to prevent runtime error when `images` is not an array. */}
                     {Array.isArray(images) && images.slice(0, 4).map((img: any, i: number) => (
                         <img key={i} src={img} className={`w-full h-full object-cover ${i === 0 ? 'rounded-tl-lg' : ''} ${i === 1 ? 'rounded-tr-lg' : ''}`} loading="lazy" />
                     ))}

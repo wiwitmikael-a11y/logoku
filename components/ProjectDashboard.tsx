@@ -336,7 +336,7 @@ const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
         {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><AICreator projects={props.projects} /></Suspense>)}
         {activeTab === 'lemari' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><LemariKreasi /></Suspense>)}
         {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
-        {activeTab === 'gamify' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><PusatJuragan /></Suspense>)}
+        {activeTab === 'gamify' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
       </div>
     </div>
   );
