@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, FunctionDeclaration, Type } from "@google/genai";
 import * as geminiService from '../services/geminiService';
+import { getAiClient } from '../services/geminiService';
 import { encode, decode, decodeAudioData } from '../utils/audioUtils';
 import { playSound } from '../services/soundService';
 import type { BrandInputs, VoiceWizardStep, Profile, ProjectData } from '../types';
@@ -127,9 +128,6 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs & { log
 
 
 const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profile, deductCredits, setShowOutOfCreditsModal }) => {
-  // FIX: Replaced separate useState and useEffect-synced useRef with a wrapper function
-  // to ensure the ref is updated synchronously with the state. This prevents race conditions
-  // in async callbacks like `onclose`.
   const [conversationState, _setConversationState] = useState<ConversationState>('IDLE');
   const conversationStateRef = useRef<ConversationState>('IDLE');
   const setConversationState = (state: ConversationState) => {
@@ -181,10 +179,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   }, []);
 
   const handleFinalizeAndComplete = useCallback(async (isAutoCompleted = false) => {
-    // FIX: Use a ref to check the conversation state to prevent race conditions from stale closures in callbacks.
     if (conversationStateRef.current === 'FINALIZING' || wizardStep === 'COMPLETED') return;
     
-    // FIX: Set state BEFORE closing the session to prevent a race condition in the onclose handler.
     setConversationState('FINALIZING');
     setWizardStep('FINALIZING_LOGO');
     cleanupSession();
@@ -226,7 +222,6 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
         
         onComplete(projectData);
         setWizardStep('COMPLETED');
-        // FIX: Set conversation state to completed for logical consistency.
         setConversationState('COMPLETED');
 
     } catch (err) {
@@ -258,7 +253,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
       setPermissionState('granted');
       streamRef.current = stream;
       
-      const ai = new GoogleGenAI({apiKey: process.env.VITE_API_KEY});
+      const ai = getAiClient(); // Use the lazy-loaded client
 
       sessionPromiseRef.current = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
@@ -381,15 +376,10 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               }
             }
           },
-          // FIX: Add event parameter to onerror callback to match type signature and fix type inference.
-          onerror: (e: ErrorEvent) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          // FIX: Add event parameter to onclose callback to match type signature and fix type inference.
+          onerror: (e: ErrorEvent) => { setError(`Koneksi error: ${e.message}`); setConversationState('ERROR'); },
           onclose: (e: CloseEvent) => {
             const currentState = conversationStateRef.current;
-            if (currentState === 'COMPLETED' || currentState === 'FINALIZING') {
-              // Do nothing, the session closed as expected after completion.
-            } else {
-              // If the session closes unexpectedly in any other state, reset to idle.
+            if (currentState !== 'COMPLETED' && currentState !== 'FINALIZING') {
               setConversationState('IDLE');
             }
           },
@@ -415,7 +405,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     catch { setPermissionState('prompt'); }
   }, []);
   
-  // Lock body scroll when modal is open
   useEffect(() => {
     if (show) document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'auto'; };
@@ -426,7 +415,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
     return () => { 
       if (!show) { 
         cleanupSession();
-        // Reset all component states
         setPermissionState('pending'); 
         setConversationState('IDLE'); 
         setWizardStep('GREETING'); 

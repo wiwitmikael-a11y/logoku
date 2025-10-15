@@ -6,7 +6,8 @@ import { fetchImageAsBase64, compressAndConvertToWebP } from "../utils/imageUtil
 
 let aiInstance: GoogleGenAI | null = null;
 
-const getAiClient = (): GoogleGenAI => {
+// FIX: Export getAiClient to make it accessible from other modules.
+export const getAiClient = (): GoogleGenAI => {
   if (aiInstance) {
     return aiInstance;
   }
