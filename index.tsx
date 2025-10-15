@@ -9,6 +9,11 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { AIPetProvider } from './contexts/AIPetContext';
 
+// Import error screens and config checks
+import { supabaseError } from './services/supabaseClient';
+import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
+import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
@@ -26,18 +31,26 @@ if ('serviceWorker' in navigator) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <AuthProvider>
-      <UserActionsProvider>
-        <UIProvider>
-          <LanguageProvider>
-            <AIPetProvider>
-              <App />
-            </AIPetProvider>
-          </LanguageProvider>
-        </UIProvider>
-      </UserActionsProvider>
-    </AuthProvider>
-  </React.StrictMode>
-);
+
+// Perform startup checks here, before rendering the main app tree
+if (supabaseError) {
+  root.render(<SupabaseKeyErrorScreen error={supabaseError} />);
+} else if (!import.meta?.env?.VITE_API_KEY) {
+  root.render(<ApiKeyErrorScreen />);
+} else {
+  root.render(
+    <React.StrictMode>
+      <AuthProvider>
+        <UserActionsProvider>
+          <UIProvider>
+            <LanguageProvider>
+              <AIPetProvider>
+                <App />
+              </AIPetProvider>
+            </LanguageProvider>
+          </UIProvider>
+        </UserActionsProvider>
+      </AuthProvider>
+    </React.StrictMode>
+  );
+}

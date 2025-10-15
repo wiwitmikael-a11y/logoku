@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
-import { supabase, supabaseError } from './services/supabaseClient';
+import { supabase } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
 import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
@@ -17,8 +17,6 @@ import { fetchImageAsBase64 } from './utils/imageUtils';
 
 // --- Error Handling & Loading ---
 import ErrorBoundary from './components/common/ErrorBoundary';
-import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
-import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
 import AuthLoadingScreen from './components/common/AuthLoadingScreen';
 import LoadingMessage from './components/common/LoadingMessage';
 import ErrorMessage from './components/common/ErrorMessage';
@@ -69,12 +67,6 @@ const VoiceBrandingWizard = React.lazy(() => import('./components/VoiceBrandingW
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 
 const App: React.FC = () => {
-    if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
-    if (!import.meta?.env?.VITE_API_KEY) return <ApiKeyErrorScreen />;
-    return <MainApp />;
-};
-
-const MainApp: React.FC = () => {
     const { session, user, profile, loading: authLoading, projects, setProjects, executeLogout, authError } = useAuth();
     const ui = useUI();
     const userActions = useUserActions();
