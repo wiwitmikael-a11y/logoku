@@ -374,7 +374,7 @@ export const generateVideo = async (prompt: string, imageBase64?: string): Promi
     let operation;
     if (imageBase64) {
         operation = await ai.models.generateVideos({
-            model: 'veo-2.0-generate-001',
+            model: 'veo-3.1-fast-generate-preview',
             prompt,
             image: {
                 imageBytes: imageBase64.split(',')[1],
@@ -384,7 +384,7 @@ export const generateVideo = async (prompt: string, imageBase64?: string): Promi
         });
     } else {
         operation = await ai.models.generateVideos({
-            model: 'veo-2.0-generate-001',
+            model: 'veo-3.1-fast-generate-preview',
             prompt,
             config: { numberOfVideos: 1 }
         });

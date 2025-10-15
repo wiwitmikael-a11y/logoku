@@ -2,28 +2,32 @@
 
 import React, { Suspense } from 'react';
 import Button from './common/Button';
-// FIX: Module '"../services/supabaseClient"' has no exported member 'supabase'. Did you mean 'getSupabaseClient'?
 import { getSupabaseClient } from '../services/supabaseClient';
 import { useUI } from '../contexts/UIContext';
 import { useTranslation } from '../contexts/LanguageContext';
 
 interface Props {
   isCaptchaSolved: boolean;
+  isReadyForLogin: boolean;
 }
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
+const LoginScreen: React.FC<Props> = ({ isCaptchaSolved, isReadyForLogin }) => {
   const { toggleToSModal, togglePrivacyModal } = useUI();
   const { t } = useTranslation();
 
   const handleGoogleLogin = () => {
-    // FIX: 'supabase' is not defined.
-    const supabase = getSupabaseClient();
-    supabase.auth.signInWithOAuth({ 
-        provider: 'google', 
-        options: { redirectTo: window.location.origin }
-    });
+    try {
+      const supabase = getSupabaseClient();
+      supabase.auth.signInWithOAuth({ 
+          provider: 'google', 
+          options: { redirectTo: window.location.origin }
+      });
+    } catch (error) {
+        console.error("Supabase client could not be initialized:", error);
+        alert(`Gagal memulai proses login: ${(error as Error).message}`);
+    }
   };
 
   return (
@@ -60,7 +64,7 @@ const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
                 disabled={!isCaptchaSolved}
                 title={!isCaptchaSolved ? t({ id: "Selesaikan puzzle captcha dulu!", en: "Solve the captcha puzzle first!" }) : t({ id: "Masuk dengan akun Google", en: "Sign in with Google" })}
                 size="large"
-                className="!bg-[rgb(var(--c-bg-inverse))] !text-[rgb(var(--c-text-inverse))] border-2 border-border-main hover:!bg-border-light shadow-lg"
+                className={`!bg-[rgb(var(--c-bg-inverse))] !text-[rgb(var(--c-text-inverse))] border-2 border-border-main hover:!bg-border-light shadow-lg ${isReadyForLogin ? 'animate-button-ready' : ''}`}
               >
                 <svg className="w-5 h-5" aria-hidden="true" focusable="false" viewBox="0 0 48 48">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
