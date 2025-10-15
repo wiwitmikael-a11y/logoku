@@ -32,8 +32,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted `handleCopy` to an arrow function. This ensures that `this` refers to the class instance
-  // when the method is passed as an event handler, resolving errors where `this.setState` was not found.
+  // FIX: Converted `handleCopy` to an arrow function to correctly bind `this`, allowing access to `this.setState`.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString());
@@ -46,7 +45,6 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     const { hasError, error, isCopied } = this.state;
-    // FIX: `this.props` is correctly accessed within the `render` method, as `this` is properly bound by React in class component lifecycle methods. The reported error likely stemmed from incorrect `this` context in other methods.
     const { onReset, children } = this.props;
 
     if (hasError) {

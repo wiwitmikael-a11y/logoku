@@ -115,7 +115,7 @@ const LemariKreasi: React.FC = () => {
             const images = asset.asset_data?.images;
             preview = (
                 <div className="grid grid-cols-2 gap-px h-32 bg-background">
-                    {/* FIX: Add Array.isArray type guard. This ensures `images` is an array before calling .map(), resolving the "Property 'map' does not exist on type 'unknown'" error that occurs when `asset_data` is not strictly typed. */}
+                    {/* FIX: Add Array.isArray guard to ensure `images` is an array before mapping. */}
                     {Array.isArray(images) && images.slice(0, 4).map((img: any, i: number) => (
                         <img key={i} src={img} className={`w-full h-full object-cover ${i === 0 ? 'rounded-tl-lg' : ''} ${i === 1 ? 'rounded-tr-lg' : ''}`} loading="lazy" />
                     ))}
