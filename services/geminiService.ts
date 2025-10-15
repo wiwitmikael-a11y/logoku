@@ -4,7 +4,22 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, GeneratedCaption, LogoVariations, SocialAdsData, SocialMediaKitAssets, SocialProfileData, ProjectData } from '../types';
 import { fetchImageAsBase64, compressAndConvertToWebP } from "../utils/imageUtils";
 
-const ai = new GoogleGenAI({ apiKey: import.meta?.env?.VITE_API_KEY || '' });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAiClient = (): GoogleGenAI => {
+  if (aiInstance) {
+    return aiInstance;
+  }
+  
+  const apiKey = import.meta?.env?.VITE_API_KEY;
+  if (!apiKey) {
+    throw new Error("Konfigurasi API Key Google Gemini (`VITE_API_KEY`) tidak ditemukan. Harap atur di environment variables.");
+  }
+
+  aiInstance = new GoogleGenAI({ apiKey });
+  return aiInstance;
+};
+
 
 // Helper to parse JSON safely from AI responses which might include markdown ```json
 const safeJsonParse = <T>(jsonString: string, fallback: T): T => {
@@ -36,6 +51,7 @@ const safeJsonParse = <T>(jsonString: string, fallback: T): T => {
 };
 
 export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string, competitorAnalysis: string | null): Promise<BrandPersona[]> => {
+    const ai = getAiClient();
     const prompt = `Buat 3 persona brand unik untuk bisnis UMKM Indonesia.
 - Nama Bisnis: "${businessName}"
 - Industri/Bidang: ${industry}
@@ -91,6 +107,7 @@ export const generateBrandPersona = async (businessName: string, industry: strin
 };
 
 export const generateSlogans = async (businessName: string, persona: BrandPersona, competitors: string): Promise<string[]> => {
+    const ai = getAiClient();
     const prompt = `Buat 5 opsi slogan pendek, menarik, dan mudah diingat untuk bisnis bernama "${businessName}".
 Persona Brand: ${persona.nama_persona} (${persona.deskripsi_singkat})
 Kata Kunci Gaya: ${persona.kata_kunci.join(', ')}
@@ -109,6 +126,7 @@ Hindari gaya slogan seperti kompetitor: ${competitors || 'Tidak ada'}`;
 };
 
 export const analyzeCompetitorUrl = async (url: string, businessName: string): Promise<string> => {
+    const ai = getAiClient();
     const prompt = `Analisis URL kompetitor ini: ${url}. Berikan ringkasan singkat (1-2 paragraf) tentang kekuatan, kelemahan, dan gaya visual mereka. Analisis ini akan digunakan untuk membedakan brand baru bernama "${businessName}". Fokus pada aspek branding yang bisa ditiru atau dihindari.`;
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -118,6 +136,7 @@ export const analyzeCompetitorUrl = async (url: string, businessName: string): P
 };
 
 export const generateLogoOptions = async (prompt: string, style: string, businessName: string, count: number = 4): Promise<string[]> => {
+    const ai = getAiClient();
     const fullPrompt = `logo ${style} untuk "${businessName}", dengan objek utama: ${prompt}. Bersih, vektor, di latar belakang putih polos.`;
     
     const response = await ai.models.generateImages({
@@ -135,6 +154,7 @@ export const generateLogoOptions = async (prompt: string, style: string, busines
 };
 
 export const editLogo = async (base64Data: string, mimeType: string, prompt: string): Promise<string> => {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: {
@@ -156,6 +176,7 @@ export const editLogo = async (base64Data: string, mimeType: string, prompt: str
 };
 
 export const generateLogoVariations = async (baseLogoUrl: string, businessName: string): Promise<LogoVariations> => {
+    const ai = getAiClient();
     const logoBase64 = baseLogoUrl.split(',')[1];
     const mimeType = baseLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/png';
 
@@ -202,6 +223,7 @@ export const generateSocialMediaKitAssets = async (projectData: ProjectData): Pr
 };
 
 export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string): Promise<GeneratedCaption[]> => {
+    const ai = getAiClient();
     const prompt = `Buat 3 opsi caption media sosial untuk "${businessName}".
 Persona Brand: ${persona.nama_persona}
 Gaya Bicara: ${persona.brand_voice.deskripsi}
@@ -231,6 +253,7 @@ Sertakan juga rekomendasi hashtag yang relevan untuk setiap caption.`;
 };
 
 export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona): Promise<SocialProfileData> => {
+    const ai = getAiClient();
     const prompt = `Buat teks profil untuk berbagai platform sosial media untuk bisnis "${inputs.businessName}".
 Persona Brand: ${persona.nama_persona} (${persona.deskripsi_singkat}).
 Gaya Bicara: ${persona.brand_voice.deskripsi}.
@@ -273,6 +296,7 @@ export const generateMerchandiseMockup = async (prompt: string, logoBase64: stri
 };
 
 export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
+    const ai = getAiClient();
     const prompt = `Buat rencana konten media sosial untuk 7 hari ke depan untuk bisnis "${businessName}" dengan persona "${persona.nama_persona}".
 Fokus pada topik yang relevan dengan ${persona.kata_kunci.join(', ')}.
 Untuk setiap hari, berikan: hari, tipe konten (misal: Promosi, Edukasi, Interaksi), ide konten singkat, draf caption lengkap sesuai gaya bicara brand (${persona.brand_voice.deskripsi}), dan 5 rekomendasi hashtag.
@@ -294,6 +318,7 @@ JAWAB HANYA DALAM FORMAT JSON.`;
 };
 
 export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string): Promise<SocialAdsData> => {
+    const ai = getAiClient();
     const prompt = `Buat 2 set teks iklan (ad copy) untuk sosial media, satu untuk Instagram Ads, satu untuk TikTok Ads.
 Bisnis: "${inputs.businessName}" (${inputs.businessDetail})
 Target: ${inputs.targetAudience}
@@ -332,6 +357,7 @@ export const generateSocialMediaPostImage = async (topic: string, keywords: stri
 };
 
 export const moderateContent = async (content: string): Promise<{ isAppropriate: boolean; reason: string }> => {
+    const ai = getAiClient();
     const prompt = `Analisis teks berikut dan tentukan apakah mengandung konten yang tidak pantas (SARA, ujaran kebencian, kekerasan, konten dewasa, spam). Jawab HANYA dengan format JSON {"isAppropriate": boolean, "reason": "alasan singkat jika tidak pantas"}. Teks: "${content}"`;
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -343,6 +369,7 @@ export const moderateContent = async (content: string): Promise<{ isAppropriate:
 
 // --- Video Generation ---
 export const generateVideo = async (prompt: string, imageBase64?: string): Promise<any> => {
+    const ai = getAiClient();
     let operation;
     if (imageBase64) {
         operation = await ai.models.generateVideos({
@@ -365,6 +392,7 @@ export const generateVideo = async (prompt: string, imageBase64?: string): Promi
 };
 
 export const getVideosOperation = async (operation: any): Promise<any> => {
+    const ai = getAiClient();
     return await ai.operations.getVideosOperation({ operation: operation });
 };
 
@@ -374,6 +402,7 @@ export const generateBusinessNames = (category: string, keywords: string) => gen
 export const generateQuickSlogans = (businessName: string, keywords: string) => generateSlogans(businessName, { nama_persona: keywords } as BrandPersona, '');
 
 export const generateMoodboardText = async (keywords: string): Promise<{ description: string; palette: string[] }> => {
+    const ai = getAiClient();
     const prompt = `Buat deskripsi singkat (1 paragraf) untuk mood & feel dari sebuah brand dengan kata kunci: "${keywords}". Berikan juga 5 palet warna dalam format HEX yang cocok.`;
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -399,6 +428,7 @@ export const generateMoodboardImages = async (keywords: string): Promise<string[
 };
 
 export const generateSceneFromImages = async (base64Images: string[], prompt: string): Promise<string> => {
+    const ai = getAiClient();
     const parts: ({ inlineData: { data: string; mimeType: string; }; } | { text: string; })[] = base64Images.map(b64 => ({
         inlineData: {
             data: b64.split(',')[1],
@@ -422,6 +452,7 @@ export const generateSceneFromImages = async (base64Images: string[], prompt: st
 };
 
 export const generateImageForCanvas = async (prompt: string, baseImageB64?: string): Promise<string> => {
+    const ai = getAiClient();
     const parts: ({ text: string; } | { inlineData: { data: string; mimeType: string; }; })[] = [{ text: prompt }];
     if (baseImageB64) {
         parts.unshift({
@@ -448,6 +479,7 @@ export const generateImageForCanvas = async (prompt: string, baseImageB64?: stri
 
 // Other functions from the codebase that need implementation
 export const generateMissingField = async (currentInputs: Partial<BrandInputs>, fieldToGenerate: keyof BrandInputs): Promise<string> => {
+    const ai = getAiClient();
     const prompt = `Berdasarkan informasi brand ini: ${JSON.stringify(currentInputs)}, berikan satu saran untuk kolom yang hilang: "${fieldToGenerate}". Berikan jawaban singkat dan langsung pada intinya.`;
     const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
     return response.text.replace(/["*]/g, '').trim();
@@ -460,6 +492,7 @@ export const applyPatternToMockup = async (patternB64: string, mockupB64: string
 };
 
 export const generateMascot = async (prompt: string, imageB64?: string): Promise<string[]> => {
+    const ai = getAiClient();
     if (imageB64) {
         const fullPrompt = `Jadikan wajah di gambar ini sebagai inspirasi utama. Buat sebuah karakter maskot berdasarkan deskripsi ini: ${prompt}. Gaya ilustrasi vektor yang lucu dan modern, di latar belakang putih polos. Buat 2 variasi.`;
         // Since we need 2 variations, we can't use generateImageForCanvas which only returns one.

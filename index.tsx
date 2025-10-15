@@ -8,9 +8,6 @@ import { UserActionsProvider } from './contexts/UserActionsContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 
-// Import error screens and config checks
-import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
-
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
@@ -29,22 +26,18 @@ if ('serviceWorker' in navigator) {
 
 const root = ReactDOM.createRoot(rootElement);
 
-// Perform startup checks here, before rendering the main app tree.
-// Supabase check is removed to allow lazy initialization.
-if (!import.meta?.env?.VITE_API_KEY) {
-  root.render(<ApiKeyErrorScreen />);
-} else {
-  root.render(
-    <React.StrictMode>
-      <AuthProvider>
-        <UserActionsProvider>
-          <UIProvider>
-            <LanguageProvider>
-              <App />
-            </LanguageProvider>
-          </UIProvider>
-        </UserActionsProvider>
-      </AuthProvider>
-    </React.StrictMode>
-  );
-}
+// Startup checks are moved to their respective services (lazy initialization).
+// The app will now always attempt to render, showing the login/captcha screen first.
+root.render(
+  <React.StrictMode>
+    <AuthProvider>
+      <UserActionsProvider>
+        <UIProvider>
+          <LanguageProvider>
+            <App />
+          </LanguageProvider>
+        </UIProvider>
+      </UserActionsProvider>
+    </AuthProvider>
+  </React.StrictMode>
+);
