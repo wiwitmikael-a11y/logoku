@@ -14,17 +14,14 @@ interface AuthContextType {
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   loading: boolean;
-  showLogoutConfirm: boolean;
-  setShowLogoutConfirm: (show: boolean) => void;
-  handleLogout: () => void;
   executeLogout: () => Promise<void>;
-  handleDeleteAccount: () => void;
   authError: string | null;
   refreshProfile: () => Promise<void>;
   isMuted: boolean;
   handleToggleMute: () => void;
   bgmSelection: BgmSelection;
   handleBgmChange: (selection: BgmSelection) => void;
+  handleDeleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,29 +33,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
-  const fetchInProgress = useRef(false);
-
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
-  const [isMuted, setIsMutedState] = useState(() => localStorage.getItem('desainfun_isMuted') !== 'false');
+  const [isMuted, setIsMutedState] = useState(() => localStorage.getItem('desainfun_isMuted') === 'true');
   const [bgmSelection, setBgmSelection] = useState<BgmSelection>(() => (localStorage.getItem('desainfun_bgmSelection') as BgmSelection) || 'Random');
-
-  const handleLogout = () => setShowLogoutConfirm(true);
 
   const executeLogout = async () => {
     stopBGM();
     await supabase.auth.signOut();
-    // Clearing state is now handled by the useEffect hook that depends on `user`
+    // State will be cleared by the onAuthStateChange listener
   };
 
   const handleDeleteAccount = async () => {
       if (!user) return;
-      alert("This is a permanent action! We are calling the RPC function to delete your data.");
+      if (!window.confirm("Ini adalah tindakan permanen! Semua data proyek, profil, dan progres Anda akan dihapus selamanya. Yakin mau lanjut?")) return;
+
       const { error } = await supabase.rpc('delete_user_account');
       if (error) {
-          alert(`Error deleting account: ${error.message}`);
+          alert(`Error menghapus akun: ${error.message}`);
       } else {
-          alert("Your account and all associated data have been deleted.");
+          alert("Akun Anda dan semua data terkait telah dihapus.");
           await executeLogout();
       }
   };
@@ -71,153 +64,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (newMuted) {
             stopBGM();
         } else {
-            if (bgmSelection === 'Mute') {
+            const currentSelection = localStorage.getItem('desainfun_bgmSelection') as BgmSelection || 'Random';
+            if (currentSelection === 'Mute') {
                 const newSelection = 'Random';
                 setBgmSelection(newSelection);
                 localStorage.setItem('desainfun_bgmSelection', newSelection);
                 playRandomBGM();
-            } else if (bgmSelection === 'Random') {
+            } else if (currentSelection === 'Random') {
                 playRandomBGM();
             } else {
-                playBGM(bgmSelection as any);
+                playBGM(currentSelection as any);
             }
         }
         return newMuted;
     });
-  }, [bgmSelection]);
+  }, []);
 
   const handleBgmChange = useCallback((selection: BgmSelection) => {
     setBgmSelection(selection);
     localStorage.setItem('desainfun_bgmSelection', selection);
-    if (isMuted && selection !== 'Mute') {
-        setIsMutedState(false);
-        localStorage.setItem('desainfun_isMuted', 'false');
-        setMuted(false);
-    }
-
+    
     if (selection === 'Mute') {
-        stopBGM();
-        setIsMutedState(true);
-        localStorage.setItem('desainfun_isMuted', 'true');
-        setMuted(true);
-    } else if (selection === 'Random') {
-        playRandomBGM();
+        if (!isMuted) {
+            setIsMutedState(true);
+            localStorage.setItem('desainfun_isMuted', 'true');
+            setMuted(true);
+            stopBGM();
+        }
     } else {
-        playBGM(selection as any);
+        if (isMuted) {
+            setIsMutedState(false);
+            localStorage.setItem('desainfun_isMuted', 'false');
+            setMuted(false);
+        }
+        if (selection === 'Random') playRandomBGM();
+        else playBGM(selection as any);
     }
   }, [isMuted]);
-  
-  const fetchInitialUserData = useCallback(async (userToFetch: User | null) => {
-    if (!userToFetch) {
-        setProfile(null);
-        setProjects([]);
-        return;
-    }
-
-    try {
-        let { data: profileData, error: profileError, status } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userToFetch.id)
-            .single();
-
-        if (profileError && status !== 406) throw profileError;
-
-        let finalProfile: Profile | null = null;
-
-        if (profileData) {
-            // Profile exists, handle updates (daily reset, sync)
-            let needsDBUpdate = false;
-            let updates: Partial<Profile> = {};
-            let currentProfile = { ...profileData };
-
-            // 1. Daily Reset Logic
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const lastReset = currentProfile.last_credit_reset ? new Date(currentProfile.last_credit_reset) : null;
-
-            if (!lastReset || lastReset < today) {
-                needsDBUpdate = true;
-                updates.last_credit_reset = today.toISOString();
-                updates.daily_actions = {}; // Reset daily missions
-                if (currentProfile.credits < 5) {
-                    updates.credits = 5;
-                }
-            }
-
-            // 2. Sync with Auth provider info
-            const authName = userToFetch.user_metadata.full_name || 'Juragan Baru';
-            const authAvatar = userToFetch.user_metadata.avatar_url || null;
-            if (currentProfile.full_name !== authName || currentProfile.avatar_url !== authAvatar) {
-                needsDBUpdate = true;
-                updates.full_name = authName;
-                updates.avatar_url = authAvatar;
-            }
-
-            // 3. Perform update if needed
-            if (needsDBUpdate) {
-                const { data: updatedProfile, error: updateError } = await supabase
-                    .from('profiles')
-                    .update(updates)
-                    .eq('id', userToFetch.id)
-                    .select()
-                    .single();
-                
-                if (updateError) {
-                    console.error("Failed to apply profile updates:", updateError);
-                    finalProfile = currentProfile; // Use stale data on failure
-                } else {
-                    finalProfile = updatedProfile; // Use fresh data
-                }
-            } else {
-                finalProfile = currentProfile; // No updates needed
-            }
-
-        } else if (status === 406) {
-            // Profile does not exist, create it with welcome bonus
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const { data: newProfileData, error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: userToFetch.id,
-                full_name: userToFetch.user_metadata.full_name || 'Juragan Baru',
-                avatar_url: userToFetch.user_metadata.avatar_url || '',
-                credits: 20, // Welcome bonus
-                welcome_bonus_claimed: true,
-                last_credit_reset: today.toISOString(),
-                xp: 0,
-                level: 1,
-                achievements: [],
-                total_projects_completed: 0,
-                completed_first_steps: [],
-                daily_actions: {},
-              })
-              .select()
-              .single();
-            if (insertError) throw insertError;
-            finalProfile = newProfileData;
-        }
-
-        setProfile(finalProfile);
-
-        const { data: projectsData, error: projectsError } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('user_id', userToFetch.id)
-            .order('created_at', { ascending: false });
-
-        if (projectsError) {
-            setAuthError(`Gagal mengambil data project: ${projectsError.message}`);
-            setProjects([]);
-        } else {
-            setProjects(projectsData as Project[] || []);
-        }
-
-    } catch (error: any) {
-        setAuthError(`Gagal memuat data pengguna: ${error.message}`);
-    }
-  }, []);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
@@ -226,52 +109,88 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         else setProfile(data);
     }
   }, [user]);
-  
+
+  // Effect 1: Handles Auth State (Session and User objects)
   useEffect(() => {
-    setMuted(isMuted);
-    if (!isMuted) {
-        handleBgmChange(bgmSelection);
-    } else {
-        stopBGM();
-    }
-  }, [isMuted, bgmSelection, handleBgmChange]);
-  
-  // Effect to setup auth listeners
-  useEffect(() => {
+    setLoading(true);
+    // Check for session on initial load
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
+      setLoading(false); // Initial auth check is done
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
     });
 
     return () => {
-        subscription?.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
-  // Effect to fetch data when user object changes
+  // Effect 2: Handles Data Fetching based on User state
   useEffect(() => {
     if (user) {
-        if (fetchInProgress.current) return;
-        setLoading(true);
-        fetchInProgress.current = true;
-        fetchInitialUserData(user).finally(() => {
-            setLoading(false);
-            fetchInProgress.current = false;
-        });
+      const fetchUserData = async () => {
+        setAuthError(null);
+        try {
+          // --- Fetch Profile, Create if not exists ---
+          let { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError && profileError.code === 'PGRST116') { // "Not found" error
+            const { data: newProfileData, error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: user.id,
+                full_name: user.user_metadata.full_name || 'Juragan Baru',
+                avatar_url: user.user_metadata.avatar_url || '',
+                credits: 20,
+                welcome_bonus_claimed: true,
+                last_credit_reset: new Date().toISOString(),
+              })
+              .select()
+              .single();
+            if (insertError) throw insertError;
+            profileData = newProfileData;
+          } else if (profileError) {
+            throw profileError;
+          }
+
+          setProfile(profileData);
+
+          // --- Fetch Projects ---
+          const { data: projectsData, error: projectsError } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (projectsError) throw projectsError;
+          setProjects(projectsData || []);
+
+        } catch (error: any) {
+          setAuthError(`Gagal memuat data pengguna: ${error.message}`);
+          setProfile(null);
+          setProjects([]);
+        }
+      };
+      
+      fetchUserData();
     } else {
-        // No user, clear data and stop loading
-        setProfile(null);
-        setProjects([]);
-        setLoading(false);
+      // User is logged out, clear all data
+      setProfile(null);
+      setProjects([]);
     }
-  }, [user, fetchInitialUserData]);
+  }, [user]);
   
-  const value: AuthContextType = { session, user, profile, projects, setProjects, loading, showLogoutConfirm, setShowLogoutConfirm, handleLogout, executeLogout, handleDeleteAccount, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange };
+  const value: AuthContextType = { session, user, profile, projects, setProjects, loading, executeLogout, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, handleDeleteAccount };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

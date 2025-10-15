@@ -101,7 +101,7 @@ export interface DailyActions {
   [actionId: string]: number | string[] | undefined;
 }
 
-// FIX: Add AIPetState definition and add to Profile interface.
+// FIX: Add AIPetState definition
 export type AIPetStage = 'aipod' | 'egg' | 'baby' | 'active';
 
 export interface AIPetState {
@@ -130,6 +130,7 @@ export interface Profile {
   data_fragments?: number;
   daily_actions?: DailyActions | null;
   language?: 'id' | 'en';
+  // FIX: Add aipet_state to Profile type
   aipet_state?: AIPetState | null;
 }
 

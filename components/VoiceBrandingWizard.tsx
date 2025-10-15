@@ -380,8 +380,10 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
               }
             }
           },
-          onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
-          onclose: () => {
+          // FIX: Add event parameter to onerror callback to match type signature and fix type inference.
+          onerror: (e: ErrorEvent) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
+          // FIX: Add event parameter to onclose callback to match type signature and fix type inference.
+          onclose: (e: CloseEvent) => {
             const currentState = conversationStateRef.current;
             if (currentState === 'COMPLETED' || currentState === 'FINALIZING') {
               // Do nothing, the session closed as expected after completion.

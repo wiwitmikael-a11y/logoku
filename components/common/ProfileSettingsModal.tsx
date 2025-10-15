@@ -21,7 +21,8 @@ interface Props {
 
 const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const { user, profile, handleLogout, handleDeleteAccount, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
+  // FIX: Destructure 'executeLogout' from useAuth instead of the non-existent 'handleLogout'.
+  const { user, profile, executeLogout, handleDeleteAccount, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
   const { toggleToSModal, toggleContactModal } = useUI();
 
   useEffect(() => {
@@ -34,7 +35,8 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
 
   const handleClose = async () => { await unlockAudio(); playSound('click'); onClose(); };
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => { if (e.target === e.currentTarget) handleClose(); }
-  const handleLogoutClick = () => { handleLogout(); onClose(); };
+  // FIX: Call 'executeLogout' which is provided by the context.
+  const handleLogoutClick = () => { executeLogout(); onClose(); };
   const handleTosClick = () => { toggleToSModal(true); onClose(); };
   const handleContactClick = () => { toggleContactModal(true); onClose(); };
 
@@ -115,7 +117,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
              <div className="w-full">
                 <h3 className="text-sm font-semibold text-text-muted mb-3 uppercase tracking-wider">Lencana Pencapaian</h3>
                 <div className="flex gap-4 p-4 bg-background border border-border-main rounded-lg">
-                    {Object.keys(ACHIEVEMENTS_MAP).length > 0 && profile.achievements.length > 0 ? (
+                    {profile.achievements && profile.achievements.length > 0 ? (
                         Object.entries(ACHIEVEMENTS_MAP).map(([id, ach]) => {
                             const isUnlocked = profile.achievements.includes(id);
                             if (isUnlocked) {
