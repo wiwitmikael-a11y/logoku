@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, FunctionDeclaration, Type } from "@google/genai";
 import * as geminiService from '../services/geminiService';
-import { getAiClient } from '../services/geminiService';
+import { getAiClient } from '../services/geminiService'; // Import the lazy loader
 import { encode, decode, decodeAudioData } from '../utils/audioUtils';
 import { playSound } from '../services/soundService';
 import type { BrandInputs, VoiceWizardStep, Profile, ProjectData } from '../types';

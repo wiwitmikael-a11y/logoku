@@ -104,6 +104,7 @@ const App: React.FC = () => {
 
     const [generalError, setGeneralError] = useState<string | null>(null);
     const [showCaptcha, setShowCaptcha] = useState(true);
+    const [isReadyForLogin, setIsReadyForLogin] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -314,7 +315,7 @@ const App: React.FC = () => {
     
     if (authLoading) return <AuthLoadingScreen />;
     
-    if (!session) return ( <> <LoginScreen isCaptchaSolved={!showCaptcha} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} /> </Suspense> </> );
+    if (!session) return ( <> <LoginScreen isCaptchaSolved={!showCaptcha} isReadyForLogin={isReadyForLogin} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => { setShowCaptcha(false); setIsReadyForLogin(true); }} /> <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} /> </Suspense> </> );
     
     return (
       <>
