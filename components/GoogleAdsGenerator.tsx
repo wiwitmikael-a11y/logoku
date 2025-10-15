@@ -115,7 +115,6 @@ const LemariKreasi: React.FC = () => {
             const images = asset.asset_data?.images;
             preview = (
                 <div className="grid grid-cols-2 gap-px h-32 bg-background">
-                    {/* FIX: Add an Array.isArray check before calling .map() to prevent runtime errors if `images` is not an array. */}
                     {Array.isArray(images) && images.slice(0, 4).map((img: any, i: number) => (
                         <img key={i} src={img} className={`w-full h-full object-cover ${i === 0 ? 'rounded-tl-lg' : ''} ${i === 1 ? 'rounded-tr-lg' : ''}`} loading="lazy" />
                     ))}
@@ -157,7 +156,8 @@ const LemariKreasi: React.FC = () => {
                 <p className="mt-1">Buka tab 'AI Creator', buat aset keren, lalu klik 'Simpan ke Lemari' buat ngumpulin di sini.</p>
             </div>
         ) : (
-            Object.entries(groupedAssets).map(([type, assetList]) => (
+// FIX: Explicitly type the tuple from Object.entries to ensure `assetList` is correctly typed as `LemariAsset[]`, fixing the "map does not exist on type 'unknown'" error.
+            Object.entries(groupedAssets).map(([type, assetList]: [string, LemariAsset[]]) => (
                 <div key={type}>
                     <h3 className="text-xl font-bold text-text-header capitalize mb-4 pb-2 border-b-2 border-border-main" style={{fontFamily: 'var(--font-display)'}}>{type.replace(/_/g, ' ')}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
