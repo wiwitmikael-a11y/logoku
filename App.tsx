@@ -4,9 +4,8 @@ import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react
 import { supabase } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, AIPetState } from './types';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus } from './types';
 import { useAuth } from './contexts/AuthContext';
-import { useAIPet } from './contexts/AIPetContext';
 import { useUI } from './contexts/UIContext';
 import { useUserActions } from './contexts/UserActionsContext';
 
@@ -54,10 +53,8 @@ const LevelUpModal = React.lazy(() => import('./components/gamification/LevelUpM
 const AchievementToast = React.lazy(() => import('./components/gamification/AchievementToast'));
 const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
 const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
-const AIPetLabModal = React.lazy(() => import('./components/AIPetLabModal'));
 const TokenomicsModal = React.lazy(() => import('./components/common/TokenomicsModal'));
 const VoiceBrandingWizard = React.lazy(() => import('./components/VoiceBrandingWizard'));
-const AIPetVisual = React.lazy(() => import('./components/AIPetVisual'));
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
 
@@ -65,7 +62,6 @@ const App: React.FC = () => {
     const { session, user, profile, loading: authLoading, projects, setProjects, executeLogout, authError } = useAuth();
     const ui = useUI();
     const userActions = useUserActions();
-    const aipetContext = useAIPet();
     
     const [appState, setAppState] = useState<AppState>(() => (sessionStorage.getItem('desainfun_app_state') as AppState) || 'dashboard');
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(() => {
@@ -181,10 +177,9 @@ const App: React.FC = () => {
         
         const updatedProject: Project = dbData as any; 
         setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
-        aipetContext.notifyPetOfActivity('project_completed');
         handleReturnToDashboard(); 
         ui.showToast("Mantap! Project lo berhasil diselesaikan.");
-    }, [session, selectedProjectId, profile, userActions, setProjects, aipetContext, handleReturnToDashboard, ui]);
+    }, [session, selectedProjectId, profile, userActions, setProjects, handleReturnToDashboard, ui]);
 
     // --- Regenerate Handlers for Project Summary ---
     const handleRegenerateAsset = useCallback(async <T extends any>(
@@ -230,9 +225,9 @@ const App: React.FC = () => {
     }, [projects, profile, userActions, ui, setProjects]);
 
     const handleRegenerateContentCalendar = useCallback((projectId: number) => handleRegenerateAsset(projectId, 1, async (p) => {
-        const { calendar, sources } = await geminiService.generateContentCalendar(p.project_data.brandInputs!.businessName, p.project_data.selectedPersona!, aipetContext.petState);
+        const { calendar, sources } = await geminiService.generateContentCalendar(p.project_data.brandInputs!.businessName, p.project_data.selectedPersona!);
         return { contentCalendar: calendar, searchSources: sources };
-    }, "Kalender konten baru berhasil dibuat!"), [handleRegenerateAsset, aipetContext.petState]);
+    }, "Kalender konten baru berhasil dibuat!"), [handleRegenerateAsset]);
 
     const handleRegenerateSocialKit = useCallback((projectId: number) => handleRegenerateAsset(projectId, 2, async (p) => {
         const assets = await geminiService.generateSocialMediaKitAssets(p.project_data as ProjectData);
@@ -240,14 +235,14 @@ const App: React.FC = () => {
     }, "Social media kit baru berhasil dibuat!"), [handleRegenerateAsset]);
 
     const handleRegenerateProfiles = useCallback((projectId: number) => handleRegenerateAsset(projectId, 1, async (p) => {
-        const profiles = await geminiService.generateSocialProfiles(p.project_data.brandInputs!, p.project_data.selectedPersona!, aipetContext.petState);
+        const profiles = await geminiService.generateSocialProfiles(p.project_data.brandInputs!, p.project_data.selectedPersona!);
         return { socialProfiles: profiles };
-    }, "Profil sosmed baru berhasil dibuat!"), [handleRegenerateAsset, aipetContext.petState]);
+    }, "Profil sosmed baru berhasil dibuat!"), [handleRegenerateAsset]);
 
     const handleRegenerateSocialAds = useCallback((projectId: number) => handleRegenerateAsset(projectId, 1, async (p) => {
-        const adsData = await geminiService.generateSocialAds(p.project_data.brandInputs!, p.project_data.selectedPersona!, p.project_data.selectedSlogan!, aipetContext.petState);
+        const adsData = await geminiService.generateSocialAds(p.project_data.brandInputs!, p.project_data.selectedPersona!, p.project_data.selectedSlogan!);
         return { socialAds: adsData };
-    }, "Teks iklan baru berhasil dibuat!"), [handleRegenerateAsset, aipetContext.petState]);
+    }, "Teks iklan baru berhasil dibuat!"), [handleRegenerateAsset]);
 
     const handleRegeneratePackaging = useCallback((projectId: number) => handleRegenerateAsset(projectId, 1, async (p) => {
         const { brandInputs, selectedPersona, selectedLogoUrl } = p.project_data;
@@ -360,7 +355,6 @@ const App: React.FC = () => {
             <ProfileSettingsModal show={ui.showProfileModal} onClose={() => ui.toggleProfileModal(false)} />
             <BrandGalleryModal show={ui.showBrandGalleryModal} onClose={() => ui.toggleBrandGalleryModal(false)} />
             <TokenomicsModal show={ui.showTokenomicsModal} onClose={() => ui.toggleTokenomicsModal(false)} />
-            <AIPetLabModal show={ui.showAIPetLab} onClose={() => ui.toggleAIPetLab(false)} />
             <Sotoshop show={ui.showSotoshop} onClose={() => ui.toggleSotoshop(false)} />
             
             <OutOfCreditsModal show={userActions.showOutOfCreditsModal} onClose={() => userActions.setShowOutOfCreditsModal(false)} />

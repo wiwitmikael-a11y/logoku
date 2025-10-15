@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { BrandInputs, BrandPersona, ContentCalendarEntry, GeneratedCaption, LogoVariations, SocialAdsData, SocialMediaKitAssets, SocialProfileData, AIPetState, ProjectData } from '../types';
+import type { BrandInputs, BrandPersona, ContentCalendarEntry, GeneratedCaption, LogoVariations, SocialAdsData, SocialMediaKitAssets, SocialProfileData, ProjectData } from '../types';
 import { fetchImageAsBase64 } from "../utils/imageUtils";
 
 const ai = new GoogleGenAI({ apiKey: import.meta?.env?.VITE_API_KEY || '' });
@@ -33,12 +33,6 @@ const safeJsonParse = <T>(jsonString: string, fallback: T): T => {
         console.error("Failed to parse JSON response from AI:", e, "\nOriginal string:", jsonString);
         return fallback;
     }
-};
-
-const petContextPrompt = (petState: AIPetState | null): string => {
-    if (!petState || petState.stage !== 'active') return "";
-    const dominantTrait = (Object.keys(petState.personality) as Array<keyof typeof petState.personality>).reduce((a, b) => petState.personality[a] > petState.personality[b] ? a : b);
-    return `\n\nAsisten AI-Pet Anda, ${petState.name}, yang memiliki sifat ${dominantTrait} dan tingkat kreativitas ${petState.stats.creativity}/100, menyarankan agar hasilnya lebih menonjolkan aspek ${dominantTrait}.`;
 };
 
 export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string, competitorAnalysis: string | null): Promise<BrandPersona[]> => {
@@ -231,14 +225,13 @@ Sertakan juga rekomendasi hashtag yang relevan untuk setiap caption.`;
     return safeJsonParse(response.text, []);
 };
 
-export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona, petState: AIPetState | null): Promise<SocialProfileData> => {
+export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona): Promise<SocialProfileData> => {
     const prompt = `Buat teks profil untuk berbagai platform sosial media untuk bisnis "${inputs.businessName}".
 Persona Brand: ${persona.nama_persona} (${persona.deskripsi_singkat}).
 Gaya Bicara: ${persona.brand_voice.deskripsi}.
 Target Audiens: ${inputs.targetAudience}.
 Keunggulan: ${inputs.valueProposition}.
-Buatkan untuk: bio Instagram (termasuk call to action), bio TikTok (lebih pendek dan catchy), dan deskripsi toko untuk Marketplace (Shopee/Tokopedia, lebih detail).
-${petContextPrompt(petState)}`;
+Buatkan untuk: bio Instagram (termasuk call to action), bio TikTok (lebih pendek dan catchy), dan deskripsi toko untuk Marketplace (Shopee/Tokopedia, lebih detail).`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-pro',
@@ -271,13 +264,12 @@ export const generateMerchandiseMockup = async (prompt: string, logoBase64: stri
      return [await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`)];
 };
 
-export const generateContentCalendar = async (businessName: string, persona: BrandPersona, petState: AIPetState | null): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
+export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
     const prompt = `Buat rencana konten media sosial untuk 7 hari ke depan untuk bisnis "${businessName}" dengan persona "${persona.nama_persona}".
 Fokus pada topik yang relevan dengan ${persona.kata_kunci.join(', ')}.
 Untuk setiap hari, berikan: hari, tipe konten (misal: Promosi, Edukasi, Interaksi), ide konten singkat, draf caption lengkap sesuai gaya bicara brand (${persona.brand_voice.deskripsi}), dan 5 rekomendasi hashtag.
 Gunakan Google Search untuk mencari ide-ide yang sedang tren.
-JAWAB HANYA DALAM FORMAT JSON.
-${petContextPrompt(petState)}`;
+JAWAB HANYA DALAM FORMAT JSON.`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -293,7 +285,7 @@ ${petContextPrompt(petState)}`;
     return { calendar, sources };
 };
 
-export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string, petState: AIPetState | null): Promise<SocialAdsData> => {
+export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string): Promise<SocialAdsData> => {
     const prompt = `Buat 2 set teks iklan (ad copy) untuk sosial media, satu untuk Instagram Ads, satu untuk TikTok Ads.
 Bisnis: "${inputs.businessName}" (${inputs.businessDetail})
 Target: ${inputs.targetAudience}
@@ -301,8 +293,7 @@ Persona: ${persona.nama_persona}
 Gaya Bicara: ${persona.brand_voice.deskripsi}
 Slogan: "${slogan}"
 Keunggulan: ${inputs.valueProposition}
-Sertakan juga 5-7 hashtag relevan untuk setiap platform.
-${petContextPrompt(petState)}`;
+Sertakan juga 5-7 hashtag relevan untuk setiap platform.`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-pro',

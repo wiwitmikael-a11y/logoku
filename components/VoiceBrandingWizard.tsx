@@ -173,9 +173,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   }, []);
 
   const handleFinalizeAndComplete = useCallback(async (isAutoCompleted = false) => {
-    // FIX: Use the `conversationState` from `useState` directly and add it to the dependency array.
-    // This resolves a potential type inference issue with the mutable ref and makes the logic clearer.
-    if (conversationState === 'FINALIZING' || wizardStep === 'COMPLETED') return;
+    // FIX: Use a ref to check the conversation state to prevent race conditions from stale closures in callbacks.
+    if (conversationStateRef.current === 'FINALIZING' || wizardStep === 'COMPLETED') return;
     
     cleanupSession();
 
@@ -225,7 +224,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
         setError(errorMessage);
         setConversationState('ERROR');
     }
-  }, [onComplete, wizardStep, cleanupSession, conversationState]);
+  }, [onComplete, wizardStep, cleanupSession]);
 
   const connectToGemini = useCallback(async () => {
     if (sessionPromiseRef.current || conversationStateRef.current === 'CONNECTING') return;
@@ -249,7 +248,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
       setPermissionState('granted');
       streamRef.current = stream;
       
-      const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
+      const ai = new GoogleGenAI({apiKey: process.env.VITE_API_KEY});
 
       sessionPromiseRef.current = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',

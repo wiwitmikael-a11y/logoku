@@ -192,7 +192,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 total_projects_completed: 0,
                 completed_first_steps: [],
                 daily_actions: {},
-                aipet_state: null
               })
               .select()
               .single();

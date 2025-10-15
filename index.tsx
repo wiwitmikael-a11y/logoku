@@ -7,7 +7,6 @@ import { UIProvider } from './contexts/UIContext';
 import { UserActionsProvider } from './contexts/UserActionsContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { AIPetProvider } from './contexts/AIPetContext';
 
 // Import error screens and config checks
 import { supabaseError } from './services/supabaseClient';
@@ -44,9 +43,7 @@ if (supabaseError) {
         <UserActionsProvider>
           <UIProvider>
             <LanguageProvider>
-              <AIPetProvider>
-                <App />
-              </AIPetProvider>
+              <App />
             </LanguageProvider>
           </UIProvider>
         </UserActionsProvider>

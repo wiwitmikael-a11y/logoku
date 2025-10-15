@@ -54,7 +54,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
 
     try {
       if (!(await deductCredits(GENERATION_COST))) return;
-      const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona, null);
+      const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona);
       setCalendar(result.calendar);
       setSources(result.sources);
       setShowNextStepNudge(true);

@@ -50,7 +50,7 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
     playSound('start');
 
     try {
-      const result = await generateSocialProfiles(brandInputs, selectedPersona, null);
+      const result = await generateSocialProfiles(brandInputs, selectedPersona);
       if (!(await deductCredits(GENERATION_COST))) return;
       setProfileData(result);
       setShowNextStepNudge(true);
