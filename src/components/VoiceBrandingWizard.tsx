@@ -225,6 +225,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
         
         onComplete(projectData);
         setWizardStep('COMPLETED');
+        // FIX: Set conversation state to completed for logical consistency.
+        setConversationState('COMPLETED');
 
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Gagal menyelesaikan project secara otomatis.";
@@ -381,8 +383,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
           onerror: (e) => { setError(`Koneksi error: ${e.type}`); setConversationState('ERROR'); },
           onclose: () => {
             const currentState = conversationStateRef.current;
-            // FIX: This comparison was causing a TS error due to a race condition where the ref wasn't updated
-            // before this callback fired. The underlying race condition has been fixed by updating the ref synchronously.
             if (currentState === 'COMPLETED' || currentState === 'FINALIZING') {
               // Do nothing, the session closed as expected after completion.
             } else {

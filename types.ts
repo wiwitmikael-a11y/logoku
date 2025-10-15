@@ -101,6 +101,19 @@ export interface DailyActions {
   [actionId: string]: number | string[] | undefined;
 }
 
+// FIX: Add AIPetState definition and add to Profile interface.
+export type AIPetStage = 'aipod' | 'egg' | 'baby' | 'active';
+
+export interface AIPetState {
+  stage: AIPetStage;
+  name: string;
+  xp: number;
+  level: number;
+  blueprint: 'chompy' | 'leafy' | 'sparky' | 'aunty' | string;
+  last_interaction: string;
+  last_fed: string;
+}
+
 export interface Profile {
   id: string;
   full_name: string;
@@ -117,6 +130,7 @@ export interface Profile {
   data_fragments?: number;
   daily_actions?: DailyActions | null;
   language?: 'id' | 'en';
+  aipet_state?: AIPetState | null;
 }
 
 export interface GeneratedCaption {
