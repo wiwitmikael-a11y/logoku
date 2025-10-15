@@ -4,7 +4,7 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, GeneratedCaption, LogoVariations, SocialAdsData, SocialMediaKitAssets, SocialProfileData, AIPetState, ProjectData } from '../types';
 import { fetchImageAsBase64 } from "../utils/imageUtils";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
 
 // Helper to parse JSON safely from AI responses which might include markdown ```json
 const safeJsonParse = <T>(jsonString: string, fallback: T): T => {

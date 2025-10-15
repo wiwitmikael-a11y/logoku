@@ -280,11 +280,8 @@ const AppContent: React.FC = () => {
         setGeneralError(null); if (!user || (profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
         try { const resultBase64 = await generationFunc(); await deductCredits(cost); const updatedProjectData = { ...project.project_data, [assetKey]: resultBase64 }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast(successMessage); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
     }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
-    // FIX: Pass null for the petState argument to match the function signature.
     const handleRegenerateContentCalendar = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs.businessName, p.project_data.selectedPersona, null).then(res => res.calendar), "Kalender konten baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
-    // FIX: Pass null for the petState argument to match the function signature.
     const handleRegenerateProfiles = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p.project_data.brandInputs, p.project_data.selectedPersona, null), "Profil sosmed baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
-    // FIX: Pass null for the petState argument to match the function signature.
     const handleRegenerateSocialAds = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return; handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs, p.project_data.selectedPersona, p.project_data.selectedSlogan, null), "Teks iklan baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
     const handleRegenerateSocialKit = useCallback(async (projectId: number) => {
         setGeneralError(null); if (!user || (profile?.credits ?? 0) < 2) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project || !project.project_data.selectedLogoUrl) return;
@@ -463,7 +460,7 @@ const App: React.FC = () => {
   if (supabaseError) {
     return <SupabaseKeyErrorScreen error={supabaseError} />;
   }
-  if (!process.env.API_KEY) {
+  if (!import.meta.env.VITE_API_KEY) {
     return <ApiKeyErrorScreen />;
   }
   return (
