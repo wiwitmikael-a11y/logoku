@@ -17,12 +17,18 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Use class property for state initialization to simplify the component and avoid constructor boilerplate.
-  public state: State = {
-    hasError: false,
-    error: undefined,
-    isCopied: false,
-  };
+  // FIX: Reverted to using a constructor to initialize state and bind methods.
+  // This is a more robust pattern that guarantees the correct 'this' context, resolving the errors
+  // where 'setState' and 'props' were not found on the component instance.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error, isCopied: false };
@@ -32,8 +38,9 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Use an arrow function for the method to automatically bind `this`, resolving issues where `this.setState` was not found.
-  private handleCopy = () => {
+  // FIX: Changed from an arrow function property to a standard class method.
+  // The 'this' context is now correctly bound in the constructor.
+  private handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString() + "\n" + (this.state.error.stack || ''));
       this.setState({ isCopied: true });
@@ -46,7 +53,6 @@ class ErrorBoundary extends React.Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       const { error, isCopied } = this.state;
-      // FIX: `this.props` is now correctly recognized on the component instance.
       const { onReset } = this.props;
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
@@ -88,7 +94,6 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // FIX: `this.props` is now correctly recognized on the component instance.
     return this.props.children;
   }
 }

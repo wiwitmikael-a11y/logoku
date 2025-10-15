@@ -1,37 +1,44 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Variabel untuk menampung instance Supabase (Singleton pattern)
 let supabaseInstance: SupabaseClient | null = null;
+let initializationError: string | null = null;
 
-/**
- * Mengambil atau membuat instance Supabase client.
- * Ini adalah 'lazy initialization' untuk memastikan environment variables
- * sudah tersedia saat client dibuat. Selalu gunakan fungsi ini untuk mengakses Supabase.
- * @throws {Error} Jika environment variables untuk Supabase tidak ditemukan.
- * @returns {SupabaseClient} Instance dari Supabase client.
- */
-export const getSupabaseClient = (): SupabaseClient => {
-  // Jika instance sudah ada, langsung kembalikan
-  if (supabaseInstance) {
-    return supabaseInstance;
-  }
-
-  // Jika belum ada, coba buat instance baru
+try {
   const supabaseUrl = import.meta?.env?.VITE_SUPABASE_URL;
   const supabaseAnonKey = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Lemparkan error jika keys tidak ditemukan.
-    // Error ini akan ditangkap oleh komponen yang memanggilnya, bukan saat startup.
-    throw new Error("Inisialisasi Supabase gagal: environment variable VITE_SUPABASE_URL atau VITE_SUPABASE_ANON_KEY tidak ditemukan.");
+    throw new Error("Environment variable VITE_SUPABASE_URL atau VITE_SUPABASE_ANON_KEY tidak ditemukan. Pastikan sudah diatur di Vercel.");
   }
 
-  try {
-    // Buat dan simpan instance baru
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
-    return supabaseInstance;
-  } catch (e) {
-    // Lemparkan error jika proses pembuatan client gagal
-    throw new Error(`Gagal membuat Supabase client: ${(e as Error).message}`);
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+
+} catch (e) {
+  initializationError = (e as Error).message;
+  console.error("Supabase Initialization Failed:", initializationError);
+}
+
+/**
+ * Supabase client instance.
+ * @throws {Error} Jika client gagal diinisialisasi saat startup.
+ */
+export const supabase = supabaseInstance as SupabaseClient;
+
+/**
+ * Error message if initialization fails, or null if successful.
+ */
+export const supabaseError = initializationError;
+
+/**
+ * Function to get the client. Included for compatibility, 
+ * but direct export is now preferred. Throws if initialization failed.
+ * @returns {SupabaseClient}
+ */
+export const getSupabaseClient = (): SupabaseClient => {
+  if (initializationError) {
+    throw new Error(initializationError);
   }
+  return supabaseInstance as SupabaseClient;
 };

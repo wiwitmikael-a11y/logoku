@@ -7,6 +7,8 @@ import { UIProvider } from './contexts/UIContext';
 import { UserActionsProvider } from './contexts/UserActionsContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { supabaseError } from './services/supabaseClient';
+import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -26,18 +28,25 @@ if ('serviceWorker' in navigator) {
 
 const root = ReactDOM.createRoot(rootElement);
 
-// Startup checks are moved to their respective services (lazy initialization).
-// The app will now always attempt to render, showing the login/captcha screen first.
-root.render(
-  <React.StrictMode>
-    <AuthProvider>
-      <UserActionsProvider>
-        <UIProvider>
-          <LanguageProvider>
-            <App />
-          </LanguageProvider>
-        </UIProvider>
-      </UserActionsProvider>
-    </AuthProvider>
-  </React.StrictMode>
-);
+// CRITICAL: Check for Supabase initialization error BEFORE rendering the app.
+if (supabaseError) {
+  root.render(
+    <React.StrictMode>
+      <SupabaseKeyErrorScreen error={supabaseError} />
+    </React.StrictMode>
+  );
+} else {
+  root.render(
+    <React.StrictMode>
+      <AuthProvider>
+        <UserActionsProvider>
+          <UIProvider>
+            <LanguageProvider>
+              <App />
+            </LanguageProvider>
+          </UIProvider>
+        </UserActionsProvider>
+      </AuthProvider>
+    </React.StrictMode>
+  );
+}
