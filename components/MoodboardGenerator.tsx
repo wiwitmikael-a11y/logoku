@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
 import { supabase } from '../services/supabaseClient';
+import type { Project } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
@@ -18,7 +19,11 @@ const XP_REWARD = 25;
 
 const VIBE_SUGGESTIONS = ["Kopi senja, hangat, rustic", "Modern, bersih, teknologi", "Ceria, anak-anak, playful", "Mewah, elegan, emas", "Petualangan, alam, outdoor"];
 
-const MoodboardGenerator: React.FC = () => {
+interface MoodboardGeneratorProps {
+    selectedProjectContext: Project | null;
+}
+
+const MoodboardGenerator: React.FC<MoodboardGeneratorProps> = ({ selectedProjectContext }) => {
     const { user, profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     

@@ -25,14 +25,14 @@ const MOCKUP_ASSETS = {
 
 interface PatternGeneratorProps {
     projects: Project[];
+    selectedProjectContext: Project | null;
 }
 
-const PatternGenerator: React.FC<PatternGeneratorProps> = ({ projects }) => {
+const PatternGenerator: React.FC<PatternGeneratorProps> = ({ projects, selectedProjectContext }) => {
     const { user, profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
     const [prompt, setPrompt] = useState('');
-    const [selectedProjectId, setSelectedProjectId] = useState<string>('');
     const [result, setResult] = useState<string | null>(null);
     const [mockupPreviews, setMockupPreviews] = useState<{mug?: string; bag?: string; shirt?: string}>({});
     const [isLoading, setIsLoading] = useState(false);
@@ -40,19 +40,15 @@ const PatternGenerator: React.FC<PatternGeneratorProps> = ({ projects }) => {
     const [loadingMockup, setLoadingMockup] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
-    
-    const completedProjects = projects.filter(p => p.status === 'completed' && p.project_data.selectedPersona);
-    
+        
     const handleGenerate = async () => {
         if (!prompt.trim()) { setError('Deskripsi pola tidak boleh kosong!'); return; }
         if ((profile?.credits ?? 0) < PATTERN_COST) { setShowOutOfCreditsModal(true); return; }
 
         let finalPrompt = prompt;
-        if (selectedProjectId) {
-            const project = completedProjects.find(p => p.id.toString() === selectedProjectId);
-            if (project?.project_data.selectedPersona) {
-                finalPrompt += `. Gunakan palet warna utama: ${project.project_data.selectedPersona.palet_warna_hex.join(', ')}.`;
-            }
+        if (selectedProjectContext?.project_data.selectedPersona) {
+            const persona = selectedProjectContext.project_data.selectedPersona;
+            finalPrompt += `. Gunakan palet warna utama: ${persona.palet_warna_hex.join(', ')} dengan gaya ${persona.kata_kunci.join(', ')}.`;
         }
 
         setIsLoading(true); setError(null); setResult(null); setMockupPreviews({}); playSound('start');
@@ -108,10 +104,9 @@ const PatternGenerator: React.FC<PatternGeneratorProps> = ({ projects }) => {
 
             <div className="space-y-2">
                 <Textarea label="Deskripsi Pola" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: batik megamendung modern, warna pastel" rows={3} />
-                <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)} className="w-full bg-background border border-border-main rounded-lg p-2 text-sm text-text-body">
-                    <option value="">-- Gunakan Warna Bebas --</option>
-                    {completedProjects.map(p => <option key={p.id} value={p.id}>Gunakan Palet Warna dari "{p.project_data.brandInputs?.businessName}"</option>)}
-                </select>
+                 {selectedProjectContext && (
+                    <p className="text-xs text-primary animate-content-fade-in">✨ Prompt akan disempurnakan dengan palet warna & gaya dari brand "{selectedProjectContext.project_data.brandInputs?.businessName}".</p>
+                )}
             </div>
 
             <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">

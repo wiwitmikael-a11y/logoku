@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useMemo } from 'react';
 import { playSound } from '../services/soundService';
 import type { Project } from '../types';
 import LoadingMessage from './common/LoadingMessage';
@@ -22,6 +22,25 @@ interface AICreatorProps {
 
 const AICreator: React.FC<AICreatorProps> = ({ projects }) => {
     const [activeTool, setActiveTool] = useState<Tool>('video');
+    const [selectedProjectContext, setSelectedProjectContext] = useState<Project | null>(null);
+
+    const completedProjects = useMemo(() => 
+        projects.filter(p => 
+            p.status === 'completed' && 
+            p.project_data.brandInputs &&
+            p.project_data.selectedPersona &&
+            p.project_data.selectedLogoUrl
+        ), [projects]);
+
+    const handleContextChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const projectId = e.target.value;
+        if (projectId) {
+            const project = completedProjects.find(p => p.id.toString() === projectId);
+            setSelectedProjectContext(project || null);
+        } else {
+            setSelectedProjectContext(null);
+        }
+    };
 
     const toolsConfig = [
         { id: 'video', name: 'AI Video Generator', desc: 'Ubah ide jadi video pendek sinematik.', icon: '🎬' },
@@ -34,13 +53,14 @@ const AICreator: React.FC<AICreatorProps> = ({ projects }) => {
 
     const renderActiveTool = () => {
         const fallback = <div className="flex justify-center items-center h-64"><LoadingMessage /></div>;
+        const props = { selectedProjectContext };
         switch(activeTool) {
-            case 'video': return <Suspense fallback={fallback}><VideoGenerator projects={projects} /></Suspense>;
-            case 'photo': return <Suspense fallback={fallback}><PhotoStudio /></Suspense>;
-            case 'mixer': return <Suspense fallback={fallback}><SceneMixer /></Suspense>;
-            case 'moodboard': return <Suspense fallback={fallback}><MoodboardGenerator /></Suspense>;
-            case 'pattern': return <Suspense fallback={fallback}><PatternGenerator projects={projects} /></Suspense>;
-            case 'mascot': return <Suspense fallback={fallback}><MascotGenerator /></Suspense>;
+            case 'video': return <Suspense fallback={fallback}><VideoGenerator projects={projects} {...props} /></Suspense>;
+            case 'photo': return <Suspense fallback={fallback}><PhotoStudio {...props} /></Suspense>;
+            case 'mixer': return <Suspense fallback={fallback}><SceneMixer {...props} /></Suspense>;
+            case 'moodboard': return <Suspense fallback={fallback}><MoodboardGenerator {...props} /></Suspense>;
+            case 'pattern': return <Suspense fallback={fallback}><PatternGenerator projects={projects} {...props} /></Suspense>;
+            case 'mascot': return <Suspense fallback={fallback}><MascotGenerator {...props} /></Suspense>;
             default: return null;
         }
     }
@@ -70,8 +90,36 @@ const AICreator: React.FC<AICreatorProps> = ({ projects }) => {
             </aside>
 
             {/* Right Content Area */}
-            <main className="w-full md:w-2/3 lg:w-3/4 bg-surface border border-border-main rounded-xl shadow-lg shadow-black/20 p-6">
-                {renderActiveTool()}
+            <main className="w-full md:w-2/3 lg:w-3/4 bg-surface border border-border-main rounded-xl shadow-lg shadow-black/20 p-6 space-y-6">
+                 <div>
+                    <label htmlFor="brand-context-selector" className="block text-sm font-bold text-text-header mb-2">Pilih Konteks Brand</label>
+                    <select 
+                        id="brand-context-selector"
+                        onChange={handleContextChange}
+                        value={selectedProjectContext?.id || ''}
+                        className="w-full bg-background border border-border-main rounded-lg p-2 text-sm text-text-body focus:ring-2 focus:ring-primary focus:outline-none"
+                    >
+                        <option value="">🎨 Mode Freestyle (Tanpa Konteks)</option>
+                        {completedProjects.map(p => (
+                            <option key={p.id} value={p.id}>
+                                {p.project_data.brandInputs?.businessName}
+                            </option>
+                        ))}
+                    </select>
+                    {selectedProjectContext && (
+                        <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg flex items-center gap-3 animate-content-fade-in">
+                            <img src={selectedProjectContext.project_data.selectedLogoUrl} alt="logo" className="w-8 h-8 rounded-md bg-white p-1" />
+                            <div>
+                                <p className="text-xs text-primary font-semibold">Konteks Aktif:</p>
+                                <p className="text-sm font-bold text-text-header">{selectedProjectContext.project_data.brandInputs?.businessName}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="border-t border-border-main pt-6">
+                    {renderActiveTool()}
+                </div>
             </main>
         </div>
     );

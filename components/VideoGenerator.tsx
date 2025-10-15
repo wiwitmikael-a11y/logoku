@@ -24,10 +24,16 @@ const LOADING_MESSAGES = [
 
 interface InteractivePromptBuilderProps {
     onGenerate: (prompt: string) => void;
+    initialProduct: string;
 }
 
-const InteractivePromptBuilder: React.FC<InteractivePromptBuilderProps> = ({ onGenerate }) => {
+const InteractivePromptBuilder: React.FC<InteractivePromptBuilderProps> = ({ onGenerate, initialProduct }) => {
     const [state, setState] = useState({ type: 'Promosi Produk', product: '', feature: '', vibe: 'Modern & Bersih' });
+    
+    useEffect(() => {
+        setState(prev => ({ ...prev, product: initialProduct }));
+    }, [initialProduct]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setState(prev => ({ ...prev, [name]: value }));
@@ -86,8 +92,9 @@ const PostProductionPanel: React.FC<PostProductionPanelProps> = ({ projects, vid
 
 interface VideoGeneratorProps {
     projects: Project[];
+    selectedProjectContext: Project | null;
 }
-const VideoGenerator: React.FC<VideoGeneratorProps> = ({ projects }) => {
+const VideoGenerator: React.FC<VideoGeneratorProps> = ({ projects, selectedProjectContext }) => {
     const { profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     const credits = profile?.credits ?? 0;
@@ -111,6 +118,15 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({ projects }) => {
         }
         return () => clearInterval(interval);
     }, [isLoading]);
+    
+    // Clear state when context changes
+    useEffect(() => {
+        setPrompt('');
+        setImageBase64(null);
+        setVideoUrl(null);
+        setError(null);
+        setUseInteractiveBuilder(true);
+    }, [selectedProjectContext]);
 
     const handleFileChange = (files: FileList | null) => {
         if (!files || files.length === 0) return;
@@ -176,7 +192,10 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({ projects }) => {
                             <button onClick={() => setUseInteractiveBuilder(p => !p)} className="text-xs text-primary hover:underline">{useInteractiveBuilder ? 'Mode Manual' : 'Pakai Asisten Prompt'}</button>
                         </div>
                         {useInteractiveBuilder ? (
-                             <InteractivePromptBuilder onGenerate={(p) => { setPrompt(p); setUseInteractiveBuilder(false); }} />
+                             <InteractivePromptBuilder 
+                                onGenerate={(p) => { setPrompt(p); setUseInteractiveBuilder(false); }} 
+                                initialProduct={selectedProjectContext?.project_data.brandInputs?.businessName || ''}
+                            />
                         ) : (
                             <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Contoh: seekor kucing oren mengendarai sepeda motor dengan kecepatan tinggi di jalanan neon Tokyo" rows={4} />
                         )}

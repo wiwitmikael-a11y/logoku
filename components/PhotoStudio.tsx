@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
 import { supabase } from '../services/supabaseClient';
+import type { Project } from '../types';
 import Button from './common/Button';
 import ErrorMessage from './common/ErrorMessage';
 import LoadingMessage from './common/LoadingMessage';
@@ -22,7 +23,11 @@ const SCENE_TEMPLATES = [
     { name: "Rak Toko Modern", prompt: "di sebuah rak toko modern yang terang dengan beberapa produk lain yang blur di latar belakang." },
 ];
 
-const PhotoStudio: React.FC = () => {
+interface PhotoStudioProps {
+    selectedProjectContext: Project | null;
+}
+
+const PhotoStudio: React.FC<PhotoStudioProps> = ({ selectedProjectContext }) => {
     const { user, profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     

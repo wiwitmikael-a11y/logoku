@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
 import { supabase } from '../services/supabaseClient';
+import type { Project } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
@@ -20,7 +21,11 @@ interface SceneImage {
   instruction: string;
 }
 
-const SceneMixer: React.FC = () => {
+interface SceneMixerProps {
+    selectedProjectContext: Project | null;
+}
+
+const SceneMixer: React.FC<SceneMixerProps> = ({ selectedProjectContext }) => {
     const { user, profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     

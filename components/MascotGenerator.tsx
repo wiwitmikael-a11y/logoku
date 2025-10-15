@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
 import { supabase } from '../services/supabaseClient';
+import type { Project } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
@@ -19,7 +20,11 @@ const XP_REWARD = 25;
 
 type Step = 'prompt' | 'options' | 'poses';
 
-const MascotGenerator: React.FC = () => {
+interface MascotGeneratorProps {
+    selectedProjectContext: Project | null;
+}
+
+const MascotGenerator: React.FC<MascotGeneratorProps> = ({ selectedProjectContext }) => {
     const { user, profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
@@ -37,11 +42,16 @@ const MascotGenerator: React.FC = () => {
     const handleGenerateInitial = async () => {
         if (!prompt.trim()) { setError('Deskripsi maskot tidak boleh kosong!'); return; }
         if ((profile?.credits ?? 0) < INITIAL_COST) { setShowOutOfCreditsModal(true); return; }
+        
+        let finalPrompt = prompt;
+        if (selectedProjectContext?.project_data.selectedPersona) {
+            finalPrompt += `, dengan gaya visual ${selectedProjectContext.project_data.selectedPersona.kata_kunci.join(', ')}`;
+        }
 
         setIsLoading(true); setError(null); setInitialOptions([]); setSelectedMascot(null); setPoses([]); playSound('start');
         try {
             if (!(await deductCredits(INITIAL_COST))) throw new Error("Gagal mengurangi token.");
-            const results = await generateMascot(prompt);
+            const results = await generateMascot(finalPrompt);
             setInitialOptions(results);
             setStep('options');
             await addXp(XP_REWARD);
@@ -115,6 +125,9 @@ const MascotGenerator: React.FC = () => {
             {step === 'prompt' && (
                 <div className="space-y-4 animate-content-fade-in">
                     <Textarea label="Deskripsi Maskot" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: beruang madu imut pakai blangkon, gaya kartun 2D" rows={3} />
+                     {selectedProjectContext && (
+                        <p className="text-xs text-primary animate-content-fade-in">✨ Prompt akan disempurnakan dengan gaya visual dari brand "{selectedProjectContext.project_data.brandInputs?.businessName}".</p>
+                    )}
                     <Button onClick={handleGenerateInitial} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">Buat 2 Opsi Awal ({INITIAL_COST} Token, +{XP_REWARD} XP)</Button>
                 </div>
             )}
