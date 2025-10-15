@@ -463,7 +463,7 @@ const App: React.FC = () => {
   if (supabaseError) {
     return <SupabaseKeyErrorScreen error={supabaseError} />;
   }
-  if (!import.meta.env.VITE_API_KEY) {
+  if (!process.env.API_KEY) {
     return <ApiKeyErrorScreen />;
   }
   return (

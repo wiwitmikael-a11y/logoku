@@ -1,12 +1,10 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-// FIX: Import ProjectData type.
-import { GoogleGenAI, Type, Modality, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { BrandInputs, BrandPersona, ContentCalendarEntry, GeneratedCaption, LogoVariations, SocialAdsData, SocialMediaKitAssets, SocialProfileData, AIPetState, ProjectData } from '../types';
 import { fetchImageAsBase64 } from "../utils/imageUtils";
 
-// FIX: Initialize the GoogleGenAI client with the API key from environment variables.
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Helper to parse JSON safely from AI responses which might include markdown ```json
 const safeJsonParse = <T>(jsonString: string, fallback: T): T => {
@@ -400,7 +398,6 @@ export const generateMoodboardImages = async (keywords: string): Promise<string[
 };
 
 export const generateSceneFromImages = async (base64Images: string[], prompt: string): Promise<string> => {
-    // FIX: Explicitly type the 'parts' array to allow both image and text objects.
     const parts: ({ inlineData: { data: string; mimeType: string; }; } | { text: string; })[] = base64Images.map(b64 => ({
         inlineData: {
             data: b64.split(',')[1],
@@ -421,7 +418,6 @@ export const generateSceneFromImages = async (base64Images: string[], prompt: st
 };
 
 export const generateImageForCanvas = async (prompt: string, baseImageB64?: string): Promise<string> => {
-    // FIX: Explicitly type the 'parts' array to allow both text and image objects.
     const parts: ({ text: string; } | { inlineData: { data: string; mimeType: string; }; })[] = [{ text: prompt }];
     if (baseImageB64) {
         parts.unshift({

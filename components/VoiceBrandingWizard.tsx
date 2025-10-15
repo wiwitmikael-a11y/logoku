@@ -248,7 +248,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
       setPermissionState('granted');
       streamRef.current = stream;
       
-      const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_API_KEY});
+      const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
 
       sessionPromiseRef.current = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',

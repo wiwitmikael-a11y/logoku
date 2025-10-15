@@ -10,17 +10,16 @@ import Button from './common/Button';
 import LoadingMessage from './common/LoadingMessage';
 import ErrorMessage from './common/ErrorMessage';
 
-const VideoGenerator = React.lazy(() => import('./VideoGenerator'));
 const PhotoStudio = React.lazy(() => import('./PhotoStudio'));
 const SceneMixer = React.lazy(() => import('./SceneMixer'));
 const MoodboardGenerator = React.lazy(() => import('./MoodboardGenerator'));
 const PatternGenerator = React.lazy(() => import('./PatternGenerator'));
 const MascotGenerator = React.lazy(() => import('./MascotGenerator'));
 
-type CreatorTool = 'video_gen' | 'photo_studio' | 'scene_mixer' | 'moodboard' | 'pattern' | 'mascot';
+type CreatorTool = 'photo_studio' | 'scene_mixer' | 'moodboard' | 'pattern' | 'mascot';
 
 const AICreator: React.FC<{ projects: Project[] }> = ({ projects }) => {
-    const [activeTool, setActiveTool] = useState<CreatorTool>('video_gen');
+    const [activeTool, setActiveTool] = useState<CreatorTool>('photo_studio');
     const [selectedProjectId, setSelectedProjectId] = useState<string>('freestyle');
 
     const { profile } = useAuth();
@@ -89,7 +88,6 @@ const AICreator: React.FC<{ projects: Project[] }> = ({ projects }) => {
     const renderActiveTool = () => {
         const props = { selectedProjectContext, ownerPhotoCutout };
         switch (activeTool) {
-            case 'video_gen': return <Suspense fallback={<LoadingMessage />}><VideoGenerator {...props} /></Suspense>;
             case 'photo_studio': return <Suspense fallback={<LoadingMessage />}><PhotoStudio {...props} /></Suspense>;
             case 'scene_mixer': return <Suspense fallback={<LoadingMessage />}><SceneMixer {...props} /></Suspense>;
             case 'moodboard': return <Suspense fallback={<LoadingMessage />}><MoodboardGenerator {...props} /></Suspense>;
@@ -100,7 +98,6 @@ const AICreator: React.FC<{ projects: Project[] }> = ({ projects }) => {
     };
 
     const tools = [
-        { id: 'video_gen', name: 'Video Generator', icon: '🎬' },
         { id: 'photo_studio', name: 'Studio Foto Virtual', icon: '📸' },
         { id: 'scene_mixer', name: 'Scene Mixer', icon: '🧩' },
         { id: 'moodboard', name: 'Asisten Vibe Brand', icon: '🎨' },
