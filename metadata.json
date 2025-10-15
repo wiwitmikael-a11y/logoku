@@ -1,8 +1,5 @@
 {
   "name": "desain.fun",
   "description": "Aplikasi Mang AI buat bantu UMKM dan bisnis kecil bikin logo, persona brand, dan konten sosmed unik dalam hitungan menit.",
-  "requestFramePermissions": [
-    "microphone",
-    "camera"
-  ]
+  "requestFramePermissions": []
 }

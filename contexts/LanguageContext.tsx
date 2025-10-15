@@ -10,7 +10,7 @@ type Translations = { [key in Language]: string };
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (translations: Translations) => string;
+  t: (translations: {id: string; en: string}) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -22,7 +22,6 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return (localStorage.getItem('desainfun_language') as Language) || 'id';
   });
 
-  // Effect for setting the initial language from the profile or local storage
   useEffect(() => {
     const initialLang = profile?.language || localStorage.getItem('desainfun_language') || 'id';
     setLanguageState(initialLang as Language);
@@ -43,16 +42,13 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
           if (error) {
             console.error('Gagal menyimpan preferensi bahasa:', error);
           } else {
-            // After successful DB update, refresh the profile to get the latest data
-            // which will trigger the useEffect to sync language state
             refreshProfile(); 
           }
         });
     }
   }, [user, refreshProfile]);
 
-  const t = useCallback((translations: Translations): string => {
-    // Fallback to Indonesian ('id') if the selected language is not in the provided translations
+  const t = useCallback((translations: {id: string; en: string}): string => {
     return translations[language] || translations['id'];
   }, [language]);
 

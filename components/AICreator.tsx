@@ -41,6 +41,21 @@ const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
     const completedProjects = projects.filter(p => p.status === 'completed');
     const selectedProjectContext = selectedProjectId === 'freestyle' ? null : completedProjects.find(p => p.id === parseInt(selectedProjectId)) || null;
 
+    const handleTakePhoto = async () => {
+        setOwnerAssetError(null);
+        try {
+            // Request camera permission temporarily.
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            // Immediately stop the tracks as we only need permission for the capture input to work.
+            stream.getTracks().forEach(track => track.stop());
+            // Programmatically click the hidden file input with the 'capture' attribute.
+            cameraInputRef.current?.click();
+        } catch (err) {
+            console.error("Camera permission error:", err);
+            setOwnerAssetError("Gagal mendapatkan izin kamera. Pastikan kamu mengizinkan akses di browser-mu.");
+        }
+    };
+    
     const handleFileSelect = (file: File | null) => {
         if (!file) return;
         if (!file.type.startsWith('image/')) {
@@ -160,7 +175,7 @@ const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
                     </div>
                      {ownerAssetError && <ErrorMessage message={ownerAssetError} />}
                     <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={() => cameraInputRef.current?.click()} size="small" variant="secondary">📸 Ambil Foto</Button>
+                        <Button onClick={handleTakePhoto} size="small" variant="secondary">📸 Ambil Foto</Button>
                         <Button onClick={() => galleryInputRef.current?.click()} size="small" variant="secondary">🖼️ Dari Galeri</Button>
                     </div>
                      {ownerPhotoOriginal && (

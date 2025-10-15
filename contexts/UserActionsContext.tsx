@@ -158,7 +158,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
     } else {
         await addXp(xp);
     }
-  }, [user, dailyActions, addXp, refreshProfile]);
+  }, [user, dailyActions, addXp]);
 
   const value: UserActionsContextType = {
     showOutOfCreditsModal, setShowOutOfCreditsModal,

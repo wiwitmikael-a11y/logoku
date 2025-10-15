@@ -3,9 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
-// FIX: Import missing AIPet types.
 import type { AIPetState, AIPetPersonalityVector } from '../types';
-// FIX: Import missing geminiService function.
 import { generateAIPetNarrative } from '../services/geminiService';
 
 export type VisualEffect = { type: 'feed', id: number } | null;
@@ -34,21 +32,16 @@ export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [visualEffect, setVisualEffect] = useState<VisualEffect | null>(null);
 
   useEffect(() => {
-    // This logic is now driven by the master loading state from AuthContext.
-    // If auth is loading, AIPet is also loading.
     if (authLoading) {
         setIsLoading(true);
-        setPetState(null); // Clear pet state while auth is in flux
+        setPetState(null);
         return;
     }
     
-    // Auth is done, now we can determine AIPet state.
     setIsLoading(false);
     if (profile) {
-        // If a profile exists, use its pet state.
         setPetState(profile.aipet_state || null);
     } else {
-        // If no profile (e.g., user logged out), ensure pet state is cleared.
         setPetState(null);
     }
   }, [authLoading, profile]);
@@ -75,7 +68,6 @@ export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         throw new Error(`Token tidak cukup. Butuh 5, kamu punya ${profile.credits}.`);
     }
 
-    // FIX: The RPC function expects the parameter to be named 'p_user_id', not 'user_id', consistent with other RPC calls in the app.
     const { data, error } = await supabase.rpc('activate_aipet', {
         p_user_id: user.id
     });
@@ -90,7 +82,6 @@ export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       return (Object.keys(p) as Array<keyof typeof p>).reduce((a, b) => p[a] > p[b] ? a : b);
     };
     const dominantTrait = getDominantTrait(newPetState.personality);
-    // FIX: `dominantTrait` can be inferred as `string | number`. Explicitly cast to string.
     const narrative = await generateAIPetNarrative(newPetState.name, newPetState.tier, String(dominantTrait));
     
     const { error: narrativeError } = await supabase

@@ -57,7 +57,7 @@ const LemariKreasi: React.FC = () => {
     let base64Url: string | undefined;
     if (asset.asset_type === 'mascot' && asset.asset_data.urls) {
       base64Url = asset.asset_data.urls[0];
-    } else if (asset.asset_type === 'moodboard' && asset.asset_data.images) {
+    } else if (asset.asset_type === 'moodboard' && Array.isArray(asset.asset_data.images)) {
       base64Url = asset.asset_data.images[0];
     } else {
       base64Url = asset.asset_data.url;
@@ -79,7 +79,7 @@ const LemariKreasi: React.FC = () => {
     let base64Url: string | undefined;
     if (asset.asset_type === 'mascot' && asset.asset_data.urls) {
       base64Url = asset.asset_data.urls[0];
-    } else if (asset.asset_type === 'moodboard' && asset.asset_data.images) {
+    } else if (asset.asset_type === 'moodboard' && Array.isArray(asset.asset_data.images)) {
       base64Url = asset.asset_data.images[0];
     } else {
       base64Url = asset.asset_data.url;

@@ -12,6 +12,9 @@ interface UIContextType {
   showToast: (message: string) => void;
   closeToast: () => void;
 
+  isAssistantOpen: boolean;
+  toggleAssistant: (isOpen?: boolean) => void;
+
   // Modal states and toggles
   showContactModal: boolean;
   toggleContactModal: (show?: boolean) => void;
@@ -27,16 +30,19 @@ interface UIContextType {
   toggleBrandGalleryModal: (show?: boolean) => void;
   showSotoshop: boolean;
   toggleSotoshop: (show?: boolean) => void;
-  showVoiceWizard: boolean;
-  toggleVoiceWizard: (show?: boolean) => void;
+  showAIPetLab: boolean;
+  toggleAIPetLab: (show?: boolean) => void;
   showTokenomicsModal: boolean;
   toggleTokenomicsModal: (show?: boolean) => void;
+  showVoiceWizard: boolean;
+  toggleVoiceWizard: (show?: boolean) => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [toast, setToast] = useState<ToastState>({ message: '', show: false });
+  const [isAssistantOpen, setAssistantOpen] = useState(false);
   
   const [showContactModal, setShowContactModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
@@ -45,8 +51,9 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
   const [showSotoshop, setShowSotoshop] = useState(false);
-  const [showVoiceWizard, setShowVoiceWizard] = useState(false);
+  const [showAIPetLab, setShowAIPetLab] = useState(false);
   const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
+  const [showVoiceWizard, setShowVoiceWizard] = useState(false);
 
   const showToast = useCallback((message: string) => {
     setToast({ message, show: true });
@@ -66,6 +73,8 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     toast,
     showToast,
     closeToast,
+    isAssistantOpen,
+    toggleAssistant: createToggle(setAssistantOpen),
     showContactModal,
     toggleContactModal: createToggle(setShowContactModal),
     showAboutModal,
@@ -80,10 +89,12 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     toggleBrandGalleryModal: createToggle(setShowBrandGalleryModal),
     showSotoshop,
     toggleSotoshop: createToggle(setShowSotoshop),
-    showVoiceWizard,
-    toggleVoiceWizard: createToggle(setShowVoiceWizard),
+    showAIPetLab,
+    toggleAIPetLab: createToggle(setShowAIPetLab),
     showTokenomicsModal,
     toggleTokenomicsModal: createToggle(setShowTokenomicsModal),
+    showVoiceWizard,
+    toggleVoiceWizard: createToggle(setShowVoiceWizard),
   };
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

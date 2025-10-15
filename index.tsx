@@ -3,6 +3,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { UIProvider } from './contexts/UIContext';
+import { UserActionsProvider } from './contexts/UserActionsContext';
+import { LanguageProvider } from './contexts/LanguageContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { AIPetProvider } from './contexts/AIPetContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -12,9 +17,6 @@ if (!rootElement) {
 // Register Service Worker for PWA capabilities
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // The path '/sw.js' is absolute to the origin, which is the correct implementation.
-    // The "origin mismatch" error reported is an environment-specific issue (e.g., a proxy or misconfigured CDN)
-    // and not a bug in this registration code itself.
     navigator.serviceWorker.register('/sw.js').then(registration => {
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
     }, err => {
@@ -26,6 +28,16 @@ if ('serviceWorker' in navigator) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <UserActionsProvider>
+        <UIProvider>
+          <LanguageProvider>
+            <AIPetProvider>
+              <App />
+            </AIPetProvider>
+          </LanguageProvider>
+        </UIProvider>
+      </UserActionsProvider>
+    </AuthProvider>
   </React.StrictMode>
 );
