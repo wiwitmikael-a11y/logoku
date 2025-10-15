@@ -21,7 +21,7 @@ interface Props {
   setShowOutOfCreditsModal: (show: boolean) => void;
 }
 
-// FIX: Ensured 'FINALIZING' is included in the ConversationState type to resolve the TypeScript error.
+// FIX: Added 'FINALIZING' to the ConversationState union type to resolve a comparison error in the `onclose` callback.
 type ConversationState = 'IDLE' | 'CONNECTING' | 'AI_SPEAKING' | 'USER_LISTENING' | 'PROCESSING' | 'COMPLETED' | 'FINALIZING' | 'ERROR';
 type ExtendedWizardStep = VoiceWizardStep | 'GET_LOGO_STYLE' | 'FINALIZING_LOGO' | 'FINALIZING';
 

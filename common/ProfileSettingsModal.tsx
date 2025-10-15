@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, Suspense } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { User, Profile } from '../../types';
 import Button from './Button';
 import { BgmSelection } from '../../contexts/AuthContext';
@@ -23,7 +23,7 @@ interface Props {
 
 const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const { user, profile, handleLogout, handleDeleteAccount, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
+  const { user, profile, executeLogout, handleDeleteAccount, isMuted, handleToggleMute, bgmSelection, handleBgmChange } = useAuth();
   const { toggleToSModal, toggleContactModal } = useUI();
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
 
   const handleClose = async () => { await unlockAudio(); playSound('click'); onClose(); };
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => { if (e.target === e.currentTarget) handleClose(); }
-  const handleLogoutClick = () => { handleLogout(); onClose(); };
+  const handleLogoutClick = () => { executeLogout(); onClose(); };
   const handleTosClick = () => { toggleToSModal(true); onClose(); };
   const handleContactClick = () => { toggleContactModal(true); onClose(); };
 
