@@ -2,7 +2,6 @@
 
 import React, { useEffect } from 'react';
 import { playSound } from '../../services/soundService';
-// FIX: Changed import path for Achievement type
 import type { Achievement } from '../../contexts/UserActionsContext';
 
 interface AchievementToastProps {

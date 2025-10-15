@@ -190,7 +190,7 @@ export type VoiceWizardStep =
   | 'CONFIRMATION'
   | 'FINALIZING'
   | 'COMPLETED';
-// --- FIX: Add missing AIPet types ---
+  
 export type AIPetTier = 'common' | 'epic' | 'legendary' | 'mythic';
 export type AIPetStage = 'aipod' | 'active';
 

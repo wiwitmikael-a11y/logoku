@@ -38,7 +38,6 @@ const SkeletonCard: React.FC = () => (
 
 
 const BrandGallery: React.FC<Props> = ({ onClose }) => {
-    // FIX: Destructure user from useAuth and other actions from useUserActions
     const { user } = useAuth();
     const { addXp, incrementDailyAction } = useUserActions();
     const [projects, setProjects] = useState<Project[]>([]);

@@ -54,7 +54,6 @@ const ContentCalendarGenerator: React.FC<Props> = ({ projectData, onComplete, on
 
     try {
       if (!(await deductCredits(GENERATION_COST))) return;
-      // FIX: Pass null for the petState argument to match the function signature.
       const result = await generateContentCalendar(projectData.brandInputs.businessName, projectData.selectedPersona, null);
       setCalendar(result.calendar);
       setSources(result.sources);

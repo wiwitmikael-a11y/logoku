@@ -50,7 +50,6 @@ const ProfileOptimizer: React.FC<Props> = ({ projectData, onComplete, onGoToDash
     playSound('start');
 
     try {
-      // FIX: Pass null for the petState argument to match the function signature.
       const result = await generateSocialProfiles(brandInputs, selectedPersona, null);
       if (!(await deductCredits(GENERATION_COST))) return;
       setProfileData(result);

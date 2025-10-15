@@ -23,7 +23,6 @@ type MediaTab = 'roll_banner' | 'banner';
 const GENERATION_COST = 1;
 
 const PrintMediaGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  // FIX: Destructure profile from useAuth and other actions from useUserActions
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const credits = profile?.credits ?? 0;

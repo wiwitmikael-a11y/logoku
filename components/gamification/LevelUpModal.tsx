@@ -3,7 +3,6 @@
 import React, { useEffect, useRef } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
 import Button from '../common/Button';
-// FIX: Changed import path for LevelUpInfo type
 import type { LevelUpInfo } from '../../contexts/UserActionsContext';
 
 interface Props {

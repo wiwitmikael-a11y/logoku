@@ -19,7 +19,6 @@ interface Props {
 const GENERATION_COST = 2;
 
 const SocialMediaKitGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  // FIX: Destructure profile from useAuth and other actions from useUserActions
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const credits = profile?.credits ?? 0;

@@ -4,7 +4,6 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generatePackagingDesign } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import { useAuth } from '../contexts/AuthContext';
-// FIX: The import for types was failing because types.ts was not a module. This is fixed by adding content to types.ts
 import type { ProjectData } from '../types';
 import { useUserActions } from '../contexts/UserActionsContext';
 import Button from './common/Button';
@@ -69,7 +68,6 @@ const packagingConfigs: PackagingCategory = {
 const categoryMap: { [key: string]: string } = { 'Makanan': 'Makanan', 'Minuman': 'Minuman', 'Fashion': 'Fashion', 'Jasa': 'Jasa', 'Kecantikan': 'Kecantikan & Perawatan Diri', 'Kerajinan Tangan': 'Kerajinan Tangan & Dekorasi Rumah', 'Lainnya': 'Kerajinan Tangan & Dekorasi Rumah' };
 
 const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
-  // FIX: Destructure profile from useAuth and other actions from useUserActions
   const { profile } = useAuth();
   const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
   const credits = profile?.credits ?? 0;

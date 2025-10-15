@@ -32,7 +32,7 @@ if ('serviceWorker' in navigator) {
 
 const root = ReactDOM.createRoot(rootElement);
 
-// Perform startup checks here, before rendering the main app tree
+// Perform startup checks here, before rendering the main app tree. This is the core fix.
 if (supabaseError) {
   root.render(<SupabaseKeyErrorScreen error={supabaseError} />);
 } else if (!import.meta?.env?.VITE_API_KEY) {

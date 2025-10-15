@@ -1,7 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useEffect, useState, useMemo, Suspense } from 'react';
-import type { Project, BrandInputs } from '../types';
+// FIX: Import ProjectData type to resolve TypeScript error.
+import type { Project, ProjectData } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
 import { supabase } from '../services/supabaseClient';
@@ -19,7 +20,7 @@ const PusatJuragan = React.lazy(() => import('./gamification/PusatJuragan'));
 
 interface ProjectDashboardProps {
   projects: Project[];
-  onNewProject: (templateData?: Partial<BrandInputs>) => void;
+  onNewProject: (templateData?: Partial<ProjectData>) => void;
   onSelectProject: (projectId: number) => void;
   onDeleteProject: (projectId: number) => void;
   onPreloadNewProject: () => void;
@@ -30,317 +31,174 @@ const DYNAMIC_INFO_TIPS = [
     { icon: '🎉', title: 'Project Pertama Lebih Hemat!', text: 'Rancang brand pertamamu dan dapatkan <strong class="text-text-header">cashback 1 token</strong> di setiap langkah generator utamanya! Ini cara Mang AI bilang \'selamat datang\' dan bantu lo hemat di awal.' },
     { icon: '🎁', title: 'Bonus Sambutan 20 Token', text: 'Sebagai juragan baru, lo juga langsung dapet bonus sambutan <span class="font-bold text-splash">20 token</span> di hari pertama! Manfaatin buat eksplorasi sepuasnya, ya!' },
     { icon: '☀️', title: 'Jatah Harian Anti Rugi', text: 'Tiap pagi, kalo token lo kurang dari 5, Mang AI bakal <strong class="text-text-header">isi ulang sampe jadi 5</strong>, gratis! Kalo sisa token lo banyak (misal 12), jumlahnya <strong class="text-text-header">nggak akan direset</strong>. Aman!' },
-    { icon: '💾', title: 'WAJIB: Amankan Aset Visual!', text: 'Untuk menjaga layanan ini gratis, semua gambar (logo, mockup) <strong class="text-text-header">hanya disimpan sementara</strong> di browser. Setelah project selesai, jangan lupa <span class="font-bold text-splash">unduh semua asetmu</span> lewat Brand Hub!' },
-    { icon: '🚀', title: 'Kekuatan Brand Hub', text: 'Project yang udah selesai masuk ke <strong class="text-text-header">Brand Hub</strong>. Dari sana, lo bisa generate ulang teks iklan atau kalender konten kapan aja tanpa ngulang dari nol.' },
-];
+    { icon: '💾', title: 'WAJIB: Amankan Aset Visual!', text: 'Untuk menjaga layanan ini gratis, semua gambar (logo, mockup) <strong class="--- START OF FILE components/PackagingGenerator.tsx ---
 
-const DynamicInfoBox: React.FC = () => {
-    const [currentTipIndex, setCurrentTipIndex] = useState(0);
-    useEffect(() => {
-        const interval = setInterval(() => { setCurrentTipIndex(prev => (prev + 1) % DYNAMIC_INFO_TIPS.length); }, 7000);
-        return () => clearInterval(interval);
-    }, []);
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-    const currentTip = DYNAMIC_INFO_TIPS[currentTipIndex];
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { generatePackagingDesign } from '../services/geminiService';
+import { playSound } from '../services/soundService';
+import { useAuth } from '../contexts/AuthContext';
+import type { ProjectData } from '../types';
+import { useUserActions } from '../contexts/UserActionsContext';
+import Button from './common/Button';
+import Textarea from './common/Textarea';
+import ImageModal from './common/ImageModal';
+import ErrorMessage from './common/ErrorMessage';
+import CalloutPopup from './common/CalloutPopup';
+import { fetchImageAsBase64 } from '../utils/imageUtils';
+import Card from './common/Card';
 
-    return (
-        <div key={currentTipIndex} className="w-full max-w-3xl bg-surface border border-border-main rounded-lg p-4 flex items-start gap-4 text-left animate-content-fade-in shadow-lg shadow-black/20">
-            <div className="flex-shrink-0 text-2xl pt-1">{currentTip.icon}</div>
-            <div>
-                <h4 className="font-bold text-primary">{currentTip.title}</h4>
-                <p className="text-sm text-text-body" dangerouslySetInnerHTML={{ __html: currentTip.text }} />
-            </div>
-        </div>
-    );
+interface Props {
+  projectData: Partial<ProjectData>;
+  onComplete: (data: { packagingUrl: string }) => void;
+  onGoToDashboard: () => void;
+}
+
+const GENERATION_COST = 1;
+
+interface PackagingOption { id: string; name: string; prompt: string; }
+interface PackagingCategory { [category: string]: PackagingOption[]; }
+
+const packagingConfigs: PackagingCategory = {
+  'Makanan': [
+    { id: 'snack_trio', name: 'Trio Kemasan Snack & Makanan Ringan', prompt: 'Create a single, cohesive, high-quality commercial product photoshoot on a clean, minimalist surface. The image must feature three packaging variations for "{{businessName}}", a brand selling "{{businessDetail}}". The style should be {{personaStyle}}. The composition must showcase:\n\n1.  **Center Focus:** A modern standing pouch with a clear window showing the product inside. The provided logo is prominent.\n2.  **Left:** A smaller, sealed foil sachet for single servings, with the logo.\n3.  **Right:** A stack of the actual product (e.g., chips, cookies) next to an open pouch to show texture and appeal.' },
+    { id: 'rice_box_set', name: 'Set Nasi Box & Lauk Pauk', prompt: 'Create a single, top-down (flat lay) photo for a food delivery service. The image must feature three variations for "{{businessName}}", a brand selling "{{businessDetail}}". The style should be modern and appetizing. The composition must showcase:\n\n1.  **Center Focus:** A closed brown kraft paper rice box with the provided logo stamped clearly on top.\n2.  **Left:** An open rice box showing the complete meal "{{businessDetail}}" neatly arranged inside.\n3.  **Right:** A separate paper bowl containing just the main lauk (side dish) from the meal, to highlight it.' },
+    { id: 'frozen_food_lineup', name: 'Line-up Frozen Food', prompt: 'Create a single, cohesive, high-quality commercial product photoshoot against a clean, white background with subtle icy textures. The image must feature three packaging variations for "{{businessName}}", a brand selling frozen "{{businessDetail}}". The style is {{personaStyle}}. The composition must showcase:\n\n1.  **Center Focus:** A vacuum-sealed plastic pack showing the frozen product clearly.\n2.  **Left:** A designed cardboard box for the frozen food, ready for retail freezer display.\n3.  **Right:** The product "{{businessDetail}}" cooked and beautifully plated on a modern dish, to show the final result.' },
+    { id: 'sambal_jar_set', name: 'Set Sambal, Bumbu & Selai', prompt: 'Create a single, cohesive, high-quality product photoshoot emphasizing texture and fresh ingredients. The image must feature three variations for "{{businessName}}", a brand selling "{{businessDetail}}". The composition on a rustic wooden surface must showcase:\n\n1.  **Center Focus:** The product in a clear glass jar with a branded label.\n2.  **Front:** A small amount of the product on a spoon or in a mini traditional bowl (cobek) to show its rich texture.\n3.  **Background:** Artfully arranged fresh raw ingredients like chili peppers, onions, or strawberries.\nThe overall style is {{personaStyle}}, natural, and appetizing.'},
+    { id: 'bakery_set', name: 'Sajian Kue & Roti (Bakery)', prompt: 'Create a single, elegant, high-quality bakery photoshoot. The image must feature three perspectives for "{{businessName}}", which sells "{{businessDetail}}". The composition must showcase:\n\n1.  **Center Focus:** The whole cake or loaf of bread on a stylish stand.\n2.  **Front:** A single slice of the product on a plate, revealing the inner texture and layers.\n3.  **Background:** A premium, branded cake box for takeaway.\nThe lighting should be soft and inviting, with a style of {{personaStyle}}.'},
+    { id: 'hampers_pack', name: 'Paket Hampers & Katering', prompt: 'Create a single, luxurious, high-quality flat lay photograph of a food hamper from "{{businessName}}". The image must showcase the "{{businessDetail}}" package from three perspectives:\n\n1.  **Center Focus:** The beautifully wrapped, closed hamper basket or box.\n2.  **Arranged Around:** A top-down view of all the individual food items from the hamper, artfully arranged.\n3.  **Prominently Placed:** A close-up of a branded greeting card or tag featuring the provided logo.\nThe overall style should be {{personaStyle}}, premium, and celebratory.'}
+  ],
+  'Minuman': [
+    { id: 'coffee_shop_trio', name: 'Trio Kopi Kekinian (Gelas, Botol, Biji)', prompt: 'Create a single, cohesive, high-quality commercial product photoshoot on a minimalist cafe table with soft lighting. The image must feature three product variations for "{{businessName}}", which sells "{{businessDetail}}". The composition must showcase:\n\n1.  **Left:** A tall, iced plastic cup of the beverage with the provided logo clearly visible.\n2.  **Center Focus:** A sleek 1-liter bottle (botol kopi literan) with a branded label featuring the provided logo.\n3.  **Right:** A small, branded paper pouch filled with roasted coffee beans, with the logo on it.\nThe entire composition must look professional, trendy, and match the brand style: {{personaStyle}}.' },
+    { id: 'jamu_herbal_set', name: 'Set Jamu & Minuman Herbal', prompt: 'Create a single, cohesive, high-quality product photo with an earthy, natural aesthetic. The image must feature three product variations for "{{businessName}}", a brand selling "{{businessDetail}}". The composition must showcase:\n\n1.  **Center Focus:** A classic amber or green glass bottle (botol kaca) with a simple, elegant label featuring the provided logo.\n2.  **Left:** A small, traditional glass (gelas sloki) filled with the beverage.\n3.  **Right:** The raw ingredients (e.g., turmeric, ginger, tamarind) used to make the beverage, arranged artfully next to the bottle.\nThe style should be {{personaStyle}}, emphasizing natural and healthy qualities.' },
+    { id: 'tea_set', name: 'Rangkaian Teh & Tisane', prompt: 'Create a single, serene, and high-quality product photoshoot for a tea brand named "{{businessName}}". The image must showcase the process of enjoying "{{businessDetail}}" in three stages:\n\n1.  **Background:** The loose-leaf tea in its branded packaging (a pouch or a tin can).\n2.  **Center Focus:** The tea being steeped in a clear glass teapot, showing the beautiful color of the infusion.\n3.  **Foreground:** A single, elegant teacup filled with the ready-to-drink tea, with a wisp of steam rising.\nThe style should be {{personaStyle}}, calm, and minimalist.'},
+    { id: 'powdered_drink_trio', name: 'Trio Minuman Bubuk (Cokelat, Matcha, Susu)', prompt: 'Create a single, clean, and dynamic product photoshoot for a powdered drink brand, "{{businessName}}", which sells "{{businessDetail}}". The composition must showcase:\n\n1.  **Background:** The main product packaging (pouch or can) with the provided logo.\n2.  **Mid-ground:** A scoop or spoon showing the fine texture of the powder.\n3.  **Foreground:** A tall glass of the prepared beverage (hot or iced), looking delicious and ready to drink.\nThe overall style is {{personaStyle}}, modern, and energetic.'}
+  ],
+  'Fashion': [
+    { id: 'apparel_pack', name: 'Paket Brand Apparel (Baju, Hang Tag, Box)', prompt: 'Create a single, clean, high-end flat lay product photograph for a fashion e-commerce store called "{{businessName}}", which sells "{{businessDetail}}". The background is a neutral, textured surface. The composition must showcase:\n\n1.  **Center Focus:** A neatly folded t-shirt or piece of clothing.\n2.  **On the clothing:** A close-up of a stylish cardboard hang-tag featuring the provided logo.\n3.  **Next to it:** A sleek, branded mailer box or polymailer for shipping.\nThe overall aesthetic must be {{personaStyle}}, chic and stylish.' },
+    { id: 'hijab_set', name: 'Set Hijab & Scarf', prompt: 'Create a single, elegant flat lay photograph for a hijab brand, "{{businessName}}". The image must emphasize texture, pattern, and premium packaging. The composition must showcase:\n\n1.  **Main:** The hijab folded gracefully to highlight the branded label.\n2.  **Detail:** A close-up, macro shot of the fabric\'s texture or a key part of the pattern.\n3.  **Packaging:** An exclusive pouch or thin box used for packaging.\nThe style is {{personaStyle}}, sophisticated, and modest.'},
+    { id: 'accessories_trio', name: 'Trio Aksesoris (Tas, Sepatu, Dompet)', prompt: 'Create a single, cohesive, high-quality commercial product photoshoot for an accessories brand, "{{businessName}}", which sells "{{businessDetail}}". The composition must showcase:\n\n1.  **Main:** The full view of the product (e.g., handbag, pair of shoes).\n2.  **Detail:** A close-up shot focusing on a specific detail like stitching, a buckle, or the material texture.\n3.  **Packaging:** The protective dust bag or branded box it comes with.\nThe style should be {{personaStyle}}, clean, and focused on craftsmanship.'}
+  ],
+  'Kecantikan & Perawatan Diri': [
+    { id: 'skincare_product_line', name: 'Rangkaian Produk Skincare', prompt: 'Create a single, cohesive, high-quality cosmetic product photoshoot against a clean, elegant background. The image must feature three packaging variations for "{{businessName}}", a brand selling "{{businessDetail}}". The composition must showcase:\n\n1.  **Center Focus:** A serum bottle with a dropper.\n2.  **Left:** A cosmetic cream jar.\n3.  **Right:** The outer product box for one of the items.\nAll items must feature the provided logo and look like a cohesive product line. The style is {{personaStyle}}, premium, and clean.' },
+    { id: 'makeup_demo', name: 'Demo Produk Makeup (Lipstik, Foundation)', prompt: 'Create a single, chic, high-quality cosmetic product photoshoot. The image must demonstrate the product "{{businessDetail}}" from "{{businessName}}". The composition must showcase:\n\n1.  **Product:** The primary packaging of the product (e.g., lipstick tube, foundation bottle).\n2.  **Texture/Color:** A textural smear or swatch of the product on a clean, flat surface (like a piece of acrylic) to show its true color and texture.\n3.  **Packaging:** The secondary outer box for the product.\nThe style should be {{personaStyle}}, clean, modern, and macro-focused.'},
+    { id: 'body_care_set', name: 'Set Perawatan Tubuh (Sabun, Lulur, Minyak)', prompt: 'Create a single, spa-like, relaxing product photoshoot for a body care brand, "{{businessName}}". The image must showcase "{{businessDetail}}" in an appealing way. The composition, arranged on a surface like slate or wood, must include:\n\n1.  **Product:** The main product (e.g., a bar of soap, a jar of body scrub).\n2.  **Texture:** A demonstration of its texture (e.g., rich lather, scrub granules).\n3.  **Ingredients:** Natural props related to its ingredients (e.g., dried flowers, coffee beans, a slice of lemon).\nThe style should be {{personaStyle}}, natural, and serene.'}
+  ],
+  'Jasa': [
+    { id: 'service_branding_kit', name: 'Branding Kit untuk Jasa Profesional', prompt: 'Create a single, cohesive, high-quality mockup showcasing a branding kit for a service-based business, "{{businessName}}", which offers "{{businessDetail}}". The style is professional and trustworthy. The flat lay composition on a clean desk must include:\n\n1.  **Center Focus:** A business card featuring the provided logo and contact details.\n2.  **Left:** A branded A4 letterhead or folder.\n3.  **Right:** A smartphone or tablet screen displaying the hero section of a website, with the logo clearly visible.\nThe overall aesthetic must be {{personaStyle}}.' },
+    { id: 'creative_service_demo', name: 'Proses & Hasil Jasa Kreatif', prompt: 'Create a single, professional mockup image to visualize a creative service by "{{businessName}}". The image should show a "process and result" concept. The composition must include:\n\n1.  **Process:** A "behind-the-scenes" element like a camera or a design software interface on a screen.\n2.  **Result:** The final output of the service (a printed photo, a finished design on a screen).\n3.  **Testimonial:** A mockup of a client testimonial quote displayed on a smartphone screen.\nThe style should be {{personaStyle}}, modern, and results-oriented.'},
+    { id: 'physical_service_demo', name: 'Paket Jasa Layanan Fisik', prompt: 'Create a single, compelling "before and after" diptych image for a service like laundry, cleaning, or a workshop called "{{businessName}}". The composition must showcase:\n\n1.  **Before:** An object in its "before" state (e.g., a dirty shoe).\n2.  **After:** The same object in its clean, pristine "after" state.\n3.  **Branding:** The final product being handed over in a branded bag or box with the provided logo.\nThe style should be clean and emphasize the dramatic, positive transformation.'}
+  ],
+  'Kerajinan Tangan & Dekorasi Rumah': [
+    { id: 'generic_product_trio', name: 'Trio Produk Serbaguna', prompt: 'Create a single, cohesive, high-quality commercial product photoshoot. The image must feature three packaging variations for "{{businessName}}", a brand selling "{{businessDetail}}". The style is {{personaStyle}}. The composition must showcase:\n\n1.  **Center Focus:** The main product in a premium cardboard box.\n2.  **Left:** The product itself, unboxed and presented attractively.\n3.  **Right:** A branded paper bag or pouch for the product.\nThe entire scene must look professional and ready for an e-commerce website.' },
+    { id: 'aromatherapy_set', name: 'Set Produk Aromaterapi (Lilin, Diffuser)', prompt: 'Create a single, cozy, and atmospheric product photoshoot for an aromatherapy brand "{{businessName}}" selling "{{businessDetail}}". The composition must showcase:\n\n1.  **Product:** The product in its container (a candle in a glass jar, a diffuser bottle).\n2.  **In Use:** A detail of the product in action (the flickering flame of the candle, the reed sticks in the diffuser).\n3.  **Packaging:** The elegant outer box for the product.\nThe lighting should be warm and soft, creating a tranquil mood. The style is {{personaStyle}}.'},
+    { id: 'stationery_set', name: 'Rangkaian Alat Tulis & Kertas', prompt: 'Create a single, beautiful flat lay photograph for a stationery brand, "{{businessName}}". The image must showcase the quality and design of "{{businessDetail}}". The composition must include:\n\n1.  **Cover:** The front cover of the product (e.g., a journal, planner).\n2.  **Interior:** The product opened to a sample inner page.\n3.  **Detail:** A close-up of a unique feature (e.g., a holographic sticker, the spiral binding, a custom bookmark).\nThe style should be {{personaStyle}}, creative, and well-organized.'}
+  ],
+   'Agrikultur & Produk Tani': [
+    { id: 'fresh_produce_trio', name: 'Trio Hasil Panen (Buah, Sayur, Madu)', prompt: 'Create a single, fresh, and vibrant product photoshoot for an agricultural business, "{{businessName}}", selling "{{businessDetail}}". The image must emphasize freshness and natural quality. The composition must include:\n\n1.  **Packaging:** The produce in its delivery packaging (a rustic basket, a branded box).\n2.  **Produce:** The fresh produce itself, artfully arranged and looking delicious.\n3.  **Detail:** A close-up shot showing a detail like a drop of honey, condensation on a fruit, or the texture of a vegetable.\nThe style should be {{personaStyle}}, bright, and organic.'},
+    { id: 'gardening_kit', name: 'Set Benih & Perlengkapan Berkebun', prompt: 'Create a single, hopeful, and inspiring product photoshoot for a gardening brand, "{{businessName}}". The image should show a complete starter kit for "{{businessDetail}}". The composition must include:\n\n1.  **Seeds:** The branded seed packet.\n2.  **Supplies:** A bag of potting soil or other necessary supplies.\n3.  **Result:** A small, healthy plant seedling growing in a pot, representing the successful outcome.\nThe style should be {{personaStyle}}, earthy, and encouraging.'}
+  ]
 };
+const categoryMap: { [key: string]: string } = { 'Makanan': 'Makanan', 'Minuman': 'Minuman', 'Fashion': 'Fashion', 'Jasa': 'Jasa', 'Kecantikan': 'Kecantikan & Perawatan Diri', 'Kerajinan Tangan': 'Kerajinan Tangan & Dekorasi Rumah', 'Lainnya': 'Kerajinan Tangan & Dekorasi Rumah' };
 
-const PodiumCard: React.FC<{ project: Project; rank: number; delay: number }> = ({ project, rank, delay }) => {
-    const { brandInputs, selectedLogoUrl } = project.project_data || {};
-
-    if (!brandInputs?.businessName || !selectedLogoUrl) {
-        return null; // Don't render card if essential data is missing
-    }
-    
-    const rankClasses = { 1: 'row-start-1 md:row-start-auto md:col-start-2 z-10 scale-110 transform', 2: 'md:mt-12', 3: 'md:mt-12' };
-    const glowClasses = { 1: 'shadow-[0_0_20px_theme(colors.yellow.400)] border-yellow-400', 2: 'shadow-[0_0_15px_theme(colors.slate.400)] border-slate-400', 3: 'shadow-[0_0_15px_#A0522D] border-[#A0522D]' }
-    const rankColor = (glowClasses[rank as keyof typeof glowClasses] || '').split(' ')[1].replace('border-', '');
-
-    return (
-        <div className={`flex flex-col items-center gap-1 group transition-transform duration-300 hover:scale-105 ${rankClasses[rank as keyof typeof rankClasses]}`} style={{ animation: `item-appear 0.5s ${delay}s cubic-bezier(0.25, 1, 0.5, 1) forwards`, opacity: 0 }}>
-            <div className={`relative w-24 h-24 p-2 rounded-xl bg-surface/80 backdrop-blur-sm border-2 transition-all duration-300 ${glowClasses[rank as keyof typeof glowClasses]}`}>
-                <img src={selectedLogoUrl} alt={`Logo for ${brandInputs.businessName}`} className="max-w-full max-h-full object-contain mx-auto" />
-                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-surface border-2 flex items-center justify-center text-lg font-bold" style={{ borderColor: rankColor }}>
-                    {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
-                </div>
-            </div>
-            <p className="text-sm font-semibold text-text-header truncate w-24 text-center">{brandInputs.businessName}</p>
-            <p className="text-xs text-splash font-bold">{project.like_count || 0} Menyala 🔥</p>
-        </div>
-    );
-};
-
-const BrandGalleryPreview: React.FC = () => {
-    const { toggleBrandGalleryModal } = useUI();
-    const [topProjects, setTopProjects] = useState<Project[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchTopProjects = async () => {
-            setIsLoading(true);
-            const { data, error } = await supabase.from('projects').select('id, project_data, like_count').eq('status', 'completed').order('like_count', { ascending: false }).limit(3);
-            if (error) console.error("Failed to fetch top projects:", error);
-            else setTopProjects(data.sort((a, b) => (b.like_count || 0) - (a.like_count || 0)) as Project[]);
-            setIsLoading(false);
-        };
-        fetchTopProjects();
-    }, []);
-    
-    const [first, second, third] = topProjects;
-
-    return (
-        <div className="w-full text-center mt-12">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Podium Juara Pameran Brand 🏆</h2>
-            <div className="group relative bg-surface/80 backdrop-blur-sm border border-border-main rounded-xl p-6 hover:border-primary/50 transition-colors cursor-pointer overflow-hidden shadow-lg shadow-black/20" onClick={() => toggleBrandGalleryModal(true)} style={{ backgroundImage: 'radial-gradient(ellipse at 50% 10%, rgba(14, 165, 233, 0.05) 0%, transparent 60%)' }}>
-                {isLoading ? (<div className="h-40 flex items-center justify-center"><LoadingMessage /></div>) : 
-                topProjects.length === 0 ? (
-                    <div className="h-40 flex flex-col items-center justify-center">
-                        <p className="text-text-body text-lg">Panggung Masih Kosong!</p>
-                        <p className="text-text-muted mt-1">Jadilah yang pertama menyelesaikan project dan rebut podium juara.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-y-8 gap-x-4 items-end min-h-[160px]">
-                        {second && <PodiumCard project={second} rank={2} delay={0.2} />}
-                        {first && <PodiumCard project={first} rank={1} delay={0} />}
-                        {third && <PodiumCard project={third} rank={3} delay={0.4} />}
-                    </div>
-                )}
-                <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl">
-                    <p className="font-bold text-white text-lg animate-pulse" style={{fontFamily: 'var(--font-display)', letterSpacing: '0.1em'}}>Lihat Semua Pameran &rarr;</p>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const DeleteButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
-  <button onClick={onClick} className="absolute top-3 right-12 z-10 p-1.5 rounded-full text-text-muted hover:bg-red-500/20 hover:text-red-400 transition-colors" title="Hapus Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm4 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" /></svg></button>
-);
-
-const EditButton: React.FC<{ onClick: (e: React.MouseEvent) => void }> = ({ onClick }) => (
-  <button onClick={onClick} className="absolute top-3 right-3 z-10 p-1.5 rounded-full text-text-muted hover:bg-background hover:text-text-body transition-colors" title="Lihat & Edit Project"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg></button>
-);
-
-const StatusBadge: React.FC<{ status: Project['status'] }> = ({ status }) => {
-    const statusMap = {
-        'in-progress': { text: 'Dikerjakan', color: 'bg-yellow-400/20', dotColor: 'bg-yellow-400', textColor: 'text-yellow-200' },
-        'completed': { text: 'Selesai', color: 'bg-green-400/20', dotColor: 'bg-green-400', textColor: 'text-green-200' },
-    };
-    const { text, color, dotColor, textColor } = statusMap[status] || { text: 'Unknown', color: 'bg-slate-400/20', dotColor: 'bg-slate-400', textColor: 'text-slate-300' };
-    return (
-        <div className={`inline-flex text-xs font-semibold px-2.5 py-1 rounded-full items-center gap-1.5 ${color} flex-shrink-0`}>
-            <span className={`h-2 w-2 rounded-full ${dotColor}`}></span>
-            <span className={textColor}>{text}</span>
-        </div>
-    );
-};
-
-const ProjectContent: React.FC<ProjectDashboardProps> = ({ projects, onNewProject, onSelectProject, onDeleteProject, onPreloadNewProject }) => {
-    const { profile } = useAuth();
-    const { toggleVoiceWizard } = useUI();
-    const [showOnboarding, setShowOnboarding] = useState(false);
-    
-    useEffect(() => {
-        if (profile?.total_projects_completed === 0 && projects.length === 0 && !sessionStorage.getItem('onboardingDismissed')) setShowOnboarding(true);
-    }, [profile, projects]);
-
-    const { inProgressProjects, completedProjects } = useMemo(() => {
-        const inProgress = projects.filter(p => p.status === 'in-progress');
-        const completed = projects.filter(p => p.status === 'completed');
-        return { inProgressProjects: inProgress, completedProjects: completed };
-    }, [projects]);
-  
-    const getProgressDescription = (project: Project): string => {
-        const data = project.project_data;
-        if (!data.selectedPersona) return "Memulai: Persona Brand";
-        if (!data.selectedLogoUrl) return "Progres: Desain Logo";
-        if (!data.logoVariations) return "Progres: Finalisasi Logo";
-        if (!data.socialMediaKit) return "Progres: Social Media Kit";
-        if (!data.socialProfiles) return "Progres: Optimasi Profil";
-        if (!data.selectedPackagingUrl) return "Progres: Desain Kemasan";
-        if (!data.printMediaAssets) return "Progres: Media Cetak";
-        if (!data.contentCalendar) return "Progres: Kalender Konten";
-        return "Progres: Iklan Sosmed";
-    }
-    
-    return (
-        <div className="flex flex-col gap-8 items-center text-center">
-            <DynamicInfoBox />
-            <div className="relative mt-12 flex flex-col items-center gap-4 w-full max-w-md">
-                <div className="w-full text-center">
-                    <div className="relative">
-                        <Button onClick={() => onNewProject()} onMouseEnter={onPreloadNewProject} size="large" variant="splash" className="w-full">+ Bikin Project Branding Baru</Button>
-                        {showOnboarding && (
-                            <div onClick={() => { setShowOnboarding(false); sessionStorage.setItem('onboardingDismissed', 'true'); }} className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max cursor-pointer animate-bounce">
-                                <CalloutPopup>Sokin, Juragan! Klik di sini buat mulai!</CalloutPopup>
-                            </div>
-                        )}
-                    </div>
-                     <div className="text-xs text-text-muted px-4 mt-2 bg-background/50 rounded-md p-2 border border-border-main">
-                        <strong className="text-splash">MANUAL!</strong> Isi formulir singkat untuk memandu AI meracik brand-mu langkah demi langkah. Cocok buat yang suka kontrol penuh.
-                    </div>
-                </div>
-                <div className="text-text-muted font-semibold">ATAU</div>
-                <div className="w-full text-center">
-                    <Button
-                        onClick={() => toggleVoiceWizard(true)}
-                        variant="splash"
-                        size="large"
-                        className="w-full"
-                    >
-                         <span className="relative flex items-center justify-center gap-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                            Mulai Konsultasi Suara
-                         </span>
-                    </Button>
-                    <div className="text-xs text-text-muted px-4 mt-2 bg-background/50 rounded-md p-2 border border-border-main">
-                        <strong className="text-splash">BARU!</strong> Coba ngobrol santai 5 menit bareng Mang AI. Jawab pertanyaannya, dan di akhir sesi, lo bakal langsung dapet fondasi brand & logo master.
-                    </div>
-                </div>
-            </div>
-
-            <div className="w-full border-t border-border-main my-8"></div>
-
-            {inProgressProjects.length > 0 && (
-                <div className="w-full text-left">
-                <h2 className="text-2xl md:text-3xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project yang Sedang Dikerjakan:</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {inProgressProjects.map(project => (
-                        <div key={project.id} className="relative group">
-                            <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-20">{project.project_data.brandInputs?.businessName || 'Project Tanpa Nama'}</span></>} onClick={() => onSelectProject(project.id)}>
-                              <div className="pr-12">
-                                <p className="text-sm text-text-muted min-h-[40px] italic">{getProgressDescription(project)}</p>
-                                <div className="mt-4 pt-4 border-t border-border-main"><p className="text-xs text-text-muted">Klik untuk lanjut...</p></div>
-                              </div>
-                            </Card>
-                            <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
-                        </div>
-                    ))}
-                </div>
-                </div>
-            )}
-
-            {completedProjects.length > 0 && (
-                <div className="w-full text-left mt-8">
-                <h2 className="text-2xl md:text-3xl font-bold mb-4 text-text-header" style={{ fontFamily: 'var(--font-display)' }}>Project Selesai (Brand Hub):</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {completedProjects.map(project => (
-                        <div key={project.id} className="relative group">
-                            <Card title={<><StatusBadge status={project.status} /><span className="block mt-2 truncate pr-20">{project.project_data.brandInputs.businessName}</span></>} onClick={() => onSelectProject(project.id)}>
-                              <div className="space-y-3 pr-12">
-                                <p className="text-sm text-primary italic">"{project.project_data.selectedSlogan}"</p>
-                                <div className="flex items-center gap-4 pt-2 border-t border-border-main">
-                                    <img src={project.project_data.selectedLogoUrl} alt="logo" className="w-10 h-10 rounded-md bg-surface p-1 border border-border-light" loading="lazy" />
-                                    <p className="text-sm text-text-body"><span className="font-semibold text-text-header">Persona:</span> {project.project_data.selectedPersona.nama_persona}</p>
-                                </div>
-                                <p className="text-xs text-text-muted pt-2 border-t border-border-main">Selesai pada: {new Date(project.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                              </div>
-                            </Card>
-                            <DeleteButton onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }} />
-                            <EditButton onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} />
-                        </div>
-                    ))}
-                </div>
-                </div>
-            )}
-
-            {projects.length === 0 && (<div className="mt-8 text-center text-text-muted"><p>Lo belom punya project nih. Klik tombol di atas buat bikin brand pertama lo!</p></div>)}
-            
-            <div className="w-full border-t border-border-main my-8"></div>
-            <div className="w-full max-w-4xl space-y-8">
-                <BrandGalleryPreview />
-            </div>
-            <div className="w-full max-w-4xl space-y-8 mt-8">
-                <SaweriaWidget />
-                <InFeedAd />
-            </div>
-        </div>
-    );
-};
-
-const TabButton: React.FC<{
-    name: string;
-    icon: React.ReactNode;
-    active: boolean;
-    onClick: () => void;
-}> = ({ name, icon, active, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${active ? 'tab-active-accent' : 'text-text-muted hover:text-text-header'}`}
-    >
-        {icon}
-        <span>{name}</span>
-    </button>
-);
-
-const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
+const PackagingGenerator: React.FC<Props> = ({ projectData, onComplete, onGoToDashboard }) => {
   const { profile } = useAuth();
-  const userName = profile?.full_name?.split(' ')[0] || 'Juragan';
-  const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'lemari' | 'forum' | 'gamify'>('projects');
+  const { deductCredits, setShowOutOfCreditsModal } = useUserActions();
+  const credits = profile?.credits ?? 0;
+
+  const [prompt, setPrompt] = useState('');
+  const [designs, setDesigns] = useState<string[]>([]);
+  const [selectedDesignBase64, setSelectedDesignBase64] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+  const [showNextStepNudge, setShowNextStepNudge] = useState(false);
+  
+  const rawCategory = projectData.brandInputs?.businessCategory || 'Lainnya';
+  const mappedCategory = categoryMap[rawCategory] || 'Kerajinan Tangan & Dekorasi Rumah';
+  const availableOptions = packagingConfigs[mappedCategory] || packagingConfigs['Kerajinan Tangan & Dekorasi Rumah'];
+  
+  const [selectedPackagingTypeId, setSelectedPackagingTypeId] = useState<string>(availableOptions[0].id);
+
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const currentOptions = packagingConfigs[mappedCategory] || [];
+    const selectionExists = currentOptions.some(opt => opt.id === selectedPackagingTypeId);
+    if (!selectionExists && currentOptions.length > 0) setSelectedPackagingTypeId(currentOptions[0].id);
+  }, [mappedCategory, selectedPackagingTypeId]);
   
   useEffect(() => {
-    if (sessionStorage.getItem('openForumTab')) {
-        setActiveTab('forum');
-        sessionStorage.removeItem('openForumTab');
+    if (!projectData.brandInputs || !projectData.selectedPersona) return;
+    const { brandInputs, selectedPersona } = projectData;
+    const options = packagingConfigs[mappedCategory] || packagingConfigs['Kerajinan Tangan & Dekorasi Rumah'];
+    const config = options.find(opt => opt.id === selectedPackagingTypeId) || options[0];
+    const personaStyle = selectedPersona.kata_kunci.join(', ');
+    const initialPrompt = config.prompt
+        .replace(/\{\{businessName\}\}/g, brandInputs.businessName)
+        .replace(/\{\{businessDetail\}\}/g, brandInputs.businessDetail)
+        .replace(/\{\{personaStyle\}\}/g, personaStyle);
+    setPrompt(initialPrompt);
+  }, [projectData, mappedCategory, selectedPackagingTypeId]);
+
+  useEffect(() => {
+    if (designs.length > 0 && resultsRef.current) resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [designs]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (credits < GENERATION_COST) { setShowOutOfCreditsModal(true); playSound('error'); return; }
+    if (!prompt || !projectData.selectedLogoUrl) { setError("Data logo tidak ditemukan."); playSound('error'); return; }
+
+    setIsLoading(true);
+    setError(null);
+    setDesigns([]);
+    setSelectedDesignBase64(null);
+    setShowNextStepNudge(false);
+    playSound('start');
+
+    try {
+      const logoBase64 = await fetchImageAsBase64(projectData.selectedLogoUrl);
+      const results = await generatePackagingDesign(prompt, logoBase64);
+      if (!(await deductCredits(GENERATION_COST))) return;
+      setDesigns(results);
+      setSelectedDesignBase64(results[0]);
+      setShowNextStepNudge(true);
+      playSound('success');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
+      playSound('error');
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [prompt, projectData, credits, deductCredits, setShowOutOfCreditsModal]);
 
-  const tabs = [
-    { id: 'projects', name: 'Project', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
-    { id: 'tools', name: 'CreAItor', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg> },
-    { id: 'lemari', name: 'Lemari', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-fuchsia-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg> },
-    { id: 'forum', name: 'Forum', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H17z" /></svg> },
-    { id: 'gamify', name: 'Gamify', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
-  ];
-
-  const handleTabClick = (id: string) => {
-      setActiveTab(id as any);
-  }
+  const handleContinue = () => {
+    if (selectedDesignBase64) {
+      onComplete({ packagingUrl: selectedDesignBase64 });
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
       <div className="text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>Halo, {userName}! Siap Jadi Juara?</h2>
-        <p className="text-text-muted max-w-3xl mx-auto">
-            Ini studio branding pribadimu. Mulai dari <strong className="text-sky-400 font-semibold">Project</strong>, 
-            berkreasi di <strong className="text-yellow-400 font-semibold">CreAItor</strong>, 
-            simpan aset di <strong className="text-fuchsia-400 font-semibold">Lemari</strong>,
-            ngobrol di <strong className="text-orange-400 font-semibold">Forum</strong>, 
-            atau asah jiwa kompetisimu di menu <strong className="text-green-400 font-semibold">Gamify</strong>. 
-            Semua alat buat jadi juara ada di sini!
-        </p>
+        <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">Langkah 6: Foto Produk & Kemasan</h2>
+        <p className="text-text-muted max-w-3xl mx-auto">Pilih skenario foto produk yang paling pas, dan Mang AI akan membuatkan sebuah foto komersial profesional yang menampilkan beberapa variasi kemasan atau penyajian produk lo sekaligus.</p>
       </div>
 
-      <div className="flex justify-center border-b border-border-main overflow-x-auto">
-        {tabs.map(tab => (
-            <TabButton 
-                key={tab.id}
-                name={tab.name}
-                icon={tab.icon}
-                active={activeTab === tab.id}
-                onClick={() => handleTabClick(tab.id)}
-            />
-        ))}
-      </div>
-      
-      <div className="mt-4">
-        {activeTab === 'projects' && <ProjectContent {...props} />}
-        {activeTab === 'tools' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><AICreator projects={props.projects} onShowSotoshop={props.onShowSotoshop} /></Suspense>)}
-        {activeTab === 'lemari' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><LemariKreasi /></Suspense>)}
-        {activeTab === 'forum' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><Forum /></Suspense>)}
-        {activeTab === 'gamify' && (<Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]"><LoadingMessage /></div>}><PusatJuragan /></Suspense>)}
-      </div>
-    </div>
-  );
-};
-
-export default ProjectDashboard;
+      <Card title="Konfigurasi Foto Produk" className="p-4 sm:p-6">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                   <label htmlFor="packagingType" className="block mb-1.5 text-sm font-medium text-text-muted">Pilih Skenario Foto Produk</label>
+                   <select id="packagingType" name="packagingType" value={selectedPackagingTypeId} onChange={(e) => setSelectedPackagingTypeId(e.target.value)} className="w-full px-3 py-2 text-text-body bg-surface border border-border-main rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors">
+                      {availableOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
+                   </select>
+              </div>
+              <p className="text-sm text-text-muted md:pt-8">Pilihan ini disesuaikan berdasarkan kategori bisnis "<span className="font-semibold text-text-header">{rawCategory}</span>", dan menggunakan skenario untuk "<span className="font-semibold text-text-header">{mappedCategory}</span>".</p>
+          </div>
+          <Textarea label="Prompt Foto Produk (Sudah Otomatis, Bisa Diedit)" name="packagingPrompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={10} />
+          <div className="pt-4 border-t border-border-main">
+            <Button type="submit" isLoading={isLoading} disabled={!prompt.trim() || credits < GENERATION_COST}>Jepret Foto Produknya, Mang! ({GENERATION_COST} Token)</Button>
+          
