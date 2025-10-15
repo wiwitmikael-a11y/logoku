@@ -1,125 +1,175 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, Suspense, useMemo } from 'react';
-import { playSound } from '../services/soundService';
+import React, { useState, Suspense, useRef } from 'react';
 import type { Project } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { useUserActions } from '../contexts/UserActionsContext';
+import { playSound } from '../services/soundService';
+import { removeBackground } from '../services/geminiService';
+import Button from './common/Button';
 import LoadingMessage from './common/LoadingMessage';
+import ErrorMessage from './common/ErrorMessage';
 
-// Lazy load all the individual tool components
 const VideoGenerator = React.lazy(() => import('./VideoGenerator'));
 const PhotoStudio = React.lazy(() => import('./PhotoStudio'));
 const SceneMixer = React.lazy(() => import('./SceneMixer'));
 const MoodboardGenerator = React.lazy(() => import('./MoodboardGenerator'));
 const PatternGenerator = React.lazy(() => import('./PatternGenerator'));
 const MascotGenerator = React.lazy(() => import('./MascotGenerator'));
-const Sotoshop = React.lazy(() => import('./Sotoshop'));
 
-type Tool = 'video' | 'photo' | 'mixer' | 'moodboard' | 'pattern' | 'mascot';
+type CreatorTool = 'video_gen' | 'photo_studio' | 'scene_mixer' | 'moodboard' | 'pattern' | 'mascot';
 
-interface AICreatorProps {
-  projects: Project[];
-}
+const AICreator: React.FC<{ projects: Project[] }> = ({ projects }) => {
+    const [activeTool, setActiveTool] = useState<CreatorTool>('video_gen');
+    const [selectedProjectId, setSelectedProjectId] = useState<string>('freestyle');
 
-const AICreator: React.FC<AICreatorProps> = ({ projects }) => {
-    const [activeTool, setActiveTool] = useState<Tool>('video');
-    const [selectedProjectContext, setSelectedProjectContext] = useState<Project | null>(null);
+    const { profile } = useAuth();
+    const { deductCredits, setShowOutOfCreditsModal, addXp } = useUserActions();
 
-    const completedProjects = useMemo(() => 
-        projects.filter(p => 
-            p.status === 'completed' && 
-            p.project_data.brandInputs &&
-            p.project_data.selectedPersona &&
-            p.project_data.selectedLogoUrl
-        ), [projects]);
+    const [ownerPhotoOriginal, setOwnerPhotoOriginal] = useState<string | null>(null);
+    const [ownerPhotoCutout, setOwnerPhotoCutout] = useState<string | null>(null);
+    const [isRemovingBg, setIsRemovingBg] = useState(false);
+    const [ownerAssetError, setOwnerAssetError] = useState<string | null>(null);
 
-    const handleContextChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const projectId = e.target.value;
-        if (projectId) {
-            const project = completedProjects.find(p => p.id.toString() === projectId);
-            setSelectedProjectContext(project || null);
-        } else {
-            setSelectedProjectContext(null);
+    const galleryInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
+    
+    const completedProjects = projects.filter(p => p.status === 'completed');
+    const selectedProjectContext = selectedProjectId === 'freestyle' ? null : completedProjects.find(p => p.id === parseInt(selectedProjectId)) || null;
+
+    const handleFileSelect = (file: File | null) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            setOwnerAssetError('File yang dipilih harus berupa gambar.');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setOwnerPhotoOriginal(e.target?.result as string);
+            setOwnerPhotoCutout(null); // Reset cutout when new image is uploaded
+            setOwnerAssetError(null);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleProcessFace = async () => {
+        if (!ownerPhotoOriginal || isRemovingBg) return;
+        if ((profile?.credits ?? 0) < 1) {
+            setShowOutOfCreditsModal(true);
+            return;
+        }
+        
+        setIsRemovingBg(true);
+        setOwnerAssetError(null);
+        playSound('start');
+
+        try {
+            if (!(await deductCredits(1))) throw new Error("Gagal mengurangi token.");
+            
+            const resultBase64 = await removeBackground(ownerPhotoOriginal);
+            setOwnerPhotoCutout(resultBase64);
+            await addXp(10);
+            playSound('success');
+
+        } catch (err) {
+            setOwnerAssetError(err instanceof Error ? err.message : 'Gagal memproses gambar.');
+            playSound('error');
+        } finally {
+            setIsRemovingBg(false);
         }
     };
 
-    const toolsConfig = [
-        { id: 'video', name: 'AI Video Generator', desc: 'Ubah ide jadi video pendek sinematik.', icon: '🎬' },
-        { id: 'photo', name: 'Studio Foto Virtual', desc: 'Upload produk & tempatkan di berbagai scene.', icon: '📸' },
-        { id: 'mixer', name: 'Scene Mixer', desc: 'Gabungkan beberapa gambar jadi satu karya baru.', icon: '🧩' },
-        { id: 'moodboard', name: 'Asisten Vibe Brand', desc: 'Tentukan nuansa & palet warna brand-mu.', icon: '🎨' },
-        { id: 'pattern', name: 'Studio Motif Brand', desc: 'Buat pola seamless untuk kemasan & lainnya.', icon: '🌀' },
-        { id: 'mascot', name: 'Pabrik Maskot Interaktif', desc: 'Lahirkan karakter unik untuk brand-mu.', icon: '🐻' },
-    ];
+    const clearOwnerAsset = () => {
+        setOwnerPhotoOriginal(null);
+        setOwnerPhotoCutout(null);
+        if (galleryInputRef.current) galleryInputRef.current.value = '';
+        if (cameraInputRef.current) cameraInputRef.current.value = '';
+    }
 
     const renderActiveTool = () => {
-        const fallback = <div className="flex justify-center items-center h-64"><LoadingMessage /></div>;
-        const props = { selectedProjectContext };
-        switch(activeTool) {
-            case 'video': return <Suspense fallback={fallback}><VideoGenerator projects={projects} {...props} /></Suspense>;
-            case 'photo': return <Suspense fallback={fallback}><PhotoStudio {...props} /></Suspense>;
-            case 'mixer': return <Suspense fallback={fallback}><SceneMixer {...props} /></Suspense>;
-            case 'moodboard': return <Suspense fallback={fallback}><MoodboardGenerator {...props} /></Suspense>;
-            case 'pattern': return <Suspense fallback={fallback}><PatternGenerator projects={projects} {...props} /></Suspense>;
-            case 'mascot': return <Suspense fallback={fallback}><MascotGenerator {...props} /></Suspense>;
-            default: return null;
+        const props = { selectedProjectContext, ownerPhotoCutout };
+        switch (activeTool) {
+            case 'video_gen': return <Suspense fallback={<LoadingMessage />}><VideoGenerator {...props} /></Suspense>;
+            case 'photo_studio': return <Suspense fallback={<LoadingMessage />}><PhotoStudio {...props} /></Suspense>;
+            case 'scene_mixer': return <Suspense fallback={<LoadingMessage />}><SceneMixer {...props} /></Suspense>;
+            case 'moodboard': return <Suspense fallback={<LoadingMessage />}><MoodboardGenerator {...props} /></Suspense>;
+            case 'pattern': return <Suspense fallback={<LoadingMessage />}><PatternGenerator {...props} /></Suspense>;
+            case 'mascot': return <Suspense fallback={<LoadingMessage />}><MascotGenerator {...props} /></Suspense>;
+            default: return <p>Pilih alat untuk memulai.</p>;
         }
-    }
-    
-    return (
-        <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Left Navigation */}
-            <aside className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
-                <div className="sticky top-28 space-y-3">
-                    <h2 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Creative Studio</h2>
-                    {toolsConfig.map(tool => (
-                        <button 
-                            key={tool.id} 
-                            onClick={() => { playSound('select'); setActiveTool(tool.id as Tool); }}
-                            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${activeTool === tool.id ? 'bg-primary/10 border-primary shadow-lg shadow-primary/10' : 'bg-surface border-border-main hover:border-splash/50 hover:bg-background'}`}
-                        >
-                           <div className="flex items-start gap-4">
-                                <div className="text-2xl mt-1">{tool.icon}</div>
-                                <div>
-                                    <h3 className={`font-bold ${activeTool === tool.id ? 'text-primary' : 'text-text-header'}`}>{tool.name}</h3>
-                                    <p className="text-xs text-text-muted">{tool.desc}</p>
-                                </div>
-                           </div>
-                        </button>
-                    ))}
-                </div>
-            </aside>
+    };
 
-            {/* Right Content Area */}
-            <main className="w-full md:w-2/3 lg:w-3/4 bg-surface border border-border-main rounded-xl shadow-lg shadow-black/20 p-6 space-y-6">
-                 <div>
-                    <label htmlFor="brand-context-selector" className="block text-sm font-bold text-text-header mb-2">Pilih Konteks Brand</label>
-                    <select 
-                        id="brand-context-selector"
-                        onChange={handleContextChange}
-                        value={selectedProjectContext?.id || ''}
-                        className="w-full bg-background border border-border-main rounded-lg p-2 text-sm text-text-body focus:ring-2 focus:ring-primary focus:outline-none"
-                    >
-                        <option value="">🎨 Mode Freestyle (Tanpa Konteks)</option>
-                        {completedProjects.map(p => (
-                            <option key={p.id} value={p.id}>
-                                {p.project_data.brandInputs?.businessName}
-                            </option>
+    const tools = [
+        { id: 'video_gen', name: 'Video Generator', icon: '🎬' },
+        { id: 'photo_studio', name: 'Studio Foto Virtual', icon: '📸' },
+        { id: 'scene_mixer', name: 'Scene Mixer', icon: '🧩' },
+        { id: 'moodboard', name: 'Asisten Vibe Brand', icon: '🎨' },
+        { id: 'pattern', name: 'Studio Motif Brand', icon: '🌀' },
+        { id: 'mascot', name: 'Pabrik Maskot Interaktif', icon: '🐻' },
+    ];
+
+    return (
+        <div className="flex flex-col lg:flex-row gap-6">
+             <input type="file" accept="image/*" ref={galleryInputRef} onChange={(e) => handleFileSelect(e.target.files?.[0] || null)} className="hidden" />
+             <input type="file" accept="image/*" capture="user" ref={cameraInputRef} onChange={(e) => handleFileSelect(e.target.files?.[0] || null)} className="hidden" />
+
+            {/* Left Sidebar */}
+            <aside className="w-full lg:w-1/4 xl:w-1/5 flex-shrink-0 space-y-6">
+                <div className="p-4 bg-surface rounded-lg border border-border-main">
+                    <h3 className="font-bold text-text-header mb-3">Navigasi CreAItor</h3>
+                    <nav className="space-y-2">
+                        {tools.map(tool => (
+                            <button key={tool.id} onClick={() => setActiveTool(tool.id as CreatorTool)} className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors text-left ${activeTool === tool.id ? 'bg-primary text-white font-semibold' : 'text-text-body hover:bg-background'}`}>
+                                <span>{tool.icon}</span><span>{tool.name}</span>
+                            </button>
                         ))}
+                    </nav>
+                </div>
+                <div className="p-4 bg-surface rounded-lg border border-border-main space-y-3">
+                    <h3 className="font-bold text-text-header">Konteks Brand</h3>
+                    <select value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)} className="w-full px-3 py-2 text-text-body bg-background border border-border-main rounded-lg focus:outline-none focus:ring-2 focus:ring-splash/50 focus:border-splash transition-colors">
+                        <option value="freestyle">Mode Freestyle</option>
+                        {completedProjects.map(p => <option key={p.id} value={p.id}>{p.project_data.brandInputs?.businessName}</option>)}
                     </select>
-                    {selectedProjectContext && (
-                        <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg flex items-center gap-3 animate-content-fade-in">
-                            <img src={selectedProjectContext.project_data.selectedLogoUrl} alt="logo" className="w-8 h-8 rounded-md bg-white p-1" />
-                            <div>
-                                <p className="text-xs text-primary font-semibold">Konteks Aktif:</p>
-                                <p className="text-sm font-bold text-text-header">{selectedProjectContext.project_data.brandInputs?.businessName}</p>
-                            </div>
+                     {selectedProjectContext && (
+                        <div className="text-xs text-primary bg-primary/10 p-2 rounded-md">
+                            Keren! CreAItor sekarang pakai data dari brand "{selectedProjectContext.project_data.brandInputs?.businessName}".
                         </div>
                     )}
                 </div>
-
-                <div className="border-t border-border-main pt-6">
-                    {renderActiveTool()}
+                 <div className="p-4 bg-surface rounded-lg border border-border-main space-y-3">
+                    <h3 className="font-bold text-text-header">Aset Persona Juragan</h3>
+                    <div className="bg-background p-3 rounded-lg flex flex-col items-center justify-center min-h-[150px]">
+                        {ownerPhotoCutout ? (
+                             <img src={ownerPhotoCutout} alt="Owner Cutout" className="max-w-full max-h-32 object-contain" />
+                        ) : ownerPhotoOriginal ? (
+                             <img src={ownerPhotoOriginal} alt="Owner Original" className="max-w-full max-h-32 object-contain" />
+                        ) : (
+                            <div className="text-center text-text-muted">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <p className="text-xs mt-2">Upload fotomu buat jadi model!</p>
+                            </div>
+                        )}
+                    </div>
+                     {ownerAssetError && <ErrorMessage message={ownerAssetError} />}
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button onClick={() => cameraInputRef.current?.click()} size="small" variant="secondary">📸 Ambil Foto</Button>
+                        <Button onClick={() => galleryInputRef.current?.click()} size="small" variant="secondary">🖼️ Dari Galeri</Button>
+                    </div>
+                     {ownerPhotoOriginal && (
+                        <Button onClick={handleProcessFace} isLoading={isRemovingBg} disabled={isRemovingBg} variant="accent" className="w-full">
+                           {ownerPhotoCutout ? "Proses Ulang (1 Token)" : "Proses Wajah (1 Token)"}
+                        </Button>
+                    )}
+                    {(ownerPhotoOriginal || ownerPhotoCutout) && (
+                         <Button onClick={clearOwnerAsset} size="small" variant="secondary" className="w-full !text-red-500 !border-red-500/20 hover:!bg-red-500/10">Hapus Foto</Button>
+                    )}
                 </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="w-full lg:flex-1 bg-surface p-6 rounded-lg border border-border-main">
+                {renderActiveTool()}
             </main>
         </div>
     );

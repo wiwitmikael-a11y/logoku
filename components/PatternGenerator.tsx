@@ -24,11 +24,10 @@ const MOCKUP_ASSETS = {
 };
 
 interface PatternGeneratorProps {
-    projects: Project[];
     selectedProjectContext: Project | null;
 }
 
-const PatternGenerator: React.FC<PatternGeneratorProps> = ({ projects, selectedProjectContext }) => {
+const PatternGenerator: React.FC<PatternGeneratorProps> = ({ selectedProjectContext }) => {
     const { user, profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     

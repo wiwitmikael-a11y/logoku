@@ -45,12 +45,11 @@ const SceneMixer: React.FC<SceneMixerProps> = ({ selectedProjectContext }) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const newImages = [...images];
-            // Ensure array is long enough
             while (newImages.length <= index) {
                 newImages.push({ src: '', instruction: '' });
             }
             newImages[index] = { src: e.target?.result as string, instruction: '' };
-            setImages(newImages.filter(img => img.src)); // Clean up empty slots if any were skipped
+            setImages(newImages.filter(img => img.src)); 
         };
         reader.readAsDataURL(file);
     };
@@ -123,7 +122,7 @@ const SceneMixer: React.FC<SceneMixerProps> = ({ selectedProjectContext }) => {
             <p className="text-sm text-text-body">Gabungkan beberapa gambar jadi satu karya baru! Upload hingga 3 gambar, kasih instruksi untuk tiap gambar, dan tulis prompt utama untuk menyatukannya.</p>
 
             <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <ImageSlot index={0} />
                     <ImageSlot index={1} />
                     <ImageSlot index={2} />

@@ -87,7 +87,7 @@ export const AIPetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const newPetState = data as AIPetState;
 
     const getDominantTrait = (p: AIPetPersonalityVector): keyof AIPetPersonalityVector => {
-      return (Object.keys(p) as Array<keyof AIPetPersonalityVector>).reduce((a, b) => p[a] > p[b] ? a : b);
+      return (Object.keys(p) as Array<keyof typeof p>).reduce((a, b) => p[a] > p[b] ? a : b);
     };
     const dominantTrait = getDominantTrait(newPetState.personality);
     // FIX: `dominantTrait` can be inferred as `string | number`. Explicitly cast to string.

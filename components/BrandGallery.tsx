@@ -133,7 +133,6 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
             } else {
                 const { error: insertError } = await supabase.from('project_likes').insert({ project_id: projectId, user_id: user.id });
                 if (insertError) throw insertError;
-                await supabase.rpc('increment_like_count', { project_id_in: projectId });
                 await addXp(1);
                 await incrementDailyAction('liked_projects');
             }

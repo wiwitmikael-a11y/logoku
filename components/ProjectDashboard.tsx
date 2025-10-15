@@ -283,7 +283,6 @@ const TabButton: React.FC<{
 
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { profile } = useAuth();
-  const { toggleSotoshop } = useUI();
   const userName = profile?.full_name?.split(' ')[0] || 'Juragan';
   const [activeTab, setActiveTab] = useState<'projects' | 'tools' | 'lemari' | 'forum' | 'gamify'>('projects');
   
