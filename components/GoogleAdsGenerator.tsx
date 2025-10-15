@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
 import type { LemariAsset } from '../types';
@@ -20,6 +20,7 @@ const LemariKreasi: React.FC = () => {
   const fetchAssets = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('lemari_kreasi')
       .select('*')
@@ -44,6 +45,7 @@ const LemariKreasi: React.FC = () => {
     
     const originalAssets = [...assets];
     setAssets(assets.filter(a => a.id !== assetId)); // Optimistic update
+    const supabase = getSupabaseClient();
     const { error } = await supabase.from('lemari_kreasi').delete().eq('id', assetId);
     if (error) {
       setError(`Gagal menghapus aset: ${error.message}`);
@@ -79,7 +81,7 @@ const LemariKreasi: React.FC = () => {
     let base64Url: string | undefined;
     if (asset.asset_type === 'mascot' && asset.asset_data.urls) {
       base64Url = asset.asset_data.urls[0];
-    } else if (asset.asset_type === 'moodboard' && asset.asset_data.images) {
+    } else if (asset.asset_type === 'moodboard' && Array.isArray(asset.asset_data.images)) {
       base64Url = asset.asset_data.images[0];
     } else {
       base64Url = asset.asset_data.url;

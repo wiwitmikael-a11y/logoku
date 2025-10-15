@@ -5,14 +5,6 @@ import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import type { DailyActions } from '../types';
 
-// Constants
-const getLevelFromXp = (xp: number): number => Math.floor(xp / 750) + 1;
-const getLevelUpReward = (level: number): number => {
-    if (level % 10 === 0) return 5; // Major milestone reward
-    if (level % 5 === 0) return 3;  // Minor milestone reward
-    return 1;                       // Standard level up reward
-};
-
 export interface LevelUpInfo {
   newLevel: number;
   tokenReward: number;
@@ -68,49 +60,43 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
   const deductCredits = useCallback(async (amount: number): Promise<boolean> => {
     if (!user || !profile) return false;
     if (profile.credits < amount) {
-        setShowOutOfCreditsModal(true);
-        return false;
+      setShowOutOfCreditsModal(true);
+      return false;
     }
     const supabase = getSupabaseClient();
-    const newCredits = profile.credits - amount;
-    const { error } = await supabase
-        .from('profiles')
-        .update({ credits: newCredits })
-        .eq('id', user.id);
+    const { error } = await supabase.rpc('deduct_credits', { p_amount: amount, p_user_id: user.id });
     
     if (error) {
-        console.error("Error deducting credits:", error);
-        return false;
-    } else {
-        await refreshProfile(); // Refresh to get the latest profile state
-        return true;
+      console.error("Error deducting credits via RPC:", error);
+      if (error.message.includes('insufficient credits') || error.code === '23514') {
+          setShowOutOfCreditsModal(true);
+      }
+      return false;
     }
-  }, [user, profile, refreshProfile]);
+    
+    await refreshProfile();
+    return true;
+  }, [user, profile, refreshProfile, setShowOutOfCreditsModal]);
+
 
   const addXp = useCallback(async (amount: number) => {
     if (!user || !profile) return;
-
     const supabase = getSupabaseClient();
-    const currentLevel = profile.level;
-    const newXp = profile.xp + amount;
-    const newLevel = getLevelFromXp(newXp);
-
-    let newCredits = profile.credits;
-    if (newLevel > currentLevel) {
-        const reward = getLevelUpReward(newLevel);
-        newCredits += reward;
-        setLevelUpInfo({ newLevel, tokenReward: reward });
+    const { data, error } = await supabase.rpc('add_xp', { p_amount: amount, p_user_id: user.id });
+    
+    if (error) {
+        console.error("Error adding XP via RPC:", error);
+        return;
+    }
+    
+    if (data && data.leveled_up) {
+        setLevelUpInfo({ newLevel: data.new_level, tokenReward: data.reward });
         setShowLevelUpModal(true);
     }
     
-    const { error } = await supabase
-        .from('profiles')
-        .update({ xp: newXp, level: newLevel, credits: newCredits })
-        .eq('id', user.id);
-    
-    if (error) console.error("Error adding XP:", error);
-    else await refreshProfile();
+    await refreshProfile();
   }, [user, profile, refreshProfile]);
+
 
   const grantAchievement = useCallback(async (achievementId: string) => {
     if (!user || !profile || profile.achievements.includes(achievementId)) return;

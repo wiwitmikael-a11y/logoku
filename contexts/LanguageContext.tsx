@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 
 type Language = 'id' | 'en';
@@ -34,6 +34,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     document.documentElement.lang = lang;
 
     if (user) {
+      const supabase = getSupabaseClient();
       supabase
         .from('profiles')
         .update({ language: lang })

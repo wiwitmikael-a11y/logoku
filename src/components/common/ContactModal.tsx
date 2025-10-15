@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
+import Button from './Button';
 
 interface Props {
   show: boolean;
@@ -49,6 +50,7 @@ const ContactModal: React.FC<Props> = ({ show, onClose }) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>
                 Hubungi via Email
             </a>
+            {/* FIX: Add aria-label for accessibility */}
             <a href="https://www.instagram.com/rangga.p.h" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick} className="w-full flex items-center justify-center gap-3 bg-background hover:bg-border-light text-text-body font-semibold py-3 px-4 rounded-lg transition-colors" aria-label="Kunjungi Instagram Developer">
                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" role="img"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" /></svg>
                 Kunjungi Instagram

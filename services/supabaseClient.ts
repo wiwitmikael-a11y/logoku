@@ -6,7 +6,7 @@ let supabaseInstance: SupabaseClient | null = null;
 /**
  * Mengambil atau membuat instance Supabase client.
  * Ini adalah 'lazy initialization' untuk memastikan environment variables
- * sudah tersedia saat client dibuat.
+ * sudah tersedia saat client dibuat. Selalu gunakan fungsi ini untuk mengakses Supabase.
  * @throws {Error} Jika environment variables untuk Supabase tidak ditemukan.
  * @returns {SupabaseClient} Instance dari Supabase client.
  */
@@ -35,8 +35,3 @@ export const getSupabaseClient = (): SupabaseClient => {
     throw new Error(`Gagal membuat Supabase client: ${(e as Error).message}`);
   }
 };
-
-// Ekspor instance dengan nama 'supabase' untuk kompatibilitas minimal,
-// namun best practice-nya adalah menggunakan getSupabaseClient().
-// Ini akan 'undefined' pada awalnya.
-export const supabase = supabaseInstance;

@@ -1,7 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { supabase } from '../services/supabaseClient';
+// FIX: Module '"../services/supabaseClient"' has no exported member 'supabase'. Did you mean 'getSupabaseClient'?
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import type { DailyActions } from '../types';
 
@@ -72,6 +73,8 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
         return false;
     }
     const newCredits = profile.credits - amount;
+    // FIX: 'supabase' is not defined.
+    const supabase = getSupabaseClient();
     const { error } = await supabase
         .from('profiles')
         .update({ credits: newCredits })
@@ -101,6 +104,8 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
         setShowLevelUpModal(true);
     }
     
+    // FIX: 'supabase' is not defined.
+    const supabase = getSupabaseClient();
     const { error } = await supabase
         .from('profiles')
         .update({ xp: newXp, level: newLevel, credits: newCredits })
@@ -113,6 +118,8 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
   const grantAchievement = useCallback(async (achievementId: string) => {
     if (!user || !profile || profile.achievements.includes(achievementId)) return;
     const newAchievements = [...profile.achievements, achievementId];
+    // FIX: 'supabase' is not defined.
+    const supabase = getSupabaseClient();
     const { error } = await supabase
         .from('profiles')
         .update({ achievements: newAchievements })
@@ -132,6 +139,8 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
     const newCompletedSteps = [...profile.completed_first_steps, step];
     const newCredits = profile.credits + 1;
     
+    // FIX: 'supabase' is not defined.
+    const supabase = getSupabaseClient();
     const { error } = await supabase
         .from('profiles')
         .update({ completed_first_steps: newCompletedSteps, credits: newCredits })
@@ -143,6 +152,8 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   const incrementDailyAction = useCallback(async (actionId: string, amount = 1) => {
     if (!user) return;
+    // FIX: 'supabase' is not defined.
+    const supabase = getSupabaseClient();
     const { error } = await supabase.rpc('increment_daily_action', { p_user_id: user.id, p_action_id: actionId, p_amount: amount });
     if (error) console.error(`Error incrementing daily action ${actionId}:`, error);
     else await refreshProfile();
@@ -151,6 +162,8 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
   const claimMissionReward = useCallback(async (missionId: string, xp: number) => {
     if (!user || dailyActions?.claimed_missions?.includes(missionId)) return;
     
+    // FIX: 'supabase' is not defined.
+    const supabase = getSupabaseClient();
     const { error } = await supabase.rpc('claim_daily_mission', { p_user_id: user.id, p_mission_id: missionId });
     if (error) {
         console.error('Error claiming mission:', error);

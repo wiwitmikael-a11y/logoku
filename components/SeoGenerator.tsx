@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     generateMoodboardText,
     generateMoodboardImages,
@@ -13,7 +13,7 @@ import {
     generateMascotPose,
     removeBackground,
 } from '../services/geminiService';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { useUI } from '../contexts/UIContext';

@@ -17,21 +17,12 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Added public state property declaration to satisfy TypeScript.
-  // The state was initialized in the constructor but not declared on the class.
-  public state: State;
-
-  // FIX: Switched to constructor-based state initialization and method binding
-  // to ensure 'this' context is correctly handled across all environments.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  // FIX: Use class property for state initialization to simplify the component and avoid constructor boilerplate.
+  public state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
   public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error, isCopied: false };
@@ -41,9 +32,10 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  private handleCopy() {
+  // FIX: Use an arrow function for the method to automatically bind `this`, resolving issues where `this.setState` was not found.
+  private handleCopy = () => {
     if (this.state.error) {
-      navigator.clipboard.writeText(this.state.error.toString());
+      navigator.clipboard.writeText(this.state.error.toString() + "\n" + (this.state.error.stack || ''));
       this.setState({ isCopied: true });
       setTimeout(() => {
         this.setState({ isCopied: false });
@@ -54,6 +46,7 @@ class ErrorBoundary extends React.Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       const { error, isCopied } = this.state;
+      // FIX: `this.props` is now correctly recognized on the component instance.
       const { onReset } = this.props;
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
@@ -83,7 +76,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                     <details className="mt-6 text-left text-xs text-text-muted">
                         <summary className="cursor-pointer">Detail Error (untuk developer)</summary>
                         <pre className="mt-2 p-2 bg-background rounded overflow-auto selectable-text">
-                            {error.toString()}
+                            {error.stack || error.toString()}
                         </pre>
                         <button onClick={this.handleCopy} className="mt-2 px-3 py-1 text-xs font-semibold rounded-md text-primary bg-transparent border border-primary/30 hover:bg-primary/10">
                             {isCopied ? 'Tersalin!' : 'Salin Detail'}
@@ -95,6 +88,7 @@ class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
+    // FIX: `this.props` is now correctly recognized on the component instance.
     return this.props.children;
   }
 }

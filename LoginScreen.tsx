@@ -2,7 +2,8 @@
 
 import React, { Suspense } from 'react';
 import Button from './common/Button';
-import { supabase } from '../services/supabaseClient';
+// FIX: Module '"../services/supabaseClient"' has no exported member 'supabase'. Did you mean 'getSupabaseClient'?
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useUI } from '../contexts/UIContext';
 import { useTranslation } from '../contexts/LanguageContext';
 
@@ -17,6 +18,8 @@ const LoginScreen: React.FC<Props> = ({ isCaptchaSolved }) => {
   const { t } = useTranslation();
 
   const handleGoogleLogin = () => {
+    // FIX: 'supabase' is not defined.
+    const supabase = getSupabaseClient();
     supabase.auth.signInWithOAuth({ 
         provider: 'google', 
         options: { redirectTo: window.location.origin }
