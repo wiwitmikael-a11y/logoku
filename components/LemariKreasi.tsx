@@ -156,7 +156,6 @@ const LemariKreasi: React.FC = () => {
                 <p className="mt-1">Buka tab 'AI Creator', buat aset keren, lalu klik 'Simpan ke Lemari' buat ngumpulin di sini.</p>
             </div>
         ) : (
-// FIX: Explicitly type the tuple from Object.entries to ensure `assetList` is correctly typed as `LemariAsset[]`, fixing the "map does not exist on type 'unknown'" error.
             Object.entries(groupedAssets).map(([type, assetList]: [string, LemariAsset[]]) => (
                 <div key={type}>
                     <h3 className="text-xl font-bold text-text-header capitalize mb-4 pb-2 border-b-2 border-border-main" style={{fontFamily: 'var(--font-display)'}}>{type.replace(/_/g, ' ')}</h3>

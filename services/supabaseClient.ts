@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Access environment variables using import.meta.env for Vite compatibility.
+// This optional chaining is robust against missing variables.
 const supabaseUrl = import.meta?.env?.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
 
