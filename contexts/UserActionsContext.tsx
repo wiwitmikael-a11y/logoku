@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import type { DailyActions } from '../types';
 
@@ -71,6 +71,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
         setShowOutOfCreditsModal(true);
         return false;
     }
+    const supabase = getSupabaseClient();
     const newCredits = profile.credits - amount;
     const { error } = await supabase
         .from('profiles')
@@ -89,6 +90,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
   const addXp = useCallback(async (amount: number) => {
     if (!user || !profile) return;
 
+    const supabase = getSupabaseClient();
     const currentLevel = profile.level;
     const newXp = profile.xp + amount;
     const newLevel = getLevelFromXp(newXp);
@@ -112,6 +114,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   const grantAchievement = useCallback(async (achievementId: string) => {
     if (!user || !profile || profile.achievements.includes(achievementId)) return;
+    const supabase = getSupabaseClient();
     const newAchievements = [...profile.achievements, achievementId];
     const { error } = await supabase
         .from('profiles')
@@ -129,6 +132,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
   const grantFirstTimeCompletionBonus = useCallback(async (step: string) => {
     if (!user || !profile || profile.total_projects_completed > 0 || profile.completed_first_steps.includes(step)) return;
     
+    const supabase = getSupabaseClient();
     const newCompletedSteps = [...profile.completed_first_steps, step];
     const newCredits = profile.credits + 1;
     
@@ -143,6 +147,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   const incrementDailyAction = useCallback(async (actionId: string, amount = 1) => {
     if (!user) return;
+    const supabase = getSupabaseClient();
     const { error } = await supabase.rpc('increment_daily_action', { p_user_id: user.id, p_action_id: actionId, p_amount: amount });
     if (error) console.error(`Error incrementing daily action ${actionId}:`, error);
     else await refreshProfile();
@@ -151,6 +156,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
   const claimMissionReward = useCallback(async (missionId: string, xp: number) => {
     if (!user || dailyActions?.claimed_missions?.includes(missionId)) return;
     
+    const supabase = getSupabaseClient();
     const { error } = await supabase.rpc('claim_daily_mission', { p_user_id: user.id, p_mission_id: missionId });
     if (error) {
         console.error('Error claiming mission:', error);

@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import type { ForumThread, ForumPost } from '../types';
@@ -143,6 +143,7 @@ const Forum: React.FC = () => {
     const [hasMoreThreads, setHasMoreThreads] = useState(true);
 
     const fetchThreads = useCallback(async (pageNum: number) => {
+        const supabase = getSupabaseClient();
         if (pageNum === 0) setIsLoadingThreads(true);
         else setIsLoadingMoreThreads(true);
         setError(null);
@@ -181,6 +182,7 @@ const Forum: React.FC = () => {
     };
 
     const fetchPosts = useCallback(async (threadId: string) => {
+        const supabase = getSupabaseClient();
         setIsLoadingPosts(true);
         setPosts([]);
         try {
@@ -252,6 +254,7 @@ const Forum: React.FC = () => {
     useEffect(() => {
         if (view !== 'thread' || !selectedThread || selectedThread.id === '0') return;
 
+        const supabase = getSupabaseClient();
         const channel = supabase.channel(`posts:${selectedThread.id}`)
             .on('postgres_changes', { 
                 event: 'INSERT', 
@@ -293,6 +296,7 @@ const Forum: React.FC = () => {
 
     const handleCreateThread = async () => {
         if (!user || !profile || !newThreadTitle.trim() || !newThreadContent.trim()) return;
+        const supabase = getSupabaseClient();
         setIsSubmitting(true);
         setError(null);
         try {
@@ -328,6 +332,7 @@ const Forum: React.FC = () => {
     
     const handleCreatePost = async () => {
         if (!user || !profile || !selectedThread || !newPostContent.trim()) return;
+        const supabase = getSupabaseClient();
         setIsSubmitting(true);
         setError(null);
         try {

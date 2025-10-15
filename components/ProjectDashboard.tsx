@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import type { Project, ProjectData } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import Button from './common/Button';
 import Card from './common/Card';
 import InFeedAd from './common/InFeedAd';
@@ -86,6 +86,7 @@ const BrandGalleryPreview: React.FC = () => {
 
     useEffect(() => {
         const fetchTopProjects = async () => {
+            const supabase = getSupabaseClient();
             setIsLoading(true);
             const { data, error } = await supabase.from('projects').select('id, project_data, like_count').eq('status', 'completed').order('like_count', { ascending: false }).limit(3);
             if (error) console.error("Failed to fetch top projects:", error);

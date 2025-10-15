@@ -17,6 +17,10 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
+  // FIX: Added public state property declaration to satisfy TypeScript.
+  // The state was initialized in the constructor but not declared on the class.
+  public state: State;
+
   // FIX: Switched to constructor-based state initialization and method binding
   // to ensure 'this' context is correctly handled across all environments.
   constructor(props: Props) {

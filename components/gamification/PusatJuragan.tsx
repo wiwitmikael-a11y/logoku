@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
-import { supabase } from '../../services/supabaseClient';
+import { getSupabaseClient } from '../../services/supabaseClient';
 import type { Profile } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserActions } from '../../contexts/UserActionsContext';
@@ -89,6 +89,7 @@ const PusatJuragan: React.FC = () => {
         if (activeSubTab !== 'leaderboard' || leaderboard.length > 0) return;
         
         const fetchLeaderboard = async () => {
+            const supabase = getSupabaseClient();
             setIsLoadingLeaderboard(true);
             setError(null);
             try {

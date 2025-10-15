@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import type { Project } from '../types';
@@ -52,6 +52,7 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
     const showToast = (message: string) => setToast({ message, show: true });
 
     const fetchProjects = useCallback(async (pageNum: number) => {
+        const supabase = getSupabaseClient();
         if (pageNum === 0) setIsLoading(true);
         else setIsLoadingMore(true);
         setError(null);
@@ -112,6 +113,7 @@ const BrandGallery: React.FC<Props> = ({ onClose }) => {
             return;
         }
 
+        const supabase = getSupabaseClient();
         const isCurrentlyLiked = likedProjects.has(projectId);
         const originalProjects = [...projects];
         const originalLikedProjects = new Set(likedProjects);

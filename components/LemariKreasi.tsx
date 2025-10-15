@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../services/supabaseClient';
+import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
 import type { LemariAsset } from '../types';
@@ -19,6 +19,7 @@ const LemariKreasi: React.FC = () => {
 
   const fetchAssets = useCallback(async () => {
     if (!user) return;
+    const supabase = getSupabaseClient();
     setIsLoading(true);
     const { data, error } = await supabase
       .from('lemari_kreasi')
@@ -42,6 +43,7 @@ const LemariKreasi: React.FC = () => {
     playSound('error');
     if (!window.confirm('Yakin mau hapus aset ini dari lemari? Gak bisa dibalikin lho.')) return;
     
+    const supabase = getSupabaseClient();
     const originalAssets = [...assets];
     setAssets(assets.filter(a => a.id !== assetId)); // Optimistic update
     const { error } = await supabase.from('lemari_kreasi').delete().eq('id', assetId);
