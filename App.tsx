@@ -12,7 +12,6 @@ import { useUserActions } from './contexts/UserActionsContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
-// FIX: Import fetchImageAsBase64 to handle image data for regeneration.
 import { fetchImageAsBase64 } from './utils/imageUtils';
 
 // --- Error Handling & Loading ---

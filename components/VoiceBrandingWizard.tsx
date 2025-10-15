@@ -173,12 +173,13 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
   }, []);
 
   const handleFinalizeAndComplete = useCallback(async (isAutoCompleted = false) => {
-    if (conversationStateRef.current === 'FINALIZING' || wizardStep === 'COMPLETED') return;
+    // FIX: Use the `conversationState` from `useState` directly and add it to the dependency array.
+    // This resolves a potential type inference issue with the mutable ref and makes the logic clearer.
+    if (conversationState === 'FINALIZING' || wizardStep === 'COMPLETED') return;
     
     cleanupSession();
 
     setConversationState('FINALIZING');
-    conversationStateRef.current = 'FINALIZING';
     setWizardStep('FINALIZING_LOGO');
 
     let currentInputs = { ...brandInputsRef.current };
@@ -224,7 +225,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onComplete, profi
         setError(errorMessage);
         setConversationState('ERROR');
     }
-  }, [onComplete, wizardStep, cleanupSession]);
+  }, [onComplete, wizardStep, cleanupSession, conversationState]);
 
   const connectToGemini = useCallback(async () => {
     if (sessionPromiseRef.current || conversationStateRef.current === 'CONNECTING') return;
