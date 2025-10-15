@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { Session, User, Profile, Project } from '../types';
 import { playBGM, setMuted, stopBGM, playRandomBGM } from '../services/soundService';
@@ -110,86 +110,76 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
-  // Effect 1: Handles Auth State (Session and User objects)
   useEffect(() => {
     setLoading(true);
-    // Check for session on initial load
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      setSession(initialSession);
-      setUser(initialSession?.user ?? null);
-      setLoading(false); // Initial auth check is done
-    });
+    setAuthError(null);
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        setSession(session);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+
+        if (currentUser) {
+            try {
+                // --- Fetch Profile, Create if not exists ---
+                const { data: profileData, error: profileError, status } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                let finalProfile = profileData;
+
+                if (profileError && status === 406) { // status 406 = Not Found for .single()
+                    const { data: newProfileData, error: insertError } = await supabase
+                        .from('profiles')
+                        .insert({
+                            id: currentUser.id,
+                            full_name: currentUser.user_metadata.full_name || 'Juragan Baru',
+                            avatar_url: currentUser.user_metadata.avatar_url || '',
+                            credits: 20,
+                            welcome_bonus_claimed: true,
+                            last_credit_reset: new Date().toISOString(),
+                        })
+                        .select()
+                        .single();
+                    if (insertError) throw insertError;
+                    finalProfile = newProfileData;
+                } else if (profileError) {
+                    throw profileError;
+                }
+                setProfile(finalProfile);
+
+                // --- Fetch Projects ---
+                const { data: projectsData, error: projectsError } = await supabase
+                    .from('projects')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+
+                if (projectsError) throw projectsError;
+                setProjects(projectsData || []);
+
+            } catch (error: any) {
+                setAuthError(`Gagal memuat data pengguna: ${error.message}`);
+                setProfile(null);
+                setProjects([]);
+            }
+        } else {
+            // User is logged out, clear all data
+            setProfile(null);
+            setProjects([]);
+        }
+        
+        // Finish loading ONLY after all data is fetched/cleared
+        setLoading(false);
     });
 
     return () => {
-      subscription?.unsubscribe();
+        subscription?.unsubscribe();
     };
   }, []);
 
-  // Effect 2: Handles Data Fetching based on User state
-  useEffect(() => {
-    if (user) {
-      const fetchUserData = async () => {
-        setAuthError(null);
-        try {
-          // --- Fetch Profile, Create if not exists ---
-          let { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-          if (profileError && profileError.code === 'PGRST116') { // "Not found" error
-            const { data: newProfileData, error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: user.id,
-                full_name: user.user_metadata.full_name || 'Juragan Baru',
-                avatar_url: user.user_metadata.avatar_url || '',
-                credits: 20,
-                welcome_bonus_claimed: true,
-                last_credit_reset: new Date().toISOString(),
-              })
-              .select()
-              .single();
-            if (insertError) throw insertError;
-            profileData = newProfileData;
-          } else if (profileError) {
-            throw profileError;
-          }
-
-          setProfile(profileData);
-
-          // --- Fetch Projects ---
-          const { data: projectsData, error: projectsError } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-          if (projectsError) throw projectsError;
-          setProjects(projectsData || []);
-
-        } catch (error: any) {
-          setAuthError(`Gagal memuat data pengguna: ${error.message}`);
-          setProfile(null);
-          setProjects([]);
-        }
-      };
-      
-      fetchUserData();
-    } else {
-      // User is logged out, clear all data
-      setProfile(null);
-      setProjects([]);
-    }
-  }, [user]);
-  
   const value: AuthContextType = { session, user, profile, projects, setProjects, loading, executeLogout, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, handleDeleteAccount };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
