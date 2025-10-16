@@ -100,7 +100,7 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({ selectedProjectContext,
             if (!downloadLink) throw new Error("Tidak ada video yang dihasilkan.");
             
             setLoadingMessage("Mengunduh video...");
-            const response = await fetch(`${downloadLink}&key=${import.meta.env?.VITE_API_KEY || ''}`);
+            const response = await fetch(`${downloadLink}&key=${process.env.API_KEY || ''}`);
             if (!response.ok) throw new Error("Gagal mengunduh video dari server.");
 
             const videoBlob = await response.blob();
