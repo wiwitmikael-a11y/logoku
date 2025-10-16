@@ -79,17 +79,21 @@ const LoginScreen: React.FC<Props> = ({ isCaptchaSolved, isReadyForLogin }) => {
             
             <p className="text-xs text-text-muted mt-4">
               {t({ id: "Dengan masuk, lo setuju sama", en: "By signing in, you agree to the" })}{' '}
+              {/* FIX: Add captcha validation to ToS and Privacy buttons */}
               <button 
-                onClick={() => toggleToSModal(true)}
-                className="text-primary hover:underline focus:outline-none"
+                onClick={isCaptchaSolved ? () => toggleToSModal(true) : undefined} 
+                disabled={!isCaptchaSolved}
+                className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t({ id: "Ketentuan Layanan", en: "Terms of Service" })}
               </button> & <button 
-                onClick={() => togglePrivacyModal(true)} 
-                className="text-primary hover:underline focus:outline-none"
+                onClick={isCaptchaSolved ? () => togglePrivacyModal(true) : undefined} 
+                disabled={!isCaptchaSolved}
+                className="text-primary hover:underline focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t({ id: "Kebijakan Privasi", en: "Privacy Policy" })}
               </button>.
+               {!isCaptchaSolved && <span className="block text-accent font-semibold text-sm mt-2">{t({ id: "Selesaikan puzzle di atas dulu, Juragan!", en: "Solve the puzzle above first, Boss!" })}</span>}
             </p>
         </div>
       </div>

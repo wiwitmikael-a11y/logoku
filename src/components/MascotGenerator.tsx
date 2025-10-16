@@ -1,0 +1,1 @@
+full contents of src/components/MascotGenerator.tsx
