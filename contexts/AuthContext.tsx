@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (user) {
       try {
         const supabase = getSupabaseClient();
-        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        const { data, error } = await supabase.from('profiles').select('*, aipet_state').eq('id', user.id).single();
         if (error) setAuthError(error.message);
         else setProfile(data);
       } catch (error) {
@@ -139,7 +139,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           try {
             const { data: profileData, error: profileError, status } = await supabase
               .from('profiles')
-              .select('*')
+              .select('*, aipet_state')
               .eq('id', currentUser.id)
               .single();
 
@@ -156,7 +156,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   welcome_bonus_claimed: true,
                   last_credit_reset: new Date().toISOString(),
                 })
-                .select()
+                .select('*, aipet_state')
                 .single();
               if (insertError) throw insertError;
               finalProfile = newProfileData;
