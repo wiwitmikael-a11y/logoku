@@ -28,72 +28,93 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   
-  const fetchProfileAndProjects = useCallback(async (user: User) => {
+  // This function is now the single source of truth for fetching data.
+  const fetchUserData = useCallback(async (user: User): Promise<boolean> => {
     try {
       const supabase = getSupabaseClient();
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
       
-      if (profileError) throw profileError;
-      setProfile(profileData);
-      setMuted(profileData?.is_muted ?? false);
+      // Promise.all ensures both profile and projects are fetched concurrently.
+      const [profileResponse, projectsResponse] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('projects').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      ]);
+      
+      const { data: profileData, error: profileError } = profileResponse;
+      if (profileError) {
+        // This handles cases where the profile might not exist yet for a new user, which is okay.
+        // But if it's another error, we throw it.
+        if (profileError.code !== 'PGRST116') {
+            throw new Error(`Gagal mengambil profil: ${profileError.message}`);
+        }
+      }
+      
+      const { data: projectsData, error: projectsError } = projectsResponse;
+      if (projectsError) throw new Error(`Gagal mengambil proyek: ${projectsError.message}`);
 
-      const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (projectsError) throw projectsError;
+      setProfile(profileData || null);
       setProjects(projectsData || []);
-
+      setMuted(profileData?.is_muted ?? false);
+      
+      return true; // Indicate success
     } catch (error) {
       setAuthError((error as Error).message);
+      console.error("AuthContext Error:", error);
+      return false; // Indicate failure
     }
   }, []);
 
+  // Main authentication effect hook - now more robust.
   useEffect(() => {
     const supabase = getSupabaseClient();
     setLoading(true);
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfileAndProjects(session.user);
-      }
-      setLoading(false);
-    });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const handleAuthStateChange = async (_event: string, session: Session | null) => {
       setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setLoading(true);
-        await fetchProfileAndProjects(session.user);
-        setLoading(false);
+      const currentUser = session?.user;
+      setUser(currentUser ?? null);
+      
+      if (currentUser) {
+        // If there's a user, we fetch their data.
+        // The loading state will only be set to false AFTER this completes.
+        await fetchUserData(currentUser);
       } else {
+        // No user, clear all data.
         setProfile(null);
         setProjects([]);
       }
+      setLoading(false);
+    };
+
+    // Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+    
+    // Also check the initial session on component mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!subscription) { // Ensure we don't double-handle if the listener fires immediately
+           handleAuthStateChange('INITIAL_SESSION', session);
+        }
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
-  }, [fetchProfileAndProjects]);
+  }, [fetchUserData]);
   
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfileAndProjects(user);
+      await fetchUserData(user);
     }
-  }, [user, fetchProfileAndProjects]);
+  }, [user, fetchUserData]);
 
   const executeLogout = async () => {
     const supabase = getSupabaseClient();
+    setLoading(true);
     await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setProjects([]);
+    setLoading(false);
   };
 
   const value = {
