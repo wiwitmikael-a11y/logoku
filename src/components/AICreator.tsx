@@ -1,16 +1,16 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, lazy, useMemo } from 'react';
-import type { Project, ProjectData } from '../../types';
-import { getSupabaseClient } from '../../services/supabaseClient';
-import { useAuth } from '../../contexts/AuthContext';
-import { playSound } from '../../services/soundService';
+import type { Project, ProjectData } from '../types';
+import { getSupabaseClient } from '../services/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
+import { playSound } from '../services/soundService';
 import ModuleLoader from './common/ModuleLoader';
 import Button from './common/Button';
 import ErrorMessage from './common/ErrorMessage';
 import Input from './common/Input';
-import { useUserActions } from '../../contexts/UserActionsContext';
-import { clearWorkflowState } from '../../services/workflowPersistence';
+import { useUserActions } from '../contexts/UserActionsContext';
+import { clearWorkflowState } from '../services/workflowPersistence';
 
 // Lazy load generator modules
 const BrandPersonaGenerator = lazy(() => import('./BrandPersonaGenerator'));
