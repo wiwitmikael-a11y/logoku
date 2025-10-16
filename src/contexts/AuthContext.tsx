@@ -42,7 +42,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const supabase = getSupabaseClient();
       stopBGM();
       await supabase.auth.signOut();
-      // State will be cleared by the onAuthStateChange listener
+      // State will be cleared by the onAuthStateChange listener, which will set session to null.
+      // Explicitly clear local state as a failsafe.
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      setProjects([]);
+      setLoading(false); // Ensure loading stops on manual logout.
     } catch (error) {
       setAuthError((error as Error).message);
     }
@@ -129,61 +135,71 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(true);
       const supabase = getSupabaseClient();
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        setAuthError(null);
-        setSession(session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
         
-        if (currentUser) {
-          try {
-            const { data: profileData, error: profileError, status } = await supabase
-              .from('profiles')
-              .select('*, aipet_state')
-              .eq('id', currentUser.id)
-              .single();
+        // WATCHDOG TIMER: If this whole process takes too long, force a logout.
+        const watchdog = setTimeout(() => {
+          console.warn("Authentication process timed out. Forcing logout to clear stuck session.");
+          executeLogout();
+        }, 8000); // 8-second watchdog
 
-            let finalProfile = profileData;
+        try {
+            setAuthError(null);
+            setSession(session);
+            const currentUser = session?.user ?? null;
+            setUser(currentUser);
+            
+            if (currentUser) {
+                const { data: profileData, error: profileError, status } = await supabase
+                  .from('profiles')
+                  .select('*, aipet_state')
+                  .eq('id', currentUser.id)
+                  .single();
 
-            if (profileError && status === 406) {
-              const { data: newProfileData, error: insertError } = await supabase
-                .from('profiles')
-                .insert({
-                  id: currentUser.id,
-                  full_name: currentUser.user_metadata.full_name || 'Juragan Baru',
-                  avatar_url: currentUser.user_metadata.avatar_url || '',
-                  credits: 20,
-                  welcome_bonus_claimed: true,
-                  last_credit_reset: new Date().toISOString(),
-                })
-                .select('*, aipet_state')
-                .single();
-              if (insertError) throw insertError;
-              finalProfile = newProfileData;
-            } else if (profileError) {
-              throw profileError;
+                let finalProfile = profileData;
+
+                if (profileError && status === 406) { // Profile does not exist, create it
+                  const { data: newProfileData, error: insertError } = await supabase
+                    .from('profiles')
+                    .insert({
+                      id: currentUser.id,
+                      full_name: currentUser.user_metadata.full_name || 'Juragan Baru',
+                      avatar_url: currentUser.user_metadata.avatar_url || '',
+                      credits: 20,
+                      welcome_bonus_claimed: true,
+                      last_credit_reset: new Date().toISOString(),
+                    })
+                    .select('*, aipet_state')
+                    .single();
+                  if (insertError) throw insertError;
+                  finalProfile = newProfileData;
+                } else if (profileError) {
+                  throw profileError;
+                }
+                
+                const { data: projectsData, error: projectsError } = await supabase
+                  .from('projects')
+                  .select('*')
+                  .eq('user_id', currentUser.id)
+                  .order('created_at', { ascending: false });
+
+                if (projectsError) throw projectsError;
+                
+                setProfile(finalProfile);
+                setProjects(projectsData || []);
+
+            } else { // No user session
+              setProfile(null);
+              setProjects([]);
             }
-            
-            const { data: projectsData, error: projectsError } = await supabase
-              .from('projects')
-              .select('*')
-              .eq('user_id', currentUser.id)
-              .order('created_at', { ascending: false });
-
-            if (projectsError) throw projectsError;
-            
-            setProfile(finalProfile);
-            setProjects(projectsData || []);
-
-          } catch (error: any) {
+        } catch (error: any) {
+            console.error("Error during auth state change handling:", error);
             setAuthError(`Gagal memuat data pengguna: ${error.message}`);
-            setProfile(null);
-            setProjects([]);
-          }
-        } else {
-          setProfile(null);
-          setProjects([]);
+            await executeLogout(); // Logout on error to be safe
+        } finally {
+            // Process finished successfully, clear the watchdog.
+            clearTimeout(watchdog);
+            setLoading(false);
         }
-        setLoading(false);
       });
 
       return () => {
@@ -193,7 +209,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAuthError((error as Error).message);
       setLoading(false);
     }
-  }, []);
+  }, [executeLogout]);
 
   const value: AuthContextType = { session, user, profile, projects, setProjects, loading, executeLogout, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, handleDeleteAccount };
 
