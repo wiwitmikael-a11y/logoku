@@ -17,14 +17,12 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Switched from constructor to a public class field for state initialization. This is a more modern syntax and resolves issues with `this` context.
   public state: State = { 
     hasError: false,
     error: undefined,
     isCopied: false 
   };
 
-  // FIX: Corrected return type to Partial<State> as per React's definition for this lifecycle method.
   public static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
@@ -33,14 +31,12 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Converted to an arrow function to automatically bind `this`, removing the need for binding in a constructor and fixing access to `this.state` and `this.setState`.
+  // FIX: Changed to arrow function to correctly bind `this` for event handling.
   private handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString() + "\n" + (this.state.error.stack || ''));
       this.setState({ isCopied: true });
-      setTimeout(() => {
-        this.setState({ isCopied: false });
-      }, 2000);
+      setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
 

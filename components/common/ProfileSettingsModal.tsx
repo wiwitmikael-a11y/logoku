@@ -1,12 +1,14 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense } from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
 import { useAuth } from '../../contexts/AuthContext';
-import type { User, Profile } from '../../types';
+import { User, Profile } from '../../types';
 import Button from './Button';
 import { BgmSelection } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
+
+const AIPetCard = React.lazy(() => import('../gamification/AIPetCard'));
 
 const ACHIEVEMENTS_MAP: { [key: string]: { name: string; description: string; icon: string; } } = {
   BRAND_PERTAMA_LAHIR: { name: 'Brand Pertama Lahir!', description: 'Berhasil menyelesaikan project branding pertama.', icon: '🥉' },
@@ -135,8 +137,24 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
                 </div>
             </div>
 
+            <div className="w-full border-t border-border-main pt-6">
+                <h3 className="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Aset Digital AIPet</h3>
+                <div className="bg-background border border-border-main p-4 rounded-lg">
+                {profile.aipet_state && profile.aipet_state.stage !== 'aipod' ? (
+                     <Suspense fallback={<div className="h-64 flex items-center justify-center text-sm text-text-muted">Memuat Kartu...</div>}>
+                         <AIPetCard petState={profile.aipet_state} />
+                     </Suspense>
+                 ) : (
+                     <div className="text-center text-sm text-text-muted p-4 border border-dashed border-border-main rounded-lg">
+                         <p>AIPet-mu masih di dalam AIPod! Buka menu AIPet di dashboard untuk mengaktifkannya.</p>
+                     </div>
+                 )}
+                </div>
+            </div>
+
             <div className="w-full border-t border-red-500/30 pt-4 mt-6">
                <h3 className="text-sm font-semibold text-red-500 uppercase tracking-wider">Zona Berbahaya</h3>
+               {/* FIX: Corrected onClick handler to use `handleDeleteAccount` from the useAuth hook instead of the undefined `onDeleteAccount`. */}
                <Button onClick={handleDeleteAccount} size="small" variant="secondary" className="mt-3 !border-red-500/30 !text-red-500 hover:!bg-red-500/10 disabled:!border-slate-300 disabled:!text-slate-400 disabled:cursor-not-allowed" disabled={true} title="Fitur ini hanya tersedia untuk user Pro (Segera Hadir)."> Hapus Akun Saya </Button>
             </div>
         </main>
