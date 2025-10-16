@@ -5,7 +5,6 @@ import { generateSceneFromImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
-// FIX: Module '"../services/supabaseClient"' has no exported member 'supabase'. Did you mean 'getSupabaseClient'?
 import { getSupabaseClient } from '../services/supabaseClient';
 import type { Project } from '../types';
 import Button from './common/Button';
@@ -87,7 +86,6 @@ const SceneMixer: React.FC<SceneMixerProps> = ({ selectedProjectContext }) => {
     const handleSaveToLemari = async () => {
         if (!user || !result || isSaving) return;
         setIsSaving(true);
-        // FIX: 'supabase' is not defined.
         const supabase = getSupabaseClient();
         const { error } = await supabase.from('lemari_kreasi').insert({
             user_id: user.id,

@@ -17,22 +17,25 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  public state: State = { 
+  // FIX: Removed 'public' modifier, which can sometimes interfere with type inference in certain setups.
+  state: State = { 
     hasError: false,
     error: undefined,
     isCopied: false 
   };
 
-  public static getDerivedStateFromError(error: Error): Partial<State> {
+  // FIX: Removed 'public' modifier.
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  // FIX: Removed 'public' modifier.
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: The handleCopy method is an arrow function to ensure `this` is correctly bound to the component instance. This prevents errors where `this.state` or `this.setState` would be undefined when called from an event handler like onClick.
-  public handleCopy = () => {
+  // FIX: Removed 'public' modifier.
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString() + "\n" + (this.state.error.stack || ''));
       this.setState({ isCopied: true });
@@ -40,7 +43,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     }
   }
 
-  public render() {
+  // FIX: Removed 'public' modifier.
+  render() {
     if (this.state.hasError) {
       const { error, isCopied } = this.state;
       const { onReset } = this.props;
