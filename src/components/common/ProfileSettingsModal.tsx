@@ -48,6 +48,8 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
   const xpProgress = currentXp - xpForCurrentLevel;
   const xpNeededForLevel = xpForNextLevel - xpForCurrentLevel;
   const progressPercentage = xpNeededForLevel > 0 ? (xpProgress / xpNeededForLevel) * 100 : 100;
+  // FIX: Define userAchievements from the profile object.
+  const userAchievements = profile.achievements || [];
 
   return (
     <div
@@ -117,10 +119,9 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
              <div className="w-full">
                 <h3 className="text-sm font-semibold text-text-muted mb-3 uppercase tracking-wider">Lencana Pencapaian</h3>
                 <div className="flex gap-4 p-4 bg-background border border-border-main rounded-lg">
-                    {/* FIX: Check if profile.achievements exists before mapping */}
-                    {profile.achievements && profile.achievements.length > 0 ? (
+                    {userAchievements.length > 0 ? (
                         Object.entries(ACHIEVEMENTS_MAP).map(([id, ach]) => {
-                            const isUnlocked = profile.achievements.includes(id);
+                            const isUnlocked = userAchievements.includes(id);
                             if (isUnlocked) {
                                 return (
                                     <div key={id} className="flex flex-col items-center text-center" title={`${ach.name}: ${ach.description}`}>

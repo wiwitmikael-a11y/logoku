@@ -46,7 +46,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
   const xpProgress = currentXp - xpForCurrentLevel;
   const xpNeededForLevel = xpForNextLevel - xpForCurrentLevel;
   const progressPercentage = xpNeededForLevel > 0 ? (xpProgress / xpNeededForLevel) * 100 : 100;
-  // FIX: Define userAchievements from the profile object.
+  // FIX: Define userAchievements from the profile object for safer access.
   const userAchievements = profile.achievements || [];
 
   return (
