@@ -1,17 +1,20 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
-import { supabase } from './services/supabaseClient';
+import { GoogleGenAI, Chat } from "@google/genai";
+import { getSupabaseClient } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile } from './types';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
 import { useAuth } from './contexts/AuthContext';
 import { useUI } from './contexts/UIContext';
 import { useUserActions } from './contexts/UserActionsContext';
+import { useAIPet } from './contexts/AIPetContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
 import { fetchImageAsBase64 } from './utils/imageUtils';
+
 
 // --- Error Handling & Loading ---
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -24,6 +27,7 @@ import LoginScreen from './components/LoginScreen';
 import ProgressStepper from './components/common/ProgressStepper';
 import AdBanner from './components/AdBanner';
 import Toast from './components/common/Toast';
+import Footer from './components/common/Footer';
 
 // --- Lazily Loaded Components ---
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
@@ -41,7 +45,6 @@ const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCred
 const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
 const DeleteProjectSliderModal = React.lazy(() => import('./components/common/DeleteProjectSliderModal'));
-const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
 const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
 const SocialMediaKitGenerator = React.lazy(() => import('./components/SocialMediaKitGenerator'));
 const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'));
@@ -76,8 +79,7 @@ const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> =
 const App: React.FC = () => {
     const { 
         session, user, profile, projects, setProjects, loading: authLoading, 
-        executeLogout: authExecuteLogout, authError,
-        isMuted, handleToggleMute, bgmSelection, handleBgmChange
+        executeLogout: authExecuteLogout, authError
     } = useAuth();
     
     const { 
@@ -104,7 +106,6 @@ const App: React.FC = () => {
     });
 
     const [generalError, setGeneralError] = useState<string | null>(null);
-    const [showCaptcha, setShowCaptcha] = useState(true);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -142,8 +143,6 @@ const App: React.FC = () => {
         }
     }, [appState, selectedProjectId, session]);
     
-    useEffect(() => { if (!session && !authLoading) setShowCaptcha(true); else setShowCaptcha(false); }, [session, authLoading]);
-    
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => { 
             if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false); 
@@ -175,6 +174,7 @@ const App: React.FC = () => {
     const handleNewProject = useCallback(async (templateData?: Partial<ProjectData>) => {
         if (!user || !profile) return;
         if (profile.total_projects_completed === 0 && projects.length === 0) sessionStorage.setItem('onboardingStep2', 'true');
+        const supabase = getSupabaseClient();
         const { data, error } = await supabase.from('projects').insert({ user_id: user.id, project_data: {}, status: 'in-progress' as ProjectStatus }).select().single();
         if (error) { setGeneralError(`Gagal memulai project baru: ${error.message}`); return; }
         const newProject: Project = data as any;
@@ -205,6 +205,7 @@ const App: React.FC = () => {
     const handleCancelDelete = useCallback(() => { setShowDeleteConfirm(false); setProjectToDelete(null); }, []);
     const handleConfirmDelete = useCallback(async () => {
         if (!projectToDelete || !user) return; setIsDeleting(true);
+        const supabase = getSupabaseClient();
         const { error } = await supabase.from('projects').delete().eq('id', projectToDelete.id);
         setIsDeleting(false);
         if (error) { setGeneralError(`Gagal menghapus project: ${error.message}`); }
@@ -223,6 +224,7 @@ const App: React.FC = () => {
     const handlePersonaComplete = useCallback(async (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => {
         saveLocalCheckpoint({ brandInputs: data.inputs, selectedPersona: data.selectedPersona, selectedSlogan: data.selectedSlogan });
         if (user && selectedProjectId) {
+            const supabase = getSupabaseClient();
             const currentData = loadWorkflowState();
             const { error: updateError } = await supabase.from('projects').update({ project_data: currentData }).eq('id', selectedProjectId);
             if (updateError) { setGeneralError(`Gagal menyimpan progres awal: ${updateError.message}`); return; }
@@ -240,6 +242,7 @@ const App: React.FC = () => {
     const handleSocialAdsComplete = useCallback(async (data: { adsData: SocialAdsData }) => { saveLocalCheckpoint({ socialAds: data.adsData }); await grantFirstTimeCompletionBonus('social_ads'); navigateTo('merchandise'); }, [saveLocalCheckpoint, grantFirstTimeCompletionBonus]);
     const handleMerchandiseComplete = useCallback(async (merchandiseUrl: string) => {
         if (!user || !selectedProjectId || !profile) return; const currentState = loadWorkflowState() || {}; const finalProjectData = { ...currentState, merchandiseUrl };
+        const supabase = getSupabaseClient();
         await grantFirstTimeCompletionBonus('merchandise'); const { data: dbData, error: projectError } = await supabase.from('projects').update({ project_data: finalProjectData, status: 'completed' as ProjectStatus }).eq('id', selectedProjectId).select().single();
         if (projectError) { setGeneralError(`Gagal menyimpan finalisasi project: ${projectError.message}`); return; } 
         await addXp(500);
@@ -248,6 +251,7 @@ const App: React.FC = () => {
     }, [user, selectedProjectId, profile, grantFirstTimeCompletionBonus, addXp, grantAchievement, handleReturnToDashboard, showToast]);
     const handleVoiceWizardComplete = useCallback(async (projectData: Partial<ProjectData>) => {
         if (!user) return;
+        const supabase = getSupabaseClient();
         const { data, error } = await supabase.from('projects').insert({ user_id: user.id, project_data: projectData, status: 'in-progress' }).select().single();
         if (error) { setGeneralError(error.message); return; }
         const newProject: Project = data as any;
@@ -259,10 +263,12 @@ const App: React.FC = () => {
 
     const handleRegenerateTextAsset = useCallback(async <T,>(projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<T>, successMessage: string) => {
         setGeneralError(null); if ((profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
+        const supabase = getSupabaseClient();
         try { const result = await generationFunc(); await deductCredits(cost); const updatedProjectData = { ...project.project_data, [assetKey]: result }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast(successMessage); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
     }, [profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
     const handleRegenerateVisualAsset = useCallback(async (projectId: number, assetKey: keyof ProjectData, cost: number, generationFunc: () => Promise<string>, successMessage: string) => {
         setGeneralError(null); if (!user || (profile?.credits ?? 0) < cost) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project) return;
+        const supabase = getSupabaseClient();
         try { const resultBase64 = await generationFunc(); await deductCredits(cost); const updatedProjectData = { ...project.project_data, [assetKey]: resultBase64 }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast(successMessage); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
     }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
     const handleRegenerateContentCalendar = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs!.businessName, p.project_data.selectedPersona!).then(res => res.calendar), "Kalender konten baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
@@ -270,6 +276,7 @@ const App: React.FC = () => {
     const handleRegenerateSocialAds = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return; handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs!, p.project_data.selectedPersona!, p.project_data.selectedSlogan!), "Teks iklan baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
     const handleRegenerateSocialKit = useCallback(async (projectId: number) => {
         setGeneralError(null); if (!user || (profile?.credits ?? 0) < 2) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project || !project.project_data.selectedLogoUrl) return;
+        const supabase = getSupabaseClient();
         try { const assets = await geminiService.generateSocialMediaKitAssets(project.project_data as any); await deductCredits(2); const updatedProjectData = { ...project.project_data, socialMediaKit: assets }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast("Social media kit baru berhasil dibuat!"); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Gagal membuat social media kit.'); }
     }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
     const handleRegeneratePackaging = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return; const { brandInputs, selectedPersona, selectedLogoUrl } = p.project_data; const prompt = `Take the provided logo image. Create a realistic, high-quality product mockup of a generic product box for "${brandInputs.businessDetail}". Place the logo prominently. The brand is "${brandInputs.businessName}". The style is ${selectedPersona.kata_kunci.join(', ')}, modern, and clean. This is a commercial product photo.`; handleRegenerateVisualAsset(projectId, 'selectedPackagingUrl', 1, async () => { const logoBase64 = await fetchImageAsBase64(selectedLogoUrl!); return (await geminiService.generatePackagingDesign(prompt, logoBase64))[0]; }, "Desain kemasan baru berhasil dibuat!"); }, [projects, handleRegenerateVisualAsset]);
@@ -277,6 +284,7 @@ const App: React.FC = () => {
         const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.selectedPersona || !p.project_data.selectedLogoUrl) return; const { selectedPersona, selectedLogoUrl } = p.project_data; let prompt = ''; const colors = selectedPersona.palet_warna_hex.join(', '); const style = selectedPersona.kata_kunci.join(', ');
         if (mediaType === 'banner') prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a wide horizontal outdoor banner (spanduk, 3:1 aspect ratio). Do NOT create a realistic 3D mockup. Use the brand's color palette: ${colors}. The design should be bold, incorporating the style: ${style}. Place the logo prominently. CRITICAL: DO NOT generate any text.`;
         else prompt = `Take the provided logo image. Create a clean, flat graphic design TEMPLATE for a vertical roll-up banner (9:16 aspect ratio). Do NOT create a realistic 3D mockup. Use the brand's color palette: ${colors}. The design should be stylish, modern, incorporating the style: ${style}. Place the logo prominently. CRITICAL: DO NOT generate any text.`;
+        const supabase = getSupabaseClient();
         try { setGeneralError(null); if (!user || (profile?.credits ?? 0) < 1) { setShowOutOfCreditsModal(true); return; } const logoBase64 = await fetchImageAsBase64(selectedLogoUrl!); const resultBase64 = (await geminiService.generatePrintMedia(prompt, logoBase64))[0]; await deductCredits(1); const currentAssets = p.project_data.printMediaAssets || {}; const updatedAssets = mediaType === 'banner' ? { ...currentAssets, bannerUrl: resultBase64 } : { ...currentAssets, rollBannerUrl: resultBase64 }; const updatedProjectData = { ...p.project_data, printMediaAssets: updatedAssets }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(proj => proj.id === projectId ? (data as Project) : proj)); showToast(`Template ${mediaType === 'banner' ? 'spanduk' : 'roll banner'} baru berhasil dibuat!`); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
     }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
     const handleRegenerateMerchandise = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p || !p.project_data.selectedLogoUrl) return; const prompt = 'Take the provided logo image. Create a realistic mockup of a plain colored t-shirt on a clean, neutral background. The t-shirt prominently features the logo. The photo is high-quality, commercial-style, showing the texture of the fabric.'; handleRegenerateVisualAsset(projectId, 'merchandiseUrl', 1, async () => { const logoBase64 = await fetchImageAsBase64(p.project_data.selectedLogoUrl!); return (await geminiService.generateMerchandiseMockup(prompt, logoBase64))[0]; }, "Mockup merchandise baru berhasil dibuat!"); }, [projects, handleRegenerateVisualAsset]);
@@ -299,14 +307,14 @@ const App: React.FC = () => {
             case 'summary': const project = projects.find(p => p.id === selectedProjectId); return project ? <ProjectSummary project={project} onStartNew={handleReturnToDashboard} onGoToCaptionGenerator={handleGoToCaptionGenerator} onGoToInstantContent={handleGoToInstantContent} onDeleteProject={handleRequestDeleteProject} onRegenerateContentCalendar={() => handleRegenerateContentCalendar(project.id)} onRegenerateSocialKit={() => handleRegenerateSocialKit(project.id)} onRegenerateProfiles={() => handleRegenerateProfiles(project.id)} onRegenerateSocialAds={() => handleRegenerateSocialAds(project.id)} onRegeneratePackaging={() => handleRegeneratePackaging(project.id)} onRegeneratePrintMedia={(type) => handleRegeneratePrintMedia(project.id, type)} onRegenerateMerchandise={() => handleRegenerateMerchandise(project.id)} onShareToForum={() => handleShareToForum(project)} /> : null;
             case 'caption': return workflowData && selectedProjectId ? <CaptionGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonProps} /> : null;
             case 'instant_content': return workflowData && selectedProjectId ? <InstantContentGenerator projectData={workflowData} onBack={() => navigateTo('summary')} {...commonProps} /> : null;
-            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onPreloadNewProject={preloadBrandPersona} onShowSotoshop={() => toggleSotoshop(true)} />;
+            case 'dashboard': default: return <ProjectDashboard projects={projects} onNewProject={handleNewProject} onSelectProject={handleSelectProject} onDeleteProject={handleRequestDeleteProject} onPreloadNewProject={preloadBrandPersona} />;
         }
         handleReturnToDashboard(); return <AuthLoadingScreen />;
     };
     
     if (authLoading) return <AuthLoadingScreen />;
     
-    if (!session) return ( <> <LoginScreen isCaptchaSolved={!showCaptcha} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => setShowCaptcha(false)} /> <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} /> </Suspense> </> );
+    if (!session) return ( <> <LoginScreen isCaptchaSolved={true} isReadyForLogin={true} /> <Suspense fallback={null}> <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} /> </Suspense> </> );
     
     return (
       <>
@@ -394,42 +402,6 @@ const App: React.FC = () => {
             {profile && <VoiceBrandingWizard show={showVoiceWizard} onClose={() => toggleVoiceWizard(false)} onComplete={handleVoiceWizardComplete} profile={profile} deductCredits={deductCredits} setShowOutOfCreditsModal={setShowOutOfCreditsModal}/>}
         </Suspense>
       </>
-    );
-};
-
-const Footer: React.FC<{onShowAbout: () => void; onShowContact: () => void; onShowToS: () => void; onShowPrivacy: () => void;}> = ({ onShowAbout, onShowContact, onShowToS, onShowPrivacy }) => {
-    return (
-        <footer className="bg-surface border-t border-border-main text-text-muted">
-            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="space-y-4">
-                        <h3 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}><span className="text-primary">des<span className="text-accent">ai</span>n</span>.fun</h3>
-                        <p className="text-sm">Studio branding AI untuk UMKM juara. Ubah ide jadi brand siap tanding dalam hitungan menit.</p>
-                        <div className="flex space-x-4">
-                            <a href="https://www.instagram.com/rangga.p.h" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-primary transition-colors" title="Instagram Developer">
-                                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" /></svg>
-                            </a>
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <h4 className="font-semibold text-text-header">Navigasi</h4>
-                        <ul className="space-y-1 text-sm">
-                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
-                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Kontak Developer</button></li>
-                            <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
-                            <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
-                        </ul>
-                    </div>
-                     <div className="space-y-2">
-                        <h4 className="font-semibold text-text-header">Legal</h4>
-                        <p className="text-sm">Aplikasi ini disediakan "sebagaimana adanya". Pengguna bertanggung jawab penuh untuk melakukan pengecekan merek dagang sebelum penggunaan komersial.</p>
-                    </div>
-                </div>
-                <div className="mt-8 pt-4 border-t border-border-main text-center text-xs">
-                    <p>&copy; {new Date().getFullYear()} Atharrazka Core oleh Rangga.P.H. Dibangun dengan ❤️ untuk UMKM Indonesia.</p>
-                </div>
-            </div>
-        </footer>
     );
 };
 
