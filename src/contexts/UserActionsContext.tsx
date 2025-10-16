@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
 import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import { playSound } from '../services/soundService';
-import type { Achievement, LevelUpInfo } from '../types';
+import type { Achievement, LevelUpInfo, BrandInputs } from '../types';
 
 interface UserActionsContextType {
   deductCredits: (amount: number) => Promise<boolean>;
@@ -17,6 +17,8 @@ interface UserActionsContextType {
   unlockedAchievement: Achievement | null;
   setUnlockedAchievement: (achievement: Achievement | null) => void;
   checkForNewAchievements: (projectsCount: number) => void;
+  lastVoiceConsultationResult: BrandInputs | null;
+  setLastVoiceConsultationResult: (result: BrandInputs | null) => void;
 }
 
 const UserActionsContext = createContext<UserActionsContextType | undefined>(undefined);
@@ -33,6 +35,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState<LevelUpInfo | null>(null);
   const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
+  const [lastVoiceConsultationResult, setLastVoiceConsultationResult] = useState<BrandInputs | null>(null);
 
   const deductCredits = useCallback(async (amount: number): Promise<boolean> => {
     if (!user || !profile || profile.credits < amount) {
@@ -93,7 +96,9 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
     levelUpInfo,
     unlockedAchievement,
     setUnlockedAchievement,
-    checkForNewAchievements
+    checkForNewAchievements,
+    lastVoiceConsultationResult,
+    setLastVoiceConsultationResult
   };
 
   return <UserActionsContext.Provider value={value}>{children}</UserActionsContext.Provider>;
