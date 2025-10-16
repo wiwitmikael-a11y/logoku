@@ -28,7 +28,7 @@ const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCa
 const VoiceBrandingWizard = React.lazy(() => import('./components/VoiceBrandingWizard'));
 
 const App: React.FC = () => {
-  const { session, loading, authError } = useAuth();
+  const { session, loading, authError, executeLogout } = useAuth();
   const { showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showVoiceWizard, toggleVoiceWizard } = useUI();
   const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement } = useUserActions();
   
@@ -48,6 +48,21 @@ const App: React.FC = () => {
       setGeminiError((e as Error).message);
     }
   }, []);
+  
+  // FAILSAFE: Force logout if authentication is stuck for too long
+  useEffect(() => {
+    let stuckTimer: number;
+    if (loading) {
+      stuckTimer = window.setTimeout(() => {
+        console.warn("Authentication is taking too long. Forcing logout to clear potentially stuck session.");
+        executeLogout();
+      }, 8000); // 8-second timeout
+    }
+    return () => {
+      clearTimeout(stuckTimer);
+    };
+  }, [loading, executeLogout]);
+
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
