@@ -41,7 +41,6 @@ const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCred
 const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
 const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
 const DeleteProjectSliderModal = React.lazy(() => import('./components/common/DeleteProjectSliderModal'));
-const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
 const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
 const SocialMediaKitGenerator = React.lazy(() => import('./components/SocialMediaKitGenerator'));
 const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'));
@@ -103,8 +102,6 @@ const App: React.FC = () => {
     });
 
     const [generalError, setGeneralError] = useState<string | null>(null);
-    const [showCaptcha, setShowCaptcha] = useState(true);
-    const [isReadyForLogin, setIsReadyForLogin] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -141,8 +138,6 @@ const App: React.FC = () => {
             else { sessionStorage.setItem('desainfun_app_state', appState); if (selectedProjectId !== null) sessionStorage.setItem('desainfun_project_id', selectedProjectId.toString()); else sessionStorage.removeItem('desainfun_project_id'); }
         }
     }, [appState, selectedProjectId, session]);
-    
-    useEffect(() => { if (!session && !authLoading) setShowCaptcha(true); else setShowCaptcha(false); }, [session, authLoading]);
     
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => { 
@@ -315,7 +310,7 @@ const App: React.FC = () => {
     
     if (authLoading) return <AuthLoadingScreen />;
     
-    if (!session) return ( <> <LoginScreen isCaptchaSolved={!showCaptcha} isReadyForLogin={isReadyForLogin} /> <Suspense fallback={null}> <PuzzleCaptchaModal show={showCaptcha} onSuccess={() => { setShowCaptcha(false); setIsReadyForLogin(true); }} /> <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} /> </Suspense> </> );
+    if (!session) return ( <> <LoginScreen isCaptchaSolved={true} isReadyForLogin={true} /> <Suspense fallback={null}> <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} /> <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} /> </Suspense> </> );
     
     return (
       <>
