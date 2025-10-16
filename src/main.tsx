@@ -7,7 +7,6 @@ import { UIProvider } from './contexts/UIContext';
 import { UserActionsProvider } from './contexts/UserActionsContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { AIPetProvider } from './contexts/AIPetContext';
 import { supabaseError } from './services/supabaseClient';
 import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
 import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
@@ -50,9 +49,7 @@ if (supabaseError) {
         <UserActionsProvider>
           <UIProvider>
             <LanguageProvider>
-              <AIPetProvider>
-                <App />
-              </AIPetProvider>
+              <App />
             </LanguageProvider>
           </UIProvider>
         </UserActionsProvider>

@@ -1,20 +1,17 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
-import { GoogleGenAI, Chat } from "@google/genai";
 import { getSupabaseClient } from './services/supabaseClient';
 import { playSound } from './services/soundService';
 import { clearWorkflowState, loadWorkflowState, saveWorkflowState } from './services/workflowPersistence';
-import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus, Profile, AIPetState } from './types';
+import type { Project, ProjectData, BrandInputs, BrandPersona, LogoVariations, ContentCalendarEntry, SocialMediaKitAssets, SocialProfileData, SocialAdsData, PrintMediaAssets, ProjectStatus } from './types';
 import { useAuth } from './contexts/AuthContext';
 import { useUI } from './contexts/UIContext';
 import { useUserActions } from './contexts/UserActionsContext';
-import { useAIPet } from './contexts/AIPetContext';
 
 // --- API Services ---
 import * as geminiService from './services/geminiService';
 import { fetchImageAsBase64 } from './utils/imageUtils';
-
 
 // --- Error Handling & Loading ---
 import ErrorBoundary from './components/common/ErrorBoundary';
