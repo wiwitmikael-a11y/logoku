@@ -21,24 +21,20 @@ try {
 }
 
 /**
- * Supabase client instance.
- * @throws {Error} Jika client gagal diinisialisasi saat startup.
- */
-export const supabase = supabaseInstance as SupabaseClient;
-
-/**
  * Error message if initialization fails, or null if successful.
  */
 export const supabaseError = initializationError;
 
 /**
- * Function to get the client. Included for compatibility, 
- * but direct export is now preferred. Throws if initialization failed.
+ * Function to get the client. This is the single source of truth for getting
+ * the Supabase client instance. Throws if initialization failed.
  * @returns {SupabaseClient}
  */
 export const getSupabaseClient = (): SupabaseClient => {
   if (initializationError) {
+    // This will be caught by the top-level error boundary in index.tsx
     throw new Error(initializationError);
   }
+  // The initial check guarantees supabaseInstance is not null if initializationError is null.
   return supabaseInstance as SupabaseClient;
 };
