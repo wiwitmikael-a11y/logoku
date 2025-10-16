@@ -31,8 +31,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Changed to arrow function to correctly bind `this` for event handling.
-  private handleCopy = () => {
+  // FIX: The handleCopy method is an arrow function to ensure `this` is correctly bound to the component instance. This prevents errors where `this.state` or `this.setState` would be undefined when called from an event handler like onClick.
+  public handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString() + "\n" + (this.state.error.stack || ''));
       this.setState({ isCopied: true });

@@ -1,10 +1,9 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-// FIX: Module '"../services/supabaseClient"' has no exported member 'supabase'. Did you mean 'getSupabaseClient'?
-import { getSupabaseClient } from '../services/supabaseClient';
-import type { Session, User, Profile, Project } from '../types';
-import { playBGM, setMuted, stopBGM, playRandomBGM } from '../services/soundService';
+import { getSupabaseClient } from './services/supabaseClient';
+import type { Session, User, Profile, Project } from './types';
+import { playBGM, setMuted, stopBGM, playRandomBGM } from './services/soundService';
 
 export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
 
@@ -46,7 +45,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const executeLogout = async () => {
     stopBGM();
-    // FIX: 'supabase' is not defined.
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
     setSession(null);
@@ -59,7 +57,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const handleDeleteAccount = async () => {
       if (!user) return;
       alert("This is a permanent action! We are calling the RPC function to delete your data.");
-      // FIX: 'supabase' is not defined.
       const supabase = getSupabaseClient();
       const { error } = await supabase.rpc('delete_user_account');
       if (error) {
@@ -116,7 +113,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const fetchInitialUserData = useCallback(async (userToFetch: User) => {
     try {
-        // FIX: 'supabase' is not defined.
         const supabase = getSupabaseClient();
         const { data: profileData, error: profileError, status } = await supabase
             .from('profiles')
@@ -167,7 +163,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-        // FIX: 'supabase' is not defined.
         const supabase = getSupabaseClient();
         const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
         if (error) setAuthError(error.message);
@@ -186,7 +181,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   useEffect(() => {
     setLoading(true);
-    // FIX: 'supabase' is not defined.
     const supabase = getSupabaseClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);

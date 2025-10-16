@@ -1,18 +1,18 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState } from 'react';
-import { generateMoodboardText, generateMoodboardImages } from '../services/geminiService';
-import { useAuth } from '../contexts/AuthContext';
-import { useUserActions } from '../contexts/UserActionsContext';
-import { playSound } from '../services/soundService';
-import { getSupabaseClient } from '../services/supabaseClient';
-import type { Project } from '../types';
-import Button from './common/Button';
-import Textarea from './common/Textarea';
-import ErrorMessage from './common/ErrorMessage';
-import LoadingMessage from './common/LoadingMessage';
-import ImageModal from './common/ImageModal';
-import CopyButton from './common/CopyButton';
+import { generateMoodboardText, generateMoodboardImages } from './services/geminiService';
+import { useAuth } from './contexts/AuthContext';
+import { useUserActions } from './contexts/UserActionsContext';
+import { playSound } from './services/soundService';
+import { getSupabaseClient } from './services/supabaseClient';
+import type { Project } from './types';
+import Button from './components/common/Button';
+import Textarea from './components/common/Textarea';
+import ErrorMessage from './components/common/ErrorMessage';
+import LoadingMessage from './components/common/LoadingMessage';
+import ImageModal from './components/common/ImageModal';
+import CopyButton from './components/common/CopyButton';
 
 const MOODBOARD_COST = 3;
 const XP_REWARD = 25;

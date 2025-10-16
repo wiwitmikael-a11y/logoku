@@ -1,21 +1,20 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useEffect, useState, useMemo, Suspense } from 'react';
-import type { Project, BrandInputs } from '../types';
-import { useAuth } from '../contexts/AuthContext';
-import { useUI } from '../contexts/UIContext';
-// FIX: Module '"../services/supabaseClient"' has no exported member 'supabase'. Did you mean 'getSupabaseClient'?
-import { getSupabaseClient } from '../services/supabaseClient';
-import Button from './common/Button';
-import Card from './common/Card';
-import InFeedAd from './common/InFeedAd';
-import SaweriaWidget from './common/SaweriaWidget';
-import LoadingMessage from './common/LoadingMessage';
-import CalloutPopup from './common/CalloutPopup';
+import type { Project, BrandInputs } from './types';
+import { useAuth } from './contexts/AuthContext';
+import { useUI } from './contexts/UIContext';
+import { getSupabaseClient } from './services/supabaseClient';
+import Button from './components/common/Button';
+import Card from './components/common/Card';
+import InFeedAd from './components/common/InFeedAd';
+import SaweriaWidget from './components/common/SaweriaWidget';
+import LoadingMessage from './components/common/LoadingMessage';
+import CalloutPopup from './components/common/CalloutPopup';
 
-const Forum = React.lazy(() => import('./Forum'));
-const QuickTools = React.lazy(() => import('./QuickTools'));
-const PusatJuragan = React.lazy(() => import('./gamification/PusatJuragan'));
+const Forum = React.lazy(() => import('./components/Forum'));
+const QuickTools = React.lazy(() => import('./components/QuickTools'));
+const PusatJuragan = React.lazy(() => import('./components/gamification/PusatJuragan'));
 
 interface ProjectDashboardProps {
   projects: Project[];
@@ -86,7 +85,6 @@ const BrandGalleryPreview: React.FC = () => {
     useEffect(() => {
         const fetchTopProjects = async () => {
             setIsLoading(true);
-            // FIX: 'supabase' is not exported from '../services/supabaseClient'.
             const supabase = getSupabaseClient();
             const { data, error } = await supabase.from('projects').select('id, project_data, like_count').eq('status', 'completed').order('like_count', { ascending: false }).limit(3);
             if (error) console.error("Failed to fetch top projects:", error);

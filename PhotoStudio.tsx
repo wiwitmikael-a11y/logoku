@@ -1,17 +1,17 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect } from 'react';
-import { generateProductPhoto, removeBackground } from '../services/geminiService';
-import { useAuth } from '../contexts/AuthContext';
-import { useUserActions } from '../contexts/UserActionsContext';
-import { playSound } from '../services/soundService';
-import { getSupabaseClient } from '../services/supabaseClient';
-import type { Project } from '../types';
-import Button from './common/Button';
-import Textarea from './common/Textarea';
-import ErrorMessage from './common/ErrorMessage';
-import LoadingMessage from './common/LoadingMessage';
-import ImageModal from './common/ImageModal';
+import { generateProductPhoto, removeBackground } from './services/geminiService';
+import { useAuth } from './contexts/AuthContext';
+import { useUserActions } from './contexts/UserActionsContext';
+import { playSound } from './services/soundService';
+import { getSupabaseClient } from './services/supabaseClient';
+import type { Project } from './types';
+import Button from './components/common/Button';
+import Textarea from './components/common/Textarea';
+import ErrorMessage from './components/common/ErrorMessage';
+import LoadingMessage from './components/common/LoadingMessage';
+import ImageModal from './components/common/ImageModal';
 
 const PHOTO_STUDIO_COST = 1;
 const BG_REMOVAL_COST = 1;
