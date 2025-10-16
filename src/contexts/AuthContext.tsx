@@ -183,7 +183,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             })
                             .select('*, aipet_state')
                             .single();
-                        if (insertError) throw insertError;
+                        if (insertError) {
+                          // This is the most likely failure point for new users due to RLS
+                          throw new Error(`Gagal membuat profil pengguna baru. [${insertError.message}]`);
+                        }
                         finalProfile = newProfileData;
                     } else if (profileError) {
                         throw profileError;
