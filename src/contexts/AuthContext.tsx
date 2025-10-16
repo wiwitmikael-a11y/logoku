@@ -1,236 +1,112 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import { getSupabaseClient } from '../services/supabaseClient';
-import type { Session, User, Profile, Project } from '../types';
-import { playBGM, setMuted, stopBGM, playRandomBGM } from '../services/soundService';
-
-export type BgmSelection = 'Mute' | 'Random' | 'Jingle' | 'Acoustic' | 'Uplifting' | 'LoFi' | 'Bamboo' | 'Ethnic' | 'Cozy';
+import { Session, User } from '@supabase/supabase-js';
+import type { UserProfile, Project } from '../types';
+import { setMuted } from '../services/soundService';
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  profile: Profile | null;
+  profile: UserProfile | null;
   projects: Project[];
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   loading: boolean;
-  executeLogout: () => Promise<void>;
   authError: string | null;
   refreshProfile: () => Promise<void>;
-  isMuted: boolean;
-  handleToggleMute: () => void;
-  bgmSelection: BgmSelection;
-  handleBgmChange: (selection: BgmSelection) => void;
-  handleDeleteAccount: () => Promise<void>;
+  executeLogout: () => Promise<void>;
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// --- AT ALL COST: ANTI-STUCK MECHANISM ---
-const TIMEOUT_DURATION = 8000; // 8 seconds
-
-const fetchWithTimeout = <T,>(promise: Promise<T>, timeout: number, timeoutMessage: string): Promise<T> => {
-  let timeoutId: number;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = window.setTimeout(() => {
-      reject(new Error(timeoutMessage));
-    }, timeout);
-  });
-  
-  return Promise.race([promise, timeoutPromise]).finally(() => {
-    clearTimeout(timeoutId);
-  });
-};
-// -----------------------------------------
-
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   
-  const [isMuted, setIsMutedState] = useState(() => localStorage.getItem('desainfun_isMuted') === 'true');
-  const [bgmSelection, setBgmSelection] = useState<BgmSelection>(() => (localStorage.getItem('desainfun_bgmSelection') as BgmSelection) || 'Random');
-
-  const executeLogout = useCallback(async () => {
+  const fetchProfileAndProjects = useCallback(async (user: User) => {
     try {
       const supabase = getSupabaseClient();
-      stopBGM();
-      await supabase.auth.signOut();
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) throw profileError;
+      setProfile(profileData);
+      setMuted(profileData?.is_muted ?? false);
+
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (projectsError) throw projectsError;
+      setProjects(projectsData || []);
+
     } catch (error) {
       setAuthError((error as Error).message);
-    } finally {
-      // Clear all local state regardless of signout success
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      setProjects([]);
-      setLoading(false);
     }
   }, []);
 
-  const handleDeleteAccount = useCallback(async () => {
-      if (!user) return;
-      if (!window.confirm("Ini adalah tindakan permanen! Semua data proyek, profil, dan progres Anda akan dihapus selamanya. Yakin mau lanjut?")) return;
-      
-      try {
-        const supabase = getSupabaseClient();
-        const { error } = await supabase.rpc('delete_user_account');
-        if (error) {
-            alert(`Error menghapus akun: ${error.message}`);
-        } else {
-            alert("Akun Anda dan semua data terkait telah dihapus.");
-            await executeLogout();
-        }
-      } catch (error) {
-        setAuthError((error as Error).message);
-      }
-  }, [user, executeLogout]);
-
-  const handleToggleMute = useCallback(() => {
-    const newMuted = !isMuted;
-    setIsMutedState(newMuted);
-    localStorage.setItem('desainfun_isMuted', String(newMuted));
-    setMuted(newMuted);
-
-    if (newMuted) {
-      stopBGM();
-    } else {
-      const currentSelection = localStorage.getItem('desainfun_bgmSelection') as BgmSelection || 'Random';
-      if (currentSelection === 'Mute') {
-        const newSelection = 'Random';
-        setBgmSelection(newSelection);
-        localStorage.setItem('desainfun_bgmSelection', newSelection);
-        playRandomBGM();
-      } else if (currentSelection === 'Random') {
-        playRandomBGM();
-      } else {
-        playBGM(currentSelection as any);
-      }
-    }
-  }, [isMuted]);
-
-  const handleBgmChange = useCallback((selection: BgmSelection) => {
-    setBgmSelection(selection);
-    localStorage.setItem('desainfun_bgmSelection', selection);
-    
-    if (selection === 'Mute') {
-        if (!isMuted) {
-            setIsMutedState(true);
-            localStorage.setItem('desainfun_isMuted', 'true');
-            setMuted(true);
-            stopBGM();
-        }
-    } else {
-        if (isMuted) {
-            setIsMutedState(false);
-            localStorage.setItem('desainfun_isMuted', 'false');
-            setMuted(false);
-        }
-        if (selection === 'Random') playRandomBGM();
-        else playBGM(selection as any);
-    }
-  }, [isMuted]);
-
-  const refreshProfile = useCallback(async () => {
-    if (user) {
-      try {
-        const supabase = getSupabaseClient();
-        const { data, error } = await supabase.from('profiles').select('*, aipet_state').eq('id', user.id).single();
-        if (error) setAuthError(error.message);
-        else setProfile(data);
-      } catch (error) {
-        setAuthError((error as Error).message);
-      }
-    }
-  }, [user]);
-
   useEffect(() => {
-    setLoading(true);
     const supabase = getSupabaseClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        
-        try {
-            setAuthError(null);
-            setSession(session);
-            const currentUser = session?.user ?? null;
-            setUser(currentUser);
-            
-            if (currentUser) {
-                // AT ALL COST: Use the robust fetch-with-timeout mechanism
-                const getProfileAndProjects = async () => {
-                    const { data: profileData, error: profileError, status } = await supabase
-                        .from('profiles')
-                        .select('*, aipet_state')
-                        .eq('id', currentUser.id)
-                        .single();
+    setLoading(true);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        await fetchProfileAndProjects(session.user);
+      }
+      setLoading(false);
+    });
 
-                    let finalProfile = profileData;
-
-                    if (profileError && status === 406) { // Profile does not exist, create it
-                        const { data: newProfileData, error: insertError } = await supabase
-                            .from('profiles')
-                            .insert({
-                                id: currentUser.id,
-                                full_name: currentUser.user_metadata.full_name || 'Juragan Baru',
-                                avatar_url: currentUser.user_metadata.avatar_url || '',
-                                credits: 20,
-                                welcome_bonus_claimed: true,
-                                last_credit_reset: new Date().toISOString(),
-                            })
-                            .select('*, aipet_state')
-                            .single();
-                        if (insertError) {
-                          // This is the most likely failure point for new users due to RLS
-                          throw new Error(`Gagal membuat profil pengguna baru. [${insertError.message}]`);
-                        }
-                        finalProfile = newProfileData;
-                    } else if (profileError) {
-                        throw profileError;
-                    }
-                    
-                    const { data: projectsData, error: projectsError } = await supabase
-                        .from('projects')
-                        .select('*')
-                        .eq('user_id', currentUser.id)
-                        .order('created_at', { ascending: false });
-
-                    if (projectsError) throw projectsError;
-                    
-                    return { profile: finalProfile, projects: projectsData || [] };
-                };
-
-                const { profile, projects } = await fetchWithTimeout(
-                    getProfileAndProjects(),
-                    TIMEOUT_DURATION,
-                    'Gagal memuat data pengguna dalam 8 detik. Sesi mungkin rusak.'
-                );
-
-                setProfile(profile);
-                setProjects(projects);
-
-            } else { // No user session
-              setProfile(null);
-              setProjects([]);
-            }
-        } catch (error: any) {
-            console.error("Error during auth state change handling:", error);
-            setAuthError(`Gagal memuat data: ${error.message}. Sesi akan di-logout.`);
-            await executeLogout(); // Logout on ANY error to be safe
-        } finally {
-            setLoading(false);
-        }
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setLoading(true);
+        await fetchProfileAndProjects(session.user);
+        setLoading(false);
+      } else {
+        setProfile(null);
+        setProjects([]);
+      }
     });
 
     return () => {
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
-  }, [executeLogout]);
+  }, [fetchProfileAndProjects]);
+  
+  const refreshProfile = useCallback(async () => {
+    if (user) {
+      await fetchProfileAndProjects(user);
+    }
+  }, [user, fetchProfileAndProjects]);
 
-  const value: AuthContextType = { session, user, profile, projects, setProjects, loading, executeLogout, authError, refreshProfile, isMuted, handleToggleMute, bgmSelection, handleBgmChange, handleDeleteAccount };
+  const executeLogout = async () => {
+    const supabase = getSupabaseClient();
+    await supabase.auth.signOut();
+  };
+
+  const value = {
+    session,
+    user,
+    profile,
+    projects,
+    loading,
+    authError,
+    refreshProfile,
+    executeLogout,
+    setProjects,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

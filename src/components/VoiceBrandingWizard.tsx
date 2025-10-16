@@ -181,12 +181,14 @@ const VoiceBrandingWizard: React.FC<{ show: boolean; onClose: () => void; }> = (
     const ConsultationChecklist = () => (
         <div className="space-y-2 mt-4">
             {CONSULTATION_STEPS.map((stepKey, index) => (
-                <div key={stepKey} className={`flex items-start transition-all duration-300 ${index > currentStepIndex ? 'opacity-40' : 'opacity-100'}`}>
+// FIX: Cast stepKey to string for use as a React key to satisfy TypeScript.
+                <div key={stepKey as string} className={`flex items-start transition-all duration-300 ${index > currentStepIndex ? 'opacity-40' : 'opacity-100'}`}>
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-1 flex-shrink-0 ${brandInputs[stepKey] ? 'bg-green-500' : 'bg-border-main'}`}>
                        {brandInputs[stepKey] && <span className="text-white">✓</span>}
                     </div>
                     <div>
-                        <p className="font-semibold text-sm text-text-header capitalize">{stepKey.replace(/([A-Z])/g, ' $1')}</p>
+{/* FIX: Cast stepKey to string before calling replace method to satisfy TypeScript. */}
+                        <p className="font-semibold text-sm text-text-header capitalize">{(stepKey as string).replace(/([A-Z])/g, ' $1')}</p>
                         <p className="text-xs text-text-body">{brandInputs[stepKey] || '...'}</p>
                     </div>
                 </div>
