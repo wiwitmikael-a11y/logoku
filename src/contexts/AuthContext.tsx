@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isMuted, setIsMutedState] = useState(() => localStorage.getItem('desainfun_isMuted') === 'true');
   const [bgmSelection, setBgmSelection] = useState<BgmSelection>(() => (localStorage.getItem('desainfun_bgmSelection') as BgmSelection) || 'Random');
 
-  const executeLogout = async () => {
+  const executeLogout = useCallback(async () => {
     try {
       const supabase = getSupabaseClient();
       stopBGM();
@@ -46,9 +46,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       setAuthError((error as Error).message);
     }
-  };
+  }, []);
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccount = useCallback(async () => {
       if (!user) return;
       if (!window.confirm("Ini adalah tindakan permanen! Semua data proyek, profil, dan progres Anda akan dihapus selamanya. Yakin mau lanjut?")) return;
       
@@ -64,31 +64,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (error) {
         setAuthError((error as Error).message);
       }
-  };
+  }, [user, executeLogout]);
 
   const handleToggleMute = useCallback(() => {
-    setIsMutedState(prev => {
-        const newMuted = !prev;
-        localStorage.setItem('desainfun_isMuted', String(newMuted));
-        setMuted(newMuted);
-        if (newMuted) {
-            stopBGM();
-        } else {
-            const currentSelection = localStorage.getItem('desainfun_bgmSelection') as BgmSelection || 'Random';
-            if (currentSelection === 'Mute') {
-                const newSelection = 'Random';
-                setBgmSelection(newSelection);
-                localStorage.setItem('desainfun_bgmSelection', newSelection);
-                playRandomBGM();
-            } else if (currentSelection === 'Random') {
-                playRandomBGM();
-            } else {
-                playBGM(currentSelection as any);
-            }
-        }
-        return newMuted;
-    });
-  }, []);
+    const newMuted = !isMuted;
+    setIsMutedState(newMuted);
+    localStorage.setItem('desainfun_isMuted', String(newMuted));
+    setMuted(newMuted);
+
+    if (newMuted) {
+      stopBGM();
+    } else {
+      const currentSelection = localStorage.getItem('desainfun_bgmSelection') as BgmSelection || 'Random';
+      if (currentSelection === 'Mute') {
+        const newSelection = 'Random';
+        setBgmSelection(newSelection);
+        localStorage.setItem('desainfun_bgmSelection', newSelection);
+        playRandomBGM();
+      } else if (currentSelection === 'Random') {
+        playRandomBGM();
+      } else {
+        playBGM(currentSelection as any);
+      }
+    }
+  }, [isMuted]);
 
   const handleBgmChange = useCallback((selection: BgmSelection) => {
     setBgmSelection(selection);
