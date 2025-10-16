@@ -17,11 +17,16 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  state: State = { 
-    hasError: false,
-    error: undefined,
-    isCopied: false 
-  };
+  // FIX: Initialize state and bind methods in the constructor to ensure correct 'this' context, resolving linter errors.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+      isCopied: false,
+    };
+    this.handleCopy = this.handleCopy.bind(this);
+  }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
@@ -31,12 +36,11 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  handleCopy = () => {
+  // FIX: Changed from a class property arrow function to a regular method bound in the constructor.
+  handleCopy() {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString() + "\n" + (this.state.error.stack || ''));
-      // FIX: Property 'setState' does not exist on type 'ErrorBoundary'. It should be 'this.setState'.
       this.setState({ isCopied: true });
-      // FIX: Property 'setState' does not exist on type 'ErrorBoundary'. It should be 'this.setState'.
       setTimeout(() => this.setState({ isCopied: false }), 2000);
     }
   }
@@ -44,7 +48,6 @@ class ErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       const { error, isCopied } = this.state;
-      // FIX: Property 'props' does not exist on type 'ErrorBoundary'. It should be 'this.props'.
       const { onReset } = this.props;
       const imgStyle: React.CSSProperties = { imageRendering: 'pixelated' };
       return (
@@ -85,8 +88,6 @@ class ErrorBoundary extends React.Component<Props, State> {
         </div>
       );
     }
-
-    // FIX: Property 'props' does not exist on type 'ErrorBoundary'. It should be 'this.props'.
     return this.props.children;
   }
 }
