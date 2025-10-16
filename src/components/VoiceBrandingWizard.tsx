@@ -22,7 +22,7 @@ interface Props {
   setShowOutOfCreditsModal: (show: boolean) => void;
 }
 
-// FIX: Added 'FINALIZING' to the ConversationState union type to resolve a comparison error in the `onclose` callback.
+// FIX: Added 'FINALIZING' to the ConversationState union type to resolve a comparison error.
 type ConversationState = 'IDLE' | 'CONNECTING' | 'AI_SPEAKING' | 'USER_LISTENING' | 'PROCESSING' | 'COMPLETED' | 'FINALIZING' | 'ERROR';
 type ExtendedWizardStep = VoiceWizardStep | 'GET_LOGO_STYLE' | 'FINALIZING_LOGO' | 'FINALIZING';
 
@@ -106,7 +106,8 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs & { log
     return (
         <div className="w-full max-w-md my-4 p-4 bg-black/20 rounded-lg space-y-3 text-left">
             {checklistItems.map((item, index) => {
-                const value = brandInputs[item.key as keyof typeof brandInputs];
+                // FIX: Cast brandInputs to Record<string, any> to safely access properties with a string key and avoid symbol-related type errors.
+                const value = (brandInputs as Record<string, any>)[item.key];
                 const isCompleted = !!value || (item.key === 'finalization' && currentStep === 'COMPLETED');
                 const isCurrent = currentStep === item.step;
 

@@ -106,7 +106,8 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs & { log
     return (
         <div className="w-full max-w-md my-4 p-4 bg-black/20 rounded-lg space-y-3 text-left">
             {checklistItems.map((item, index) => {
-                const value = brandInputs[item.key as keyof typeof brandInputs];
+                // FIX: Cast brandInputs to Record<string, any> to safely access properties with a string key and avoid symbol-related type errors.
+                const value = (brandInputs as Record<string, any>)[item.key];
                 const isCompleted = !!value || (item.key === 'finalization' && currentStep === 'COMPLETED');
                 const isCurrent = currentStep === item.step;
 

@@ -374,7 +374,7 @@ export const generateVideo = async (prompt: string, imageBase64?: string): Promi
     let operation;
     if (imageBase64) {
         operation = await ai.models.generateVideos({
-            model: 'veo-3.1-fast-generate-preview',
+            model: 'veo-2.0-generate-001',
             prompt,
             image: {
                 imageBytes: imageBase64.split(',')[1],
@@ -384,7 +384,7 @@ export const generateVideo = async (prompt: string, imageBase64?: string): Promi
         });
     } else {
         operation = await ai.models.generateVideos({
-            model: 'veo-3.1-fast-generate-preview',
+            model: 'veo-2.0-generate-001',
             prompt,
             config: { numberOfVideos: 1 }
         });
@@ -481,7 +481,8 @@ export const generateImageForCanvas = async (prompt: string, baseImageB64?: stri
 // Other functions from the codebase that need implementation
 export const generateMissingField = async (currentInputs: Partial<BrandInputs>, fieldToGenerate: keyof BrandInputs): Promise<string> => {
     const ai = getAiClient();
-    const prompt = `Berdasarkan informasi brand ini: ${JSON.stringify(currentInputs)}, berikan satu saran untuk kolom yang hilang: "${fieldToGenerate}". Berikan jawaban singkat dan langsung pada intinya.`;
+    // FIX: Explicitly convert fieldToGenerate to a string to avoid potential runtime errors with symbols.
+    const prompt = `Berdasarkan informasi brand ini: ${JSON.stringify(currentInputs)}, berikan satu saran untuk kolom yang hilang: "${String(fieldToGenerate)}". Berikan jawaban singkat dan langsung pada intinya.`;
     const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
     return response.text.replace(/["*]/g, '').trim();
 };
