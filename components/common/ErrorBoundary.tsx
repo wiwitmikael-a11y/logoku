@@ -17,16 +17,12 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Initialize state and bind methods in the constructor to ensure correct 'this' context, resolving linter errors.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-      isCopied: false,
-    };
-    this.handleCopy = this.handleCopy.bind(this);
-  }
+  // FIX: Initialize state as a class property to avoid constructor and potential `this` binding issues.
+  public state: State = {
+    hasError: false,
+    error: undefined,
+    isCopied: false,
+  };
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
@@ -36,8 +32,8 @@ class ErrorBoundary extends React.Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  // FIX: Changed from a class property arrow function to a regular method bound in the constructor.
-  handleCopy() {
+  // FIX: Use an arrow function for the method to automatically bind `this`, resolving issues where `this.state` was not found.
+  handleCopy = () => {
     if (this.state.error) {
       navigator.clipboard.writeText(this.state.error.toString() + "\n" + (this.state.error.stack || ''));
       this.setState({ isCopied: true });
@@ -64,9 +60,9 @@ class ErrorBoundary extends React.Component<Props, State> {
                     Mang AI pusing, ada yang rusak di dalam aplikasi. Coba refresh halaman ini. Kalau masih error, mungkin Mang AI lagi istirahat dulu.
                 </p>
                 <div className="flex flex-wrap justify-center items-center gap-4">
-                    <Button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
+                    <button onClick={() => window.location.reload()} className="!bg-red-600 !text-white hover:!bg-red-700 focus:!ring-red-500">
                         Refresh Halaman
-                    </Button>
+                    </button>
                     {onReset && (
                         <Button onClick={onReset} variant="secondary">
                             &larr; Kembali ke Menu
