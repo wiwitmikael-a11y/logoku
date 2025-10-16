@@ -1,18 +1,18 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { generateLogoVariations, editLogo } from '../services/geminiService';
-import { playSound } from '../services/soundService';
-import { useAuth } from '../contexts/AuthContext';
-import { useUserActions } from '../contexts/UserActionsContext';
-import type { LogoVariations } from '../types';
-import Button from './common/Button';
-import Input from './common/Input';
-import LoadingMessage from './common/LoadingMessage';
-import ImageModal from './common/ImageModal';
-import ErrorMessage from './common/ErrorMessage';
-import CalloutPopup from './common/CalloutPopup';
-import Card from './common/Card';
+import { generateLogoVariations, editLogo } from '../../services/geminiService';
+import { playSound } from '../../services/soundService';
+import { useAuth } from '../../contexts/AuthContext';
+import { useUserActions } from '../../contexts/UserActionsContext';
+import type { LogoVariations } from '../../types';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
+import LoadingMessage from '../../components/common/LoadingMessage';
+import ImageModal from '../../components/common/ImageModal';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import CalloutPopup from '../../components/common/CalloutPopup';
+import Card from '../../components/common/Card';
 
 interface Props {
   baseLogoUrl: string;
@@ -43,7 +43,7 @@ const LogoDetailGenerator: React.FC<Props> = ({ baseLogoUrl, businessName, onCom
 
   useEffect(() => {
     // Preload next step
-    import('./SocialMediaKitGenerator');
+    import('../../components/SocialMediaKitGenerator');
   }, []);
 
   useEffect(() => {

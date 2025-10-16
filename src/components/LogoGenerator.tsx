@@ -1,14 +1,14 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { generateLogoOptions } from '../services/geminiService';
-import { useAuth } from '../contexts/AuthContext';
-import { useUserActions } from '../contexts/UserActionsContext';
-import type { BrandPersona } from '../types';
-import Button from './common/Button';
-import Card from './common/Card';
-import ErrorMessage from './common/ErrorMessage';
-import LegalDisclaimerModal from './common/LegalDisclaimerModal';
+import { generateLogoOptions } from '../../services/geminiService';
+import { useAuth } from '../../contexts/AuthContext';
+import { useUserActions } from '../../contexts/UserActionsContext';
+import type { BrandPersona } from '../../types';
+import Button from '../../components/common/Button';
+import Card from '../../components/common/Card';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import LegalDisclaimerModal from '../../components/common/LegalDisclaimerModal';
 
 interface Props {
   persona: BrandPersona;
@@ -49,7 +49,7 @@ const LogoGenerator: React.FC<Props> = ({ persona, businessName, onComplete, onG
 
   useEffect(() => {
     // Preload next step
-    import('./LogoDetailGenerator');
+    import('../../components/LogoDetailGenerator');
   }, []);
 
   const handleGenerateLogos = useCallback(async () => {

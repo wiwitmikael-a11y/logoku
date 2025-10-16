@@ -380,7 +380,8 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
           onerror: (e: ErrorEvent) => { setError(`Koneksi error: ${e.message}`); setConversationState('ERROR'); },
           onclose: (e: CloseEvent) => {
             const currentState = conversationStateRef.current;
-            if (currentState !== 'COMPLETED' && currentState !== 'FINALIZING') {
+            // FIX: Refactored the condition to use `Array.includes()` to avoid a potential TypeScript type error while maintaining logic.
+            if (!['COMPLETED', 'FINALIZING'].includes(currentState)) {
               setConversationState('IDLE');
             }
           },

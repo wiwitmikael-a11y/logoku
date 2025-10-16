@@ -125,7 +125,7 @@ const BrandGalleryPreview: React.FC = () => {
 const ProjectDashboard: React.FC<ProjectDashboardProps> = (props) => {
   const { projects } = props;
   const { profile } = useAuth();
-  const { toggleSotoshop } = useUI();
+  const { toggleSotoshop, toggleVoiceWizard } = useUI();
   const userName = profile?.full_name?.split(' ')[0] || 'Juragan';
   const [activeTab, setActiveTab] = useState<'projects' | 'lemari' | 'creator' | 'forum' | 'gamify'>('projects');
   

@@ -7,9 +7,9 @@ import { UIProvider } from './contexts/UIContext';
 import { UserActionsProvider } from './contexts/UserActionsContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { supabaseError } from './services/supabaseClient';
-import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
-import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
+import { supabaseError } from '../services/supabaseClient';
+import SupabaseKeyErrorScreen from '../components/common/SupabaseKeyErrorScreen';
+import ApiKeyErrorScreen from '../components/common/ApiKeyErrorScreen';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

@@ -10,53 +10,54 @@ import { useUI } from './contexts/UIContext';
 import { useUserActions } from './contexts/UserActionsContext';
 
 // --- API Services ---
-import * as geminiService from './services/geminiService';
-import { fetchImageAsBase64 } from './utils/imageUtils';
+import * as geminiService from '../services/geminiService';
+import { fetchImageAsBase64 } from '../utils/imageUtils';
+
 
 // --- Error Handling & Loading ---
-import ErrorBoundary from './components/common/ErrorBoundary';
-import AuthLoadingScreen from './components/common/AuthLoadingScreen';
-import LoadingMessage from './components/common/LoadingMessage';
-import ErrorMessage from './components/common/ErrorMessage';
+import ErrorBoundary from '../components/common/ErrorBoundary';
+import AuthLoadingScreen from '../components/common/AuthLoadingScreen';
+import LoadingMessage from '../components/common/LoadingMessage';
+import ErrorMessage from '../components/common/ErrorMessage';
 
 // --- Core Components ---
-import LoginScreen from './components/LoginScreen';
-import ProgressStepper from './components/common/ProgressStepper';
-import AdBanner from './components/common/AdBanner';
-import Toast from './components/common/Toast';
+import LoginScreen from '../components/LoginScreen';
+import ProgressStepper from '../components/common/ProgressStepper';
+import AdBanner from '../components/AdBanner';
+import Toast from '../components/common/Toast';
 import Footer from './components/common/Footer';
 import ThemeToggle from './components/common/ThemeToggle';
 
 // --- Lazily Loaded Components ---
-const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
-const BrandPersonaGenerator = React.lazy(() => import('./components/BrandPersonaGenerator'));
-const LogoGenerator = React.lazy(() => import('./components/LogoGenerator'));
-const LogoDetailGenerator = React.lazy(() => import('./components/LogoDetailGenerator'));
-const ProjectSummary = React.lazy(() => import('./components/ProjectSummary'));
-const CaptionGenerator = React.lazy(() => import('./components/CaptionGenerator'));
-const InstantContentGenerator = React.lazy(() => import('./components/InstantContentGenerator'));
-const ContactModal = React.lazy(() => import('./components/common/ContactModal'));
-const AboutModal = React.lazy(() => import('./components/common/AboutModal'));
-const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
-const PrivacyPolicyModal = React.lazy(() => import('./components/common/PrivacyPolicyModal'));
-const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
-const ProfileSettingsModal = React.lazy(() => import('./components/common/ProfileSettingsModal'));
-const ConfirmationModal = React.lazy(() => import('./components/common/ConfirmationModal'));
-const DeleteProjectSliderModal = React.lazy(() => import('./components/common/DeleteProjectSliderModal'));
-const ContentCalendarGenerator = React.lazy(() => import('./components/ContentCalendarGenerator'));
-const SocialMediaKitGenerator = React.lazy(() => import('./components/SocialMediaKitGenerator'));
-const ProfileOptimizer = React.lazy(() => import('./components/ProfileOptimizer'));
-const SocialAdsGenerator = React.lazy(() => import('./components/SocialAdsGenerator'));
-const PackagingGenerator = React.lazy(() => import('./components/PackagingGenerator'));
-const PrintMediaGenerator = React.lazy(() => import('./components/PrintMediaGenerator'));
-const MerchandiseGenerator = React.lazy(() => import('./components/MerchandiseGenerator'));
-const HeaderStats = React.lazy(() => import('./components/gamification/HeaderStats'));
-const LevelUpModal = React.lazy(() => import('./components/gamification/LevelUpModal'));
-const AchievementToast = React.lazy(() => import('./components/gamification/AchievementToast'));
-const BrandGalleryModal = React.lazy(() => import('./components/BrandGalleryModal'));
-const Sotoshop = React.lazy(() => import('./components/Sotoshop'));
-const TokenomicsModal = React.lazy(() => import('./components/common/TokenomicsModal'));
-const VoiceBrandingWizard = React.lazy(() => import('./components/VoiceBrandingWizard'));
+const ProjectDashboard = React.lazy(() => import('../components/ProjectDashboard'));
+const BrandPersonaGenerator = React.lazy(() => import('../components/BrandPersonaGenerator'));
+const LogoGenerator = React.lazy(() => import('../components/LogoGenerator'));
+const LogoDetailGenerator = React.lazy(() => import('../components/LogoDetailGenerator'));
+const ProjectSummary = React.lazy(() => import('../components/ProjectSummary'));
+const CaptionGenerator = React.lazy(() => import('../components/CaptionGenerator'));
+const InstantContentGenerator = React.lazy(() => import('../components/InstantContentGenerator'));
+const ContactModal = React.lazy(() => import('../components/ContactModal'));
+const AboutModal = React.lazy(() => import('../components/common/AboutModal'));
+const TermsOfServiceModal = React.lazy(() => import('../components/common/TermsOfServiceModal'));
+const PrivacyPolicyModal = React.lazy(() => import('../components/common/PrivacyPolicyModal'));
+const OutOfCreditsModal = React.lazy(() => import('../components/common/OutOfCreditsModal'));
+const ProfileSettingsModal = React.lazy(() => import('../components/common/ProfileSettingsModal'));
+const ConfirmationModal = React.lazy(() => import('../components/common/ConfirmationModal'));
+const DeleteProjectSliderModal = React.lazy(() => import('../components/common/DeleteProjectSliderModal'));
+const ContentCalendarGenerator = React.lazy(() => import('../components/ContentCalendarGenerator'));
+const SocialMediaKitGenerator = React.lazy(() => import('../components/SocialMediaKitGenerator'));
+const ProfileOptimizer = React.lazy(() => import('../components/ProfileOptimizer'));
+const SocialAdsGenerator = React.lazy(() => import('../components/SocialAdsGenerator'));
+const PackagingGenerator = React.lazy(() => import('../components/PackagingGenerator'));
+const PrintMediaGenerator = React.lazy(() => import('../components/PrintMediaGenerator'));
+const MerchandiseGenerator = React.lazy(() => import('../components/MerchandiseGenerator'));
+const HeaderStats = React.lazy(() => import('../components/gamification/HeaderStats'));
+const LevelUpModal = React.lazy(() => import('../components/gamification/LevelUpModal'));
+const AchievementToast = React.lazy(() => import('../components/gamification/AchievementToast'));
+const BrandGalleryModal = React.lazy(() => import('../components/BrandGalleryModal'));
+const Sotoshop = React.lazy(() => import('../components/Sotoshop'));
+const TokenomicsModal = React.lazy(() => import('../components/common/TokenomicsModal'));
+const VoiceBrandingWizard = React.lazy(() => import('../components/VoiceBrandingWizard'));
 
 
 type AppState = 'dashboard' | 'persona' | 'logo' | 'logo_detail' | 'social_kit' | 'profiles' | 'packaging' | 'print_media' | 'content_calendar' | 'social_ads' | 'merchandise' | 'summary' | 'caption' | 'instant_content';
@@ -112,7 +113,7 @@ const App: React.FC = () => {
     const showStepper = currentStepIndex !== -1;
     
     // --- Smart Preloading ---
-    const preloadBrandPersona = () => import('./components/BrandPersonaGenerator');
+    const preloadBrandPersona = () => import('../components/BrandPersonaGenerator');
 
     // --- Theme Management ---
     useEffect(() => {
@@ -257,9 +258,9 @@ const App: React.FC = () => {
         const supabase = getSupabaseClient();
         try { const resultBase64 = await generationFunc(); await deductCredits(cost); const updatedProjectData = { ...project.project_data, [assetKey]: resultBase64 }; const { data, error } = await supabase.from('projects').update({ project_data: updatedProjectData }).eq('id', projectId).select().single(); if (error) throw error; setProjects(prev => prev.map(p => p.id === projectId ? (data as Project) : p)); showToast(successMessage); } catch (err) { setGeneralError(err instanceof Error ? err.message : 'Terjadi kesalahan regenerasi.'); }
     }, [user, profile, projects, deductCredits, setShowOutOfCreditsModal, showToast, setProjects]);
-    const handleRegenerateContentCalendar = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p.project_data.brandInputs!.businessName, p.project_data.selectedPersona!).then(res => res.calendar), "Kalender konten baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
-    const handleRegenerateProfiles = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p.project_data.brandInputs!, p.project_data.selectedPersona!), "Profil sosmed baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
-    const handleRegenerateSocialAds = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return; handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p.project_data.brandInputs!, p.project_data.selectedPersona!, p.project_data.selectedSlogan!), "Teks iklan baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
+    const handleRegenerateContentCalendar = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'contentCalendar', 1, () => geminiService.generateContentCalendar(p!.project_data.brandInputs!.businessName, p!.project_data.selectedPersona!).then(res => res.calendar), "Kalender konten baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
+    const handleRegenerateProfiles = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona) return; handleRegenerateTextAsset(projectId, 'socialProfiles', 1, () => geminiService.generateSocialProfiles(p!.project_data.brandInputs!, p!.project_data.selectedPersona!), "Profil sosmed baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
+    const handleRegenerateSocialAds = useCallback(async (projectId: number) => { const p = projects.find(p => p.id === projectId); if (!p?.project_data.brandInputs || !p.project_data.selectedPersona || !p.project_data.selectedSlogan) return; handleRegenerateTextAsset(projectId, 'socialAds', 1, () => geminiService.generateSocialAds(p!.project_data.brandInputs!, p!.project_data.selectedPersona!, p!.project_data.selectedSlogan!), "Teks iklan baru berhasil dibuat!"); }, [projects, handleRegenerateTextAsset]);
     const handleRegenerateSocialKit = useCallback(async (projectId: number) => {
         setGeneralError(null); if (!user || (profile?.credits ?? 0) < 2) { setShowOutOfCreditsModal(true); return; } const project = projects.find(p => p.id === projectId); if (!project || !project.project_data.selectedLogoUrl) return;
         const supabase = getSupabaseClient();
