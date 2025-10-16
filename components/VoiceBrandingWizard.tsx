@@ -106,7 +106,6 @@ const ConsultationChecklist: React.FC<{ brandInputs: Partial<BrandInputs & { log
     return (
         <div className="w-full max-w-md my-4 p-4 bg-black/20 rounded-lg space-y-3 text-left">
             {checklistItems.map((item, index) => {
-                // FIX: Cast brandInputs to Record<string, any> to safely access properties with a string key and avoid symbol-related type errors.
                 const value = (brandInputs as Record<string, any>)[item.key];
                 const isCompleted = !!value || (item.key === 'finalization' && currentStep === 'COMPLETED');
                 const isCurrent = currentStep === item.step;
@@ -380,7 +379,6 @@ Start the conversation IMMEDIATELY with a warm, friendly greeting in Indonesian.
           onerror: (e: ErrorEvent) => { setError(`Koneksi error: ${e.message}`); setConversationState('ERROR'); },
           onclose: (e: CloseEvent) => {
             const currentState = conversationStateRef.current;
-            // FIX: Refactored the condition to use `Array.includes()` to avoid a potential TypeScript type error while maintaining logic.
             if (!['COMPLETED', 'FINALIZING'].includes(currentState)) {
               setConversationState('IDLE');
             }

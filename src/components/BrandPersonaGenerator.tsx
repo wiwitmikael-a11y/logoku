@@ -1,17 +1,17 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { generateBrandPersona, generateSlogans, analyzeCompetitorUrl } from '../../services/geminiService';
-import { playSound } from '../../services/soundService';
-import { loadWorkflowState } from '../../services/workflowPersistence';
-import type { BrandPersona, BrandInputs } from '../../types';
-import { useUserActions } from '../../contexts/UserActionsContext';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
-import Textarea from '../../components/common/Textarea';
-import Card from '../../components/common/Card';
-import ErrorMessage from '../../components/common/ErrorMessage';
-import CalloutPopup from '../../components/common/CalloutPopup';
+import { generateBrandPersona, generateSlogans, analyzeCompetitorUrl } from '../services/geminiService';
+import { playSound } from '../services/soundService';
+import { loadWorkflowState } from '../services/workflowPersistence';
+import type { BrandPersona, BrandInputs } from '../types';
+import { useUserActions } from '../contexts/UserActionsContext';
+import Button from './common/Button';
+import Input from './common/Input';
+import Textarea from './common/Textarea';
+import Card from './common/Card';
+import ErrorMessage from './common/ErrorMessage';
+import CalloutPopup from './common/CalloutPopup';
 
 interface Props {
   onComplete: (data: { inputs: BrandInputs; selectedPersona: BrandPersona; selectedSlogan: string }) => void;
@@ -52,7 +52,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ onComplete, onGoToDashboard })
 
   useEffect(() => {
     // Preload next step
-    import('../../components/LogoGenerator');
+    import('./LogoGenerator');
   }, []);
 
   useEffect(() => {
