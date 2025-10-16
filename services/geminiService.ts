@@ -12,9 +12,9 @@ export const getAiClient = (): GoogleGenAI => {
     return aiInstance;
   }
   
-  const apiKey = process.env.API_KEY;
+  const apiKey = import.meta.env.VITE_API_KEY;
   if (!apiKey) {
-    throw new Error("Konfigurasi API Key Google Gemini (`API_KEY`) tidak ditemukan. Harap atur di environment variables.");
+    throw new Error("Konfigurasi API Key Google Gemini (`VITE_API_KEY`) tidak ditemukan. Harap atur di environment variables.");
   }
 
   aiInstance = new GoogleGenAI({ apiKey });
