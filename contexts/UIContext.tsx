@@ -12,9 +12,6 @@ interface UIContextType {
   showToast: (message: string) => void;
   closeToast: () => void;
 
-  isAssistantOpen: boolean;
-  toggleAssistant: (isOpen?: boolean) => void;
-
   // Modal states and toggles
   showContactModal: boolean;
   toggleContactModal: (show?: boolean) => void;
@@ -40,7 +37,6 @@ const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [toast, setToast] = useState<ToastState>({ message: '', show: false });
-  const [isAssistantOpen, setAssistantOpen] = useState(false);
   
   const [showContactModal, setShowContactModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
@@ -70,8 +66,6 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     toast,
     showToast,
     closeToast,
-    isAssistantOpen,
-    toggleAssistant: createToggle(setAssistantOpen),
     showContactModal,
     toggleContactModal: createToggle(setShowContactModal),
     showAboutModal,

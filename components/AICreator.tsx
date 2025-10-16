@@ -4,6 +4,7 @@ import React, { useState, Suspense, useRef } from 'react';
 import type { Project } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
+import { useUI } from '../contexts/UIContext';
 import { playSound } from '../services/soundService';
 import { removeBackground } from '../services/geminiService';
 import Button from './common/Button';
@@ -20,15 +21,15 @@ type CreatorTool = 'photo_studio' | 'scene_mixer' | 'moodboard' | 'pattern' | 'm
 
 interface AICreatorProps {
     projects: Project[];
-    onShowSotoshop: () => void;
 }
 
-const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
+const AICreator: React.FC<AICreatorProps> = ({ projects }) => {
     const [activeTool, setActiveTool] = useState<CreatorTool>('photo_studio');
     const [selectedProjectId, setSelectedProjectId] = useState<string>('freestyle');
 
     const { profile } = useAuth();
     const { deductCredits, setShowOutOfCreditsModal, addXp } = useUserActions();
+    const { toggleSotoshop } = useUI();
 
     const [ownerPhotoOriginal, setOwnerPhotoOriginal] = useState<string | null>(null);
     const [ownerPhotoCutout, setOwnerPhotoCutout] = useState<string | null>(null);
@@ -44,11 +45,8 @@ const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
     const handleTakePhoto = async () => {
         setOwnerAssetError(null);
         try {
-            // Request camera permission temporarily.
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            // Immediately stop the tracks as we only need permission for the capture input to work.
             stream.getTracks().forEach(track => track.stop());
-            // Programmatically click the hidden file input with the 'capture' attribute.
             cameraInputRef.current?.click();
         } catch (err) {
             console.error("Camera permission error:", err);
@@ -65,7 +63,7 @@ const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             setOwnerPhotoOriginal(e.target?.result as string);
-            setOwnerPhotoCutout(null); // Reset cutout when new image is uploaded
+            setOwnerPhotoCutout(null);
             setOwnerAssetError(null);
         };
         reader.readAsDataURL(file);
@@ -130,7 +128,6 @@ const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
              <input type="file" accept="image/*" ref={galleryInputRef} onChange={(e) => handleFileSelect(e.target.files?.[0] || null)} className="hidden" />
              <input type="file" accept="image/*" capture="user" ref={cameraInputRef} onChange={(e) => handleFileSelect(e.target.files?.[0] || null)} className="hidden" />
 
-            {/* Left Sidebar */}
             <aside className="w-full lg:w-1/4 xl:w-1/5 flex-shrink-0 space-y-6">
                 <div className="p-4 bg-surface rounded-lg border border-border-main">
                     <h3 className="font-bold text-text-header mb-3">Navigasi CreAItor</h3>
@@ -142,7 +139,7 @@ const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
                         ))}
                     </nav>
                      <div className="mt-4 pt-4 border-t border-border-main">
-                        <button onClick={onShowSotoshop} className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors text-left text-text-body hover:bg-background">
+                        <button onClick={() => toggleSotoshop(true)} className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors text-left text-text-body hover:bg-background">
                             <span>✨</span><span>Buka Sotoshop</span>
                         </button>
                     </div>
@@ -155,7 +152,7 @@ const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
                     </select>
                      {selectedProjectContext && (
                         <div className="text-xs text-primary bg-primary/10 p-2 rounded-md">
-                            Keren! CreAItor sekarang pakai data dari brand "{selectedProjectContext.project_data.brandInputs?.businessName}".
+                            CreAItor sekarang pakai data dari brand "{selectedProjectContext.project_data.brandInputs?.businessName}".
                         </div>
                     )}
                 </div>
@@ -179,8 +176,8 @@ const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
                         <Button onClick={() => galleryInputRef.current?.click()} size="small" variant="secondary">🖼️ Dari Galeri</Button>
                     </div>
                      {ownerPhotoOriginal && (
-                        <Button onClick={handleProcessFace} isLoading={isRemovingBg} disabled={isRemovingBg} variant="accent" className="w-full">
-                           {ownerPhotoCutout ? "Proses Ulang (1 Token)" : "Proses Wajah (1 Token)"}
+                        <Button onClick={handleProcessFace} isLoading={isRemovingBg} disabled={isRemovingBg || !!ownerPhotoCutout} variant="accent" className="w-full">
+                           {ownerPhotoCutout ? "✓ Background Dihapus" : "Hapus Background (1 Token)"}
                         </Button>
                     )}
                     {(ownerPhotoOriginal || ownerPhotoCutout) && (
@@ -189,7 +186,6 @@ const AICreator: React.FC<AICreatorProps> = ({ projects, onShowSotoshop }) => {
                 </div>
             </aside>
 
-            {/* Main Content */}
             <main className="w-full lg:flex-1 bg-surface p-6 rounded-lg border border-border-main">
                 {renderActiveTool()}
             </main>
