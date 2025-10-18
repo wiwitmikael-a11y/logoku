@@ -34,6 +34,8 @@ interface Props {
 type MainModule = 'persona' | 'logo' | 'kit' | 'content' | 'sotoshop';
 type SotoshopModule = 'mascot' | 'moodboard' | 'pattern' | 'photostudio' | 'scenemixer' | 'video';
 
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+
 const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, projects, setProjects }) => {
   const { user } = useAuth();
   const [mainModule, setMainModule] = useState<MainModule>('persona');
@@ -106,8 +108,9 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
     if (!selectedProject) {
         return (
             <div className="text-center p-8 bg-background rounded-lg min-h-[400px] flex flex-col justify-center items-center">
-                <h2 className="text-2xl font-bold text-text-header">Selamat Datang di Studio AI!</h2>
-                <p className="mt-2 text-text-muted max-w-md">Pilih proyek yang sudah ada di daftar, atau buat proyek baru untuk memulai petualangan branding-mu bersama Mang AI.</p>
+                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-32 h-32 animate-bouncing-ai" style={{ imageRendering: 'pixelated' }} />
+                <h2 className="text-2xl font-bold text-text-header mt-4">Studio AI Siap Beraksi!</h2>
+                <p className="mt-2 text-text-muted max-w-md">Pilih proyek yang ada, atau buat yang baru buat mulai petualangan branding-mu, Juragan!</p>
             </div>
         );
     }
@@ -180,16 +183,16 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
         
         <div className="bg-surface rounded-lg">
             <div className="border-b border-border-main overflow-x-auto">
-                <nav className="flex space-x-1" aria-label="Tabs">
+                <nav className="-mb-px flex space-x-1" aria-label="Tabs">
                     {mainTabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setMainModule(tab.id as MainModule)}
                             className={`${
                                 mainModule === tab.id
-                                    ? 'bg-background text-primary border-primary'
+                                    ? 'tab-active-splash'
                                     : 'text-text-muted border-transparent hover:text-text-header hover:border-border-light'
-                            } flex items-center gap-2 whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm transition-colors`}
+                            } flex items-center gap-2 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm transition-colors`}
                             aria-current={mainModule === tab.id ? 'page' : undefined}
                         >
                             <span className="text-lg">{tab.icon}</span>
