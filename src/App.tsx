@@ -5,7 +5,6 @@ import { useAuth } from './contexts/AuthContext';
 import { useUI } from './contexts/UIContext';
 import { useUserActions } from './contexts/UserActionsContext';
 import LoginScreen from './components/LoginScreen';
-import ProjectDashboard from './components/ProjectDashboard';
 import AuthLoadingScreen from './components/common/AuthLoadingScreen';
 import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
 import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
@@ -14,8 +13,11 @@ import { getAiClient } from './services/geminiService';
 import { playSound, playBGM, unlockAudio } from './services/soundService';
 import ThemeToggle from './components/common/ThemeToggle';
 import Footer from './components/common/Footer';
+import WelcomeGate from './components/common/PuzzleCaptchaModal'; // Renamed component, but file path is the same for now
 
-// Lazy load modals to improve initial load time
+// Lazy load components to improve initial load time
+// FIX: Lazily import ProjectDashboard to resolve the 'Cannot find name' error.
+const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
 const ContactModal = React.lazy(() => import('./components/common/ContactModal'));
 const AboutModal = React.lazy(() => import('./components/common/AboutModal'));
 const TermsOfServiceModal = React.lazy(() => import('./components/common/TermsOfServiceModal'));
@@ -24,7 +26,6 @@ const ProfileSettingsModal = React.lazy(() => import('./components/common/Profil
 const OutOfCreditsModal = React.lazy(() => import('./components/common/OutOfCreditsModal'));
 const LevelUpModal = React.lazy(() => import('./components/gamification/LevelUpModal'));
 const AchievementToast = React.lazy(() => import('./components/gamification/AchievementToast'));
-const PuzzleCaptchaModal = React.lazy(() => import('./components/common/PuzzleCaptchaModal'));
 const VoiceBrandingWizard = React.lazy(() => import('./components/VoiceBrandingWizard'));
 
 const App: React.FC = () => {
@@ -35,9 +36,9 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') as 'light' | 'dark') || 'dark');
   const [isGeminiReady, setIsGeminiReady] = useState(false);
   const [geminiError, setGeminiError] = useState<string | null>(null);
-
-  const [isCaptchaSolved, setIsCaptchaSolved] = useState(false);
-  const [showCaptcha, setShowCaptcha] = useState(false);
+  
+  // New state to manage the pre-login welcome gate
+  const [isWelcomeGatePassed, setIsWelcomeGatePassed] = useState(() => sessionStorage.getItem('welcomeGatePassed') === 'true');
 
   useEffect(() => {
     // Check for Gemini API Key availability
@@ -75,20 +76,12 @@ const App: React.FC = () => {
     setTheme(currentTheme => (currentTheme === 'light' ? 'dark' : 'light'));
   }, []);
 
-  const handleSuccessfulCaptcha = useCallback(() => {
-    setIsCaptchaSolved(true);
-    setShowCaptcha(false);
+  const handleGatePassed = useCallback(() => {
+    sessionStorage.setItem('welcomeGatePassed', 'true');
+    setIsWelcomeGatePassed(true);
     playBGM('welcome');
   }, []);
 
-  useEffect(() => {
-    if (!loading && !session) {
-      const timer = setTimeout(() => setShowCaptcha(true), 1500); // Delay captcha appearance
-      return () => clearTimeout(timer);
-    } else {
-      setShowCaptcha(false);
-    }
-  }, [loading, session]);
 
   if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
   if (geminiError) return <ApiKeyErrorScreen error={geminiError} />;
@@ -100,16 +93,16 @@ const App: React.FC = () => {
       <div className="flex flex-col min-h-screen">
         <main className="flex-grow">
           {session ? (
-            <ProjectDashboard onToggleTheme={handleToggleTheme} theme={theme} />
+            // FIX: Wrap the lazy-loaded ProjectDashboard component in Suspense to handle asynchronous loading.
+            <Suspense fallback={<AuthLoadingScreen />}>
+              <ProjectDashboard onToggleTheme={handleToggleTheme} theme={theme} />
+            </Suspense>
           ) : (
-            <>
-              {showCaptcha && !isCaptchaSolved && (
-                <Suspense fallback={<AuthLoadingScreen />}>
-                  <PuzzleCaptchaModal show={true} onSuccess={handleSuccessfulCaptcha} />
-                </Suspense>
-              )}
-              <LoginScreen isCaptchaSolved={isCaptchaSolved} isReadyForLogin={isCaptchaSolved} />
-            </>
+            isWelcomeGatePassed ? (
+              <LoginScreen />
+            ) : (
+              <WelcomeGate onGatePassed={handleGatePassed} />
+            )
           )}
         </main>
         {session && (
