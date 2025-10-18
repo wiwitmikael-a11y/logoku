@@ -1,12 +1,11 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generatePattern, applyPatternToMockup, enhancePromptWithPersonaStyle } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
-import { getSupabaseClient } from '../services/supabaseClient';
-import type { Project } from '../types';
+import type { Project, ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
@@ -23,13 +22,14 @@ const MOCKUP_ASSETS = {
     shirt: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/mockup_shirt_white.png',
 };
 
-// TODO: Refactor to get selectedProject from a shared context
-const PatternGenerator: React.FC = () => {
-    const { user, profile, projects, setProjects } = useAuth();
+interface Props {
+    project: Project;
+    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+}
+
+const PatternGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+    const { profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
-    
-    // This should ideally come from a context that AICreator provides
-    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
     
     const [prompt, setPrompt] = useState('');
     const [result, setResult] = useState<string | null>(null);
@@ -39,12 +39,20 @@ const PatternGenerator: React.FC = () => {
     const [loadingMockup, setLoadingMockup] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Reset local state when the project prop changes
+        setPrompt('');
+        setResult(null);
+        setMockupPreviews({});
+        setError(null);
+    }, [project]);
         
     const handleGenerate = async () => {
         if (!prompt.trim()) { setError('Deskripsi pola tidak boleh kosong!'); return; }
         if ((profile?.credits ?? 0) < PATTERN_COST) { setShowOutOfCreditsModal(true); return; }
 
-        const finalPrompt = enhancePromptWithPersonaStyle(prompt, selectedProject?.project_data.selectedPersona || null);
+        const finalPrompt = enhancePromptWithPersonaStyle(prompt, project.project_data.selectedPersona || null);
 
         setIsLoading(true); setError(null); setResult(null); setMockupPreviews({}); playSound('start');
         try {
@@ -80,32 +88,21 @@ const PatternGenerator: React.FC = () => {
     };
 
     const handleSaveToProject = async (url: string, originalPrompt: string) => {
-        if (!user || !selectedProject || !url || isSaving) return;
+        if (!project || !url || isSaving) return;
         
         setIsSaving(true);
         setError(null);
         
-        const updatedData = { ...selectedProject.project_data };
-        if (!updatedData.sotoshop_assets) updatedData.sotoshop_assets = {};
-        if (!updatedData.sotoshop_assets.patterns) updatedData.sotoshop_assets.patterns = [];
-        
-        updatedData.sotoshop_assets.patterns.push({ url, prompt: originalPrompt });
+        const currentPatterns = project.project_data.sotoshop_assets?.patterns || [];
+        const newPatterns = [...currentPatterns, { url, prompt: originalPrompt }];
 
         try {
-            const supabase = getSupabaseClient();
-            const { error: updateError } = await supabase
-                .from('projects')
-                .update({ project_data: updatedData })
-                .eq('id', selectedProject.id);
-
-            if (updateError) throw updateError;
-
-            const updatedProjects = projects.map(p =>
-                p.id === selectedProject.id ? { ...p, project_data: updatedData } : p
-            );
-            setProjects(updatedProjects);
-            setSelectedProject({ ...selectedProject, project_data: updatedData });
-            
+           await onUpdateProject({
+                sotoshop_assets: {
+                    ...project.project_data.sotoshop_assets,
+                    patterns: newPatterns
+                }
+            });
         } catch (err) {
             setError(`Gagal menyimpan otomatis: ${(err as Error).message}`);
         } finally {
@@ -120,12 +117,12 @@ const PatternGenerator: React.FC = () => {
 
             <div className="space-y-2">
                 <Textarea label="Deskripsi Pola" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: batik megamendung modern, warna pastel" rows={3} />
-                 {selectedProject && (
-                    <p className="text-xs text-primary animate-content-fade-in">✨ Prompt akan disempurnakan dengan palet warna & gaya dari brand "{selectedProject.project_name}".</p>
+                 {project && (
+                    <p className="text-xs text-primary animate-content-fade-in">✨ Prompt akan disempurnakan dengan palet warna & gaya dari brand "{project.project_name}".</p>
                 )}
             </div>
 
-            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim() || !selectedProject} variant="accent" className="w-full">
+            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">
                 Buat Motif! ({PATTERN_COST} Token, +{XP_REWARD} XP)
             </Button>
             

@@ -3,12 +3,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
-import { getSupabaseClient } from '../services/supabaseClient';
 import { generateLogoOptions } from '../services/geminiService';
 import { Project, ProjectData } from '../types';
 import Button from './common/Button';
 import Input from './common/Input';
-// FIX: Import the 'Textarea' component.
 import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
 import { playSound } from '../services/soundService';
@@ -18,6 +16,11 @@ const LOGO_COST = 4;
 const XP_REWARD = 50;
 
 type Step = 1 | 2 | 3 | 4; // 1: Konsep, 2: Gaya, 3: Warna, 4: Hasil
+
+interface Props {
+    project: Project;
+    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+}
 
 const LOGO_STYLES = [
     { name: 'Minimalis', icon: '🎨', prompt: 'minimalist, flat icon, modern' },
@@ -57,45 +60,52 @@ const StepIndicator: React.FC<{ currentStep: Step }> = ({ currentStep }) => {
     );
 };
 
-const LogoGenerator: React.FC = () => {
-    const { projects, setProjects, profile } = useAuth();
+const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+    const { profile } = useAuth();
     const { deductCredits, addXp } = useUserActions();
     
-    // This is a simplified context. For a larger app, a dedicated ProjectContext would be better.
-    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
-    
     const [currentStep, setCurrentStep] = useState<Step>(1);
-    const [logoPrompt, setLogoPrompt] = useState(selectedProject?.project_data.logoPrompt || '');
-    const [selectedStyle, setSelectedStyle] = useState<string | null>(selectedProject?.project_data.logoStyle || null);
-    const [selectedPaletteName, setSelectedPaletteName] = useState<string | null>(selectedProject?.project_data.logoPaletteName || null);
-    const [logoOptions, setLogoOptions] = useState<string[]>(selectedProject?.project_data.logoOptions || []);
+    const [logoPrompt, setLogoPrompt] = useState(project.project_data.logoPrompt || '');
+    const [selectedStyle, setSelectedStyle] = useState<string | null>(project.project_data.logoStyle || null);
+    const [selectedPaletteName, setSelectedPaletteName] = useState<string | null>(project.project_data.logoPaletteName || null);
+    const [logoOptions, setLogoOptions] = useState<string[]>(project.project_data.logoOptions || []);
     
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isPersonaApplied, setIsPersonaApplied] = useState(false);
 
-    const selectedPersona = selectedProject?.project_data.selectedPersona;
+    const selectedPersona = project.project_data.selectedPersona;
+    
+    useEffect(() => {
+        // Reset state when project changes
+        setLogoPrompt(project.project_data.logoPrompt || '');
+        setSelectedStyle(project.project_data.logoStyle || null);
+        setSelectedPaletteName(project.project_data.logoPaletteName || null);
+        setLogoOptions(project.project_data.logoOptions || []);
+        setCurrentStep(project.project_data.logoOptions?.length > 0 ? 4 : 1);
+        setError(null);
+    }, [project]);
     
     // Automatically apply persona styles when component loads or project changes
     useEffect(() => {
         if (selectedPersona) {
             const personaStyle = LOGO_STYLES.find(s => selectedPersona.kata_kunci.some(k => s.name.toLowerCase().includes(k.toLowerCase())));
-            if (personaStyle) {
+            if (personaStyle && !selectedStyle) { // Only apply if not already set
                 setSelectedStyle(personaStyle.name);
             }
-            // Use the persona's color palette
-            setSelectedPaletteName('Warna dari Persona');
+            if (!selectedPaletteName) { // Only apply if not already set
+                 setSelectedPaletteName('Warna dari Persona');
+            }
             setIsPersonaApplied(true);
         }
-    }, [selectedPersona]);
+    }, [selectedPersona, selectedStyle, selectedPaletteName]);
 
     const handleGenerateLogos = async () => {
-        if (!selectedProject || !logoPrompt.trim() || !selectedStyle || !selectedPaletteName) {
+        if (!project || !logoPrompt.trim() || !selectedStyle || !selectedPaletteName) {
             setError('Semua langkah harus diisi sebelum membuat logo.');
             return;
         }
         if ((profile?.credits ?? 0) < LOGO_COST) {
-            // setShowOutOfCreditsModal(true); // This should be handled by useUserActions
             return;
         }
 
@@ -112,10 +122,10 @@ const LogoGenerator: React.FC = () => {
                 paletteColors = COLOR_PALETTES.find(p => p.name === selectedPaletteName)?.colors || [];
             }
             
-            const generatedUrls = await generateLogoOptions(logoPrompt, stylePrompt, selectedProject.project_name, paletteColors);
+            const generatedUrls = await generateLogoOptions(logoPrompt, stylePrompt, project.project_name, paletteColors);
             setLogoOptions(generatedUrls);
             setCurrentStep(4); // Move to results step
-            await updateProjectData({ logoPrompt, logoStyle: selectedStyle, logoPaletteName: selectedPaletteName, logoOptions: generatedUrls });
+            await onUpdateProject({ logoPrompt, logoStyle: selectedStyle, logoPaletteName: selectedPaletteName, logoOptions: generatedUrls });
             await addXp(XP_REWARD);
             playSound('success');
 
@@ -127,29 +137,9 @@ const LogoGenerator: React.FC = () => {
         }
     };
     
-    const updateProjectData = async (dataToUpdate: Partial<ProjectData>) => {
-        if (!selectedProject) return;
-        const supabase = getSupabaseClient();
-        const updatedData = { ...selectedProject.project_data, ...dataToUpdate };
-        
-        const { data: updatedProject, error: updateError } = await supabase
-            .from('projects')
-            .update({ project_data: updatedData })
-            .eq('id', selectedProject.id)
-            .select()
-            .single();
-
-        if (updateError) throw updateError;
-        
-        const updatedProjects = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
-        setProjects(updatedProjects);
-        setSelectedProject(updatedProject);
-    };
-    
     const handleSelectLogo = async (url: string) => {
-        await updateProjectData({ selectedLogoUrl: url });
+        await onUpdateProject({ selectedLogoUrl: url });
         playSound('select');
-        // Maybe show a success message or navigate away
     };
 
     const renderStepContent = () => {
@@ -164,7 +154,7 @@ const LogoGenerator: React.FC = () => {
                                 <p className="text-sm text-text-body mt-1">Pikirkan satu objek atau simbol utama yang paling mewakili brand-mu. Gak usah ribet, yang simpel justru seringkali paling nempel di ingatan orang!</p>
                             </div>
                         </div>
-                        <Input label="Nama Brand" name="businessName" value={selectedProject?.project_name || ''} disabled />
+                        <Input label="Nama Brand" name="businessName" value={project.project_name || ''} disabled />
                         <Textarea label="Objek / Simbol Utama Logo" name="logoPrompt" value={logoPrompt} onChange={e => setLogoPrompt(e.target.value)} placeholder="Contoh: biji kopi, kepala singa, roket, buku terbuka" rows={3} />
                         <Button className="w-full" onClick={() => setCurrentStep(2)} disabled={!logoPrompt.trim()}>Lanjut Pilih Gaya</Button>
                     </div>
@@ -221,7 +211,7 @@ const LogoGenerator: React.FC = () => {
                         <p className="text-sm text-center text-text-muted -mt-3">Klik logo favoritmu untuk menyimpannya ke proyek. Tenang, pilihan lain tetap tersimpan di sini.</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {logoOptions.map((url, index) => (
-                                <div key={index} onClick={() => handleSelectLogo(url)} className={`p-2 border-2 rounded-lg cursor-pointer transition-all duration-200 ${selectedProject?.project_data.selectedLogoUrl === url ? 'border-primary ring-4 ring-primary/30' : 'border-border-main hover:border-primary'}`}>
+                                <div key={index} onClick={() => handleSelectLogo(url)} className={`p-2 border-2 rounded-lg cursor-pointer transition-all duration-200 ${project.project_data.selectedLogoUrl === url ? 'border-primary ring-4 ring-primary/30' : 'border-border-main hover:border-primary'}`}>
                                     <img src={url} alt={`Logo Option ${index + 1}`} className="w-full aspect-square object-contain bg-surface rounded-md" />
                                 </div>
                             ))}

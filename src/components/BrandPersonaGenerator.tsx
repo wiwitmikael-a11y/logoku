@@ -2,35 +2,87 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUserActions } from '../contexts/UserActionsContext';
-import { BrandInputs } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { generateBrandPersona } from '../services/geminiService';
+import type { BrandInputs, BrandPersona, Project, ProjectData } from '../types';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
 import Button from './common/Button';
+import ErrorMessage from './common/ErrorMessage';
+import { playSound } from '../services/soundService';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+const PERSONA_COST = 5;
+const XP_REWARD = 100;
 
-const BrandPersonaGenerator: React.FC = () => {
-    const { lastVoiceConsultationResult, setLastVoiceConsultationResult } = useUserActions();
-    const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs>>({
-        businessName: '',
-        industry: '',
-        targetAudience: '',
-        valueProposition: '',
-        competitorAnalysis: '',
-        businessDetail: '',
-    });
+interface Props {
+    project: Project;
+    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+}
+
+const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+    const { profile } = useAuth();
+    const { deductCredits, addXp, lastVoiceConsultationResult, setLastVoiceConsultationResult } = useUserActions();
+    
+    const [brandInputs, setBrandInputs] = useState<BrandInputs>(
+        project.project_data.brandInputs || {
+            businessName: project.project_name,
+            industry: '',
+            targetAudience: '',
+            valueProposition: '',
+            competitorAnalysis: '',
+            businessDetail: '',
+        }
+    );
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (lastVoiceConsultationResult) {
             setBrandInputs(prev => ({ ...prev, ...lastVoiceConsultationResult }));
-            // Clear the result from context so it doesn't trigger again on re-render
             setLastVoiceConsultationResult(null); 
         }
     }, [lastVoiceConsultationResult, setLastVoiceConsultationResult]);
+    
+    useEffect(() => {
+        setBrandInputs(project.project_data.brandInputs || {
+            businessName: project.project_name,
+            industry: '',
+            targetAudience: '',
+            valueProposition: '',
+            competitorAnalysis: null,
+            businessDetail: null,
+        });
+    }, [project]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setBrandInputs(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleGenerate = async () => {
+        const { businessName, industry, targetAudience, valueProposition, competitorAnalysis } = brandInputs;
+        if (!businessName || !industry || !targetAudience || !valueProposition) {
+            setError('Nama Bisnis, Industri, Target Audiens, dan Keunggulan wajib diisi.');
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            if (!(await deductCredits(PERSONA_COST))) return;
+            
+            const personas = await generateBrandPersona(businessName, industry, targetAudience, valueProposition, competitorAnalysis);
+            await onUpdateProject({ brandInputs, brandPersonas: personas });
+            await addXp(XP_REWARD);
+            playSound('success');
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat membuat persona.');
+            playSound('error');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -76,9 +128,10 @@ const BrandPersonaGenerator: React.FC = () => {
                         placeholder="Contoh: Biji kopi asli Indonesia, harga terjangkau, suasana yang homey"
                         rows={3}
                     />
+                    {error && <ErrorMessage message={error}/>}
 
-                    <Button className="w-full !mt-6" variant="primary">
-                        Gas, Buat Persona Keren!
+                    <Button onClick={handleGenerate} isLoading={isLoading} className="w-full !mt-6" variant="primary">
+                        Gas, Buat Persona Keren! ({PERSONA_COST} Token, +{XP_REWARD} XP)
                     </Button>
                 </div>
             </div>

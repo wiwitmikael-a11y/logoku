@@ -11,7 +11,7 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   projects: Project[];
-  loading: boolean; // This now ONLY represents the initial auth check
+  loading: boolean;
   authError: string | null;
   refreshProfile: () => Promise<void>;
   executeLogout: () => Promise<void>;
@@ -25,10 +25,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true); // Represents initial auth check
+  const [initialAuthCheckComplete, setInitialAuthCheckComplete] = useState(false);
+  const [userDataLoading, setUserDataLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   
   const fetchUserData = useCallback(async (user: User): Promise<void> => {
+    setUserDataLoading(true);
     try {
       const supabase = getSupabaseClient();
       const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single();
@@ -44,11 +46,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       setAuthError((error as Error).message);
       console.error("AuthContext Data Fetch Error:", error);
+    } finally {
+      setUserDataLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    setLoading(true);
     const supabase = getSupabaseClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
@@ -56,16 +59,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(currentUser ?? null);
 
       if (currentUser) {
-        // Fetch data in the background after auth state is known
         await fetchUserData(currentUser);
       } else {
-        // Clear all data on logout
         setProfile(null);
         setProjects([]);
       }
       
-      // The crucial change: set loading to false as soon as the session is checked.
-      setLoading(false);
+      setInitialAuthCheckComplete(true);
     });
 
     return () => {
@@ -82,7 +82,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const executeLogout = async () => {
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
-    // The onAuthStateChange listener will handle clearing the state.
   };
 
   const value = {
@@ -90,7 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     profile,
     projects,
-    loading,
+    loading: !initialAuthCheckComplete || userDataLoading,
     authError,
     refreshProfile,
     executeLogout,

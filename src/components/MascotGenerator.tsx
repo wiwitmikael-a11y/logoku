@@ -1,30 +1,30 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateMascot, generateMascotPose, enhancePromptWithPersonaStyle } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
-import { getSupabaseClient } from '../services/supabaseClient';
-import type { Project } from '../types';
+import type { Project, ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
-import { AICreatorContext } from './AICreatorContext'; // Assuming you create this context
 
 const MASCOT_COST = 2;
 const POSE_COST = 1;
 const XP_REWARD = 30;
 
-// TODO: Refactor to get selectedProject from a shared context instead of props
-const MascotGenerator: React.FC = () => {
-    const { user, profile, projects, setProjects } = useAuth();
+interface Props {
+    project: Project;
+    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+}
+
+const MascotGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+    const { profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
-    // This should ideally come from a context that AICreator provides
-    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
     const ownerPhotoCutout: string | null = null; // Placeholder for this logic
 
     const [prompt, setPrompt] = useState('');
@@ -39,13 +39,21 @@ const MascotGenerator: React.FC = () => {
     const [isLoadingPose, setIsLoadingPose] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Reset local state when the project prop changes
+        setPrompt('');
+        setResults([]);
+        setSelectedMascot(null);
+        setError(null);
+    }, [project]);
         
     const handleGenerate = async () => {
         if (!prompt.trim()) { setError('Deskripsi maskot tidak boleh kosong!'); return; }
         if (useOwnerInspiration && !ownerPhotoCutout) { setError('Aset Persona Juragan belum diproses. Silakan proses dulu di sidebar.'); return; }
         if ((profile?.credits ?? 0) < MASCOT_COST) { setShowOutOfCreditsModal(true); return; }
 
-        const finalPrompt = enhancePromptWithPersonaStyle(prompt, selectedProject?.project_data.selectedPersona || null);
+        const finalPrompt = enhancePromptWithPersonaStyle(prompt, project.project_data.selectedPersona || null);
 
         setIsLoading(true); setError(null); setResults([]); setSelectedMascot(null); setNewPoseResult(null); playSound('start');
         try {
@@ -64,44 +72,24 @@ const MascotGenerator: React.FC = () => {
     };
     
     const handleSaveToProject = async (url: string) => {
-        if (!user || !selectedProject || !url || isSaving) return;
+        if (!project || !url || isSaving) return;
         
         setIsSaving(true);
         setError(null);
         
-        const updatedData = { ...selectedProject.project_data };
-        if (!updatedData.sotoshop_assets) {
-            updatedData.sotoshop_assets = {};
-        }
-        if (!updatedData.sotoshop_assets.mascots) {
-            updatedData.sotoshop_assets.mascots = [];
-        }
-        updatedData.sotoshop_assets.mascots.push(url);
-
-        try {
-            const supabase = getSupabaseClient();
-            const { error: updateError } = await supabase
-                .from('projects')
-                .update({ project_data: updatedData })
-                .eq('id', selectedProject.id);
-
-            if (updateError) throw updateError;
-
-            // Update local state to reflect changes instantly
-            const updatedProjects = projects.map(p =>
-                p.id === selectedProject.id ? { ...p, project_data: updatedData } : p
-            );
-            setProjects(updatedProjects);
-            setSelectedProject({ ...selectedProject, project_data: updatedData });
-            
-            playSound('success');
-            alert('Maskot berhasil disimpan ke Lemari Brand proyek ini!');
-        } catch (err) {
-            setError(`Gagal menyimpan: ${(err as Error).message}`);
-            playSound('error');
-        } finally {
-            setIsSaving(false);
-        }
+        const currentMascots = project.project_data.sotoshop_assets?.mascots || [];
+        const newMascots = [...currentMascots, url];
+        
+        await onUpdateProject({ 
+            sotoshop_assets: {
+                ...project.project_data.sotoshop_assets,
+                mascots: newMascots
+            }
+        });
+        
+        setIsSaving(false);
+        playSound('success');
+        alert('Maskot berhasil disimpan ke Lemari Brand proyek ini!');
     };
 
     const handleGeneratePose = async () => {
@@ -111,7 +99,7 @@ const MascotGenerator: React.FC = () => {
         setIsLoadingPose(true); setError(null);
         try {
             if (!(await deductCredits(POSE_COST))) throw new Error("Gagal mengurangi token.");
-            const finalPrompt = enhancePromptWithPersonaStyle(newPosePrompt, selectedProject?.project_data.selectedPersona || null);
+            const finalPrompt = enhancePromptWithPersonaStyle(newPosePrompt, project.project_data.selectedPersona || null);
             const poseUrl = await generateMascotPose(selectedMascot, finalPrompt);
             setNewPoseResult(poseUrl);
             await addXp(10);
@@ -137,7 +125,7 @@ const MascotGenerator: React.FC = () => {
                             <label htmlFor="use-owner" className="text-sm text-text-body">Jadikan Saya Inspirasi Maskot</label>
                         </div>
                     )}
-                    <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim() || !selectedProject} variant="accent" className="w-full">
+                    <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">
                         Buat 2 Opsi Maskot! ({MASCOT_COST} Token, +{XP_REWARD} XP)
                     </Button>
                 </>

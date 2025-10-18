@@ -1,12 +1,11 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateMoodboardText, generateMoodboardImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
-import { getSupabaseClient } from '../services/supabaseClient';
-import type { Project } from '../types';
+import type { Project, ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
@@ -19,13 +18,14 @@ const XP_REWARD = 25;
 
 const VIBE_SUGGESTIONS = ["Kopi senja, hangat, rustic", "Modern, bersih, teknologi", "Ceria, anak-anak, playful", "Mewah, elegan, emas", "Petualangan, alam, outdoor"];
 
-// TODO: Refactor to get selectedProject from a shared context
-const MoodboardGenerator: React.FC = () => {
-    const { user, profile, projects, setProjects } = useAuth();
+interface Props {
+    project: Project;
+    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+}
+
+const MoodboardGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+    const { profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
-    
-    // This should ideally come from a context that AICreator provides
-    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
 
     const [keywords, setKeywords] = useState('');
     const [result, setResult] = useState<{description: string; palette: string[]; images: string[]} | null>(null);
@@ -33,6 +33,13 @@ const MoodboardGenerator: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+    
+    useEffect(() => {
+        // Reset local state when the project prop changes
+        setKeywords('');
+        setResult(null);
+        setError(null);
+    }, [project]);
     
     const handleGenerate = async () => {
         if (!keywords.trim()) { setError('Kata kunci tidak boleh kosong!'); return; }
@@ -61,32 +68,21 @@ const MoodboardGenerator: React.FC = () => {
     };
 
     const handleSaveToProject = async (moodboardData: {description: string; palette: string[]; images: string[]}) => {
-        if (!user || !selectedProject || isSaving) return;
+        if (!project || isSaving) return;
         
         setIsSaving(true);
         setError(null);
         
-        const updatedData = { ...selectedProject.project_data };
-        if (!updatedData.sotoshop_assets) updatedData.sotoshop_assets = {};
-        if (!updatedData.sotoshop_assets.moodboards) updatedData.sotoshop_assets.moodboards = [];
-        
-        updatedData.sotoshop_assets.moodboards.push(moodboardData);
+        const currentMoodboards = project.project_data.sotoshop_assets?.moodboards || [];
+        const newMoodboards = [...currentMoodboards, moodboardData];
 
         try {
-            const supabase = getSupabaseClient();
-            const { error: updateError } = await supabase
-                .from('projects')
-                .update({ project_data: updatedData })
-                .eq('id', selectedProject.id);
-
-            if (updateError) throw updateError;
-
-            const updatedProjects = projects.map(p =>
-                p.id === selectedProject.id ? { ...p, project_data: updatedData } : p
-            );
-            setProjects(updatedProjects);
-            setSelectedProject({ ...selectedProject, project_data: updatedData });
-            
+            await onUpdateProject({
+                sotoshop_assets: {
+                    ...project.project_data.sotoshop_assets,
+                    moodboards: newMoodboards
+                }
+            });
         } catch (err) {
             setError(`Gagal menyimpan otomatis: ${(err as Error).message}`);
         } finally {
@@ -107,7 +103,7 @@ const MoodboardGenerator: React.FC = () => {
                 </div>
             </div>
 
-            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !keywords.trim() || !selectedProject} variant="accent" className="w-full">
+            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !keywords.trim()} variant="accent" className="w-full">
                 Racik Vibe Brand! ({MOODBOARD_COST} Token, +{XP_REWARD} XP)
             </Button>
             

@@ -1,6 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, lazy, useMemo } from 'react';
+import React, { useState, lazy, useMemo, useCallback } from 'react';
 import type { Project, ProjectData } from '../types';
 import { getSupabaseClient } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
@@ -56,7 +56,6 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
       const initialProjectData: ProjectData = {
         brandInputs: null, brandPersonas: [], selectedPersona: null, slogans: [], selectedSlogan: null,
         logoPrompt: null, 
-        // FIX: Added missing properties to conform to the ProjectData interface.
         logoStyle: null, 
         logoPaletteName: null, 
         logoOptions: [], selectedLogoUrl: null, logoVariations: null,
@@ -93,6 +92,25 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
     }
   };
 
+    const handleUpdateProjectData = useCallback(async (dataToUpdate: Partial<ProjectData>) => {
+        if (!selectedProject) return;
+        const supabase = getSupabaseClient();
+        const updatedData = { ...selectedProject.project_data, ...dataToUpdate };
+        
+        const { data: updatedProject, error: updateError } = await supabase
+            .from('projects')
+            .update({ project_data: updatedData })
+            .eq('id', selectedProject.id)
+            .select()
+            .single();
+
+        if (updateError) throw updateError;
+        
+        const updatedProjects = projects.map(p => p.id === updatedProject.id ? updatedProject : p);
+        setProjects(updatedProjects);
+        setSelectedProject(updatedProject);
+    }, [selectedProject, projects, setProjects, setSelectedProject]);
+
   const mainTabs = useMemo(() => [
     { id: 'persona', label: '1. Persona', icon: '👤' },
     { id: 'logo', label: '2. Logo', icon: '🎨' },
@@ -115,15 +133,18 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
     if (!selectedProject) {
         return (
             <div className="text-center p-8 bg-background rounded-lg min-h-[400px] flex flex-col justify-center items-center">
-                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-32 h-32 animate-bouncing-ai" style={{ imageRendering: 'pixelated' }} />
+                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-32 h-32 animate-stomp-ai" style={{ imageRendering: 'pixelated' }} />
                 <h2 className="text-2xl font-bold text-text-header mt-4">Studio AI Siap Beraksi!</h2>
                 <p className="mt-2 text-text-muted max-w-md">Pilih proyek yang ada, atau buat yang baru buat mulai petualangan branding-mu, Juragan!</p>
             </div>
         );
     }
+    
+    const generatorProps = { project: selectedProject, onUpdateProject: handleUpdateProjectData };
+
     switch (mainModule) {
-      case 'persona': return <BrandPersonaGenerator />;
-      case 'logo': return <LogoGenerator />;
+      case 'persona': return <BrandPersonaGenerator {...generatorProps} />;
+      case 'logo': return <LogoGenerator {...generatorProps} />;
       case 'kit': return <SocialMediaKitGenerator />;
       case 'content': return <ContentCalendarGenerator />;
       case 'lemari': return <LemariBrand project={selectedProject} />;
@@ -139,11 +160,11 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
                 ))}
               </div>
               <ModuleLoader>
-                { sotoshopModule === 'mascot' && <MascotGenerator /> }
-                { sotoshopModule === 'moodboard' && <MoodboardGenerator /> }
-                { sotoshopModule === 'pattern' && <PatternGenerator /> }
-                { sotoshopModule === 'photostudio' && <PhotoStudio /> }
-                { sotoshopModule === 'scenemixer' && <SceneMixer /> }
+                { sotoshopModule === 'mascot' && <MascotGenerator {...generatorProps} /> }
+                { sotoshopModule === 'moodboard' && <MoodboardGenerator {...generatorProps} /> }
+                { sotoshopModule === 'pattern' && <PatternGenerator {...generatorProps} /> }
+                { sotoshopModule === 'photostudio' && <PhotoStudio {...generatorProps} /> }
+                { sotoshopModule === 'scenemixer' && <SceneMixer {...generatorProps} /> }
                 { sotoshopModule === 'video' && <VideoGenerator /> }
               </ModuleLoader>
             </div>

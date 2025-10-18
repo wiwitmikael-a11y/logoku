@@ -1,12 +1,11 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateSceneFromImages, enhancePromptWithPersonaStyle } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
-import { getSupabaseClient } from '../services/supabaseClient';
-import type { Project } from '../types';
+import type { Project, ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
@@ -21,14 +20,15 @@ interface SceneImage {
   instruction: string;
 }
 
-// TODO: Refactor to get selectedProject from a shared context
-const SceneMixer: React.FC = () => {
-    const { user, profile, projects, setProjects } = useAuth();
+interface Props {
+    project: Project;
+    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+}
+
+const SceneMixer: React.FC<Props> = ({ project, onUpdateProject }) => {
+    const { profile } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
-    // This should ideally come from a context that AICreator provides
-    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
-
     const [images, setImages] = useState<SceneImage[]>([]);
     const [mainPrompt, setMainPrompt] = useState('');
     const [result, setResult] = useState<string | null>(null);
@@ -36,6 +36,11 @@ const SceneMixer: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Reset local state when the project prop changes
+        reset();
+    }, [project]);
 
     const handleFileChange = (files: FileList | null, index: number) => {
         if (!files || files.length === 0) return;
@@ -71,7 +76,7 @@ const SceneMixer: React.FC = () => {
                 }
             });
             
-            const finalPrompt = enhancePromptWithPersonaStyle(combinedPrompt, selectedProject?.project_data.selectedPersona || null);
+            const finalPrompt = enhancePromptWithPersonaStyle(combinedPrompt, project.project_data.selectedPersona || null);
 
             const resultUrl = await generateSceneFromImages(validImages.map(i => i.src), finalPrompt);
             setResult(resultUrl);
@@ -87,19 +92,18 @@ const SceneMixer: React.FC = () => {
     };
     
     const handleSaveToProject = async (url: string, prompt: string) => {
-        if (!user || !selectedProject || !url) return;
+        if (!project || !url) return;
         
-        const updatedData = { ...selectedProject.project_data };
-        if (!updatedData.sotoshop_assets) updatedData.sotoshop_assets = {};
-        if (!updatedData.sotoshop_assets.sceneMixes) updatedData.sotoshop_assets.sceneMixes = [];
-        updatedData.sotoshop_assets.sceneMixes.push({ url, prompt });
+        const currentMixes = project.project_data.sotoshop_assets?.sceneMixes || [];
+        const newMixes = [...currentMixes, { url, prompt }];
 
         try {
-            const supabase = getSupabaseClient();
-            await supabase.from('projects').update({ project_data: updatedData }).eq('id', selectedProject.id);
-            const updatedProjects = projects.map(p => p.id === selectedProject.id ? { ...p, project_data: updatedData } : p);
-            setProjects(updatedProjects);
-            setSelectedProject({ ...selectedProject, project_data: updatedData });
+            await onUpdateProject({
+                sotoshop_assets: {
+                    ...project.project_data.sotoshop_assets,
+                    sceneMixes: newMixes
+                }
+            });
         } catch (err) {
             setError(`Gagal menyimpan otomatis: ${(err as Error).message}`);
         }
@@ -136,7 +140,7 @@ const SceneMixer: React.FC = () => {
                     <ImageSlot index={2} />
                 </div>
                 <Textarea label="Prompt Utama" name="mainPrompt" value={mainPrompt} onChange={e => setMainPrompt(e.target.value)} placeholder="Contoh: Gabungkan kucing (gambar 1) ke pantai (gambar 2) sambil minum kopi (gambar 3)." rows={3} />
-                <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.filter(i=>i.src).length === 0 || !mainPrompt.trim() || !selectedProject} variant="accent" className="w-full">
+                <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.filter(i=>i.src).length === 0 || !mainPrompt.trim()} variant="accent" className="w-full">
                     Campur Aduk Gambarnya! ({SCENE_MIXER_COST} Token, +{XP_REWARD} XP)
                 </Button>
             </div>

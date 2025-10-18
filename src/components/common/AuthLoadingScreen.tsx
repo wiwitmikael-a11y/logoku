@@ -21,7 +21,7 @@ const AuthLoadingScreen: React.FC<Props> = ({ isStuck }) => {
         <img
           src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
           alt="Mang AI"
-          className={`w-24 h-24 absolute bottom-0 left-1/2 -translate-x-1/2 ${isStuck ? 'animate-tripped-ai' : 'animate-bouncing-ai'}`}
+          className={`w-24 h-24 absolute bottom-0 left-1/2 -translate-x-1/2 ${isStuck ? 'animate-tripped-ai' : 'animate-stomp-ai'}`}
           style={{ imageRendering: 'pixelated' }}
         />
       </div>
