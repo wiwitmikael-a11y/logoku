@@ -13,10 +13,9 @@ import { getAiClient } from './services/geminiService';
 import { playSound, playBGM, unlockAudio } from './services/soundService';
 import ThemeToggle from './components/common/ThemeToggle';
 import Footer from './components/common/Footer';
-import WelcomeGate from './components/common/PuzzleCaptchaModal'; // Renamed component, but file path is the same for now
+import WelcomeGate from './components/common/PuzzleCaptchaModal';
 
 // Lazy load components to improve initial load time
-// FIX: Lazily import ProjectDashboard to resolve the 'Cannot find name' error.
 const ProjectDashboard = React.lazy(() => import('./components/ProjectDashboard'));
 const ContactModal = React.lazy(() => import('./components/common/ContactModal'));
 const AboutModal = React.lazy(() => import('./components/common/AboutModal'));
@@ -29,41 +28,40 @@ const AchievementToast = React.lazy(() => import('./components/gamification/Achi
 const VoiceBrandingWizard = React.lazy(() => import('./components/VoiceBrandingWizard'));
 
 const App: React.FC = () => {
-  const { session, loading, authError, executeLogout } = useAuth();
+  const { session, loading, authError } = useAuth();
   const { showContactModal, toggleContactModal, showAboutModal, toggleAboutModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal, showProfileModal, toggleProfileModal, showVoiceWizard, toggleVoiceWizard } = useUI();
   const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, levelUpInfo, setShowLevelUpModal, unlockedAchievement, setUnlockedAchievement } = useUserActions();
   
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('theme') as 'light' | 'dark') || 'dark');
   const [isGeminiReady, setIsGeminiReady] = useState(false);
   const [geminiError, setGeminiError] = useState<string | null>(null);
-  
-  // New state to manage the pre-login welcome gate
   const [isWelcomeGatePassed, setIsWelcomeGatePassed] = useState(() => sessionStorage.getItem('welcomeGatePassed') === 'true');
+  const [isStuck, setIsStuck] = useState(false); // New state for smart timeout
 
   useEffect(() => {
-    // Check for Gemini API Key availability
     try {
-      getAiClient(); // This will throw if the key is missing
+      getAiClient();
       setIsGeminiReady(true);
     } catch (e) {
       setGeminiError((e as Error).message);
     }
   }, []);
   
-  // FAILSAFE: Force logout if authentication is stuck for too long
+  // Smart timeout mechanism
   useEffect(() => {
-    let stuckTimer: number;
+    let stuckTimer: number | undefined;
     if (loading) {
       stuckTimer = window.setTimeout(() => {
-        console.warn("Authentication is taking too long. Forcing logout to clear potentially stuck session.");
-        executeLogout();
-      }, 8000); // 8-second timeout
+        console.warn("Authentication is taking too long. Prompting user to reload.");
+        setIsStuck(true);
+      }, 5000); // 5-second timeout
+    } else {
+      setIsStuck(false); // Reset if loading completes
     }
     return () => {
       clearTimeout(stuckTimer);
     };
-  }, [loading, executeLogout]);
-
+  }, [loading]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -82,19 +80,19 @@ const App: React.FC = () => {
     playBGM('welcome');
   }, []);
 
-
   if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
   if (geminiError) return <ApiKeyErrorScreen error={geminiError} />;
-  if (authError) return <ApiKeyErrorScreen error={authError} />; // Can use the same screen for auth errors
-  if (loading) return <AuthLoadingScreen />;
+  if (authError) return <ApiKeyErrorScreen error={authError} />;
+  
+  // The loading screen now has the "isStuck" logic
+  if (loading) return <AuthLoadingScreen isStuck={isStuck} />;
 
   return (
     <>
       <div className="flex flex-col min-h-screen">
         <main className="flex-grow">
           {session ? (
-            // FIX: Wrap the lazy-loaded ProjectDashboard component in Suspense to handle asynchronous loading.
-            <Suspense fallback={<AuthLoadingScreen />}>
+            <Suspense fallback={<AuthLoadingScreen isStuck={false} />}>
               <ProjectDashboard onToggleTheme={handleToggleTheme} theme={theme} />
             </Suspense>
           ) : (

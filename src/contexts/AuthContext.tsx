@@ -11,7 +11,7 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   projects: Project[];
-  loading: boolean;
+  loading: boolean; // This now ONLY represents the initial auth check
   authError: string | null;
   refreshProfile: () => Promise<void>;
   executeLogout: () => Promise<void>;
@@ -25,74 +25,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Represents initial auth check
   const [authError, setAuthError] = useState<string | null>(null);
   
-  // This function is now the single source of truth for fetching data.
-  const fetchUserData = useCallback(async (user: User): Promise<boolean> => {
+  const fetchUserData = useCallback(async (user: User): Promise<void> => {
     try {
       const supabase = getSupabaseClient();
+      const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (profileError && profileError.code !== 'PGRST116') throw new Error(`Gagal mengambil profil: ${profileError.message}`);
       
-      // Promise.all ensures both profile and projects are fetched concurrently.
-      const [profileResponse, projectsResponse] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('projects').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-      ]);
-      
-      const { data: profileData, error: profileError } = profileResponse;
-      if (profileError) {
-        // This handles cases where the profile might not exist yet for a new user, which is okay.
-        // But if it's another error, we throw it.
-        if (profileError.code !== 'PGRST116') {
-            throw new Error(`Gagal mengambil profil: ${profileError.message}`);
-        }
-      }
-      
-      const { data: projectsData, error: projectsError } = projectsResponse;
+      const { data: projectsData, error: projectsError } = await supabase.from('projects').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
       if (projectsError) throw new Error(`Gagal mengambil proyek: ${projectsError.message}`);
 
       setProfile(profileData || null);
       setProjects(projectsData || []);
       setMuted(profileData?.is_muted ?? false);
-      
-      return true; // Indicate success
+
     } catch (error) {
       setAuthError((error as Error).message);
-      console.error("AuthContext Error:", error);
-      return false; // Indicate failure
+      console.error("AuthContext Data Fetch Error:", error);
     }
   }, []);
 
-  // Main authentication effect hook - now more robust.
   useEffect(() => {
-    const supabase = getSupabaseClient();
     setLoading(true);
-
-    const handleAuthStateChange = async (_event: string, session: Session | null) => {
+    const supabase = getSupabaseClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       const currentUser = session?.user;
       setUser(currentUser ?? null);
-      
+
       if (currentUser) {
-        // If there's a user, we fetch their data.
-        // The loading state will only be set to false AFTER this completes.
+        // Fetch data in the background after auth state is known
         await fetchUserData(currentUser);
       } else {
-        // No user, clear all data.
+        // Clear all data on logout
         setProfile(null);
         setProjects([]);
       }
+      
+      // The crucial change: set loading to false as soon as the session is checked.
       setLoading(false);
-    };
-
-    // Listen to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
-    
-    // Also check the initial session on component mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!subscription) { // Ensure we don't double-handle if the listener fires immediately
-           handleAuthStateChange('INITIAL_SESSION', session);
-        }
     });
 
     return () => {
@@ -108,13 +81,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const executeLogout = async () => {
     const supabase = getSupabaseClient();
-    setLoading(true);
     await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
-    setProfile(null);
-    setProjects([]);
-    setLoading(false);
+    // The onAuthStateChange listener will handle clearing the state.
   };
 
   const value = {
