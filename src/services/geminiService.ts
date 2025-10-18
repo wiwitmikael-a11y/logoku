@@ -160,9 +160,15 @@ export const analyzeCompetitorUrl = async (url: string, businessName: string): P
     return response.text;
 };
 
-export const generateLogoOptions = async (prompt: string, style: string, businessName: string, count: number = 4): Promise<string[]> => {
+export const generateLogoOptions = async (
+    objectPrompt: string, 
+    style: string, 
+    businessName: string, 
+    palette: string[], 
+    count: number = 4
+): Promise<string[]> => {
     const ai = getAiClient();
-    const fullPrompt = `logo ${style} untuk "${businessName}", dengan objek utama: ${prompt}. Bersih, vektor, di latar belakang putih polos.`;
+    const fullPrompt = `Logo ${style} untuk "${businessName}", dengan objek utama: ${objectPrompt}. Gunakan palet warna ${palette.join(', ')}. Desain harus bersih, ikonik, memorable, format vektor, dengan latar belakang putih polos.`;
     
     const response = await ai.models.generateImages({
         model: 'imagen-4.0-generate-001',
@@ -238,6 +244,10 @@ export const generateLogoVariations = async (baseLogoUrl: string, businessName: 
 export const generateSocialMediaKitAssets = async (projectData: ProjectData): Promise<SocialMediaKitAssets> => {
     const logoUrl = projectData.selectedLogoUrl;
     const persona = projectData.selectedPersona;
+    
+    if(!logoUrl || !persona) {
+        throw new Error("Logo dan Persona harus dipilih terlebih dahulu untuk membuat Kit Media Sosial.");
+    }
     
     const [profilePicture, banner] = await Promise.all([
         generateImageForCanvas(`Foto profil media sosial yang menarik menggunakan logo ini. Latar belakangnya harus menggunakan warna utama dari palet ini: ${persona.palet_warna_hex.join(', ')}. Gaya: ${persona.kata_kunci.join(', ')}.`, logoUrl),

@@ -55,7 +55,11 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
       const supabase = getSupabaseClient();
       const initialProjectData: ProjectData = {
         brandInputs: null, brandPersonas: [], selectedPersona: null, slogans: [], selectedSlogan: null,
-        logoPrompt: null, logoOptions: [], selectedLogoUrl: null, logoVariations: null,
+        logoPrompt: null, 
+        // FIX: Added missing properties to conform to the ProjectData interface.
+        logoStyle: null, 
+        logoPaletteName: null, 
+        logoOptions: [], selectedLogoUrl: null, logoVariations: null,
         socialMediaKit: null, socialProfiles: null,
         sotoshop_assets: { mascots: [], patterns: [], moodboards: [], productPhotos: [], sceneMixes: [], videos: [] }
       };

@@ -45,15 +45,12 @@ const ProjectSummary: React.FC<{ project: Project | null }> = ({ project }) => {
 
     const countSotoshopAssets = () => {
         if (!sotoshop_assets) return 0;
-        // FIX: Added an Array.isArray check. Object.values() on an object with optional properties
-        // can result in an array of mixed types (including undefined). This type guard ensures
-        // we only access .length on actual arrays, resolving the 'property length does not exist on unknown' error.
-        return Object.values(sotoshop_assets).reduce((acc, assetArray) => {
-            if (Array.isArray(assetArray)) {
-                return acc + assetArray.length;
-            }
-            return acc;
-        }, 0);
+        // FIX: Resolved 'Operator cannot be applied' errors by filtering for arrays before reducing.
+        // This provides a stronger type guard for TypeScript, ensuring that `.length` is only
+        // accessed on actual arrays and that the values are treated as numbers.
+        return Object.values(sotoshop_assets)
+            .filter(Array.isArray)
+            .reduce((acc, assetArray) => acc + assetArray.length, 0);
     };
     const totalSotoshopAssets = countSotoshopAssets();
 

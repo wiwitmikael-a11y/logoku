@@ -66,6 +66,8 @@ export interface ProjectData {
   slogans: string[];
   selectedSlogan: string | null;
   logoPrompt: string | null;
+  logoStyle: string | null; // Added for the new logo wizard
+  logoPaletteName: string | null; // Added for the new logo wizard
   logoOptions: string[];
   selectedLogoUrl: string | null;
   logoVariations: LogoVariations | null;
