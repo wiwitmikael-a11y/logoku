@@ -49,6 +49,16 @@ export interface SocialProfileData {
   marketplaceDescription: string;
 }
 
+export interface SotoshopAssets {
+  mascots?: string[];
+  patterns?: { url: string; prompt: string }[];
+  moodboards?: { description: string; palette: string[]; images: string[] }[];
+  productPhotos?: { url: string; prompt: string }[];
+  sceneMixes?: { url: string; prompt: string }[];
+  videos?: { url: string; prompt: string }[];
+}
+
+
 export interface ProjectData {
   brandInputs: BrandInputs | null;
   brandPersonas: BrandPersona[];
@@ -61,6 +71,7 @@ export interface ProjectData {
   logoVariations: LogoVariations | null;
   socialMediaKit: SocialMediaKitAssets | null;
   socialProfiles: SocialProfileData | null;
+  sotoshop_assets?: SotoshopAssets;
 }
 
 export interface Project {

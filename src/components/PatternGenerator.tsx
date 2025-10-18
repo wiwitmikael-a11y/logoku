@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState } from 'react';
-import { generatePattern, applyPatternToMockup } from '../services/geminiService';
+import { generatePattern, applyPatternToMockup, enhancePromptWithPersonaStyle } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
@@ -23,13 +23,13 @@ const MOCKUP_ASSETS = {
     shirt: 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/mockup_shirt_white.png',
 };
 
-interface PatternGeneratorProps {
-    selectedProjectContext: Project | null;
-}
-
-const PatternGenerator: React.FC<PatternGeneratorProps> = ({ selectedProjectContext }) => {
-    const { user, profile } = useAuth();
+// TODO: Refactor to get selectedProject from a shared context
+const PatternGenerator: React.FC = () => {
+    const { user, profile, projects, setProjects } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
+    
+    // This should ideally come from a context that AICreator provides
+    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
     
     const [prompt, setPrompt] = useState('');
     const [result, setResult] = useState<string | null>(null);
@@ -44,11 +44,7 @@ const PatternGenerator: React.FC<PatternGeneratorProps> = ({ selectedProjectCont
         if (!prompt.trim()) { setError('Deskripsi pola tidak boleh kosong!'); return; }
         if ((profile?.credits ?? 0) < PATTERN_COST) { setShowOutOfCreditsModal(true); return; }
 
-        let finalPrompt = prompt;
-        if (selectedProjectContext?.project_data.selectedPersona) {
-            const persona = selectedProjectContext.project_data.selectedPersona;
-            finalPrompt += `. Gunakan palet warna utama: ${persona.palet_warna_hex.join(', ')} dengan gaya ${persona.kata_kunci.join(', ')}.`;
-        }
+        const finalPrompt = enhancePromptWithPersonaStyle(prompt, selectedProject?.project_data.selectedPersona || null);
 
         setIsLoading(true); setError(null); setResult(null); setMockupPreviews({}); playSound('start');
         try {
@@ -56,6 +52,7 @@ const PatternGenerator: React.FC<PatternGeneratorProps> = ({ selectedProjectCont
             
             const [patternUrl] = await generatePattern(finalPrompt);
             setResult(patternUrl);
+            await handleSaveToProject(patternUrl, prompt); // Auto-save on generation
             await addXp(XP_REWARD);
             playSound('success');
         } catch (err) {
@@ -82,19 +79,38 @@ const PatternGenerator: React.FC<PatternGeneratorProps> = ({ selectedProjectCont
         }
     };
 
-    const handleSaveToLemari = async () => {
-        if (!user || !result || isSaving) return;
+    const handleSaveToProject = async (url: string, originalPrompt: string) => {
+        if (!user || !selectedProject || !url || isSaving) return;
+        
         setIsSaving(true);
-        const supabase = getSupabaseClient();
-        const { error } = await supabase.from('lemari_kreasi').insert({
-            user_id: user.id,
-            asset_type: 'pattern',
-            name: `Pola: ${prompt.substring(0, 40)}`,
-            asset_data: { url: result, prompt },
-        });
-        setIsSaving(false);
-        if (error) { setError(`Gagal menyimpan: ${error.message}`); }
-        else { playSound('success'); alert('Pola berhasil disimpan ke Lemari Kreasi!'); }
+        setError(null);
+        
+        const updatedData = { ...selectedProject.project_data };
+        if (!updatedData.sotoshop_assets) updatedData.sotoshop_assets = {};
+        if (!updatedData.sotoshop_assets.patterns) updatedData.sotoshop_assets.patterns = [];
+        
+        updatedData.sotoshop_assets.patterns.push({ url, prompt: originalPrompt });
+
+        try {
+            const supabase = getSupabaseClient();
+            const { error: updateError } = await supabase
+                .from('projects')
+                .update({ project_data: updatedData })
+                .eq('id', selectedProject.id);
+
+            if (updateError) throw updateError;
+
+            const updatedProjects = projects.map(p =>
+                p.id === selectedProject.id ? { ...p, project_data: updatedData } : p
+            );
+            setProjects(updatedProjects);
+            setSelectedProject({ ...selectedProject, project_data: updatedData });
+            
+        } catch (err) {
+            setError(`Gagal menyimpan otomatis: ${(err as Error).message}`);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -104,12 +120,12 @@ const PatternGenerator: React.FC<PatternGeneratorProps> = ({ selectedProjectCont
 
             <div className="space-y-2">
                 <Textarea label="Deskripsi Pola" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: batik megamendung modern, warna pastel" rows={3} />
-                 {selectedProjectContext && (
-                    <p className="text-xs text-primary animate-content-fade-in">✨ Prompt akan disempurnakan dengan palet warna & gaya dari brand "{selectedProjectContext.project_data.brandInputs?.businessName}".</p>
+                 {selectedProject && (
+                    <p className="text-xs text-primary animate-content-fade-in">✨ Prompt akan disempurnakan dengan palet warna & gaya dari brand "{selectedProject.project_name}".</p>
                 )}
             </div>
 
-            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">
+            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim() || !selectedProject} variant="accent" className="w-full">
                 Buat Motif! ({PATTERN_COST} Token, +{XP_REWARD} XP)
             </Button>
             
@@ -121,6 +137,7 @@ const PatternGenerator: React.FC<PatternGeneratorProps> = ({ selectedProjectCont
                 <div className="space-y-4 animate-content-fade-in mt-4">
                     <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Pola Hasil Generate</h4>
+                         <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand proyek ini.</p>
                         <div onClick={() => setModalImageUrl(result)} className="w-full h-48 rounded-md cursor-pointer border-2 border-surface" style={{backgroundImage: `url(${result})`, backgroundSize: '100px 100px'}} />
                     </div>
                     <div className="p-4 bg-background rounded-lg border border-border-main">
@@ -129,7 +146,7 @@ const PatternGenerator: React.FC<PatternGeneratorProps> = ({ selectedProjectCont
                             {['mug', 'bag', 'shirt'].map(type => (
                                 <div key={type} className="text-center">
                                     {mockupPreviews[type as keyof typeof mockupPreviews] ? (
-                                        <img src={mockupPreviews[type as keyof typeof mockupPreviews]} onClick={() => setModalImageUrl(mockupPreviews[type as keyof typeof mockupPreviews]!)} alt={`${type} mockup`} className="w-full aspect-square object-cover rounded-md cursor-pointer" />
+                                        <img src={mockupPreviews[type as keyof typeof mockupPreviews]!} onClick={() => setModalImageUrl(mockupPreviews[type as keyof typeof mockupPreviews]!)} alt={`${type} mockup`} className="w-full aspect-square object-cover rounded-md cursor-pointer" />
                                     ) : (
                                         <div className="w-full aspect-square bg-border-light rounded-md flex items-center justify-center">
                                             {loadingMockup === type ? <LoadingMessage/> : <Button size="small" variant="secondary" onClick={() => handleGenerateMockup(type as any)}>Coba di {type} ({MOCKUP_COST}T)</Button>}
@@ -139,7 +156,6 @@ const PatternGenerator: React.FC<PatternGeneratorProps> = ({ selectedProjectCont
                             ))}
                         </div>
                     </div>
-                    <Button onClick={handleSaveToLemari} isLoading={isSaving} variant="secondary">Simpan Pola ke Lemari</Button>
                 </div>
             )}
             {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Pratinjau Pola" onClose={() => setModalImageUrl(null)} />}

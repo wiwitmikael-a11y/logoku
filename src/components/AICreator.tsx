@@ -23,6 +23,7 @@ const PatternGenerator = lazy(() => import('./PatternGenerator'));
 const PhotoStudio = lazy(() => import('./PhotoStudio'));
 const SceneMixer = lazy(() => import('./SceneMixer'));
 const VideoGenerator = lazy(() => import('./VideoGenerator'));
+const LemariBrand = lazy(() => import('./LemariBrand'));
 
 interface Props {
   selectedProject: Project | null;
@@ -31,7 +32,7 @@ interface Props {
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
 }
 
-type MainModule = 'persona' | 'logo' | 'kit' | 'content' | 'sotoshop';
+type MainModule = 'persona' | 'logo' | 'kit' | 'content' | 'sotoshop' | 'lemari';
 type SotoshopModule = 'mascot' | 'moodboard' | 'pattern' | 'photostudio' | 'scenemixer' | 'video';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
@@ -56,6 +57,7 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
         brandInputs: null, brandPersonas: [], selectedPersona: null, slogans: [], selectedSlogan: null,
         logoPrompt: null, logoOptions: [], selectedLogoUrl: null, logoVariations: null,
         socialMediaKit: null, socialProfiles: null,
+        sotoshop_assets: { mascots: [], patterns: [], moodboards: [], productPhotos: [], sceneMixes: [], videos: [] }
       };
 
       const { data, error: insertError } = await supabase.from('projects')
@@ -93,6 +95,7 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
     { id: 'kit', label: '3. Kit Sosmed', icon: '📱' },
     { id: 'content', label: '4. Konten', icon: '🗓️' },
     { id: 'sotoshop', label: 'Sotoshop', icon: '✨' },
+    { id: 'lemari', label: 'Lemari Brand', icon: '🗄️' },
   ], []);
 
   const sotoshopTabs = useMemo(() => [
@@ -119,6 +122,7 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
       case 'logo': return <LogoGenerator />;
       case 'kit': return <SocialMediaKitGenerator />;
       case 'content': return <ContentCalendarGenerator />;
+      case 'lemari': return <LemariBrand project={selectedProject} />;
       case 'sotoshop':
           return (
             <div className="p-4 bg-background rounded-lg border border-border-main">
@@ -131,11 +135,11 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
                 ))}
               </div>
               <ModuleLoader>
-                { sotoshopModule === 'mascot' && <MascotGenerator selectedProjectContext={selectedProject} ownerPhotoCutout={null} /> }
-                { sotoshopModule === 'moodboard' && <MoodboardGenerator selectedProjectContext={selectedProject} /> }
-                { sotoshopModule === 'pattern' && <PatternGenerator selectedProjectContext={selectedProject} /> }
-                { sotoshopModule === 'photostudio' && <PhotoStudio selectedProjectContext={selectedProject} ownerPhotoCutout={null} /> }
-                { sotoshopModule === 'scenemixer' && <SceneMixer selectedProjectContext={selectedProject} /> }
+                { sotoshopModule === 'mascot' && <MascotGenerator /> }
+                { sotoshopModule === 'moodboard' && <MoodboardGenerator /> }
+                { sotoshopModule === 'pattern' && <PatternGenerator /> }
+                { sotoshopModule === 'photostudio' && <PhotoStudio /> }
+                { sotoshopModule === 'scenemixer' && <SceneMixer /> }
                 { sotoshopModule === 'video' && <VideoGenerator /> }
               </ModuleLoader>
             </div>

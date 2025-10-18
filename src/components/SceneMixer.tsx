@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState } from 'react';
-import { generateSceneFromImages } from '../services/geminiService';
+import { generateSceneFromImages, enhancePromptWithPersonaStyle } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
@@ -21,14 +21,14 @@ interface SceneImage {
   instruction: string;
 }
 
-interface SceneMixerProps {
-    selectedProjectContext: Project | null;
-}
-
-const SceneMixer: React.FC<SceneMixerProps> = ({ selectedProjectContext }) => {
-    const { user, profile } = useAuth();
+// TODO: Refactor to get selectedProject from a shared context
+const SceneMixer: React.FC = () => {
+    const { user, profile, projects, setProjects } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
+    // This should ideally come from a context that AICreator provides
+    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
+
     const [images, setImages] = useState<SceneImage[]>([]);
     const [mainPrompt, setMainPrompt] = useState('');
     const [result, setResult] = useState<string | null>(null);
@@ -70,9 +70,12 @@ const SceneMixer: React.FC<SceneMixerProps> = ({ selectedProjectContext }) => {
                     combinedPrompt += `Untuk gambar ${i + 1}, fokus pada: "${img.instruction.trim()}".\n`;
                 }
             });
+            
+            const finalPrompt = enhancePromptWithPersonaStyle(combinedPrompt, selectedProject?.project_data.selectedPersona || null);
 
-            const resultUrl = await generateSceneFromImages(validImages.map(i => i.src), combinedPrompt);
+            const resultUrl = await generateSceneFromImages(validImages.map(i => i.src), finalPrompt);
             setResult(resultUrl);
+            await handleSaveToProject(resultUrl, mainPrompt);
             await addXp(XP_REWARD);
             playSound('success');
         } catch (err) {
@@ -83,19 +86,23 @@ const SceneMixer: React.FC<SceneMixerProps> = ({ selectedProjectContext }) => {
         }
     };
     
-    const handleSaveToLemari = async () => {
-        if (!user || !result || isSaving) return;
-        setIsSaving(true);
-        const supabase = getSupabaseClient();
-        const { error } = await supabase.from('lemari_kreasi').insert({
-            user_id: user.id,
-            asset_type: 'scene_mixer',
-            name: `Mixer: ${mainPrompt.substring(0, 40)}`,
-            asset_data: { url: result, prompt: mainPrompt, images },
-        });
-        setIsSaving(false);
-        if (error) { setError(`Gagal menyimpan: ${error.message}`); }
-        else { playSound('success'); alert('Hasil mixer berhasil disimpan ke Lemari Kreasi!'); }
+    const handleSaveToProject = async (url: string, prompt: string) => {
+        if (!user || !selectedProject || !url) return;
+        
+        const updatedData = { ...selectedProject.project_data };
+        if (!updatedData.sotoshop_assets) updatedData.sotoshop_assets = {};
+        if (!updatedData.sotoshop_assets.sceneMixes) updatedData.sotoshop_assets.sceneMixes = [];
+        updatedData.sotoshop_assets.sceneMixes.push({ url, prompt });
+
+        try {
+            const supabase = getSupabaseClient();
+            await supabase.from('projects').update({ project_data: updatedData }).eq('id', selectedProject.id);
+            const updatedProjects = projects.map(p => p.id === selectedProject.id ? { ...p, project_data: updatedData } : p);
+            setProjects(updatedProjects);
+            setSelectedProject({ ...selectedProject, project_data: updatedData });
+        } catch (err) {
+            setError(`Gagal menyimpan otomatis: ${(err as Error).message}`);
+        }
     };
     
     const reset = () => { setImages([]); setMainPrompt(''); setResult(null); setError(null); }
@@ -129,7 +136,7 @@ const SceneMixer: React.FC<SceneMixerProps> = ({ selectedProjectContext }) => {
                     <ImageSlot index={2} />
                 </div>
                 <Textarea label="Prompt Utama" name="mainPrompt" value={mainPrompt} onChange={e => setMainPrompt(e.target.value)} placeholder="Contoh: Gabungkan kucing (gambar 1) ke pantai (gambar 2) sambil minum kopi (gambar 3)." rows={3} />
-                <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.filter(i=>i.src).length === 0 || !mainPrompt.trim()} variant="accent" className="w-full">
+                <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.filter(i=>i.src).length === 0 || !mainPrompt.trim() || !selectedProject} variant="accent" className="w-full">
                     Campur Aduk Gambarnya! ({SCENE_MIXER_COST} Token, +{XP_REWARD} XP)
                 </Button>
             </div>
@@ -141,10 +148,10 @@ const SceneMixer: React.FC<SceneMixerProps> = ({ selectedProjectContext }) => {
                 <div className="space-y-4 animate-content-fade-in mt-4">
                     <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Hasil Gabungan</h4>
+                         <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand proyek ini.</p>
                         <img src={result} onClick={() => setModalImageUrl(result)} alt="Hasil Scene Mixer" className="w-full aspect-square object-contain rounded-md cursor-pointer bg-surface" />
                     </div>
                     <div className="flex gap-4">
-                        <Button onClick={handleSaveToLemari} isLoading={isSaving} variant="secondary">Simpan ke Lemari</Button>
                         <Button onClick={reset} variant="secondary">Coba Lagi</Button>
                     </div>
                 </div>

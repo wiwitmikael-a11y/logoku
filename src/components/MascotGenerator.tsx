@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState } from 'react';
-import { generateMascot, generateMascotPose } from '../services/geminiService';
+import { generateMascot, generateMascotPose, enhancePromptWithPersonaStyle } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
@@ -12,20 +12,21 @@ import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
+import { AICreatorContext } from './AICreatorContext'; // Assuming you create this context
 
 const MASCOT_COST = 2;
 const POSE_COST = 1;
 const XP_REWARD = 30;
 
-interface MascotGeneratorProps {
-    selectedProjectContext: Project | null;
-    ownerPhotoCutout: string | null;
-}
-
-const MascotGenerator: React.FC<MascotGeneratorProps> = ({ selectedProjectContext, ownerPhotoCutout }) => {
-    const { user, profile } = useAuth();
+// TODO: Refactor to get selectedProject from a shared context instead of props
+const MascotGenerator: React.FC = () => {
+    const { user, profile, projects, setProjects } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
+    // This should ideally come from a context that AICreator provides
+    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
+    const ownerPhotoCutout: string | null = null; // Placeholder for this logic
+
     const [prompt, setPrompt] = useState('');
     const [useOwnerInspiration, setUseOwnerInspiration] = useState(false);
     const [results, setResults] = useState<string[]>([]);
@@ -44,11 +45,7 @@ const MascotGenerator: React.FC<MascotGeneratorProps> = ({ selectedProjectContex
         if (useOwnerInspiration && !ownerPhotoCutout) { setError('Aset Persona Juragan belum diproses. Silakan proses dulu di sidebar.'); return; }
         if ((profile?.credits ?? 0) < MASCOT_COST) { setShowOutOfCreditsModal(true); return; }
 
-        let finalPrompt = prompt;
-        if (selectedProjectContext?.project_data.selectedPersona) {
-            const persona = selectedProjectContext.project_data.selectedPersona;
-            finalPrompt += `. Gaya visualnya harus ${persona.kata_kunci.join(', ')} dan cocok dengan warna brand: ${persona.palet_warna_hex.join(', ')}.`;
-        }
+        const finalPrompt = enhancePromptWithPersonaStyle(prompt, selectedProject?.project_data.selectedPersona || null);
 
         setIsLoading(true); setError(null); setResults([]); setSelectedMascot(null); setNewPoseResult(null); playSound('start');
         try {
@@ -66,6 +63,47 @@ const MascotGenerator: React.FC<MascotGeneratorProps> = ({ selectedProjectContex
         }
     };
     
+    const handleSaveToProject = async (url: string) => {
+        if (!user || !selectedProject || !url || isSaving) return;
+        
+        setIsSaving(true);
+        setError(null);
+        
+        const updatedData = { ...selectedProject.project_data };
+        if (!updatedData.sotoshop_assets) {
+            updatedData.sotoshop_assets = {};
+        }
+        if (!updatedData.sotoshop_assets.mascots) {
+            updatedData.sotoshop_assets.mascots = [];
+        }
+        updatedData.sotoshop_assets.mascots.push(url);
+
+        try {
+            const supabase = getSupabaseClient();
+            const { error: updateError } = await supabase
+                .from('projects')
+                .update({ project_data: updatedData })
+                .eq('id', selectedProject.id);
+
+            if (updateError) throw updateError;
+
+            // Update local state to reflect changes instantly
+            const updatedProjects = projects.map(p =>
+                p.id === selectedProject.id ? { ...p, project_data: updatedData } : p
+            );
+            setProjects(updatedProjects);
+            setSelectedProject({ ...selectedProject, project_data: updatedData });
+            
+            playSound('success');
+            alert('Maskot berhasil disimpan ke Lemari Brand proyek ini!');
+        } catch (err) {
+            setError(`Gagal menyimpan: ${(err as Error).message}`);
+            playSound('error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleGeneratePose = async () => {
         if (!selectedMascot || !newPosePrompt.trim()) return;
         if ((profile?.credits ?? 0) < POSE_COST) { setShowOutOfCreditsModal(true); return; }
@@ -73,7 +111,8 @@ const MascotGenerator: React.FC<MascotGeneratorProps> = ({ selectedProjectContex
         setIsLoadingPose(true); setError(null);
         try {
             if (!(await deductCredits(POSE_COST))) throw new Error("Gagal mengurangi token.");
-            const poseUrl = await generateMascotPose(selectedMascot, newPosePrompt);
+            const finalPrompt = enhancePromptWithPersonaStyle(newPosePrompt, selectedProject?.project_data.selectedPersona || null);
+            const poseUrl = await generateMascotPose(selectedMascot, finalPrompt);
             setNewPoseResult(poseUrl);
             await addXp(10);
         } catch(err) {
@@ -83,20 +122,6 @@ const MascotGenerator: React.FC<MascotGeneratorProps> = ({ selectedProjectContex
         }
     };
 
-    const handleSaveToLemari = async (url: string | null) => {
-        if (!user || !url || isSaving) return;
-        setIsSaving(true);
-        const supabase = getSupabaseClient();
-        const { error } = await supabase.from('lemari_kreasi').insert({
-            user_id: user.id,
-            asset_type: 'mascot',
-            name: `Maskot: ${prompt.substring(0, 40)}`,
-            asset_data: { urls: [url] }, // Simpan sebagai array untuk konsistensi
-        });
-        setIsSaving(false);
-        if (error) { setError(`Gagal menyimpan: ${error.message}`); }
-        else { playSound('success'); alert('Maskot berhasil disimpan ke Lemari Kreasi!'); }
-    };
 
     return (
         <div className="space-y-4">
@@ -112,7 +137,7 @@ const MascotGenerator: React.FC<MascotGeneratorProps> = ({ selectedProjectContex
                             <label htmlFor="use-owner" className="text-sm text-text-body">Jadikan Saya Inspirasi Maskot</label>
                         </div>
                     )}
-                    <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">
+                    <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim() || !selectedProject} variant="accent" className="w-full">
                         Buat 2 Opsi Maskot! ({MASCOT_COST} Token, +{XP_REWARD} XP)
                     </Button>
                 </>
@@ -129,7 +154,7 @@ const MascotGenerator: React.FC<MascotGeneratorProps> = ({ selectedProjectContex
                         <div className="mt-4 pt-4 border-t border-border-light text-center space-y-2">
                              <h5 className="font-semibold">Pose Baru:</h5>
                              <img src={newPoseResult} alt="Pose baru" className="max-h-40 mx-auto rounded-md bg-surface p-2" />
-                             <Button size="small" variant="secondary" onClick={() => handleSaveToLemari(newPoseResult)} isLoading={isSaving}>Simpan Pose Ini</Button>
+                             <Button size="small" variant="secondary" onClick={() => handleSaveToProject(newPoseResult)} isLoading={isSaving}>Simpan Pose ke Proyek</Button>
                         </div>
                     )}
                 </div>
@@ -140,10 +165,10 @@ const MascotGenerator: React.FC<MascotGeneratorProps> = ({ selectedProjectContex
 
             {results.length > 0 && !selectedMascot && (
                 <div className="space-y-4 animate-content-fade-in mt-4">
-                    <h4 className="font-bold text-text-header">Pilih Maskot Favoritmu:</h4>
+                    <h4 className="font-bold text-text-header">Pilih Maskot Favoritmu & Simpan ke Proyek:</h4>
                     <div className="grid grid-cols-2 gap-4">
                         {results.map((img, i) => (
-                            <div key={i} className="p-2 bg-background rounded-lg border-2 border-transparent hover:border-primary cursor-pointer" onClick={() => setSelectedMascot(img)}>
+                            <div key={i} className="p-2 bg-background rounded-lg border-2 border-transparent hover:border-primary cursor-pointer" onClick={() => { setSelectedMascot(img); handleSaveToProject(img); }}>
                                 <img src={img} alt={`Opsi maskot ${i + 1}`} className="w-full aspect-square object-contain" />
                             </div>
                         ))}

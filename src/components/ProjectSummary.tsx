@@ -41,7 +41,21 @@ const ProjectSummary: React.FC<{ project: Project | null }> = ({ project }) => {
         );
     }
     
-    const { selectedPersona, selectedSlogan, selectedLogoUrl } = project.project_data;
+    const { selectedPersona, selectedSlogan, selectedLogoUrl, sotoshop_assets } = project.project_data;
+
+    const countSotoshopAssets = () => {
+        if (!sotoshop_assets) return 0;
+        // FIX: Added an Array.isArray check. Object.values() on an object with optional properties
+        // can result in an array of mixed types (including undefined). This type guard ensures
+        // we only access .length on actual arrays, resolving the 'property length does not exist on unknown' error.
+        return Object.values(sotoshop_assets).reduce((acc, assetArray) => {
+            if (Array.isArray(assetArray)) {
+                return acc + assetArray.length;
+            }
+            return acc;
+        }, 0);
+    };
+    const totalSotoshopAssets = countSotoshopAssets();
 
     return (
         <div className="p-4 bg-surface rounded-2xl sticky top-8 animate-item-appear">
@@ -61,6 +75,9 @@ const ProjectSummary: React.FC<{ project: Project | null }> = ({ project }) => {
                     ) : (
                         'Belum dibuat'
                     )}
+                </SummaryItem>
+                 <SummaryItem icon="🗄️" label="Aset di Lemari Brand" isComplete={totalSotoshopAssets > 0}>
+                    {totalSotoshopAssets > 0 ? `${totalSotoshopAssets} Aset Tersimpan` : 'Belum ada aset Sotoshop'}
                 </SummaryItem>
             </div>
         </div>

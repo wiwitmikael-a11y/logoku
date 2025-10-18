@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect } from 'react';
-import { generateProductPhoto, removeBackground } from '../services/geminiService';
+import { generateProductPhoto, removeBackground, enhancePromptWithPersonaStyle } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
@@ -19,15 +19,15 @@ const XP_REWARD = 25;
 
 const SCENE_SUGGESTIONS = ["di atas meja marmer putih dengan properti minimalis", "di atas podium kayu dengan latar belakang alam", "melayang dengan latar belakang gradien pastel", "di pantai dengan cahaya matahari terbenam"];
 
-interface PhotoStudioProps {
-    selectedProjectContext: Project | null;
-    ownerPhotoCutout: string | null;
-}
-
-const PhotoStudio: React.FC<PhotoStudioProps> = ({ selectedProjectContext, ownerPhotoCutout }) => {
-    const { user, profile } = useAuth();
+// TODO: Refactor to get selectedProject from a shared context
+const PhotoStudio: React.FC = () => {
+    const { user, profile, projects, setProjects } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
+    // This should ideally come from a context that AICreator provides
+    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
+    const ownerPhotoCutout: string | null = null; // Placeholder for this logic
+
     const [originalImage, setOriginalImage] = useState<string | null>(null);
     const [productImage, setProductImage] = useState<string | null>(null);
     const [scenePrompt, setScenePrompt] = useState('');
@@ -84,8 +84,10 @@ const PhotoStudio: React.FC<PhotoStudioProps> = ({ selectedProjectContext, owner
         try {
             if (!(await deductCredits(PHOTO_STUDIO_COST))) throw new Error("Gagal mengurangi token.");
             
-            const photoUrl = await generateProductPhoto(productImage, scenePrompt);
+            const finalPrompt = enhancePromptWithPersonaStyle(scenePrompt, selectedProject?.project_data.selectedPersona || null);
+            const photoUrl = await generateProductPhoto(productImage, finalPrompt);
             setResult(photoUrl);
+            await handleSaveToProject(photoUrl, scenePrompt);
             await addXp(XP_REWARD);
             playSound('success');
         } catch (err) {
@@ -95,20 +97,24 @@ const PhotoStudio: React.FC<PhotoStudioProps> = ({ selectedProjectContext, owner
             setIsLoading(false);
         }
     };
+    
+    const handleSaveToProject = async (url: string, prompt: string) => {
+        if (!user || !selectedProject || !url) return;
+        
+        const updatedData = { ...selectedProject.project_data };
+        if (!updatedData.sotoshop_assets) updatedData.sotoshop_assets = {};
+        if (!updatedData.sotoshop_assets.productPhotos) updatedData.sotoshop_assets.productPhotos = [];
+        updatedData.sotoshop_assets.productPhotos.push({ url, prompt });
 
-    const handleSaveToLemari = async () => {
-        if (!user || !result || isSaving) return;
-        setIsSaving(true);
-        const supabase = getSupabaseClient();
-        const { error } = await supabase.from('lemari_kreasi').insert({
-            user_id: user.id,
-            asset_type: 'photo_studio',
-            name: `Studio: ${scenePrompt.substring(0, 40)}`,
-            asset_data: { url: result, prompt: scenePrompt, original: originalImage },
-        });
-        setIsSaving(false);
-        if (error) { setError(`Gagal menyimpan: ${error.message}`); }
-        else { playSound('success'); alert('Foto berhasil disimpan ke Lemari Kreasi!'); }
+        try {
+            const supabase = getSupabaseClient();
+            await supabase.from('projects').update({ project_data: updatedData }).eq('id', selectedProject.id);
+            const updatedProjects = projects.map(p => p.id === selectedProject.id ? { ...p, project_data: updatedData } : p);
+            setProjects(updatedProjects);
+            setSelectedProject({ ...selectedProject, project_data: updatedData });
+        } catch (err) {
+            setError(`Gagal menyimpan otomatis: ${(err as Error).message}`);
+        }
     };
     
     return (
@@ -139,7 +145,7 @@ const PhotoStudio: React.FC<PhotoStudioProps> = ({ selectedProjectContext, owner
                 </div>
             </div>
 
-            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !productImage || !scenePrompt.trim()} variant="accent" className="w-full">
+            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !productImage || !scenePrompt.trim() || !selectedProject} variant="accent" className="w-full">
                 Jepret Fotonya! ({PHOTO_STUDIO_COST} Token, +{XP_REWARD} XP)
             </Button>
             
@@ -150,9 +156,9 @@ const PhotoStudio: React.FC<PhotoStudioProps> = ({ selectedProjectContext, owner
                 <div className="space-y-4 animate-content-fade-in mt-4">
                     <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Foto Produk Profesional</h4>
+                        <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand proyek ini.</p>
                         <img src={result} onClick={() => setModalImageUrl(result)} alt="Hasil Foto Produk" className="w-full aspect-square object-contain rounded-md cursor-pointer bg-surface" />
                     </div>
-                    <Button onClick={handleSaveToLemari} isLoading={isSaving} variant="secondary">Simpan ke Lemari</Button>
                 </div>
             )}
             {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Hasil Foto Produk" onClose={() => setModalImageUrl(null)} />}

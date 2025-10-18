@@ -20,6 +20,31 @@ export const getAiClient = (): GoogleGenAI => {
   return aiInstance;
 };
 
+/**
+ * Enhances a user's prompt with stylistic details from a brand persona.
+ * This is the core of the "Visual Style Memory" feature.
+ * @param prompt The user's original prompt.
+ * @param persona The selected brand persona for the project.
+ * @returns A new, more detailed prompt.
+ */
+export const enhancePromptWithPersonaStyle = (prompt: string, persona: BrandPersona | null): string => {
+    if (!persona) return prompt;
+    // Ensure persona data is valid before creating the style prompt
+    const hasKeywords = persona.kata_kunci && persona.kata_kunci.length > 0;
+    const hasPalette = persona.palet_warna_hex && persona.palet_warna_hex.length > 0;
+    
+    let stylePrompt = "";
+    if (hasKeywords) {
+        stylePrompt += ` Gaya visualnya harus ${persona.kata_kunci.join(', ')}`;
+    }
+    if (hasPalette) {
+        stylePrompt += ` dan cocok dengan warna brand utama dari palet ini: ${persona.palet_warna_hex.join(', ')}`;
+    }
+    
+    // Append with a period for better grammar if style was added.
+    return stylePrompt ? `${prompt}.${stylePrompt}.` : prompt;
+};
+
 
 // Helper to parse JSON safely from AI responses which might include markdown ```json
 const safeJsonParse = <T>(jsonString: string, fallback: T): T => {

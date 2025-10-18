@@ -19,14 +19,14 @@ const XP_REWARD = 25;
 
 const VIBE_SUGGESTIONS = ["Kopi senja, hangat, rustic", "Modern, bersih, teknologi", "Ceria, anak-anak, playful", "Mewah, elegan, emas", "Petualangan, alam, outdoor"];
 
-interface MoodboardGeneratorProps {
-    selectedProjectContext: Project | null;
-}
-
-const MoodboardGenerator: React.FC<MoodboardGeneratorProps> = ({ selectedProjectContext }) => {
-    const { user, profile } = useAuth();
+// TODO: Refactor to get selectedProject from a shared context
+const MoodboardGenerator: React.FC = () => {
+    const { user, profile, projects, setProjects } = useAuth();
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
+    // This should ideally come from a context that AICreator provides
+    const [selectedProject, setSelectedProject] = useState<Project | null>(projects[0] || null);
+
     const [keywords, setKeywords] = useState('');
     const [result, setResult] = useState<{description: string; palette: string[]; images: string[]} | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +47,9 @@ const MoodboardGenerator: React.FC<MoodboardGeneratorProps> = ({ selectedProject
                 generateMoodboardImages(keywords)
             ]);
             
-            setResult({ ...textData, images });
+            const fullResult = { ...textData, images };
+            setResult(fullResult);
+            await handleSaveToProject(fullResult);
             await addXp(XP_REWARD);
             playSound('success');
         } catch (err) {
@@ -58,19 +60,38 @@ const MoodboardGenerator: React.FC<MoodboardGeneratorProps> = ({ selectedProject
         }
     };
 
-    const handleSaveToLemari = async () => {
-        if (!user || !result || isSaving) return;
+    const handleSaveToProject = async (moodboardData: {description: string; palette: string[]; images: string[]}) => {
+        if (!user || !selectedProject || isSaving) return;
+        
         setIsSaving(true);
-        const supabase = getSupabaseClient();
-        const { error } = await supabase.from('lemari_kreasi').insert({
-            user_id: user.id,
-            asset_type: 'moodboard',
-            name: `Vibe: ${keywords.substring(0, 40)}`,
-            asset_data: result,
-        });
-        setIsSaving(false);
-        if (error) { setError(`Gagal menyimpan: ${error.message}`); }
-        else { playSound('success'); alert('Moodboard berhasil disimpan ke Lemari Kreasi!'); }
+        setError(null);
+        
+        const updatedData = { ...selectedProject.project_data };
+        if (!updatedData.sotoshop_assets) updatedData.sotoshop_assets = {};
+        if (!updatedData.sotoshop_assets.moodboards) updatedData.sotoshop_assets.moodboards = [];
+        
+        updatedData.sotoshop_assets.moodboards.push(moodboardData);
+
+        try {
+            const supabase = getSupabaseClient();
+            const { error: updateError } = await supabase
+                .from('projects')
+                .update({ project_data: updatedData })
+                .eq('id', selectedProject.id);
+
+            if (updateError) throw updateError;
+
+            const updatedProjects = projects.map(p =>
+                p.id === selectedProject.id ? { ...p, project_data: updatedData } : p
+            );
+            setProjects(updatedProjects);
+            setSelectedProject({ ...selectedProject, project_data: updatedData });
+            
+        } catch (err) {
+            setError(`Gagal menyimpan otomatis: ${(err as Error).message}`);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -86,7 +107,7 @@ const MoodboardGenerator: React.FC<MoodboardGeneratorProps> = ({ selectedProject
                 </div>
             </div>
 
-            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !keywords.trim()} variant="accent" className="w-full">
+            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !keywords.trim() || !selectedProject} variant="accent" className="w-full">
                 Racik Vibe Brand! ({MOODBOARD_COST} Token, +{XP_REWARD} XP)
             </Button>
             
@@ -96,6 +117,7 @@ const MoodboardGenerator: React.FC<MoodboardGeneratorProps> = ({ selectedProject
 
             {result && (
                 <div className="space-y-4 animate-content-fade-in mt-4">
+                     <p className="text-xs text-center text-green-400">✓ Moodboard otomatis tersimpan di Lemari Brand proyek ini.</p>
                     <div className="p-4 bg-background rounded-lg border border-border-main">
                         <h4 className="font-bold text-text-header mb-2">Deskripsi Vibe</h4>
                         <p className="text-sm text-text-body italic selectable-text">"{result.description}"</p>
@@ -115,7 +137,6 @@ const MoodboardGenerator: React.FC<MoodboardGeneratorProps> = ({ selectedProject
                             ))}
                         </div>
                     </div>
-                    <Button onClick={handleSaveToLemari} isLoading={isSaving} variant="secondary">Simpan ke Lemari Kreasi</Button>
                 </div>
             )}
             {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Gambar Inspirasi" onClose={() => setModalImageUrl(null)} />}
