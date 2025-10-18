@@ -22,6 +22,7 @@ const MoodboardGenerator = lazy(() => import('./MoodboardGenerator'));
 const PatternGenerator = lazy(() => import('./PatternGenerator'));
 const PhotoStudio = lazy(() => import('./PhotoStudio'));
 const SceneMixer = lazy(() => import('./SceneMixer'));
+const VideoGenerator = lazy(() => import('./VideoGenerator'));
 
 interface Props {
   selectedProject: Project | null;
@@ -31,7 +32,7 @@ interface Props {
 }
 
 type MainModule = 'persona' | 'logo' | 'kit' | 'content' | 'sotoshop';
-type SotoshopModule = 'mascot' | 'moodboard' | 'pattern' | 'photostudio' | 'scenemixer';
+type SotoshopModule = 'mascot' | 'moodboard' | 'pattern' | 'photostudio' | 'scenemixer' | 'video';
 
 const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, projects, setProjects }) => {
   const { user } = useAuth();
@@ -98,6 +99,7 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
     { id: 'pattern', label: 'Studio Motif', icon: '🌀' },
     { id: 'photostudio', label: 'Studio Foto', icon: '📸' },
     { id: 'scenemixer', label: 'Scene Mixer', icon: '🎭' },
+    { id: 'video', label: 'Studio Video', icon: '🎬' },
   ], []);
 
   const renderModule = () => {
@@ -131,6 +133,7 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
                 { sotoshopModule === 'pattern' && <PatternGenerator selectedProjectContext={selectedProject} /> }
                 { sotoshopModule === 'photostudio' && <PhotoStudio selectedProjectContext={selectedProject} ownerPhotoCutout={null} /> }
                 { sotoshopModule === 'scenemixer' && <SceneMixer selectedProjectContext={selectedProject} /> }
+                { sotoshopModule === 'video' && <VideoGenerator /> }
               </ModuleLoader>
             </div>
           );

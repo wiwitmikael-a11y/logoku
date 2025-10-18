@@ -6,7 +6,6 @@ import { fetchImageAsBase64, compressAndConvertToWebP } from "../utils/imageUtil
 
 let aiInstance: GoogleGenAI | null = null;
 
-// FIX: Export getAiClient to make it accessible from other modules.
 export const getAiClient = (): GoogleGenAI => {
   if (aiInstance) {
     return aiInstance;
@@ -369,33 +368,29 @@ export const moderateContent = async (content: string): Promise<{ isAppropriate:
 };
 
 // --- Video Generation ---
-export const generateVideo = async (prompt: string, imageBase64?: string): Promise<any> => {
-    const ai = getAiClient();
+export const generateVideo = async (ai: GoogleGenAI, prompt: string, imageBase64?: string): Promise<any> => {
     let operation;
     if (imageBase64) {
         operation = await ai.models.generateVideos({
-// FIX: Updated model name to align with API guidelines.
-            model: 'veo-2.0-generate-001',
+            model: 'veo-3.1-fast-generate-preview',
             prompt,
             image: {
                 imageBytes: imageBase64.split(',')[1],
                 mimeType: imageBase64.match(/data:(.*);base64/)?.[1] || 'image/png',
             },
-            config: { numberOfVideos: 1 }
+            config: { numberOfVideos: 1, resolution: '720p', aspectRatio: '16:9' }
         });
     } else {
         operation = await ai.models.generateVideos({
-// FIX: Updated model name to align with API guidelines.
-            model: 'veo-2.0-generate-001',
+            model: 'veo-3.1-fast-generate-preview',
             prompt,
-            config: { numberOfVideos: 1 }
+            config: { numberOfVideos: 1, resolution: '720p', aspectRatio: '16:9' }
         });
     }
     return operation;
 };
 
-export const getVideosOperation = async (operation: any): Promise<any> => {
-    const ai = getAiClient();
+export const getVideosOperation = async (ai: GoogleGenAI, operation: any): Promise<any> => {
     return await ai.operations.getVideosOperation({ operation: operation });
 };
 

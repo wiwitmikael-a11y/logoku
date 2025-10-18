@@ -1,8 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-// FIX: The 'LiveSession' type is no longer exported from the '@google/genai' package.
-// It has been removed from the import statement.
 import { GoogleGenAI, LiveServerMessage, Modality, Blob } from "@google/genai";
 import { getAiClient } from '../services/geminiService';
 import { useUserActions } from '../contexts/UserActionsContext';
@@ -35,7 +33,6 @@ const VoiceBrandingWizard: React.FC<{ show: boolean; onClose: () => void; }> = (
     const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs>>({});
     const currentTranscriptionRef = useRef('');
 
-    // FIX: The 'LiveSession' type is no longer exported and has been replaced with 'any' to allow the code to compile.
     const sessionPromiseRef = useRef<Promise<any> | null>(null);
     const { setLastVoiceConsultationResult } = useUserActions();
 
@@ -181,13 +178,11 @@ const VoiceBrandingWizard: React.FC<{ show: boolean; onClose: () => void; }> = (
     const ConsultationChecklist = () => (
         <div className="space-y-2 mt-4">
             {CONSULTATION_STEPS.map((stepKey, index) => (
-// FIX: Cast stepKey to string for use as a React key to satisfy TypeScript.
                 <div key={stepKey as string} className={`flex items-start transition-all duration-300 ${index > currentStepIndex ? 'opacity-40' : 'opacity-100'}`}>
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-1 flex-shrink-0 ${brandInputs[stepKey] ? 'bg-green-500' : 'bg-border-main'}`}>
                        {brandInputs[stepKey] && <span className="text-white">✓</span>}
                     </div>
                     <div>
-{/* FIX: Cast stepKey to string before calling replace method to satisfy TypeScript. */}
                         <p className="font-semibold text-sm text-text-header capitalize">{(stepKey as string).replace(/([A-Z])/g, ' $1')}</p>
                         <p className="text-xs text-text-body">{brandInputs[stepKey] || '...'}</p>
                     </div>
@@ -213,8 +208,13 @@ const VoiceBrandingWizard: React.FC<{ show: boolean; onClose: () => void; }> = (
                  return (
                     <>
                         <p className="text-center text-text-header font-semibold mb-3">{PROMPTS[CONSULTATION_STEPS[currentStepIndex]]}</p>
-                        <div className="relative h-20">
-                            {currentState === 'LISTENING' && <VoiceVisualizer />}
+                        <div className="relative h-20 flex items-center justify-center">
+                            {currentState === 'LISTENING' && (
+                                <div className='text-center'>
+                                    <VoiceVisualizer />
+                                    <p className="text-sm text-accent animate-pulse mt-2">Mang AI sedang mendengarkan...</p>
+                                </div>
+                            )}
                             {currentState === 'SPEAKING' && <p className="text-center text-accent animate-pulse">Mang AI sedang berbicara...</p>}
                         </div>
                         <ConsultationChecklist />
@@ -224,7 +224,7 @@ const VoiceBrandingWizard: React.FC<{ show: boolean; onClose: () => void; }> = (
                 return (
                     <>
                          <p className="text-center text-green-400 font-semibold mb-3">Konsultasi Selesai!</p>
-                         <p className="text-center text-text-muted">Data akan otomatis diisi ke form.</p>
+                         <p className="text-center text-text-muted">Mantap! Data akan otomatis diisi ke form.</p>
                          <ConsultationChecklist />
                     </>
                 );
