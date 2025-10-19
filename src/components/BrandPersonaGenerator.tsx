@@ -10,6 +10,7 @@ import ErrorMessage from './common/ErrorMessage';
 import Input from './common/Input';
 import Textarea from './common/Textarea';
 import VoiceBrandingWizard from './VoiceBrandingWizard';
+import { useAuth } from '../contexts/AuthContext';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 const PERSONA_COST = 5;
@@ -22,10 +23,17 @@ interface Props {
 
 const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
   const { deductCredits, addXp, lastVoiceConsultationResult, setLastVoiceConsultationResult } = useUserActions();
-
+  const { profile } = useAuth();
+  
+  const [view, setView] = useState<'CHOICE' | 'MANUAL' | 'VOICE'>('CHOICE');
+  // FIX: Added state to explicitly control the VoiceBrandingWizard modal.
+  const [showVoiceWizard, setShowVoiceWizard] = useState(false);
+  
+  // This state is now the single source of truth for the form.
+  // Changes to it will be passed up to AICreator, which then triggers the autosave.
   const [brandInputs, setBrandInputs] = useState<BrandInputs>(
     project.project_data.brandInputs || {
-      businessName: '',
+      businessName: project.project_data.project_name || '',
       businessDetail: '',
       industry: '',
       targetAudience: '',
@@ -33,26 +41,39 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
       competitorAnalysis: '',
     }
   );
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showVoiceWizard, setShowVoiceWizard] = useState(false);
 
+  // Sync with project data when it changes externally
+  useEffect(() => {
+    setBrandInputs(project.project_data.brandInputs || {
+      businessName: project.project_data.project_name || '',
+      businessDetail: '', industry: '', targetAudience: '',
+      valueProposition: '', competitorAnalysis: '',
+    });
+  }, [project.project_data.brandInputs, project.project_data.project_name]);
+  
   // Check for results from voice consultation
   useEffect(() => {
     if (lastVoiceConsultationResult) {
-      setBrandInputs(prev => ({ ...prev, ...lastVoiceConsultationResult }));
-      // Clear it so it doesn't re-populate on re-renders
+      const updatedInputs = { ...brandInputs, ...lastVoiceConsultationResult };
+      setBrandInputs(updatedInputs);
+      onUpdateProject({ brandInputs: updatedInputs }); // Trigger autosave
       setLastVoiceConsultationResult(null); 
+      setView('MANUAL'); // Show the populated form
     }
-  }, [lastVoiceConsultationResult, setLastVoiceConsultationResult]);
+  }, [lastVoiceConsultationResult, setLastVoiceConsultationResult, onUpdateProject, brandInputs]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setBrandInputs(prev => ({ ...prev, [name]: value }));
+    const updatedInputs = { ...brandInputs, [name]: value };
+    setBrandInputs(updatedInputs);
+    // Propagate changes up immediately to trigger autosave hook in AICreator
+    onUpdateProject({ brandInputs: updatedInputs });
   };
   
   const isFormValid = () => {
-    // Competitor analysis is optional
     const requiredInputs: (keyof BrandInputs)[] = ['businessName', 'businessDetail', 'industry', 'targetAudience', 'valueProposition'];
     return requiredInputs.every(key => brandInputs[key] && brandInputs[key].trim() !== '');
   };
@@ -66,8 +87,8 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
     setError(null);
     try {
       if (!(await deductCredits(PERSONA_COST))) return;
-
-      await onUpdateProject({ brandInputs });
+      
+      // No need to call onUpdateProject here for brandInputs, autosave has handled it.
       const personas = await generateBrandPersonas(brandInputs);
       await onUpdateProject({ brandPersonas: personas });
       await addXp(XP_REWARD_PERSONA);
@@ -87,13 +108,38 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
 
   const { brandPersonas, selectedPersona } = project.project_data;
 
+  // --- RENDER LOGIC ---
+
+  if (view === 'CHOICE' && !brandPersonas?.length) {
+    return (
+        <div className="text-center max-w-2xl mx-auto">
+            <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 h-24 mx-auto mb-4" style={{imageRendering: 'pixelated'}}/>
+            <h2 className="text-3xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Mulai Dari Mana, Juragan?</h2>
+            <p className="text-text-body mt-2 mb-6">Pilih cara paling nyaman buat nentuin kepribadian brand lo. Ngobrol langsung sama Mang AI, atau isi form manual.</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <div onClick={() => setShowVoiceWizard(true)} className="w-full sm:w-1/2 p-6 rounded-lg text-center cursor-pointer selection-card">
+                    <span className="text-5xl">🎙️</span>
+                    <h3 className="font-bold text-lg mt-2 text-text-header">Konsultasi Suara</h3>
+                    <p className="text-xs text-text-muted mt-1">Ngobrol interaktif sama Mang AI buat gali DNA brand-mu. (Direkomendasikan)</p>
+                </div>
+                <div onClick={() => setView('MANUAL')} className="w-full sm:w-1/2 p-6 rounded-lg text-center cursor-pointer selection-card">
+                    <span className="text-5xl">✍️</span>
+                    <h3 className="font-bold text-lg mt-2 text-text-header">Isi Form Manual</h3>
+                    <p className="text-xs text-text-muted mt-1">Isi detail brand-mu sendiri lewat form yang udah disiapin.</p>
+                </div>
+            </div>
+            <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} />
+        </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="p-4 rounded-lg flex items-start gap-4 mang-ai-callout border border-border-main">
         <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-16 h-16" style={{imageRendering: 'pixelated'}}/>
         <div>
-          <h4 className="font-bold text-text-header">Yuk, Kenalan Sama Brand Juragan!</h4>
-          <p className="text-sm text-text-body mt-1">Isi dulu 5 pilar DNA Brand di bawah ini. Semakin detail, semakin ciamik persona yang Mang AI bikinin. Atau, kalau mau lebih seru, coba deh <strong className="text-primary">Konsultasi Suara</strong>!</p>
+          <h4 className="font-bold text-text-header">DNA Brand Juragan</h4>
+          <p className="text-sm text-text-body mt-1">Ini adalah fondasi brand-mu. Semakin detail isinya, semakin akurat semua aset yang akan dibuat Mang AI nanti.</p>
         </div>
       </div>
       
@@ -109,10 +155,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
 
       <div className="flex flex-col sm:flex-row gap-4">
         <Button onClick={handleGenerate} isLoading={isLoading} disabled={!isFormValid() || isLoading} className="w-full">
-          Buat 3 Opsi Persona Brand ({PERSONA_COST} Token)
-        </Button>
-        <Button onClick={() => setShowVoiceWizard(true)} variant="accent" className="w-full">
-          🎙️ Coba Konsultasi Suara
+          {brandPersonas && brandPersonas.length > 0 ? 'Buat Ulang Opsi Persona' : 'Buat 3 Opsi Persona Brand'} ({PERSONA_COST} Token)
         </Button>
       </div>
       
@@ -138,8 +181,6 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
           </div>
         </div>
       )}
-
-      <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} />
     </div>
   );
 };

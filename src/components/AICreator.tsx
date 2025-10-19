@@ -4,6 +4,7 @@ import React, { useState, useEffect, lazy } from 'react';
 import type { Project, ProjectData } from '../types';
 import ModuleLoader from './common/ModuleLoader';
 import { useUI } from '../contexts/UIContext';
+import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
 
 // Lazy load the main components
 const BrandPersonaGenerator = lazy(() => import('./BrandPersonaGenerator'));
@@ -30,6 +31,9 @@ const AICreator: React.FC<{ project: Project | null; onUpdateProject: (data: Par
     const [activeTab, setActiveTab] = useState('Persona');
     const { crossComponentPrompt, setCrossComponentPrompt } = useUI();
     const [initialSotoshopPrompt, setInitialSotoshopPrompt] = useState<string | null>(null);
+    
+    // Activate the "Asisten Pencatat"
+    const saveStatus = useDebouncedAutosave(project, onUpdateProject);
 
     useEffect(() => {
         if (project) {
@@ -93,6 +97,20 @@ const AICreator: React.FC<{ project: Project | null; onUpdateProject: (data: Par
         if (tab === 'Kit Sosmed' || tab === 'Konten') return 'Lengkapi Persona & Logo dulu!';
         return '';
     };
+    
+    const AutosaveIndicator = () => {
+        let text = null;
+        if (saveStatus === 'SAVING') text = "Menyimpan...";
+        if (saveStatus === 'SAVED') text = "✓ Semua perubahan disimpan";
+
+        if (!text) return null;
+
+        return (
+            <div className="text-xs text-text-muted transition-opacity duration-300">
+                {text}
+            </div>
+        );
+    };
 
     const TabButton: React.FC<{ name: string, isActive: boolean, isSotoshop?: boolean }> = ({ name, isActive, isSotoshop = false }) => {
         const disabled = isTabDisabled(name);
@@ -114,10 +132,15 @@ const AICreator: React.FC<{ project: Project | null; onUpdateProject: (data: Par
 
     return (
         <div className="bg-surface rounded-2xl shadow-lg" data-onboarding-step="3" data-onboarding-text="Setiap tab punya fungsi unik. Jelajahi 'Sotoshop' untuk fitur-fitur AI yang lebih canggih.">
-            <div className="border-b border-border-main p-2 flex flex-wrap items-center">
-                 {MAIN_TABS.map(tab => <TabButton key={tab} name={tab} isActive={activeTab === tab} />)}
-                <div className="h-6 w-px bg-border-main mx-2"></div>
-                {SOTOSHOP_TABS.map(tab => <TabButton key={tab} name={tab} isActive={activeTab === tab} isSotoshop />)}
+            <div className="border-b border-border-main p-2 flex flex-wrap items-center justify-between">
+                 <div className="flex flex-wrap items-center">
+                    {MAIN_TABS.map(tab => <TabButton key={tab} name={tab} isActive={activeTab === tab} />)}
+                    <div className="h-6 w-px bg-border-main mx-2"></div>
+                    {SOTOSHOP_TABS.map(tab => <TabButton key={tab} name={tab} isActive={activeTab === tab} isSotoshop />)}
+                 </div>
+                 <div className="px-4">
+                    <AutosaveIndicator />
+                 </div>
             </div>
             <div className="p-4 sm:p-6 md:p-8">
                 <ModuleLoader>
