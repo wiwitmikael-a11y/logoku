@@ -1,12 +1,13 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Type, FunctionDeclaration } from '@google/genai';
-import { useUserActions } from '../../contexts/UserActionsContext';
-import { getAiClient } from '../../services/geminiService';
-import { encode, decode, decodeAudioData } from '../../utils/audioUtils';
-import { playSound, unlockAudio } from '../../services/soundService';
-import type { BrandInputs } from '../../types';
+// FIX: Removed non-existent 'LiveSession' type from import. The session object type will be inferred.
+import { GoogleGenAI, LiveServerMessage, Modality, Type, FunctionDeclaration } from '@google/genai';
+import { useUserActions } from '../contexts/UserActionsContext';
+import { getAiClient } from '../services/geminiService';
+import { encode, decode, decodeAudioData } from '../utils/audioUtils';
+import { playSound, unlockAudio } from '../services/soundService';
+import type { BrandInputs } from '../types';
 import Button from './common/Button';
 import ErrorMessage from './common/ErrorMessage';
 
@@ -43,11 +44,15 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
     const [userTranscript, setUserTranscript] = useState('');
     const [mangAiTranscript, setMangAiTranscript] = useState('');
     
-    const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
+    // FIX: Changed type from Promise<LiveSession> to Promise<any> as LiveSession is not an exported type.
+    const sessionPromiseRef = useRef<Promise<any> | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
     const inputAudioContextRef = useRef<AudioContext | null>(null);
     const outputAudioContextRef = useRef<AudioContext | null>(null);
+    // Refs for gapless audio playback and interruption handling
+    const nextStartTimeRef = useRef(0);
+    const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
 
     const startConsultation = async () => {
         await unlockAudio();
@@ -99,11 +104,28 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
                         }
                         if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
                             const audioData = message.serverContent.modelTurn.parts[0].inlineData.data;
-                            const audioBuffer = await decodeAudioData(decode(audioData), outputAudioContextRef.current!, 24000, 1);
-                            const source = outputAudioContextRef.current!.createBufferSource();
+                            const outputAudioContext = outputAudioContextRef.current!;
+                            
+                            // FIX: Implemented proper audio queuing for gapless playback, as per Gemini API guidelines.
+                            nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputAudioContext.currentTime);
+                            const audioBuffer = await decodeAudioData(decode(audioData), outputAudioContext, 24000, 1);
+                            const source = outputAudioContext.createBufferSource();
                             source.buffer = audioBuffer;
-                            source.connect(outputAudioContextRef.current!.destination);
-                            source.start();
+                            source.connect(outputAudioContext.destination);
+                            source.addEventListener('ended', () => {
+                                sourcesRef.current.delete(source);
+                            });
+                            source.start(nextStartTimeRef.current);
+                            nextStartTimeRef.current += audioBuffer.duration;
+                            sourcesRef.current.add(source);
+                        }
+                        // FIX: Added interruption handling to stop audio playback when the user interrupts.
+                        if (message.serverContent?.interrupted) {
+                            for (const source of sourcesRef.current.values()) {
+                                source.stop();
+                                sourcesRef.current.delete(source);
+                            }
+                            nextStartTimeRef.current = 0;
                         }
                         if(message.serverContent?.turnComplete) {
                             setUserTranscript('');
@@ -113,7 +135,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
                         if (message.toolCall?.functionCalls) {
                             const fc = message.toolCall.functionCalls[0];
                             if (fc.name === 'submitBrandingInputs') {
-                                setLastVoiceConsultationResult(fc.args as BrandInputs);
+                                // FIX: Use 'as unknown as BrandInputs' to fix the type conversion error.
+                                setLastVoiceConsultationResult(fc.args as unknown as BrandInputs);
                                 setStatus('DONE');
                                 setMangAiTranscript('Sip, data sudah lengkap! Mang AI akan siapkan proyeknya sekarang.');
                                 playSound('success');
@@ -144,6 +167,14 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
         inputAudioContextRef.current?.close();
         outputAudioContextRef.current?.close();
         sessionPromiseRef.current?.then(session => session.close());
+
+        // FIX: Added cleanup for any queued/playing audio on session stop.
+        for (const source of sourcesRef.current.values()) {
+            source.stop();
+        }
+        sourcesRef.current.clear();
+        nextStartTimeRef.current = 0;
+
         setStatus('IDLE');
     };
     
