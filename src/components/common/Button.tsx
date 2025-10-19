@@ -1,8 +1,9 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { playSound, unlockAudio } from '../../services/soundService';
 import LoadingMessage from './LoadingMessage';
+import Spinner from './Spinner';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
@@ -11,25 +12,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'normal' | 'small' | 'large';
 }
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
-
 const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant = 'primary', size = 'normal', ...props }) => {
   
-  useEffect(() => {
-    if (!isLoading) return;
-    let timeoutIds: number[] = [];
-    const playBounceSounds = () => {
-      timeoutIds.push(window.setTimeout(() => playSound('bounce'), 240));
-      timeoutIds.push(window.setTimeout(() => playSound('bounce'), 720));
-    };
-    playBounceSounds();
-    const intervalId = setInterval(playBounceSounds, 1200);
-    return () => {
-      clearInterval(intervalId);
-      timeoutIds.forEach(clearTimeout);
-    };
-  }, [isLoading]);
-
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     await unlockAudio();
     playSound('click');
@@ -64,14 +48,14 @@ const Button: React.FC<ButtonProps> = ({ children, onClick, isLoading, variant =
       disabled={isLoading || props.disabled}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${props.className || ''}`}
     >
-      {isLoading && (
-        <img
-          src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-          alt="Mang AI working..."
-          className="animate-bouncing-ai absolute left-1/2 -translate-x-1/2 bottom-full w-24 h-24"
-        />
+      {isLoading ? (
+        <>
+          <Spinner />
+          <LoadingMessage />
+        </>
+      ) : (
+        children
       )}
-      <span className="relative z-10">{isLoading ? <LoadingMessage /> : children}</span>
     </button>
   );
 };

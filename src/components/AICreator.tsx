@@ -22,8 +22,6 @@ const SceneMixer = lazy(() => import('./SceneMixer'));
 const VideoGenerator = lazy(() => import('./VideoGenerator'));
 const AiPresenter = lazy(() => import('./AiPresenter'));
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
-
 const MAIN_TABS = ['Persona', 'Logo', 'Kit Sosmed', 'Konten', 'Lemari Brand'];
 const SOTOSHOP_TABS = ['Maskot', 'Vibe Brand', 'Motif', 'Studio Foto', 'Scene Mixer', 'Video', 'AI Presenter'];
 
@@ -57,7 +55,11 @@ const AICreator: React.FC<{ project: Project | null; onUpdateProject: (data: Par
         if (!project) {
             return (
                  <div className="text-center p-8 bg-surface rounded-lg min-h-[400px] flex flex-col justify-center items-center">
-                    <img src={`${GITHUB_ASSETS_URL}Mang_AI_Stuck.png`} alt="Mang AI Bingung" className="w-32 h-32" style={{imageRendering: 'pixelated'}} />
+                    <div className="mx-auto mb-4 w-32 h-32 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
                     <h2 className="text-2xl font-bold text-text-header mt-4">Pilih atau Buat Proyek Dulu, Juragan!</h2>
                     <p className="mt-2 text-text-muted">Mang AI butuh proyek untuk mulai bekerja. Silakan pilih dari daftar atau buat yang baru di sebelah kiri.</p>
                 </div>
@@ -131,7 +133,7 @@ const AICreator: React.FC<{ project: Project | null; onUpdateProject: (data: Par
     };
 
     return (
-        <div className="bg-surface rounded-2xl shadow-lg" data-onboarding-step="3" data-onboarding-text="Setiap tab punya fungsi unik. Jelajahi 'Sotoshop' untuk fitur-fitur AI yang lebih canggih.">
+        <div className="bg-surface rounded-2xl shadow-lg">
             <div className="border-b border-border-main p-2 flex flex-wrap items-center justify-between">
                  <div className="flex flex-wrap items-center">
                     {MAIN_TABS.map(tab => <TabButton key={tab} name={tab} isActive={activeTab === tab} />)}

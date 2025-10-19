@@ -10,7 +10,6 @@ import ErrorMessage from './common/ErrorMessage';
 import { playSound } from '../services/soundService';
 import CopyButton from './common/CopyButton';
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 const VISUAL_KIT_COST = 5;
 const TEXT_KIT_COST = 3;
 const XP_REWARD = 100;
@@ -106,7 +105,11 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ project, onUpdateProject }) 
     return (
         <div className="space-y-6">
             <div className="p-4 rounded-lg flex items-start gap-4 mang-ai-callout border border-border-main">
-                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-16 h-16" style={{ imageRendering: 'pixelated' }} />
+                <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-primary/10 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </div>
                 <div>
                     <h4 className="font-bold text-text-header">Paket Siap Tempur!</h4>
                     <p className="text-sm text-text-body mt-1">Ini dia amunisi buat sosmed-mu. Mang AI bikinin foto profil, banner, sampe bio-bio keren yang tinggal copas. Biar profilmu keliatan pro dan konsisten di mana-mana!</p>

@@ -3,8 +3,6 @@
 import React from 'react';
 import type { Project } from '../types';
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
-
 const SummaryItem: React.FC<{
   icon: string;
   label: string;
@@ -34,7 +32,11 @@ const ProjectSummary: React.FC<{ project: Project | null }> = ({ project }) => {
     if (!project) {
         return (
             <div className="p-6 bg-surface rounded-2xl sticky top-8 text-center animate-item-appear">
-                 <img src={`${GITHUB_ASSETS_URL}Mang_AI_Stuck.png`} alt="Mang AI" className="w-24 h-24 mx-auto mb-4 animate-breathing-ai" style={{imageRendering: 'pixelated'}}/>
+                 <div className="mx-auto mb-4 w-24 h-24 flex items-center justify-center bg-background rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
                 <h3 className="font-bold text-text-header text-lg">Ringkasan Proyek</h3>
                 <p className="text-sm text-text-muted mt-2">Pilih atau buat proyek baru di sebelah kiri untuk melihat progres Juragan di sini.</p>
             </div>

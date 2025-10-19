@@ -8,8 +8,6 @@ interface Props {
   onClose: () => void;
 }
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
-
 const AboutModal: React.FC<Props> = ({ show, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -40,9 +38,8 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
         </button>
         <div className="overflow-y-auto pr-4 -mr-4">
             <div className="text-center mb-6">
-                 <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 h-24 mx-auto mb-4" style={{imageRendering: 'pixelated'}}/>
                 <h2 id="about-modal-title" className="text-3xl font-bold text-primary mb-2" style={{ fontFamily: 'var(--font-display)' }}>Tentang desain.fun</h2>
-                <p className="text-lg text-text-muted" style={{fontFamily: 'var(--font-hand)'}}>Studio Branding AI untuk UMKM Juara</p>
+                <p className="text-lg text-text-muted">Studio Branding AI untuk UMKM Juara</p>
             </div>
             <div className="text-sm text-text-body space-y-4 text-justify">
                 <p><strong>desain.fun</strong> adalah sebuah platform eksperimental yang dirancang untuk memberdayakan para pelaku UMKM di Indonesia. Visinya sederhana: membuat branding berkualitas tinggi jadi lebih mudah, cepat, dan terjangkau bagi semua orang, berbekal kekuatan AI generatif.</p>

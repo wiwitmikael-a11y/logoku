@@ -3,8 +3,7 @@
 import React from 'react';
 import Button from './Button';
 import { useTranslation } from '../../contexts/LanguageContext';
-
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+import Spinner from './Spinner';
 
 interface Props {
   isStuck: boolean;
@@ -19,17 +18,14 @@ const AuthLoadingScreen: React.FC<Props> = ({ isStuck }) => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-text-body p-4 text-center">
-      <div className="relative h-40">
-        <img
-          src={`${GITHUB_ASSETS_URL}Mang_AI.png`}
-          alt="Mang AI"
-          className={`w-24 h-24 absolute bottom-0 left-1/2 -translate-x-1/2 ${isStuck ? 'animate-tripped-ai' : 'animate-stomp-ai'}`}
-          style={{ imageRendering: 'pixelated' }}
-        />
-      </div>
       {isStuck ? (
-        <div className="animate-content-fade-in">
-          <h2 className="text-xl font-bold text-accent mt-4">{t({ id: "Waduh, Kok Lama...", en: "Uh Oh, It's Taking a While..." })}</h2>
+        <div className="animate-content-fade-in flex flex-col items-center">
+            <div className="w-16 h-16 flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+          <h2 className="text-xl font-bold text-accent">{t({ id: "Waduh, Kok Lama...", en: "Uh Oh, It's Taking a While..." })}</h2>
           <p className="mt-2 text-text-muted max-w-sm">
             {t({ 
               id: "Koneksi sepertinya lambat atau ada yang nyangkut. Coba muat ulang halaman, biasanya langsung beres!", 
@@ -41,7 +37,10 @@ const AuthLoadingScreen: React.FC<Props> = ({ isStuck }) => {
           </Button>
         </div>
       ) : (
-        <p className="mt-4 text-lg font-semibold animate-pulse">{t({ id: "Memuat data Juragan...", en: "Loading your data, Boss..." })}</p>
+        <div className="flex flex-col items-center">
+            <Spinner />
+            <p className="mt-4 text-lg font-semibold">{t({ id: "Memuat data Juragan...", en: "Loading your data, Boss..." })}</p>
+        </div>
       )}
     </div>
   );

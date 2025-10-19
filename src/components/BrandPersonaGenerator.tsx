@@ -11,7 +11,6 @@ import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
 import VoiceBrandingWizard from './VoiceBrandingWizard';
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 const PERSONA_COST = 5;
 const XP_REWARD_PERSONA = 100;
 
@@ -83,10 +82,14 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-1 space-y-4">
                     <div className="p-4 rounded-lg flex items-start gap-3 mang-ai-callout border border-border-main">
-                        <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-12 h-12" style={{ imageRendering: 'pixelated' }} />
+                        <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-primary/10 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                        </div>
                         <div>
                             <h4 className="font-bold text-text-header">Langkah 1: Kenalan Dulu!</h4>
-                            <p className="text-xs text-text-body mt-1">Ceritain bisnismu ke Mang AI. Makin detail, makin pas nanti persona brand-nya.</p>
+                            <p className="text-xs text-text-body mt-1">Ceritain bisnismu. Makin detail, makin pas nanti persona brand-nya.</p>
                         </div>
                     </div>
                      <Button 

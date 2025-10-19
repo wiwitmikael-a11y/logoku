@@ -11,7 +11,6 @@ import AICreator from './AICreator';
 import ProjectSummary from './ProjectSummary';
 import Footer from './common/Footer';
 import Button from './common/Button';
-import Onboarding from './common/Onboarding';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
@@ -24,7 +23,6 @@ const ProjectDashboard: React.FC = () => {
     const { addXp, lastVoiceConsultationResult, setLastVoiceConsultationResult } = useUserActions();
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isCreating, setIsCreating] = useState(false);
-    const [showOnboarding, setShowOnboarding] = useState(!localStorage.getItem('desainfun_onboarding_completed'));
 
     useEffect(() => {
         if (lastVoiceConsultationResult) {
@@ -113,7 +111,7 @@ const ProjectDashboard: React.FC = () => {
 
 
     const ProjectSidebar = () => (
-        <aside className="w-full md:w-64 lg:w-72 flex-shrink-0 bg-surface rounded-2xl p-4 space-y-4" data-onboarding-step="1">
+        <aside className="w-full md:w-64 lg:w-72 flex-shrink-0 bg-surface rounded-2xl p-4 space-y-4">
             <h2 className="text-xl font-bold text-text-header">Proyek Juragan</h2>
             <Button onClick={() => {
                 const name = prompt("Nama proyek barunya apa, Juragan?");
@@ -156,7 +154,7 @@ const ProjectDashboard: React.FC = () => {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col md:flex-row gap-8">
                     <ProjectSidebar />
-                    <div className="flex-grow space-y-8" data-onboarding-step="2">
+                    <div className="flex-grow space-y-8">
                         <AICreator project={selectedProject} onUpdateProject={handleUpdateProject} />
                         <ProjectSummary project={selectedProject} />
                     </div>
@@ -169,10 +167,6 @@ const ProjectDashboard: React.FC = () => {
                 onShowToS={() => toggleToSModal(true)}
                 onShowPrivacy={() => togglePrivacyModal(true)}
             />
-            {showOnboarding && <Onboarding onClose={() => {
-                setShowOnboarding(false);
-                localStorage.setItem('desainfun_onboarding_completed', 'true');
-            }} />}
         </div>
     );
 };
