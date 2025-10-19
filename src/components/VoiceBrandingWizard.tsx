@@ -41,7 +41,16 @@ const VoiceBrandingWizard: React.FC<{ show: boolean; onClose: () => void; }> = (
         
         try {
             outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // ENHANCED: Activate browser's native noise suppression and audio stabilization
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    noiseSuppression: true,
+                    echoCancellation: true,
+                    autoGainControl: true,
+                } 
+            });
+            
             streamRef.current = stream;
             const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
             

@@ -26,6 +26,11 @@ export const useDebouncedAutosave = (
     onUpdateProjectRef.current = onUpdateProject;
   }, [onUpdateProject]);
 
+  // Use a ref to track the previous project data
+  // FIX: Moved `useRef` outside of the `useEffect` hook to comply with the Rules of Hooks.
+  // This ensures the ref persists across re-renders for correct change detection.
+  const prevProjectDataRef = useRef<ProjectData>();
+
   useEffect(() => {
     if (!project) {
       setStatus('IDLE');
@@ -36,9 +41,6 @@ export const useDebouncedAutosave = (
     const hasChanged = (prevData: ProjectData | undefined, nextData: ProjectData) => {
         return JSON.stringify(prevData) !== JSON.stringify(nextData);
     };
-
-    // Use a ref to track the previous project data
-    const prevProjectDataRef = useRef<ProjectData>();
 
     if (hasChanged(prevProjectDataRef.current, project.project_data)) {
         setStatus('DIRTY');
