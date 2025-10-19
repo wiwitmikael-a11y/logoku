@@ -1,92 +1,84 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { playSound } from '../services/soundService';
 
-interface ToastState {
-  message: string;
-  show: boolean;
+type Theme = 'light' | 'dark';
+
+interface CrossComponentPrompt {
+    targetTool: string;
+    prompt: string;
 }
 
 interface UIContextType {
-  toast: ToastState;
-  showToast: (message: string) => void;
-  closeToast: () => void;
-
-  // Modal states and toggles
-  showContactModal: boolean;
-  toggleContactModal: (show?: boolean) => void;
+  theme: Theme;
+  toggleTheme: () => void;
   showAboutModal: boolean;
-  toggleAboutModal: (show?: boolean) => void;
+  toggleAboutModal: (show: boolean) => void;
+  showContactModal: boolean;
+  toggleContactModal: (show: boolean) => void;
   showToSModal: boolean;
-  toggleToSModal: (show?: boolean) => void;
+  toggleToSModal: (show: boolean) => void;
   showPrivacyModal: boolean;
-  togglePrivacyModal: (show?: boolean) => void;
-  showProfileModal: boolean;
-  toggleProfileModal: (show?: boolean) => void;
-  showBrandGalleryModal: boolean;
-  toggleBrandGalleryModal: (show?: boolean) => void;
-  showSotoshop: boolean;
-  toggleSotoshop: (show?: boolean) => void;
-  showTokenomicsModal: boolean;
-  toggleTokenomicsModal: (show?: boolean) => void;
-  showVoiceWizard: boolean;
-  toggleVoiceWizard: (show?: boolean) => void;
+  togglePrivacyModal: (show: boolean) => void;
+  showProfileSettingsModal: boolean;
+  toggleProfileSettingsModal: (show: boolean) => void;
+  showPusatJuraganModal: boolean;
+  togglePusatJuraganModal: (show: boolean) => void;
+  crossComponentPrompt: CrossComponentPrompt | null;
+  setCrossComponentPrompt: React.Dispatch<React.SetStateAction<CrossComponentPrompt | null>>;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [toast, setToast] = useState<ToastState>({ message: '', show: false });
-  
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [showAboutModal, setShowAboutModal] = useState(false);
-  const [showToSModal, setShowToSModal] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showBrandGalleryModal, setShowBrandGalleryModal] = useState(false);
-  const [showSotoshop, setShowSotoshop] = useState(false);
-  const [showTokenomicsModal, setShowTokenomicsModal] = useState(false);
-  const [showVoiceWizard, setShowVoiceWizard] = useState(false);
+    const { user, profile } = useAuth();
+    const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'dark');
+    const [showAboutModal, setShowAboutModal] = useState(false);
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [showToSModal, setShowToSModal] = useState(false);
+    const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+    const [showProfileSettingsModal, setShowProfileSettingsModal] = useState(false);
+    const [showPusatJuraganModal, setShowPusatJuraganModal] = useState(false);
+    const [crossComponentPrompt, setCrossComponentPrompt] = useState<CrossComponentPrompt | null>(null);
 
-  const showToast = useCallback((message: string) => {
-    setToast({ message, show: true });
-  }, []);
+    useEffect(() => {
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+    
+    const toggleTheme = useCallback(() => {
+        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+        playSound('transition');
+    }, []);
 
-  const closeToast = useCallback(() => {
-    setToast(prev => ({ ...prev, show: false }));
-  }, []);
+    const createModalToggler = (setter: React.Dispatch<React.SetStateAction<boolean>>) => (show: boolean) => {
+        playSound('click');
+        setter(show);
+    };
 
-  // Generic toggle function factory
-  const createToggle = (setter: React.Dispatch<React.SetStateAction<boolean>>) => 
-    useCallback((show?: boolean) => {
-      setter(prev => typeof show === 'boolean' ? show : !prev);
-    }, [setter]);
-
-  const value: UIContextType = {
-    toast,
-    showToast,
-    closeToast,
-    showContactModal,
-    toggleContactModal: createToggle(setShowContactModal),
-    showAboutModal,
-    toggleAboutModal: createToggle(setShowAboutModal),
-    showToSModal,
-    toggleToSModal: createToggle(setShowToSModal),
-    showPrivacyModal,
-    togglePrivacyModal: createToggle(setShowPrivacyModal),
-    showProfileModal,
-    toggleProfileModal: createToggle(setShowProfileModal),
-    showBrandGalleryModal,
-    toggleBrandGalleryModal: createToggle(setShowBrandGalleryModal),
-    showSotoshop,
-    toggleSotoshop: createToggle(setShowSotoshop),
-    showTokenomicsModal,
-    toggleTokenomicsModal: createToggle(setShowTokenomicsModal),
-    showVoiceWizard,
-    toggleVoiceWizard: createToggle(setShowVoiceWizard),
-  };
-
-  return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
+    return (
+        <UIContext.Provider value={{
+            theme,
+            toggleTheme,
+            showAboutModal,
+            toggleAboutModal: createModalToggler(setShowAboutModal),
+            showContactModal,
+            toggleContactModal: createModalToggler(setShowContactModal),
+            showToSModal,
+            toggleToSModal: createModalToggler(setShowToSModal),
+            showPrivacyModal,
+            togglePrivacyModal: createModalToggler(setShowPrivacyModal),
+            showProfileSettingsModal,
+            toggleProfileSettingsModal: createModalToggler(setShowProfileSettingsModal),
+            showPusatJuraganModal,
+            togglePusatJuraganModal: createModalToggler(setShowPusatJuraganModal),
+            crossComponentPrompt,
+            setCrossComponentPrompt,
+        }}>
+            {children}
+        </UIContext.Provider>
+    );
 };
 
 export const useUI = () => {

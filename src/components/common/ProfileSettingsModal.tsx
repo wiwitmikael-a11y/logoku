@@ -17,7 +17,8 @@ interface Props {
 
 const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
   const { user, profile, executeLogout, refreshProfile } = useAuth();
-  const { toggleTokenomicsModal } = useUI();
+  // FIX: Removed toggleTokenomicsModal as it's not part of the UIContext
+  const { } = useUI();
   const { language, setLanguage } = useTranslation();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [isSaving, setIsSaving] = useState(false);
