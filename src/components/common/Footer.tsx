@@ -24,17 +24,19 @@ const Footer: React.FC<FooterProps> = ({ onShowAbout, onShowContact, onShowToS, 
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <h4 className="font-semibold text-text-header">Navigasi</h4>
+                        <h4 className="font-semibold text-text-header">Perusahaan</h4>
                         <ul className="space-y-1 text-sm">
-                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Aplikasi</button></li>
-                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Kontak Developer</button></li>
-                            <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
-                            <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
+                            <li><button onClick={onShowAbout} className="hover:text-primary transition-colors">Tentang Kami</button></li>
+                            <li><button onClick={onShowContact} className="hover:text-primary transition-colors">Hubungi Kami</button></li>
                         </ul>
                     </div>
                      <div className="space-y-2">
-                        <h4 className="font-semibold text-text-header">Legal</h4>
-                        <p className="text-sm">Aplikasi ini disediakan "sebagaimana adanya". Pengguna bertanggung jawab penuh untuk melakukan pengecekan merek dagang sebelum penggunaan komersial.</p>
+                        <h4 className="font-semibold text-text-header">Legal & Bantuan</h4>
+                        <ul className="space-y-1 text-sm">
+                           <li><button onClick={onShowToS} className="hover:text-primary transition-colors">Ketentuan Layanan</button></li>
+                           <li><button onClick={onShowPrivacy} className="hover:text-primary transition-colors">Kebijakan Privasi</button></li>
+                        </ul>
+                         <p className="text-sm mt-4 pt-4 border-t border-border-main">Aplikasi ini disediakan "sebagaimana adanya". Pengguna bertanggung jawab penuh untuk melakukan pengecekan merek dagang sebelum penggunaan komersial.</p>
                     </div>
                 </div>
                 <div className="mt-8 pt-4 border-t border-border-main text-center text-xs">

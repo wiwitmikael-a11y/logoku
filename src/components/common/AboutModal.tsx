@@ -48,16 +48,6 @@ const AboutModal: React.FC<Props> = ({ show, onClose }) => {
                 <p><strong>desain.fun</strong> adalah sebuah platform eksperimental yang dirancang untuk memberdayakan para pelaku UMKM di Indonesia. Visinya sederhana: membuat branding berkualitas tinggi jadi lebih mudah, cepat, dan terjangkau bagi semua orang, berbekal kekuatan AI generatif.</p>
                 <p>Saya percaya bahwa brand yang kuat adalah kunci sukses di era digital. Namun, banyak UMKM yang terkendala biaya, waktu, dan akses ke talenta desain profesional. Di sinilah <strong className="text-text-header">Mang AI</strong>, asisten virtual kita, hadir untuk membantu. Dari menciptakan persona brand yang solid, mendesain logo yang ikonik, hingga merencanakan konten media sosial yang engage, semua bisa dilakukan di sini.</p>
                 <p>Aplikasi ini dibangun dengan semangat gotong royong dan eksplorasi. Fitur-fitur yang ada akan terus berkembang berdasarkan masukan dari para "Juragan" (sebutan untuk pengguna setia kita). Tujuannya bukan untuk menggantikan desainer grafis, melainkan sebagai alat bantu awal (starting point) untuk memvisualisasikan ide dan membangun fondasi brand yang kokoh.</p>
-                 <div className="mt-6 p-4 bg-background rounded-lg border border-border-main">
-                    <h4 className="font-semibold text-text-header mb-2">Teknologi di Balik Layar</h4>
-                    <ul className="list-disc list-inside text-xs space-y-1">
-                        <li><strong>AI Engine:</strong> Google Gemini API</li>
-                        <li><strong>Framework:</strong> React (Vite) + TypeScript</li>
-                        <li><strong>Styling:</strong> TailwindCSS</li>
-                        <li><strong>Backend & Auth:</strong> Supabase</li>
-                        <li><strong>Hosting:</strong> Vercel</li>
-                    </ul>
-                </div>
                 <p className="text-center text-xs text-text-muted mt-6">Dibuat dengan ❤️ oleh Rangga P. H. untuk kemajuan UMKM Indonesia.</p>
             </div>
         </div>
