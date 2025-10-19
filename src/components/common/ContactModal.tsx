@@ -39,8 +39,8 @@ const ContactModal: React.FC<Props> = ({ show, onClose }) => {
         <button onClick={handleClose} title="Tutup" className="absolute top-4 right-4 p-2 text-primary rounded-full hover:bg-background hover:text-primary-hover transition-colors close-button-glow">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
-        <div className="w-32 h-32 mb-4 rounded-full overflow-hidden glitch-wrapper terminal-overlay" style={{ backgroundImage: `url(${GITHUB_ASSETS_URL}Dev_BW.jpg)` }}>
-            <img src={`${GITHUB_ASSETS_URL}Dev_BW.jpg`} alt="Developer Avatar" className="w-full h-full object-cover glitch-img" />
+        <div className="w-32 h-32 mb-4 rounded-full overflow-hidden glitch-wrapper terminal-overlay" style={{ backgroundImage: `url(${GITHUB_ASSETS_URL}Dev_BW.JPG)` }}>
+            <img src={`${GITHUB_ASSETS_URL}Dev_BW.JPG`} alt="Developer Avatar" className="w-full h-full object-cover glitch-img" />
         </div>
         <h2 id="contact-modal-title" className="text-4xl font-bold text-primary mb-2" style={{ fontFamily: 'var(--font-display)' }}>Kontak Developer</h2>
         <p className="text-text-body mb-6">Aplikasi ini dikembangkan oleh <span className="font-semibold text-text-header">Rangga P. H.</span> Punya masukan, pertanyaan, atau ide kolaborasi? Jangan ragu untuk menghubungi.</p>

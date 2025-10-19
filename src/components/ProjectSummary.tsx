@@ -34,7 +34,7 @@ const ProjectSummary: React.FC<{ project: Project | null }> = ({ project }) => {
     if (!project) {
         return (
             <div className="p-6 bg-surface rounded-2xl sticky top-8 text-center animate-item-appear">
-                 <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 h-24 mx-auto mb-4 animate-breathing-ai" style={{imageRendering: 'pixelated'}}/>
+                 <img src={`${GITHUB_ASSETS_URL}Mang_AI_Stuck.png`} alt="Mang AI" className="w-24 h-24 mx-auto mb-4 animate-breathing-ai" style={{imageRendering: 'pixelated'}}/>
                 <h3 className="font-bold text-text-header text-lg">Ringkasan Proyek</h3>
                 <p className="text-sm text-text-muted mt-2">Pilih atau buat proyek baru di sebelah kiri untuk melihat progres Juragan di sini.</p>
             </div>
