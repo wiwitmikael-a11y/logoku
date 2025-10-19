@@ -73,7 +73,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
             if (!(await deductCredits(PERSONA_COST))) return;
             
             const personas = await generateBrandPersona(businessName, industry, targetAudience, valueProposition, competitorAnalysis);
-            await onUpdateProject({ brandInputs, brandPersonas: personas });
+            await onUpdateProject({ brandInputs, brandPersonas: personas, selectedPersona: personas[0] });
             await addXp(XP_REWARD);
             playSound('success');
 
@@ -94,6 +94,16 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
                     <p className="text-sm text-text-body mt-1">Isi data ini selengkap mungkin ya, Juragan. Makin detail informasinya, makin jago juga saya bikinin persona brand yang pas buat bisnis lo!</p>
                 </div>
             </div>
+            
+            {project.project_data.brandPersonas.length > 0 && (
+                 <div className="p-4 rounded-lg flex items-start gap-4 bg-accent/10 border border-accent/20 animate-content-fade-in">
+                    <span className="text-2xl mt-1">🎉</span>
+                    <div>
+                        <h4 className="font-bold text-accent">Persona Berhasil Dibuat!</h4>
+                        <p className="text-sm text-text-body mt-1">Mantap! Persona brand sudah jadi. Persona pertama otomatis terpilih. Sekarang, ayo lanjut ke tab "Logo" buat bikin identitas visualnya!</p>
+                    </div>
+                </div>
+            )}
 
             <div className="p-6 bg-surface rounded-lg">
                 <h3 className="font-bold text-text-header mb-4 text-lg">1. Detail Brand Anda</h3>

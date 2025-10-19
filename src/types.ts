@@ -74,6 +74,8 @@ export interface ProjectData {
   socialMediaKit: SocialMediaKitAssets | null;
   socialProfiles: SocialProfileData | null;
   sotoshop_assets?: SotoshopAssets;
+  contentCalendar?: ContentCalendarEntry[];
+  calendarSources?: any[];
 }
 
 export interface Project {

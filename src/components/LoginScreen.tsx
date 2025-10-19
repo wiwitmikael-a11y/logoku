@@ -31,8 +31,7 @@ const LoginScreen: React.FC = () => {
               <h1 style={{fontFamily: 'var(--font-display)'}} className="text-6xl md:text-7xl font-extrabold tracking-wider text-primary mb-2">
                 des<span className="text-accent">ai</span>n<span className="text-text-header">.fun</span>
               </h1>
-              <p className="text-xl text-text-muted -mt-2" style={{ fontFamily: 'var(--font-hand)' }}>by @rangga.p.h</p>
-              <p className="font-semibold text-text-muted mt-2">{t({ id: "Studio Branding AI untuk UMKM Juara", en: "AI Branding Studio for Champion SMEs" })}</p>
+              <p className="font-semibold text-text-muted mt-2">{t({ id: "Ubah Ide Jadi Brand Juara dalam Hitungan Menit", en: "Turn Ideas Into Champion Brands in Minutes" })}</p>
             </div>
             
             <div className="flex flex-col items-center gap-4">

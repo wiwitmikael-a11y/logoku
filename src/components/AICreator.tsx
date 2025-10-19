@@ -88,6 +88,7 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
     if (project) {
       clearWorkflowState();
       setSelectedProject(project);
+      setMainModule('persona'); // Reset to first tab on project change
       playSound('select');
     }
   };
@@ -116,7 +117,7 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
     { id: 'logo', label: '2. Logo', icon: '🎨' },
     { id: 'kit', label: '3. Kit Sosmed', icon: '📱' },
     { id: 'content', label: '4. Konten', icon: '🗓️' },
-    { id: 'sotoshop', label: 'Sotoshop', icon: '✨' },
+    { id: 'sotoshop', label: 'Sotoshop ✨', icon: '✨' },
     { id: 'lemari', label: 'Lemari Brand', icon: '🗄️' },
   ], []);
 
@@ -145,8 +146,8 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
     switch (mainModule) {
       case 'persona': return <BrandPersonaGenerator {...generatorProps} />;
       case 'logo': return <LogoGenerator {...generatorProps} />;
-      case 'kit': return <SocialMediaKitGenerator />;
-      case 'content': return <ContentCalendarGenerator />;
+      case 'kit': return <SocialMediaKitGenerator {...generatorProps} />;
+      case 'content': return <ContentCalendarGenerator {...generatorProps} />;
       case 'lemari': return <LemariBrand project={selectedProject} />;
       case 'sotoshop':
           return (
@@ -223,6 +224,7 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
                                     : 'text-text-muted border-transparent hover:text-text-header hover:border-border-light'
                             } flex items-center gap-2 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm transition-colors`}
                             aria-current={mainModule === tab.id ? 'page' : undefined}
+                            disabled={!selectedProject && tab.id !== 'persona'}
                         >
                             <span className="text-lg">{tab.icon}</span>
                             {tab.label}

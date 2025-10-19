@@ -41,18 +41,16 @@ const ProjectSummary: React.FC<{ project: Project | null }> = ({ project }) => {
         );
     }
     
-    const { selectedPersona, selectedSlogan, selectedLogoUrl, sotoshop_assets } = project.project_data;
+    const { selectedPersona, selectedSlogan, selectedLogoUrl, socialMediaKit, sotoshop_assets } = project.project_data;
 
     const countSotoshopAssets = () => {
         if (!sotoshop_assets) return 0;
-        // FIX: Resolved 'Operator cannot be applied' errors by filtering for arrays before reducing.
-        // This provides a stronger type guard for TypeScript, ensuring that `.length` is only
-        // accessed on actual arrays and that the values are treated as numbers.
         return Object.values(sotoshop_assets)
             .filter(Array.isArray)
             .reduce((acc, assetArray) => acc + assetArray.length, 0);
     };
     const totalSotoshopAssets = countSotoshopAssets();
+    const socialKitAssetsCount = (socialMediaKit?.profilePictureUrl ? 1 : 0) + (socialMediaKit?.bannerUrl ? 1 : 0);
 
     return (
         <div className="p-4 bg-surface rounded-2xl sticky top-8 animate-item-appear">
@@ -73,8 +71,11 @@ const ProjectSummary: React.FC<{ project: Project | null }> = ({ project }) => {
                         'Belum dibuat'
                     )}
                 </SummaryItem>
-                 <SummaryItem icon="🗄️" label="Aset di Lemari Brand" isComplete={totalSotoshopAssets > 0}>
-                    {totalSotoshopAssets > 0 ? `${totalSotoshopAssets} Aset Tersimpan` : 'Belum ada aset Sotoshop'}
+                <SummaryItem icon="📱" label="Kit Media Sosial" isComplete={socialKitAssetsCount > 0}>
+                    {socialKitAssetsCount > 0 ? `${socialKitAssetsCount} Aset Dibuat` : 'Belum dibuat'}
+                </SummaryItem>
+                 <SummaryItem icon="✨" label="Aset Sotoshop" isComplete={totalSotoshopAssets > 0}>
+                    {totalSotoshopAssets > 0 ? `${totalSotoshopAssets} Aset Tersimpan` : 'Belum ada aset'}
                 </SummaryItem>
             </div>
         </div>
