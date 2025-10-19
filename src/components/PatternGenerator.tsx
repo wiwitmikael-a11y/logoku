@@ -118,7 +118,6 @@ const PatternGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
             <div className="space-y-2">
                 <Textarea label="Deskripsi Pola" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: batik megamendung modern, warna pastel" rows={3} />
                  {project && (
-                    // FIX: Property 'project_name' does not exist on type 'Project'. It exists on 'project.project_data'.
                     <p className="text-xs text-primary animate-content-fade-in">✨ Prompt akan disempurnakan dengan palet warna & gaya dari brand "{project.project_data.project_name}".</p>
                 )}
             </div>

@@ -75,7 +75,6 @@ const PusatJuraganModal: React.FC<Props> = ({ show, onClose }) => {
                   {gallery.map(proj => (
                     <div key={proj.id} className="bg-background rounded-lg p-3 animate-gallery-card-appear">
                       <img src={proj.project_data.selectedLogoUrl || ''} alt="Logo" className="w-full h-32 object-contain bg-white rounded-md p-2" />
-                      {/* FIX: Property 'project_name' does not exist on type 'PublicProject'. It exists on 'proj.project_data'. */}
                       <h4 className="font-bold mt-2">{proj.project_data.project_name}</h4>
                       <div className="flex items-center gap-2 mt-1 text-xs text-text-muted">
                         <img src={(proj.profiles as any).avatar_url} alt="User" className="w-5 h-5 rounded-full" />

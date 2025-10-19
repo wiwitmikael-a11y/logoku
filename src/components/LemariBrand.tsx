@@ -31,7 +31,6 @@ const LemariBrand: React.FC<Props> = ({ project }) => {
 
   return (
     <div className="space-y-4">
-        {/* FIX: Property 'project_name' does not exist on type 'Project'. It exists on 'project.project_data'. */}
         <h2 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Lemari Aset Brand: <span className="text-accent">{project.project_data.project_name}</span></h2>
         
         {!hasAssets(assets) ? (

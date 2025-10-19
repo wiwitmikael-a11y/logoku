@@ -48,7 +48,6 @@ const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject })
     };
 
     const handleCreateVisual = (idea: string) => {
-        // FIX: Property 'project_name' does not exist on type 'Project'. It exists on 'project.project_data'.
         const prompt = `Buat gambar untuk postingan media sosial dengan ide: "${idea}". Gaya visual harus sesuai dengan brand ${project.project_data.project_name}.`;
         setCrossComponentPrompt({ targetTool: 'Studio Foto', prompt });
     };

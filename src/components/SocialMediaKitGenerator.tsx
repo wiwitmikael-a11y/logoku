@@ -86,7 +86,6 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ project, onUpdateProject }) 
         zip.generateAsync({ type: 'blob' }).then(content => {
             const link = document.createElement('a');
             link.href = URL.createObjectURL(content);
-            // FIX: Property 'project_name' does not exist on type 'Project'. It exists on 'project.project_data'.
             link.download = `${project.project_data.project_name}_social_kit.zip`;
             document.body.appendChild(link);
             link.click();
