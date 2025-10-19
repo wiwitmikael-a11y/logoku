@@ -1,5 +1,20 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
+// From AuthContext, Supabase
+export interface UserProfile {
+  id: string;
+  updated_at: string;
+  full_name: string;
+  avatar_url: string;
+  credits: number;
+  level: number;
+  xp: number;
+  achievements: string[];
+  is_muted: boolean;
+  language: 'id' | 'en';
+}
+
+// From BrandPersonaGenerator
 export interface BrandInputs {
   businessName: string;
   industry: string;
@@ -9,97 +24,106 @@ export interface BrandInputs {
   businessDetail: string | null;
 }
 
-export interface CustomerAvatar {
-  nama_avatar: string;
-  deskripsi_demografis: string;
-  pain_points: string[];
-  media_sosial: string[];
-}
-
-export interface BrandVoice {
-  deskripsi: string;
-  kata_yang_digunakan: string[];
-  kata_yang_dihindari: string[];
-}
-
 export interface BrandPersona {
   nama_persona: string;
   deskripsi_singkat: string;
-  kata_kunci: string[];
+  gaya_bicara: string;
   palet_warna_hex: string[];
-  customer_avatars: CustomerAvatar[];
-  brand_voice: BrandVoice;
+  keywords: string[];
+  inspirasi_visual: string;
 }
 
-export interface LogoVariations {
-  main: string;
-  stacked: string;
-  horizontal: string;
-  monochrome: string;
-}
-
-export interface SocialMediaKitAssets {
+// From SocialMediaKitGenerator
+export interface SocialMediaKit {
   profilePictureUrl: string;
   bannerUrl: string;
 }
 
-export interface SocialProfileData {
+export interface SocialProfiles {
   instagramBio: string;
   tiktokBio: string;
   marketplaceDescription: string;
 }
 
+// From ContentCalendarGenerator
+export interface ContentCalendarEntry {
+    hari: string;
+    tipe_konten: string;
+    ide_konten: string;
+    draf_caption: string;
+    hashtag: string[];
+}
+
+export interface CalendarSource {
+    web?: {
+        uri: string;
+        title: string;
+    };
+}
+
+// From Sotoshop modules
+export interface SotoshopPattern {
+    url: string;
+    prompt: string;
+}
+
+export interface SotoshopProductPhoto {
+    url: string;
+    prompt: string;
+}
+
+export interface SotoshopSceneMix {
+    url: string;
+    prompt: string;
+}
+
+export interface SotoshopMoodboard {
+    description: string;
+    palette: string[];
+    images: string[];
+}
+
 export interface SotoshopAssets {
   mascots?: string[];
-  patterns?: { url: string; prompt: string }[];
-  moodboards?: { description: string; palette: string[]; images: string[] }[];
-  productPhotos?: { url: string; prompt: string }[];
-  sceneMixes?: { url: string; prompt: string }[];
-  videos?: { url: string; prompt: string }[];
+  patterns?: SotoshopPattern[];
+  productPhotos?: SotoshopProductPhoto[];
+  sceneMixes?: SotoshopSceneMix[];
+  moodboards?: SotoshopMoodboard[];
 }
 
 
+// Main Project Data Structure
 export interface ProjectData {
-  brandInputs: BrandInputs | null;
+  brandInputs: BrandInputs;
   brandPersonas: BrandPersona[];
   selectedPersona: BrandPersona | null;
   slogans: string[];
   selectedSlogan: string | null;
-  logoPrompt: string | null;
-  logoStyle: string | null; // Added for the new logo wizard
-  logoPaletteName: string | null; // Added for the new logo wizard
-  logoOptions: string[];
+  logoPrompts: string[];
+  logoUrls: string[];
   selectedLogoUrl: string | null;
-  logoVariations: LogoVariations | null;
-  socialMediaKit: SocialMediaKitAssets | null;
-  socialProfiles: SocialProfileData | null;
-  sotoshop_assets?: SotoshopAssets;
-  contentCalendar?: ContentCalendarEntry[];
-  calendarSources?: any[];
+  logoVariations: {
+    main?: string;
+    stacked?: string;
+    horizontal?: string;
+    monochrome?: string;
+  } | null;
+  socialMediaKit: SocialMediaKit | null;
+  socialProfiles: SocialProfiles | null;
+  contentCalendar: ContentCalendarEntry[] | null;
+  calendarSources: CalendarSource[] | null;
+  sotoshop_assets: SotoshopAssets | null;
 }
 
 export interface Project {
   id: string;
   user_id: string;
+  created_at: string;
   project_name: string;
   project_data: ProjectData;
-  created_at: string;
-  updated_at: string;
 }
 
-export interface UserProfile {
-  id: string;
-  full_name: string;
-  avatar_url: string;
-  credits: number;
-  level: number;
-  xp: number;
-  achievements: string[];
-  language: 'id' | 'en';
-  is_muted: boolean;
-  updated_at: string;
-}
-
+// Gamification types
 export interface Achievement {
   id: string;
   name: string;
@@ -110,32 +134,4 @@ export interface Achievement {
 export interface LevelUpInfo {
   newLevel: number;
   reward: string;
-}
-
-export interface AIPetState {
-  name: string;
-  species: string;
-  stage: 'egg' | 'baby' | 'adult';
-  image_url: string;
-}
-
-export interface GeneratedCaption {
-  caption: string;
-  hashtags: string[];
-}
-
-export interface ContentCalendarEntry {
-  hari: string;
-  tipe_konten: string;
-  ide_konten: string;
-  draf_caption: string;
-  hashtag: string[];
-}
-
-export type SocialAdsData = SocialAd[];
-
-export interface SocialAd {
-  platform: "Instagram" | "TikTok";
-  adCopy: string;
-  hashtags: string[];
 }

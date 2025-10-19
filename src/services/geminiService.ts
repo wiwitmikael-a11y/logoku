@@ -1,307 +1,238 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { BrandInputs, BrandPersona, ContentCalendarEntry, GeneratedCaption, LogoVariations, SocialAdsData, SocialMediaKitAssets, SocialProfileData, ProjectData } from '../types';
-import { fetchImageAsBase64, compressAndConvertToWebP } from "../utils/imageUtils";
+import { GoogleGenAI, Type, Modality, Part } from '@google/genai';
+import { BrandPersona, BrandInputs, ProjectData, ContentCalendarEntry, CalendarSource, SocialProfiles, SocialMediaKit } from '../types';
+import { createWhiteCanvasBase64 } from '../utils/imageUtils';
 
-let aiInstance: GoogleGenAI | null = null;
-
-export const getAiClient = (): GoogleGenAI => {
-  if (aiInstance) {
-    return aiInstance;
-  }
-  
-  const apiKey = import.meta.env.VITE_API_KEY;
-  if (!apiKey) {
-    throw new Error("Konfigurasi API Key Google Gemini (`VITE_API_KEY`) tidak ditemukan. Harap atur di environment variables.");
-  }
-
-  aiInstance = new GoogleGenAI({ apiKey });
-  return aiInstance;
-};
+let ai: GoogleGenAI;
 
 /**
- * Enhances a user's prompt with stylistic details from a brand persona.
- * This is the core of the "Visual Style Memory" feature.
- * @param prompt The user's original prompt.
- * @param persona The selected brand persona for the project.
- * @returns A new, more detailed prompt.
+ * Initializes and returns the GoogleGenAI client instance.
+ * Throws an error if the API key is missing.
  */
-export const enhancePromptWithPersonaStyle = (prompt: string, persona: BrandPersona | null): string => {
-    if (!persona) return prompt;
-    // Ensure persona data is valid before creating the style prompt
-    const hasKeywords = persona.kata_kunci && persona.kata_kunci.length > 0;
-    const hasPalette = persona.palet_warna_hex && persona.palet_warna_hex.length > 0;
-    
-    let stylePrompt = "";
-    if (hasKeywords) {
-        stylePrompt += ` Gaya visualnya harus ${persona.kata_kunci.join(', ')}`;
-    }
-    if (hasPalette) {
-        stylePrompt += ` dan cocok dengan warna brand utama dari palet ini: ${persona.palet_warna_hex.join(', ')}`;
-    }
-    
-    // Append with a period for better grammar if style was added.
-    return stylePrompt ? `${prompt}.${stylePrompt}.` : prompt;
+export const getAiClient = (): GoogleGenAI => {
+  if (ai) {
+    return ai;
+  }
+  const apiKey = import.meta.env.VITE_API_KEY;
+  if (!apiKey) {
+    throw new Error('API key for Gemini (VITE_API_KEY) not found. Please check your environment variables.');
+  }
+  // FIX: Per coding guidelines, apiKey must be a named parameter.
+  ai = new GoogleGenAI({ apiKey });
+  return ai;
 };
 
 
-// Helper to parse JSON safely from AI responses which might include markdown ```json
-const safeJsonParse = <T>(jsonString: string, fallback: T): T => {
-    try {
-        // Find the start and end of the JSON object/array
-        const firstBracket = jsonString.indexOf('{');
-        const lastBracket = jsonString.lastIndexOf('}');
-        const firstSquare = jsonString.indexOf('[');
-        const lastSquare = jsonString.lastIndexOf(']');
-        
-        let strToParse;
+/**
+ * A helper function to parse potentially malformed JSON responses from the AI.
+ * It cleans up common issues like markdown code fences.
+ */
+const parseJsonResponse = <T>(text: string): T => {
+  let cleanText = text.trim();
+  if (cleanText.startsWith('```json')) {
+    cleanText = cleanText.substring(7);
+  }
+  if (cleanText.endsWith('```')) {
+    cleanText = cleanText.substring(0, cleanText.length - 3);
+  }
+  cleanText = cleanText.trim();
+  try {
+    return JSON.parse(cleanText);
+  } catch (error) {
+    console.error("Failed to parse JSON:", cleanText);
+    throw new Error("Gagal memproses respons dari AI. Format tidak valid.");
+  }
+};
 
-        if (firstSquare !== -1 && (firstSquare < firstBracket || firstBracket === -1)) {
-            // It's an array
-            strToParse = jsonString.substring(firstSquare, lastSquare + 1);
-        } else if (firstBracket !== -1) {
-            // It's an object
-            strToParse = jsonString.substring(firstBracket, lastBracket + 1);
-        } else {
-            console.error("No valid JSON object or array found in string:", jsonString);
-            return fallback;
+
+/**
+ * Generates brand persona suggestions based on user inputs.
+ */
+export const generateBrandPersona = async (
+  businessName: string,
+  industry: string,
+  targetAudience: string,
+  valueProposition: string,
+  competitorAnalysis: string | null,
+): Promise<BrandPersona[]> => {
+  const ai = getAiClient();
+  const prompt = `
+    Anda adalah seorang brand strategist profesional. Buatkan 3 alternatif brand persona untuk bisnis UMKM dengan detail berikut:
+    - Nama Bisnis: ${businessName}
+    - Industri: ${industry}
+    - Target Audiens: ${targetAudience}
+    - Value Proposition: ${valueProposition}
+    ${competitorAnalysis ? `- Analisis Kompetitor: ${competitorAnalysis}` : ''}
+    
+    Setiap persona HARUS mencakup:
+    1.  nama_persona: Nama yang catchy dan deskriptif untuk persona ini (e.g., "Si Paling Santai", "Sang Profesional Modern").
+    2.  deskripsi_singkat: Satu paragraf singkat yang merangkum esensi persona.
+    3.  gaya_bicara: Jelaskan gaya bahasa yang digunakan (e.g., "Santai, pakai bahasa gaul, ramah", "Formal, to the point, informatif").
+    4.  palet_warna_hex: Array berisi 5 kode warna HEX yang merepresentasikan persona (e.g., ["#FFFFFF", "#000000"]).
+    5.  keywords: Array berisi 5-7 kata kunci yang menggambarkan persona (e.g., ["minimalis", "modern", "bersih", "teknologi"]).
+    6.  inspirasi_visual: Deskripsi singkat tentang gaya visual yang cocok untuk moodboard.
+
+    Return HANYA dalam format JSON array, tanpa markdown. Contoh: [{"nama_persona": ...}, {"nama_persona": ...}]
+  `;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: [{ parts: [{ text: prompt }] }],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            nama_persona: { type: Type.STRING },
+            deskripsi_singkat: { type: Type.STRING },
+            gaya_bicara: { type: Type.STRING },
+            palet_warna_hex: { type: Type.ARRAY, items: { type: Type.STRING } },
+            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+            inspirasi_visual: { type: Type.STRING },
+          },
+          required: ["nama_persona", "deskripsi_singkat", "gaya_bicara", "palet_warna_hex", "keywords", "inspirasi_visual"]
         }
-
-        return JSON.parse(strToParse);
-    } catch (e) {
-        console.error("Failed to parse JSON response from AI:", e, "\nOriginal string:", jsonString);
-        return fallback;
+      }
     }
+  });
+
+  return parseJsonResponse<BrandPersona[]>(response.text);
 };
 
-export const generateBrandPersona = async (businessName: string, industry: string, targetAudience: string, valueProposition: string, competitorAnalysis: string | null): Promise<BrandPersona[]> => {
+export const generateSlogans = async (brandInputs: BrandInputs, persona: BrandPersona): Promise<string[]> => {
     const ai = getAiClient();
-    const prompt = `Buat 3 persona brand unik untuk bisnis UMKM Indonesia.
-- Nama Bisnis: "${businessName}"
-- Industri/Bidang: ${industry}
-- Target Audiens: ${targetAudience}
-- Keunggulan (Value Proposition): ${valueProposition}
-- Analisis Kompetitor (jika ada): ${competitorAnalysis || 'Tidak ada'}
-- Brand voice harus jelas (contoh: formal, santai, humoris).
-- Palet warna harus dalam format HEX.
-- Customer avatar harus detail.
-- Berikan nama persona yang kreatif dan deskriptif.`;
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        nama_persona: { type: Type.STRING },
-                        deskripsi_singkat: { type: Type.STRING },
-                        kata_kunci: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        palet_warna_hex: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        customer_avatars: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    nama_avatar: { type: Type.STRING },
-                                    deskripsi_demografis: { type: Type.STRING },
-                                    pain_points: { type: Type.ARRAY, items: { type: Type.STRING } },
-                                    media_sosial: { type: Type.ARRAY, items: { type: Type.STRING } },
-                                },
-                            },
-                        },
-                        brand_voice: {
-                            type: Type.OBJECT,
-                            properties: {
-                                deskripsi: { type: Type.STRING },
-                                kata_yang_digunakan: { type: Type.ARRAY, items: { type: Type.STRING } },
-                                kata_yang_dihindari: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            },
-                        },
-                    },
-                },
-            },
-        },
-    });
-
-    return safeJsonParse(response.text, []);
-};
-
-export const generateSlogans = async (businessName: string, persona: BrandPersona, competitors: string): Promise<string[]> => {
-    const ai = getAiClient();
-    const prompt = `Buat 5 opsi slogan pendek, menarik, dan mudah diingat untuk bisnis bernama "${businessName}".
-Persona Brand: ${persona.nama_persona} (${persona.deskripsi_singkat})
-Kata Kunci Gaya: ${persona.kata_kunci.join(', ')}
-Gaya Bicara: ${persona.brand_voice.deskripsi}
-Hindari gaya slogan seperti kompetitor: ${competitors || 'Tidak ada'}`;
-
+    const prompt = `Buatkan 5 alternatif slogan yang catchy dan singkat untuk brand "${brandInputs.businessName}". Slogan harus sesuai dengan persona "${persona.nama_persona}" yang memiliki gaya bicara "${persona.gaya_bicara}" dan menonjolkan value proposition: "${brandInputs.valueProposition}". Return HANYA dalam format JSON array of strings, tanpa markdown. Contoh: ["Slogan 1", "Slogan 2"]`;
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
-            responseMimeType: 'application/json',
-            responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } },
-        },
+            responseMimeType: "application/json",
+            responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
+        }
     });
-    return safeJsonParse(response.text, []);
+    return parseJsonResponse<string[]>(response.text);
 };
 
-export const analyzeCompetitorUrl = async (url: string, businessName: string): Promise<string> => {
+
+export const generateLogoPrompts = async (brandInputs: BrandInputs, persona: BrandPersona): Promise<string[]> => {
     const ai = getAiClient();
-    const prompt = `Analisis URL kompetitor ini: ${url}. Berikan ringkasan singkat (1-2 paragraf) tentang kekuatan, kelemahan, dan gaya visual mereka. Analisis ini akan digunakan untuk membedakan brand baru bernama "${businessName}". Fokus pada aspek branding yang bisa ditiru atau dihindari.`;
+    const prompt = `
+        Anda adalah seorang desainer logo berpengalaman. Buatkan 3 alternatif prompt deskriptif untuk AI image generator (seperti Imagen) untuk membuat logo brand "${brandInputs.businessName}". 
+        Prompt harus detail dan mencerminkan persona brand "${persona.nama_persona}" dengan inspirasi visual "${persona.inspirasi_visual}" dan palet warna (${persona.palet_warna_hex.join(', ')}).
+        Gaya logo yang diinginkan adalah modern, minimalis, dan mudah diingat.
+        Setiap prompt harus berfokus pada gaya yang sedikit berbeda (misal: satu fokus pada ikon, satu pada tipografi, satu abstrak).
+        Return HANYA dalam format JSON array of strings, tanpa markdown. Contoh: ["prompt 1", "prompt 2"]
+    `;
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
-    });
-    return response.text;
-};
-
-export const generateLogoOptions = async (
-    objectPrompt: string, 
-    style: string, 
-    businessName: string, 
-    palette: string[], 
-    count: number = 4
-): Promise<string[]> => {
-    const ai = getAiClient();
-    const fullPrompt = `Logo ${style} untuk "${businessName}", dengan objek utama: ${objectPrompt}. Gunakan palet warna ${palette.join(', ')}. Desain harus bersih, ikonik, memorable, format vektor, dengan latar belakang putih polos.`;
-    
-    const response = await ai.models.generateImages({
-        model: 'imagen-4.0-generate-001',
-        prompt: fullPrompt,
         config: {
-            numberOfImages: count,
-            outputMimeType: 'image/png',
-            aspectRatio: '1:1',
-        },
+            responseMimeType: "application/json",
+            responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
+        }
     });
-
-    const base64Images = response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
-    return Promise.all(base64Images.map(b64 => compressAndConvertToWebP(b64, 0.85)));
+    return parseJsonResponse<string[]>(response.text);
 };
 
-export const editLogo = async (base64Data: string, mimeType: string, prompt: string): Promise<string> => {
+export const generateLogoImage = async (prompt: string): Promise<string> => {
     const ai = getAiClient();
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
-        contents: {
-            parts: [
-                { inlineData: { data: base64Data, mimeType } },
-                { text: prompt },
-            ],
-        },
+        contents: { parts: [{ text: `logo for a brand, ${prompt}, vector, simple, flat design, on a clean white background` }] },
         config: {
             responseModalities: [Modality.IMAGE],
-        },
+        }
     });
-    const part = response.candidates?.[0]?.content?.parts?.[0];
-    if (part?.inlineData) {
-        const resultB64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        return compressAndConvertToWebP(resultB64);
+
+    const imagePartResponse = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+    if (!imagePartResponse || !imagePartResponse.inlineData) {
+        throw new Error("AI tidak menghasilkan gambar. Coba lagi dengan prompt berbeda.");
     }
-    throw new Error("Gagal mengedit logo: tidak ada gambar yang dihasilkan.");
+    return `data:image/webp;base64,${imagePartResponse.inlineData.data}`;
 };
 
-export const generateLogoVariations = async (baseLogoUrl: string, businessName: string): Promise<LogoVariations> => {
+export const generateLogoVariations = async (logoUrl: string): Promise<Record<string, string>> => {
     const ai = getAiClient();
-    const logoBase64 = baseLogoUrl.split(',')[1];
-    const mimeType = baseLogoUrl.match(/data:(.*);base64/)?.[1] || 'image/png';
+    const imageBase64 = logoUrl.split(',')[1];
+    const imagePart: Part = { inlineData: { data: imageBase64, mimeType: 'image/webp' } };
 
-    const generateVariation = async (prompt: string): Promise<string> => {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: {
-                parts: [
-                    { inlineData: { data: logoBase64, mimeType } },
-                    { text: prompt },
-                ],
-            },
-            config: {
-                responseModalities: [Modality.IMAGE],
-            },
-        });
-        const part = response.candidates?.[0]?.content?.parts?.[0];
-        if (part?.inlineData) {
-             const resultB64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-             return compressAndConvertToWebP(resultB64);
-        }
-        throw new Error(`Gagal membuat variasi logo: ${prompt}`);
+    const prompts = {
+        stacked: 'rearrange this logo into a stacked, more vertical composition. keep the style identical. place it on a clean white background.',
+        horizontal: 'rearrange this logo into a horizontal, wider composition. keep the style identical. place it on a clean white background.',
+        monochrome: 'convert this logo into a monochrome (black on a clean white background) version. keep the shapes identical.',
     };
 
-    const [stacked, horizontal, monochrome] = await Promise.all([
-        generateVariation(`Buat logo tumpuk (stacked) dengan teks "${businessName}" di bawah ikon. Gunakan font sans-serif modern. Latar belakang putih.`),
-        generateVariation(`Buat logo datar (horizontal) dengan teks "${businessName}" di sebelah kanan ikon. Gunakan font sans-serif modern. Latar belakang putih.`),
-        generateVariation(`Ubah logo ini menjadi versi monokrom (hitam putih solid). Pertahankan bentuk aslinya. Latar belakang putih.`),
-    ]);
+    const variations: Record<string, string> = {};
 
-    return { main: baseLogoUrl, stacked, horizontal, monochrome };
-};
-
-export const generateSocialMediaKitAssets = async (projectData: ProjectData): Promise<SocialMediaKitAssets> => {
-    const logoUrl = projectData.selectedLogoUrl;
-    const persona = projectData.selectedPersona;
-    
-    if(!logoUrl || !persona) {
-        throw new Error("Logo dan Persona harus dipilih terlebih dahulu untuk membuat Kit Media Sosial.");
+    for (const key of Object.keys(prompts)) {
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: { parts: [imagePart, { text: prompts[key as keyof typeof prompts] }] },
+                config: {
+                    responseModalities: [Modality.IMAGE],
+                }
+            });
+            const imagePartResponse = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+            if (imagePartResponse?.inlineData) {
+                variations[key] = `data:image/webp;base64,${imagePartResponse.inlineData.data}`;
+            }
+        } catch (e) {
+            console.error(`Failed to generate variation "${key}":`, e);
+        }
     }
-    const logoBase64 = await fetchImageAsBase64(logoUrl);
-
-    const [profilePicture, banner] = await Promise.all([
-        generateImageForCanvas(`Foto profil media sosial yang menarik menggunakan logo ini. Latar belakangnya harus menggunakan warna utama dari palet ini: ${persona.palet_warna_hex.join(', ')}. Gaya: ${persona.kata_kunci.join(', ')}.`, logoBase64),
-        generateImageForCanvas(`Banner header media sosial (aspect ratio 16:9) yang menarik menggunakan logo ini. Desainnya harus abstrak dan minimalis, menggunakan palet warna: ${persona.palet_warna_hex.join(', ')}. Gaya: ${persona.kata_kunci.join(', ')}. Letakkan logo di tengah.`, logoBase64),
-    ]);
-
-    return { profilePictureUrl: profilePicture, bannerUrl: banner };
+    return variations;
 };
 
-export const generateCaptions = async (businessName: string, persona: BrandPersona, topic: string, tone: string): Promise<GeneratedCaption[]> => {
+export const generateSocialMediaKitAssets = async (projectData: ProjectData): Promise<SocialMediaKit> => {
     const ai = getAiClient();
-    const prompt = `Buat 3 opsi caption media sosial untuk "${businessName}".
-Persona Brand: ${persona.nama_persona}
-Gaya Bicara: ${persona.brand_voice.deskripsi}
-Topik Postingan: "${topic}"
-Nada Bicara: ${tone}
-Sertakan juga rekomendasi hashtag yang relevan untuk setiap caption.`;
+    if (!projectData.selectedLogoUrl || !projectData.selectedPersona) throw new Error("Logo dan persona dibutuhkan.");
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        caption: { type: Type.STRING },
-                        hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    },
-                },
-            },
-        },
+    const logoBase64 = projectData.selectedLogoUrl.split(',')[1];
+    const logoPart: Part = { inlineData: { data: logoBase64, mimeType: 'image/webp' } };
+
+    const commonPrompt = `using the provided logo and brand persona (visual inspiration: ${projectData.selectedPersona.inspirasi_visual}, colors: ${projectData.selectedPersona.palet_warna_hex.join(', ')})`;
+    
+    const pfpResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [logoPart, { text: `create a simple, clean, and eye-catching circular profile picture ${commonPrompt}. The logo should be clearly visible and centered.` }] },
+        config: { responseModalities: [Modality.IMAGE] }
     });
+    const profilePictureB64 = pfpResponse.candidates?.[0]?.content.parts[0].inlineData?.data;
 
-    return safeJsonParse(response.text, []);
+    const bannerResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [logoPart, { text: `create a social media banner (aspect ratio 16:9) ${commonPrompt}. The design should be clean, professional, and have space for text overlays. The logo should be placed tastefully, not necessarily in the center.` }] },
+        config: { responseModalities: [Modality.IMAGE] }
+    });
+    const bannerB64 = bannerResponse.candidates?.[0]?.content.parts[0].inlineData?.data;
+
+    if (!profilePictureB64 || !bannerB64) throw new Error("Gagal membuat aset visual.");
+
+    return { profilePictureUrl: `data:image/webp;base64,${profilePictureB64}`, bannerUrl: `data:image/webp;base64,${bannerB64}` };
 };
 
-export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona): Promise<SocialProfileData> => {
+export const generateSocialProfiles = async (brandInputs: BrandInputs, persona: BrandPersona): Promise<SocialProfiles> => {
     const ai = getAiClient();
-    const prompt = `Buat teks profil untuk berbagai platform sosial media untuk bisnis "${inputs.businessName}".
-Persona Brand: ${persona.nama_persona} (${persona.deskripsi_singkat}).
-Gaya Bicara: ${persona.brand_voice.deskripsi}.
-Target Audiens: ${inputs.targetAudience}.
-Keunggulan: ${inputs.valueProposition}.
-Buatkan untuk: bio Instagram (termasuk call to action), bio TikTok (lebih pendek dan catchy), dan deskripsi toko untuk Marketplace (Shopee/Tokopedia, lebih detail).`;
-
+    const prompt = `
+        Anda adalah seorang copywriter media sosial. Buatkan teks profil untuk brand "${brandInputs.businessName}" dengan persona "${persona.nama_persona}".
+        - Bisnis: ${brandInputs.industry}, ${brandInputs.valueProposition}.
+        
+        Buatkan untuk platform berikut:
+        1. instagramBio: Bio Instagram yang menarik, informatif, dan menyertakan Call-to-Action. Gunakan emoji.
+        2. tiktokBio: Bio TikTok yang singkat, punchy, dan sesuai tren.
+        3. marketplaceDescription: Deskripsi singkat untuk halaman toko di marketplace (Tokopedia/Shopee) yang meyakinkan pembeli.
+        
+        Return HANYA dalam format JSON object, tanpa markdown. Contoh: {"instagramBio": "...", "tiktokBio": "...", "marketplaceDescription": "..."}
+    `;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
-            responseMimeType: 'application/json',
+            responseMimeType: "application/json",
             responseSchema: {
                 type: Type.OBJECT,
                 properties: {
@@ -309,148 +240,66 @@ Buatkan untuk: bio Instagram (termasuk call to action), bio TikTok (lebih pendek
                     tiktokBio: { type: Type.STRING },
                     marketplaceDescription: { type: Type.STRING },
                 },
-            },
-        },
+                required: ["instagramBio", "tiktokBio", "marketplaceDescription"]
+            }
+        }
     });
-
-    return safeJsonParse(response.text, { instagramBio: '', tiktokBio: '', marketplaceDescription: '' });
+    return parseJsonResponse<SocialProfiles>(response.text);
 };
 
-export const generatePackagingDesign = async (prompt: string, logoBase64: string): Promise<string[]> => {
-    const result = await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`);
-    return [result];
-};
-
-export const generatePrintMedia = async (prompt: string, logoBase64: string): Promise<string[]> => {
-     const result = await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`);
-     return [result];
-};
-
-export const generateMerchandiseMockup = async (prompt: string, logoBase64: string): Promise<string[]> => {
-     const result = await generateImageForCanvas(prompt, `data:image/png;base64,${logoBase64}`);
-     return [result];
-};
-
-export const generateContentCalendar = async (businessName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: any[] }> => {
+export const generateContentCalendar = async (projectName: string, persona: BrandPersona): Promise<{ calendar: ContentCalendarEntry[], sources: CalendarSource[] }> => {
     const ai = getAiClient();
-    const prompt = `Buat rencana konten media sosial untuk 7 hari ke depan untuk bisnis "${businessName}" dengan persona "${persona.nama_persona}".
-Fokus pada topik yang relevan dengan ${persona.kata_kunci.join(', ')}.
-Untuk setiap hari, berikan: hari (misal: Senin), tipe konten (misal: Promosi, Edukasi, Interaksi), ide konten singkat, draf caption lengkap sesuai gaya bicara brand (${persona.brand_voice.deskripsi}), dan array berisi 5 string rekomendasi hashtag.
-Gunakan Google Search untuk mencari ide-ide yang sedang tren.`;
+    const prompt = `
+        Anda adalah seorang content strategist. Buatkan rencana konten media sosial untuk 7 hari ke depan untuk brand "${projectName}" dengan persona "${persona.nama_persona}" dan gaya bicara "${persona.gaya_bicara}".
+        Gunakan Google Search untuk mencari topik atau ide yang relevan dan sedang tren terkait kata kunci berikut: ${persona.keywords.join(', ')}.
+        
+        Untuk setiap hari, berikan:
+        - hari: Nama hari (e.g., "Senin").
+        - tipe_konten: Jenis konten (e.g., "Edukasi", "Promosi", "Interaksi", "Behind the Scenes").
+        - ide_konten: Judul atau ide utama konten.
+        - draf_caption: Draf caption singkat yang sesuai gaya bicara persona.
+        - hashtag: Array berisi 3-5 hashtag yang relevan.
+        
+        Return HANYA dalam format JSON object dengan key "calendar" yang berisi array dari 7 entri hari, tanpa markdown.
+    `;
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
             tools: [{ googleSearch: {} }],
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        hari: { type: Type.STRING },
-                        tipe_konten: { type: Type.STRING },
-                        ide_konten: { type: Type.STRING },
-                        draf_caption: { type: Type.STRING },
-                        hashtag: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    }
-                }
-            }
-        },
+        }
     });
-    
-    const calendar = safeJsonParse<ContentCalendarEntry[]>(response.text, []);
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
 
-    return { calendar, sources };
+    const parsed = parseJsonResponse<{ calendar: ContentCalendarEntry[] }>(response.text);
+    const sources: CalendarSource[] = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map(chunk => ({ web: chunk.web })) || [];
+
+    return { calendar: parsed.calendar, sources };
 };
 
-export const generateSocialAds = async (inputs: BrandInputs, persona: BrandPersona, slogan: string): Promise<SocialAdsData> => {
+export const enhancePromptWithPersonaStyle = (prompt: string, persona: BrandPersona | null): string => {
+    if (!persona) return prompt;
+    return `${prompt}, with a visual style of ${persona.inspirasi_visual}, using a color palette of ${persona.palet_warna_hex.join(', ')}`;
+};
+
+export const generateMascot = async (prompt: string): Promise<string[]> => {
     const ai = getAiClient();
-    const prompt = `Buat 2 set teks iklan (ad copy) untuk sosial media, satu untuk Instagram Ads, satu untuk TikTok Ads.
-Bisnis: "${inputs.businessName}" (${inputs.businessDetail})
-Target: ${inputs.targetAudience}
-Persona: ${persona.nama_persona}
-Gaya Bicara: ${persona.brand_voice.deskripsi}
-Slogan: "${slogan}"
-Keunggulan: ${inputs.valueProposition}
-Sertakan juga 5-7 hashtag relevan untuk setiap platform.`;
-
+    const finalPrompt = `vector illustration of a cute mascot character for a brand. ${prompt}. simple, flat design, white background.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        platform: { type: Type.STRING, enum: ["Instagram", "TikTok"] },
-                        adCopy: { type: Type.STRING },
-                        hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    },
-                },
-            },
-        },
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [{ text: finalPrompt }] },
+        config: { responseModalities: [Modality.IMAGE] }
     });
-
-    return safeJsonParse(response.text, []);
+    const images = response.candidates?.[0]?.content?.parts
+      .filter(part => part.inlineData)
+      .map(part => `data:image/webp;base64,${part.inlineData!.data}`) ?? [];
+    if (images.length === 0) throw new Error("AI tidak menghasilkan gambar maskot.");
+    return images;
 };
-
-export const generateSocialMediaPostImage = async (topic: string, keywords: string[]): Promise<string[]> => {
-    const prompt = `Buat sebuah gambar ilustrasi yang menarik secara visual untuk postingan media sosial dengan topik: "${topic}". Gaya visualnya harus: ${keywords.join(', ')}, cerah, dan cocok untuk platform seperti Instagram.`;
-    const result = await generateImageForCanvas(prompt);
-    return [result];
-};
-
-export const moderateContent = async (content: string): Promise<{ isAppropriate: boolean; reason: string }> => {
-    const ai = getAiClient();
-    const prompt = `Analisis teks berikut dan tentukan apakah mengandung konten yang tidak pantas (SARA, ujaran kebencian, kekerasan, konten dewasa, spam). Jawab HANYA dengan format JSON {"isAppropriate": boolean, "reason": "alasan singkat jika tidak pantas"}. Teks: "${content}"`;
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: { responseMimeType: 'application/json' }
-    });
-    return safeJsonParse(response.text, { isAppropriate: true, reason: "" });
-};
-
-// --- Video Generation ---
-export const generateVideo = async (ai: GoogleGenAI, prompt: string, imageBase64?: string): Promise<any> => {
-    let operation;
-    if (imageBase64) {
-        operation = await ai.models.generateVideos({
-            model: 'veo-3.1-fast-generate-preview',
-            prompt,
-            image: {
-                imageBytes: imageBase64.split(',')[1],
-                mimeType: imageBase64.match(/data:(.*);base64/)?.[1] || 'image/png',
-            },
-            config: { numberOfVideos: 1, resolution: '720p', aspectRatio: '16:9' }
-        });
-    } else {
-        operation = await ai.models.generateVideos({
-            model: 'veo-3.1-fast-generate-preview',
-            prompt,
-            config: { numberOfVideos: 1, resolution: '720p', aspectRatio: '16:9' }
-        });
-    }
-    return operation;
-};
-
-export const getVideosOperation = async (ai: GoogleGenAI, operation: any): Promise<any> => {
-    return await ai.operations.getVideosOperation({ operation: operation });
-};
-
-
-// QuickTools Functions
-export const generateBusinessNames = (category: string, keywords: string) => generateSlogans(category, { nama_persona: keywords } as BrandPersona, ''); // Re-use slogan gen logic
-export const generateQuickSlogans = (businessName: string, keywords: string) => generateSlogans(businessName, { nama_persona: keywords } as BrandPersona, '');
 
 export const generateMoodboardText = async (keywords: string): Promise<{ description: string; palette: string[] }> => {
     const ai = getAiClient();
-    const prompt = `Buat deskripsi singkat (1 paragraf) untuk mood & feel dari sebuah brand dengan kata kunci: "${keywords}". Berikan juga 5 palet warna dalam format HEX yang cocok.`;
+    const prompt = `Based on the keywords "${keywords}", create a brand moodboard concept. Provide: 1. description: A short paragraph describing the overall vibe. 2. palette: An array of 5 hex color codes. Return ONLY a JSON object.`;
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
@@ -462,24 +311,109 @@ export const generateMoodboardText = async (keywords: string): Promise<{ descrip
                     description: { type: Type.STRING },
                     palette: { type: Type.ARRAY, items: { type: Type.STRING } },
                 },
-            },
-        },
+                required: ["description", "palette"]
+            }
+        }
     });
-    return safeJsonParse(response.text, { description: '', palette: [] });
+    return parseJsonResponse<{ description: string; palette: string[] }>(response.text);
 };
 
 export const generateMoodboardImages = async (keywords: string): Promise<string[]> => {
-    const prompt = `4 gambar foto-realistis yang merepresentasikan vibe: ${keywords}.`;
-    const results = await Promise.all(Array(4).fill(0).map(() => generateImageForCanvas(prompt)));
-    return results;
+    const ai = getAiClient();
+    const prompt = `photorealistic, aesthetic, moodboard images related to: ${keywords}. 4 images.`;
+    
+    const response = await ai.models.generateImages({
+        model: 'imagen-4.0-generate-001',
+        prompt: prompt,
+        config: { numberOfImages: 4, aspectRatio: "1:1" },
+    });
+
+    const images = response.generatedImages.map(img => `data:image/jpeg;base64,${img.image.imageBytes}`);
+    if (images.length === 0) throw new Error("Gagal membuat gambar moodboard.");
+    return images;
 };
 
-export const generateSceneFromImages = async (base64Images: string[], prompt: string): Promise<string> => {
+export const generatePattern = async (prompt: string): Promise<string[]> => {
     const ai = getAiClient();
-    const parts: ({ inlineData: { data: string; mimeType: string; }; } | { text: string; })[] = base64Images.map(b64 => ({
+    const finalPrompt = `seamless pattern, ${prompt}. vector, simple, flat design.`;
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [{ text: finalPrompt }] },
+        config: { responseModalities: [Modality.IMAGE] }
+    });
+    const images = response.candidates?.[0]?.content?.parts
+        .filter(part => part.inlineData)
+        .map(part => `data:image/webp;base64,${part.inlineData!.data}`) ?? [];
+    if (images.length === 0) throw new Error("AI tidak menghasilkan gambar pola.");
+    return images;
+};
+
+export const applyPatternToMockup = async (patternUrl: string, mockupAssetUrl: string): Promise<string> => {
+    const ai = getAiClient();
+    const patternBase64 = patternUrl.split(',')[1];
+    const patternPart: Part = { inlineData: { data: patternBase64, mimeType: 'image/webp' } };
+
+    const prompt = `Apply this seamless pattern to a plain white object like the one in the reference image. The pattern should cover the object realistically, following its contours.`;
+
+    // This is a placeholder for actual image fetching which might be complex due to CORS etc.
+    // In a real app, we'd fetch mockupAssetUrl into a base64 string.
+    const whiteCanvasBase64 = createWhiteCanvasBase64().split(',')[1];
+    const mockupPart: Part = { inlineData: { data: whiteCanvasBase64, mimeType: 'image/png' } };
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [mockupPart, patternPart, { text: prompt }] },
+        config: { responseModalities: [Modality.IMAGE] }
+    });
+    const imagePartResponse = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+    if (!imagePartResponse || !imagePartResponse.inlineData) {
+        throw new Error("AI tidak menghasilkan gambar mockup.");
+    }
+    return `data:image/webp;base64,${imagePartResponse.inlineData.data}`;
+};
+
+export const removeBackground = async (imageUrl: string): Promise<string> => {
+    const ai = getAiClient();
+    const imageBase64 = imageUrl.split(',')[1];
+    const imagePart: Part = { inlineData: { data: imageBase64, mimeType: 'image/png' } };
+    const textPart: Part = { text: 'remove the background from this image, leaving only the main subject with a transparent background.' };
+    
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [imagePart, textPart] },
+        config: { responseModalities: [Modality.IMAGE] }
+    });
+    const imagePartResponse = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+    if (!imagePartResponse || !imagePartResponse.inlineData) {
+        throw new Error("Gagal menghapus background.");
+    }
+    return `data:image/webp;base64,${imagePartResponse.inlineData.data}`;
+};
+
+export const generateProductPhoto = async (productImageUrl: string, scenePrompt: string): Promise<string> => {
+    const ai = getAiClient();
+    const imageBase64 = productImageUrl.split(',')[1];
+    const imagePart: Part = { inlineData: { data: imageBase64, mimeType: 'image/webp' } };
+    const textPart: Part = { text: `Place this product image (which has a transparent background) into a realistic scene described as: "${scenePrompt}". The lighting should be professional and match the scene. product photography, high quality.` };
+    
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [imagePart, textPart] },
+        config: { responseModalities: [Modality.IMAGE] }
+    });
+    const imagePartResponse = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+    if (!imagePartResponse || !imagePartResponse.inlineData) {
+        throw new Error("Gagal membuat foto produk.");
+    }
+    return `data:image/webp;base64,${imagePartResponse.inlineData.data}`;
+};
+
+export const generateSceneFromImages = async (imageUrls: string[], prompt: string): Promise<string> => {
+    const ai = getAiClient();
+    const parts: Part[] = imageUrls.map(url => ({
         inlineData: {
-            data: b64.split(',')[1],
-            mimeType: b64.match(/data:(.*);base64/)?.[1] || 'image/png'
+            data: url.split(',')[1],
+            mimeType: url.substring(url.indexOf(':') + 1, url.indexOf(';')),
         }
     }));
     parts.push({ text: prompt });
@@ -487,110 +421,34 @@ export const generateSceneFromImages = async (base64Images: string[], prompt: st
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: { parts },
-        config: { responseModalities: [Modality.IMAGE] },
+        config: { responseModalities: [Modality.IMAGE] }
     });
-
-    const part = response.candidates?.[0]?.content?.parts?.[0];
-    if (part?.inlineData) {
-        const resultB64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        return compressAndConvertToWebP(resultB64);
+    const imagePartResponse = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
+    if (!imagePartResponse || !imagePartResponse.inlineData) {
+        throw new Error("Gagal menggabungkan gambar.");
     }
-    throw new Error("Gagal menggabungkan gambar.");
+    return `data:image/webp;base64,${imagePartResponse.inlineData.data}`;
 };
 
-export const generateImageForCanvas = async (prompt: string, baseImageB64?: string): Promise<string> => {
+export const generateVideo = async (prompt: string): Promise<string> => {
     const ai = getAiClient();
-    const parts: ({ text: string; } | { inlineData: { data: string; mimeType: string; }; })[] = [{ text: prompt }];
-    if (baseImageB64) {
-        parts.unshift({
-            inlineData: {
-                data: baseImageB64.split(',')[1],
-                mimeType: baseImageB64.match(/data:(.*);base64/)?.[1] || 'image/png',
-            }
-        });
-    }
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts },
-        config: { responseModalities: [Modality.IMAGE] },
+    let operation = await ai.models.generateVideos({
+      model: 'veo-3.1-fast-generate-preview',
+      prompt: prompt,
+      config: {
+        numberOfVideos: 1,
+        resolution: '720p',
+        aspectRatio: '16:9'
+      }
     });
-
-    const part = response.candidates?.[0]?.content?.parts?.[0];
-    if (part?.inlineData) {
-        const resultB64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        return compressAndConvertToWebP(resultB64);
+    while (!operation.done) {
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      operation = await ai.operations.getVideosOperation({operation: operation});
     }
-    throw new Error("Gagal membuat gambar.");
-};
-
-// Other functions from the codebase that need implementation
-export const generateMissingField = async (currentInputs: Partial<BrandInputs>, fieldToGenerate: keyof BrandInputs): Promise<string> => {
-    const ai = getAiClient();
-    const prompt = `Berdasarkan informasi brand ini: ${JSON.stringify(currentInputs)}, berikan satu saran untuk kolom yang hilang: "${String(fieldToGenerate)}". Berikan jawaban singkat dan langsung pada intinya.`;
-    const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-    return response.text.replace(/["*]/g, '').trim();
-};
-
-export const applyPatternToMockup = async (patternB64: string, mockupB64: string): Promise<string> => {
-    const prompt = "Terapkan pola dari gambar pertama ke area putih di gambar kedua (mockup).";
-    const result = await generateImageForCanvas(prompt, patternB64);
-    return compressAndConvertToWebP(result);
-};
-
-export const generateMascot = async (prompt: string, imageB64?: string): Promise<string[]> => {
-    const ai = getAiClient();
-    if (imageB64) {
-        const fullPrompt = `Jadikan wajah di gambar ini sebagai inspirasi utama. Buat sebuah karakter maskot berdasarkan deskripsi ini: ${prompt}. Gaya ilustrasi vektor yang lucu dan modern, di latar belakang putih polos. Buat 2 variasi.`;
-        // Since we need 2 variations, we can't use generateImageForCanvas which only returns one.
-        // We will call the standard image model that can generate multiple.
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: { parts: [{ inlineData: { data: imageB64.split(',')[1], mimeType: imageB64.match(/data:(.*);base64/)?.[1] || 'image/png' } }, {text: fullPrompt}] }
-        });
-        // This model only returns one image, so we'll run it twice for now. A bit inefficient but works.
-        const response2 = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: { parts: [{ inlineData: { data: imageB64.split(',')[1], mimeType: imageB64.match(/data:(.*);base64/)?.[1] || 'image/png' } }, {text: fullPrompt}] }
-        });
-        const results = [];
-        const part1 = response.candidates?.[0]?.content?.parts?.[0];
-        if (part1?.inlineData) results.push(`data:${part1.inlineData.mimeType};base64,${part1.inlineData.data}`);
-        const part2 = response2.candidates?.[0]?.content?.parts?.[0];
-        if (part2?.inlineData) results.push(`data:${part2.inlineData.mimeType};base64,${part2.inlineData.data}`);
-        if(results.length > 0) return Promise.all(results.map(r => compressAndConvertToWebP(r)));
-        throw new Error("Gagal membuat maskot dari gambar.");
-        
-    } else {
-        const fullPrompt = `Karakter maskot: ${prompt}. Gaya ilustrasi vektor yang lucu dan modern, di latar belakang putih polos. Buat 2 variasi.`;
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: fullPrompt,
-            config: { numberOfImages: 2, aspectRatio: '1:1', outputMimeType: 'image/png' },
-        });
-        const base64Images = response.generatedImages.map(img => `data:image/png;base64,${img.image.imageBytes}`);
-        return Promise.all(base64Images.map(b64 => compressAndConvertToWebP(b64)));
+    
+    const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+    if (!downloadLink) {
+        throw new Error("Gagal membuat video.");
     }
-};
-
-
-export const generateMascotPose = async (mascotB64: string, poseDescription: string): Promise<string> => {
-    const prompt = `Ubah pose karakter di gambar ini menjadi: ${poseDescription}.`;
-    return await generateImageForCanvas(prompt, mascotB64);
-};
-
-export const removeBackground = async (imageB64: string): Promise<string> => {
-    const prompt = "Hapus total latar belakang gambar ini. Sisakan hanya objek utamanya. Latar belakang harus transparan.";
-    return await generateImageForCanvas(prompt, imageB64);
-};
-
-export const generatePattern = async (prompt: string): Promise<string[]> => {
-    const fullPrompt = `pola seamless (tanpa sambungan) dari: ${prompt}. gaya vektor datar.`;
-    const result = await generateImageForCanvas(fullPrompt);
-    return [result];
-};
-
-export const generateProductPhoto = async (productB64: string, scenePrompt: string): Promise<string> => {
-    const prompt = `Hapus background gambar produk ini dan letakkan di suasana baru: ${scenePrompt}. Buat seperti foto produk komersial yang realistis.`;
-    return await generateImageForCanvas(prompt, productB64);
+    return downloadLink;
 };
