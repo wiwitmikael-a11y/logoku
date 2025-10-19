@@ -112,14 +112,17 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
         setSelectedProject(updatedProject);
     }, [selectedProject, projects, setProjects, setSelectedProject]);
 
+    const isLogoReady = !!selectedProject?.project_data.selectedLogoUrl;
+    const isPersonaReady = !!selectedProject?.project_data.selectedPersona;
+
   const mainTabs = useMemo(() => [
-    { id: 'persona', label: '1. Persona', icon: '👤' },
-    { id: 'logo', label: '2. Logo', icon: '🎨' },
-    { id: 'kit', label: '3. Kit Sosmed', icon: '📱' },
-    { id: 'content', label: '4. Konten', icon: '🗓️' },
-    { id: 'sotoshop', label: 'Sotoshop ✨', icon: '✨' },
-    { id: 'lemari', label: 'Lemari Brand', icon: '🗄️' },
-  ], []);
+    { id: 'persona', label: '1. Persona', icon: '👤', enabled: true },
+    { id: 'logo', label: '2. Logo', icon: '🎨', enabled: isPersonaReady },
+    { id: 'kit', label: '3. Kit Sosmed', icon: '📱', enabled: isLogoReady },
+    { id: 'content', label: '4. Konten', icon: '🗓️', enabled: isPersonaReady },
+    { id: 'sotoshop', label: 'Sotoshop ✨', icon: '✨', enabled: true },
+    { id: 'lemari', label: 'Lemari Brand', icon: '🗄️', enabled: true },
+  ], [isPersonaReady, isLogoReady]);
 
   const sotoshopTabs = useMemo(() => [
     { id: 'mascot', label: 'Pabrik Maskot', icon: '🐻' },
@@ -217,14 +220,16 @@ const AICreator: React.FC<Props> = ({ selectedProject, setSelectedProject, proje
                     {mainTabs.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => setMainModule(tab.id as MainModule)}
+                            onClick={() => tab.enabled && setMainModule(tab.id as MainModule)}
                             className={`${
                                 mainModule === tab.id
                                     ? 'tab-active-splash'
                                     : 'text-text-muted border-transparent hover:text-text-header hover:border-border-light'
-                            } flex items-center gap-2 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm transition-colors`}
+                            } ${!tab.enabled ? 'opacity-50 cursor-not-allowed' : ''}
+                            flex items-center gap-2 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm transition-colors`}
                             aria-current={mainModule === tab.id ? 'page' : undefined}
-                            disabled={!selectedProject && tab.id !== 'persona'}
+                            disabled={!selectedProject || !tab.enabled}
+                            title={!tab.enabled ? 'Selesaikan langkah sebelumnya dulu, Juragan!' : ''}
                         >
                             <span className="text-lg">{tab.icon}</span>
                             {tab.label}

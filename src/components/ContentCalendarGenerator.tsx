@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { generateContentCalendar } from '../services/geminiService';
-import type { Project, ProjectData, ContentCalendarEntry } from '../types';
+import type { Project, ProjectData } from '../types';
 import Button from './common/Button';
 import ErrorMessage from './common/ErrorMessage';
 import { playSound } from '../services/soundService';
@@ -97,7 +97,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject })
                                     <td className="p-3">{entry.ide_konten}</td>
                                     <td className="p-3 whitespace-pre-wrap">
                                         <p className="selectable-text">{entry.draf_caption}</p>
-                                        <p className="text-accent text-xs mt-2 selectable-text">{entry.hashtag.join(' ')}</p>
+                                        <p className="text-accent text-xs mt-2 selectable-text">{entry.hashtag?.join(' ')}</p>
                                     </td>
                                 </tr>
                             ))}

@@ -248,10 +248,11 @@ export const generateSocialMediaKitAssets = async (projectData: ProjectData): Pr
     if(!logoUrl || !persona) {
         throw new Error("Logo dan Persona harus dipilih terlebih dahulu untuk membuat Kit Media Sosial.");
     }
-    
+    const logoBase64 = await fetchImageAsBase64(logoUrl);
+
     const [profilePicture, banner] = await Promise.all([
-        generateImageForCanvas(`Foto profil media sosial yang menarik menggunakan logo ini. Latar belakangnya harus menggunakan warna utama dari palet ini: ${persona.palet_warna_hex.join(', ')}. Gaya: ${persona.kata_kunci.join(', ')}.`, logoUrl),
-        generateImageForCanvas(`Banner header media sosial (aspect ratio 16:9) yang menarik menggunakan logo ini. Desainnya harus abstrak dan minimalis, menggunakan palet warna: ${persona.palet_warna_hex.join(', ')}. Gaya: ${persona.kata_kunci.join(', ')}. Letakkan logo di tengah.`, logoUrl),
+        generateImageForCanvas(`Foto profil media sosial yang menarik menggunakan logo ini. Latar belakangnya harus menggunakan warna utama dari palet ini: ${persona.palet_warna_hex.join(', ')}. Gaya: ${persona.kata_kunci.join(', ')}.`, logoBase64),
+        generateImageForCanvas(`Banner header media sosial (aspect ratio 16:9) yang menarik menggunakan logo ini. Desainnya harus abstrak dan minimalis, menggunakan palet warna: ${persona.palet_warna_hex.join(', ')}. Gaya: ${persona.kata_kunci.join(', ')}. Letakkan logo di tengah.`, logoBase64),
     ]);
 
     return { profilePictureUrl: profilePicture, bannerUrl: banner };
@@ -334,15 +335,28 @@ export const generateContentCalendar = async (businessName: string, persona: Bra
     const ai = getAiClient();
     const prompt = `Buat rencana konten media sosial untuk 7 hari ke depan untuk bisnis "${businessName}" dengan persona "${persona.nama_persona}".
 Fokus pada topik yang relevan dengan ${persona.kata_kunci.join(', ')}.
-Untuk setiap hari, berikan: hari, tipe konten (misal: Promosi, Edukasi, Interaksi), ide konten singkat, draf caption lengkap sesuai gaya bicara brand (${persona.brand_voice.deskripsi}), dan 5 rekomendasi hashtag.
-Gunakan Google Search untuk mencari ide-ide yang sedang tren.
-JAWAB HANYA DALAM FORMAT JSON.`;
+Untuk setiap hari, berikan: hari (misal: Senin), tipe konten (misal: Promosi, Edukasi, Interaksi), ide konten singkat, draf caption lengkap sesuai gaya bicara brand (${persona.brand_voice.deskripsi}), dan array berisi 5 string rekomendasi hashtag.
+Gunakan Google Search untuk mencari ide-ide yang sedang tren.`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
             tools: [{ googleSearch: {} }],
+            responseMimeType: 'application/json',
+            responseSchema: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        hari: { type: Type.STRING },
+                        tipe_konten: { type: Type.STRING },
+                        ide_konten: { type: Type.STRING },
+                        draf_caption: { type: Type.STRING },
+                        hashtag: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    }
+                }
+            }
         },
     });
     
