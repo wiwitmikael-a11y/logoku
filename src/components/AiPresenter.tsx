@@ -32,7 +32,8 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
     const mouthRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
-    const animationFrameRef = useRef<number>();
+    // FIX: Initialize useRef with null to provide an initial value, satisfying the linter/compiler rule.
+    const animationFrameRef = useRef<number | null>(null);
 
     const availableCharacters = project.project_data.sotoshop_assets?.mascots || [];
 
@@ -127,12 +128,18 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
         };
 
         audio.onpause = () => {
-            cancelAnimationFrame(animationFrameRef.current!);
+            // FIX: Add a guard to prevent calling cancelAnimationFrame with a null/undefined value.
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
             if (containerRef.current) containerRef.current.style.animation = 'none';
         };
 
         return () => {
-            cancelAnimationFrame(animationFrameRef.current!);
+            // FIX: Add a guard to prevent calling cancelAnimationFrame with a null/undefined value.
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
             if(source) source.disconnect();
             if(analyserRef.current) analyserRef.current.disconnect();
         };

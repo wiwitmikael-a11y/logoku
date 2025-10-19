@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { getSupabaseClient } from '../../services/supabaseClient';
-import { playSound, unlockAudio, setMuted } from '../../services/soundService';
+import { playSound, unlockAudio, setMuted, getIsMuted } from '../../services/soundService';
 import Button from './Button';
 import Input from './Input';
 import ErrorMessage from './ErrorMessage';
@@ -17,20 +17,19 @@ interface Props {
 
 const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
   const { user, profile, executeLogout, refreshProfile } = useAuth();
-  // FIX: Removed toggleTokenomicsModal as it's not part of the UIContext
   const { } = useUI();
   const { language, setLanguage } = useTranslation();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isMutedState, setIsMutedState] = useState(profile?.is_muted ?? false);
+  const [isMutedState, setIsMutedState] = useState(getIsMuted());
 
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name);
-      setIsMutedState(profile.is_muted);
     }
-  }, [profile]);
+    setIsMutedState(getIsMuted());
+  }, [profile, show]);
 
   if (!show) return null;
 
@@ -44,7 +43,7 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
     const supabase = getSupabaseClient();
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ full_name: fullName.trim(), is_muted: isMutedState })
+      .update({ full_name: fullName.trim() }) // Removed is_muted from update
       .eq('id', user.id);
     
     if (updateError) {

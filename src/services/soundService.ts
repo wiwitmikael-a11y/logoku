@@ -155,10 +155,18 @@ export const stopBGM = (): void => {
     randomBgmPlaylist = []; // Stop random playback loop
 };
 
-// This will be managed by AuthContext
+export const initializeMuteState = () => {
+    isMuted = localStorage.getItem('desainfun_isMuted') === 'true';
+};
+
+export const getIsMuted = (): boolean => {
+    return isMuted;
+};
+
 export const setMuted = (shouldMute: boolean) => {
     isMuted = shouldMute;
+    localStorage.setItem('desainfun_isMuted', String(shouldMute));
     if (isMuted && currentBGM) {
         currentBGM.pause();
     }
-}
+};

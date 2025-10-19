@@ -45,9 +45,30 @@ const ProjectDashboard: React.FC = () => {
         if (!newProjectName.trim() || !profile) return;
         setIsCreating(true);
         const supabase = getSupabaseClient();
+
+        // Adjusted to store project_name inside project_data JSONB
+        const initialProjectData: ProjectData = {
+            project_name: newProjectName.trim(),
+            brandInputs: null,
+            slogans: [],
+            selectedSlogan: null,
+            logoPrompt: null,
+            logoOptions: [],
+            selectedLogoUrl: null,
+            logoVariations: [],
+            brandPersonas: [],
+            selectedPersona: null,
+            socialMediaKit: null,
+            socialProfiles: null,
+            contentCalendar: null,
+        };
+
         const { data, error } = await supabase
             .from('projects')
-            .insert({ project_name: newProjectName, user_id: profile.id, project_data: { brandInputs: null } })
+            .insert({ 
+                user_id: profile.id, 
+                project_data: initialProjectData 
+            })
             .select()
             .single();
 
@@ -115,7 +136,7 @@ const ProjectDashboard: React.FC = () => {
                              <div className="space-y-2 max-h-60 overflow-y-auto">
                                 {projects.map(p => (
                                     <button key={p.id} onClick={() => setSelectedProject(p)} className={`w-full text-left p-2 rounded-md text-sm ${selectedProject?.id === p.id ? 'bg-primary text-white font-semibold' : 'hover:bg-background'}`}>
-                                        {p.project_name}
+                                        {p.project_data.project_name}
                                     </button>
                                 ))}
                             </div>

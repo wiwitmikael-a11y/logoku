@@ -12,8 +12,8 @@ const BrandGuidelineDocument: React.FC<Props> = ({ project }) => {
     return null;
   }
 
-  const { project_name, project_data } = project;
-  const { selectedPersona: persona, selectedLogoUrl, selectedSlogan } = project_data;
+  const { project_data } = project;
+  const { selectedPersona: persona, selectedLogoUrl, selectedSlogan, project_name } = project_data;
 
   return (
     <div id="brand-guideline-pdf" className="w-[800px] p-10 bg-white text-gray-800 font-sans">

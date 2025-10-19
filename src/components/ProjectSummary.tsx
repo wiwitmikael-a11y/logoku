@@ -41,7 +41,7 @@ const ProjectSummary: React.FC<{ project: Project | null }> = ({ project }) => {
         );
     }
     
-    const { selectedPersona, selectedSlogan, selectedLogoUrl, socialMediaKit, sotoshop_assets } = project.project_data;
+    const { selectedPersona, selectedSlogan, selectedLogoUrl, socialMediaKit, sotoshop_assets, project_name } = project.project_data;
 
     const countSotoshopAssets = () => {
         if (!sotoshop_assets) return 0;
@@ -55,7 +55,7 @@ const ProjectSummary: React.FC<{ project: Project | null }> = ({ project }) => {
     return (
         <div className="p-4 bg-surface rounded-2xl sticky top-8 animate-item-appear">
             <h3 className="text-2xl font-bold text-text-header mb-4" style={{fontFamily: 'var(--font-display)'}}>
-                Progres Juragan: <span className="text-accent">{project.project_name}</span>
+                Progres Juragan: <span className="text-accent">{project_name}</span>
             </h3>
             <div className="space-y-3">
                 <SummaryItem icon="👤" label="Persona Brand" isComplete={!!selectedPersona}>

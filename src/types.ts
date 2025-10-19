@@ -13,14 +13,12 @@ export interface UserProfile extends User {
   level: number;
   xp: number;
   achievements: string[];
-  is_muted: boolean;
   language: 'id' | 'en';
 }
 
 export interface Project {
   id: string;
   user_id: string;
-  project_name: string;
   created_at: string;
   is_public: boolean;
   project_data: ProjectData;
@@ -91,6 +89,7 @@ export interface VideoAsset {
 }
 
 export interface ProjectData {
+  project_name: string;
   brandInputs: BrandInputs | null;
   slogans: string[];
   selectedSlogan: string | null;

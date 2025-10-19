@@ -24,7 +24,7 @@ interface Props {
 }
 
 const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
-  const [inputs, setInputs] = useState<BrandInputs>(project.project_data.brandInputs || { businessName: project.project_name, businessDetail: '', industry: '', targetAudience: '', valueProposition: '', competitorAnalysis: '' });
+  const [inputs, setInputs] = useState<BrandInputs>(project.project_data.brandInputs || { businessName: project.project_data.project_name, businessDetail: '', industry: '', targetAudience: '', valueProposition: '', competitorAnalysis: '' });
   const [personas, setPersonas] = useState<BrandPersona[]>(project.project_data.brandPersonas || []);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +95,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
               });
               
               pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-              pdf.save(`${project.project_name}_brand_guideline.pdf`);
+              pdf.save(`${project.project_data.project_name}_brand_guideline.pdf`);
           } catch (error) {
               setError("Gagal membuat PDF: " + (error as Error).message);
           }

@@ -4,7 +4,7 @@ import React, { createContext, useState, useEffect, useContext, ReactNode, useCa
 import { getSupabaseClient } from '../services/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
 import type { UserProfile, Project } from '../types';
-import { setMuted } from '../services/soundService';
+import { setMuted, initializeMuteState } from '../services/soundService';
 
 interface AuthContextType {
   session: Session | null;
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setProfile(profileData || null);
       setProjects(projectsData || []);
-      setMuted(profileData?.is_muted ?? false);
+      // Mute state is now handled by soundService and localStorage, no need to fetch from profile.
 
     } catch (error) {
       setAuthError((error as Error).message);
@@ -52,6 +52,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   useEffect(() => {
+    initializeMuteState(); // Initialize mute state from localStorage
     const supabase = getSupabaseClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
