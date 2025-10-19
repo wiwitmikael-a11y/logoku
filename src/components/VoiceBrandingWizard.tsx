@@ -1,288 +1,183 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { GoogleGenAI, LiveServerMessage, Modality, Blob } from "@google/genai";
-import { getAiClient } from '../services/geminiService';
-import { useUserActions } from '../contexts/UserActionsContext';
-import { BrandInputs } from '../types';
-import { encode, decode, decodeAudioData } from '../utils/audioUtils';
-import { playSound, unlockAudio } from '../services/soundService';
+import React, { useState, useEffect, useRef } from 'react';
+import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Type, FunctionDeclaration } from '@google/genai';
+import { useUserActions } from '../../contexts/UserActionsContext';
+import { getAiClient } from '../../services/geminiService';
+import { encode, decode, decodeAudioData } from '../../utils/audioUtils';
+import { playSound, unlockAudio } from '../../services/soundService';
+import type { BrandInputs } from '../../types';
+import Button from './common/Button';
+import ErrorMessage from './common/ErrorMessage';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-const CONSULTATION_STEPS: (keyof BrandInputs)[] = [
-  'businessName', 'industry', 'targetAudience', 'valueProposition'
-];
+const systemInstruction = `You are "Mang AI", a friendly and expert branding consultant for small businesses in Indonesia. Your goal is to conduct a voice consultation to gather all the necessary information to build a brand persona. You MUST ask questions one by one to fill out these fields: businessName, businessDetail, industry, targetAudience, valueProposition, and competitorAnalysis. Speak in a friendly, informal Indonesian style ("lo-gue" is okay). Be encouraging. Once you have gathered all the information, you MUST call the 'submitBrandingInputs' function with the collected data. Do not end the conversation until you have called the function. Start by introducing yourself and asking for the business name.`;
 
-type ConversationState = 'IDLE' | 'REQUESTING_MIC' | 'LISTENING' | 'ANALYZING' | 'SPEAKING' | 'COMPLETED' | 'ERROR';
+const submitFunctionDeclaration: FunctionDeclaration = {
+  name: 'submitBrandingInputs',
+  parameters: {
+    type: Type.OBJECT,
+    description: 'Submits the collected branding information once all fields are gathered.',
+    properties: {
+      businessName: { type: Type.STRING, description: 'Nama bisnis atau brand.' },
+      businessDetail: { type: Type.STRING, description: 'Penjelasan detail tentang bisnis.' },
+      industry: { type: Type.STRING, description: 'Industri bisnis, misal: F&B, Fashion.' },
+      targetAudience: { type: Type.STRING, description: 'Target pasar atau audiens.' },
+      valueProposition: { type: Type.STRING, description: 'Keunggulan unik atau nilai jual produk/jasa.' },
+      competitorAnalysis: { type: Type.STRING, description: 'Analisis singkat tentang kompetitor utama.' },
+    },
+    required: ['businessName', 'businessDetail', 'industry', 'targetAudience', 'valueProposition'],
+  },
+};
 
-const VoiceBrandingWizard: React.FC<{ show: boolean; onClose: () => void; }> = ({ show, onClose }) => {
-    const [currentState, setCurrentState] = useState<ConversationState>('IDLE');
-    const [error, setError] = useState<string | null>(null);
-    const [currentStepIndex, setCurrentStepIndex] = useState(-1); // Start at -1 for introduction
-    const [brandInputs, setBrandInputs] = useState<Partial<BrandInputs>>({});
-    const [liveTranscription, setLiveTranscription] = useState('');
-    
-    const sessionPromiseRef = useRef<Promise<any> | null>(null);
+interface Props {
+  show: boolean;
+  onClose: () => void;
+}
+
+const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
     const { setLastVoiceConsultationResult } = useUserActions();
-    const outputAudioContextRef = useRef<AudioContext | null>(null);
-    const nextStartTimeRef = useRef(0);
-    const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const [status, setStatus] = useState<'IDLE' | 'LISTENING' | 'PROCESSING' | 'SPEAKING' | 'DONE' | 'ERROR'>('IDLE');
+    const [error, setError] = useState<string | null>(null);
+    const [userTranscript, setUserTranscript] = useState('');
+    const [mangAiTranscript, setMangAiTranscript] = useState('');
+    
+    const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+    const inputAudioContextRef = useRef<AudioContext | null>(null);
+    const outputAudioContextRef = useRef<AudioContext | null>(null);
 
-    const handleStartConsultation = async () => {
+    const startConsultation = async () => {
         await unlockAudio();
-        playSound('start');
-        setCurrentState('REQUESTING_MIC');
+        setStatus('LISTENING');
         setError(null);
-        setBrandInputs({});
-        setCurrentStepIndex(-1);
-        setLiveTranscription('');
-        
+        setMangAiTranscript('Mang AI sedang mendengarkan...');
+
         try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
+
+            const ai = getAiClient();
+            inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
             outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             
-            // ENHANCED: Activate browser's native noise suppression and audio stabilization
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    noiseSuppression: true,
-                    echoCancellation: true,
-                    autoGainControl: true,
-                } 
-            });
-            
-            streamRef.current = stream;
-            const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-            
-            const ai = getAiClient();
             sessionPromiseRef.current = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+                config: {
+                    responseModalities: [Modality.AUDIO],
+                    systemInstruction,
+                    tools: [{ functionDeclarations: [submitFunctionDeclaration] }],
+                    inputAudioTranscription: {},
+                    outputAudioTranscription: {},
+                },
                 callbacks: {
                     onopen: () => {
-                        const source = inputAudioContext.createMediaStreamSource(stream);
-                        const scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
-                        scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
-                            const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
-                            const pcmBlob: Blob = {
+                        const source = inputAudioContextRef.current!.createMediaStreamSource(streamRef.current!);
+                        const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
+                        scriptProcessorRef.current = scriptProcessor;
+
+                        scriptProcessor.onaudioprocess = (event) => {
+                            const inputData = event.inputBuffer.getChannelData(0);
+                            const pcmBlob = {
                                 data: encode(new Uint8Array(new Int16Array(inputData.map(f => f * 32768)).buffer)),
                                 mimeType: 'audio/pcm;rate=16000',
                             };
-                            sessionPromiseRef.current?.then((session) => session.sendRealtimeInput({ media: pcmBlob }));
+                            sessionPromiseRef.current?.then(session => session.sendRealtimeInput({ media: pcmBlob }));
                         };
                         source.connect(scriptProcessor);
-                        scriptProcessor.connect(inputAudioContext.destination);
+                        scriptProcessor.connect(inputAudioContextRef.current!.destination);
                     },
                     onmessage: async (message: LiveServerMessage) => {
-                        if (currentState === 'COMPLETED') return;
-
-                        const audioData = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
-                        if (audioData) {
-                            setCurrentState('SPEAKING');
-                            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-
-                            const audioContext = outputAudioContextRef.current;
-                            if (audioContext) {
-                                nextStartTimeRef.current = Math.max(nextStartTimeRef.current, audioContext.currentTime);
-                                const audioBuffer = await decodeAudioData(decode(audioData), audioContext, 24000, 1);
-                                const sourceNode = audioContext.createBufferSource();
-                                sourceNode.buffer = audioBuffer;
-                                sourceNode.connect(audioContext.destination);
-                                sourceNode.start(nextStartTimeRef.current);
-                                nextStartTimeRef.current += audioBuffer.duration;
-                                sourceNode.onended = () => {
-                                    if(currentStepIndex < CONSULTATION_STEPS.length) {
-                                       setCurrentState('LISTENING');
-                                    }
-                                };
-                            }
+                        if (message.serverContent?.inputTranscription) {
+                            setUserTranscript(prev => prev + message.serverContent!.inputTranscription!.text);
                         }
-
-                        const transcription = message.serverContent?.inputTranscription?.text;
-                        if (transcription) {
-                           setLiveTranscription(prev => prev + transcription);
-                           if(silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+                        if (message.serverContent?.outputTranscription) {
+                             if(status !== 'SPEAKING') setStatus('SPEAKING');
+                             setMangAiTranscript(prev => prev.replace('Mang AI sedang mendengarkan...', '') + message.serverContent!.outputTranscription!.text);
                         }
-
-                        if (message.serverContent?.turnComplete) {
-                            const fullTranscription = liveTranscription.trim();
-                            setLiveTranscription('');
-                            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-
-                            if (currentStepIndex >= 0) {
-                                if (!fullTranscription) { 
-                                    sessionPromiseRef.current?.then(session => session.sendText({ text: "Maaf, saya tidak mendengar jawaban Juragan. Bisa diulangi?" }));
-                                    return;
-                                }
-                                const currentField = CONSULTATION_STEPS[currentStepIndex];
-                                setBrandInputs(prev => ({...prev, [currentField]: fullTranscription}));
-                                setCurrentState('ANALYZING');
-                                
-                                setTimeout(() => {
-                                    const nextStepIndex = currentStepIndex + 1;
-                                    sessionPromiseRef.current?.then(session => {
-                                        session.sendText({ text: `Jawaban pengguna adalah: "${fullTranscription}". Lanjutkan ke langkah berikutnya.` });
-                                    });
-                                    setCurrentStepIndex(nextStepIndex);
-                                }, 1500); // Simulate analysis time
-
+                        if (message.serverContent?.modelTurn?.parts[0]?.inlineData?.data) {
+                            const audioData = message.serverContent.modelTurn.parts[0].inlineData.data;
+                            const audioBuffer = await decodeAudioData(decode(audioData), outputAudioContextRef.current!, 24000, 1);
+                            const source = outputAudioContextRef.current!.createBufferSource();
+                            source.buffer = audioBuffer;
+                            source.connect(outputAudioContextRef.current!.destination);
+                            source.start();
+                        }
+                        if(message.serverContent?.turnComplete) {
+                            setUserTranscript('');
+                            setMangAiTranscript('');
+                            setStatus('LISTENING');
+                        }
+                        if (message.toolCall?.functionCalls) {
+                            const fc = message.toolCall.functionCalls[0];
+                            if (fc.name === 'submitBrandingInputs') {
+                                setLastVoiceConsultationResult(fc.args as BrandInputs);
+                                setStatus('DONE');
+                                setMangAiTranscript('Sip, data sudah lengkap! Mang AI akan siapkan proyeknya sekarang.');
+                                playSound('success');
+                                stopConsultation();
+                                setTimeout(onClose, 2000);
                             }
                         }
                     },
-                    onerror: (e: ErrorEvent) => {
-                        setError(`Terjadi kesalahan koneksi: ${e.message}`);
-                        setCurrentState('ERROR');
+                    onclose: () => { console.log('closed'); },
+                    onerror: (e) => {
+                        console.error('Live session error:', e);
+                        setError('Terjadi kesalahan koneksi.');
+                        setStatus('ERROR');
                     },
-                    onclose: () => {
-                        stream.getTracks().forEach(track => track.stop());
-                        inputAudioContext.close();
-                    },
-                },
-                config: {
-                    responseModalities: [Modality.AUDIO],
-                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } },
-                    inputAudioTranscription: {},
-                    systemInstruction: `Anda adalah Mang AI, seorang konsultan branding profesional yang ramah, efisien, dan sangat sistematis untuk UMKM. Panggil pengguna dengan sebutan "Juragan". Alur kerja Anda SANGAT TEGAS dan harus diikuti tanpa kecuali:
-
-1.  **Pembukaan:** Saat menerima perintah "Mulai sesi konsultasi", awali dengan sapaan hangat dan profesional. Jelaskan bahwa Anda akan melakukan sesi konsultasi singkat untuk menggali 4 pilar DNA brand, lalu langsung ajukan pertanyaan pertama tentang "Nama Bisnis".
-
-2.  **Proses Tanya Jawab:** Anda akan menerima perintah dari sistem yang berisi jawaban pengguna dan instruksi untuk "Lanjutkan ke langkah berikutnya". Berdasarkan jumlah langkah yang telah dilalui, ajukan pertanyaan sesuai urutan ini:
-    *   Langkah 1: Nama Bisnis
-    *   Langkah 2: Industri / Bidang Usaha
-    *   Langkah 3: Target Audiens
-    *   Langkah 4: Keunggulan Utama
-    
-3.  **Konfirmasi & Transisi WAJIB:** Respons Anda SETELAH menerima jawaban pengguna HARUS dimulai dengan konfirmasi verbal atas jawaban tersebut. Contoh: jika diberi tahu jawaban adalah "Kopi Senja", respons Anda HARUS diawali dengan, "Oke, dicatat, nama bisnisnya 'Kopi Senja' ya! Nah, selanjutnya,...". Setelah konfirmasi, baru ajukan pertanyaan berikutnya dengan transisi yang mulus.
-
-4.  **Penutupan:** Setelah langkah ke-4 (Keunggulan Utama) terjawab dan Anda menerima perintah 'lanjutkan' untuk terakhir kalinya, JANGAN bertanya lagi. Sebaliknya, berikan rangkuman verbal singkat dari 4 poin yang telah terkumpul. Akhiri dengan ucapan selamat dan antusias, lalu katakan "Mantap, semua data sudah lengkap! Saya simpan hasilnya ya, Juragan."
-
-5.  **Aturan Tambahan:** Selalu tunggu perintah dari sistem. Jika pengguna diam, sistem akan memberitahu Anda. Anda bisa merespons dengan, "Halo, Juragan? Apa masih di sana?".`,
                 },
             });
-            
-            const session = await sessionPromiseRef.current;
-            session.sendText({ text: "Mulai sesi konsultasi." });
-            setCurrentState('SPEAKING'); // AI will start with introduction
-            setCurrentStepIndex(0);
 
         } catch (err) {
-            setError(err instanceof Error ? `Gagal memulai: ${err.message}. Pastikan izin mikrofon diberikan.` : 'Gagal memulai sesi.');
-            setCurrentState('ERROR');
+            console.error(err);
+            setError('Gagal mengakses mikrofon. Pastikan sudah diizinkan di browser.');
+            setStatus('ERROR');
         }
     };
     
-    useEffect(() => {
-        if (currentStepIndex >= CONSULTATION_STEPS.length && currentState !== 'COMPLETED' && Object.keys(brandInputs).length > 0) {
-            setCurrentState('COMPLETED');
-            setTimeout(handleClose, 6000); 
-        }
-    }, [currentStepIndex, currentState, brandInputs]);
+    const stopConsultation = () => {
+        streamRef.current?.getTracks().forEach(track => track.stop());
+        scriptProcessorRef.current?.disconnect();
+        inputAudioContextRef.current?.close();
+        outputAudioContextRef.current?.close();
+        sessionPromiseRef.current?.then(session => session.close());
+        setStatus('IDLE');
+    };
     
-    const handleClose = useCallback(() => {
-        if (sessionPromiseRef.current) {
-            sessionPromiseRef.current.then(session => session.close());
-            sessionPromiseRef.current = null;
+    useEffect(() => {
+        if (!show) {
+            stopConsultation();
         }
-        if (outputAudioContextRef.current && outputAudioContextRef.current.state !== 'closed') {
-            outputAudioContextRef.current.close();
-            outputAudioContextRef.current = null;
-        }
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-            streamRef.current = null;
-        }
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-
-        if (Object.keys(brandInputs).length === CONSULTATION_STEPS.length) {
-            setLastVoiceConsultationResult(brandInputs as BrandInputs);
-            playSound('success');
-        }
-        
-        onClose();
-        setTimeout(() => { 
-            setCurrentState('IDLE'); setBrandInputs({}); setCurrentStepIndex(-1);
-        }, 300);
-    }, [brandInputs, onClose, setLastVoiceConsultationResult]);
+    }, [show]);
 
     if (!show) return null;
 
-    const ConsultationChecklist = () => (
-        <div className="space-y-2 mt-4 text-left">
-            {CONSULTATION_STEPS.map((stepKey, index) => (
-                <div key={stepKey as string} className={`flex items-start transition-all duration-300 ${index > currentStepIndex ? 'opacity-40' : 'opacity-100'}`}>
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center mr-3 mt-1 flex-shrink-0 ${brandInputs[stepKey] ? 'bg-green-500' : (index === currentStepIndex ? 'bg-primary animate-pulse' : 'bg-border-main')}`}>
-                       {brandInputs[stepKey] && <span className="text-white text-xs">✓</span>}
-                    </div>
-                    <div>
-                        <p className="font-semibold text-sm text-text-header capitalize">{(stepKey as string).replace(/([A-Z])/g, ' $1')}</p>
-                        <p className="text-xs text-text-body truncate max-w-xs">{brandInputs[stepKey] || '...'}</p>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-    
-    const StateIndicator = () => {
-        let text, icon, colorClass = "text-accent";
-        switch (currentState) {
-            case 'LISTENING': text = "Mang AI sedang mendengarkan..."; icon = "🎤"; break;
-            case 'ANALYZING': text = "Menganalisa jawaban..."; icon = "🤔"; break;
-            case 'SPEAKING': text = "Mang AI sedang berbicara..."; icon = "💬"; break;
-            case 'COMPLETED': text = "Konsultasi Selesai!"; icon = "✅"; colorClass="text-green-500"; break;
-            default: return null;
-        }
-        return <div className={`text-sm ${colorClass} animate-pulse mt-2 font-semibold flex items-center justify-center gap-2`}><span>{icon}</span> {text}</div>
-    }
-
-    const renderContent = () => {
-        switch (currentState) {
-            case 'IDLE':
-                return (
-                    <>
-                        <p className="text-text-body mt-2 mb-6 text-center">Mang AI akan menjadi konsultan pribadimu untuk menggali DNA brand lewat sesi tanya jawab suara yang interaktif.</p>
-                        <button onClick={handleStartConsultation} className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors">Mulai Konsultasi Suara</button>
-                    </>
-                );
-            case 'REQUESTING_MIC':
-                return <p className="text-center text-text-muted">Meminta izin mikrofon...</p>;
-            case 'LISTENING':
-            case 'ANALYZING':
-            case 'SPEAKING':
-            case 'COMPLETED':
-                 return (
-                    <>
-                        <StateIndicator/>
-                        <div className="relative h-16 w-full my-4 bg-background rounded-lg flex items-center justify-center overflow-hidden border border-border-main">
-                           <p className="text-center text-text-body p-2 italic">"{liveTranscription}"</p>
-                           {currentState === 'LISTENING' && <div className="absolute bottom-0 left-0 h-1 w-full bg-primary animate-pulse" />}
-                           {currentState === 'ANALYZING' && <div className="absolute inset-0 bg-primary/10 flex items-center justify-center"><div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin"></div></div>}
-                        </div>
-                        <ConsultationChecklist />
-                    </>
-                 );
-            case 'ERROR':
-                 return (
-                    <>
-                        <p className="text-center text-red-500 font-semibold mb-3">Waduh, ada masalah!</p>
-                        <p className="text-sm text-center text-text-muted break-words">{error}</p>
-                        <button onClick={handleStartConsultation} className="w-full mt-4 py-2 bg-primary text-white rounded-lg">Coba Lagi</button>
-                    </>
-                )
-        }
-    }
-
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" style={{animationDuration: '0.3s'}}>
-            <div className="relative bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full">
-                <button onClick={handleClose} title="Tutup" className="absolute top-4 right-4 z-10 p-2 text-primary rounded-full hover:bg-background hover:text-primary-hover transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-xl p-8 text-center flex flex-col items-center">
+                 <button onClick={onClose} title="Tutup" className="absolute top-4 right-4 p-2 text-primary rounded-full hover:bg-background transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
-                <div className="text-center">
-                    <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-20 h-20 mx-auto mb-4" style={{imageRendering: 'pixelated'}}/>
-                    <h2 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Konsultan Suara Brand</h2>
+                <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-24 h-24 mb-4" style={{ imageRendering: 'pixelated' }} />
+                <h2 className="text-2xl font-bold text-text-header mb-2">Konsultasi Suara dengan Mang AI</h2>
+                <p className="text-sm text-text-body mb-6">Jawab pertanyaan Mang AI, dan biarkan dia yang mengisi formulir untukmu. Santai saja!</p>
+                
+                <div className="w-full min-h-[80px] bg-background p-3 rounded-lg text-left text-sm mb-4">
+                    <p className="text-text-header font-semibold">Mang AI:</p>
+                    <p className="text-text-body italic">{mangAiTranscript || (status === 'IDLE' && "Klik 'Mulai' untuk ngobrol.")}</p>
+                    <p className="text-text-muted mt-2 text-right">{userTranscript}</p>
                 </div>
-                <div className="mt-4 min-h-[250px]">
-                    {renderContent()}
-                </div>
+                
+                {error && <ErrorMessage message={error} />}
+
+                {status === 'IDLE' || status === 'ERROR' ? (
+                     <Button onClick={startConsultation} variant="primary">Mulai Konsultasi</Button>
+                ) : status !== 'DONE' ? (
+                    <Button onClick={stopConsultation} variant="secondary">Hentikan Sesi</Button>
+                ) : null}
             </div>
         </div>
     );
