@@ -9,6 +9,7 @@ import Button from './Button';
 import Input from './Input';
 import ErrorMessage from './ErrorMessage';
 import { useTranslation } from '../../contexts/LanguageContext';
+import HeaderStats from '../gamification/HeaderStats';
 
 interface Props {
   show: boolean;
@@ -17,7 +18,7 @@ interface Props {
 
 const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
   const { user, profile, executeLogout, refreshProfile } = useAuth();
-  const { } = useUI();
+  const { toggleDailyMissionsModal } = useUI();
   const { language, setLanguage } = useTranslation();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -72,6 +73,11 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
     await executeLogout();
     onClose();
   };
+  
+  const openMissions = () => {
+      onClose(); // Close this modal first
+      toggleDailyMissionsModal(true); // Then open the other
+  }
 
   return (
     <div
@@ -94,6 +100,10 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
           </div>
         </div>
         
+        <div className="mb-6">
+          <HeaderStats />
+        </div>
+        
         <div className="space-y-4">
           <Input 
             label="Nama Lengkap"
@@ -114,12 +124,14 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
                 <label htmlFor="mute-toggle" className="text-sm font-medium text-text-body">Mute Suara UI</label>
                 <input type="checkbox" id="mute-toggle" checked={isMutedState} onChange={handleMuteToggle} className="h-4 w-4 rounded bg-surface border-border-main text-primary focus:ring-primary"/>
             </div>
-
         </div>
 
         {error && <ErrorMessage message={error} />}
 
         <div className="flex flex-col gap-2 mt-6">
+          <Button onClick={openMissions} variant="accent" className="w-full">
+            🎯 Lihat Misi Harian
+          </Button>
           <Button onClick={handleSave} isLoading={isSaving} className="w-full">
             Simpan Perubahan
           </Button>

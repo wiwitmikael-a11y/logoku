@@ -6,7 +6,6 @@ import { useUI } from '../contexts/UIContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { getSupabaseClient } from '../services/supabaseClient';
 import type { Project, ProjectData } from '../types';
-import HeaderStats from './gamification/HeaderStats';
 import ProjectSummary from './ProjectSummary';
 import AICreator from './AICreator';
 import Button from './common/Button';
@@ -20,7 +19,7 @@ const ProjectDashboard: React.FC = () => {
     const { 
         theme, toggleTheme,
         toggleAboutModal, toggleContactModal, toggleToSModal, togglePrivacyModal,
-        toggleProfileSettingsModal, togglePusatJuraganModal, toggleDailyMissionsModal
+        toggleProfileSettingsModal, togglePusatJuraganModal
     } = useUI();
     const { checkForNewAchievements } = useUserActions();
     
@@ -105,7 +104,6 @@ const ProjectDashboard: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-2">
                              <Button onClick={() => togglePusatJuraganModal(true)} variant="secondary" size="small">Pusat Juragan</Button>
-                             <Button onClick={() => toggleDailyMissionsModal(true)} variant="secondary" size="small">🎯 Misi Harian</Button>
                             <ThemeToggle theme={theme} onToggle={toggleTheme} />
                             <button onClick={() => toggleProfileSettingsModal(true)} title={profile?.full_name}>
                                 <img src={profile?.avatar_url} alt="Avatar" className="w-9 h-9 rounded-full" />
@@ -116,7 +114,6 @@ const ProjectDashboard: React.FC = () => {
             </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <HeaderStats />
                 <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     <aside className="lg:col-span-3 space-y-6">
                         <div className="p-4 bg-surface rounded-2xl">
