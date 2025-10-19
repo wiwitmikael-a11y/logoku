@@ -12,8 +12,6 @@ import AICreator from './AICreator';
 import Button from './common/Button';
 import ThemeToggle from './common/ThemeToggle';
 import Footer from './common/Footer';
-import DailyMissions from './gamification/DailyMissions';
-import Onboarding from './common/Onboarding';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
@@ -22,23 +20,19 @@ const ProjectDashboard: React.FC = () => {
     const { 
         theme, toggleTheme,
         toggleAboutModal, toggleContactModal, toggleToSModal, togglePrivacyModal,
-        toggleProfileSettingsModal, togglePusatJuraganModal
+        toggleProfileSettingsModal, togglePusatJuraganModal, toggleDailyMissionsModal
     } = useUI();
     const { checkForNewAchievements } = useUserActions();
     
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [newProjectName, setNewProjectName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
-    const [showOnboarding, setShowOnboarding] = useState(false);
 
     useEffect(() => {
         if (projects.length > 0 && !selectedProject) {
             setSelectedProject(projects[0]);
         }
         checkForNewAchievements(projects.length);
-        if (projects.length === 0 && profile) {
-            setShowOnboarding(true);
-        }
     }, [projects, selectedProject, checkForNewAchievements, profile]);
 
     const handleCreateProject = async () => {
@@ -103,7 +97,6 @@ const ProjectDashboard: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-background text-text-body">
-            {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
             <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border-main">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
@@ -112,6 +105,7 @@ const ProjectDashboard: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-2">
                              <Button onClick={() => togglePusatJuraganModal(true)} variant="secondary" size="small">Pusat Juragan</Button>
+                             <Button onClick={() => toggleDailyMissionsModal(true)} variant="secondary" size="small">🎯 Misi Harian</Button>
                             <ThemeToggle theme={theme} onToggle={toggleTheme} />
                             <button onClick={() => toggleProfileSettingsModal(true)} title={profile?.full_name}>
                                 <img src={profile?.avatar_url} alt="Avatar" className="w-9 h-9 rounded-full" />
@@ -123,9 +117,8 @@ const ProjectDashboard: React.FC = () => {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <HeaderStats />
-                <DailyMissions />
                 <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                    <aside className="lg:col-span-3 space-y-6" data-onboarding-step="1" data-onboarding-text="Ini daftar proyekmu. Kamu bisa pilih proyek yang ada atau bikin yang baru di sini.">
+                    <aside className="lg:col-span-3 space-y-6">
                         <div className="p-4 bg-surface rounded-2xl">
                             <h2 className="text-lg font-bold text-text-header mb-3">Proyek Branding</h2>
                             <div className="space-y-2">
@@ -144,7 +137,7 @@ const ProjectDashboard: React.FC = () => {
                         <ProjectSummary project={selectedProject} />
                     </aside>
 
-                    <div className="lg:col-span-9" data-onboarding-step="2" data-onboarding-text="Di sini area kerjamu. Ikuti alur dari Persona, Logo, sampai Konten untuk membangun brand-mu dari nol.">
+                    <div className="lg:col-span-9">
                         <AICreator project={selectedProject} onUpdateProject={handleUpdateProjectData} />
                     </div>
                 </div>

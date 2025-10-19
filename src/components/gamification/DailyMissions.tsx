@@ -16,14 +16,19 @@ const ALL_MISSIONS: Omit<DailyMission, 'isCompleted'>[] = [
     { id: 'mission_5', description: "Simpan 1 Aset ke Lemari Brand", xp: 25, action: 'SAVE_ASSET' },
 ];
 
-const DailyMissions: React.FC = () => {
+interface Props {
+    show: boolean;
+    onClose: () => void;
+}
+
+const DailyMissions: React.FC<Props> = ({ show, onClose }) => {
     const { user } = useAuth();
     const { addXp, deductCredits } = useUserActions();
     const [missions, setMissions] = useState<DailyMission[]>([]);
     const [xpGain, setXpGain] = useState<{ id: string, amount: number } | null>(null);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !show) return;
         const storageKey = getMissionStorageKey(user.id);
         const savedMissions = localStorage.getItem(storageKey);
 
@@ -34,7 +39,7 @@ const DailyMissions: React.FC = () => {
             setMissions(newMissions);
             localStorage.setItem(storageKey, JSON.stringify(newMissions));
         }
-    }, [user]);
+    }, [user, show]);
 
     const completeMission = async (missionId: string) => {
         if (!user) return;
@@ -60,35 +65,42 @@ const DailyMissions: React.FC = () => {
         }
     };
     
+    if (!show) return null;
+
     const allComplete = missions.length > 0 && missions.every(m => m.isCompleted);
 
     return (
-        <div className="mt-8 p-4 bg-surface rounded-2xl animate-item-appear">
-            <h3 className="text-2xl font-bold text-text-header mb-3 flex items-center gap-2" style={{fontFamily: 'var(--font-display)'}}>
-                <span>🎯</span> Misi Harian Juragan
-            </h3>
-            <div className="space-y-3">
-                {missions.map(mission => (
-                     <div key={mission.id} className={`relative flex items-center justify-between p-3 rounded-lg transition-all ${mission.isCompleted ? 'bg-green-500/10 text-text-muted' : 'bg-background'}`}>
-                        <div>
-                            <p className={`font-semibold text-sm ${mission.isCompleted ? 'line-through' : 'text-text-header'}`}>{mission.description}</p>
-                            <p className="text-xs">
-                                <span className="text-accent font-bold">+{mission.xp} XP</span>
-                                {mission.token && <span className="text-primary font-bold ml-2"> +{mission.token} Token</span>}
-                            </p>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-xl p-6">
+                <button onClick={onClose} title="Tutup" className="absolute top-4 right-4 p-2 text-primary rounded-full hover:bg-background transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+                <h3 className="text-2xl font-bold text-text-header mb-4 flex items-center gap-2" style={{fontFamily: 'var(--font-display)'}}>
+                    <span>🎯</span> Misi Harian Juragan
+                </h3>
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                    {missions.map(mission => (
+                         <div key={mission.id} className={`relative flex items-center justify-between p-3 rounded-lg transition-all ${mission.isCompleted ? 'bg-green-500/10 text-text-muted' : 'bg-background'}`}>
+                            <div>
+                                <p className={`font-semibold text-sm ${mission.isCompleted ? 'line-through' : 'text-text-header'}`}>{mission.description}</p>
+                                <p className="text-xs">
+                                    <span className="text-accent font-bold">+{mission.xp} XP</span>
+                                    {mission.token && <span className="text-primary font-bold ml-2"> +{mission.token} Token</span>}
+                                </p>
+                            </div>
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white ${mission.isCompleted ? 'bg-green-500' : 'bg-border-main'}`}>
+                               {mission.isCompleted && '✓'}
+                            </div>
+                            {xpGain?.id === mission.id && (
+                                <div className="xp-gain-animation">+{xpGain.amount} XP</div>
+                            )}
                         </div>
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white ${mission.isCompleted ? 'bg-green-500' : 'bg-border-main'}`}>
-                           {mission.isCompleted && '✓'}
-                        </div>
-                        {xpGain?.id === mission.id && (
-                            <div className="xp-gain-animation">+{xpGain.amount} XP</div>
-                        )}
-                    </div>
-                ))}
+                    ))}
+                </div>
+                 {allComplete && (
+                    <p className="text-center text-sm text-green-400 mt-4 font-semibold">Mantap! Semua misi hari ini beres. Sampai jumpa besok!</p>
+                )}
             </div>
-             {allComplete && (
-                <p className="text-center text-sm text-green-400 mt-4 font-semibold">Mantap! Semua misi hari ini beres. Sampai jumpa besok!</p>
-            )}
         </div>
     );
 };

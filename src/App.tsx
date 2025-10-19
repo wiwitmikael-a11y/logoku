@@ -22,6 +22,7 @@ import LevelUpModal from './components/gamification/LevelUpModal';
 import AchievementToast from './components/gamification/AchievementToast';
 import ProfileSettingsModal from './components/common/ProfileSettingsModal';
 import PusatJuraganModal from './components/community/PusatJuraganModal';
+import DailyMissions from './components/gamification/DailyMissions'; // Now a modal
 import { playBGM, stopBGM } from './services/soundService';
 
 const App: React.FC = () => {
@@ -34,6 +35,7 @@ const App: React.FC = () => {
         showPrivacyModal, togglePrivacyModal,
         showProfileSettingsModal, toggleProfileSettingsModal,
         showPusatJuraganModal, togglePusatJuraganModal,
+        showDailyMissionsModal, toggleDailyMissionsModal,
     } = useUI();
     const { 
         showOutOfCreditsModal, setShowOutOfCreditsModal,
@@ -95,6 +97,7 @@ const App: React.FC = () => {
             <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} />
             <ProfileSettingsModal show={showProfileSettingsModal} onClose={() => toggleProfileSettingsModal(false)} />
             <PusatJuraganModal show={showPusatJuraganModal} onClose={() => togglePusatJuraganModal(false)} />
+            <DailyMissions show={showDailyMissionsModal} onClose={() => toggleDailyMissionsModal(false)} />
             
             <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
             {levelUpInfo && <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />}

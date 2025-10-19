@@ -26,6 +26,8 @@ interface UIContextType {
   toggleProfileSettingsModal: (show: boolean) => void;
   showPusatJuraganModal: boolean;
   togglePusatJuraganModal: (show: boolean) => void;
+  showDailyMissionsModal: boolean;
+  toggleDailyMissionsModal: (show: boolean) => void;
   crossComponentPrompt: CrossComponentPrompt | null;
   setCrossComponentPrompt: React.Dispatch<React.SetStateAction<CrossComponentPrompt | null>>;
 }
@@ -41,6 +43,7 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [showPrivacyModal, setShowPrivacyModal] = useState(false);
     const [showProfileSettingsModal, setShowProfileSettingsModal] = useState(false);
     const [showPusatJuraganModal, setShowPusatJuraganModal] = useState(false);
+    const [showDailyMissionsModal, setShowDailyMissionsModal] = useState(false);
     const [crossComponentPrompt, setCrossComponentPrompt] = useState<CrossComponentPrompt | null>(null);
 
     useEffect(() => {
@@ -73,6 +76,8 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
             toggleProfileSettingsModal: createModalToggler(setShowProfileSettingsModal),
             showPusatJuraganModal,
             togglePusatJuraganModal: createModalToggler(setShowPusatJuraganModal),
+            showDailyMissionsModal,
+            toggleDailyMissionsModal: createModalToggler(setShowDailyMissionsModal),
             crossComponentPrompt,
             setCrossComponentPrompt,
         }}>
