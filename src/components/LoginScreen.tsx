@@ -4,11 +4,9 @@ import React from 'react';
 import Button from './common/Button';
 import { getSupabaseClient } from '../services/supabaseClient';
 import { useUI } from '../contexts/UIContext';
-import { useTranslation } from '../contexts/LanguageContext';
 
 const LoginScreen: React.FC = () => {
   const { toggleToSModal, togglePrivacyModal } = useUI();
-  const { t } = useTranslation();
 
   const handleGoogleLogin = () => {
     try {
@@ -31,13 +29,13 @@ const LoginScreen: React.FC = () => {
               <h1 style={{fontFamily: 'var(--font-display)'}} className="text-6xl md:text-7xl font-extrabold tracking-wider text-primary mb-2">
                 des<span className="text-accent">ai</span>n<span className="text-text-header">.fun</span>
               </h1>
-              <p className="font-semibold text-text-muted mt-2">{t({ id: "Ubah Ide Jadi Brand Juara dalam Hitungan Menit", en: "Turn Ideas Into Champion Brands in Minutes" })}</p>
+              <p className="font-semibold text-text-muted mt-2">Ubah Ide Jadi Brand Juara dalam Hitungan Menit</p>
             </div>
             
             <div className="flex flex-col items-center gap-4">
               <Button 
                 onClick={handleGoogleLogin} 
-                title={t({ id: "Masuk dengan akun Google", en: "Sign in with Google" })}
+                title="Masuk dengan akun Google"
                 size="large"
                 className="!bg-[rgb(var(--c-bg-inverse))] !text-[rgb(var(--c-text-inverse))] border-2 border-border-main hover:!bg-border-light shadow-lg animate-button-ready"
               >
@@ -48,22 +46,22 @@ const LoginScreen: React.FC = () => {
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
                   <path fill="none" d="M0 0h48v48H0z"></path>
                 </svg>
-                {t({ id: "Masuk dengan Google", en: "Sign in with Google" })}
+                Masuk dengan Google
               </Button>
             </div>
             
             <p className="text-xs text-text-muted mt-4">
-              {t({ id: "Dengan masuk, lo setuju sama", en: "By signing in, you agree to the" })}{' '}
+              Dengan masuk, lo setuju sama{' '}
               <button 
                 onClick={() => toggleToSModal(true)} 
                 className="text-primary hover:underline focus:outline-none"
               >
-                {t({ id: "Ketentuan Layanan", en: "Terms of Service" })}
+                Ketentuan Layanan
               </button> & <button 
                 onClick={() => togglePrivacyModal(true)} 
                 className="text-primary hover:underline focus:outline-none"
               >
-                {t({ id: "Kebijakan Privasi", en: "Privacy Policy" })}
+                Kebijakan Privasi
               </button>.
             </p>
         </div>

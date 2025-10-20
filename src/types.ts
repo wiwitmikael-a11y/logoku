@@ -13,7 +13,8 @@ export interface UserProfile extends User {
   level: number;
   xp: number;
   achievements: string[];
-  language: 'id' | 'en';
+  // FIX: Add optional 'language' property to align with database schema and fix type errors.
+  language?: 'id' | 'en';
 }
 
 export interface Project {

@@ -4,7 +4,6 @@ import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { UIProvider } from './contexts/UIContext';
 import { UserActionsProvider } from './contexts/UserActionsContext';
-import { LanguageProvider } from './contexts/LanguageContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -13,9 +12,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       <AuthProvider>
         <UIProvider>
           <UserActionsProvider>
-            <LanguageProvider>
               <App />
-            </LanguageProvider>
           </UserActionsProvider>
         </UIProvider>
       </AuthProvider>

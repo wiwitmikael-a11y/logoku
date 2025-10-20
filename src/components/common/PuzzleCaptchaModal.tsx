@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { playSound } from '../../services/soundService';
-import { useTranslation } from '../../contexts/LanguageContext';
 import Button from './Button';
 
 interface WelcomeGateProps {
@@ -11,7 +10,6 @@ interface WelcomeGateProps {
 
 const WelcomeGate: React.FC<WelcomeGateProps> = ({ onGatePassed }) => {
   const [isVerified, setIsVerified] = useState(false);
-  const { t } = useTranslation();
 
   useEffect(() => {
     if (isVerified) {
@@ -35,24 +33,21 @@ const WelcomeGate: React.FC<WelcomeGateProps> = ({ onGatePassed }) => {
             </div>
 
             <div className="relative z-10">
-                <h1 className="text-3xl font-bold text-text-header mb-2">{t({ id: "Selamat Datang di desain.fun!", en: "Welcome to desain.fun!" })}</h1>
+                <h1 className="text-3xl font-bold text-text-header mb-2">Selamat Datang di desain.fun!</h1>
                 <p className="text-text-body mb-6 max-w-lg mx-auto">
-                  {t({ 
-                    id: "Pusing mikirin logo, konten sosmed, atau kemasan produk? Tenang, Juragan! Mang AI siap jadi partner setia lo. Ubah ide sederhana jadi", 
-                    en: "Struggling with logos, social media content, or product packaging? Relax, Boss! Mang AI is here to be your loyal partner. Turn simple ideas into a" 
-                  })} <strong className="text-text-header">{t({ id: "paket branding lengkap", en: "complete branding package" })}</strong>.
+                  Pusing mikirin logo, konten sosmed, atau kemasan produk? Tenang, Juragan! Mang AI siap jadi partner setia lo. Ubah ide sederhana jadi <strong className="text-text-header">paket branding lengkap</strong>.
                 </p>
                 
                 <div className="p-4 bg-surface rounded-xl border border-border-main">
-                    <h2 className="text-xl font-bold text-primary mb-2">{t({ id: "Verifikasi Dulu, Juragan!", en: "Verify First, Boss!" })}</h2>
-                    <p className="text-sm text-text-muted mb-4">{t({ id: "Untuk memastikan Anda bukan robot, dan untuk klaim token harianmu!", en: "To make sure you're not a robot, and to claim your daily tokens!" })}</p>
+                    <h2 className="text-xl font-bold text-primary mb-2">Verifikasi Dulu, Juragan!</h2>
+                    <p className="text-sm text-text-muted mb-4">Untuk memastikan Anda bukan robot, dan untuk klaim token harianmu!</p>
                     <div className="p-4 bg-accent/10 rounded-lg text-sm text-accent mb-4">
-                        <p><strong>✨ Info Penting:</strong> {t({ id: "Setiap hari Juragan dapat jatah token gratis untuk berkreasi sepuasnya!", en: "Every day you get a free token allowance to create to your heart's content!" })}</p>
+                        <p><strong>✨ Info Penting:</strong> Setiap hari Juragan dapat jatah token gratis untuk berkreasi sepuasnya!</p>
                     </div>
 
                     {isVerified ? (
                         <div className="bg-green-500/20 text-green-400 p-3 rounded-md">
-                        ✓ {t({ id: "Terverifikasi! Siap-siap...", en: "Verified! Get ready..." })}
+                        ✓ Terverifikasi! Siap-siap...
                         </div>
                     ) : (
                         <Button
@@ -61,7 +56,7 @@ const WelcomeGate: React.FC<WelcomeGateProps> = ({ onGatePassed }) => {
                         variant="primary"
                         className="w-full"
                         >
-                        {t({ id: "Masuk & Mulai Berkreasi!", en: "Enter & Start Creating!" })}
+                        Masuk & Mulai Berkreasi!
                         </Button>
                     )}
                 </div>

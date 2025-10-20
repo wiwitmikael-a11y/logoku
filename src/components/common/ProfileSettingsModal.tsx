@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
-import { useTranslation } from '../../contexts/LanguageContext';
 import { getSupabaseClient } from '../../services/supabaseClient';
 import { getIsMuted, setMuted, playBGM, stopBGM, playRandomBGM, playSound } from '../../services/soundService';
 import Button from './Button';
@@ -18,7 +17,6 @@ const bgmOptions = ['Jingle', 'Acoustic', 'Uplifting', 'LoFi', 'Bamboo', 'Ethnic
 const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
   const { profile, user } = useAuth();
   const { theme, toggleTheme } = useUI();
-  const { language, setLanguage } = useTranslation();
   const [isMuted, setIsMuted] = useState(getIsMuted());
 
   useEffect(() => {
@@ -72,13 +70,6 @@ const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
         </div>
         <hr className="my-4 border-border-main" />
         <div className="space-y-4 text-sm max-h-[60vh] overflow-y-auto pr-2">
-            <div className="flex justify-between items-center">
-                <span className="font-semibold text-text-body">Bahasa:</span>
-                <div className="flex gap-2">
-                    <Button size="small" variant={language === 'id' ? 'primary' : 'secondary'} onClick={() => setLanguage('id')}>ID</Button>
-                    <Button size="small" variant={language === 'en' ? 'primary' : 'secondary'} onClick={() => setLanguage('en')}>EN</Button>
-                </div>
-            </div>
              <div className="flex justify-between items-center">
                 <span className="font-semibold text-text-body">Tema:</span>
                 <Button size="small" variant="secondary" onClick={toggleTheme}>{theme === 'dark' ? 'Gelap' : 'Terang'}</Button>
