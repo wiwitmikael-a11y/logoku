@@ -51,7 +51,9 @@ const App: React.FC = () => {
     }, [theme]);
 
     useEffect(() => {
-        let timer: NodeJS.Timeout;
+        // FIX: The type `NodeJS.Timeout` is not available in a browser environment.
+        // Replaced with `ReturnType<typeof setTimeout>` which correctly resolves to `number`.
+        let timer: ReturnType<typeof setTimeout>;
         if (authLoading) {
             timer = setTimeout(() => setIsStuck(true), 8000); // 8 seconds timeout
         } else {
