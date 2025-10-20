@@ -11,6 +11,7 @@ import AICreator from './AICreator';
 import ProjectSummary from './ProjectSummary';
 import Footer from './common/Footer';
 import Button from './common/Button';
+import Tooltip from './common/Tooltip';
 
 const ProjectDock: React.FC<{
   projects: Project[];
@@ -155,11 +156,17 @@ const ProjectDashboard: React.FC = () => {
                     <div className="flex items-center justify-between mb-2">
                         <h1 className="text-3xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}><span className="text-primary">des<span className="text-accent">ai</span>n</span>.fun</h1>
                         <div className="flex items-center gap-2">
-                             <button onClick={() => toggleDailyMissionsModal(true)} title="Misi Harian" className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">🎯</button>
-                             <button onClick={() => togglePusatJuraganModal(true)} title="Pusat Juragan" className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">🏆</button>
-                            <button onClick={() => toggleProfileSettingsModal(true)} title="Pengaturan & Profil" className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
-                                <img src={profile?.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full" />
-                            </button>
+                            <Tooltip text="Misi Harian">
+                                <button onClick={() => toggleDailyMissionsModal(true)} className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">🎯</button>
+                            </Tooltip>
+                             <Tooltip text="Pusat Juragan">
+                                <button onClick={() => togglePusatJuraganModal(true)} className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">🏆</button>
+                             </Tooltip>
+                            <Tooltip text="Profil & Pengaturan">
+                                <button onClick={() => toggleProfileSettingsModal(true)} className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
+                                    <img src={profile?.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full" />
+                                </button>
+                            </Tooltip>
                         </div>
                     </div>
                     <HeaderStats />

@@ -34,7 +34,15 @@ const LemariBrand: React.FC<Props> = ({ project }) => {
         <h2 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Lemari Aset Brand: <span className="text-accent">{project.project_data.project_name}</span></h2>
         
         {!hasAssets(assets) ? (
-            <p className="text-text-muted p-4 bg-surface rounded-lg">Lemari masih kosong, nih. Coba deh pakai tool-tool di "Sotoshop" buat ngisi lemari ini dengan aset-aset keren!</p>
+             <div className="p-6 bg-surface rounded-2xl text-center animate-item-appear min-h-[200px] flex flex-col justify-center items-center">
+                <div className="mx-auto mb-4 w-24 h-24 flex items-center justify-center bg-background rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                </div>
+                <h3 className="font-bold text-text-header text-lg">Lemari Brand Masih Kosong</h3>
+                <p className="text-sm text-text-muted mt-2">Gunakan tool di tab "Sotoshop" untuk membuat dan menyimpan aset visual di sini.</p>
+            </div>
         ) : (
             <div className="space-y-4">
                 <AssetSection title="Maskot" count={assets?.mascots?.length}>

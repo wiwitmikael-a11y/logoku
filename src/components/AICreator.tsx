@@ -1,12 +1,11 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, lazy, useEffect } from 'react';
+import React, { useState, lazy, useEffect, useCallback } from 'react';
 import type { Project, ProjectData, BrandInputs } from '../types';
 import ModuleLoader from './common/ModuleLoader';
 import { useUI } from '../contexts/UIContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
-// FIX: Added missing import for the Button component.
 import Button from './common/Button';
 
 const BrandPersonaGenerator = lazy(() => import('./BrandPersonaGenerator'));
@@ -36,52 +35,40 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
   const [showVoiceWizard, setShowVoiceWizard] = useState(false);
   const { crossComponentPrompt, setCrossComponentPrompt } = useUI();
   const { lastVoiceConsultationResult, setLastVoiceConsultationResult } = useUserActions();
+  const isProjectReady = !!project;
 
-  // Reset to first tab when project changes
-  useEffect(() => {
-    setActiveTab('persona');
-  }, [project]);
-
-  const handleNavigate = (tabId: TabId) => {
+  const handleNavigate = useCallback((tabId: TabId) => {
     playSound('transition');
     setActiveTab(tabId);
-    // You might want to scroll to the top of the creator element here
-  };
+  }, []);
+
+  useEffect(() => {
+    if (project) {
+        setActiveTab('persona');
+    }
+  }, [project]);
 
   useEffect(() => {
     if (crossComponentPrompt) {
         handleNavigate('sotoshop');
-        // A more robust implementation would scroll to the specific tool
     }
-  }, [crossComponentPrompt]);
+  }, [crossComponentPrompt, handleNavigate]);
   
   useEffect(() => {
     if (lastVoiceConsultationResult) {
+      // Immediately copy and clear state to prevent re-trigger on refresh/re-render
+      const result = { ...lastVoiceConsultationResult };
+      setLastVoiceConsultationResult(null);
+
       const projectName = `Proyek Suara ${new Date().toLocaleDateString('id-ID')}`;
-      onCreateProject(projectName, lastVoiceConsultationResult).then(() => {
-        setLastVoiceConsultationResult(null); // Clear after use
-        handleNavigate('logo'); // Navigate to the next step
+      onCreateProject(projectName, result).then(() => {
+        handleNavigate('logo');
+      }).catch(err => {
+        console.error("Failed to create project from voice consultation:", err);
       });
     }
-  }, [lastVoiceConsultationResult, onCreateProject, setLastVoiceConsultationResult]);
+  }, [lastVoiceConsultationResult, onCreateProject, setLastVoiceConsultationResult, handleNavigate]);
 
-  if (!project) {
-    return (
-      <div className="text-center p-8 bg-surface rounded-2xl min-h-[400px] flex flex-col justify-center items-center">
-        <span className="text-5xl mb-4">🚀</span>
-        <h2 className="text-2xl font-bold text-text-header mt-4">Siap Mulai Petualangan Branding?</h2>
-        <p className="mt-2 text-text-muted max-w-md">Buat proyek baru dulu di "Proyek Juragan" di atas, atau coba fitur unggulan konsultasi suara dengan Mang AI!</p>
-        <Button onClick={() => setShowVoiceWizard(true)} variant="primary" className="mt-4">
-            🎙️ Mulai dengan Konsultasi Suara
-        </Button>
-        {showVoiceWizard && 
-            <ModuleLoader>
-                <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} />
-            </ModuleLoader>
-        }
-      </div>
-    );
-  }
 
   const TABS: { id: TabId; name: string; }[] = [
     { id: 'persona', name: '1. Persona' },
@@ -93,6 +80,7 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
   ];
 
   const renderActiveTabContent = () => {
+    if (!project) return null; // Guard against null project
     switch(activeTab) {
       case 'persona':
         return <BrandPersonaGenerator project={project} onUpdateProject={onUpdateProject} onComplete={() => handleNavigate('logo')} />;
@@ -127,15 +115,30 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
             {TABS.map(tab => (
                 <button 
                     key={tab.id} 
-                    onClick={() => handleNavigate(tab.id)}
-                    className={`py-2 px-4 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${activeTab === tab.id ? 'tab-active-splash' : 'text-text-muted hover:text-text-header'}`}
+                    onClick={() => isProjectReady && handleNavigate(tab.id)}
+                    disabled={!isProjectReady}
+                    className={`py-2 px-4 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${activeTab === tab.id && isProjectReady ? 'tab-active-splash' : 'text-text-muted'} ${!isProjectReady ? 'cursor-not-allowed opacity-50' : 'hover:text-text-header'}`}
                 >
                     {tab.name}
                 </button>
             ))}
         </div>
         <ModuleLoader>
-          {renderActiveTabContent()}
+          {isProjectReady && project ? renderActiveTabContent() : (
+            <div className="text-center p-8 bg-surface rounded-2xl min-h-[400px] flex flex-col justify-center items-center">
+              <span className="text-5xl mb-4">🚀</span>
+              <h2 className="text-2xl font-bold text-text-header mt-4">Siap Mulai Petualangan Branding?</h2>
+              <p className="mt-2 text-text-muted max-w-md">Buat proyek baru dulu di "Proyek Juragan" di atas, atau coba fitur unggulan konsultasi suara dengan Mang AI!</p>
+              <Button onClick={() => setShowVoiceWizard(true)} variant="primary" className="mt-4">
+                  🎙️ Mulai dengan Konsultasi Suara
+              </Button>
+              {showVoiceWizard && 
+                  <ModuleLoader>
+                      <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} />
+                  </ModuleLoader>
+              }
+            </div>
+          )}
         </ModuleLoader>
     </div>
   );

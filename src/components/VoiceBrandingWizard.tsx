@@ -26,6 +26,13 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
     const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
 
+    // Safety net: ensure consultation result is cleared when component unmounts
+    useEffect(() => {
+        return () => {
+            setLastVoiceConsultationResult(null);
+        }
+    }, [setLastVoiceConsultationResult]);
+    
     // Auto-close modal on finish
     useEffect(() => {
         if (status === 'finished') {
@@ -95,10 +102,13 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
                     },
                     onerror: (e: ErrorEvent) => {
                         console.error('Live session error:', e);
-                        setStatus('idle');
+                        setTranscript(prev => [...prev, { speaker: 'mang-ai', text: 'Waduh, koneksi ngadat. Coba lagi ya, Juragan.' }]);
+                        stopConversation();
                     },
                     onclose: (e: CloseEvent) => {
-                        // Clean up
+                        if (status === 'listening') {
+                           stopConversation();
+                        }
                     },
                 },
                 config: {
@@ -120,6 +130,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
         mediaStreamSourceRef.current?.disconnect();
         audioContextRef.current?.close().catch(() => {});
         streamRef.current?.getTracks().forEach(track => track.stop());
+        sessionPromiseRef.current = null;
         setStatus('idle');
     };
     
@@ -143,6 +154,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
             playSound('success');
         } catch (err) {
             console.error('Failed to process transcript:', err);
+            setStatus('idle');
         }
     };
     
