@@ -7,8 +7,11 @@ import { getSupabaseClient } from "./supabaseClient";
 import { fetchImageAsBase64 } from "../utils/imageUtils";
 
 let ai: GoogleGenAI | null = null;
+let vertexAi: GoogleGenAI | null = null;
 let geminiApiKeyError: string | null = null;
+let vertexApiKeyError: string | null = null;
 
+// Inisialisasi Klien Gemini Standar
 try {
   const apiKey = import.meta.env.VITE_API_KEY;
   if (!apiKey) {
@@ -19,17 +22,40 @@ try {
   geminiApiKeyError = (e as Error).message;
 }
 
+// BARU: Inisialisasi Klien Khusus untuk Vertex AI (Veo)
+try {
+  const vertexApiKey = import.meta.env.VITE_VERTEX_API_KEY;
+  if (!vertexApiKey) {
+    throw new Error("Kunci API VITE_VERTEX_API_KEY untuk Vertex/Veo tidak ditemukan.");
+  }
+  vertexAi = new GoogleGenAI({ apiKey: vertexApiKey });
+} catch (e) {
+  vertexApiKeyError = (e as Error).message;
+}
+
 export const getAiClient = (): GoogleGenAI => {
     if (geminiApiKeyError) {
         throw new Error(geminiApiKeyError);
     }
     if (!ai) {
-        throw new Error("Klien Gemini AI belum terinisialisasi. Cek konfigurasi API Key.");
+        throw new Error("Klien Gemini AI standar belum terinisialisasi. Cek konfigurasi VITE_API_KEY.");
     }
     return ai;
 }
 
-export const getApiKeyError = (): string | null => geminiApiKeyError;
+// BARU: Fungsi untuk mendapatkan klien Vertex AI
+const getVertexAiClient = (): GoogleGenAI => {
+    if (vertexApiKeyError) {
+        throw new Error(vertexApiKeyError);
+    }
+    if (!vertexAi) {
+        throw new Error("Klien Vertex AI belum terinisialisasi. Cek konfigurasi VITE_VERTEX_API_KEY.");
+    }
+    return vertexAi;
+}
+
+
+export const getApiKeyError = (): string | null => geminiApiKeyError || vertexApiKeyError;
 
 // --- UTILITY ---
 export const enhancePromptWithPersonaStyle = (prompt: string, persona: BrandPersona | null): string => {
@@ -38,11 +64,11 @@ export const enhancePromptWithPersonaStyle = (prompt: string, persona: BrandPers
   return `${prompt}. Gunakan gaya visual yang ${persona.visual_style} dengan palet warna dominan ${colorNames}.`;
 };
 
-// --- CORE BRANDING WORKFLOW ---
+// --- CORE BRANDING WORKFLOW (TETAP MENGGUNAKAN KLIEN STANDAR) ---
 
 export const generateBrandPersonas = async (inputs: BrandInputs): Promise<BrandPersona[]> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Klien Standar
         const prompt = `Buat 3 persona brand unik untuk bisnis dengan detail berikut:
 - Nama Bisnis: ${inputs.businessName}
 - Detail: ${inputs.businessDetail}
@@ -99,7 +125,7 @@ Untuk setiap persona, berikan:
 
 export const generateSlogans = async (inputs: BrandInputs): Promise<string[]> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Klien Standar
         const prompt = `Buatkan 5 opsi slogan yang singkat, menarik, dan menjual untuk brand:
 - Nama: ${inputs.businessName}
 - Detail: ${inputs.businessDetail}
@@ -130,6 +156,7 @@ export const generateSlogans = async (inputs: BrandInputs): Promise<string[]> =>
     }
 };
 
+// ... (semua fungsi lain seperti generateLogoPrompt, generateLogoOptions, editLogo, dll. tetap menggunakan getAiClient() standar)
 export const generateLogoPrompt = async (slogan: string, persona: BrandPersona): Promise<string> => {
     try {
         const ai = getAiClient();
@@ -471,6 +498,7 @@ export const generateSceneFromImages = async (imageUrls: string[], prompt: strin
 };
 
 
+// --- FUNGSI VIDEO (MENGGUNAKAN KLIEN VERTEX BARU) ---
 export const generateVideo = async (
   prompt: string,
   model: 'veo-3.1-fast-generate-preview' | 'veo-3.1-generate-preview',
@@ -478,7 +506,7 @@ export const generateVideo = async (
   aspectRatio: '16:9' | '9:16'
 ): Promise<Operation<GenerateVideosResponse>> => {
     try {
-        const ai = getAiClient();
+        const ai = getVertexAiClient(); // UPDATE: Gunakan klien Vertex
         const operation = await ai.models.generateVideos({
             model,
             prompt,
@@ -498,7 +526,7 @@ export const generateVideo = async (
 export const extendVideo = async (previousVideo: any, prompt: string): Promise<Operation<GenerateVideosResponse>> => {
     try {
         if (!previousVideo) throw new Error("Video sebelumnya tidak ditemukan untuk diperpanjang.");
-        const ai = getAiClient();
+        const ai = getVertexAiClient(); // UPDATE: Gunakan klien Vertex
         const operation = await ai.models.generateVideos({
             model: 'veo-3.1-generate-preview', // Extending requires the higher quality model
             prompt,
@@ -518,7 +546,7 @@ export const extendVideo = async (previousVideo: any, prompt: string): Promise<O
 
 export const checkVideoOperationStatus = async (operation: Operation<GenerateVideosResponse>): Promise<Operation<GenerateVideosResponse>> => {
     try {
-        const ai = getAiClient();
+        const ai = getVertexAiClient(); // UPDATE: Gunakan klien Vertex
         return ai.operations.getVideosOperation({ operation });
     } catch (error) {
         console.error("Gemini API Error in checkVideoOperationStatus:", error);
@@ -527,6 +555,7 @@ export const checkVideoOperationStatus = async (operation: Operation<GenerateVid
 };
 
 
+// --- FUNGSI LAIN (KEMBALI KE KLIEN STANDAR) ---
 export const generateSpeech = async (script: string): Promise<string> => {
     try {
         const ai = getAiClient();

@@ -22,7 +22,8 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
     const sessionPromiseRef = useRef<Promise<any> | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
-    const mediaStreamSourceRef = useRef<MediaStreamSourceNode | null>(null);
+    // FIX: Corrected the type 'MediaStreamSourceNode' to the correct 'MediaStreamAudioSourceNode'.
+    const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
 
     const startConversation = async () => {

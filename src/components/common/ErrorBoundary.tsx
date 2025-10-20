@@ -30,7 +30,11 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
-    if (this.state.hasError) {
+    // FIX: Destructure state and props from `this`. This can help resolve type inference issues
+    // with certain build toolchains that might incorrectly report the properties as missing.
+    const { state, props } = this;
+
+    if (state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background text-text-body p-4">
           <div className="max-w-xl text-center">
@@ -39,7 +43,7 @@ class ErrorBoundary extends Component<Props, State> {
             <details className="text-left bg-surface p-4 rounded-lg text-sm text-text-muted">
               <summary>Detail Error</summary>
               <pre className="mt-2 whitespace-pre-wrap break-words">
-                {this.state.error?.toString()}
+                {state.error?.toString()}
               </pre>
             </details>
              <button
@@ -53,7 +57,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return props.children;
   }
 }
 
