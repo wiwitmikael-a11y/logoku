@@ -30,7 +30,7 @@ export const useDebouncedAutosave = (
   // FIX: Moved `useRef` outside of the `useEffect` hook to comply with the Rules of Hooks.
   // This ensures the ref persists across re-renders for correct change detection.
   // FIX: Initialize useRef with an argument to satisfy the linter/compiler expecting one.
-  const prevProjectDataRef = useRef<ProjectData | undefined>(undefined);
+  const prevProjectDataRef = useRef<ProjectData | undefined>(project?.project_data);
 
   useEffect(() => {
     if (!project) {

@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, lazy } from 'react';
-import type { Project, ProjectData } from '../types';
+import type { Project, ProjectData, BrandInputs } from '../types';
 import ModuleLoader from './common/ModuleLoader';
 import { useUI } from '../contexts/UIContext';
 import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
@@ -25,7 +25,14 @@ const AiPresenter = lazy(() => import('./AiPresenter'));
 const MAIN_TABS = ['Persona', 'Logo', 'Kit Sosmed', 'Konten', 'Lemari Brand'];
 const SOTOSHOP_TABS = ['Maskot', 'Vibe Brand', 'Motif', 'Studio Foto', 'Scene Mixer', 'Video', 'AI Presenter'];
 
-const AICreator: React.FC<{ project: Project | null; onUpdateProject: (data: Partial<ProjectData>) => Promise<void>; }> = ({ project, onUpdateProject }) => {
+interface AICreatorProps {
+    project: Project | null;
+    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+    // FIX: Added onCreateProject to props to enable child components to create new projects.
+    onCreateProject: (projectName: string, initialData: BrandInputs | null) => Promise<void>;
+}
+
+const AICreator: React.FC<AICreatorProps> = ({ project, onUpdateProject, onCreateProject }) => {
     const [activeTab, setActiveTab] = useState('Persona');
     const { crossComponentPrompt, setCrossComponentPrompt } = useUI();
     const [initialSotoshopPrompt, setInitialSotoshopPrompt] = useState<string | null>(null);
@@ -69,7 +76,8 @@ const AICreator: React.FC<{ project: Project | null; onUpdateProject: (data: Par
         const commonProps = { project, onUpdateProject };
 
         switch (activeTab) {
-            case 'Persona': return <BrandPersonaGenerator {...commonProps} />;
+            // FIX: Pass onCreateProject down to BrandPersonaGenerator.
+            case 'Persona': return <BrandPersonaGenerator {...commonProps} onCreateProject={onCreateProject} />;
             case 'Logo': return <LogoGenerator {...commonProps} />;
             case 'Kit Sosmed': return <SocialMediaKitGenerator {...commonProps} />;
             case 'Konten': return <ContentCalendarGenerator {...commonProps} />;

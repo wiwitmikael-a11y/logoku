@@ -66,13 +66,6 @@ const ProjectDashboard: React.FC = () => {
     const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
-        if (lastVoiceConsultationResult) {
-            handleCreateNewProject(lastVoiceConsultationResult.businessName, lastVoiceConsultationResult);
-            setLastVoiceConsultationResult(null); // consume it
-        }
-    }, [lastVoiceConsultationResult, setLastVoiceConsultationResult]);
-    
-    useEffect(() => {
         if (projects.length > 0 && !selectedProject) {
             setSelectedProject(projects[0]);
         } else if (projects.length === 0) {
@@ -128,7 +121,7 @@ const ProjectDashboard: React.FC = () => {
 
     const handleCreateClick = () => {
         const name = prompt("Nama proyek barunya apa, Juragan?");
-        if (name) handleCreateNewProject(name);
+        if (name) handleCreateNewProject(name, null);
     };
 
     const handleUpdateProject = useCallback(async (updatedData: Partial<ProjectData>) => {
@@ -183,7 +176,8 @@ const ProjectDashboard: React.FC = () => {
                 />
                 <div className="flex flex-col lg:flex-row gap-8">
                      <div className="lg:order-2 flex-grow">
-                        <AICreator project={selectedProject} onUpdateProject={handleUpdateProject} />
+                        {/* FIX: Pass the handleCreateNewProject function down to enable the VoiceBrandingWizard. */}
+                        <AICreator project={selectedProject} onUpdateProject={handleUpdateProject} onCreateProject={handleCreateNewProject} />
                     </div>
                     <div className="lg:order-1 lg:w-72 flex-shrink-0">
                         <div className="lg:sticky top-24">

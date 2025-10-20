@@ -96,6 +96,9 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
 
         const animateMouth = () => {
             if (!analyserRef.current || !mouthRef.current || !containerRef.current) {
+                if (animationFrameRef.current !== null) {
+                    cancelAnimationFrame(animationFrameRef.current);
+                }
                 animationFrameRef.current = requestAnimationFrame(animateMouth);
                 return;
             }
@@ -131,6 +134,7 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
             // FIX: Add a guard to prevent calling cancelAnimationFrame with a null/undefined value.
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
             }
             if (containerRef.current) containerRef.current.style.animation = 'none';
         };
@@ -139,6 +143,7 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
             // FIX: Add a guard to prevent calling cancelAnimationFrame with a null/undefined value.
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
             }
             if(source) source.disconnect();
             if(analyserRef.current) analyserRef.current.disconnect();

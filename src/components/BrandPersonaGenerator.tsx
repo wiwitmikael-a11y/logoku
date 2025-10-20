@@ -17,9 +17,11 @@ const XP_REWARD_PERSONA = 100;
 interface Props {
     project: Project;
     onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+    // FIX: Added onCreateProject prop to be passed down to the VoiceBrandingWizard.
+    onCreateProject: (projectName: string, initialData: BrandInputs | null) => Promise<void>;
 }
 
-const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject }) => {
     const { deductCredits, addXp } = useUserActions();
     const [inputs, setInputs] = useState<BrandInputs>({
         businessName: project.project_data.brandInputs?.businessName || project.project_data.project_name || '',
@@ -97,7 +99,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
                         variant="splash"
                         className="w-full"
                     >
-                        🎤 Konsultasi Suara (BETA)
+                        🎤 Mesin Branding Ekspres (BETA)
                     </Button>
                 </div>
 
@@ -141,6 +143,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
              <VoiceBrandingWizard 
                 show={showVoiceWizard} 
                 onClose={() => setShowVoiceWizard(false)}
+                onCreateProject={onCreateProject}
             />
         </div>
     );
