@@ -8,7 +8,6 @@ import Button from './common/Button';
 import ErrorMessage from './common/ErrorMessage';
 import { playSound } from '../services/soundService';
 import ImageModal from './common/ImageModal';
-import { fetchImageAsBase64 } from '../utils/imageUtils';
 import Textarea from './common/Textarea';
 
 const SLOGAN_COST = 1;
@@ -20,9 +19,10 @@ const XP_REWARD = 150;
 interface Props {
   project: Project;
   onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+  onComplete: () => void;
 }
 
-const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject, onComplete }) => {
   const { deductCredits, addXp } = useUserActions();
   const [isLoading, setIsLoading] = useState<string | false>(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +95,7 @@ const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
 
   if (!selectedPersona) {
     return (
-        <div className="text-center p-8 bg-surface rounded-lg min-h-[400px] flex flex-col justify-center items-center">
+        <div className="text-center p-8 bg-background rounded-lg min-h-[400px] flex flex-col justify-center items-center">
             <span className="text-5xl mb-4">🎨</span>
             <h2 className="text-2xl font-bold text-text-header mt-4">Pilih Persona Dulu!</h2>
             <p className="mt-2 text-text-muted max-w-md">Logo yang bagus itu mencerminkan kepribadian brand. Selesaikan Langkah 1 dulu ya, Juragan!</p>
@@ -122,7 +122,7 @@ const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
           <Button onClick={handleGenerateSlogans} isLoading={isLoading === 'slogans'} disabled={!!isLoading}>Buat Slogan ({SLOGAN_COST} Token)</Button>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {slogans.map(s => <button key={s} onClick={() => onUpdateProject({ selectedSlogan: s })} className={`px-3 py-1 text-sm rounded-full ${selectedSlogan === s ? 'bg-primary text-white' : 'bg-surface hover:bg-border-light'}`}>{s}</button>)}
+            {slogans.map(s => <button key={s} onClick={() => onUpdateProject({ selectedSlogan: s })} className={`px-3 py-1 text-sm rounded-full transition-colors ${selectedSlogan === s ? 'bg-primary text-white' : 'bg-surface hover:bg-border-light'}`}>{s}</button>)}
           </div>
         )}
       </div>
@@ -132,7 +132,7 @@ const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
         <div className="p-4 bg-background rounded-lg space-y-3 animate-content-fade-in">
           <h4 className="font-semibold text-text-header">2b. Resep Logo (Prompt)</h4>
           {logoPrompt ? (
-            <p className="text-sm italic text-text-body bg-surface p-2 rounded">"{logoPrompt}"</p>
+            <p className="text-sm italic text-text-body bg-surface p-2 rounded selectable-text">"{logoPrompt}"</p>
           ) : (
             <Button onClick={handleGenerateLogoPrompt} isLoading={isLoading === 'prompt'} disabled={!!isLoading}>Buat Resep Logo ({LOGO_PROMPT_COST} Token)</Button>
           )}
@@ -148,7 +148,7 @@ const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {logoOptions.map(url => (
-                    <div key={url} className={`relative p-2 border-2 rounded-lg cursor-pointer transition-all group ${selectedLogoUrl === url ? 'border-primary' : 'border-transparent'}`} onClick={() => handleSelectLogo(url)}>
+                    <div key={url} className={`relative p-2 rounded-lg cursor-pointer transition-all group ${selectedLogoUrl === url ? 'selection-card-active' : 'selection-card'}`} onClick={() => handleSelectLogo(url)}>
                         <img src={url} alt="logo option" className="w-full aspect-square object-contain bg-white rounded-md"/>
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                            <Button size="small" onClick={(e) => { e.stopPropagation(); setModalImageUrl(url); }}>🔎</Button>
@@ -172,6 +172,14 @@ const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
                 <Button onClick={handleEditLogo} isLoading={isLoading === 'edit'} disabled={!editPrompt}>Revisi ({LOGO_EDIT_COST} T)</Button>
                 <Button onClick={() => setEditingLogoUrl(null)} variant="secondary">Batal</Button>
              </div>
+        </div>
+      )}
+      
+      {selectedLogoUrl && (
+         <div className="mt-6 pt-6 border-t border-border-main text-center animate-content-fade-in">
+            <Button onClick={onComplete} variant="accent">
+                Lanjut ke Kit Sosmed →
+            </Button>
         </div>
       )}
 

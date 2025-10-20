@@ -17,9 +17,10 @@ const XP_REWARD = 100;
 interface Props {
   project: Project;
   onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+  onComplete: () => void;
 }
 
-const SocialMediaKitGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+const SocialMediaKitGenerator: React.FC<Props> = ({ project, onUpdateProject, onComplete }) => {
   const { deductCredits, addXp } = useUserActions();
   const [isLoading, setIsLoading] = useState<string | false>(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +52,11 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ project, onUpdateProject }) 
     finally { setIsLoading(false); }
   };
 
+  const isComplete = !!socialMediaKit && !!socialProfiles;
+
   if (!selectedPersona || !selectedLogoUrl) {
     return (
-      <div className="text-center p-8 bg-surface rounded-lg min-h-[400px] flex flex-col justify-center items-center">
+      <div className="text-center p-8 bg-background rounded-lg min-h-[400px] flex flex-col justify-center items-center">
         <span className="text-5xl mb-4">📱</span>
         <h2 className="text-2xl font-bold text-text-header mt-4">Pilih Persona & Logo Dulu!</h2>
         <p className="mt-2 text-text-muted max-w-md">Kit media sosial butuh logo dan kepribadian yang jelas. Silakan lengkapi langkah 1 & 2 dulu, Juragan.</p>
@@ -116,6 +119,14 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ project, onUpdateProject }) 
           )}
         </div>
       </div>
+      
+      {isComplete && (
+         <div className="mt-6 pt-6 border-t border-border-main text-center animate-content-fade-in">
+            <Button onClick={onComplete} variant="accent">
+                Lanjut ke Rencana Konten →
+            </Button>
+        </div>
+      )}
 
        {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Pratinjau Aset Visual" onClose={() => setModalImageUrl(null)} />}
     </div>

@@ -7,6 +7,7 @@ import { getAiClient } from '../services/geminiService';
 import { encode } from '../utils/audioUtils';
 import Button from './common/Button';
 import { playSound } from '../services/soundService';
+import Spinner from './common/Spinner';
 
 interface Props {
     show: boolean;
@@ -22,9 +23,18 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
     const sessionPromiseRef = useRef<Promise<any> | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
-    // FIX: Corrected the type 'MediaStreamSourceNode' to the correct 'MediaStreamAudioSourceNode'.
     const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
+
+    // Auto-close modal on finish
+    useEffect(() => {
+        if (status === 'finished') {
+            const timer = setTimeout(() => {
+                onClose();
+            }, 1500); // 1.5 second delay
+            return () => clearTimeout(timer);
+        }
+    }, [status, onClose]);
 
     const startConversation = async () => {
         setStatus('listening');
@@ -149,15 +159,17 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
                             <strong>{t.speaker === 'mang-ai' ? 'Mang AI' : 'Juragan'}:</strong> {t.text}
                         </p>
                     ))}
+                     {status === 'listening' && <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>}
                 </div>
 
                 {status === 'idle' && <Button onClick={startConversation}>Mulai Ngobrol</Button>}
                 {status === 'listening' && <Button onClick={stopConversation} variant="secondary">Hentikan</Button>}
-                {status === 'processing' && <p>Memproses hasil obrolan...</p>}
-                {status === 'finished' && (
-                    <div>
-                        <p className="text-green-400">Selesai! Proyek baru akan dibuat berdasarkan obrolan kita.</p>
-                        <Button onClick={onClose} className="mt-4">Tutup</Button>
+                {(status === 'processing' || status === 'finished') && (
+                    <div className="text-center p-4">
+                        <Spinner />
+                        <p className="mt-2 text-green-400 font-semibold">
+                            {status === 'processing' ? 'Memproses hasil obrolan...' : 'Mantap! Proyek baru sedang dibuat...'}
+                        </p>
                     </div>
                 )}
             </div>

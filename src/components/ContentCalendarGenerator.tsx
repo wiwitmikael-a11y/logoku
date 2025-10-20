@@ -16,9 +16,10 @@ const XP_REWARD = 75;
 interface Props {
     project: Project;
     onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+    onComplete: () => void;
 }
 
-const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject, onComplete }) => {
     const { deductCredits, addXp } = useUserActions();
     const { setCrossComponentPrompt } = useUI();
     const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +54,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject })
 
     if (!selectedPersona || !project.project_data.selectedLogoUrl) {
         return (
-            <div className="text-center p-8 bg-surface rounded-lg min-h-[400px] flex flex-col justify-center items-center">
+            <div className="text-center p-8 bg-background rounded-lg min-h-[400px] flex flex-col justify-center items-center">
                 <span className="text-5xl mb-4">🗓️</span>
                 <h2 className="text-2xl font-bold text-text-header mt-4">Pilih Persona & Logo Dulu!</h2>
                 <p className="mt-2 text-text-muted max-w-md">Perencanaan konten butuh kepribadian yang jelas. Silakan lengkapi langkah 1 & 2 di tab sebelumnya, Juragan.</p>
@@ -65,13 +66,13 @@ const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject })
         <div className="space-y-6">
             <div className="p-4 rounded-lg flex items-start gap-4 mang-ai-callout border border-border-main">
                 <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-primary/10 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    <svg xmlns="http://www.w.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
                 <div>
-                    <h4 className="font-bold text-text-header">Stuck Mikirin Konten?</h4>
-                    <p className="text-sm text-text-body mt-1">Nggak perlu pusing lagi! Mang AI bakal bikinin jadwal konten 7 hari lengkap dengan ide, draf caption, sampe hashtag yang lagi ngetren. Dijamin sosmed-mu makin rame!</p>
+                    <h3 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Langkah 4: Jadwal Konten Cerdas</h3>
+                    <p className="text-sm text-text-body mt-1">Nggak perlu pusing lagi mikirin mau posting apa! Mang AI bakal bikinin jadwal konten 7 hari lengkap dengan ide, draf caption, sampe hashtag yang lagi ngetren. Dijamin sosmed-mu makin rame!</p>
                 </div>
             </div>
 
@@ -85,9 +86,9 @@ const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject })
 
             {contentCalendar && (
                 <div className="animate-content-fade-in space-y-4">
-                    <div className="overflow-x-auto bg-surface rounded-lg">
+                    <div className="overflow-x-auto bg-background rounded-lg">
                         <table className="w-full text-sm text-left">
-                            <thead className="bg-background text-xs text-text-header uppercase">
+                            <thead className="bg-surface text-xs text-text-header uppercase">
                                 <tr>
                                     <th className="px-4 py-3">Hari</th>
                                     <th className="px-4 py-3">Tipe Konten</th>
@@ -98,7 +99,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject })
                             </thead>
                             <tbody>
                                 {contentCalendar.plan.map((entry, index) => (
-                                    <tr key={index} className="border-b border-border-main hover:bg-background">
+                                    <tr key={index} className="border-b border-border-main hover:bg-surface">
                                         <td className="px-4 py-3 font-semibold">{entry.day}</td>
                                         <td className="px-4 py-3"><span className="px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">{entry.contentType}</span></td>
                                         <td className="px-4 py-3">
@@ -129,6 +130,11 @@ const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject })
                             </ul>
                         </div>
                     )}
+                    <div className="mt-6 pt-6 border-t border-border-main text-center animate-content-fade-in">
+                        <Button onClick={onComplete} variant="accent">
+                            Lanjut ke Sotoshop →
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>

@@ -17,9 +17,10 @@ const XP_REWARD = 100;
 interface Props {
   project: Project;
   onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+  onComplete: () => void;
 }
 
-const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
+const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject, onComplete }) => {
   const { profile } = useAuth();
   const { deductCredits, addXp } = useUserActions();
   const [inputs, setInputs] = useState<BrandInputs>(project.project_data.brandInputs || {
@@ -106,15 +107,23 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject }) =>
           <h4 className="text-xl font-bold text-center text-text-header">Pilih Persona yang Paling "Lo Banget"!</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {project.project_data.brandPersonas.map((p, i) => (
-              <div key={i} onClick={() => handleSelectPersona(p)} className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${project.project_data.selectedPersona?.nama_persona === p.nama_persona ? 'border-primary bg-primary/5' : 'border-border-main hover:border-primary/50'}`}>
+              <div key={i} onClick={() => handleSelectPersona(p)} className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${project.project_data.selectedPersona?.nama_persona === p.nama_persona ? 'selection-card-active' : 'selection-card'}`}>
                 <h5 className="font-bold text-primary">{p.nama_persona}</h5>
                 <p className="text-xs text-text-body mt-1">{p.deskripsi}</p>
                 <div className="flex gap-2 mt-3">
-                  {p.palet_warna.map(c => <div key={c.hex} className="w-5 h-5 rounded-full" style={{backgroundColor: c.hex}} title={c.nama}/>)}
+                  {p.palet_warna.map(c => <div key={c.hex} className="w-5 h-5 rounded-full border border-surface" style={{backgroundColor: c.hex}} title={c.nama}/>)}
                 </div>
               </div>
             ))}
           </div>
+        </div>
+      )}
+      
+      {project.project_data.selectedPersona && (
+        <div className="mt-6 pt-6 border-t border-border-main text-center animate-content-fade-in">
+            <Button onClick={onComplete} variant="accent">
+                Lanjut ke Logo →
+            </Button>
         </div>
       )}
     </div>
