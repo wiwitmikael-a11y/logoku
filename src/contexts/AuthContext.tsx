@@ -57,7 +57,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     } catch (error) {
       console.error('Error fetching user data:', error);
-      // Handle error state if needed
+      // Re-throw the error to be caught by the calling function's catch block
+      throw error;
     }
   }, []);
 
@@ -66,14 +67,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const supabase = getSupabaseClient();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      await fetchUserData(currentUser);
-      setLoading(false);
+      // Use a try...finally block to guarantee setLoading(false) is called.
+      try {
+        setSession(session);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        // This will fetch profile, projects, etc.
+        await fetchUserData(currentUser);
+      } catch (error) {
+        console.error("Error during authentication state change:", error);
+        // Clear user data on failure to prevent a broken state
+        setProfile(null);
+        setProjects([]);
+      } finally {
+        // This ensures the loading screen is hidden even if data fetching fails.
+        setLoading(false);
+      }
     });
 
-    // Check initial session
+    // This part is an optimization. If there's no session token at all,
+    // we don't need to wait for onAuthStateChange to tell us that. We can show
+    // the login screen right away. If there IS a session, onAuthStateChange
+    // will handle the full data load and then set loading to false.
     supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session) {
             setLoading(false);
@@ -87,7 +102,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchUserData(user);
+        try {
+            await fetchUserData(user);
+        } catch (error) {
+            console.error("Failed to refresh profile:", error);
+        }
     }
   }, [user, fetchUserData]);
 
