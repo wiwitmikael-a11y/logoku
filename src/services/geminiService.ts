@@ -556,7 +556,7 @@ export const checkVideoOperationStatus = async (operation: Operation<GenerateVid
 
 
 // --- FUNGSI LAIN (KEMBALI KE KLIEN STANDAR) ---
-export const generateSpeech = async (script: string): Promise<string> => {
+export const generateSpeech = async (script: string, voiceName: string = 'Kore'): Promise<string> => {
     try {
         const ai = getAiClient();
         const response = await ai.models.generateContent({
@@ -565,7 +565,7 @@ export const generateSpeech = async (script: string): Promise<string> => {
             config: {
                 responseModalities: [Modality.AUDIO],
                 speechConfig: {
-                    voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
+                    voiceConfig: { prebuiltVoiceConfig: { voiceName: voiceName } },
                 },
             },
         });

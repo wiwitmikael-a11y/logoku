@@ -92,7 +92,7 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
         return <ContentCalendarGenerator project={project} onUpdateProject={onUpdateProject} onComplete={() => handleNavigate('sotoshop')} />;
       case 'sotoshop':
         return (
-            <div className="space-y-8">
+            <div className="space-y-6">
                 <MascotGenerator project={project} onUpdateProject={onUpdateProject} />
                 <MoodboardGenerator project={project} onUpdateProject={onUpdateProject} />
                 <PatternGenerator project={project} onUpdateProject={onUpdateProject} />
@@ -110,7 +110,7 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
   };
 
   return (
-    <div className="bg-surface rounded-2xl shadow-lg p-6">
+    <div className="glass-effect rounded-2xl shadow-lg p-6">
         <div className="flex gap-2 mb-6 border-b-2 border-border-main overflow-x-auto">
             {TABS.map(tab => (
                 <button 
@@ -125,7 +125,7 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
         </div>
         <ModuleLoader>
           {isProjectReady && project ? renderActiveTabContent() : (
-            <div className="text-center p-8 bg-surface rounded-2xl min-h-[400px] flex flex-col justify-center items-center">
+            <div className="text-center p-8 bg-surface/50 rounded-2xl min-h-[400px] flex flex-col justify-center items-center">
               <span className="text-5xl mb-4">🚀</span>
               <h2 className="text-2xl font-bold text-text-header mt-4">Siap Mulai Petualangan Branding?</h2>
               <p className="mt-2 text-text-muted max-w-md">Buat proyek baru dulu di "Proyek Juragan" di atas, atau coba fitur unggulan konsultasi suara dengan Mang AI!</p>

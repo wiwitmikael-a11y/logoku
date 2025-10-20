@@ -12,6 +12,7 @@ import ErrorMessage from './common/ErrorMessage';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
 import AssetPickerModal from './common/AssetPickerModal';
+import CollapsibleSection from './common/CollapsibleSection';
 
 const SCENE_MIXER_COST = 2;
 const XP_REWARD = 25;
@@ -123,7 +124,7 @@ const SceneMixer: React.FC<Props> = ({ project, onUpdateProject }) => {
     const ImageSlot: React.FC<{index: number}> = ({ index }) => {
         const image = images[index];
         return (
-            <div className="bg-background p-2 rounded-lg border border-border-main space-y-2 relative h-full flex flex-col">
+            <div className="bg-background/50 p-2 rounded-lg border border-border-main space-y-2 relative h-full flex flex-col">
                 <button onClick={() => handleRemoveImageSlot(index)} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full h-5 w-5 text-xs flex items-center justify-center z-10 hover:bg-red-700 transition-colors">&times;</button>
                 {image.src ? (
                     <>
@@ -146,50 +147,51 @@ const SceneMixer: React.FC<Props> = ({ project, onUpdateProject }) => {
     };
 
     return (
-        <div className="space-y-4">
-            <h3 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Scene Mixer (Sutradara Gambar)</h3>
-            <p className="text-sm text-text-body">Jadilah sutradara! Gabungkan beberapa gambar jadi satu karya baru. Upload atau pilih aset dari Lemari Brand, kasih instruksi, dan tulis prompt utama untuk menyatukannya.</p>
-
+        <CollapsibleSection title="Scene Mixer (Sutradara Gambar)" icon="🎬">
             <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 min-h-[150px]">
-                    {images.map((_, index) => <ImageSlot key={index} index={index} />)}
-                    {images.length < MAX_IMAGES && (
-                        <button onClick={handleAddImageSlot} className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-border-main rounded-lg cursor-pointer hover:bg-border-light text-text-muted transition-colors">
-                           <p className="text-2xl">+</p>
-                           <p className="text-xs">Tambah Gambar</p>
-                        </button>
-                    )}
-                </div>
-                <Textarea label="Prompt Utama (Sutradara)" name="mainPrompt" value={mainPrompt} onChange={e => setMainPrompt(e.target.value)} placeholder="Contoh: Gabungkan maskot kucing (gambar 1) ke pantai (gambar 2) sambil dia minum kopi (gambar 3)." rows={3} />
-                <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.filter(i=>i.src).length === 0 || !mainPrompt.trim()} variant="accent" className="w-full">
-                    Mulai Syuting! ({SCENE_MIXER_COST} Token, +{XP_REWARD} XP)
-                </Button>
-            </div>
-            
-            {error && <ErrorMessage message={error} />}
-            {isLoading && <div className="flex justify-center p-4"><LoadingMessage /></div>}
+                <p className="text-sm text-text-body">Jadilah sutradara! Gabungkan beberapa gambar jadi satu karya baru. Upload atau pilih aset dari Lemari Brand, kasih instruksi, dan tulis prompt utama untuk menyatukannya.</p>
 
-            {result && (
-                <div className="space-y-4 animate-content-fade-in mt-4">
-                    <div className="p-4 bg-background rounded-lg border border-border-main">
-                        <h4 className="font-bold text-text-header mb-2">Hasil Akhir</h4>
-                         <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand.</p>
-                        <img src={result} onClick={() => setModalImageUrl(result)} alt="Hasil Scene Mixer" className="w-full aspect-video object-contain rounded-md cursor-pointer bg-surface" />
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 min-h-[150px]">
+                        {images.map((_, index) => <ImageSlot key={index} index={index} />)}
+                        {images.length < MAX_IMAGES && (
+                            <button onClick={handleAddImageSlot} className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-border-main rounded-lg cursor-pointer hover:bg-border-light/50 text-text-muted transition-colors">
+                               <p className="text-2xl">+</p>
+                               <p className="text-xs">Tambah Gambar</p>
+                            </button>
+                        )}
                     </div>
-                    <div className="flex gap-4">
-                        <Button onClick={() => {setResult(null)}} variant="secondary">Oke</Button>
-                    </div>
+                    <Textarea label="Prompt Utama (Sutradara)" name="mainPrompt" value={mainPrompt} onChange={e => setMainPrompt(e.target.value)} placeholder="Contoh: Gabungkan maskot kucing (gambar 1) ke pantai (gambar 2) sambil dia minum kopi (gambar 3)." rows={3} />
+                    <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.filter(i=>i.src).length === 0 || !mainPrompt.trim()} variant="accent" className="w-full">
+                        Mulai Syuting! ({SCENE_MIXER_COST} Token, +{XP_REWARD} XP)
+                    </Button>
                 </div>
-            )}
-            
-            <AssetPickerModal 
-                show={isPickerOpen}
-                onClose={() => setIsPickerOpen(false)}
-                onSelectAsset={handleAssetSelect}
-                assets={project.project_data.sotoshop_assets}
-            />
-            {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Hasil Scene Mixer" onClose={() => setModalImageUrl(null)} />}
-        </div>
+                
+                {error && <ErrorMessage message={error} />}
+                {isLoading && <div className="flex justify-center p-4"><LoadingMessage /></div>}
+
+                {result && (
+                    <div className="space-y-4 animate-content-fade-in mt-4">
+                        <div className="p-4 bg-background/50 rounded-lg border border-border-main">
+                            <h4 className="font-bold text-text-header mb-2">Hasil Akhir</h4>
+                             <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand.</p>
+                            <img src={result} onClick={() => setModalImageUrl(result)} alt="Hasil Scene Mixer" className="w-full aspect-video object-contain rounded-md cursor-pointer bg-surface/50" />
+                        </div>
+                        <div className="flex gap-4">
+                            <Button onClick={() => {setResult(null)}} variant="secondary">Oke</Button>
+                        </div>
+                    </div>
+                )}
+                
+                <AssetPickerModal 
+                    show={isPickerOpen}
+                    onClose={() => setIsPickerOpen(false)}
+                    onSelectAsset={handleAssetSelect}
+                    assets={project.project_data.sotoshop_assets}
+                />
+                {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Hasil Scene Mixer" onClose={() => setModalImageUrl(null)} />}
+            </div>
+        </CollapsibleSection>
     );
 };
 

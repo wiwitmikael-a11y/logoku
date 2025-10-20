@@ -8,8 +8,10 @@ import { playSound } from '../services/soundService';
 import type { Project, ProjectData, VideoAsset } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
+import Select from './common/Select';
 import ErrorMessage from './common/ErrorMessage';
 import { Operation, GenerateVideosResponse } from '@google/genai';
+import CollapsibleSection from './common/CollapsibleSection';
 
 const VIDEO_GEN_COST = 10;
 const XP_REWARD = 100;
@@ -24,6 +26,9 @@ const VideoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
     const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
     const [prompt, setPrompt] = useState('');
+    const [resolution, setResolution] = useState<'720p' | '1080p'>('720p');
+    const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9');
+    const [style, setStyle] = useState('Cinematic');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [statusMessage, setStatusMessage] = useState('');
@@ -46,7 +51,7 @@ const VideoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
 
         const videoUri = op.response?.generatedVideos?.[0]?.video?.uri;
         if (videoUri) {
-            const videoUrl = `${videoUri}&key=${import.meta.env.VITE_API_KEY}`;
+            const videoUrl = `${videoUri}&key=${import.meta.env.VITE_VERTEX_API_KEY}`;
             const newVideoAsset: VideoAsset = {
                 id: `vid_${Date.now()}`,
                 prompt: initialPrompt,
@@ -69,10 +74,11 @@ const VideoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
         if ((profile?.credits ?? 0) < VIDEO_GEN_COST) { setShowOutOfCreditsModal(true); return; }
 
         setIsLoading(true); setError(null); setStatusMessage(''); setLatestVideo(null); playSound('start');
+        const fullPrompt = `${prompt}, ${style} style`;
         try {
             if (!(await deductCredits(VIDEO_GEN_COST))) throw new Error("Gagal mengurangi token.");
-            const operation = await generateVideo(prompt, 'veo-3.1-fast-generate-preview', '720p', '16:9');
-            pollOperation(operation, prompt);
+            const operation = await generateVideo(fullPrompt, 'veo-3.1-fast-generate-preview', resolution, aspectRatio);
+            pollOperation(operation, fullPrompt);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Gagal memulai pembuatan video.');
             setIsLoading(false);
@@ -106,35 +112,39 @@ const VideoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
     };
 
     return (
-        <div className="space-y-4">
-            <h3 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Studio Video Veo</h3>
-            <p className="text-sm text-text-body">Buat video pendek dari teks. Cukup tulis idemu, dan Mang AI akan membuatkan video sinematik untukmu. Proses ini butuh waktu beberapa menit.</p>
+        <CollapsibleSection title="Studio Video Veo" icon="🎥">
+            <div className="space-y-4">
+                <p className="text-sm text-text-body">Buat video pendek dari teks. Cukup tulis idemu, dan Mang AI akan membuatkan video sinematik untukmu. Proses ini butuh waktu beberapa menit.</p>
 
-            <div className="space-y-2">
-                <Textarea label="Deskripsi Video" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: seekor astronot mengendarai kuda di Mars, gaya sinematik" rows={3} />
-            </div>
-
-            <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">
-                Buat Video! ({VIDEO_GEN_COST} Token, +{XP_REWARD} XP)
-            </Button>
-            
-            {error && <ErrorMessage message={error} />}
-            {isLoading && <p className="text-center text-sm text-accent">{statusMessage}</p>}
-
-            {latestVideo && !isLoading && (
-                <div className="space-y-4 animate-content-fade-in mt-4">
-                    <div className="p-4 bg-background rounded-lg border border-border-main">
-                        <h4 className="font-bold text-text-header mb-2">Video Terbaru</h4>
-                        <video src={latestVideo.videoUrl} controls className="w-full aspect-video rounded-md" />
-                    </div>
-                     <div className="p-4 bg-background rounded-lg border border-border-main space-y-2">
-                         <h4 className="font-bold text-text-header">Perpanjang Video</h4>
-                        <Textarea label="Apa yang terjadi selanjutnya?" name="extendPrompt" value={extendPrompt} onChange={e => setExtendPrompt(e.target.value)} placeholder="Contoh: tiba-tiba sebuah UFO mendarat di dekatnya" rows={2} />
-                        <Button onClick={handleExtend} isLoading={isLoading} disabled={isLoading || !extendPrompt.trim()} variant="secondary">Lanjutkan Cerita ({VIDEO_GEN_COST} T)</Button>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Select label="Resolusi" name="resolution" value={resolution} onChange={e => setResolution(e.target.value as any)} options={[ {value: '720p', label: '720p (Cepat)'}, {value: '1080p', label: '1080p (HD)'} ]} />
+                    <Select label="Rasio Aspek" name="aspectRatio" value={aspectRatio} onChange={e => setAspectRatio(e.target.value as any)} options={[ {value: '16:9', label: '16:9 (Landscape)'}, {value: '9:16', label: '9:16 (Portrait)'} ]} />
+                     <Select label="Gaya Sinematik" name="style" value={style} onChange={e => setStyle(e.target.value)} options={[ {value: 'Cinematic', label: 'Sinematik'}, {value: 'Drone shot', label: 'Drone Shot'}, {value: 'Time-lapse', label: 'Time-lapse'}, {value: 'Black and white', label: 'Hitam Putih'} ]} />
                 </div>
-            )}
-        </div>
+                <Textarea label="Deskripsi Video" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: seekor astronot mengendarai kuda di Mars" rows={3} />
+
+                <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">
+                    Buat Video! ({VIDEO_GEN_COST} Token, +{XP_REWARD} XP)
+                </Button>
+                
+                {error && <ErrorMessage message={error} />}
+                {isLoading && <p className="text-center text-sm text-accent">{statusMessage}</p>}
+
+                {latestVideo && !isLoading && (
+                    <div className="space-y-4 animate-content-fade-in mt-4">
+                        <div className="p-4 bg-background/50 rounded-lg border border-border-main">
+                            <h4 className="font-bold text-text-header mb-2">Video Terbaru</h4>
+                            <video src={latestVideo.videoUrl} controls className="w-full aspect-video rounded-md" />
+                        </div>
+                         <div className="p-4 bg-background/50 rounded-lg border border-border-main space-y-2">
+                             <h4 className="font-bold text-text-header">Perpanjang Video</h4>
+                            <Textarea label="Apa yang terjadi selanjutnya?" name="extendPrompt" value={extendPrompt} onChange={e => setExtendPrompt(e.target.value)} placeholder="Contoh: tiba-tiba sebuah UFO mendarat di dekatnya" rows={2} />
+                            <Button onClick={handleExtend} isLoading={isLoading} disabled={isLoading || !extendPrompt.trim()} variant="secondary">Lanjutkan Cerita ({VIDEO_GEN_COST} T)</Button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </CollapsibleSection>
     );
 };
 

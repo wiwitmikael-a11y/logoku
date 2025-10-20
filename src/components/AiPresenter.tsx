@@ -8,7 +8,9 @@ import { playSound, unlockAudio } from '../services/soundService';
 import type { Project, ProjectData, AiPresenterAsset } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
+import Select from './common/Select';
 import ErrorMessage from './common/ErrorMessage';
+import CollapsibleSection from './common/CollapsibleSection';
 
 const PRESENTER_COST = 4;
 const XP_REWARD = 75;
@@ -24,6 +26,7 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
     
     const [script, setScript] = useState('');
     const [selectedChar, setSelectedChar] = useState<string | null>(null);
+    const [voice, setVoice] = useState('Kore');
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -32,7 +35,6 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
     const mouthRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
-    // FIX: Initialize useRef with null to provide an initial value, satisfying the linter/compiler rule.
     const animationFrameRef = useRef<number | null>(null);
 
     const availableCharacters = project.project_data.sotoshop_assets?.mascots || [];
@@ -53,7 +55,7 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
         try {
             if (!(await deductCredits(PRESENTER_COST))) throw new Error("Gagal mengurangi token.");
             
-            const generatedAudioUrl = await generateSpeech(script);
+            const generatedAudioUrl = await generateSpeech(script, voice);
             setAudioUrl(generatedAudioUrl);
             await handleSaveToProject(selectedChar, script, generatedAudioUrl);
             await addXp(XP_REWARD);
@@ -74,7 +76,6 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
         });
     };
     
-    // Lip-sync animation logic
     useEffect(() => {
         if (!audioUrl || !audioRef.current || !mouthRef.current) return;
         
@@ -84,8 +85,6 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
 
         const setupAudioContext = async () => {
             await unlockAudio();
-            // FIX: The AudioContext constructor can require an options object in some environments.
-            // Providing the sampleRate to match the TTS output is good practice.
             audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             analyserRef.current = audioContext.createAnalyser();
             source = audioContext.createMediaElementSource(audio);
@@ -95,10 +94,8 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
         };
 
         const animateMouth = () => {
-            if (!analyserRef.current || !mouthRef.current || !containerRef.current) {
-                if (animationFrameRef.current !== null) {
-                    cancelAnimationFrame(animationFrameRef.current);
-                }
+             if (!analyserRef.current || !containerRef.current) {
+                if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
                 animationFrameRef.current = requestAnimationFrame(animateMouth);
                 return;
             }
@@ -106,17 +103,6 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
             analyserRef.current.getByteFrequencyData(dataArray);
             const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
             
-            mouthRef.current.classList.remove('mang-ai-mouth-0', 'mang-ai-mouth-1', 'mang-ai-mouth-2');
-            
-            if (avg > 20) { // Mouth open
-                mouthRef.current.classList.add('mang-ai-mouth-2');
-            } else if (avg > 5) { // Mouth mid
-                mouthRef.current.classList.add('mang-ai-mouth-1');
-            } else { // Mouth closed
-                mouthRef.current.classList.add('mang-ai-mouth-0');
-            }
-            
-            // Add bounce effect
             const bounceIntensity = Math.min(avg / 100, 1.0);
             if (containerRef.current) {
                 containerRef.current.style.animation = audio.paused ? 'none' : `mang-ai-talking-bounce ${0.2 + (1-bounceIntensity)*0.3}s ease-in-out infinite`;
@@ -131,7 +117,6 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
         };
 
         audio.onpause = () => {
-            // FIX: Add a guard to prevent calling cancelAnimationFrame with a null/undefined value.
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
                 animationFrameRef.current = null;
@@ -140,7 +125,6 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
         };
 
         return () => {
-            // FIX: Add a guard to prevent calling cancelAnimationFrame with a null/undefined value.
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
                 animationFrameRef.current = null;
@@ -152,55 +136,67 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
     }, [audioUrl]);
 
     return (
-        <div className="space-y-4">
-            <h3 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>AI Presenter</h3>
-            <p className="text-sm text-text-body">Punya maskot? Sekarang dia bisa ngomong! Pilih karakter, tulis skripnya, dan biarkan Mang AI yang jadi pengisi suaranya. Cocok buat konten video pendek!</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Character Selection */}
-                <div className="md:col-span-1 space-y-2">
-                    <h4 className="font-semibold text-text-muted">1. Pilih Karakter</h4>
-                    {availableCharacters.length > 0 ? (
-                        <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto bg-background p-2 rounded-lg">
-                           {availableCharacters.map((url, i) => (
-                               <img key={i} src={url} alt={`Karakter ${i}`} onClick={() => setSelectedChar(url)} className={`w-full aspect-square object-contain rounded-md cursor-pointer border-2 ${selectedChar === url ? 'border-primary' : 'border-transparent'}`}/>
-                           ))}
-                        </div>
-                    ) : (
-                        <p className="text-xs text-text-muted p-4 bg-background rounded-lg">Buat maskot dulu di Sotoshop untuk memilih karakter.</p>
-                    )}
-                </div>
-
-                {/* Script & Generation */}
-                <div className="md:col-span-2 space-y-2">
-                    <h4 className="font-semibold text-text-muted">2. Tulis Skrip</h4>
-                    <Textarea label="" name="script" value={script} onChange={e => setScript(e.target.value)} placeholder="Ketik apa yang mau diucapkan karakter di sini..." rows={5} />
-                    <Button onClick={handleGenerate} isLoading={isLoading} disabled={!script.trim() || !selectedChar || isLoading} variant="accent" className="w-full">
-                        Buat Presentasi! ({PRESENTER_COST} Token)
-                    </Button>
-                </div>
-            </div>
-
-            {error && <ErrorMessage message={error} />}
-
-            {/* Result */}
-            {(isLoading || audioUrl) && (
-                <div className="p-4 bg-background rounded-lg border border-border-main text-center">
-                    <h4 className="font-bold text-text-header mb-4">Hasil Presentasi</h4>
-                     <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand.</p>
-                    {isLoading && <p>Loading...</p>}
-                    {audioUrl && selectedChar && (
-                        <div className="flex flex-col items-center gap-4">
-                            <div ref={containerRef} className="mang-ai-talking-container">
-                                <div className="mang-ai-body" style={{ backgroundImage: `url(${selectedChar})`, backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}></div>
-                                <div ref={mouthRef} className="mang-ai-mouth mang-ai-mouth-0" style={{visibility: 'hidden' /* Hide sprite-based mouth for now */}}></div>
+        <CollapsibleSection title="AI Presenter" icon="🎙️">
+            <div className="space-y-4">
+                <p className="text-sm text-text-body">Punya maskot? Sekarang dia bisa ngomong! Pilih karakter, tulis skripnya, dan biarkan Mang AI yang jadi pengisi suaranya. Cocok buat konten video pendek!</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-1 space-y-2">
+                        <h4 className="font-semibold text-text-muted">1. Pilih Karakter</h4>
+                        {availableCharacters.length > 0 ? (
+                            <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto bg-background/50 p-2 rounded-lg">
+                               {availableCharacters.map((url, i) => (
+                                   <img key={i} src={url} alt={`Karakter ${i}`} onClick={() => setSelectedChar(url)} className={`w-full aspect-square object-contain rounded-md cursor-pointer border-2 ${selectedChar === url ? 'border-primary' : 'border-transparent'}`}/>
+                               ))}
                             </div>
-                            <audio ref={audioRef} src={audioUrl} controls className="w-full max-w-sm"/>
+                        ) : (
+                            <p className="text-xs text-text-muted p-4 bg-background/50 rounded-lg">Buat maskot dulu di Sotoshop untuk memilih karakter.</p>
+                        )}
+                    </div>
+
+                    <div className="md:col-span-2 space-y-4">
+                        <div>
+                             <h4 className="font-semibold text-text-muted mb-2">2. Atur Suara & Skrip</h4>
+                             <Select 
+                                label="Suara & Nada Bicara"
+                                name="voice"
+                                value={voice}
+                                onChange={(e) => setVoice(e.target.value)}
+                                options={[
+                                    { value: 'Kore', label: 'Wanita - Ceria & Ramah' },
+                                    { value: 'Puck', label: 'Pria - Santai & Muda' },
+                                    { value: 'Charon', label: 'Pria - Dewasa & Berwibawa' },
+                                    { value: 'Zephyr', label: 'Wanita - Elegan & Profesional' },
+                                    { value: 'Fenrir', label: 'Pria - Enerjik & Antusias' },
+                                ]}
+                            />
                         </div>
-                    )}
+                        <Textarea label="" name="script" value={script} onChange={e => setScript(e.target.value)} placeholder="Ketik apa yang mau diucapkan karakter di sini..." rows={5} />
+                    </div>
                 </div>
-            )}
-        </div>
+                <Button onClick={handleGenerate} isLoading={isLoading} disabled={!script.trim() || !selectedChar || isLoading} variant="accent" className="w-full">
+                    Buat Presentasi! ({PRESENTER_COST} Token)
+                </Button>
+
+                {error && <ErrorMessage message={error} />}
+
+                {(isLoading || audioUrl) && (
+                    <div className="p-4 bg-background/50 rounded-lg border border-border-main text-center">
+                        <h4 className="font-bold text-text-header mb-4">Hasil Presentasi</h4>
+                         <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand.</p>
+                        {isLoading && <p>Membuat audio...</p>}
+                        {audioUrl && selectedChar && (
+                            <div className="flex flex-col items-center gap-4">
+                                <div ref={containerRef} className="relative w-40 h-40">
+                                    <img src={selectedChar} alt="Karakter Presenter" className="w-full h-full object-contain"/>
+                                </div>
+                                <audio ref={audioRef} src={audioUrl} controls className="w-full max-w-sm"/>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </CollapsibleSection>
     );
 };
 
