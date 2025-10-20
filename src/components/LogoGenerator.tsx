@@ -1,23 +1,21 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect } from 'react';
-import { generateSlogans, generateLogoPrompt, generateLogoOptions, editLogo } from '../services/geminiService';
+import React, { useState } from 'react';
 import { useUserActions } from '../contexts/UserActionsContext';
-import { fetchImageAsBase64 } from '../utils/imageUtils';
-import { playSound } from '../services/soundService';
+import { generateSlogans, generateLogoPrompt, generateLogoOptions, editLogo } from '../services/geminiService';
 import type { Project, ProjectData } from '../types';
 import Button from './common/Button';
 import ErrorMessage from './common/ErrorMessage';
-import Textarea from './common/Textarea';
+import { playSound } from '../services/soundService';
 import ImageModal from './common/ImageModal';
+import { fetchImageAsBase64 } from '../utils/imageUtils';
+import Textarea from './common/Textarea';
 
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 const SLOGAN_COST = 1;
-const LOGO_COST = 5;
-const REVISI_COST = 1;
-const XP_REWARD_LOGO = 150;
-
-type AspectRatio = '1:1' | '4:3' | '16:9';
+const LOGO_PROMPT_COST = 1;
+const LOGO_GEN_COST = 4;
+const LOGO_EDIT_COST = 1;
+const XP_REWARD = 150;
 
 interface Props {
   project: Project;
@@ -25,158 +23,161 @@ interface Props {
 }
 
 const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
-    const { deductCredits, addXp } = useUserActions();
-    const { selectedPersona, slogans, selectedSlogan, logoPrompt, logoOptions, selectedLogoUrl } = project.project_data;
+  const { deductCredits, addXp } = useUserActions();
+  const [isLoading, setIsLoading] = useState<string | false>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [editPrompt, setEditPrompt] = useState('');
+  const [editingLogoUrl, setEditingLogoUrl] = useState<string | null>(null);
+  const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
 
-    const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
-    const [error, setError] = useState<string | null>(null);
-    const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
-    const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
-    const [revisionPrompt, setRevisionPrompt] = useState('');
+  const { brandInputs, selectedPersona, slogans, selectedSlogan, logoPrompt, logoOptions, selectedLogoUrl } = project.project_data;
 
-    const setLoader = (key: string, value: boolean) => setIsLoading(prev => ({ ...prev, [key]: value }));
+  const handleGenerateSlogans = async () => {
+    if (!brandInputs) return;
+    setIsLoading('slogans'); setError(null);
+    try {
+      if (!(await deductCredits(SLOGAN_COST))) return;
+      const newSlogans = await generateSlogans(brandInputs);
+      await onUpdateProject({ slogans: newSlogans, selectedSlogan: newSlogans[0] });
+      playSound('success');
+    } catch (err) { setError((err as Error).message); } 
+    finally { setIsLoading(false); }
+  };
 
-    const handleGenerateSlogans = async () => {
-        setLoader('slogans', true); setError(null);
-        try {
-            if (!(await deductCredits(SLOGAN_COST))) return;
-            const res = await generateSlogans(project.project_data.brandInputs!);
-            await onUpdateProject({ slogans: res });
-        } catch (e) { setError((e as Error).message); } finally { setLoader('slogans', false); }
-    };
+  const handleGenerateLogoPrompt = async () => {
+    if (!selectedSlogan || !selectedPersona) return;
+    setIsLoading('prompt'); setError(null);
+    try {
+      if (!(await deductCredits(LOGO_PROMPT_COST))) return;
+      const newPrompt = await generateLogoPrompt(selectedSlogan, selectedPersona);
+      await onUpdateProject({ logoPrompt: newPrompt });
+    } catch (err) { setError((err as Error).message); } 
+    finally { setIsLoading(false); }
+  };
 
-    const handleSelectSlogan = async (slogan: string) => {
-        playSound('select');
-        await onUpdateProject({ selectedSlogan: slogan });
-        // Auto-generate prompt after slogan selection
-        if (selectedPersona) {
-            setLoader('prompt', true); setError(null);
-            try {
-                const res = await generateLogoPrompt(slogan, selectedPersona);
-                await onUpdateProject({ logoPrompt: res });
-            } catch (e) { setError((e as Error).message); } finally { setLoader('prompt', false); }
-        }
-    };
-    
-    const handleGenerateLogos = async () => {
-        if (!logoPrompt) return;
-        setLoader('logos', true); setError(null);
-        try {
-            if (!(await deductCredits(LOGO_COST))) return;
-            const res = await generateLogoOptions(logoPrompt, aspectRatio);
-            await onUpdateProject({ logoOptions: res });
-            await addXp(XP_REWARD_LOGO);
-        } catch (e) { setError((e as Error).message); } finally { setLoader('logos', false); }
-    };
+  const handleGenerateLogos = async () => {
+    if (!logoPrompt) return;
+    setIsLoading('logos'); setError(null);
+    try {
+      if (!(await deductCredits(LOGO_GEN_COST))) return;
+      const newLogos = await generateLogoOptions(logoPrompt);
+      await onUpdateProject({ logoOptions: newLogos, selectedLogoUrl: newLogos[0] });
+      await addXp(XP_REWARD);
+    } catch (err) { setError((err as Error).message); } 
+    finally { setIsLoading(false); }
+  };
 
-    const handleSelectLogo = async (url: string) => {
-        playSound('success');
-        await onUpdateProject({ selectedLogoUrl: url });
-    };
-
-    const handleRevision = async () => {
-        if (!revisionPrompt.trim() || !selectedLogoUrl) return;
-        setLoader('revision', true); setError(null);
-        try {
-            if (!(await deductCredits(REVISI_COST))) return;
-            const base64Image = await fetchImageAsBase64(selectedLogoUrl);
-            const revisedUrl = await editLogo(base64Image, revisionPrompt);
-            await onUpdateProject({ selectedLogoUrl: revisedUrl });
-            setRevisionPrompt('');
-        } catch (e) { setError((e as Error).message); } finally { setLoader('revision', false); }
-    };
-
-    if (!selectedPersona) {
-        return (
-            <div className="text-center p-8 bg-surface rounded-lg min-h-[400px] flex flex-col justify-center items-center">
-                <span className="text-5xl mb-4">👤</span>
-                <h2 className="text-2xl font-bold text-text-header mt-4">Pilih Persona Dulu, Juragan!</h2>
-                <p className="mt-2 text-text-muted max-w-md">Logo yang bagus itu mencerminkan kepribadian brand. Silakan selesaikan Langkah 1 di tab "Persona" untuk melanjutkan.</p>
-            </div>
-        );
+  const handleSelectLogo = (url: string) => {
+    onUpdateProject({ selectedLogoUrl: url });
+    playSound('select');
+  };
+  
+  const handleEditLogo = async () => {
+    if (!editingLogoUrl || !editPrompt) return;
+    setIsLoading('edit'); setError(null);
+    try {
+        if (!(await deductCredits(LOGO_EDIT_COST))) return;
+        const newLogoUrl = await editLogo(editingLogoUrl, editPrompt);
+        
+        // Replace the old logo with the new one
+        const newLogoOptions = logoOptions.map(url => url === editingLogoUrl ? newLogoUrl : url);
+        await onUpdateProject({ logoOptions: newLogoOptions, selectedLogoUrl: newLogoUrl });
+        
+        setEditingLogoUrl(null);
+        setEditPrompt('');
+    } catch (err) {
+        setError((err as Error).message);
+    } finally {
+        setIsLoading(false);
     }
+  };
 
+
+  if (!selectedPersona) {
     return (
-        <div className="space-y-6">
-            {/* Step 1: Slogan */}
-            <div className="p-4 bg-background rounded-lg">
-                <h3 className="font-bold text-text-header mb-2">Step 1: Slogan Juara</h3>
-                {slogans && slogans.length > 0 ? (
-                    <div className="space-y-2">
-                        {slogans.map((s, i) => (
-                            <button key={i} onClick={() => handleSelectSlogan(s)} className={`w-full text-left p-3 rounded-lg text-sm transition-colors ${selectedSlogan === s ? 'bg-primary text-white font-semibold' : 'bg-surface hover:bg-border-light'}`}>
-                                "{s}"
-                            </button>
-                        ))}
-                    </div>
-                ) : (
-                    <Button onClick={handleGenerateSlogans} isLoading={isLoading.slogans}>Buat Opsi Slogan ({SLOGAN_COST} Token)</Button>
-                )}
-            </div>
-
-            {/* Step 2: Logo Prompt */}
-            {selectedSlogan && (
-                 <div className="p-4 bg-background rounded-lg animate-content-fade-in">
-                    <h3 className="font-bold text-text-header mb-2">Step 2: Resep Rahasia Logo</h3>
-                    <Textarea name="logoPrompt" label="Prompt untuk AI" value={logoPrompt || ''} onChange={(e) => onUpdateProject({ logoPrompt: e.target.value })} rows={4} disabled={isLoading.prompt} />
-                    {isLoading.prompt && <p className="text-sm text-accent animate-pulse mt-2">Mang AI sedang meracik resep...</p>}
-                </div>
-            )}
-            
-            {/* Step 3: Logo Generation */}
-            {logoPrompt && (
-                <div className="p-4 bg-background rounded-lg animate-content-fade-in">
-                    <h3 className="font-bold text-text-header mb-2">Step 3: Waktunya Bikin Logo!</h3>
-                    <div className="flex items-center gap-4 mb-3">
-                         <label className="text-sm font-medium text-text-muted">Aspek Rasio:</label>
-                         {(['1:1', '4:3', '16:9'] as AspectRatio[]).map(ratio => (
-                            <button key={ratio} onClick={() => setAspectRatio(ratio)} className={`px-3 py-1 text-xs rounded-full ${aspectRatio === ratio ? 'bg-primary text-white' : 'bg-surface hover:bg-border-light'}`}>
-                                {ratio}
-                            </button>
-                         ))}
-                    </div>
-                    <Button onClick={handleGenerateLogos} isLoading={isLoading.logos} className="w-full">
-                        Buat 4 Opsi Logo! ({LOGO_COST} Token)
-                    </Button>
-                </div>
-            )}
-
-            {logoOptions && logoOptions.length > 0 && (
-                <div className="p-4 bg-background rounded-lg animate-content-fade-in">
-                    <h3 className="font-bold text-text-header mb-2">Pilih Logo Andalanku</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {logoOptions.map((url, i) => (
-                            <div key={i} className={`relative group border-2 rounded-lg transition-all ${selectedLogoUrl === url ? 'border-primary scale-105' : 'border-transparent'}`}>
-                                <img src={url} alt={`Logo Option ${i}`} className="w-full aspect-square object-contain rounded-md bg-white p-1 cursor-pointer" onClick={() => setModalImageUrl(url)} />
-                                <button onClick={() => handleSelectLogo(url)} className={`absolute -bottom-3 left-1/2 -translate-x-1/2 w-3/4 py-1 text-xs font-bold rounded-md transition-opacity ${selectedLogoUrl === url ? 'bg-primary text-white' : 'bg-surface text-text-header opacity-0 group-hover:opacity-100'}`}>
-                                    {selectedLogoUrl === url ? '✓ Terpilih' : 'Pilih Ini'}
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-            
-            {/* Step 4: Revision Studio */}
-            {selectedLogoUrl && (
-                <div className="p-4 bg-background rounded-lg border-2 border-primary animate-content-fade-in">
-                    <h3 className="font-bold text-primary mb-2">Studio Revisi Logo Terpilih</h3>
-                     <div className="flex flex-col md:flex-row gap-4 items-start">
-                        <img src={selectedLogoUrl} alt="Logo Terpilih" className="w-full md:w-1/3 aspect-square object-contain rounded-md bg-white p-1" />
-                        <div className="w-full space-y-2">
-                           <Textarea name="revisionPrompt" label="Instruksi Revisi" value={revisionPrompt} onChange={(e) => setRevisionPrompt(e.target.value)} rows={3} placeholder="Contoh: ganti warnanya jadi biru dongker, tambahkan api di sekelilingnya, hapus teksnya" />
-                           <Button onClick={handleRevision} isLoading={isLoading.revision} disabled={!revisionPrompt.trim()} className="w-full" variant="accent">
-                                Revisi Logo Ini! ({REVISI_COST} Token)
-                           </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {error && <ErrorMessage message={error} />}
-            {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Pratinjau Logo" onClose={() => setModalImageUrl(null)} />}
+        <div className="text-center p-8 bg-surface rounded-lg min-h-[400px] flex flex-col justify-center items-center">
+            <span className="text-5xl mb-4">🎨</span>
+            <h2 className="text-2xl font-bold text-text-header mt-4">Pilih Persona Dulu!</h2>
+            <p className="mt-2 text-text-muted max-w-md">Logo yang bagus itu mencerminkan kepribadian brand. Selesaikan Langkah 1 dulu ya, Juragan!</p>
         </div>
     );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="p-4 rounded-lg flex items-start gap-4 mang-ai-callout border border-border-main">
+        <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-primary/10 rounded-full"><span className="text-3xl">🎨</span></div>
+        <div>
+          <h3 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Langkah 2: Ciptakan Logo Juara</h3>
+          <p className="text-sm text-text-body mt-1">Logo itu wajahnya brand. Mang AI akan bantu kamu dari bikin slogan, resep logo (prompt), sampai 4 pilihan desain logo yang bisa kamu pilih dan revisi.</p>
+        </div>
+      </div>
+      
+      {error && <ErrorMessage message={error} />}
+
+      {/* Slogan Generation */}
+      <div className="p-4 bg-background rounded-lg space-y-3">
+        <h4 className="font-semibold text-text-header">2a. Slogan Juara</h4>
+        {slogans.length === 0 ? (
+          <Button onClick={handleGenerateSlogans} isLoading={isLoading === 'slogans'} disabled={!!isLoading}>Buat Slogan ({SLOGAN_COST} Token)</Button>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {slogans.map(s => <button key={s} onClick={() => onUpdateProject({ selectedSlogan: s })} className={`px-3 py-1 text-sm rounded-full ${selectedSlogan === s ? 'bg-primary text-white' : 'bg-surface hover:bg-border-light'}`}>{s}</button>)}
+          </div>
+        )}
+      </div>
+
+      {/* Logo Prompt Generation */}
+      {selectedSlogan && (
+        <div className="p-4 bg-background rounded-lg space-y-3 animate-content-fade-in">
+          <h4 className="font-semibold text-text-header">2b. Resep Logo (Prompt)</h4>
+          {logoPrompt ? (
+            <p className="text-sm italic text-text-body bg-surface p-2 rounded">"{logoPrompt}"</p>
+          ) : (
+            <Button onClick={handleGenerateLogoPrompt} isLoading={isLoading === 'prompt'} disabled={!!isLoading}>Buat Resep Logo ({LOGO_PROMPT_COST} Token)</Button>
+          )}
+        </div>
+      )}
+
+      {/* Logo Generation */}
+      {logoPrompt && (
+        <div className="p-4 bg-background rounded-lg space-y-3 animate-content-fade-in">
+          <h4 className="font-semibold text-text-header">2c. Pilihan Desain Logo</h4>
+          {logoOptions.length === 0 ? (
+             <Button onClick={handleGenerateLogos} isLoading={isLoading === 'logos'} disabled={!!isLoading}>Gambar 4 Opsi Logo! ({LOGO_GEN_COST} Token)</Button>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {logoOptions.map(url => (
+                    <div key={url} className={`relative p-2 border-2 rounded-lg cursor-pointer transition-all group ${selectedLogoUrl === url ? 'border-primary' : 'border-transparent'}`} onClick={() => handleSelectLogo(url)}>
+                        <img src={url} alt="logo option" className="w-full aspect-square object-contain bg-white rounded-md"/>
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                           <Button size="small" onClick={(e) => { e.stopPropagation(); setModalImageUrl(url); }}>🔎</Button>
+                           <Button size="small" onClick={(e) => { e.stopPropagation(); setEditingLogoUrl(url); }}>✏️</Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {editingLogoUrl && (
+        <div className="p-4 bg-background rounded-lg space-y-3 animate-content-fade-in">
+             <h4 className="font-semibold text-text-header">Revisi Logo</h4>
+             <div className="flex gap-4 items-start">
+                <img src={editingLogoUrl} alt="logo to edit" className="w-24 h-24 object-contain bg-white rounded-md"/>
+                <Textarea label="Instruksi revisi" name="editPrompt" value={editPrompt} onChange={e => setEditPrompt(e.target.value)} placeholder="Contoh: ganti warnanya jadi biru" rows={3} className="flex-grow" />
+             </div>
+             <div className="flex gap-2">
+                <Button onClick={handleEditLogo} isLoading={isLoading === 'edit'} disabled={!editPrompt}>Revisi ({LOGO_EDIT_COST} T)</Button>
+                <Button onClick={() => setEditingLogoUrl(null)} variant="secondary">Batal</Button>
+             </div>
+        </div>
+      )}
+
+      {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Pratinjau Logo" onClose={() => setModalImageUrl(null)} />}
+    </div>
+  );
 };
 
 export default LogoGenerator;

@@ -1,164 +1,114 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect, lazy } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import type { Project, ProjectData, BrandInputs } from '../types';
 import ModuleLoader from './common/ModuleLoader';
 import { useUI } from '../contexts/UIContext';
-import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
+import { useUserActions } from '../contexts/UserActionsContext';
 
-// Lazy load the main components
 const BrandPersonaGenerator = lazy(() => import('./BrandPersonaGenerator'));
 const LogoGenerator = lazy(() => import('./LogoGenerator'));
 const SocialMediaKitGenerator = lazy(() => import('./SocialMediaKitGenerator'));
 const ContentCalendarGenerator = lazy(() => import('./ContentCalendarGenerator'));
-const LemariBrand = lazy(() => import('./LemariBrand'));
-
-// Lazy load Sotoshop tools
 const MascotGenerator = lazy(() => import('./MascotGenerator'));
 const MoodboardGenerator = lazy(() => import('./MoodboardGenerator'));
 const PatternGenerator = lazy(() => import('./PatternGenerator'));
 const PhotoStudio = lazy(() => import('./PhotoStudio'));
 const SceneMixer = lazy(() => import('./SceneMixer'));
+const LemariBrand = lazy(() => import('./LemariBrand'));
 const VideoGenerator = lazy(() => import('./VideoGenerator'));
 const AiPresenter = lazy(() => import('./AiPresenter'));
+const VoiceBrandingWizard = lazy(() => import('./VoiceBrandingWizard'));
 
-const MAIN_TABS = ['Persona', 'Logo', 'Kit Sosmed', 'Konten', 'Lemari Brand'];
-const SOTOSHOP_TABS = ['Maskot', 'Vibe Brand', 'Motif', 'Studio Foto', 'Scene Mixer', 'Video', 'AI Presenter'];
-
-interface AICreatorProps {
-    project: Project | null;
-    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
-    // FIX: Added onCreateProject to props to enable child components to create new projects.
-    onCreateProject: (projectName: string, initialData: BrandInputs | null) => Promise<void>;
+interface Props {
+  project: Project | null;
+  onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+  onCreateProject: (projectName: string, initialInputs: BrandInputs | null) => Promise<void>;
 }
 
-const AICreator: React.FC<AICreatorProps> = ({ project, onUpdateProject, onCreateProject }) => {
-    const [activeTab, setActiveTab] = useState('Persona');
-    const { crossComponentPrompt, setCrossComponentPrompt } = useUI();
-    const [initialSotoshopPrompt, setInitialSotoshopPrompt] = useState<string | null>(null);
-    
-    // Activate the "Asisten Pencatat"
-    const saveStatus = useDebouncedAutosave(project, onUpdateProject);
+const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject }) => {
+  const [activeTab, setActiveTab] = useState('branding');
+  const [showVoiceWizard, setShowVoiceWizard] = useState(false);
+  const { crossComponentPrompt, setCrossComponentPrompt } = useUI();
+  const { lastVoiceConsultationResult, setLastVoiceConsultationResult } = useUserActions();
 
-    useEffect(() => {
-        if (project) {
-            if (!project.project_data.selectedPersona) setActiveTab('Persona');
-            else if (!project.project_data.selectedLogoUrl) setActiveTab('Logo');
-            else setActiveTab('Kit Sosmed');
-        } else {
-            setActiveTab('Persona');
-        }
-    }, [project]);
-    
-    useEffect(() => {
-        if (crossComponentPrompt) {
-            setActiveTab(crossComponentPrompt.targetTool);
-            setInitialSotoshopPrompt(crossComponentPrompt.prompt);
-            setCrossComponentPrompt(null);
-        }
-    }, [crossComponentPrompt, setCrossComponentPrompt]);
+  React.useEffect(() => {
+    if (crossComponentPrompt) {
+        setActiveTab('sotoshop');
+        // A more robust implementation would scroll to the specific tool
+    }
+  }, [crossComponentPrompt]);
+  
+  React.useEffect(() => {
+    if (lastVoiceConsultationResult) {
+      const projectName = `Proyek Konsultasi Suara - ${new Date().toLocaleDateString()}`;
+      onCreateProject(projectName, lastVoiceConsultationResult).then(() => {
+        setLastVoiceConsultationResult(null); // Clear after use
+        setActiveTab('branding');
+      });
+    }
+  }, [lastVoiceConsultationResult, onCreateProject, setLastVoiceConsultationResult]);
 
-    const renderTabContent = () => {
-        if (!project) {
-            return (
-                 <div className="text-center p-8 bg-surface rounded-lg min-h-[400px] flex flex-col justify-center items-center">
-                    <div className="mx-auto mb-4 w-32 h-32 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                    </div>
-                    <h2 className="text-2xl font-bold text-text-header mt-4">Pilih atau Buat Proyek Dulu, Juragan!</h2>
-                    <p className="mt-2 text-text-muted">Mang AI butuh proyek untuk mulai bekerja. Silakan pilih dari daftar atau buat yang baru di sebelah kiri.</p>
-                </div>
-            );
-        }
 
-        const commonProps = { project, onUpdateProject };
-
-        switch (activeTab) {
-            // FIX: Pass onCreateProject down to BrandPersonaGenerator.
-            case 'Persona': return <BrandPersonaGenerator {...commonProps} onCreateProject={onCreateProject} />;
-            case 'Logo': return <LogoGenerator {...commonProps} />;
-            case 'Kit Sosmed': return <SocialMediaKitGenerator {...commonProps} />;
-            case 'Konten': return <ContentCalendarGenerator {...commonProps} />;
-            case 'Lemari Brand': return <LemariBrand {...commonProps} />;
-            // Sotoshop Tools
-            case 'Maskot': return <MascotGenerator {...commonProps} />;
-            case 'Vibe Brand': return <MoodboardGenerator {...commonProps} />;
-            case 'Motif': return <PatternGenerator {...commonProps} />;
-            case 'Studio Foto': return <PhotoStudio {...commonProps} initialPrompt={initialSotoshopPrompt} />;
-            case 'Scene Mixer': return <SceneMixer {...commonProps} />;
-            case 'Video': return <VideoGenerator {...commonProps} />;
-            case 'AI Presenter': return <AiPresenter {...commonProps} />;
-            default: return <div>Pilih Tab</div>;
-        }
-    };
-    
-    const isTabDisabled = (tab: string): boolean => {
-        if (!project) return tab !== 'Persona';
-        const { selectedPersona, selectedLogoUrl } = project.project_data;
-        if (tab === 'Logo' && !selectedPersona) return true;
-        if ((tab === 'Kit Sosmed' || tab === 'Konten') && (!selectedPersona || !selectedLogoUrl)) return true;
-        return false;
-    };
-    
-    const getDisabledMessage = (tab: string): string => {
-        if (tab === 'Logo') return 'Lengkapi Persona dulu!';
-        if (tab === 'Kit Sosmed' || tab === 'Konten') return 'Lengkapi Persona & Logo dulu!';
-        return '';
-    };
-    
-    const AutosaveIndicator = () => {
-        let text = null;
-        if (saveStatus === 'SAVING') text = "Menyimpan...";
-        if (saveStatus === 'SAVED') text = "✓ Semua perubahan disimpan";
-
-        if (!text) return null;
-
-        return (
-            <div className="text-xs text-text-muted transition-opacity duration-300">
-                {text}
-            </div>
-        );
-    };
-
-    const TabButton: React.FC<{ name: string, isActive: boolean, isSotoshop?: boolean }> = ({ name, isActive, isSotoshop = false }) => {
-        const disabled = isTabDisabled(name);
-        const title = disabled ? getDisabledMessage(name) : `Buka tab ${name}`;
-        
-        return (
-             <button
-                title={title}
-                onClick={() => !disabled && setActiveTab(name)}
-                className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors duration-200 border-b-2 
-                    ${isActive ? 'tab-active-splash text-primary' : 'text-text-muted border-transparent hover:bg-background hover:text-text-header'}
-                    ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                    ${isSotoshop && 'text-accent hover:text-accent-hover'}`}
-            >
-                {isSotoshop && '✨ '}{name}
-            </button>
-        )
-    };
-
+  if (!project) {
     return (
-        <div className="bg-surface rounded-2xl shadow-lg">
-            <div className="border-b border-border-main p-2 flex flex-wrap items-center justify-between">
-                 <div className="flex flex-wrap items-center">
-                    {MAIN_TABS.map(tab => <TabButton key={tab} name={tab} isActive={activeTab === tab} />)}
-                    <div className="h-6 w-px bg-border-main mx-2"></div>
-                    {SOTOSHOP_TABS.map(tab => <TabButton key={tab} name={tab} isActive={activeTab === tab} isSotoshop />)}
-                 </div>
-                 <div className="px-4">
-                    <AutosaveIndicator />
-                 </div>
-            </div>
-            <div className="p-4 sm:p-6 md:p-8">
-                <ModuleLoader>
-                    {renderTabContent()}
-                </ModuleLoader>
-            </div>
-        </div>
+      <div className="text-center p-8 bg-surface rounded-lg min-h-[400px] flex flex-col justify-center items-center">
+        <span className="text-5xl mb-4">🚀</span>
+        <h2 className="text-2xl font-bold text-text-header mt-4">Siap Mulai Petualangan Branding?</h2>
+        <p className="mt-2 text-text-muted max-w-md">Buat proyek baru dulu di panel "Proyek Juragan" di atas, atau coba konsultasi suara dengan Mang AI!</p>
+        <button onClick={() => setShowVoiceWizard(true)} className="mt-4 px-4 py-2 bg-splash text-white rounded-lg hover:bg-splash-hover">
+            🎙️ Konsultasi Suara
+        </button>
+        {showVoiceWizard && 
+            <ModuleLoader>
+                <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} />
+            </ModuleLoader>
+        }
+      </div>
     );
+  }
+
+  const TABS: { id: string; name: string; content: React.ReactNode }[] = [
+    { id: 'branding', name: '🧠 Branding Utama', content: (
+        <div className="space-y-8">
+            <BrandPersonaGenerator project={project} onUpdateProject={onUpdateProject} />
+            <LogoGenerator project={project} onUpdateProject={onUpdateProject} />
+            <SocialMediaKitGenerator project={project} onUpdateProject={onUpdateProject} />
+            <ContentCalendarGenerator project={project} onUpdateProject={onUpdateProject} />
+        </div>
+    )},
+    { id: 'sotoshop', name: '✨ Sotoshop (AI Playground)', content: (
+        <div className="space-y-8">
+            <MascotGenerator project={project} onUpdateProject={onUpdateProject} />
+            <MoodboardGenerator project={project} onUpdateProject={onUpdateProject} />
+            <PatternGenerator project={project} onUpdateProject={onUpdateProject} />
+            <PhotoStudio project={project} onUpdateProject={onUpdateProject} initialPrompt={crossComponentPrompt?.targetTool === 'Studio Foto' ? crossComponentPrompt.prompt : null} />
+            <SceneMixer project={project} onUpdateProject={onUpdateProject} />
+            <VideoGenerator project={project} onUpdateProject={onUpdateProject} />
+            <AiPresenter project={project} onUpdateProject={onUpdateProject} />
+        </div>
+    )},
+    { id: 'lemari', name: '📦 Lemari Brand', content: <LemariBrand project={project} onUpdateProject={onUpdateProject} />},
+  ];
+
+  return (
+    <div className="bg-surface rounded-2xl shadow-lg p-6" data-onboarding-step="2">
+        <div className="flex gap-2 mb-6 border-b-2 border-border-main overflow-x-auto" data-onboarding-step="3">
+            {TABS.map(tab => (
+                <button 
+                    key={tab.id} 
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`py-2 px-4 text-sm font-semibold whitespace-nowrap ${activeTab === tab.id ? 'tab-active-primary' : 'text-text-muted hover:text-text-header'}`}
+                >
+                    {tab.name}
+                </button>
+            ))}
+        </div>
+        <ModuleLoader>
+          {TABS.find(t => t.id === activeTab)?.content}
+        </ModuleLoader>
+    </div>
+  );
 };
 
 export default AICreator;
