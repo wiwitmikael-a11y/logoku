@@ -35,7 +35,7 @@ const App: React.FC = () => {
   useAudioContextManager();
 
   useEffect(() => {
-    document.documentElement.className = theme;
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
   
   useEffect(() => {
