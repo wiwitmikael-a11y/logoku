@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getSupabaseClient } from '../services/supabaseClient';
 import type { Project, ProjectData } from '../types';
-// FIX: Corrected import path. Assumes AICreator.tsx exists and exports a default component.
 import AICreator from './AICreator';
 import Spinner from './common/Spinner';
 import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
@@ -13,6 +12,7 @@ import { useUserActions } from '../contexts/UserActionsContext';
 import BrandCreationGate from './BrandCreationGate';
 import DashboardHeader from './DashboardHeader';
 import { useProject } from '../contexts/ProjectContext';
+import Sidebar from './Sidebar';
 
 const ProjectDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -63,12 +63,15 @@ const ProjectDashboard: React.FC = () => {
     const onSave = async (data: Partial<ProjectData>) => {
         if (!selectedProject) return;
         const supabase = getSupabaseClient();
-        await supabase.from('projects').update({ project_data: data }).eq('id', selectedProject.id);
+        const { error } = await supabase.from('projects').update({ project_data: data }).eq('id', selectedProject.id);
+         if (error) {
+            console.error("Autosave failed:", error);
+        }
     };
 
     useDebouncedAutosave(selectedProject, onSave);
     
-    if (loading) {
+    if (loading && projects.length === 0) {
         return <div className="min-h-screen flex justify-center items-center"><Spinner /></div>;
     }
     
@@ -79,17 +82,20 @@ const ProjectDashboard: React.FC = () => {
     return (
         <div className="min-h-screen flex flex-col">
             <DashboardHeader />
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
-                 {selectedProject ? (
-                    <AICreator project={selectedProject} onUpdateProject={handleUpdateProjectData} />
-                ) : (
-                     <div className="text-center p-8 bg-surface rounded-2xl min-h-[50vh] flex flex-col justify-center items-center">
-                        <span className="text-6xl mb-4">🤔</span>
-                        <h2 className="text-3xl font-bold text-text-header mt-4" style={{fontFamily: 'var(--font-display)'}}>Pilih Proyek</h2>
-                        <p className="mt-2 text-text-muted max-w-md">Pilih salah satu proyek dari sidebar di sebelah kiri untuk mulai bekerja.</p>
-                    </div>
-                )}
-            </main>
+            <div className="flex flex-1 overflow-hidden">
+                 <Sidebar />
+                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                     {selectedProject ? (
+                        <AICreator project={selectedProject} onUpdateProject={handleUpdateProjectData} />
+                    ) : (
+                         <div className="text-center p-8 bg-surface rounded-2xl min-h-[50vh] flex flex-col justify-center items-center">
+                            <span className="text-6xl mb-4">🤔</span>
+                            <h2 className="text-3xl font-bold text-text-header mt-4" style={{fontFamily: 'var(--font-display)'}}>Pilih Proyek</h2>
+                            <p className="mt-2 text-text-muted max-w-md">Pilih salah satu proyek dari sidebar di sebelah kiri untuk mulai bekerja.</p>
+                        </div>
+                    )}
+                </main>
+            </div>
         </div>
     );
 };

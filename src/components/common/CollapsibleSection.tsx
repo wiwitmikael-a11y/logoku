@@ -3,41 +3,40 @@
 import React, { useState } from 'react';
 import GlowingArrowButton from './GlowingArrowButton';
 
-interface Props {
+interface CollapsibleSectionProps {
   title: string;
-  icon: React.ReactNode;
+  icon: string;
   children: React.ReactNode;
   initialOpen?: boolean;
 }
 
-const CollapsibleSection: React.FC<Props> = ({ title, icon, children, initialOpen = true }) => {
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, icon, children, initialOpen = false }) => {
   const [isOpen, setIsOpen] = useState(initialOpen);
 
   return (
-    <div className="glass-effect rounded-xl transition-all duration-300">
-      <div
-        className="flex items-center justify-between p-4 cursor-pointer"
+    <div className="bg-surface rounded-2xl border border-border-main overflow-hidden transition-all duration-300">
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        role="button"
-        aria-expanded={isOpen}
+        className="w-full flex items-center justify-between p-4 text-left"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-primary/10 rounded-full text-primary text-xl">
-            {icon}
-          </div>
-          <h3 className="text-xl font-bold text-text-header" style={{ fontFamily: 'var(--font-display)' }}>
-            {title}
-          </h3>
+          <span className="text-2xl">{icon}</span>
+          <h3 className="text-lg font-bold text-text-header">{title}</h3>
         </div>
         <GlowingArrowButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
-      </div>
-      {isOpen && (
-        <div className="p-4 pt-0 animate-content-fade-in">
-          <div className="border-t border-border-main pt-4">
+      </button>
+      <div
+        className={`transition-all duration-500 ease-in-out ${
+          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+        style={{ display: 'grid' }}
+      >
+        <div className="overflow-hidden">
+          <div className="p-4 border-t border-border-main">
             {children}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

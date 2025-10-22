@@ -2,47 +2,32 @@
 
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import Tooltip from './common/Tooltip';
 
 const HeaderStats: React.FC = () => {
     const { profile } = useAuth();
 
     if (!profile) return null;
 
-    const getXpForLevel = (level: number): number => 100 + (level * 150); // Slightly adjusted curve
-    const xpForNextLevel = getXpForLevel(profile.level);
-    const xpForCurrentLevel = getXpForLevel(profile.level - 1);
-    const totalXpInLevel = xpForNextLevel - xpForCurrentLevel;
-    const currentXpInLevel = profile.xp - xpForCurrentLevel;
-    
-    const progressPercentage = totalXpInLevel > 0 ? Math.max(0, Math.min(100, (currentXpInLevel / totalXpInLevel) * 100)) : 0;
+    const { credits, level, xp } = profile;
+    const nextLevelXP = 1000 * level; // Example formula
+    const xpPercentage = (xp / nextLevelXP) * 100;
 
     return (
-        <div className="flex flex-wrap items-center gap-2 md:gap-4">
-            <div className="stat-card-gradient p-2 rounded-lg flex items-center gap-2">
-                <span className="text-2xl">🪙</span>
-                <div>
-                    <p className="text-xs text-text-muted">Token</p>
-                    <p className="text-xl font-bold text-primary">{profile.credits}</p>
-                </div>
+        <div className="flex items-center gap-4 bg-background px-4 py-2 rounded-full border border-border-main">
+            {/* Credits */}
+            <div className="flex items-center gap-2" title="Token Kredit">
+                <span className="text-xl">🪙</span>
+                <span className="font-bold text-text-header">{credits}</span>
             </div>
-            <div className="stat-card-gradient p-2 rounded-lg flex items-center gap-2">
-                 <span className="text-2xl">⭐</span>
-                 <div>
-                    <p className="text-xs text-text-muted">Level</p>
-                    <p className="text-xl font-bold text-accent">{profile.level}</p>
+            
+            <div className="h-6 w-px bg-border-main"></div>
+
+            {/* Level & XP */}
+            <div className="flex-1 flex items-center gap-3">
+                <span className="font-bold text-sm text-primary" title={`Level ${level}`}>LV {level}</span>
+                <div className="w-full bg-border-light rounded-full h-2.5" title={`${xp} / ${nextLevelXP} XP`}>
+                    <div className="bg-primary h-2.5 rounded-full" style={{ width: `${xpPercentage}%` }}></div>
                 </div>
-            </div>
-            <div className="flex-grow stat-card-gradient p-2 rounded-lg flex items-center gap-2">
-                <p className="text-xs font-semibold text-text-muted">XP</p>
-                <Tooltip text={`${profile.xp} / ${xpForNextLevel}`}>
-                     <div className="w-full bg-border-main rounded-full h-2.5">
-                        <div 
-                            className="bg-accent h-2.5 rounded-full transition-all duration-500 ease-out" 
-                            style={{ width: `${progressPercentage}%`, background: 'linear-gradient(90deg, rgb(var(--c-accent)) 0%, rgb(var(--c-accent-hover)) 100%)' }}
-                        ></div>
-                    </div>
-                </Tooltip>
             </div>
         </div>
     );

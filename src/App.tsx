@@ -1,99 +1,88 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { useUI } from './contexts/UIContext';
+import { useUserActions } from './contexts/UserActionsContext';
+import { getApiKeyError } from './services/geminiService';
+import { supabaseError } from './services/supabaseClient';
+import { useAudioContextManager } from './hooks/useAudioContextManager';
+
+// --- Screens ---
 import LoginScreen from './components/LoginScreen';
 import ProjectDashboard from './components/ProjectDashboard';
-import AuthLoadingScreen from './components/common/AuthLoadingScreen';
 import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
+import AuthLoadingScreen from './components/common/AuthLoadingScreen';
 import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
+
+// --- Modals ---
+import AboutModal from './components/common/AboutModal';
+import ContactModal from './components/common/ContactModal';
+import TermsOfServiceModal from './components/common/TermsOfServiceModal';
+import PrivacyPolicyModal from './components/common/PrivacyPolicyModal';
 import OutOfCreditsModal from './components/common/OutOfCreditsModal';
 import LevelUpModal from './components/gamification/LevelUpModal';
 import AchievementToast from './components/gamification/AchievementToast';
-import { useUserActions } from './contexts/UserActionsContext';
-import { supabaseError } from './services/supabaseClient';
-// FIX: Corrected import path. Assumes geminiService.ts exists and exports this function.
-import { getApiKeyError } from './services/geminiService';
-import { useAudioContextManager } from './hooks/useAudioContextManager';
-import { playBGM, stopBGM } from './services/soundService';
-import WelcomeGate from './components/common/PuzzleCaptchaModal';
-import AdAnchor from './components/common/AdAnchor';
-import Sidebar from './components/Sidebar';
+import Onboarding from './components/common/Onboarding';
 
 const App: React.FC = () => {
-  const { user, loading } = useAuth();
-  const { theme } = useUI();
-  const {
-    showOutOfCreditsModal, setShowOutOfCreditsModal,
-    showLevelUpModal, setShowLevelUpModal, levelUpInfo,
-    unlockedAchievement, setUnlockedAchievement,
-  } = useUserActions();
-  
-  const [gatePassed, setGatePassed] = useState(sessionStorage.getItem('desainfun_gate_passed') === 'true');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const { user, loading, isNewUser } = useAuth();
+    const { theme, showAboutModal, toggleAboutModal, showContactModal, toggleContactModal, showToSModal, toggleToSModal, showPrivacyModal, togglePrivacyModal } = useUI();
+    const { showOutOfCreditsModal, setShowOutOfCreditsModal, showLevelUpModal, setShowLevelUpModal, levelUpInfo, unlockedAchievement, setUnlockedAchievement } = useUserActions();
 
-  useAudioContextManager();
-
-  useEffect(() => {
-    document.documentElement.className = theme;
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-  
-  useEffect(() => {
-      if (gatePassed && user) {
-          playBGM('welcome');
-          const timer = setTimeout(() => {
-              playBGM('LoFi'); // Or random BGM
-          }, 4000); // Duration of welcome jingle
-          return () => {
-              clearTimeout(timer);
-              stopBGM();
-          }
-      }
-  }, [gatePassed, user]);
-  
-  const handleGatePassed = () => {
-    sessionStorage.setItem('desainfun_gate_passed', 'true');
-    setGatePassed(true);
-  };
-
-  const geminiApiKeyError = getApiKeyError();
-  if (geminiApiKeyError) return <ApiKeyErrorScreen error={geminiApiKeyError} />;
-  if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
-  if (loading) return <AuthLoadingScreen />;
-  
-  const renderContent = () => {
-    if (!user) return <LoginScreen />;
-    if (!gatePassed) return <WelcomeGate onGatePassed={handleGatePassed} />;
+    const [showOnboarding, setShowOnboarding] = React.useState(false);
     
-    // New layout with Sidebar
-    return (
-      <div id="app-layout">
-        <Sidebar 
-          isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        />
-        <main className="main-content">
-          <ProjectDashboard />
-        </main>
-      </div>
-    );
-  };
+    useAudioContextManager(); // Initialize and manage audio context globally
 
-  return (
-    <>
-      {renderContent()}
-      
-      {/* Global Modals & Toasts */}
-      <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
-      {levelUpInfo && <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />}
-      {unlockedAchievement && <AchievementToast achievement={unlockedAchievement} onDismiss={() => setUnlockedAchievement(null)} />}
-      
-      {/* Global Ad Anchor, shown only after login and gate passed */}
-      {user && gatePassed && <AdAnchor />}
-    </>
-  );
+    useEffect(() => {
+        document.documentElement.className = theme;
+    }, [theme]);
+    
+    useEffect(() => {
+        if (isNewUser) {
+            const hasSeenOnboarding = localStorage.getItem('desainfun_onboarding_seen');
+            if (!hasSeenOnboarding) {
+                setShowOnboarding(true);
+            }
+        }
+    }, [isNewUser]);
+
+    const handleOnboardingClose = () => {
+        setShowOnboarding(false);
+        localStorage.setItem('desainfun_onboarding_seen', 'true');
+    };
+
+    const geminiError = getApiKeyError();
+    if (geminiError) {
+        return <ApiKeyErrorScreen error={geminiError} />;
+    }
+    if (supabaseError) {
+        return <SupabaseKeyErrorScreen error={supabaseError} />;
+    }
+
+    if (loading) {
+        return <AuthLoadingScreen />;
+    }
+
+    return (
+        <div className="bg-background text-text-body font-sans">
+            {user ? <ProjectDashboard /> : <LoginScreen />}
+
+            {/* Global Modals & Toasts */}
+            <AboutModal show={showAboutModal} onClose={() => toggleAboutModal(false)} />
+            <ContactModal show={showContactModal} onClose={() => toggleContactModal(false)} />
+            <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} />
+            <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} />
+            <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
+            {showLevelUpModal && levelUpInfo && (
+                <LevelUpModal show={true} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />
+            )}
+            {unlockedAchievement && (
+                <AchievementToast achievement={unlockedAchievement} onDismiss={() => setUnlockedAchievement(null)} />
+            )}
+            {showOnboarding && <Onboarding onClose={handleOnboardingClose} />}
+        </div>
+    );
 };
 
 export default App;
