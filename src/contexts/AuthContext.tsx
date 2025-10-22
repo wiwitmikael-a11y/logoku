@@ -5,7 +5,8 @@ import { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../services/supabaseClient';
 import type { UserProfile } from '../types';
 import { usePageFocusTrigger } from '../hooks/usePageFocusTrigger';
-import { ProjectProvider } from './ProjectContext'; // Import ProjectProvider
+// FIX: Removed ProjectProvider import to break circular dependency.
+// It is now handled in main.tsx.
 
 interface AuthContextType {
   user: User | null;
@@ -100,10 +101,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider value={value}>
-        {/* Wrap children with ProjectProvider so it has access to auth context */}
-        <ProjectProvider>
-            {children}
-        </ProjectProvider>
+        {/* ProjectProvider is now moved to main.tsx to avoid circular dependency */}
+        {children}
     </AuthContext.Provider>
   );
 };

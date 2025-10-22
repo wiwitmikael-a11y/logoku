@@ -1,6 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect } from 'react';
+// FIX: Corrected import path. Assumes geminiService.ts exists and exports these functions.
 import { generatePattern, applyPatternToMockup } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';

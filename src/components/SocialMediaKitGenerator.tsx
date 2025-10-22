@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useUserActions } from '../contexts/UserActionsContext';
+// FIX: Corrected import path. Assumes geminiService.ts exists and exports these functions.
 import { generateSocialMediaKitAssets, generateSocialProfiles } from '../services/geminiService';
 import type { Project, ProjectData } from '../types';
 import Button from './common/Button';

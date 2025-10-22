@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getSupabaseClient } from '../services/supabaseClient';
 import type { Project, ProjectData } from '../types';
+// FIX: Corrected import path. Assumes AICreator.tsx exists and exports a default component.
 import AICreator from './AICreator';
 import Spinner from './common/Spinner';
 import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';

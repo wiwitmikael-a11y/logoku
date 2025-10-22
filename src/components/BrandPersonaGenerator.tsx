@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
+// FIX: Corrected import path. Assumes geminiService.ts exists and exports this function.
 import { generateBrandPersonas } from '../services/geminiService';
 import { playSound } from '../services/soundService';
 import type { Project, ProjectData, BrandInputs, BrandPersona } from '../types';

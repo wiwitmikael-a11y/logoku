@@ -1,0 +1,222 @@
+@import url('https://cdn.tailwindcss.com');
+
+/* Light Theme (Default) */
+:root {
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'Bebas Neue', cursive;
+  --font-handwriting: 'Caveat', cursive;
+  
+  --c-bg: 242 242 247; /* #f2f2f7 */
+  --c-surface: 255 255 255; /* #ffffff */
+  --c-text-header: 28 28 30; /* #1c1c1e */
+  --c-text-body: 58 58 60; /* #3a3a3c */
+  --c-text-muted: 142 142 147; /* #8e8e93 */
+  --c-primary: 0 122 255; /* #007aff */
+  --c-primary-hover: 0 102 215;
+  --c-accent: 255 149 0; /* #ff9500 */
+  --c-accent-hover: 225 129 0;
+  --c-splash: 175 82 222; /* #af52de */
+  --c-splash-hover: 155 62 202;
+  --c-border-main: 229 229 234; /* #e5e5ea */
+  --c-border-light: 242 242 247;
+  --c-bg-inverse: 28 28 30;
+  --c-text-inverse: 255 255 255;
+}
+
+/* Dark Theme */
+[data-theme='dark'] {
+  --c-bg: 10 10 12; /* #0a0a0c */
+  --c-surface: 28 28 30; /* #1c1c1e */
+  --c-text-header: 242 242 247; /* #f2f2f7 */
+  --c-text-body: 174 174 178; /* #aeaeb2 */
+  --c-text-muted: 99 99 102; /* #636366 */
+  --c-primary: 10 132 255; /* #0a84ff */
+  --c-primary-hover: 40 152 255;
+  --c-accent: 255 159 10; /* #ff9f0a */
+  --c-accent-hover: 255 179 40;
+  --c-splash: 191 90 242; /* #bf5af2 */
+  --c-splash-hover: 211 110 255;
+  --c-border-main: 58 58 60; /* #3a3a3c */
+  --c-border-light: 78 78 80;
+  --c-bg-inverse: 242 242 247;
+  --c-text-inverse: 28 28 30;
+}
+
+/* Tailwind CSS Configuration */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: rgb(var(--c-bg));
+    font-family: var(--font-body);
+    color: rgb(var(--c-text-body));
+    transition: background-color 0.3s, color 0.3s;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom Components & Animations */
+@layer components {
+  .dropdown-item {
+    @apply w-full text-left px-3 py-2 text-sm text-text-body hover:bg-background flex items-center gap-3 transition-colors;
+  }
+  .selection-card {
+      @apply bg-background border-border-main hover:border-primary hover:-translate-y-1;
+  }
+  .selection-card-active {
+      @apply bg-primary/10 border-primary ring-2 ring-primary ring-offset-2 ring-offset-surface -translate-y-1;
+  }
+  .mang-ai-callout {
+    @apply bg-gradient-to-br from-primary/5 to-transparent;
+  }
+  .glass-effect {
+    @apply bg-surface/50 backdrop-blur-md border border-border-main/50;
+  }
+  .toggle-switch {
+    @apply relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: rgb(var(--c-border-main));
+  }
+  .toggle-switch:checked {
+    background-color: rgb(var(--c-primary));
+  }
+  .toggle-switch::before {
+    @apply pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out;
+    content: '';
+  }
+  .toggle-switch:checked::before {
+    transform: translateX(1.25rem);
+  }
+   .tab-active {
+    @apply border-b-2 border-primary text-primary;
+  }
+  .tab-active-splash {
+    @apply border-b-2 border-splash text-splash;
+  }
+  .stat-card-gradient {
+    @apply bg-gradient-to-br from-surface to-background;
+  }
+  .sidebar {
+      @apply bg-surface/80 backdrop-blur-md border-r border-border-main w-64 flex-shrink-0 flex flex-col transition-all duration-300 ease-in-out;
+  }
+  .sidebar.collapsed {
+      @apply w-20;
+  }
+  .main-content {
+      @apply flex-grow transition-all duration-300 ease-in-out;
+  }
+  #app-layout {
+      @apply flex;
+  }
+  .sidebar-item button {
+      @apply w-full;
+  }
+   .workflow-step .step-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.4s ease-out;
+  }
+  .workflow-step .step-content.open {
+    grid-template-rows: 1fr;
+  }
+  .workflow-step .step-content > div {
+    overflow: hidden;
+  }
+
+}
+
+/* Keyframe Animations */
+@keyframes content-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes button-ready {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes breathing-ai {
+    0%, 100% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+@keyframes arrow-pulse {
+    0%, 100% { filter: drop-shadow(0 0 2px rgb(var(--c-primary)/0.4)); }
+    50% { filter: drop-shadow(0 0 8px rgb(var(--c-primary)/0.8)); }
+}
+@keyframes mang-ai-breathing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes mang-ai-talking-bounce {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-4px) scale(1.02); }
+  75% { transform: translateY(2px); }
+}
+@keyframes marquee-animation {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Marquee/Ticker Styles */
+.marquee-text-wrapper {
+  overflow: hidden;
+  width: 100%;
+}
+.marquee-text {
+  display: inline-block;
+  animation: marquee-animation linear infinite;
+  margin: 0;
+  padding-left: 100%; /* Start off-screen */
+  white-space: nowrap;
+}
+
+/* Progress Bar */
+.progress-bar {
+  width: 100%;
+  background-color: rgb(var(--c-border-main));
+  height: 8px;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, rgb(var(--c-primary)) 0%, rgb(var(--c-accent)) 100%);
+  transition: width 0.5s ease-in-out;
+}
+
+/* Other Custom Styles */
+.selectable-text {
+  user-select: text;
+}
+.animate-content-fade-in { animation: content-fade-in 0.5s ease-out forwards; }
+.animate-button-ready { animation: button-ready 2.5s ease-in-out infinite; }
+.animate-breathing-ai { animation: breathing-ai 3s ease-in-out infinite; }
+.animate-arrow-pulse { animation: arrow-pulse 2s ease-in-out infinite; }
+.animate-item-appear {
+  animation: content-fade-in 0.3s ease-out forwards;
+}
+
+.result-card-cta-bar {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.group:hover .result-card-cta-bar {
+  opacity: 1;
+  transform: translateY(0);
+}

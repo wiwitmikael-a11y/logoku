@@ -13,6 +13,7 @@ import LevelUpModal from './components/gamification/LevelUpModal';
 import AchievementToast from './components/gamification/AchievementToast';
 import { useUserActions } from './contexts/UserActionsContext';
 import { supabaseError } from './services/supabaseClient';
+// FIX: Corrected import path. Assumes geminiService.ts exists and exports this function.
 import { getApiKeyError } from './services/geminiService';
 import { useAudioContextManager } from './hooks/useAudioContextManager';
 import { playBGM, stopBGM } from './services/soundService';

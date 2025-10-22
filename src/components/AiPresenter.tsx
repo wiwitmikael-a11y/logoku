@@ -1,200 +1,160 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect, useRef } from 'react';
-import { generateSpeech } from '../services/geminiService';
+import React, { useState, useEffect } from 'react';
+import { generateCharacterImage, generateSpeech } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
-import { playSound, unlockAudio } from '../services/soundService';
-import type { Project, ProjectData, AiPresenterAsset } from '../types';
+import { playSound } from '../services/soundService';
+import type { Project, AiPresenterAsset } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
-import Select from './common/Select';
 import ErrorMessage from './common/ErrorMessage';
 import CollapsibleSection from './common/CollapsibleSection';
+import { uploadBase64Audio } from '../services/storageService';
+import Spinner from './common/Spinner';
 
-const PRESENTER_COST = 4;
-const XP_REWARD = 75;
+const CHARACTER_COST = 2;
+const SPEECH_COST = 6; // Disesuaikan untuk subsidi
+const XP_REWARD = 50;
 
 interface Props {
     project: Project;
-    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
+    onUpdateProject: (data: any) => Promise<void>;
 }
 
 const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
-    const { profile } = useAuth();
-    const { deductCredits, addXp } = useUserActions();
+    const { user, profile } = useAuth();
+    const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
     
+    const [characterPrompt, setCharacterPrompt] = useState('');
     const [script, setScript] = useState('');
-    const [selectedChar, setSelectedChar] = useState<string | null>(null);
-    const [voice, setVoice] = useState('Kore');
-    const [audioUrl, setAudioUrl] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState<string | false>(false);
     const [error, setError] = useState<string | null>(null);
+    const [result, setResult] = useState<Partial<AiPresenterAsset>>({});
 
-    const audioRef = useRef<HTMLAudioElement>(null);
-    const mouthRef = useRef<HTMLDivElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const analyserRef = useRef<AnalyserNode | null>(null);
-    const animationFrameRef = useRef<number | null>(null);
-
-    const availableCharacters = project.project_data.sotoshop_assets?.mascots || [];
-
-    const handleGenerate = async () => {
-        if (!script.trim() || !selectedChar) {
-            setError('Pilih karakter dan isi skrip dulu!');
-            return;
-        }
-        if ((profile?.credits ?? 0) < PRESENTER_COST) {
-            setError(`Token tidak cukup, butuh ${PRESENTER_COST} token.`);
-            return;
-        }
-
-        setIsLoading(true);
+    useEffect(() => {
+        setCharacterPrompt('');
+        setScript('');
+        setResult({});
         setError(null);
-        setAudioUrl(null);
+    }, [project]);
+
+    const handleGenerateCharacter = async () => {
+        if (!characterPrompt.trim()) { setError('Deskripsi karakter tidak boleh kosong!'); return; }
+        if ((profile?.credits ?? 0) < CHARACTER_COST) { setShowOutOfCreditsModal(true); return; }
+
+        setIsLoading('character');
+        setError(null);
         try {
-            if (!(await deductCredits(PRESENTER_COST))) throw new Error("Gagal mengurangi token.");
-            
-            const generatedAudioUrl = await generateSpeech(script, voice);
-            setAudioUrl(generatedAudioUrl);
-            await handleSaveToProject(selectedChar, script, generatedAudioUrl);
-            await addXp(XP_REWARD);
+            if (!(await deductCredits(CHARACTER_COST))) throw new Error("Gagal mengurangi token.");
+            const imageUrl = await generateCharacterImage(characterPrompt);
+            setResult(prev => ({ ...prev, characterUrl: imageUrl }));
             playSound('success');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Gagal membuat presentasi.');
+            setError(err instanceof Error ? err.message : 'Gagal membuat karakter.');
+            playSound('error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGenerateSpeech = async () => {
+        if (!script.trim()) { setError('Naskah tidak boleh kosong!'); return; }
+        if ((profile?.credits ?? 0) < SPEECH_COST) { setShowOutOfCreditsModal(true); return; }
+
+        setIsLoading('speech');
+        setError(null);
+        try {
+            if (!(await deductCredits(SPEECH_COST))) throw new Error("Gagal mengurangi token.");
+            if (!user) throw new Error("User tidak ditemukan");
+            
+            const audioBase64 = await generateSpeech(script);
+            // Upload to get a permanent URL
+            const audioUrl = await uploadBase64Audio(audioBase64, user.id, 'audio/mpeg');
+            setResult(prev => ({ ...prev, script, audioUrl }));
+            playSound('success');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Gagal membuat audio.');
             playSound('error');
         } finally {
             setIsLoading(false);
         }
     };
     
-    const handleSaveToProject = async (characterUrl: string, script: string, audioUrl: string) => {
-        const newAsset: AiPresenterAsset = { id: `pre_${Date.now()}`, characterUrl, script, audioUrl };
-        const currentAssets = project.project_data.sotoshop_assets?.aiPresenter || [];
-        await onUpdateProject({
-            sotoshop_assets: { ...project.project_data.sotoshop_assets, aiPresenter: [...currentAssets, newAsset] }
-        });
+    const handleSaveToProject = async () => {
+        if (!result.characterUrl || !result.audioUrl || !result.script) {
+            setError("Karakter dan audio harus dibuat dulu sebelum menyimpan.");
+            return;
+        }
+        setIsLoading('save');
+        const finalAsset: AiPresenterAsset = {
+            id: `presenter_${Date.now()}`,
+            characterUrl: result.characterUrl,
+            script: result.script,
+            audioUrl: result.audioUrl
+        };
+
+        const currentPresenters = project.project_data.sotoshop_assets?.aiPresenter || [];
+        const newPresenters = [...currentPresenters, finalAsset];
+        try {
+           await onUpdateProject({ sotoshop_assets: { ...project.project_data.sotoshop_assets, aiPresenter: newPresenters } });
+           await addXp(XP_REWARD);
+           // Reset for next creation
+           setResult({});
+           setCharacterPrompt('');
+           setScript('');
+           playSound('success');
+        } catch (err) {
+            setError(`Gagal menyimpan: ${(err as Error).message}`);
+        } finally {
+            setIsLoading(false);
+        }
     };
-    
-    useEffect(() => {
-        if (!audioUrl || !audioRef.current || !mouthRef.current) return;
-        
-        const audio = audioRef.current;
-        let audioContext: AudioContext;
-        let source: MediaElementAudioSourceNode;
-
-        const setupAudioContext = async () => {
-            await unlockAudio();
-            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-            analyserRef.current = audioContext.createAnalyser();
-            source = audioContext.createMediaElementSource(audio);
-            source.connect(analyserRef.current);
-            analyserRef.current.connect(audioContext.destination);
-            analyserRef.current.fftSize = 32;
-        };
-
-        const animateMouth = () => {
-             if (!analyserRef.current || !containerRef.current) {
-                if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
-                animationFrameRef.current = requestAnimationFrame(animateMouth);
-                return;
-            }
-            const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-            analyserRef.current.getByteFrequencyData(dataArray);
-            const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
-            
-            const bounceIntensity = Math.min(avg / 100, 1.0);
-            if (containerRef.current) {
-                containerRef.current.style.animation = audio.paused ? 'none' : `mang-ai-talking-bounce ${0.2 + (1-bounceIntensity)*0.3}s ease-in-out infinite`;
-            }
-
-            animationFrameRef.current = requestAnimationFrame(animateMouth);
-        };
-        
-        audio.onplay = () => {
-             if (!analyserRef.current) setupAudioContext().then(animateMouth);
-             else animateMouth();
-        };
-
-        audio.onpause = () => {
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-                animationFrameRef.current = null;
-            }
-            if (containerRef.current) containerRef.current.style.animation = 'none';
-        };
-
-        return () => {
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-                animationFrameRef.current = null;
-            }
-            if(source) source.disconnect();
-            if(analyserRef.current) analyserRef.current.disconnect();
-        };
-
-    }, [audioUrl]);
 
     return (
-        <CollapsibleSection title="AI Presenter" icon="🎙️" initialOpen={false}>
+        <CollapsibleSection title="Presenter AI" icon="🤖" initialOpen={false}>
             <div className="space-y-4">
-                <p className="text-sm text-text-body">Punya maskot? Sekarang dia bisa ngomong! Pilih karakter, tulis skripnya, dan biarkan Mang AI yang jadi pengisi suaranya. Cocok buat konten video pendek!</p>
+                <p className="text-sm text-text-body">Buat karakter virtual untuk presentasi atau konten video. Tentukan penampilan karakter, tulis naskahnya, dan Mang AI akan membuatkan suaranya.</p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-1 space-y-2">
-                        <h4 className="font-semibold text-text-muted">1. Pilih Karakter</h4>
-                        {availableCharacters.length > 0 ? (
-                            <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto bg-background/50 p-2 rounded-lg">
-                               {availableCharacters.map((url, i) => (
-                                   <img key={i} src={url} alt={`Karakter ${i}`} onClick={() => setSelectedChar(url)} className={`w-full aspect-square object-contain rounded-md cursor-pointer border-2 ${selectedChar === url ? 'border-primary' : 'border-transparent'}`}/>
-                               ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-text-muted p-4 bg-background/50 rounded-lg">Buat maskot dulu di Sotoshop untuk memilih karakter.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Character Generation */}
+                    <div className="space-y-3">
+                        <h4 className="font-bold text-text-header">1. Buat Karakter</h4>
+                        <Textarea label="Deskripsi penampilan karakter" name="characterPrompt" value={characterPrompt} onChange={e => setCharacterPrompt(e.target.value)} placeholder="Contoh: seorang wanita muda berhijab dengan kacamata, tersenyum ramah" rows={3} />
+                        <Button onClick={handleGenerateCharacter} isLoading={isLoading === 'character'} disabled={!!isLoading || !characterPrompt.trim()}>
+                            Buat Karakter ({CHARACTER_COST} T)
+                        </Button>
+                        {result.characterUrl && (
+                             <div className="p-2 bg-background rounded-lg text-center">
+                                <img src={result.characterUrl} alt="Generated character" className="w-32 h-32 mx-auto rounded-md object-cover"/>
+                                <p className="text-xs text-green-500 mt-1">Karakter siap!</p>
+                             </div>
                         )}
                     </div>
 
-                    <div className="md:col-span-2 space-y-4">
-                        <div>
-                             <h4 className="font-semibold text-text-muted mb-2">2. Atur Suara & Skrip</h4>
-                             <Select 
-                                label="Suara & Nada Bicara"
-                                name="voice"
-                                value={voice}
-                                onChange={(e) => setVoice(e.target.value)}
-                                options={[
-                                    { value: 'Kore', label: 'Wanita - Ceria & Ramah' },
-                                    { value: 'Puck', label: 'Pria - Santai & Muda' },
-                                    { value: 'Charon', label: 'Pria - Dewasa & Berwibawa' },
-                                    { value: 'Zephyr', label: 'Wanita - Elegan & Profesional' },
-                                    { value: 'Fenrir', label: 'Pria - Enerjik & Antusias' },
-                                ]}
-                            />
-                        </div>
-                        <Textarea label="" name="script" value={script} onChange={e => setScript(e.target.value)} placeholder="Ketik apa yang mau diucapkan karakter di sini..." rows={5} />
+                    {/* Speech Generation */}
+                    <div className="space-y-3">
+                        <h4 className="font-bold text-text-header">2. Buat Audio</h4>
+                        <Textarea label="Tulis naskah / skrip" name="script" value={script} onChange={e => setScript(e.target.value)} placeholder="Contoh: Halo Juragan! Selamat datang di toko kami..." rows={3} />
+                        <Button onClick={handleGenerateSpeech} isLoading={isLoading === 'speech'} disabled={!!isLoading || !script.trim()}>
+                            Buat Suara ({SPEECH_COST} T)
+                        </Button>
+                         {result.audioUrl && (
+                             <div className="p-2 bg-background rounded-lg text-center">
+                                <audio src={result.audioUrl} controls className="w-full h-10" />
+                                <p className="text-xs text-green-500 mt-1">Audio siap!</p>
+                             </div>
+                        )}
                     </div>
                 </div>
-                <Button onClick={handleGenerate} isLoading={isLoading} disabled={!script.trim() || !selectedChar || isLoading} variant="accent" className="w-full">
-                    Buat Presentasi! ({PRESENTER_COST} Token)
-                </Button>
-
+                
                 {error && <ErrorMessage message={error} />}
 
-                {(isLoading || audioUrl) && (
-                    <div className="p-4 bg-background/50 rounded-lg border border-border-main text-center">
-                        <h4 className="font-bold text-text-header mb-4">Hasil Presentasi</h4>
-                         <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand.</p>
-                        {isLoading && <p>Membuat audio...</p>}
-                        {audioUrl && selectedChar && (
-                            <div className="flex flex-col items-center gap-4">
-                                <div ref={containerRef} className="relative w-40 h-40">
-                                    <img src={selectedChar} alt="Karakter Presenter" className="w-full h-full object-contain"/>
-                                </div>
-                                <audio ref={audioRef} src={audioUrl} controls className="w-full max-w-sm"/>
-                            </div>
-                        )}
-                    </div>
-                )}
+                <div className="pt-4 border-t border-border-main text-center">
+                    <Button onClick={handleSaveToProject} isLoading={isLoading === 'save'} disabled={!result.characterUrl || !result.audioUrl || !!isLoading} variant="accent">
+                        Simpan Presenter ke Lemari Brand (+{XP_REWARD} XP)
+                    </Button>
+                </div>
             </div>
         </CollapsibleSection>
     );
