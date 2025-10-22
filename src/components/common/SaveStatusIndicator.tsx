@@ -29,7 +29,8 @@ const SaveStatusIndicator: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    // FIX: Changed NodeJS.Timeout to number for browser environment.
+    let timer: number;
     if (status === 'saved' || status === 'error') {
       timer = setTimeout(() => {
         setStatus('idle');
