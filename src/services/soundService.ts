@@ -4,9 +4,36 @@ const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-a
 
 const audioCache: { [key: string]: HTMLAudioElement } = {};
 let isMuted = localStorage.getItem('desainfun_isMuted') === 'true';
-let isAudioUnlocked = false;
+let audioCtx: AudioContext | null = null;
 let currentBGM: HTMLAudioElement | null = null;
 let randomBgmPlaylist: BgmName[] = [];
+
+// --- Audio Context Management ---
+const initializeAudioContext = (): void => {
+    if (!audioCtx && typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)) {
+        audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+};
+
+export const getAudioContext = (): AudioContext | null => {
+    if (!audioCtx) initializeAudioContext();
+    return audioCtx;
+};
+
+export const resumeAudioContext = async (): Promise<void> => {
+    const context = getAudioContext();
+    if (context && context.state === 'suspended') {
+        try {
+            await context.resume();
+            // If there's a BGM that should be playing, try to play it now.
+            if (currentBGM && !isMuted && currentBGM.paused) {
+                 currentBGM.play().catch(() => {});
+            }
+        } catch (e) {
+            console.error("Audio context could not be resumed.", e);
+        }
+    }
+};
 
 const getAudio = (src: string, isLoop = false): HTMLAudioElement => {
     if (audioCache[src]) {
@@ -43,38 +70,20 @@ const bgmUrls = {
   Cozy: `${GITHUB_ASSETS_URL}bgm_Cozy.mp3`,
 };
 
+/**
+ * @deprecated The useAudioContextManager hook now handles this automatically.
+ * This function remains for explicit calls but is less necessary.
+ */
 export const unlockAudio = async (): Promise<void> => {
-    if (isAudioUnlocked || typeof window === 'undefined') return;
-    try {
-        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        if (audioCtx.state === 'suspended') {
-            await audioCtx.resume();
-        }
-        isAudioUnlocked = true;
-        
-        if (currentBGM && !isMuted && currentBGM.paused) {
-            currentBGM.play().catch(() => {});
-        }
-    } catch (e) {
-        console.error("Audio context could not be resumed.", e);
-    }
+    await resumeAudioContext();
 };
-
-const setupAudioUnlock = () => {
-    if (typeof window === 'undefined') return;
-    const unlockHandler = () => unlockAudio();
-    window.addEventListener('click', unlockHandler, { once: true });
-    window.addEventListener('keydown', unlockHandler, { once: true });
-    window.addEventListener('touchstart', unlockHandler, { once: true });
-};
-setupAudioUnlock();
 
 type SoundName = keyof typeof soundUrls;
 type BgmName = keyof typeof bgmUrls;
 
 export const playSound = (soundName: SoundName): void => {
     if (isMuted) return;
-    unlockAudio();
+    resumeAudioContext();
     const sound = getAudio(soundUrls[soundName]);
     sound.volume = soundName === 'bounce' ? 0.2 : 0.5;
     sound.currentTime = 0;
@@ -83,7 +92,7 @@ export const playSound = (soundName: SoundName): void => {
 
 export const playBGM = (bgmName: BgmName): void => {
     if (isMuted) { stopBGM(); return; }
-    unlockAudio();
+    resumeAudioContext();
     if (currentBGM) {
         currentBGM.pause();
         currentBGM.onended = null;
@@ -113,7 +122,7 @@ const playNextRandomTrack = () => {
 
 export const playRandomBGM = () => {
     if (isMuted) { stopBGM(); return; }
-    unlockAudio();
+    resumeAudioContext();
     randomBgmPlaylist = [];
     playNextRandomTrack();
 }
@@ -136,3 +145,6 @@ export const setMuted = (shouldMute: boolean) => {
         currentBGM.pause();
     }
 };
+
+// Initialize the context when the module loads.
+initializeAudioContext();

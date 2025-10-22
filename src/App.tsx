@@ -6,6 +6,8 @@ import { useUI } from './contexts/UIContext';
 import { useUserActions } from './contexts/UserActionsContext';
 import { supabaseError } from './services/supabaseClient';
 import { getApiKeyError } from './services/geminiService';
+import { usePageFocusTrigger } from './hooks/usePageFocusTrigger'; // Import hook baru
+import { useAudioContextManager } from './hooks/useAudioContextManager'; // Import hook baru
 
 import LoginScreen from './components/LoginScreen';
 import ProjectDashboard from './components/ProjectDashboard';
@@ -26,7 +28,7 @@ import DailyMissions from './components/gamification/DailyMissions'; // Now a mo
 import { playBGM, stopBGM } from './services/soundService';
 
 const App: React.FC = () => {
-    const { session, loading: authLoading } = useAuth();
+    const { session, loading: authLoading, revalidateSession } = useAuth();
     const { 
         theme, 
         showAboutModal, toggleAboutModal,
@@ -44,6 +46,13 @@ const App: React.FC = () => {
     } = useUserActions();
     
     const [gatePassed, setGatePassed] = useState(sessionStorage.getItem('desainfun_gate_passed') === 'true');
+
+    // --- INTEGRASI HOOK BARU ---
+    // Proaktif memvalidasi ulang sesi saat tab kembali fokus untuk mencegah loop.
+    usePageFocusTrigger(revalidateSession);
+    // Mengelola AudioContext secara otomatis untuk stabilitas audio.
+    useAudioContextManager();
+    // --- AKHIR INTEGRASI ---
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);

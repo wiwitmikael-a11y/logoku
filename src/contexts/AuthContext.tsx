@@ -13,6 +13,7 @@ interface AuthContextType {
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   loading: boolean;
   refreshProfile: () => Promise<void>;
+  revalidateSession: () => Promise<void>; // Exposed for proactive checks
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,57 +33,74 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', currentUser.id)
-      .single();
-    
-    if (profileError && profileError.code !== 'PGRST116') {
-      throw profileError;
-    }
-    
-    if (!profileData) {
-        throw new Error(`Profil untuk user ID ${currentUser.id} tidak ditemukan. Sesi mungkin tidak sinkron.`);
-    }
-    setProfile(profileData);
+    try {
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
+        
+        if (profileError && profileError.code !== 'PGRST116') throw profileError;
+        
+        if (!profileData) {
+            throw new Error(`Profil untuk user ID ${currentUser.id} tidak ditemukan. Sesi mungkin tidak sinkron.`);
+        }
+        setProfile(profileData);
 
-    const { data: projectsData, error: projectsError } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('created_at', { ascending: false });
+        const { data: projectsData, error: projectsError } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
 
-    if (projectsError) {
-      throw projectsError;
-    }
-    setProjects(projectsData || []);
-
-  }, [supabase]);
-
-  useEffect(() => {
-    // Rely solely on onAuthStateChange as the single source of truth.
-    // It fires once on initial load and then on any auth state change.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        setSession(session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        await fetchUserData(currentUser);
-      } catch (error) {
+        if (projectsError) throw projectsError;
+        setProjects(projectsData || []);
+    } catch (error) {
         console.error("Gagal memuat data pengguna, sesi mungkin rusak. Memaksa logout:", error);
         setProfile(null);
         setProjects([]);
         await supabase.auth.signOut();
-      } finally {
-        setLoading(false);
+    }
+  }, [supabase]);
+  
+  const revalidateSession = useCallback(async () => {
+      // Proactively check the session with the server.
+      const { data } = await supabase.auth.getSession();
+      // If the session state has changed (e.g., user logged out in another tab),
+      // onAuthStateChange will be triggered by Supabase's broadcast channel,
+      // which will then handle the state update. This function ensures we
+      // trigger that check if the broadcast channel was missed (e.g., tab was suspended).
+      if (JSON.stringify(data.session) !== JSON.stringify(session)) {
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+          await fetchUserData(data.session?.user ?? null);
       }
+  }, [supabase, session, fetchUserData]);
+
+  useEffect(() => {
+    // Initial, proactive check to get the session state as quickly as possible.
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+        setSession(session);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        await fetchUserData(currentUser);
+        setLoading(false); // Stop loading after the initial check.
+    });
+
+    // onAuthStateChange remains the primary listener for real-time auth events.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+        setSession(newSession);
+        const currentUser = newSession?.user ?? null;
+        setUser(currentUser);
+        await fetchUserData(currentUser);
+        if (loading) setLoading(false); // Ensure loading is false after auth change.
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchUserData, supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount.
 
   const refreshProfile = useCallback(async () => {
     if (user) {
@@ -103,6 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setProjects,
     loading,
     refreshProfile,
+    revalidateSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
