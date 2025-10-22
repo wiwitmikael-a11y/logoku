@@ -23,48 +23,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const supabase = getSupabaseClient();
 
   const fetchUserData = useCallback(async (currentUser: User | null) => {
     if (!currentUser) {
       setProfile(null);
       setProjects([]);
-      return;
+      return; // Tidak perlu throw error jika user memang null (logout)
     }
 
-    try {
-      const supabase = getSupabaseClient();
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', currentUser.id)
-        .single();
-      
-      if (profileError && profileError.code !== 'PGRST116') { // PGRST116: no rows found
-        throw profileError;
-      }
-      setProfile(profileData);
-
-      const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false });
-
-      if (projectsError) {
-        throw projectsError;
-      }
-      setProjects(projectsData || []);
-
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      // Re-throw the error to be caught by the calling function's catch block
-      throw error;
+    // Ambil profil
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+    
+    // Jika ada error selain "tidak ada baris ditemukan", throw error
+    if (profileError && profileError.code !== 'PGRST116') {
+      throw profileError;
     }
-  }, []);
+    
+    // Jika tidak ada profil, ini adalah kondisi anomali (ada auth user tapi tidak ada profil)
+    if (!profileData) {
+        throw new Error(`Profil untuk user ID ${currentUser.id} tidak ditemukan. Sesi mungkin tidak sinkron.`);
+    }
+    setProfile(profileData);
+
+    // Ambil proyek
+    const { data: projectsData, error: projectsError } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false });
+
+    if (projectsError) {
+      throw projectsError;
+    }
+    setProjects(projectsData || []);
+
+  }, [supabase]);
 
   useEffect(() => {
     setLoading(true);
-    const supabase = getSupabaseClient();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
@@ -73,34 +74,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(currentUser);
         await fetchUserData(currentUser);
       } catch (error) {
-        console.error("Error during authentication state change:", error);
+        console.error("Gagal memuat data pengguna, sesi mungkin rusak. Memaksa logout:", error);
         setProfile(null);
         setProjects([]);
+        // Ini adalah langkah penting: jika ada sesi tapi data gagal dimuat, paksa logout!
+        await supabase.auth.signOut();
       } finally {
         setLoading(false);
       }
     });
 
+    // Cek sesi awal saat aplikasi dimuat
     supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session) {
             setLoading(false);
         }
+    }).catch(() => {
+        // Handle potential error fetching initial session
+        setLoading(false);
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchUserData]);
+  }, [fetchUserData, supabase]);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
         try {
             await fetchUserData(user);
         } catch (error) {
-            console.error("Failed to refresh profile:", error);
+            console.error("Gagal me-refresh profil:", error);
+            // Jika refresh gagal, mungkin sesi sudah tidak valid
+            await supabase.auth.signOut();
         }
     }
-  }, [user, fetchUserData]);
+  }, [user, fetchUserData, supabase]);
 
   const value = {
     session,
