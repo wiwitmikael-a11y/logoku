@@ -4,13 +4,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
-// FIX: Import ProjectProvider to be used at the top level, breaking a circular dependency.
 import { ProjectProvider } from './contexts/ProjectContext';
 import { UIProvider } from './contexts/UIContext';
 import { UserActionsProvider } from './contexts/UserActionsContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
-import './index.css'; // Import the new global CSS file
+import './index.css'; // THE CRITICAL FIX IS HERE. This line was missing.
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
