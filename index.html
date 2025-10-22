@@ -168,6 +168,20 @@
       .animate-breathing-ai { animation: mang-ai-breathing 2.5s ease-in-out infinite; }
       
       @keyframes mang-ai-talking-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+      /* === NEW: SMOOTH SIDEBAR TEXT ANIMATION === */
+      .sidebar-text {
+        transition: opacity 0.2s ease-out, max-width 0.3s ease-in-out;
+        opacity: 1;
+        max-width: 150px; /* Adjust as needed */
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .sidebar.collapsed .sidebar-text {
+        opacity: 0;
+        max-width: 0;
+        pointer-events: none; /* Disable interaction when hidden */
+      }
       
       /* --- UI COMPONENTS --- */
       .tooltip {

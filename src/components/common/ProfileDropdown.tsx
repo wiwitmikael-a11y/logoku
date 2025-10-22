@@ -32,6 +32,14 @@ const ProfileDropdown: React.FC = () => {
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
   };
+  
+  // XP Calculation Logic
+  const getXpForLevel = (level: number): number => 100 + (level * 150);
+  const xpForNextLevel = getXpForLevel(profile.level);
+  const xpForCurrentLevel = getXpForLevel(profile.level - 1);
+  const totalXpInLevel = xpForNextLevel - xpForCurrentLevel;
+  const currentXpInLevel = profile.xp - xpForCurrentLevel;
+  const progressPercentage = totalXpInLevel > 0 ? Math.max(0, Math.min(100, (currentXpInLevel / totalXpInLevel) * 100)) : 0;
 
   return (
     <>
@@ -42,11 +50,34 @@ const ProfileDropdown: React.FC = () => {
             </button>
         </Tooltip>
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-xl z-50 overflow-hidden animate-content-fade-in border border-border-main">
+          <div className="absolute right-0 mt-2 w-64 bg-surface rounded-lg shadow-xl z-50 overflow-hidden animate-content-fade-in border border-border-main">
             <div className="p-3 border-b border-border-main">
               <p className="font-semibold text-text-header truncate">{profile.full_name}</p>
               <p className="text-xs text-text-muted truncate">{profile.email}</p>
             </div>
+            
+            {/* NEW: Stats Block */}
+            <div className="p-3 border-b border-border-main space-y-2">
+                <div className="flex items-center gap-2 text-primary font-bold">
+                    <span className="text-lg">🪙</span>
+                    <span className="text-sm">{profile.credits} Token Tersisa</span>
+                </div>
+                <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                        <p className="font-semibold text-accent">Level {profile.level}</p>
+                        <p className="text-text-muted">{profile.xp} / {xpForNextLevel} XP</p>
+                    </div>
+                    <Tooltip text={`${Math.round(progressPercentage)}% menuju level berikutnya`}>
+                      <div className="w-full bg-border-main rounded-full h-1.5">
+                          <div 
+                              className="bg-accent h-1.5 rounded-full" 
+                              style={{ width: `${progressPercentage}%`, background: 'linear-gradient(90deg, rgb(var(--c-accent)) 0%, rgb(var(--c-accent-hover)) 100%)' }}
+                          ></div>
+                      </div>
+                    </Tooltip>
+                </div>
+            </div>
+
             <ul className="py-1">
               <li><button onClick={() => { setShowSettings(true); setIsOpen(false); }} className="dropdown-item">⚙️ Pengaturan</button></li>
               <li><button onClick={() => { setShowMissions(true); setIsOpen(false); }} className="dropdown-item">🎯 Misi Harian</button></li>
