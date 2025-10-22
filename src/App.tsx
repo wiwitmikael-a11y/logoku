@@ -43,7 +43,8 @@ const App: React.FC = () => {
   useAudioContextManager();
 
   useEffect(() => {
-    document.documentElement.className = theme;
+    // FIX: This is the critical fix. The theme is controlled by a 'data-theme' attribute, not a class.
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
   
   useEffect(() => {

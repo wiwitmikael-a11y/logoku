@@ -31,6 +31,7 @@ const AdsenseBanner: React.FC<Props> = ({
   }
   
   // In development, you might want to show a placeholder
+  // FIX: Use `import.meta.env.DEV`, which is a boolean provided by Vite.
   if (import.meta.env.DEV) {
     return (
       <div className={`adsense-placeholder ${className} flex items-center justify-center bg-gray-200 text-gray-500`}>
