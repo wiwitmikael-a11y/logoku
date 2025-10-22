@@ -1,13 +1,295 @@
-<script type="importmap">
-{
-  "imports": {
-    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.76.1",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.26.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react-to-print": "https://aistudiocdn.com/react-to-print@^3.2.0"
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>desain.fun - Studio Branding AI</title>
+  <meta name="description" content="Aplikasi Mang AI buat bantu UMKM dan bisnis kecil bikin logo, persona brand, dan konten sosmed unik dalam hitungan menit.">
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  
+  <!-- AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6110736010099308" crossorigin="anonymous"></script>
+  
+  <script type="importmap">
+  {
+    "imports": {
+      "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.76.1",
+      "react": "https://aistudiocdn.com/react@^19.2.0",
+      "react/": "https://aistudiocdn.com/react@^19.2.0/",
+      "@google/genai": "https://aistudiocdn.com/@google/genai@^1.26.0",
+      "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+      "react-to-print": "https://aistudiocdn.com/react-to-print@^3.2.0"
+    }
   }
-}
-</script>
-full contents of index.html
+  </script>
+
+  <style>
+    /* ----- Core Setup & Fonts ----- */
+    :root {
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-display: 'Bebas Neue', 'Caveat', cursive;
+    }
+
+    /* ----- THEME & PALETTE DEFINITION ----- */
+    /* Light Theme - Glassmorphism & Aurora */
+    [data-theme="light"] {
+      --c-primary: 217 94 255; /* Fuchsia */
+      --c-primary-hover: 232 124 255;
+      --c-accent: 29 200 205; /* Teal */
+      --c-accent-hover: 59 220 225;
+      --c-splash: 255 35 140; 
+      --c-splash-hover: 255 65 160;
+
+      --c-bg: 240 240 245;
+      --c-surface: 255 255 255 / 0.5; /* Glass effect */
+      --c-glass-border: 255 255 255 / 0.8;
+      
+      --c-text-header: 10 10 20;
+      --c-text-body: 50 50 70;
+      --c-text-muted: 100 100 120;
+
+      --c-bg-inverse: 28 28 32;
+      --c-text-inverse: 240 240 245;
+
+      --c-border-main: 220 220 225;
+      --c-border-light: 230 230 235;
+
+      --aurora-opacity: 0.4;
+    }
+
+    /* Dark Theme - Glassmorphism & Aurora */
+    [data-theme="dark"] {
+      --c-primary: 217 94 255; /* Fuchsia */
+      --c-primary-hover: 232 124 255;
+      --c-accent: 29 200 205; /* Teal */
+      --c-accent-hover: 59 220 225;
+      --c-splash: 255 35 140; 
+      --c-splash-hover: 255 65 160;
+
+      --c-bg: 10 10 12;
+      --c-surface: 28 28 32 / 0.5; /* Glass effect */
+      --c-glass-border: 255 255 255 / 0.1;
+
+      --c-text-header: 240 240 245;
+      --c-text-body: 200 200 215;
+      --c-text-muted: 140 140 155;
+
+      --c-bg-inverse: 240 240 245;
+      --c-text-inverse: 28 28 32;
+
+      --c-border-main: 50 50 60;
+      --c-border-light: 70 70 80;
+
+      --aurora-opacity: 0.6;
+    }
+    
+    /* ----- Base Styling ----- */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      background-color: rgb(var(--c-bg));
+      color: rgb(var(--c-text-body));
+      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ----- Aurora Background Effect ----- */
+    body::before, body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        pointer-events: none;
+        opacity: var(--aurora-opacity);
+    }
+    body::before {
+        background: radial-gradient(circle at 10% 20%, rgba(var(--c-primary), 0.3), transparent 40%),
+                    radial-gradient(circle at 80% 90%, rgba(var(--c-accent), 0.3), transparent 40%);
+        animation: aurora 25s linear infinite;
+    }
+    body::after {
+        background: radial-gradient(circle at 90% 10%, rgba(var(--c-splash), 0.2), transparent 35%),
+                    radial-gradient(circle at 20% 80%, rgba(var(--c-primary), 0.2), transparent 35%);
+        animation: aurora 35s linear infinite reverse;
+    }
+
+    @keyframes aurora {
+      0% { transform: rotate(0deg) scale(1.2); }
+      50% { transform: rotate(180deg) scale(1.5); }
+      100% { transform: rotate(360deg) scale(1.2); }
+    }
+
+    /* ----- Glassmorphism Component Style ----- */
+    .glass-effect {
+        background-color: rgb(var(--c-surface));
+        backdrop-filter: blur(20px) saturate(150%);
+        -webkit-backdrop-filter: blur(20px) saturate(150%);
+        border: 1px solid rgb(var(--c-glass-border));
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    /* ----- Component Specific Styles ----- */
+    .dropdown-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    .dropdown-item:hover {
+        background-color: rgb(var(--c-border-main));
+    }
+    
+    .tab-active {
+        color: rgb(var(--c-primary));
+        border-bottom: 2px solid rgb(var(--c-primary));
+    }
+     .tab-active-splash {
+        color: rgb(var(--c-splash));
+        border-bottom: 2px solid rgb(var(--c-splash));
+    }
+
+    .selection-card {
+        background-color: rgb(var(--c-background));
+        border: 2px solid rgb(var(--c-border-main));
+    }
+     .selection-card:hover {
+        border-color: rgb(var(--c-primary));
+        transform: translateY(-2px);
+    }
+    .selection-card-active {
+        background-color: rgb(var(--c-primary) / 0.1);
+        border: 2px solid rgb(var(--c-primary));
+        box-shadow: 0 0 15px rgb(var(--c-primary) / 0.3);
+    }
+    
+    .project-card, .project-card-active {
+      background-size: 200% 200%;
+      background-position: 50% 50%;
+    }
+    .project-card {
+      background-image: linear-gradient(135deg, rgb(var(--c-surface)) 0%, rgb(var(--c-background)) 100%);
+    }
+    .project-card:hover {
+       transform: translateY(-4px);
+       box-shadow: 0 4px 20px rgb(0 0 0 / 0.2);
+    }
+    .project-card-active {
+      background-image: linear-gradient(135deg, rgb(var(--c-primary) / 0.2) 0%, rgb(var(--c-accent) / 0.2) 100%);
+      border: 1px solid rgb(var(--c-primary));
+      animation: aurora-border 5s ease infinite;
+    }
+
+    @keyframes aurora-border {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* Custom Toggle Switch */
+    .toggle-switch {
+      width: 44px;
+      height: 24px;
+      position: relative;
+      display: inline-block;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgb(var(--c-border-main));
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .toggle-switch::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.3s;
+    }
+    .toggle-switch:checked {
+      background: rgb(var(--c-primary));
+    }
+    .toggle-switch:checked::before {
+      transform: translateX(20px);
+    }
+
+    .mang-ai-callout {
+        background: linear-gradient(135deg, rgb(var(--c-primary) / 0.05), rgb(var(--c-accent) / 0.05));
+    }
+    
+    .stat-card-gradient {
+        background: linear-gradient(135deg, rgb(var(--c-surface)) 0%, rgb(var(--c-background)) 100%);
+    }
+    
+    .selectable-text {
+        user-select: text;
+    }
+    
+    /* ----- Marquee Animation ----- */
+    @keyframes marquee {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+    }
+
+    /* ----- Other Animations ----- */
+    @keyframes content-fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-content-fade-in { animation: content-fade-in 0.5s ease-out forwards; }
+    
+    @keyframes button-ready {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgb(var(--c-primary)/0.0); }
+        50% { transform: scale(1.02); box-shadow: 0 0 25px rgb(var(--c-primary)/0.4); }
+    }
+    .animate-button-ready { animation: button-ready 3s ease-in-out infinite; }
+
+    @keyframes arrow-pulse {
+      0%, 100% { filter: drop-shadow(0 0 2px rgb(var(--c-primary)/0.5)); }
+      50% { filter: drop-shadow(0 0 8px rgb(var(--c-primary)/1)); }
+    }
+    .animate-arrow-pulse { animation: arrow-pulse 2s ease-in-out infinite; }
+    
+    @keyframes breathing-ai {
+        0%, 100% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.05); opacity: 1; }
+    }
+    .animate-breathing-ai { animation: breathing-ai 4s ease-in-out infinite; }
+    
+    @keyframes mang-ai-talking-bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -17,6 +17,8 @@ import Footer from './common/Footer';
 import { useUI } from '../contexts/UIContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
+// FIX: Import the Button component to resolve 'Cannot find name' errors.
+import Button from './common/Button';
 
 const ProjectDashboard: React.FC = () => {
     const { user, isNewUser } = useAuth();
