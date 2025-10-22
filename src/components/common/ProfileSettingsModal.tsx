@@ -2,110 +2,86 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useUI } from '../../contexts/UIContext';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { getSupabaseClient } from '../../services/supabaseClient';
-import { getIsMuted, setMuted, playBGM, stopBGM, playRandomBGM, playSound } from '../../services/soundService';
 import Button from './Button';
+import Input from './Input';
+import Select from './Select';
 
 interface Props {
   show: boolean;
   onClose: () => void;
 }
 
-const bgmOptions = ['Jingle', 'Acoustic', 'Uplifting', 'LoFi', 'Bamboo', 'Ethnic', 'Cozy', 'Random', 'Stop'];
-
 const ProfileSettingsModal: React.FC<Props> = ({ show, onClose }) => {
-  const { profile, user } = useAuth();
-  const { theme, toggleTheme } = useUI();
-  const [isMuted, setIsMuted] = useState(getIsMuted());
+  const { profile, refreshProfile } = useAuth();
+  const { language, setLanguage } = useTranslation();
+  const [fullName, setFullName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    setIsMuted(getIsMuted());
-  }, [show]);
+    if (profile) {
+      setFullName(profile.full_name || '');
+    }
+  }, [profile, show]);
 
   if (!show || !profile) return null;
 
-  const handleLogout = async () => {
-    const supabase = getSupabaseClient();
-    await supabase.auth.signOut();
-    onClose();
-  };
-  
-  const handleMuteToggle = () => {
-    const newMuteState = !isMuted;
-    setIsMuted(newMuteState);
-    setMuted(newMuteState);
-    if(newMuteState) {
-        stopBGM();
-    } else {
-        playBGM('welcome');
-    }
-  };
-  
-  const handleBgmChange = (bgm: string) => {
-    playSound('select');
-    if (bgm === 'Stop') {
-        stopBGM();
-    } else if (bgm === 'Random') {
-        playRandomBGM();
-    } else {
-        playBGM(bgm as any);
-    }
-  };
+  const handleSave = async () => {
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
 
-  const xpForNextLevel = 100 + (profile.level * 150);
+    const supabase = getSupabaseClient();
+    const { error } = await supabase
+      .from('profiles')
+      .update({ full_name: fullName, language: language })
+      .eq('id', profile.id);
+
+    if (error) {
+      setError(`Gagal menyimpan: ${error.message}`);
+    } else {
+      setSuccess('Profil berhasil disimpan!');
+      await refreshProfile();
+      setTimeout(() => setSuccess(''), 2000);
+    }
+    setIsLoading(false);
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="relative max-w-lg w-full bg-surface rounded-2xl shadow-xl p-6">
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-content-fade-in"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="relative max-w-md w-full bg-surface rounded-2xl shadow-xl p-8">
         <button onClick={onClose} title="Tutup" className="absolute top-4 right-4 p-2 text-primary rounded-full hover:bg-background transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
-        <div className="flex items-center gap-4">
-          <img src={profile.avatar_url} alt="Avatar" className="w-16 h-16 rounded-full" />
-          <div>
-            <h3 className="text-xl font-bold text-text-header">{profile.full_name}</h3>
-            <p className="text-sm text-text-muted">{profile.email}</p>
-          </div>
+        <h2 className="text-2xl font-bold text-text-header mb-6">Pengaturan Profil</h2>
+        
+        <div className="space-y-4">
+          <Input label="Email" name="email" value={profile.email || ''} disabled />
+          <Input label="Nama Lengkap" name="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nama Lengkap Juragan" />
+          <Select
+            label="Bahasa"
+            name="language"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as 'id' | 'en')}
+            options={[
+              { value: 'id', label: 'Bahasa Indonesia' },
+              { value: 'en', label: 'English' }
+            ]}
+          />
         </div>
-        <hr className="my-4 border-border-main" />
-        <div className="space-y-4 text-sm max-h-[60vh] overflow-y-auto pr-2">
-             <div className="flex justify-between items-center">
-                <span className="font-semibold text-text-body">Tema:</span>
-                <Button size="small" variant="secondary" onClick={toggleTheme}>{theme === 'dark' ? 'Gelap' : 'Terang'}</Button>
-            </div>
-             <div className="flex justify-between items-center">
-                <span className="font-semibold text-text-body">Suara & Musik:</span>
-                <Button size="small" variant="secondary" onClick={handleMuteToggle}>{isMuted ? 'Nyalakan' : 'Matikan'}</Button>
-            </div>
-             <div>
-                <span className="font-semibold text-text-body block mb-2">Pilih Musik Latar:</span>
-                 <div className="flex flex-wrap gap-2">
-                    {bgmOptions.map(bgm => (
-                        <Button key={bgm} size="small" variant="secondary" onClick={() => handleBgmChange(bgm)} disabled={isMuted}>{bgm}</Button>
-                    ))}
-                 </div>
-            </div>
-            <div className="pt-2">
-                <h4 className="font-bold text-text-header mb-2">Statistik Juragan</h4>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-background p-2 rounded-lg">
-                        <p className="text-xs text-text-muted">Level</p>
-                        <p className="text-lg font-bold text-accent">{profile.level}</p>
-                    </div>
-                     <div className="bg-background p-2 rounded-lg">
-                        <p className="text-xs text-text-muted">XP</p>
-                        <p className="text-lg font-bold text-accent">{profile.xp} / {xpForNextLevel}</p>
-                    </div>
-                     <div className="bg-background p-2 rounded-lg">
-                        <p className="text-xs text-text-muted">Token</p>
-                        <p className="text-lg font-bold text-primary">{profile.credits}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div className="mt-6 flex justify-end">
-            <Button onClick={handleLogout} variant="secondary">Keluar Akun</Button>
+
+        <div className="mt-6 flex justify-between items-center">
+          <Button onClick={handleSave} isLoading={isLoading}>Simpan</Button>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          {success && <p className="text-sm text-green-500">{success}</p>}
         </div>
       </div>
     </div>

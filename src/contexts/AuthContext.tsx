@@ -1,122 +1,104 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../services/supabaseClient';
-import { UserProfile, Project } from '../types';
+import type { UserProfile } from '../types';
+import { usePageFocusTrigger } from '../hooks/usePageFocusTrigger';
 
 interface AuthContextType {
-  session: Session | null;
   user: User | null;
   profile: UserProfile | null;
-  projects: Project[];
   loading: boolean;
-  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  isNewUser: boolean;
   refreshProfile: () => Promise<void>;
-  revalidateSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
 
-  const fetchUserData = useCallback(async (user: User | null) => {
-    if (!user) {
+  const fetchProfile = useCallback(async (userToFetch: User | null) => {
+    if (!userToFetch) {
       setProfile(null);
-      setProjects([]);
       return;
     }
-
     try {
       const supabase = getSupabaseClient();
-      const { data: profileData, error: profileError } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', userToFetch.id)
         .single();
-
-      if (profileError && profileError.code !== 'PGRST116') { // Ignore "exact one row" error if profile doesn't exist yet
-        throw profileError;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        setProfile(null);
+      } else {
+        setProfile(data);
       }
-      setProfile(profileData);
-
-      const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (projectsError) {
-        throw projectsError;
-      }
-      setProjects(projectsData || []);
-    } catch (error) {
-      console.error("Error fetching user data:", error);
+    } catch (e) {
+      console.error('Error in fetchProfile:', e);
       setProfile(null);
-      setProjects([]);
     }
   }, []);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchUserData(user);
+      await fetchProfile(user);
     }
-  }, [user, fetchUserData]);
+  }, [user, fetchProfile]);
 
-  const revalidateSession = useCallback(async () => {
-    const supabase = getSupabaseClient();
-    const { data } = await supabase.auth.getSession();
-    setSession(data.session);
-    setUser(data.session?.user ?? null);
-  }, []);
+  // Re-fetch profile when tab gets focus to sync credits/xp
+  usePageFocusTrigger(refreshProfile);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
-
-    const getInitialSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        await fetchUserData(currentUser);
-        setLoading(false);
+    
+    const handleSession = async (session: Session | null) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        await fetchProfile(currentUser);
+        // Check if this is the first time the user has logged in
+        // A simple heuristic is checking if created_at is very close to last_sign_in_at
+        const createdAt = new Date(currentUser.created_at || 0).getTime();
+        const lastSignInAt = new Date(currentUser.last_sign_in_at || 0).getTime();
+        if (Math.abs(lastSignInAt - createdAt) < 5000) { // e.g., within 5 seconds
+            setIsNewUser(true);
+        } else {
+            setIsNewUser(false);
+        }
+      }
+      setLoading(false);
     };
 
-    getInitialSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        setSession(session);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        // Fetch data on sign in or when token is refreshed.
-        if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || _event === 'USER_UPDATED') {
-            await fetchUserData(currentUser);
-        }
-        if (_event === 'SIGNED_OUT') {
-            setProfile(null);
-            setProjects([]);
-        }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleSession(session);
     });
 
-    return () => {
-        authListener.subscription.unsubscribe();
-    };
-  }, [fetchUserData]);
+    // Listen for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        handleSession(session);
+      }
+    );
 
-  const value = {
-    session,
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
+  
+  const value: AuthContextType = {
     user,
     profile,
-    projects,
     loading,
-    setProjects,
-    refreshProfile,
-    revalidateSession,
+    isNewUser,
+    refreshProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

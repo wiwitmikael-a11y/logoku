@@ -2,40 +2,97 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useUI } from '../contexts/UIContext';
-import { useUserActions } from '../contexts/UserActionsContext';
 import { getSupabaseClient } from '../services/supabaseClient';
 import type { Project, ProjectData, BrandInputs } from '../types';
-import HeaderStats from './gamification/HeaderStats';
-import AICreator from './AICreator';
-import ProjectSummary from './ProjectSummary';
-import Footer from './common/Footer';
-import Tooltip from './common/Tooltip';
 import ProjectDock from './ProjectDock';
+import AICreator from './AICreator';
+import Spinner from './common/Spinner';
+import Header from './gamification/HeaderStats';
+import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
+import { playSound } from '../services/soundService';
+import Onboarding from './common/Onboarding';
+import InfoTicker from './common/InfoTicker';
+import VoiceBrandingWizard from './VoiceBrandingWizard';
+import { useUserActions } from '../contexts/UserActionsContext';
 
 const ProjectDashboard: React.FC = () => {
-    const { profile, projects, setProjects } = useAuth();
-    const { 
-        toggleAboutModal, toggleContactModal, toggleToSModal, togglePrivacyModal, 
-        toggleProfileSettingsModal, togglePusatJuraganModal, toggleDailyMissionsModal
-    } = useUI();
-    const { addXp } = useUserActions();
+    const { user, isNewUser } = useAuth();
+    const { checkForNewAchievements } = useUserActions();
+    const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-    const [isCreating, setIsCreating] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [showVoiceWizard, setShowVoiceWizard] = useState(false);
+
+    const fetchProjects = useCallback(async () => {
+        if (!user) return;
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching projects:', error);
+        } else {
+            setProjects(data);
+            checkForNewAchievements(data.length);
+            if (!selectedProject && data.length > 0) {
+                setSelectedProject(data[0]);
+            } else if (data.length === 0) {
+                setSelectedProject(null);
+            }
+        }
+        setLoading(false);
+    }, [user, selectedProject, checkForNewAchievements]);
 
     useEffect(() => {
-        if (projects.length > 0 && !selectedProject) {
-            setSelectedProject(projects[0]);
-        } else if (projects.length === 0) {
-            setSelectedProject(null);
+        fetchProjects();
+        if (isNewUser) {
+           setTimeout(() => setShowOnboarding(true), 1000); // Delay for UI to settle
         }
-    }, [projects, selectedProject]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, isNewUser]);
 
-    const handleCreateNewProject = async (projectName: string, initialInputs: BrandInputs | null = null) => {
-        if (!profile) return;
-        setIsCreating(true);
+    const handleNewProject = async () => {
+        if (!user) return;
+        const projectName = `Proyek Tanpa Judul ${projects.length + 1}`;
+        const newProjectData: ProjectData = {
+            project_name: projectName,
+            brandInputs: { businessName: projectName, businessDetail: '', industry: '', targetAudience: '', valueProposition: '', competitorAnalysis: '' },
+            slogans: [],
+            selectedSlogan: null,
+            logoPrompt: null,
+            logoOptions: [],
+            selectedLogoUrl: null,
+            logoVariations: [],
+            brandPersonas: [],
+            selectedPersona: null,
+            socialMediaKit: null,
+            socialProfiles: null,
+            contentCalendar: null,
+        };
+
         const supabase = getSupabaseClient();
-        const initialData: ProjectData = {
+        const { data, error } = await supabase
+            .from('projects')
+            .insert({ user_id: user.id, project_data: newProjectData })
+            .select()
+            .single();
+
+        if (error) console.error('Error creating project', error);
+        else {
+            setProjects([data, ...projects]);
+            setSelectedProject(data);
+            playSound('success');
+        }
+    };
+    
+    const handleNewVoiceProject = async (projectName: string, initialInputs: BrandInputs | null) => {
+        if (!user) return;
+        
+        const newProjectData: ProjectData = {
             project_name: projectName,
             brandInputs: initialInputs,
             slogans: [],
@@ -49,111 +106,89 @@ const ProjectDashboard: React.FC = () => {
             socialMediaKit: null,
             socialProfiles: null,
             contentCalendar: null,
-            sotoshop_assets: {
-                mascots: [],
-                moodboards: [],
-                patterns: [],
-                photoStudio: [],
-                sceneMixes: [],
-                videos: [],
-                aiPresenter: [],
-            },
         };
 
+        const supabase = getSupabaseClient();
         const { data, error } = await supabase
             .from('projects')
-            .insert({ user_id: profile.id, project_data: initialData })
+            .insert({ user_id: user.id, project_data: newProjectData })
             .select()
             .single();
 
         if (error) {
-            console.error("Error creating project:", error);
-        } else if (data) {
-            const newProjects = [data, ...projects];
-            setProjects(newProjects);
+            console.error('Error creating voice project', error);
+        } else {
+            setProjects([data, ...projects]);
             setSelectedProject(data);
-            await addXp(50);
+            playSound('success');
         }
-        setIsCreating(false);
     };
 
-    const handleCreateClick = () => {
-        const name = prompt("Nama proyek barunya apa, Juragan?");
-        if (name) handleCreateNewProject(name, null);
-    };
-
-    const handleUpdateProject = useCallback(async (updatedData: Partial<ProjectData>) => {
-        if (!selectedProject) return;
+    const handleDeleteProject = async (projectId: string) => {
+        if (!window.confirm("Yakin mau hapus proyek ini? Nggak bisa dibalikin lho.")) return;
         
+        const supabase = getSupabaseClient();
+        const { error } = await supabase.from('projects').delete().eq('id', projectId);
+        if (error) console.error("Error deleting project", error);
+        else {
+            const updatedProjects = projects.filter(p => p.id !== projectId);
+            setProjects(updatedProjects);
+            if (selectedProject?.id === projectId) {
+                setSelectedProject(updatedProjects.length > 0 ? updatedProjects[0] : null);
+            }
+            playSound('error');
+        }
+    };
+
+    const handleUpdateProjectData = useCallback(async (data: Partial<ProjectData>) => {
+        if (!selectedProject) return;
+        // Optimistic update
         const updatedProject = {
             ...selectedProject,
             project_data: {
                 ...selectedProject.project_data,
-                ...updatedData
+                ...data
             }
         };
-
         setSelectedProject(updatedProject);
         setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
-        
-        const supabase = getSupabaseClient();
-        await supabase
-            .from('projects')
-            .update({ project_data: updatedProject.project_data })
-            .eq('id', selectedProject.id);
+    }, [selectedProject, projects]);
 
-    }, [selectedProject, projects, setProjects]);
+    const onSave = async (data: Partial<ProjectData>) => {
+        if (!selectedProject) return;
+        const supabase = getSupabaseClient();
+        await supabase.from('projects').update({ project_data: data }).eq('id', selectedProject.id);
+    };
+
+    const saveStatus = useDebouncedAutosave(selectedProject, onSave);
 
     return (
         <div className="min-h-screen bg-background text-text-body">
-            <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-sm shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-                    <div className="flex items-center justify-between mb-2">
-                        <h1 className="text-3xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}><span className="text-primary">des<span className="text-accent">ai</span>n</span>.fun</h1>
-                        <div className="flex items-center gap-2">
-                            <Tooltip text="Misi Harian">
-                                <button onClick={() => toggleDailyMissionsModal(true)} className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">🎯</button>
-                            </Tooltip>
-                             <Tooltip text="Pusat Juragan">
-                                <button onClick={() => togglePusatJuraganModal(true)} className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">🏆</button>
-                             </Tooltip>
-                            <Tooltip text="Profil & Pengaturan">
-                                <button onClick={() => toggleProfileSettingsModal(true)} className="p-2 rounded-full text-text-muted hover:bg-surface hover:text-text-header transition-colors">
-                                    <img src={profile?.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full" />
-                                </button>
-                            </Tooltip>
-                        </div>
+            <Header saveStatus={saveStatus} />
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-32">
+                {loading ? (
+                    <div className="flex justify-center items-center h-[50vh]"><Spinner /></div>
+                ) : selectedProject ? (
+                    <AICreator project={selectedProject} onUpdateProject={handleUpdateProjectData} />
+                ) : (
+                    <div className="text-center p-8 bg-surface rounded-2xl min-h-[50vh] flex flex-col justify-center items-center">
+                        <span className="text-6xl mb-4">🚀</span>
+                        <h2 className="text-3xl font-bold text-text-header mt-4" style={{fontFamily: 'var(--font-display)'}}>Selamat Datang, Juragan!</h2>
+                        <p className="mt-2 text-text-muted max-w-md">Kelihatannya lo belum punya proyek. Buat proyek pertamamu di dok bawah untuk memulai petualangan branding!</p>
                     </div>
-                    <HeaderStats />
-                </div>
-            </header>
-            
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-                <ProjectDock
-                    projects={projects}
-                    selectedProject={selectedProject}
-                    onSelectProject={setSelectedProject}
-                    onCreateProject={handleCreateClick}
-                    isCreating={isCreating}
-                />
-                <div className="flex flex-col lg:flex-row gap-8">
-                     <div className="lg:order-2 flex-grow">
-                        <AICreator project={selectedProject} onUpdateProject={handleUpdateProject} onCreateProject={handleCreateNewProject} />
-                    </div>
-                    <div className="lg:order-1 lg:w-72 flex-shrink-0">
-                        <div className="lg:sticky top-24">
-                           <ProjectSummary project={selectedProject} />
-                        </div>
-                    </div>
-                </div>
+                )}
             </main>
-
-            <Footer 
-                onShowAbout={() => toggleAboutModal(true)} 
-                onShowContact={() => toggleContactModal(true)}
-                onShowToS={() => toggleToSModal(true)}
-                onShowPrivacy={() => togglePrivacyModal(true)}
+            <InfoTicker />
+            <ProjectDock
+                projects={projects}
+                selectedProject={selectedProject}
+                onSelectProject={setSelectedProject}
+                onDeleteProject={handleDeleteProject}
+                onNewProject={handleNewProject}
+                onNewVoiceProject={() => setShowVoiceWizard(true)}
             />
+            {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
+            <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} onCreateProject={handleNewVoiceProject} />
         </div>
     );
 };

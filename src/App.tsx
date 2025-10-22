@@ -3,105 +3,93 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { useUI } from './contexts/UIContext';
-import { useUserActions } from './contexts/UserActionsContext';
-import { supabaseError } from './services/supabaseClient';
-import { getApiKeyError } from './services/geminiService';
-import { usePageFocusTrigger } from './hooks/usePageFocusTrigger'; // Import hook baru
-import { useAudioContextManager } from './hooks/useAudioContextManager'; // Import hook baru
-
 import LoginScreen from './components/LoginScreen';
 import ProjectDashboard from './components/ProjectDashboard';
 import AuthLoadingScreen from './components/common/AuthLoadingScreen';
-import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
 import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
-import WelcomeGate from './components/common/PuzzleCaptchaModal';
+import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
 import AboutModal from './components/common/AboutModal';
 import ContactModal from './components/common/ContactModal';
-import ToSModal from './components/common/TermsOfServiceModal';
+import TermsOfServiceModal from './components/common/TermsOfServiceModal';
 import PrivacyPolicyModal from './components/common/PrivacyPolicyModal';
 import OutOfCreditsModal from './components/common/OutOfCreditsModal';
 import LevelUpModal from './components/gamification/LevelUpModal';
 import AchievementToast from './components/gamification/AchievementToast';
-import ProfileSettingsModal from './components/common/ProfileSettingsModal';
-import PusatJuraganModal from './components/community/PusatJuraganModal';
-import DailyMissions from './components/gamification/DailyMissions'; // Now a modal
+import { useUserActions } from './contexts/UserActionsContext';
+import { supabaseError } from './services/supabaseClient';
+import { getApiKeyError } from './services/geminiService';
+import { useAudioContextManager } from './hooks/useAudioContextManager';
 import { playBGM, stopBGM } from './services/soundService';
+import WelcomeGate from './components/common/PuzzleCaptchaModal';
 
 const App: React.FC = () => {
-    const { session, loading: authLoading, revalidateSession } = useAuth();
-    const { 
-        theme, 
-        showAboutModal, toggleAboutModal,
-        showContactModal, toggleContactModal,
-        showToSModal, toggleToSModal,
-        showPrivacyModal, togglePrivacyModal,
-        showProfileSettingsModal, toggleProfileSettingsModal,
-        showPusatJuraganModal, togglePusatJuraganModal,
-        showDailyMissionsModal, toggleDailyMissionsModal,
-    } = useUI();
-    const { 
-        showOutOfCreditsModal, setShowOutOfCreditsModal,
-        showLevelUpModal, setShowLevelUpModal, levelUpInfo,
-        unlockedAchievement, setUnlockedAchievement
-    } = useUserActions();
-    
-    const [gatePassed, setGatePassed] = useState(sessionStorage.getItem('desainfun_gate_passed') === 'true');
+  const { user, loading } = useAuth();
+  const {
+    theme,
+    showAboutModal, toggleAboutModal,
+    showContactModal, toggleContactModal,
+    showToSModal, toggleToSModal,
+    showPrivacyModal, togglePrivacyModal,
+  } = useUI();
 
-    // --- INTEGRASI HOOK BARU ---
-    // Proaktif memvalidasi ulang sesi saat tab kembali fokus untuk mencegah loop.
-    usePageFocusTrigger(revalidateSession);
-    // Mengelola AudioContext secara otomatis untuk stabilitas audio.
-    useAudioContextManager();
-    // --- AKHIR INTEGRASI ---
+  const {
+    showOutOfCreditsModal, setShowOutOfCreditsModal,
+    showLevelUpModal, setShowLevelUpModal, levelUpInfo,
+    unlockedAchievement, setUnlockedAchievement,
+  } = useUserActions();
+  
+  const [gatePassed, setGatePassed] = useState(sessionStorage.getItem('desainfun_gate_passed') === 'true');
 
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-    }, [theme]);
-    
-    useEffect(() => {
-        if(session && gatePassed) {
-           playBGM('welcome');
-        } else {
-           stopBGM();
-        }
-        return () => stopBGM(); // Cleanup on unmount or session change
-    }, [session, gatePassed]);
+  useAudioContextManager();
 
-    const handleGatePassed = () => {
-        setGatePassed(true);
-        sessionStorage.setItem('desainfun_gate_passed', 'true');
-    };
+  useEffect(() => {
+    document.documentElement.className = theme;
+  }, [theme]);
+  
+  useEffect(() => {
+      if (gatePassed && user) {
+          playBGM('welcome');
+          const timer = setTimeout(() => {
+              playBGM('LoFi'); // Or random BGM
+          }, 4000); // Duration of welcome jingle
+          return () => {
+              clearTimeout(timer);
+              stopBGM();
+          }
+      }
+  }, [gatePassed, user]);
+  
+  const handleGatePassed = () => {
+    sessionStorage.setItem('desainfun_gate_passed', 'true');
+    setGatePassed(true);
+  };
 
-    if (getApiKeyError()) return <ApiKeyErrorScreen error={getApiKeyError()!} />;
-    if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
-    if (authLoading) return <AuthLoadingScreen />;
-
-    return (
-        <>
-            {session ? (
-                gatePassed ? (
-                    <ProjectDashboard />
-                ) : (
-                    <WelcomeGate onGatePassed={handleGatePassed} />
-                )
-            ) : (
-                <LoginScreen />
-            )}
-
-            {/* Global Modals & Toasts */}
-            <AboutModal show={showAboutModal} onClose={() => toggleAboutModal(false)} />
-            <ContactModal show={showContactModal} onClose={() => toggleContactModal(false)} />
-            <ToSModal show={showToSModal} onClose={() => toggleToSModal(false)} />
-            <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} />
-            <ProfileSettingsModal show={showProfileSettingsModal} onClose={() => toggleProfileSettingsModal(false)} />
-            <PusatJuraganModal show={showPusatJuraganModal} onClose={() => togglePusatJuraganModal(false)} />
-            <DailyMissions show={showDailyMissionsModal} onClose={() => toggleDailyMissionsModal(false)} />
-            
-            <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
-            {levelUpInfo && <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />}
-            {unlockedAchievement && <AchievementToast achievement={unlockedAchievement} onDismiss={() => setUnlockedAchievement(null)} />}
-        </>
-    );
+  const geminiApiKeyError = getApiKeyError();
+  if (geminiApiKeyError) return <ApiKeyErrorScreen error={geminiApiKeyError} />;
+  if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
+  if (loading) return <AuthLoadingScreen />;
+  
+  return (
+    <>
+      {!user ? (
+        <LoginScreen />
+      ) : !gatePassed ? (
+        <WelcomeGate onGatePassed={handleGatePassed} />
+      ) : (
+        <ProjectDashboard />
+      )}
+      
+      {/* Global Modals & Toasts */}
+      <AboutModal show={showAboutModal} onClose={() => toggleAboutModal(false)} />
+      <ContactModal show={showContactModal} onClose={() => toggleContactModal(false)} />
+      <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} />
+      <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} />
+      
+      <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
+      {levelUpInfo && <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />}
+      {unlockedAchievement && <AchievementToast achievement={unlockedAchievement} onDismiss={() => setUnlockedAchievement(null)} />}
+    </>
+  );
 };
 
 export default App;
