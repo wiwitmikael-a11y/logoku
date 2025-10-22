@@ -1,103 +1,218 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect, lazy } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useUserActions } from '../contexts/UserActionsContext';
+import { getSupabaseClient } from '../services/supabaseClient';
 import type { Project, ProjectData } from '../types';
-import { useUI } from '../contexts/UIContext';
+import { playSound } from '../services/soundService';
+import Onboarding from './common/Onboarding';
 import ModuleLoader from './common/ModuleLoader';
+import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
+import VoiceBrandingWizard from './VoiceBrandingWizard';
+import Button from './common/Button';
 
-// Lazy load components for better initial performance
+// Lazy load components
 const BrandPersonaGenerator = lazy(() => import('./BrandPersonaGenerator'));
 const LogoGenerator = lazy(() => import('./LogoGenerator'));
 const SocialMediaKitGenerator = lazy(() => import('./SocialMediaKitGenerator'));
 const ContentCalendarGenerator = lazy(() => import('./ContentCalendarGenerator'));
-const MascotGenerator = lazy(() => import('./MascotGenerator'));
-const MoodboardGenerator = lazy(() => import('./MoodboardGenerator'));
-const PatternGenerator = lazy(() => import('./PatternGenerator'));
-const PhotoStudio = lazy(() => import('./PhotoStudio'));
-const SceneMixer = lazy(() => import('./SceneMixer'));
-const VideoGenerator = lazy(() => import('./VideoGenerator'));
-const AiPresenter = lazy(() => import('./AiPresenter'));
+const Sotoshop = lazy(() => import('./Sotoshop'));
 const LemariBrand = lazy(() => import('./LemariBrand'));
 const ProjectSummary = lazy(() => import('./ProjectSummary'));
 
 
-interface Props {
-  project: Project;
-  onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
-}
+const TABS = ["Ringkasan", "1. Persona", "2. Logo", "3. Kit Sosmed", "4. Konten", "Sotoshop", "Lemari Brand"];
 
-const TABS = [
-  'Ringkasan',
-  '1. Persona',
-  '2. Logo',
-  '3. Kit Sosmed',
-  '4. Rencana Konten',
-  'Sotoshop',
-  'Lemari Brand'
-];
+const AICreator: React.FC = () => {
+    const { user, isNewUser } = useAuth();
+    const { addXp, checkForNewAchievements } = useUserActions();
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [currentProject, setCurrentProject] = useState<Project | null>(null);
+    const [activeTab, setActiveTab] = useState(TABS[0]);
+    const [loading, setLoading] = useState(true);
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [showVoiceWizard, setShowVoiceWizard] = useState(false);
 
-const AICreator: React.FC<Props> = ({ project, onUpdateProject }) => {
-  const [activeTab, setActiveTab] = useState('Ringkasan');
-  const { crossComponentPrompt, setCrossComponentPrompt } = useUI();
-  
-  // Cross-component communication for Sotoshop tools
-  useEffect(() => {
-    if (crossComponentPrompt) {
-      setActiveTab('Sotoshop');
-    }
-  }, [crossComponentPrompt]);
+    useDebouncedAutosave(currentProject, (data) => updateProjectData(data, true));
 
-  const handleStepComplete = (nextStep: string) => {
-    setActiveTab(nextStep);
-  };
+    const fetchProjects = async () => {
+        if (!user) return;
+        setLoading(true);
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+        if (error) { console.error("Error fetching projects:", error); } 
+        else {
+            const fetchedProjects = data || [];
+            setProjects(fetchedProjects);
+            if(fetchedProjects.length > 0) {
+                 checkForNewAchievements(fetchedProjects.length);
+                 // On initial load, try to load from session or pick the first project
+                const sessionProjectId = sessionStorage.getItem('desainfun_currentProjectId');
+                const projectToLoad = fetchedProjects.find(p => p.id === sessionProjectId) || fetchedProjects[0];
+                if (projectToLoad) {
+                    handleProjectSelect(projectToLoad.id);
+                } else {
+                    setCurrentProject(null);
+                }
+            } else {
+                 setCurrentProject(null);
+            }
+        }
+        setLoading(false);
+    };
+    
+    // This component communicates with ProjectDock via window events
+    useEffect(() => {
+      const handleProjectSelected = (e: Event) => {
+        const detail = (e as CustomEvent).detail;
+        if(detail.projectId) handleProjectSelect(detail.projectId);
+      };
 
-  return (
-    <div data-onboarding-step="2" className="bg-surface rounded-2xl shadow-lg min-h-[70vh] flex flex-col">
-      <div className="p-4 border-b border-border-main">
-        <div className="overflow-x-auto">
-          <div className="flex gap-2 border-b-2 border-border-main">
-            {TABS.map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`py-2 px-4 text-sm font-semibold whitespace-nowrap ${activeTab === tab ? 'tab-active' : 'text-text-muted hover:text-text-header'}`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="p-6 flex-grow">
-        <ModuleLoader>
-          {activeTab === 'Ringkasan' && <ProjectSummary project={project} onUpdateProject={onUpdateProject} />}
-          {activeTab === '1. Persona' && <BrandPersonaGenerator project={project} onUpdateProject={onUpdateProject} onComplete={() => handleStepComplete('2. Logo')} />}
-          {activeTab === '2. Logo' && <LogoGenerator project={project} onUpdateProject={onUpdateProject} onComplete={() => handleStepComplete('3. Kit Sosmed')} />}
-          {activeTab === '3. Kit Sosmed' && <SocialMediaKitGenerator project={project} onUpdateProject={onUpdateProject} onComplete={() => handleStepComplete('4. Rencana Konten')} />}
-          {activeTab === '4. Rencana Konten' && <ContentCalendarGenerator project={project} onUpdateProject={onUpdateProject} onComplete={() => handleStepComplete('Sotoshop')} />}
-          {activeTab === 'Sotoshop' && (
-            <div className="space-y-6" data-onboarding-step="3">
-              <div className="p-4 rounded-lg flex items-start gap-4 mang-ai-callout border border-border-main">
-                <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-splash/10 rounded-full text-splash text-3xl">🎨</div>
-                <div>
-                    <h3 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Sotoshop: Studio Kreatif AI</h3>
-                    <p className="text-sm text-text-body mt-1">Ini playground-nya Juragan! Gunakan aneka tool AI canggih di bawah ini untuk membuat aset visual keren buat brand-mu. Semua hasil karyamu akan otomatis tersimpan di "Lemari Brand".</p>
+      const handleCreateNewProject = (e: Event) => {
+        const detail = (e as CustomEvent).detail;
+        if(detail.projectName) createNewProject(detail.projectName);
+      };
+      
+      const handleCreateNewProjectWithVoice = () => {
+        setShowVoiceWizard(true);
+      };
+
+      window.addEventListener('projectSelected', handleProjectSelected);
+      window.addEventListener('createNewProject', handleCreateNewProject);
+      window.addEventListener('createNewProjectWithVoice', handleCreateNewProjectWithVoice);
+
+      return () => {
+        window.removeEventListener('projectSelected', handleProjectSelected);
+        window.removeEventListener('createNewProject', handleCreateNewProject);
+        window.removeEventListener('createNewProjectWithVoice', handleCreateNewProjectWithVoice);
+      };
+    }, [projects]); // Rerun if projects list changes to have the correct closure
+
+    useEffect(() => {
+        fetchProjects();
+        const shouldShow = isNewUser && !localStorage.getItem('desainfun_onboarding_completed');
+        setShowOnboarding(shouldShow);
+    }, [user]);
+
+    const handleProjectSelect = (projectId: string) => {
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+            setCurrentProject(project);
+            setActiveTab(TABS[0]); // Reset to summary tab
+            sessionStorage.setItem('desainfun_currentProjectId', projectId);
+        }
+    };
+    
+    const createNewProject = async (projectName: string, initialInputs: ProjectData['brandInputs'] = null) => {
+        if (!user) return;
+        setIsSaving(true);
+        const supabase = getSupabaseClient();
+        const newProjectData: ProjectData = {
+            project_name: projectName,
+            brandInputs: initialInputs,
+            slogans: [], selectedSlogan: null,
+            logoPrompt: null, logoOptions: [], selectedLogoUrl: null, logoVariations: [],
+            brandPersonas: [], selectedPersona: null,
+            socialMediaKit: null, socialProfiles: null,
+            contentCalendar: null,
+            sotoshop_assets: { mascots: [], moodboards: [], patterns: [], photoStudio: [], sceneMixes: [], videos: [], aiPresenter: [] }
+        };
+
+        const { data, error } = await supabase.from('projects').insert({ user_id: user.id, project_data: newProjectData }).select().single();
+        if (error) { console.error("Error creating project:", error); } 
+        else {
+            const newProject = data as Project;
+            setProjects(prev => [newProject, ...prev]);
+            setCurrentProject(newProject);
+            sessionStorage.setItem('desainfun_currentProjectId', newProject.id);
+            setActiveTab(TABS[1]); // Go to persona tab
+            await addXp(50);
+            playSound('success');
+            // Notify dock to update
+            window.dispatchEvent(new CustomEvent('projectListUpdated'));
+        }
+        setIsSaving(false);
+    };
+
+    const updateProjectData = async (data: Partial<ProjectData>, isAutosave = false) => {
+        if (!currentProject) return;
+        const updatedProjectData = { ...currentProject.project_data, ...data };
+        const updatedProject = { ...currentProject, project_data: updatedProjectData };
+        
+        setCurrentProject(updatedProject);
+        // Update the project in the main list as well to keep it in sync
+        setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
+        
+        if (isAutosave) return; // Debounced autosave will handle the DB update
+
+        setIsSaving(true);
+        const supabase = getSupabaseClient();
+        const { error } = await supabase.from('projects').update({ project_data: updatedProject.project_data }).eq('id', currentProject.id);
+        if (error) { console.error("Error updating project:", error); }
+        setIsSaving(false);
+    };
+
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        playSound('transition');
+    };
+
+    if (loading) { return <div className="flex justify-center items-center h-64"><p>Memuat proyek...</p></div>; }
+    
+    if (!currentProject) {
+        return (
+            <div className="text-center p-8 bg-surface rounded-lg min-h-[400px] flex flex-col justify-center items-center">
+                <h2 className="text-3xl font-bold">Selamat Datang, Juragan!</h2>
+                <p className="mt-2 text-text-muted max-w-lg mx-auto">Sepertinya belum ada proyek, atau belum ada yang dipilih. Yuk, buat brand pertamamu atau pilih dari daftar di bawah!</p>
+                <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+                   <Button onClick={() => createNewProject(`Proyek Baru ${new Date().toLocaleDateString()}`)} isLoading={isSaving} variant="primary" size="large">
+                        🚀 Buat Proyek Baru
+                    </Button>
+                    <Button onClick={() => setShowVoiceWizard(true)} isLoading={isSaving} variant="accent" size="large">
+                        🎙️ Mulai dengan Suara
+                    </Button>
                 </div>
-              </div>
-              <MascotGenerator project={project} onUpdateProject={onUpdateProject} />
-              <MoodboardGenerator project={project} onUpdateProject={onUpdateProject} />
-              <PatternGenerator project={project} onUpdateProject={onUpdateProject} />
-              <PhotoStudio project={project} onUpdateProject={onUpdateProject} initialPrompt={crossComponentPrompt?.targetTool === 'Studio Foto' ? crossComponentPrompt.prompt : null} />
-              <SceneMixer project={project} onUpdateProject={onUpdateProject} />
-              <AiPresenter project={project} onUpdateProject={onUpdateProject} />
-              <VideoGenerator project={project} onUpdateProject={onUpdateProject} />
+                 {showVoiceWizard && <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} onCreateProject={createNewProject} />}
             </div>
-          )}
-          {activeTab === 'Lemari Brand' && <LemariBrand project={project} onUpdateProject={onUpdateProject} />}
-        </ModuleLoader>
-      </div>
-    </div>
-  );
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+             {showOnboarding && <Onboarding onClose={() => { setShowOnboarding(false); localStorage.setItem('desainfun_onboarding_completed', 'true'); }} />}
+            
+            <div className="w-full">
+                <div className="border-b border-border-main mb-6" data-onboarding-step="2">
+                    <div className="flex space-x-1 overflow-x-auto pb-px">
+                        {TABS.map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => handleTabChange(tab)}
+                                className={`py-3 px-4 text-sm font-semibold whitespace-nowrap transition-colors duration-200 ${activeTab === tab ? 'tab-active' : 'text-text-muted hover:text-text-header'}`}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                
+                <div className="animate-content-fade-in" data-onboarding-step="3">
+                    <ModuleLoader>
+                        {activeTab === "Ringkasan" && <ProjectSummary project={currentProject} onUpdateProject={updateProjectData} />}
+                        {activeTab === "1. Persona" && <BrandPersonaGenerator project={currentProject} onUpdateProject={updateProjectData} onComplete={() => setActiveTab(TABS[2])} />}
+                        {activeTab === "2. Logo" && <LogoGenerator project={currentProject} onUpdateProject={updateProjectData} onComplete={() => setActiveTab(TABS[3])} />}
+                        {activeTab === "3. Kit Sosmed" && <SocialMediaKitGenerator project={currentProject} onUpdateProject={updateProjectData} onComplete={() => setActiveTab(TABS[4])} />}
+                        {activeTab === "4. Konten" && <ContentCalendarGenerator project={currentProject} onUpdateProject={updateProjectData} onComplete={() => setActiveTab(TABS[5])} />}
+                        {activeTab === "Sotoshop" && <Sotoshop project={currentProject} onUpdateProject={updateProjectData} />}
+                        {activeTab === "Lemari Brand" && <LemariBrand project={currentProject} onUpdateProject={updateProjectData} />}
+                    </ModuleLoader>
+                </div>
+            </div>
+             {showVoiceWizard && <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} onCreateProject={createNewProject} />}
+        </div>
+    );
 };
 
 export default AICreator;

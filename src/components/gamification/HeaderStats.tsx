@@ -2,57 +2,63 @@
 
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import HeaderStats from '../HeaderStats';
-import ProfileDropdown from '../common/ProfileDropdown';
-import ThemeToggle from '../common/ThemeToggle';
 import { useUI } from '../../contexts/UIContext';
+import ThemeToggle from '../common/ThemeToggle';
+import ProfileDropdown from '../common/ProfileDropdown';
 
-type SaveStatus = 'IDLE' | 'DIRTY' | 'SAVING' | 'SAVED';
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-interface HeaderProps {
-    saveStatus: SaveStatus;
-}
-
-const Header: React.FC<HeaderProps> = ({ saveStatus }) => {
+const HeaderStats: React.FC = () => {
     const { profile } = useAuth();
     const { theme, toggleTheme } = useUI();
-    
-    const getSaveStatusMessage = () => {
-        switch (saveStatus) {
-            case 'DIRTY': return 'Mengetik...';
-            case 'SAVING': return 'Menyimpan...';
-            case 'SAVED': return 'Tersimpan ✓';
-            default: return '';
-        }
-    };
 
-    if (!profile) return null;
-
-    return (
-        <header data-onboarding-step="1" className="bg-surface/80 backdrop-blur-md sticky top-0 z-30 border-b border-border-main">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-20">
-                    <div className="flex items-center gap-2">
-                        <h1 style={{fontFamily: 'var(--font-display)'}} className="text-3xl font-extrabold tracking-wider text-primary">
-                             des<span className="text-accent">ai</span>n<span className="text-text-header">.fun</span>
-                        </h1>
-                         <div className="text-xs text-text-muted h-5 flex items-center transition-opacity duration-300">
-                            {getSaveStatusMessage()}
-                        </div>
-                    </div>
-
-                    <div className="flex-1 max-w-md mx-4 hidden md:block">
-                       <HeaderStats />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <ThemeToggle theme={theme} onToggle={toggleTheme} />
-                        <ProfileDropdown />
-                    </div>
+    if (!profile) {
+        return (
+             <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                     <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-8 h-8" style={{ imageRendering: 'pixelated' }}/>
+                     <h1 className="text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}><span className="text-primary">des<span className="text-accent">ai</span>n</span>.fun</h1>
                 </div>
             </div>
-        </header>
+        );
+    }
+    
+    const xpForNextLevel = 100 * Math.pow(1.5, profile.level - 1);
+    const xpProgress = (profile.xp / xpForNextLevel) * 100;
+
+    return (
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+                 <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-8 h-8" style={{ imageRendering: 'pixelated' }}/>
+                 <h1 className="hidden sm:block text-xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}><span className="text-primary">des<span className="text-accent">ai</span>n</span>.fun</h1>
+            </div>
+
+            <div className="flex-grow flex items-center justify-end gap-3 sm:gap-6">
+                 {/* Level & XP */}
+                <div className="flex-grow max-w-xs hidden md:block">
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-primary text-sm">Level {profile.level}</span>
+                        <span className="text-xs text-text-muted">{profile.xp} / {Math.round(xpForNextLevel)} XP</span>
+                    </div>
+                    <div className="w-full bg-surface h-2 rounded-full overflow-hidden">
+                        <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: `${xpProgress}%` }}></div>
+                    </div>
+                </div>
+
+                {/* Credits */}
+                <div className="flex items-center gap-2 bg-surface px-3 py-1.5 rounded-full text-sm font-semibold">
+                    <span role="img" aria-label="Token">🪙</span>
+                    <span className="text-text-header">{profile.credits}</span>
+                    <span className="text-text-muted">Token</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                     <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                     <ProfileDropdown />
+                </div>
+            </div>
+        </div>
     );
 };
 
-export default Header;
+export default HeaderStats;

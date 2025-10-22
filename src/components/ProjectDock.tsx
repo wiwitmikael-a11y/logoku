@@ -1,70 +1,93 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getSupabaseClient } from '../services/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 import type { Project } from '../types';
-import Button from './common/Button';
+import Spinner from './common/Spinner';
 import GlowingArrowButton from './common/GlowingArrowButton';
-import { playSound } from '../services/soundService';
 
-interface Props {
-  projects: Project[];
-  selectedProject: Project | null;
-  onSelectProject: (project: Project) => void;
-  onDeleteProject: (projectId: string) => void;
-  onNewProject: () => void;
-  onNewVoiceProject: () => void;
-}
-
-const ProjectDock: React.FC<Props> = ({ projects, selectedProject, onSelectProject, onDeleteProject, onNewProject, onNewVoiceProject }) => {
+const ProjectDock: React.FC = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(true);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(sessionStorage.getItem('desainfun_currentProjectId'));
 
-  const toggleOpen = () => {
-    playSound('transition');
-    setIsOpen(!isOpen);
-  }
+  const fetchProjects = async () => {
+    if (!user) return;
+    setLoading(true);
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('projects').select('id, project_data(project_name)').order('created_at', { ascending: false });
+    if (error) console.error("Error fetching project list:", error);
+    else setProjects(data as any[]);
+    setLoading(false);
+  };
+  
+  useEffect(() => {
+    fetchProjects();
+    
+    const handleProjectListUpdate = () => fetchProjects();
+    window.addEventListener('projectListUpdated', handleProjectListUpdate);
+    
+    // Also listen for selection changes from AICreator to keep sync
+    const handleProjectSelectedEvent = (e: Event) => {
+        const detail = (e as CustomEvent).detail;
+        if (detail.projectId) setCurrentProjectId(detail.projectId);
+    };
+    window.addEventListener('projectSelected', handleProjectSelectedEvent);
+
+    return () => {
+        window.removeEventListener('projectListUpdated', handleProjectListUpdate);
+        window.removeEventListener('projectSelected', handleProjectSelectedEvent);
+    };
+  }, [user]);
+
+  const selectProject = (projectId: string) => {
+    setCurrentProjectId(projectId);
+    sessionStorage.setItem('desainfun_currentProjectId', projectId);
+    window.dispatchEvent(new CustomEvent('projectSelected', { detail: { projectId } }));
+  };
+
+  const createProject = () => {
+    const projectName = prompt('Masukkan nama proyek baru:', `Proyek Baru ${new Date().toLocaleDateString('id-ID')}`);
+    if (projectName) {
+      window.dispatchEvent(new CustomEvent('createNewProject', { detail: { projectName } }));
+    }
+  };
+  
+  const createProjectWithVoice = () => {
+    window.dispatchEvent(new CustomEvent('createNewProjectWithVoice'));
+  };
 
   return (
-    <div className={`sticky bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-in-out ${isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-4rem)]'}`}>
-      <div className="bg-surface/90 backdrop-blur-lg border-t-2 border-primary/20 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.3)] rounded-t-2xl">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 cursor-pointer" onClick={toggleOpen}>
-            <h3 className="text-lg font-bold text-text-header">Garasi Proyek</h3>
-            <div className="flex items-center gap-4">
-               {selectedProject && <p className="text-sm font-semibold text-accent hidden sm:block">Dipilih: {selectedProject.project_data.project_name}</p>}
-               <GlowingArrowButton isOpen={isOpen} onClick={toggleOpen} />
-            </div>
-          </div>
-          <div className="pb-4">
-            <div className="flex items-stretch gap-4 overflow-x-auto pb-4 -mx-4 px-4">
-              {projects.map(p => (
-                <div 
-                  key={p.id}
-                  onClick={(e) => { e.stopPropagation(); onSelectProject(p); playSound('select'); }}
-                  className={`relative flex-shrink-0 w-48 h-28 p-3 rounded-lg cursor-pointer transition-all duration-200 group ${selectedProject?.id === p.id ? 'project-card-active' : 'project-card'}`}
-                >
-                  <h4 className="font-bold text-sm text-text-header truncate">{p.project_data.project_name}</h4>
-                  <p className="text-xs text-text-muted mt-1">
-                    {new Date(p.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </p>
+    <div className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl z-30 transition-transform duration-500 ease-in-out ${isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-4rem)]'}`} data-onboarding-step="1">
+      <div className="bg-surface/80 backdrop-blur-md rounded-t-2xl shadow-2xl border-t border-x border-border-main">
+        <div className="flex justify-center -mt-4">
+           <GlowingArrowButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
+        </div>
+        
+        <div className="p-4">
+          <h3 className="text-lg font-bold text-text-header mb-3 text-center">Manajer Proyek</h3>
+          {loading ? <div className="flex justify-center"><Spinner /></div> : (
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-grow h-48 sm:h-auto sm:max-h-48 overflow-y-auto pr-2 space-y-2">
+                {projects.map(p => (
                   <button 
-                    onClick={(e) => { e.stopPropagation(); onDeleteProject(p.id); }}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/20 text-white opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all text-xs"
-                    title="Hapus Proyek"
+                    key={p.id} 
+                    onClick={() => selectProject(p.id)}
+                    className={`w-full text-left p-3 rounded-lg transition-colors text-sm font-semibold ${currentProjectId === p.id ? 'bg-primary text-white shadow-md' : 'bg-background hover:bg-border-light text-text-body'}`}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    {p.project_data.project_name}
                   </button>
-                </div>
-              ))}
-              <div className="flex-shrink-0 flex flex-col items-center justify-center gap-2 p-4 border-l border-border-main ml-2">
-                <Button onClick={onNewProject} size="small">
-                  + Proyek Baru
-                </Button>
-                <Button onClick={onNewVoiceProject} size="small" variant="secondary">
-                  🎙️ Suara
-                </Button>
+                ))}
+              </div>
+              <div className="flex-shrink-0 flex flex-col gap-2">
+                <button onClick={createProject} className="w-full p-3 bg-primary/20 text-primary rounded-lg text-sm font-semibold hover:bg-primary/30 transition-colors">🚀 Buat Proyek Baru</button>
+                <button onClick={createProjectWithVoice} className="w-full p-3 bg-accent/20 text-accent rounded-lg text-sm font-semibold hover:bg-accent/30 transition-colors">🎙️ Mulai dengan Suara</button>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
