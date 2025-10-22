@@ -5,6 +5,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../services/supabaseClient';
 import type { UserProfile } from '../types';
 import { usePageFocusTrigger } from '../hooks/usePageFocusTrigger';
+import { ProjectProvider } from './ProjectContext'; // Import ProjectProvider
 
 interface AuthContextType {
   user: User | null;
@@ -63,11 +64,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(currentUser);
       if (currentUser) {
         await fetchProfile(currentUser);
-        // Check if this is the first time the user has logged in
-        // A simple heuristic is checking if created_at is very close to last_sign_in_at
         const createdAt = new Date(currentUser.created_at || 0).getTime();
         const lastSignInAt = new Date(currentUser.last_sign_in_at || 0).getTime();
-        if (Math.abs(lastSignInAt - createdAt) < 5000) { // e.g., within 5 seconds
+        if (Math.abs(lastSignInAt - createdAt) < 5000) {
             setIsNewUser(true);
         } else {
             setIsNewUser(false);
@@ -76,12 +75,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(false);
     };
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleSession(session);
     });
 
-    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         handleSession(session);
@@ -101,7 +98,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     refreshProfile
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+        {/* Wrap children with ProjectProvider so it has access to auth context */}
+        <ProjectProvider>
+            {children}
+        </ProjectProvider>
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

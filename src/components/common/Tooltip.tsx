@@ -2,15 +2,31 @@
 
 import React from 'react';
 
-const Tooltip: React.FC<{ text: string, children: React.ReactNode }> = ({ text, children }) => {
-    return (
-        <div className="relative group">
-            {children}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max bg-background text-text-header text-xs font-semibold rounded-md py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg pointer-events-none z-10">
-                {text}
-            </div>
-        </div>
-    );
+interface TooltipProps {
+  text: string;
+  children: React.ReactNode;
+  position?: 'top' | 'right' | 'left'; // Simplified positioning
+}
+
+const Tooltip: React.FC<TooltipProps> = ({ text, children, position = 'right' }) => {
+  const positionClasses = {
+    right: 'left-full ml-3 top-1/2 -translate-y-1/2',
+    top: 'bottom-full mb-2 left-1/2 -translate-x-1/2',
+    left: 'right-full mr-3 top-1/2 -translate-y-1/2',
+  };
+
+  return (
+    <div className="relative group flex items-center">
+      {children}
+      <div
+        className={`absolute whitespace-nowrap bg-[rgb(var(--c-bg-inverse))] text-[rgb(var(--c-text-inverse))] text-xs font-semibold px-3 py-1.5 rounded-md
+                   opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50
+                   ${positionClasses[position]}`}
+      >
+        {text}
+      </div>
+    </div>
+  );
 };
 
 export default Tooltip;

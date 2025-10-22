@@ -8,10 +8,6 @@ import ProjectDashboard from './components/ProjectDashboard';
 import AuthLoadingScreen from './components/common/AuthLoadingScreen';
 import ApiKeyErrorScreen from './components/common/ApiKeyErrorScreen';
 import SupabaseKeyErrorScreen from './components/common/SupabaseKeyErrorScreen';
-import AboutModal from './components/common/AboutModal';
-import ContactModal from './components/common/ContactModal';
-import TermsOfServiceModal from './components/common/TermsOfServiceModal';
-import PrivacyPolicyModal from './components/common/PrivacyPolicyModal';
 import OutOfCreditsModal from './components/common/OutOfCreditsModal';
 import LevelUpModal from './components/gamification/LevelUpModal';
 import AchievementToast from './components/gamification/AchievementToast';
@@ -22,17 +18,11 @@ import { useAudioContextManager } from './hooks/useAudioContextManager';
 import { playBGM, stopBGM } from './services/soundService';
 import WelcomeGate from './components/common/PuzzleCaptchaModal';
 import AdAnchor from './components/common/AdAnchor';
+import Sidebar from './components/Sidebar';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
-  const {
-    theme,
-    showAboutModal, toggleAboutModal,
-    showContactModal, toggleContactModal,
-    showToSModal, toggleToSModal,
-    showPrivacyModal, togglePrivacyModal,
-  } = useUI();
-
+  const { theme } = useUI();
   const {
     showOutOfCreditsModal, setShowOutOfCreditsModal,
     showLevelUpModal, setShowLevelUpModal, levelUpInfo,
@@ -40,11 +30,13 @@ const App: React.FC = () => {
   } = useUserActions();
   
   const [gatePassed, setGatePassed] = useState(sessionStorage.getItem('desainfun_gate_passed') === 'true');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useAudioContextManager();
 
   useEffect(() => {
     document.documentElement.className = theme;
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
   
   useEffect(() => {
@@ -70,27 +62,34 @@ const App: React.FC = () => {
   if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
   if (loading) return <AuthLoadingScreen />;
   
+  const renderContent = () => {
+    if (!user) return <LoginScreen />;
+    if (!gatePassed) return <WelcomeGate onGatePassed={handleGatePassed} />;
+    
+    // New layout with Sidebar
+    return (
+      <div id="app-layout">
+        <Sidebar 
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
+        <main className="main-content">
+          <ProjectDashboard />
+        </main>
+      </div>
+    );
+  };
+
   return (
     <>
-      {!user ? (
-        <LoginScreen />
-      ) : !gatePassed ? (
-        <WelcomeGate onGatePassed={handleGatePassed} />
-      ) : (
-        <ProjectDashboard />
-      )}
+      {renderContent()}
       
       {/* Global Modals & Toasts */}
-      <AboutModal show={showAboutModal} onClose={() => toggleAboutModal(false)} />
-      <ContactModal show={showContactModal} onClose={() => toggleContactModal(false)} />
-      <TermsOfServiceModal show={showToSModal} onClose={() => toggleToSModal(false)} />
-      <PrivacyPolicyModal show={showPrivacyModal} onClose={() => togglePrivacyModal(false)} />
-      
       <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
       {levelUpInfo && <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />}
       {unlockedAchievement && <AchievementToast achievement={unlockedAchievement} onDismiss={() => setUnlockedAchievement(null)} />}
       
-      {/* Global Ad Anchor, shown only after login */}
+      {/* Global Ad Anchor, shown only after login and gate passed */}
       {user && gatePassed && <AdAnchor />}
     </>
   );

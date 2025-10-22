@@ -6,6 +6,7 @@ import { getSupabaseClient } from '../../services/supabaseClient';
 import ProfileSettingsModal from './ProfileSettingsModal';
 import DailyMissions from '../gamification/DailyMissions';
 import PusatJuraganModal from '../community/PusatJuraganModal';
+import Tooltip from './Tooltip';
 
 const ProfileDropdown: React.FC = () => {
   const { profile } = useAuth();
@@ -35,11 +36,13 @@ const ProfileDropdown: React.FC = () => {
   return (
     <>
       <div className="relative" ref={dropdownRef}>
-        <button onClick={() => setIsOpen(!isOpen)} className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary hover:border-accent transition-colors">
-          <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
-        </button>
+        <Tooltip text="Profil & Pengaturan" position="left">
+            <button onClick={() => setIsOpen(!isOpen)} className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary hover:border-accent transition-colors">
+            <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+            </button>
+        </Tooltip>
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-xl z-50 overflow-hidden animate-content-fade-in">
+          <div className="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-xl z-50 overflow-hidden animate-content-fade-in border border-border-main">
             <div className="p-3 border-b border-border-main">
               <p className="font-semibold text-text-header truncate">{profile.full_name}</p>
               <p className="text-xs text-text-muted truncate">{profile.email}</p>
