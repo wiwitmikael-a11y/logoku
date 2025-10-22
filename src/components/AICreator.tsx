@@ -4,7 +4,6 @@ import React, { useState, lazy, useEffect, useCallback } from 'react';
 import type { Project, ProjectData, BrandInputs } from '../types';
 import ModuleLoader from './common/ModuleLoader';
 import { useUI } from '../contexts/UIContext';
-import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
 import Button from './common/Button';
 
@@ -33,8 +32,7 @@ type TabId = 'persona' | 'logo' | 'sosmed' | 'konten' | 'sotoshop' | 'lemari';
 const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject }) => {
   const [activeTab, setActiveTab] = useState<TabId>('persona');
   const [showVoiceWizard, setShowVoiceWizard] = useState(false);
-  const { crossComponentPrompt, setCrossComponentPrompt } = useUI();
-  const { lastVoiceConsultationResult, setLastVoiceConsultationResult } = useUserActions();
+  const { crossComponentPrompt } = useUI();
   const isProjectReady = !!project;
 
   const handleNavigate = useCallback((tabId: TabId) => {
@@ -43,7 +41,8 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
   }, []);
 
   useEffect(() => {
-    if (project) {
+    if (project && activeTab !== 'sotoshop' && activeTab !== 'lemari') {
+        // Only reset to persona if we're not on the creative tabs
         setActiveTab('persona');
     }
   }, [project]);
@@ -54,22 +53,6 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
     }
   }, [crossComponentPrompt, handleNavigate]);
   
-  useEffect(() => {
-    if (lastVoiceConsultationResult) {
-      // Immediately copy and clear state to prevent re-trigger on refresh/re-render
-      const result = { ...lastVoiceConsultationResult };
-      setLastVoiceConsultationResult(null);
-
-      const projectName = `Proyek Suara ${new Date().toLocaleDateString('id-ID')}`;
-      onCreateProject(projectName, result).then(() => {
-        handleNavigate('logo');
-      }).catch(err => {
-        console.error("Failed to create project from voice consultation:", err);
-      });
-    }
-  }, [lastVoiceConsultationResult, onCreateProject, setLastVoiceConsultationResult, handleNavigate]);
-
-
   const TABS: { id: TabId; name: string; }[] = [
     { id: 'persona', name: '1. Persona' },
     { id: 'logo', name: '2. Logo' },
@@ -80,7 +63,7 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
   ];
 
   const renderActiveTabContent = () => {
-    if (!project) return null; // Guard against null project
+    if (!project) return null;
     switch(activeTab) {
       case 'persona':
         return <BrandPersonaGenerator project={project} onUpdateProject={onUpdateProject} onComplete={() => handleNavigate('logo')} />;
@@ -132,14 +115,18 @@ const AICreator: React.FC<Props> = ({ project, onUpdateProject, onCreateProject 
               <Button onClick={() => setShowVoiceWizard(true)} variant="primary" className="mt-4">
                   🎙️ Mulai dengan Konsultasi Suara
               </Button>
-              {showVoiceWizard && 
-                  <ModuleLoader>
-                      <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} />
-                  </ModuleLoader>
-              }
             </div>
           )}
         </ModuleLoader>
+        {showVoiceWizard && 
+            <ModuleLoader>
+                <VoiceBrandingWizard 
+                    show={showVoiceWizard} 
+                    onClose={() => setShowVoiceWizard(false)} 
+                    onCreateProject={onCreateProject}
+                />
+            </ModuleLoader>
+        }
     </div>
   );
 };

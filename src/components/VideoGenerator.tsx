@@ -112,7 +112,7 @@ const VideoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
     };
 
     return (
-        <CollapsibleSection title="Studio Video Veo" icon="🎥">
+        <CollapsibleSection title="Studio Video Veo" icon="🎥" initialOpen={false}>
             <div className="space-y-4">
                 <p className="text-sm text-text-body">Buat video pendek dari teks. Cukup tulis idemu, dan Mang AI akan membuatkan video sinematik untukmu. Proses ini butuh waktu beberapa menit.</p>
 

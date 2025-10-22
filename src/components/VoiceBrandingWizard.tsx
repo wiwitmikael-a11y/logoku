@@ -2,22 +2,22 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { LiveServerMessage, Modality } from '@google/genai';
-import { useUserActions } from '../contexts/UserActionsContext';
 import { getAiClient } from '../services/geminiService';
 import { encode } from '../utils/audioUtils';
 import Button from './common/Button';
 import { playSound } from '../services/soundService';
 import Spinner from './common/Spinner';
+import type { BrandInputs } from '../types';
 
 interface Props {
     show: boolean;
     onClose: () => void;
+    onCreateProject: (projectName: string, initialInputs: BrandInputs | null) => Promise<void>;
 }
 
 const SYSTEM_INSTRUCTION = `Anda adalah "Mang AI", konsultan branding AI yang ramah dan antusias dari aplikasi desain.fun. Gaya bicaramu santai seperti teman ngobrol, gunakan sapaan "Juragan". Tugasmu adalah memandu pengguna (Juragan) untuk mengisi 5 informasi penting tentang bisnis mereka: Nama Bisnis, Detail Bisnis, Industri, Target Audiens, dan Keunggulan. Ajukan pertanyaan satu per satu, tunggu jawaban pengguna, dan berikan konfirmasi singkat setelah setiap jawaban. Setelah kelima informasi terkumpul, rangkum semua jawaban dengan jelas, lalu akhiri percakapan dengan mengatakan "TRANSKRIP_SELESAI" dan tidak ada kata lain setelahnya. Mulai percakapan dengan menyapa dan menanyakan nama bisnisnya.`;
 
-const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
-    const { setLastVoiceConsultationResult } = useUserActions();
+const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onCreateProject }) => {
     const [status, setStatus] = useState<'idle' | 'listening' | 'processing' | 'finished'>('idle');
     const [transcript, setTranscript] = useState<{ speaker: 'mang-ai' | 'juragan'; text: string }[]>([]);
     const sessionPromiseRef = useRef<Promise<any> | null>(null);
@@ -25,20 +25,12 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
     const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
     const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
-
-    // Safety net: ensure consultation result is cleared when component unmounts
-    useEffect(() => {
-        return () => {
-            setLastVoiceConsultationResult(null);
-        }
-    }, [setLastVoiceConsultationResult]);
     
-    // Auto-close modal on finish
     useEffect(() => {
         if (status === 'finished') {
             const timer = setTimeout(() => {
                 onClose();
-            }, 1500); // 1.5 second delay
+            }, 1500);
             return () => clearTimeout(timer);
         }
     }, [status, onClose]);
@@ -131,7 +123,9 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
         audioContextRef.current?.close().catch(() => {});
         streamRef.current?.getTracks().forEach(track => track.stop());
         sessionPromiseRef.current = null;
-        setStatus('idle');
+        if (status !== 'processing' && status !== 'finished') {
+            setStatus('idle');
+        }
     };
     
     const processFinalTranscript = async () => {
@@ -148,8 +142,10 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose }) => {
                 config: { responseMimeType: 'application/json' }
             });
 
-            const parsedResult = JSON.parse(response.text);
-            setLastVoiceConsultationResult(parsedResult);
+            const parsedResult: BrandInputs = JSON.parse(response.text);
+            const projectName = parsedResult.businessName || `Proyek Suara ${new Date().toLocaleTimeString('id-ID')}`;
+            await onCreateProject(projectName, parsedResult);
+            
             setStatus('finished');
             playSound('success');
         } catch (err) {

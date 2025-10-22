@@ -99,7 +99,7 @@ const PhotoStudio: React.FC<Props> = ({ project, onUpdateProject, initialPrompt 
     };
 
     return (
-        <CollapsibleSection title="Studio Foto AI" icon="📷">
+        <CollapsibleSection title="Studio Foto AI" icon="📷" initialOpen={!!initialPrompt}>
             <div className="space-y-4">
                 <p className="text-sm text-text-body">Nggak punya studio foto? Santai. Upload foto produkmu, lalu suruh Mang AI untuk menaruhnya di scene baru atau mengeditnya langsung.</p>
                 

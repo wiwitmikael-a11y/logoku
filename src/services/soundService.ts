@@ -1,10 +1,12 @@
+// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 
-// We'll keep track of audio elements to manage them.
 const audioCache: { [key: string]: HTMLAudioElement } = {};
-let isMuted = false;
+let isMuted = localStorage.getItem('desainfun_isMuted') === 'true';
 let isAudioUnlocked = false;
 let currentBGM: HTMLAudioElement | null = null;
+let randomBgmPlaylist: BgmName[] = [];
 
 const getAudio = (src: string, isLoop = false): HTMLAudioElement => {
     if (audioCache[src]) {
@@ -41,21 +43,15 @@ const bgmUrls = {
   Cozy: `${GITHUB_ASSETS_URL}bgm_Cozy.mp3`,
 };
 
-/**
- * Browsers block audio until a user interaction. This function,
- * called on click/focus events, resumes the audio context.
- */
 export const unlockAudio = async (): Promise<void> => {
     if (isAudioUnlocked || typeof window === 'undefined') return;
     try {
-        // A simple way to get the context going.
         const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
         if (audioCtx.state === 'suspended') {
             await audioCtx.resume();
         }
         isAudioUnlocked = true;
         
-        // After unlocking, try to play the current BGM if it's supposed to be on and is currently paused.
         if (currentBGM && !isMuted && currentBGM.paused) {
             currentBGM.play().catch(() => {});
         }
@@ -64,65 +60,44 @@ export const unlockAudio = async (): Promise<void> => {
     }
 };
 
-/**
- * Sets up global, one-time event listeners to call unlockAudio() on the first
- * user interaction with the page. This is crucial for complying with browser
- * autoplay policies.
- */
 const setupAudioUnlock = () => {
     if (typeof window === 'undefined') return;
-    const unlockHandler = () => {
-        unlockAudio();
-    };
-    // The { once: true } option automatically removes the listener after it runs.
+    const unlockHandler = () => unlockAudio();
     window.addEventListener('click', unlockHandler, { once: true });
     window.addEventListener('keydown', unlockHandler, { once: true });
     window.addEventListener('touchstart', unlockHandler, { once: true });
 };
-setupAudioUnlock(); // Set up the listeners when the module is loaded.
-
+setupAudioUnlock();
 
 type SoundName = keyof typeof soundUrls;
 type BgmName = keyof typeof bgmUrls;
 
 export const playSound = (soundName: SoundName): void => {
     if (isMuted) return;
+    unlockAudio();
     const sound = getAudio(soundUrls[soundName]);
-    // Reduce volume specifically for the bounce sound
-    if (soundName === 'bounce') {
-      sound.volume = 0.2; // Reduced volume for the loading bounce
-    } else {
-      sound.volume = 0.5;
-    }
+    sound.volume = soundName === 'bounce' ? 0.2 : 0.5;
     sound.currentTime = 0;
-    sound.play().catch(() => {}); // Ignore play errors if interrupted
+    sound.play().catch(() => {});
 };
 
 export const playBGM = (bgmName: BgmName): void => {
-    if (isMuted) {
-        stopBGM();
-        return;
-    }
+    if (isMuted) { stopBGM(); return; }
+    unlockAudio();
     if (currentBGM) {
         currentBGM.pause();
         currentBGM.onended = null;
     }
     currentBGM = getAudio(bgmUrls[bgmName], true);
-    // Set a consistent, subtle volume for ALL background music.
     currentBGM.volume = 0.1;
     currentBGM.play().catch(() => {});
 };
 
-let randomBgmPlaylist: BgmName[] = [];
 const getMainBgmKeys = () => Object.keys(bgmUrls).filter(k => k !== 'welcome' && k !== 'Jingle') as BgmName[];
 
 const playNextRandomTrack = () => {
-    if (isMuted) {
-        stopBGM();
-        return;
-    }
+    if (isMuted) { stopBGM(); return; }
     if(randomBgmPlaylist.length === 0) {
-        // Shuffle and create a new playlist
         randomBgmPlaylist = getMainBgmKeys().sort(() => 0.5 - Math.random());
     }
     const nextTrack = randomBgmPlaylist.shift()!;
@@ -130,21 +105,18 @@ const playNextRandomTrack = () => {
         currentBGM.pause();
         currentBGM.onended = null;
     }
-    currentBGM = getAudio(bgmUrls[nextTrack], false); // Don't loop, we use onended
+    currentBGM = getAudio(bgmUrls[nextTrack], false);
     currentBGM.volume = 0.1;
     currentBGM.play().catch(() => {});
     currentBGM.onended = playNextRandomTrack;
 }
 
 export const playRandomBGM = () => {
-    if (isMuted) {
-        stopBGM();
-        return;
-    }
-    randomBgmPlaylist = []; // Reset playlist
+    if (isMuted) { stopBGM(); return; }
+    unlockAudio();
+    randomBgmPlaylist = [];
     playNextRandomTrack();
 }
-
 
 export const stopBGM = (): void => {
     if (currentBGM) {
@@ -152,16 +124,10 @@ export const stopBGM = (): void => {
         currentBGM.onended = null;
         currentBGM = null;
     }
-    randomBgmPlaylist = []; // Stop random playback loop
+    randomBgmPlaylist = [];
 };
 
-export const initializeMuteState = () => {
-    isMuted = localStorage.getItem('desainfun_isMuted') === 'true';
-};
-
-export const getIsMuted = (): boolean => {
-    return isMuted;
-};
+export const getIsMuted = (): boolean => isMuted;
 
 export const setMuted = (shouldMute: boolean) => {
     isMuted = shouldMute;

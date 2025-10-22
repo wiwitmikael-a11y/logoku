@@ -136,7 +136,7 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
     }, [audioUrl]);
 
     return (
-        <CollapsibleSection title="AI Presenter" icon="🎙️">
+        <CollapsibleSection title="AI Presenter" icon="🎙️" initialOpen={false}>
             <div className="space-y-4">
                 <p className="text-sm text-text-body">Punya maskot? Sekarang dia bisa ngomong! Pilih karakter, tulis skripnya, dan biarkan Mang AI yang jadi pengisi suaranya. Cocok buat konten video pendek!</p>
                 

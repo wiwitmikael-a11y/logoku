@@ -12,10 +12,6 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Switched to class property initializer for state.
-  // The reported errors about 'state' and 'props' not existing on the component instance,
-  // despite a seemingly correct constructor, suggest a potential issue with the build toolchain or
-  // TypeScript configuration. Using a class property is a more modern and often more reliable way to initialize state.
   public state: State = {
     hasError: false,
     error: undefined,
@@ -30,8 +26,6 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
-    // FIX: A previous destructuring attempt (`const { state, props } = this;`) was causing a
-    // type error. Switched to direct access with `this.state` and `this.props` to resolve it.
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background text-text-body p-4">

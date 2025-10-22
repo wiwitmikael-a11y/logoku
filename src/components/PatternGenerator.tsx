@@ -101,7 +101,7 @@ const PatternGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
     };
 
     return (
-        <CollapsibleSection title="Studio Motif Brand" icon="✨">
+        <CollapsibleSection title="Studio Motif Brand" icon="✨" initialOpen={false}>
             <div className="space-y-4">
                 <p className="text-sm text-text-body">Butuh motif unik buat kemasan, background, atau merchandise? Masukkan idemu, dan Mang AI akan membuatkan pola seamless (tanpa sambungan) yang bisa langsung dicoba di berbagai mockup.</p>
 

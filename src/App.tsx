@@ -43,25 +43,12 @@ const App: React.FC = () => {
         unlockedAchievement, setUnlockedAchievement
     } = useUserActions();
     
-    const [isStuck, setIsStuck] = useState(false);
     const [gatePassed, setGatePassed] = useState(sessionStorage.getItem('desainfun_gate_passed') === 'true');
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
     }, [theme]);
-
-    useEffect(() => {
-        // FIX: The type `NodeJS.Timeout` is not available in a browser environment.
-        // Replaced with `ReturnType<typeof setTimeout>` which correctly resolves to `number`.
-        let timer: ReturnType<typeof setTimeout>;
-        if (authLoading) {
-            timer = setTimeout(() => setIsStuck(true), 8000); // 8 seconds timeout
-        } else {
-            setIsStuck(false);
-        }
-        return () => clearTimeout(timer);
-    }, [authLoading]);
-
+    
     useEffect(() => {
         if(session && gatePassed) {
            playBGM('welcome');
@@ -78,7 +65,7 @@ const App: React.FC = () => {
 
     if (getApiKeyError()) return <ApiKeyErrorScreen error={getApiKeyError()!} />;
     if (supabaseError) return <SupabaseKeyErrorScreen error={supabaseError} />;
-    if (authLoading) return <AuthLoadingScreen isStuck={isStuck} />;
+    if (authLoading) return <AuthLoadingScreen />;
 
     return (
         <>

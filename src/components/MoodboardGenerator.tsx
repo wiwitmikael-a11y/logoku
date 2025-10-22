@@ -81,7 +81,7 @@ const MoodboardGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
     };
 
     return (
-        <CollapsibleSection title="Asisten Vibe Brand" icon="🎨">
+        <CollapsibleSection title="Asisten Vibe Brand" icon="🎨" initialOpen={false}>
             <div className="space-y-4">
                 <p className="text-sm text-text-body">Bingung nentuin nuansa visual brand? Cukup kasih beberapa kata kunci, dan Mang AI akan meracik sebuah moodboard lengkap dengan deskripsi, palet warna, dan gambar inspirasi.</p>
 

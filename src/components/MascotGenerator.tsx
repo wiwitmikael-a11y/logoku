@@ -81,7 +81,7 @@ const MascotGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
     };
 
     return (
-        <CollapsibleSection title="Desainer Maskot" icon="👻">
+        <CollapsibleSection title="Desainer Maskot" icon="👻" initialOpen={false}>
             <div className="space-y-4">
                 <p className="text-sm text-text-body">Brand yang punya maskot itu lebih gampang diingat, lho! Coba deskripsikan maskot impianmu, dan Mang AI akan menggambarkannya untukmu.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

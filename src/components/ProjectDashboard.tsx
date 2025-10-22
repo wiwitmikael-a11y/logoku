@@ -10,51 +10,8 @@ import HeaderStats from './gamification/HeaderStats';
 import AICreator from './AICreator';
 import ProjectSummary from './ProjectSummary';
 import Footer from './common/Footer';
-import Button from './common/Button';
 import Tooltip from './common/Tooltip';
-
-const ProjectDock: React.FC<{
-  projects: Project[];
-  selectedProject: Project | null;
-  onSelectProject: (project: Project) => void;
-  onCreateProject: () => void;
-  isCreating: boolean;
-}> = ({ projects, selectedProject, onSelectProject, onCreateProject, isCreating }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-
-  return (
-    <div className="bg-surface rounded-2xl shadow-lg transition-all duration-300 ease-in-out">
-      <div className="p-4 border-b border-border-main flex justify-between items-center">
-        <div>
-          <h2 className="text-lg font-bold text-text-header">Proyek Juragan</h2>
-          <p className="text-xs text-text-muted">{selectedProject ? `Terpilih: ${selectedProject.project_data.project_name}` : 'Pilih atau buat proyek baru'}</p>
-        </div>
-        <Button onClick={() => setIsExpanded(!isExpanded)} size="small" variant="secondary">
-          {isExpanded ? 'Ciutkan' : 'Bentangkan'}
-        </Button>
-      </div>
-      {isExpanded && (
-        <div className="p-4 space-y-3 animate-content-fade-in">
-          <Button onClick={onCreateProject} isLoading={isCreating} className="w-full">
-            + Proyek Baru
-          </Button>
-          <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-            {projects.map(p => (
-              <button
-                key={p.id}
-                onClick={() => onSelectProject(p)}
-                className={`w-full text-left p-3 rounded-lg text-sm font-semibold transition-colors ${selectedProject?.id === p.id ? 'bg-primary text-white shadow-md' : 'bg-background hover:bg-border-light'}`}
-              >
-                {p.project_data.project_name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
+import ProjectDock from './ProjectDock';
 
 const ProjectDashboard: React.FC = () => {
     const { profile, projects, setProjects } = useAuth();
@@ -62,7 +19,7 @@ const ProjectDashboard: React.FC = () => {
         toggleAboutModal, toggleContactModal, toggleToSModal, togglePrivacyModal, 
         toggleProfileSettingsModal, togglePusatJuraganModal, toggleDailyMissionsModal
     } = useUI();
-    const { addXp, lastVoiceConsultationResult, setLastVoiceConsultationResult } = useUserActions();
+    const { addXp } = useUserActions();
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isCreating, setIsCreating] = useState(false);
 
@@ -136,11 +93,9 @@ const ProjectDashboard: React.FC = () => {
             }
         };
 
-        // Update local state immediately for responsiveness
         setSelectedProject(updatedProject);
         setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
         
-        // Persist to DB
         const supabase = getSupabaseClient();
         await supabase
             .from('projects')
@@ -183,7 +138,6 @@ const ProjectDashboard: React.FC = () => {
                 />
                 <div className="flex flex-col lg:flex-row gap-8">
                      <div className="lg:order-2 flex-grow">
-                        {/* FIX: Pass the handleCreateNewProject function down to enable the VoiceBrandingWizard. */}
                         <AICreator project={selectedProject} onUpdateProject={handleUpdateProject} onCreateProject={handleCreateNewProject} />
                     </div>
                     <div className="lg:order-1 lg:w-72 flex-shrink-0">

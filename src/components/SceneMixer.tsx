@@ -147,7 +147,7 @@ const SceneMixer: React.FC<Props> = ({ project, onUpdateProject }) => {
     };
 
     return (
-        <CollapsibleSection title="Scene Mixer (Sutradara Gambar)" icon="🎬">
+        <CollapsibleSection title="Scene Mixer (Sutradara Gambar)" icon="🎬" initialOpen={false}>
             <div className="space-y-4">
                 <p className="text-sm text-text-body">Jadilah sutradara! Gabungkan beberapa gambar jadi satu karya baru. Upload atau pilih aset dari Lemari Brand, kasih instruksi, dan tulis prompt utama untuk menyatukannya.</p>
 
