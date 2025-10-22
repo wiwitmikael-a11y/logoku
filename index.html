@@ -1,275 +1,260 @@
 <!DOCTYPE html>
-<html lang="id">
-<head>
+<html lang="id" data-theme="dark">
+  <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>desain.fun - Studio Branding AI</title>
-    <meta name="description" content="Aplikasi Mang AI buat bantu UMKM dan bisnis kecil bikin logo, persona brand, dan konten sosmed unik dalam hitungan menit.">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>desain.fun AI UMKM Branding</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Ubah ide jadi brand juara! desain.fun adalah AI UMKM Branding: buat logo, persona brand, social media kit, dan konten sosmed dalam hitungan menit." />
+    <meta name="keywords" content="logo generator, branding AI, UMKM, bisnis kecil, desain logo, persona brand, konten sosmed, Mang AI, desain.fun, AI logo maker, generator logo, buat logo online, social media kit" />
+    <meta name="author" content="Rangga.P.H (Atharrazka Core)" />
+    <meta name="theme-color" content="#c026d3" />
+    <link rel="canonical" href="https://desain.fun" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://desain.fun" />
+    <meta property="og:title" content="desain.fun AI UMKM Branding" />
+    <meta property="og:description" content="Ubah ide jadi brand juara! desain.fun adalah AI UMKM Branding: buat logo, persona brand, social media kit, dan konten sosmed dalam hitungan menit." />
+    <meta property="og:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/desainfun-og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="desain.fun" />
+    <meta property="og:locale" content="id_ID" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://desain.fun" />
+    <meta property="twitter:title" content="desain.fun AI UMKM Branding" />
+    <meta property="twitter:description" content="Ubah ide jadi brand juara! desain.fun adalah AI UMKM Branding: buat logo, persona brand, social media kit, dan konten sosmed dalam hitungan menit." />
+    <meta property="twitter:image" content="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/desainfun-og.png" />
+    <meta name="twitter:creator" content="@rangga_p_h" />
+
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon.ico" type="image/x-icon" />
+    <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6110736010099308" crossorigin="anonymous"></script>
-
-    <style>
-      /* Reset & Base Styles */
-      :root {
-        --font-body: 'Plus Jakarta Sans', sans-serif;
-        --font-display: 'Bebas Neue', cursive;
-        --font-handwriting: 'Caveat', cursive;
-      }
-
-      body {
-        font-family: var(--font-body);
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-rendering: optimizeLegibility;
-        overscroll-behavior-y: contain;
-      }
-      
-      /* THEME PALETTE & AURORA BACKGROUND */
-      @keyframes aurora-gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-
-      [data-theme="dark"] {
-        /* Color Palette */
-        --c-primary: 204 88 255; /* Fuchsia */
-        --c-primary-hover: 220 120 255;
-        --c-accent: 0 225 220; /* Teal */
-        --c-accent-hover: 50 240 235;
-        --c-splash: 255, 30, 150; /* Hot Pink for special buttons */
-        --c-splash-hover: 255, 70, 170;
-
-        --c-bg: 10 10 12; /* Deep Space */
-        --c-surface: 28 28 32; /* Slightly Lighter Surface */
-        --c-background: 16 16 20; /* Main Content Background */
-        --c-border-main: 50 50 55;
-        --c-border-light: 70 70 75;
-        
-        --c-text-header: 245 245 255;
-        --c-text-body: 210 210 220;
-        --c-text-muted: 150 150 160;
-
-        --c-bg-inverse: 250 250 250;
-        --c-text-inverse: 10 10 12;
-
-        /* Aurora Background */
-        --aurora-bg: linear-gradient(-45deg, #18002b, #002e2c, #2e0030, #003344);
-        --aurora-opacity: 0.5;
-      }
-
-      [data-theme="light"] {
-        /* Color Palette */
-        --c-primary: 180 30 220; /* Brighter Fuchsia */
-        --c-primary-hover: 200 50 240;
-        --c-accent: 0 180 175; /* Deeper Teal */
-        --c-accent-hover: 10 200 195;
-        --c-splash: 230, 20, 130;
-        --c-splash-hover: 240, 50, 150;
-
-        --c-bg: 240 242 248; /* Light Sky */
-        --c-surface: 255 255 255;
-        --c-background: 248 250 255;
-        --c-border-main: 220 225 235;
-        --c-border-light: 200 205 215;
-        
-        --c-text-header: 10 10 20;
-        --c-text-body: 50 50 60;
-        --c-text-muted: 110 110 120;
-        
-        --c-bg-inverse: 16 16 20;
-        --c-text-inverse: 245 245 255;
-
-        /* Aurora Background */
-        --aurora-bg: linear-gradient(-45deg, #e0c3ff, #c3e7ff, #f3d4ff, #d4f3ff);
-        --aurora-opacity: 0.6;
-      }
-      
-      /* Global Styles */
-      body {
-        background-color: rgb(var(--c-bg));
-        color: rgb(var(--c-text-body));
-        transition: background-color 0.3s ease, color 0.3s ease;
-      }
-      
-      body::before {
-        content: '';
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: var(--aurora-bg);
-        background-size: 400% 400%;
-        animation: aurora-gradient 30s ease infinite;
-        z-index: -1;
-        opacity: var(--aurora-opacity);
-        transition: opacity 0.5s ease;
-      }
-
-      /* Glassmorphism Effect */
-      .glass-effect {
-        background-color: rgba(var(--c-surface), 0.5);
-        backdrop-filter: blur(16px) saturate(180%);
-        -webkit-backdrop-filter: blur(16px) saturate(180%);
-        border: 1px solid rgba(var(--c-border-main), 0.3);
-      }
-      
-      /* Component specific styles */
-      .tab-active {
-        color: rgb(var(--c-primary));
-        position: relative;
-      }
-      .tab-active::after, .tab-active-splash::after {
-        content: '';
-        position: absolute;
-        bottom: -2px; /* aligns with the parent's border */
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, rgb(var(--c-primary)), rgb(var(--c-accent)));
-        border-radius: 2px;
-      }
-      .tab-active-splash {
-        color: rgb(var(--c-splash));
-        position: relative;
-      }
-      .tab-active-splash::after {
-         background: linear-gradient(90deg, rgb(var(--c-splash)), rgb(var(--c-primary)));
-      }
-      
-      .selection-card {
-        background-color: rgb(var(--c-background));
-        border: 2px solid rgb(var(--c-border-main));
-      }
-      .selection-card:hover {
-        border-color: rgb(var(--c-primary));
-        transform: translateY(-2px);
-      }
-      .selection-card-active {
-        background-color: rgba(var(--c-primary), 0.1);
-        border: 2px solid rgb(var(--c-primary));
-        transform: translateY(-2px);
-        box-shadow: 0 0 15px rgba(var(--c-primary), 0.3);
-      }
-
-      .project-card {
-        background: linear-gradient(135deg, rgba(var(--c-surface), 0.7), rgba(var(--c-background), 0.7));
-        border: 1px solid rgba(var(--c-border-main), 0.3);
-      }
-      
-      .project-card:hover {
-        border-color: rgba(var(--c-primary), 0.5);
-        transform: translateY(-4px);
-      }
-      
-      .project-card-active, .project-card-active:hover {
-        border-color: rgba(var(--c-primary), 1);
-        transform: translateY(-4px);
-        box-shadow: 0 0 20px rgba(var(--c-primary), 0.4);
-      }
-
-      .mang-ai-callout {
-        background: linear-gradient(135deg, rgba(var(--c-primary), 0.05), rgba(var(--c-accent), 0.05));
-      }
-      
-      .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 44px;
-        height: 24px;
-        background-color: rgb(var(--c-border-main));
-        border-radius: 9999px;
-        transition: background-color 0.2s;
-        cursor: pointer;
-        appearance: none;
-      }
-
-      .toggle-switch:checked {
-        background-color: rgb(var(--c-primary));
-      }
-
-      .toggle-switch::before {
-        content: '';
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        width: 20px;
-        height: 20px;
-        background-color: white;
-        border-radius: 50%;
-        transition: transform 0.2s;
-      }
-      .toggle-switch:checked::before {
-        transform: translateX(20px);
-      }
-      
-      .dropdown-item {
-        display: block;
-        width: 100%;
-        padding: 0.5rem 1rem;
-        text-align: left;
-        font-size: 0.875rem;
-        line-height: 1.25rem;
-        color: rgb(var(--c-text-body));
-      }
-      .dropdown-item:hover {
-        background-color: rgba(var(--c-primary), 0.1);
-        color: rgb(var(--c-text-header));
-      }
-      
-      /* Animation */
-      @keyframes content-fade-in {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .animate-content-fade-in { animation: content-fade-in 0.5s ease-out forwards; }
-      
-      @keyframes breathing-ai {
-        0%, 100% { transform: scale(1); opacity: 0.8; }
-        50% { transform: scale(1.05); opacity: 1; }
-      }
-      .animate-breathing-ai { animation: breathing-ai 4s infinite ease-in-out; }
-
-      @keyframes arrow-pulse {
-        0%, 100% { filter: drop-shadow(0 0 2px rgba(var(--c-primary), 0.5)); }
-        50% { filter: drop-shadow(0 0 8px rgba(var(--c-primary), 1)); }
-      }
-      .animate-arrow-pulse { animation: arrow-pulse 3s infinite ease-in-out; }
-      
-      @keyframes mang-ai-talking-bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-5px); }
-      }
-      
-      .stat-card-gradient {
-        background: linear-gradient(135deg, rgba(var(--c-surface), 0.5), rgba(var(--c-background), 0.5));
-      }
-      
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: rgba(var(--c-border-light), 0.5); border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: rgba(var(--c-border-main), 0.8); }
-
-    </style>
-    <script type="importmap">
-    {
-      "imports": {
-        "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.76.1",
-        "react": "https://aistudiocdn.com/react@^19.2.0",
-        "react/": "https://aistudiocdn.com/react@^19.2.0/",
-        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.26.0",
-        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-        "react-to-print": "https://aistudiocdn.com/react-to-print@^3.2.0"
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      darkMode: 'class', // atau 'media'
+      theme: {
+        extend: {
+          colors: {
+            'primary': 'rgb(var(--c-primary) / <alpha-value>)',
+            'primary-hover': 'rgb(var(--c-primary-hover) / <alpha-value>)',
+            'accent': 'rgb(var(--c-accent) / <alpha-value>)',
+            'accent-hover': 'rgb(var(--c-accent-hover) / <alpha-value>)',
+            'splash': 'rgb(var(--c-splash) / <alpha-value>)',
+            'splash-hover': 'rgb(var(--c-splash-hover) / <alpha-value>)',
+            'background': 'rgb(var(--c-bg) / <alpha-value>)',
+            'surface': 'rgb(var(--c-surface) / <alpha-value>)',
+            'text-header': 'rgb(var(--c-text-header) / <alpha-value>)',
+            'text-body': 'rgb(var(--c-text-body) / <alpha-value>)',
+            'text-muted': 'rgb(var(--c-text-muted) / <alpha-value>)',
+            'border-main': 'rgb(var(--c-border) / <alpha-value>)',
+            'border-light': 'rgb(var(--c-border-light) / <alpha-value>)',
+          }
+        }
       }
     }
+  </script>
+    <!-- Publisher ID AdSense kamu sudah terpasang -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6110736010099308"
+     crossorigin="anonymous"></script>
+    <style>
+      /* --- THEME DEFINITIONS (GLASSMORPHISM) --- */
+      [data-theme="dark"] {
+        --c-primary: 234 88 12;         /* orange-600 (Safety Orange) */
+        --c-primary-hover: 249 115 22;    /* orange-500 */
+        --c-accent: 250 204 21;        /* yellow-400 (Caution Yellow) */
+        --c-accent-hover: 252 211 77;   /* yellow-300 */
+        --c-splash: 226 232 240;        /* slate-200 (Concrete White) */
+        --c-splash-hover: 241 245 249;  /* slate-100 */
+        --c-text-header: 241 245 249;  /* slate-100 */
+        --c-text-body: 190 190 200;    /* Lighter zinc-400 */
+        --c-text-muted: 130 130 142;    /* Lighter zinc-500 */
+        --c-bg: 20 20 22;              /* Near-black */
+        --c-surface: 48 50 62 / 0.6;    /* Translucent grey for glass effect */
+        --c-border: 255 255 255 / 0.1;  /* Subtle white border */
+        --c-border-light: 255 255 255 / 0.2; /* Brighter subtle border */
+        --c-bg-inverse: 241 245 249;    /* slate-100 */
+        --c-text-inverse: 13 13 15;    /* near-black */
+      }
+      [data-theme="light"] {
+        --c-primary: 234 88 12;         /* orange-600 */
+        --c-primary-hover: 249 115 22;    /* orange-500 */
+        --c-accent: 234 179 8;         /* yellow-500 */
+        --c-accent-hover: 250 204 21;   /* yellow-400 */
+        --c-splash: 15 23 42;          /* slate-900 */
+        --c-splash-hover: 51 65 85;     /* slate-700 */
+        --c-text-header: 15 23 42;     /* slate-900 */
+        --c-text-body: 51 65 85;       /* slate-700 */
+        --c-text-muted: 100 116 139;   /* slate-500 */
+        --c-bg: 226 232 240;           /* slate-200 (Cement Wall) */
+        --c-surface: 255 255 255 / 0.6; /* Translucent white for glass effect */
+        --c-border: 0 0 0 / 0.1;       /* Subtle black border */
+        --c-border-light: 0 0 0 / 0.15; /* Brighter subtle border */
+        --c-bg-inverse: 20 20 22;      /* near-black */
+        --c-text-inverse: 241 245 249;   /* slate-100 */
+      }
+      :root {
+        --font-display: 'Bebas Neue', cursive;
+      }
+      
+      /* --- GLOBAL STYLES --- */
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: rgb(var(--c-bg));
+        color: rgb(var(--c-text-body));
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      [data-theme="dark"] body {
+         background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"%3E%3Cg fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.04"%3E%3Cpath d="M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+      }
+      [data-theme="light"] body {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%239ca3af' fill-opacity='0.08'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+      
+      section[id] { scroll-margin-top: 120px; }
+      h2, h3, h4 { font-family: 'Bebas Neue', 'Plus Jakarta Sans', sans-serif; letter-spacing: 0.05em; }
+      .selectable-text { user-select: text; }
+      
+      /* GLASSMORPHISM EFFECT */
+      .glass-effect {
+        background-color: rgb(var(--c-surface));
+        border: 1px solid rgb(var(--c-border));
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+      [data-theme="light"] ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+      [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      
+      /* --- ANIMATIONS & EFFECTS --- */
+      @keyframes content-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-content-fade-in { animation: content-fade-in 0.5s ease-out forwards; }
+      
+      @keyframes item-appear { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+      .animate-item-appear { animation: item-appear 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+      
+      @keyframes gallery-card-appear { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-gallery-card-appear { animation: gallery-card-appear 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
+
+      @keyframes mang-ai-breathing { 0%, 100% { transform: scale(1) translateY(0); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); } 50% { transform: scale(1.04) translateY(-2px); filter: drop-shadow(0 8px 10px rgba(0,0,0,0.4)); } }
+      .animate-breathing-ai { animation: mang-ai-breathing 2.5s ease-in-out infinite; transform-origin: bottom center; }
+
+      @keyframes arrow-pulse {
+        0%, 100% { filter: drop-shadow(0 0 2px rgba(var(--c-primary), 0.7)); }
+        50% { filter: drop-shadow(0 0 8px rgba(var(--c-primary), 1)); }
+      }
+      .animate-arrow-pulse {
+          animation: arrow-pulse 2s infinite ease-in-out;
+      }
+
+      .xp-gain-animation { position: absolute; top: 50%; right: 50%; color: #f59e0b; font-weight: bold; font-size: 1.5rem; font-family: var(--font-display); animation: xp-gain-float-up 1.5s ease-out forwards; pointer-events: none; text-shadow: 0 0 5px rgba(0,0,0,0.7); z-index: 50; }
+      @keyframes xp-gain-float-up { 0% { transform: translate(50%, -50%) scale(0.5); opacity: 1; } 100% { transform: translate(50%, -200%) scale(1.2); opacity: 0; } }
+      
+      @keyframes mang-ai-stomp { 0%, 100% { transform: translateY(0) scale(1); opacity: 1; } 20% { transform: translateY(0) scale(1.2, 0.8); } 50% { transform: translateY(-30px) scale(0.9, 1.1) rotate(-5deg); } 80% { transform: translateY(0) scale(1); } }
+      .animate-stomp-ai { animation: mang-ai-stomp 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite; transform-origin: bottom center; image-rendering: pixelated; }
+
+      @keyframes mang-ai-tripped { 0% { transform: translateY(0) rotate(0deg); } 20% { transform: translateY(-20px) rotate(-15deg); } 40% { transform: translateY(0) rotate(15deg) scale(1.1, 0.9); } 50% { transform: translateY(-10px) rotate(-10deg); } 60% { transform: translateY(0) rotate(5deg); } 70% { transform: translateY(0) rotate(0deg) scale(0.95, 1.05); } 80%, 100% { transform: translateY(0) rotate(0deg); } }
+      .animate-tripped-ai { animation: mang-ai-tripped 1.5s ease-in-out infinite; transform-origin: bottom center; }
+      
+      @keyframes bouncing-ai { 0%, 100% { transform: translateY(0) rotate(5deg); } 50% { transform: translateY(-15px) rotate(-5deg); } }
+      .animate-bouncing-ai { animation: bouncing-ai 1.2s cubic-bezier(0.8, 0, 0.2, 1) infinite; transform-origin: bottom center; image-rendering: pixelated; }
+
+      @keyframes button-ready-glow {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(var(--c-bg-inverse), 0.4), 0 0 0 0 rgba(var(--c-bg-inverse), 0.1); }
+        50% { box-shadow: 0 0 12px 8px rgba(var(--c-bg-inverse), 0), 0 0 0 4px rgba(var(--c-bg-inverse), 0.2); }
+      }
+      .animate-button-ready {
+          animation: button-ready-glow 2s infinite ease-in-out;
+      }
+      
+      img { pointer-events: none; }
+      
+      /* --- UI/UX STYLES --- */
+      .blinking-cursor { animation: blink 1s step-end infinite; }
+      @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
+
+      .tab-active-splash {
+        position: relative;
+        color: rgb(var(--c-primary)) !important;
+        border-bottom: 3px solid rgb(var(--c-primary)) !important;
+      }
+      
+      .mang-ai-callout {
+        background: linear-gradient(135deg, rgba(var(--c-surface), 0.5) 0%, rgba(var(--c-primary), 0.1) 100%);
+        border-left: 4px solid rgb(var(--c-primary));
+      }
+
+      .selection-card {
+        border-width: 1px;
+        border-color: rgb(var(--c-border));
+        background-color: transparent;
+        transition: all 0.2s ease-in-out;
+      }
+      .selection-card:hover {
+        border-color: rgb(var(--c-primary-hover));
+        transform: translateY(-2px);
+        background-color: rgba(var(--c-primary), 0.1);
+      }
+      .selection-card-active {
+        border-color: rgb(var(--c-primary)) !important;
+        background-color: rgba(var(--c-primary), 0.2) !important;
+        transform: scale(1.03);
+        box-shadow: 0 0 15px rgba(var(--c-primary), 0.3);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.44.4",
+    "jszip": "https://esm.sh/jszip@3.10.1",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1",
+    "react-to-print": "https://aistudiocdn.com/react-to-print@^3.2.0"
+  }
+}
+</script>
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    { "@context": "https://schema.org", "@type": "SoftwareApplication", "name": "desain.fun", "applicationCategory": "BusinessApplication", "description": "Aplikasi branding AI untuk UMKM dan bisnis kecil. Hasilkan logo, persona brand, dan konten media sosial unik dalam hitungan menit.", "author": { "@type": "Person", "name": "Rangga.P.H" }, "offers": { "@type": "Offer", "price": "0", "priceCurrency": "IDR" } }
     </script>
 </head>
-<body>
+  <body>
     <div id="root"></div>
+    <noscript>
+      <div style="font-family: sans-serif; text-align: center; padding: 2rem; color: rgb(var(--c-text-body)); background-color: rgb(var(--c-bg));">
+        <h1 style="color: rgb(var(--c-text-header));">desain.fun AI UMKM Branding</h1>
+        <p>Aplikasi ini membutuhkan JavaScript untuk berjalan. Harap aktifkan JavaScript di browser Anda.</p>
+        <br>
+        <p><strong>desain.fun</strong> adalah studio branding berbasis AI yang dirancang khusus untuk membantu UMKM dan bisnis kecil di Indonesia. Dengan platform kami, Anda dapat dengan mudah membuat logo profesional, menentukan persona brand yang kuat, dan menghasilkan paket konten media sosial yang siap pakai—semuanya dalam hitungan menit. Kami menyediakan alat-alat yang Anda butuhkan untuk mengubah ide menjadi brand yang juara dan siap bersaing di pasar digital.</p>
+      </div>
+    </noscript>
+    <script> document.addEventListener('contextmenu', event => event.preventDefault()); </script>
     <script type="module" src="/src/main.tsx"></script>
-</body>
+  </body>
 </html>
