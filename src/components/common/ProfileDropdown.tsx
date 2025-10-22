@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getSupabaseClient } from '../../services/supabaseClient';
 import ProfileSettingsModal from './ProfileSettingsModal';
-// FIX: Corrected imports for components
 import DailyMissions from '../gamification/DailyMissions';
 import PusatJuraganModal from '../community/PusatJuraganModal';
 

@@ -2,40 +2,57 @@
 
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import Tooltip from '../common/Tooltip';
+import HeaderStats from '../HeaderStats';
+import ProfileDropdown from '../common/ProfileDropdown';
+import ThemeToggle from '../common/ThemeToggle';
+import { useUI } from '../../contexts/UIContext';
 
-const HeaderStats: React.FC = () => {
-  const { profile } = useAuth();
+type SaveStatus = 'IDLE' | 'DIRTY' | 'SAVING' | 'SAVED';
 
-  if (!profile) {
-    return null;
-  }
+interface HeaderProps {
+    saveStatus: SaveStatus;
+}
 
-  // Calculate XP progress for the progress bar
-  const xpForNextLevel = 100 * Math.pow(profile.level, 1.5); // Example formula, should match backend
-  const xpProgress = (profile.xp / xpForNextLevel) * 100;
+const Header: React.FC<HeaderProps> = ({ saveStatus }) => {
+    const { profile } = useAuth();
+    const { theme, toggleTheme } = useUI();
+    
+    const getSaveStatusMessage = () => {
+        switch (saveStatus) {
+            case 'DIRTY': return 'Mengetik...';
+            case 'SAVING': return 'Menyimpan...';
+            case 'SAVED': return 'Tersimpan ✓';
+            default: return '';
+        }
+    };
 
-  return (
-    <div className="flex items-center gap-4 text-sm">
-      <Tooltip text={`${profile.credits} Token`}>
-        <div className="flex items-center gap-2 bg-surface px-3 py-1.5 rounded-full">
-          <span className="text-lg">🪙</span>
-          <span className="font-bold text-text-header">{profile.credits}</span>
-        </div>
-      </Tooltip>
-      
-      <div className="flex items-center gap-2 bg-surface px-3 py-1.5 rounded-full">
-        <Tooltip text={`Level ${profile.level}`}>
-            <span className="font-bold text-primary">LVL {profile.level}</span>
-        </Tooltip>
-        <div className="w-24 bg-background rounded-full h-2.5 overflow-hidden">
-            <Tooltip text={`${profile.xp.toFixed(0)} / ${xpForNextLevel.toFixed(0)} XP`}>
-                 <div className="bg-accent h-2.5 rounded-full" style={{ width: `${xpProgress}%` }}></div>
-            </Tooltip>
-        </div>
-      </div>
-    </div>
-  );
+    if (!profile) return null;
+
+    return (
+        <header data-onboarding-step="1" className="bg-surface/80 backdrop-blur-md sticky top-0 z-30 border-b border-border-main">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-20">
+                    <div className="flex items-center gap-2">
+                        <h1 style={{fontFamily: 'var(--font-display)'}} className="text-3xl font-extrabold tracking-wider text-primary">
+                             des<span className="text-accent">ai</span>n<span className="text-text-header">.fun</span>
+                        </h1>
+                         <div className="text-xs text-text-muted h-5 flex items-center transition-opacity duration-300">
+                            {getSaveStatusMessage()}
+                        </div>
+                    </div>
+
+                    <div className="flex-1 max-w-md mx-4 hidden md:block">
+                       <HeaderStats />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                        <ProfileDropdown />
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
 };
 
-export default HeaderStats;
+export default Header;

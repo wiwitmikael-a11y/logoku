@@ -1,51 +1,71 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React from 'react';
-import { getSupabaseClient } from '../services/supabaseClient';
-import { playSound, unlockAudio } from '../services/soundService';
 import Button from './common/Button';
-
-const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+import { getSupabaseClient } from '../services/supabaseClient';
+import { useUI } from '../contexts/UIContext';
 
 const LoginScreen: React.FC = () => {
-  const handleLogin = async () => {
-    await unlockAudio();
-    playSound('start');
-    const supabase = getSupabaseClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
+  const { toggleToSModal, togglePrivacyModal } = useUI();
+
+  const handleGoogleLogin = () => {
+    try {
+      const supabase = getSupabaseClient();
+      supabase.auth.signInWithOAuth({ 
+          provider: 'google', 
+          options: { redirectTo: window.location.origin }
+      });
+    } catch (error) {
+        console.error("Supabase client could not be initialized:", error);
+        alert(`Gagal memulai proses login: ${(error as Error).message}`);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-background text-text-body transition-colors duration-300 overflow-hidden">
-        <div className="max-w-xl w-full relative z-10">
-            <img 
-                src={`${GITHUB_ASSETS_URL}Mang_AI.png`} 
-                alt="Mang AI Mascot" 
-                className="w-40 h-40 mx-auto mb-4 animate-breathing-ai"
-                style={{ imageRendering: 'pixelated' }}
-            />
-            <h1 className="text-5xl font-bold text-text-header mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-                <span className="text-primary">des<span className="text-accent">ai</span>n</span>.fun
-            </h1>
-            <p className="text-text-body mb-8 max-w-lg mx-auto">
-              Studio branding AI untuk UMKM juara. Ubah ide jadi brand siap tanding dalam hitungan menit.
-            </p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-background text-text-body transition-colors duration-300 overflow-hidden animate-content-fade-in">
+      <div className="max-w-xl w-full relative">
+        <div className="relative z-10">
+            <div className="inline-flex flex-col items-center mb-6">
+              <h1 style={{fontFamily: 'var(--font-display)'}} className="text-6xl md:text-7xl font-extrabold tracking-wider text-primary mb-2">
+                des<span className="text-accent">ai</span>n<span className="text-text-header">.fun</span>
+              </h1>
+              <p className="font-semibold text-text-muted mt-2">Ubah Ide Jadi Brand Juara dalam Hitungan Menit</p>
+            </div>
             
-            <Button
-              onClick={handleLogin}
-              size="large"
-              variant="splash"
-              className="w-full max-w-xs mx-auto"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
-              Masuk dengan Google
-            </Button>
+            <div className="flex flex-col items-center gap-4">
+              <Button 
+                onClick={handleGoogleLogin} 
+                title="Masuk dengan akun Google"
+                size="large"
+                className="!bg-[rgb(var(--c-bg-inverse))] !text-[rgb(var(--c-text-inverse))] border-2 border-border-main hover:!bg-border-light shadow-lg animate-button-ready"
+              >
+                <svg className="w-5 h-5" aria-hidden="true" focusable="false" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                  <path fill="none" d="M0 0h48v48H0z"></path>
+                </svg>
+                Masuk dengan Google
+              </Button>
+            </div>
+            
+            <p className="text-xs text-text-muted mt-4">
+              Dengan masuk, lo setuju sama{' '}
+              <button 
+                onClick={() => toggleToSModal(true)} 
+                className="text-primary hover:underline focus:outline-none"
+              >
+                Ketentuan Layanan
+              </button> & <button 
+                onClick={() => togglePrivacyModal(true)} 
+                className="text-primary hover:underline focus:outline-none"
+              >
+                Kebijakan Privasi
+              </button>.
+            </p>
         </div>
+      </div>
     </div>
   );
 };
