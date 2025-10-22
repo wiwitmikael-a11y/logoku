@@ -49,7 +49,7 @@ const MoodboardGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
             
             const [textData, images] = await Promise.all([
                 generateMoodboardText(keywords),
-                generateMoodboardImages(keywords)
+                generateMoodboardImages(keywords, project.project_data.selectedPersona)
             ]);
             
             const fullResult = { ...textData, images };

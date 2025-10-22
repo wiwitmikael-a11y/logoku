@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect } from 'react';
-import { generatePattern, applyPatternToMockup, enhancePromptWithPersonaStyle } from '../services/geminiService';
+import { generatePattern, applyPatternToMockup } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
@@ -51,13 +51,12 @@ const PatternGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
         if (!prompt.trim()) { setError('Deskripsi pola tidak boleh kosong!'); return; }
         if ((profile?.credits ?? 0) < PATTERN_COST) { setShowOutOfCreditsModal(true); return; }
 
-        const fullPrompt = `seamless tileable pattern, ${style}, ${prompt}, vector art, simple`;
-        const finalPrompt = enhancePromptWithPersonaStyle(fullPrompt, project.project_data.selectedPersona || null);
+        const fullPrompt = `${style}, ${prompt}`;
 
         setIsLoading(true); setError(null); setResult(null); setMockupPreviews({}); playSound('start');
         try {
             if (!(await deductCredits(PATTERN_COST))) throw new Error("Gagal mengurangi token.");
-            const [patternUrl] = await generatePattern(finalPrompt);
+            const [patternUrl] = await generatePattern(fullPrompt, project.project_data.selectedPersona);
             setResult(patternUrl);
             await handleSaveToProject(patternUrl, prompt);
             await addXp(XP_REWARD);

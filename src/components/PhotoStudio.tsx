@@ -74,7 +74,7 @@ const PhotoStudio: React.FC<Props> = ({ project, onUpdateProject, initialPrompt 
             
             const finalPrompt = `Place the product from the image into a new photorealistic scene. The scene is described as: "${prompt}". Use "${lighting}" lighting, from a "${angle}" camera angle, on a "${background}". Keep the original product shape and details.`;
             
-            const resultUrl = await editProductImage(image, finalPrompt);
+            const resultUrl = await editProductImage(image, finalPrompt, project.project_data.selectedPersona);
             setResult(resultUrl);
             await handleSaveToProject(resultUrl, prompt);
             await addXp(XP_REWARD);

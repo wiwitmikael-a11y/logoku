@@ -40,7 +40,7 @@ const ProjectSummary: React.FC<Props> = ({ project, onUpdateProject }) => {
     <div className="space-y-6">
       <div className="p-4 rounded-lg flex items-center justify-between gap-4 mang-ai-callout border border-border-main">
         <div>
-          <h2 className="text-3xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>{project_name}</h2>
+          <h2 className="text-3xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>{project_name || 'Proyek Tanpa Nama'}</h2>
           <p className="text-sm text-text-muted">Ringkasan Proyek Branding</p>
         </div>
         <div className="flex items-center gap-4">

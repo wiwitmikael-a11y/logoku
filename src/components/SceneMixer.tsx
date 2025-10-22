@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect } from 'react';
-import { generateSceneFromImages, enhancePromptWithPersonaStyle } from '../services/geminiService';
+import { generateSceneFromImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
@@ -96,10 +96,8 @@ const SceneMixer: React.FC<Props> = ({ project, onUpdateProject }) => {
                     combinedPrompt += `Untuk gambar ${i + 1}, fokus pada: "${img.instruction.trim()}".\n`;
                 }
             });
-            
-            const finalPrompt = enhancePromptWithPersonaStyle(combinedPrompt, project.project_data.selectedPersona || null);
 
-            const resultUrl = await generateSceneFromImages(validImages.map(i => i.src), finalPrompt);
+            const resultUrl = await generateSceneFromImages(validImages.map(i => i.src), combinedPrompt, project.project_data.selectedPersona);
             setResult(resultUrl);
             await handleSaveToProject(resultUrl, mainPrompt);
             await addXp(XP_REWARD);

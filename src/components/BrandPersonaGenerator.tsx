@@ -35,7 +35,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject, onCo
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setInputs(project.project_data.brandInputs || { businessName: project.project_data.project_name, businessDetail: '', industry: '', targetAudience: '', valueProposition: '', competitorAnalysis: '' });
+    setInputs(project.project_data.brandInputs || { businessName: project.project_data.project_name || '', businessDetail: '', industry: '', targetAudience: '', valueProposition: '', competitorAnalysis: '' });
   }, [project]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

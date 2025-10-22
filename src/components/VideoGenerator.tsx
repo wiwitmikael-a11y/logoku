@@ -13,7 +13,7 @@ import ErrorMessage from './common/ErrorMessage';
 import { Operation, GenerateVideosResponse } from '@google/genai';
 import CollapsibleSection from './common/CollapsibleSection';
 
-const VIDEO_GEN_COST = 10;
+const VIDEO_GEN_COST = 20; // Strategic price increase to cover high modal cost
 const XP_REWARD = 100;
 
 interface Props {

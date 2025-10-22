@@ -22,7 +22,7 @@ const BrandGuidelineDocument: React.FC<Props> = ({ project }) => {
         <h1 className="text-5xl font-bold tracking-wider" style={{ fontFamily: 'Bebas Neue' }}>
           BRAND GUIDELINE
         </h1>
-        <h2 className="text-3xl mt-4">{project_name}</h2>
+        <h2 className="text-3xl mt-4">{project_name || 'Proyek Tanpa Nama'}</h2>
         {selectedLogoUrl && (
           <img src={selectedLogoUrl} alt="Logo" className="max-w-xs max-h-xs mt-12" />
         )}

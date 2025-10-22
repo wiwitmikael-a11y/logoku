@@ -58,17 +58,37 @@ const getVertexAiClient = (): GoogleGenAI => {
 export const getApiKeyError = (): string | null => geminiApiKeyError || vertexApiKeyError;
 
 // --- UTILITY ---
-export const enhancePromptWithPersonaStyle = (prompt: string, persona: BrandPersona | null): string => {
+/**
+ * Injects rich contextual details from the brand persona into a base prompt.
+ * This function is key to maintaining high-quality output with cost-effective models.
+ * @param prompt The base prompt for the AI.
+ * @param persona The selected brand persona containing style guides.
+ * @returns A supercharged, more detailed prompt.
+ */
+export const superchargePromptWithPersona = (prompt: string, persona: BrandPersona | null): string => {
   if (!persona) return prompt;
+  
   const colorNames = persona.palet_warna.map(c => c.nama).join(', ');
-  return `${prompt}. Gunakan gaya visual yang ${persona.visual_style} dengan palet warna dominan ${colorNames}.`;
+  const personaContext = `
+---
+Panduan Gaya Wajib:
+- Persona Brand: "${persona.nama_persona}"
+- Gaya Visual: "${persona.visual_style}"
+- Palet Warna Dominan: "${colorNames}"
+- Nuansa/Mood: Ciptakan nuansa yang mencerminkan deskripsi persona: "${persona.deskripsi.substring(0, 100)}..."
+Sesuaikan hasil akhir agar selaras dengan panduan gaya ini.
+---
+  `;
+  
+  return `${prompt}. ${personaContext}`;
 };
 
-// --- CORE BRANDING WORKFLOW (TETAP MENGGUNAKAN KLIEN STANDAR) ---
+
+// --- CORE BRANDING WORKFLOW ---
 
 export const generateBrandPersonas = async (inputs: BrandInputs): Promise<BrandPersona[]> => {
     try {
-        const ai = getAiClient(); // <- Klien Standar
+        const ai = getAiClient(); // <- Tetap Pro untuk kualitas nalar terbaik
         const prompt = `Buat 3 persona brand unik untuk bisnis dengan detail berikut:
 - Nama Bisnis: ${inputs.businessName}
 - Detail: ${inputs.businessDetail}
@@ -125,7 +145,7 @@ Untuk setiap persona, berikan:
 
 export const generateSlogans = async (inputs: BrandInputs): Promise<string[]> => {
     try {
-        const ai = getAiClient(); // <- Klien Standar
+        const ai = getAiClient(); // <- Flash sudah cukup
         const prompt = `Buatkan 5 opsi slogan yang singkat, menarik, dan menjual untuk brand:
 - Nama: ${inputs.businessName}
 - Detail: ${inputs.businessDetail}
@@ -156,10 +176,9 @@ export const generateSlogans = async (inputs: BrandInputs): Promise<string[]> =>
     }
 };
 
-// ... (semua fungsi lain seperti generateLogoPrompt, generateLogoOptions, editLogo, dll. tetap menggunakan getAiClient() standar)
 export const generateLogoPrompt = async (slogan: string, persona: BrandPersona): Promise<string> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Flash sudah cukup
         const prompt = `Buat sebuah prompt deskriptif dalam Bahasa Inggris untuk AI image generator (seperti Imagen) untuk membuat logo. Prompt harus detail, fokus pada objek visual, dan mencerminkan esensi dari brand berikut:
 - Slogan: "${slogan}"
 - Persona Brand: ${persona.nama_persona}
@@ -177,21 +196,34 @@ Prompt yang dihasilkan harus berupa satu paragraf detail, tanpa judul, dan fokus
     }
 };
 
-export const generateLogoOptions = async (prompt: string, style: string = 'Vector', aspectRatio: '1:1' | '4:3' | '16:9' = '1:1'): Promise<string[]> => {
+export const generateLogoOptions = async (prompt: string, style: string = 'Vector'): Promise<string[]> => {
     try {
         const ai = getAiClient();
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: `logo, ${prompt}, ${style}, simple, minimalist, clean background`,
-            config: { numberOfImages: 4, aspectRatio }
-        });
+        const fullPrompt = `logo, ${prompt}, ${style} style, simple, minimalist, clean background`;
+
+        // REBALANCING: Generate 4 images in parallel using the more cost-effective model
+        const imagePromises = Array(4).fill(0).map(() => 
+            ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: { parts: [{ text: fullPrompt }] },
+                config: { responseModalities: [Modality.IMAGE] }
+            })
+        );
+        const responses = await Promise.all(imagePromises);
         
+        const base64DataArray = responses.map(response => 
+            response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
+        ).filter((data): data is string => !!data);
+
+        if (base64DataArray.length < 4) console.warn("Could not generate all 4 logo options.");
+        if (base64DataArray.length === 0) throw new Error("Gagal membuat opsi logo, tidak ada gambar yang dihasilkan oleh AI.");
+
         const supabase = getSupabaseClient();
         const userId = (await supabase.auth.getSession()).data.session?.user.id;
         if (!userId) throw new Error("User not logged in.");
 
         return Promise.all(
-            response.generatedImages.map(img => uploadBase64Image(`data:image/png;base64,${img.image.imageBytes}`, userId))
+            base64DataArray.map(base64Data => uploadBase64Image(`data:image/png;base64,${base64Data}`, userId))
         );
     } catch (error) {
         console.error("Gemini API Error in generateLogoOptions:", error);
@@ -201,7 +233,7 @@ export const generateLogoOptions = async (prompt: string, style: string = 'Vecto
 
 export const editLogo = async (imageUrl: string, prompt: string): Promise<string> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Flash Image adalah pilihan tepat
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: {
@@ -229,21 +261,23 @@ export const editLogo = async (imageUrl: string, prompt: string): Promise<string
 
 export const generateSocialMediaKitAssets = async (projectData: ProjectData): Promise<{ profilePictureUrl: string, bannerUrl: string }> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Flash Image adalah pilihan tepat
         const { selectedLogoUrl, selectedPersona } = projectData;
         if (!selectedLogoUrl || !selectedPersona) throw new Error("Logo atau persona belum dipilih.");
 
-        const basePrompt = `Gunakan logo yang diberikan sebagai dasar. Buat aset media sosial yang serasi dengan gaya visual "${selectedPersona.visual_style}" dan palet warna "${selectedPersona.palet_warna.map(c => c.nama).join(', ')}".`;
+        const basePrompt = `Gunakan logo yang diberikan sebagai dasar. Buat aset media sosial yang serasi.`;
+        const superchargedPPPrompt = superchargePromptWithPersona(`${basePrompt} Buat sebuah foto profil (avatar) yang menarik.`, selectedPersona);
+        const superchargedBannerPrompt = superchargePromptWithPersona(`${basePrompt} Buat sebuah banner/header untuk profil media sosial (e.g., Twitter, Facebook).`, selectedPersona);
         
         const [ppResponse, bannerResponse] = await Promise.all([
             ai.models.generateContent({
                 model: 'gemini-2.5-flash-image',
-                contents: { parts: [{ inlineData: { mimeType: 'image/png', data: selectedLogoUrl.split(',')[1] } }, { text: `${basePrompt} Buat sebuah foto profil (avatar) yang menarik.` }] },
+                contents: { parts: [{ inlineData: { mimeType: 'image/png', data: selectedLogoUrl.split(',')[1] } }, { text: superchargedPPPrompt }] },
                 config: { responseModalities: [Modality.IMAGE] },
             }),
             ai.models.generateContent({
                 model: 'gemini-2.5-flash-image',
-                contents: { parts: [{ inlineData: { mimeType: 'image/png', data: selectedLogoUrl.split(',')[1] } }, { text: `${basePrompt} Buat sebuah banner/header untuk profil media sosial (e.g., Twitter, Facebook).` }] },
+                contents: { parts: [{ inlineData: { mimeType: 'image/png', data: selectedLogoUrl.split(',')[1] } }, { text: superchargedBannerPrompt }] },
                 config: { responseModalities: [Modality.IMAGE] },
             })
         ]);
@@ -271,7 +305,7 @@ export const generateSocialMediaKitAssets = async (projectData: ProjectData): Pr
 
 export const generateSocialProfiles = async (inputs: BrandInputs, persona: BrandPersona): Promise<{ instagramBio: string, tiktokBio: string, marketplaceDescription: string }> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Flash sudah cukup
         const prompt = `Buat teks profil untuk brand "${inputs.businessName}".
 - Gaya Bicara: ${persona.gaya_bicara}
 - Keunggulan: ${inputs.valueProposition}
@@ -292,7 +326,7 @@ Hasil harus dalam format JSON dengan properti: "instagramBio", "tiktokBio", dan 
 
 export const generateContentCalendar = async (inputs: BrandInputs, persona: BrandPersona): Promise<{ plan: any[], sources: any[] }> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Tetap Pro untuk perencanaan berkualitas
         const prompt = `Buat rencana konten media sosial untuk 7 hari ke depan untuk brand "${inputs.businessName}" yang bergerak di bidang ${inputs.industry} dengan target audiens ${inputs.targetAudience}. Gunakan gaya bicara persona "${persona.nama_persona}". Untuk setiap hari, berikan tipe konten, ide spesifik, draf caption singkat, dan 3-5 rekomendasi hashtag relevan. Cari ide-ide yang sedang tren.`;
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-pro',
@@ -330,21 +364,35 @@ export const generateContentCalendar = async (inputs: BrandInputs, persona: Bran
 
 // --- SOTOSHOP TOOLS ---
 
-export const generateMascot = async (prompt: string, numVariations: 2 | 4 = 2): Promise<string[]> => {
+export const generateMascot = async (prompt: string, numVariations: 2 | 4 = 2, persona: BrandPersona | null): Promise<string[]> => {
     try {
         const ai = getAiClient();
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: `cute character mascot, ${prompt}, full body, simple background, vibrant colors, character sheet style`,
-            config: { numberOfImages: numVariations }
-        });
+        const basePrompt = `cute character mascot, ${prompt}, full body, simple background, vibrant colors, character sheet style`;
+        const fullPrompt = superchargePromptWithPersona(basePrompt, persona);
+
+        // REBALANCING: Use cost-effective model
+        const imagePromises = Array(numVariations).fill(0).map(() =>
+             ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: { parts: [{ text: fullPrompt }] },
+                config: { responseModalities: [Modality.IMAGE] }
+            })
+        );
+        const responses = await Promise.all(imagePromises);
+
+        const base64DataArray = responses.map(response => 
+            response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
+        ).filter((data): data is string => !!data);
+
+        if (base64DataArray.length < numVariations) console.warn(`Could not generate all ${numVariations} mascot variations.`);
+        if (base64DataArray.length === 0) throw new Error("Gagal membuat maskot, tidak ada gambar yang dihasilkan.");
 
         const supabase = getSupabaseClient();
         const userId = (await supabase.auth.getSession()).data.session?.user.id;
         if (!userId) throw new Error("User not logged in.");
 
         return Promise.all(
-            response.generatedImages.map(img => uploadBase64Image(`data:image/png;base64,${img.image.imageBytes}`, userId))
+            base64DataArray.map(base64Data => uploadBase64Image(`data:image/png;base64,${base64Data}`, userId))
         );
     } catch (error) {
         console.error("Gemini API Error in generateMascot:", error);
@@ -354,7 +402,7 @@ export const generateMascot = async (prompt: string, numVariations: 2 | 4 = 2): 
 
 export const generateMoodboardText = async (keywords: string): Promise<{ description: string; palette: string[] }> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Flash sudah cukup
         const prompt = `Based on the keywords "${keywords}", create a moodboard concept. Provide:
 1. A short, evocative description of the mood in Indonesian.
 2. A palette of 5 hex color codes that fit the mood.`;
@@ -383,21 +431,35 @@ export const generateMoodboardText = async (keywords: string): Promise<{ descrip
     }
 };
 
-export const generateMoodboardImages = async (keywords: string): Promise<string[]> => {
+export const generateMoodboardImages = async (keywords: string, persona: BrandPersona | null): Promise<string[]> => {
     try {
         const ai = getAiClient();
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: `photorealistic moodboard, inspiration images for a brand with the vibe: ${keywords}. 4 separate images.`,
-            config: { numberOfImages: 4, aspectRatio: '1:1' }
-        });
+        const basePrompt = `photorealistic moodboard inspiration image for a brand with the vibe: ${keywords}.`;
+        const fullPrompt = superchargePromptWithPersona(basePrompt, persona);
+        
+        // REBALANCING: Use cost-effective model, generate 4 images in parallel
+        const imagePromises = Array(4).fill(0).map(() =>
+            ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: { parts: [{ text: fullPrompt }] },
+                config: { responseModalities: [Modality.IMAGE] }
+            })
+        );
+        const responses = await Promise.all(imagePromises);
+        
+        const base64DataArray = responses.map(response => 
+            response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
+        ).filter((data): data is string => !!data);
+        
+        if (base64DataArray.length < 4) console.warn("Could not generate all 4 moodboard images.");
+        if (base64DataArray.length === 0) throw new Error("Gagal membuat gambar moodboard, tidak ada gambar yang dihasilkan.");
 
         const supabase = getSupabaseClient();
         const userId = (await supabase.auth.getSession()).data.session?.user.id;
         if (!userId) throw new Error("User not logged in.");
 
         return Promise.all(
-            response.generatedImages.map(img => uploadBase64Image(`data:image/png;base64,${img.image.imageBytes}`, userId))
+            base64DataArray.map(base64Data => uploadBase64Image(`data:image/png;base64,${base64Data}`, userId))
         );
     } catch (error) {
         console.error("Gemini API Error in generateMoodboardImages:", error);
@@ -405,22 +467,27 @@ export const generateMoodboardImages = async (keywords: string): Promise<string[
     }
 };
 
-export const generatePattern = async (prompt: string): Promise<string[]> => {
+export const generatePattern = async (prompt: string, persona: BrandPersona | null): Promise<string[]> => {
     try {
         const ai = getAiClient();
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: `seamless tileable pattern, ${prompt}, vector art, simple`,
-            config: { numberOfImages: 1, aspectRatio: '1:1' }
+        const basePrompt = `seamless tileable pattern, ${prompt}, vector art, simple`;
+        const fullPrompt = superchargePromptWithPersona(basePrompt, persona);
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: { parts: [{ text: fullPrompt }] },
+            config: { responseModalities: [Modality.IMAGE] }
         });
+
+        const base64Data = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (!base64Data) throw new Error("Gagal membuat motif/pola, tidak ada gambar yang dihasilkan.");
 
         const supabase = getSupabaseClient();
         const userId = (await supabase.auth.getSession()).data.session?.user.id;
         if (!userId) throw new Error("User not logged in.");
 
-        return Promise.all(
-            response.generatedImages.map(img => uploadBase64Image(`data:image/png;base64,${img.image.imageBytes}`, userId))
-        );
+        const url = await uploadBase64Image(`data:image/png;base64,${base64Data}`, userId);
+        return [url];
     } catch (error) {
         console.error("Gemini API Error in generatePattern:", error);
         throw new Error(`Gagal membuat motif/pola. ${(error as Error).message}`);
@@ -429,7 +496,7 @@ export const generatePattern = async (prompt: string): Promise<string[]> => {
 
 export const applyPatternToMockup = async (patternUrl: string, mockupUrl: string): Promise<string> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Flash Image adalah pilihan tepat
         const [patternBase64, mockupBase64] = await Promise.all([
             fetchImageAsBase64(patternUrl),
             fetchImageAsBase64(mockupUrl)
@@ -461,9 +528,9 @@ export const applyPatternToMockup = async (patternUrl: string, mockupUrl: string
     }
 };
 
-export const generateSceneFromImages = async (imageUrls: string[], prompt: string): Promise<string> => {
+export const generateSceneFromImages = async (imageUrls: string[], prompt: string, persona: BrandPersona | null): Promise<string> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Flash Image adalah pilihan tepat
         
         const imageParts = await Promise.all(
             imageUrls.map(async (url) => {
@@ -471,13 +538,15 @@ export const generateSceneFromImages = async (imageUrls: string[], prompt: strin
                 return { inlineData: { mimeType: 'image/png', data: base64.split(',')[1] } };
             })
         );
+        
+        const fullPrompt = superchargePromptWithPersona(prompt, persona);
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: {
                 parts: [
                     ...imageParts,
-                    { text: prompt },
+                    { text: fullPrompt },
                 ],
             },
             config: { responseModalities: [Modality.IMAGE] },
@@ -498,7 +567,7 @@ export const generateSceneFromImages = async (imageUrls: string[], prompt: strin
 };
 
 
-// --- FUNGSI VIDEO (MENGGUNAKAN KLIEN VERTEX BARU) ---
+// --- FUNGSI VIDEO (TETAP PREMIUM) ---
 export const generateVideo = async (
   prompt: string,
   model: 'veo-3.1-fast-generate-preview' | 'veo-3.1-generate-preview',
@@ -506,7 +575,7 @@ export const generateVideo = async (
   aspectRatio: '16:9' | '9:16'
 ): Promise<Operation<GenerateVideosResponse>> => {
     try {
-        const ai = getVertexAiClient(); // UPDATE: Gunakan klien Vertex
+        const ai = getVertexAiClient();
         const operation = await ai.models.generateVideos({
             model,
             prompt,
@@ -526,14 +595,14 @@ export const generateVideo = async (
 export const extendVideo = async (previousVideo: any, prompt: string): Promise<Operation<GenerateVideosResponse>> => {
     try {
         if (!previousVideo) throw new Error("Video sebelumnya tidak ditemukan untuk diperpanjang.");
-        const ai = getVertexAiClient(); // UPDATE: Gunakan klien Vertex
+        const ai = getVertexAiClient();
         const operation = await ai.models.generateVideos({
-            model: 'veo-3.1-generate-preview', // Extending requires the higher quality model
+            model: 'veo-3.1-generate-preview',
             prompt,
             video: previousVideo,
             config: {
                 numberOfVideos: 1,
-                resolution: '720p', // Extending is limited to 720p
+                resolution: '720p',
                 aspectRatio: previousVideo.aspectRatio,
             }
         });
@@ -546,7 +615,7 @@ export const extendVideo = async (previousVideo: any, prompt: string): Promise<O
 
 export const checkVideoOperationStatus = async (operation: Operation<GenerateVideosResponse>): Promise<Operation<GenerateVideosResponse>> => {
     try {
-        const ai = getVertexAiClient(); // UPDATE: Gunakan klien Vertex
+        const ai = getVertexAiClient();
         return ai.operations.getVideosOperation({ operation });
     } catch (error) {
         console.error("Gemini API Error in checkVideoOperationStatus:", error);
@@ -558,7 +627,7 @@ export const checkVideoOperationStatus = async (operation: Operation<GenerateVid
 // --- FUNGSI LAIN (KEMBALI KE KLIEN STANDAR) ---
 export const generateSpeech = async (script: string, voiceName: string = 'Kore'): Promise<string> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Model TTS khusus
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-preview-tts',
             contents: [{ parts: [{ text: script }] }],
@@ -583,15 +652,17 @@ export const generateSpeech = async (script: string, voiceName: string = 'Kore')
     }
 };
 
-export const editProductImage = async (base64Image: string, prompt: string): Promise<string> => {
+export const editProductImage = async (base64Image: string, prompt: string, persona: BrandPersona | null): Promise<string> => {
     try {
-        const ai = getAiClient();
+        const ai = getAiClient(); // <- Flash Image adalah pilihan tepat
+        const fullPrompt = superchargePromptWithPersona(prompt, persona);
+
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/png', data: base64Image.split(',')[1] } },
-                    { text: prompt },
+                    { text: fullPrompt },
                 ],
             },
             config: { responseModalities: [Modality.IMAGE] },

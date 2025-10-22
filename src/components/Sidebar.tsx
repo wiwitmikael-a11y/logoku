@@ -83,7 +83,7 @@ const Sidebar: React.FC<Props> = ({ isOpen, onToggle }) => {
                  className={`w-full flex items-center gap-3 p-2 rounded-md transition-colors ${selectedProject?.id === p.id ? 'bg-primary/20 text-primary font-bold' : 'text-text-body hover:bg-surface'}`}>
                 <div className={`w-2 h-6 rounded-full ${selectedProject?.id === p.id ? 'bg-primary' : 'bg-transparent'}`}></div>
                 <div className="w-6 h-6 flex-shrink-0 bg-border-light rounded-md flex items-center justify-center text-xs font-bold">
-                  {p.project_data.project_name.substring(0, 1)}
+                  {(p.project_data.project_name || '#').substring(0, 1)}
                 </div>
                 {isOpen && <span className="truncate flex-grow">{p.project_data.project_name}</span>}
                 {isOpen && 

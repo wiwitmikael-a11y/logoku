@@ -1,7 +1,7 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect } from 'react';
-import { generateMascot, enhancePromptWithPersonaStyle } from '../services/geminiService';
+import { generateMascot } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
@@ -44,16 +44,15 @@ const MascotGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
         if (!prompt.trim()) { setError('Deskripsi maskot tidak boleh kosong!'); return; }
         if ((profile?.credits ?? 0) < MASCOT_COST) { setShowOutOfCreditsModal(true); return; }
 
-        let fullPrompt = `cute character mascot, ${prompt}, style: ${style}, full body, simple background, vibrant colors, character sheet style.`;
+        let fullPrompt = `${prompt}, style: ${style}.`;
         if (negativePrompt.trim()) {
             fullPrompt += ` Negative prompt: ${negativePrompt.trim()}`;
         }
-        const finalPrompt = enhancePromptWithPersonaStyle(fullPrompt, project.project_data.selectedPersona || null);
 
         setIsLoading(true); setError(null); setResults([]); playSound('start');
         try {
             if (!(await deductCredits(MASCOT_COST))) throw new Error("Gagal mengurangi token.");
-            const mascotUrls = await generateMascot(finalPrompt);
+            const mascotUrls = await generateMascot(fullPrompt, 2, project.project_data.selectedPersona);
             setResults(mascotUrls);
             await handleSaveToProject(mascotUrls);
             await addXp(XP_REWARD);
