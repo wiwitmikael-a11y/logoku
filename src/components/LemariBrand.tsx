@@ -1,94 +1,86 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState } from 'react';
-import type { Project, SotoshopAssets } from '../types';
+import type { Project } from '../types';
 import ImageModal from './common/ImageModal';
-import Button from './common/Button';
 
 interface Props {
   project: Project;
-  onUpdateProject: (data: any) => Promise<void>;
 }
 
 const LemariBrand: React.FC<Props> = ({ project }) => {
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
   const assets = project.project_data.sotoshop_assets;
 
-  const AssetSection: React.FC<{ title: string; children: React.ReactNode; count?: number }> = ({ title, children, count }) => {
-    if (!count || count === 0) return null;
+  const renderSection = (title: string, items: any[] | undefined, renderItem: (item: any, index: number) => React.ReactNode) => {
+    if (!items || items.length === 0) return null;
     return (
       <div className="p-4 bg-background rounded-lg">
-        <h3 className="font-bold text-text-header mb-3">{title} ({count})</h3>
-        {children}
+        <h3 className="text-xl font-bold text-primary mb-4">{title}</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {items.map(renderItem)}
+        </div>
       </div>
     );
   };
   
-  const hasAssets = (assets: SotoshopAssets | undefined): boolean => {
-    if (!assets) return false;
-    return Object.values(assets).some(val => Array.isArray(val) && val.length > 0);
-  };
+  const allAssetsEmpty = Object.values(assets || {}).every(val => !val || (Array.isArray(val) && val.length === 0));
+
 
   return (
-    <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Lemari Aset Brand: <span className="text-accent">{project.project_data.project_name}</span></h2>
-        
-        {!hasAssets(assets) ? (
-             <div className="p-6 bg-surface rounded-2xl text-center animate-item-appear min-h-[200px] flex flex-col justify-center items-center">
-                <div className="mx-auto mb-4 w-24 h-24 flex items-center justify-center bg-background rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                    </svg>
+    <div className="space-y-6">
+       <div className="p-4 rounded-lg flex items-start gap-4 mang-ai-callout border border-border-main">
+        <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-primary/10 rounded-full"><span className="text-3xl">📦</span></div>
+        <div>
+          <h3 className="text-2xl font-bold text-text-header" style={{fontFamily: 'var(--font-display)'}}>Lemari Brand</h3>
+          <p className="text-sm text-text-body mt-1">Semua aset visual yang kamu buat di "Sotoshop" akan tersimpan di sini. Kamu bisa lihat, unduh, atau gunakan kembali aset-aset ini di tool lain.</p>
+        </div>
+      </div>
+      
+      {allAssetsEmpty ? (
+        <div className="text-center p-8 bg-background rounded-lg min-h-[400px] flex flex-col justify-center items-center">
+             <span className="text-5xl mb-4">💨</span>
+             <h2 className="text-2xl font-bold text-text-header mt-4">Lemari Masih Kosong</h2>
+             <p className="mt-2 text-text-muted max-w-md">Belum ada aset yang dibuat. Coba gunakan tool-tool di "Sotoshop" untuk mengisi lemari brand-mu!</p>
+         </div>
+      ) : (
+          <div className="space-y-6">
+              {renderSection('Logo & Variasi', project.project_data.logoOptions, (url, i) => (
+                  <img key={i} src={url} alt={`Logo ${i}`} className="w-full aspect-square object-contain bg-white p-2 rounded-md cursor-pointer hover:scale-105 transition-transform" onClick={() => setModalImageUrl(url)} />
+              ))}
+              {renderSection('Maskot', assets?.mascots, (url, i) => (
+                   <img key={i} src={url} alt={`Mascot ${i}`} className="w-full aspect-square object-contain bg-white p-2 rounded-md cursor-pointer hover:scale-105 transition-transform" onClick={() => setModalImageUrl(url)} />
+              ))}
+              {renderSection('Video', assets?.videos, (video, i) => (
+                   <video key={i} src={video.videoUrl} controls className="w-full aspect-video rounded-md" title={video.prompt} />
+              ))}
+               {renderSection('Presenter AI', assets?.aiPresenter, (presenter, i) => (
+                  <div key={i} className="flex flex-col gap-2 items-center text-center">
+                    <img src={presenter.characterUrl} alt={`Presenter ${i}`} className="w-full aspect-square object-contain rounded-md" />
+                    <audio src={presenter.audioUrl} controls className="w-full h-8" />
+                  </div>
+               ))}
+              {renderSection('Moodboard', assets?.moodboards, (moodboard, i) => (
+                <div key={i} className="md:col-span-2 p-2 bg-surface rounded-lg">
+                    <p className="text-xs italic">"{moodboard.description}"</p>
+                    <div className="grid grid-cols-2 gap-1 mt-2">
+                        {moodboard.images.map((img: string, idx: number) => <img key={idx} src={img} alt={`mood ${idx}`} className="w-full aspect-square object-cover rounded" onClick={() => setModalImageUrl(img)}/>)}
+                    </div>
                 </div>
-                <h3 className="font-bold text-text-header text-lg">Lemari Brand Masih Kosong</h3>
-                <p className="text-sm text-text-muted mt-2">Gunakan tool di tab "Sotoshop" untuk membuat dan menyimpan aset visual di sini.</p>
-            </div>
-        ) : (
-            <div className="space-y-4">
-                <AssetSection title="Maskot" count={assets?.mascots?.length}>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                        {assets?.mascots?.map((url, i) => (
-                            <img key={i} src={url} alt={`Mascot ${i}`} className="w-full aspect-square object-contain rounded-md cursor-pointer hover:scale-105 transition-transform" onClick={() => setModalImageUrl(url)} />
-                        ))}
-                    </div>
-                </AssetSection>
-                <AssetSection title="Video" count={assets?.videos?.length}>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {assets?.videos?.map((video) => (
-                            <video key={video.id} src={video.videoUrl} controls className="w-full aspect-video object-cover rounded-md" />
-                        ))}
-                    </div>
-                </AssetSection>
-                <AssetSection title="Presentasi AI" count={assets?.aiPresenter?.length}>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {assets?.aiPresenter?.map((p) => (
-                           <div key={p.id} className="bg-surface p-2 rounded-lg text-center">
-                               <img src={p.characterUrl} alt="Karakter" className="w-24 h-24 mx-auto mb-2"/>
-                               <p className="text-xs italic text-text-body mb-2">"{p.script.substring(0, 30)}..."</p>
-                               <audio src={p.audioUrl} controls className="w-full h-8" />
-                           </div>
-                        ))}
-                    </div>
-                </AssetSection>
-                 <AssetSection title="Pola / Motif" count={assets?.patterns?.length}>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 gap-3">
-                        {assets?.patterns?.map((p, i) => (
-                           <div key={i} title={p.prompt} onClick={() => setModalImageUrl(p.url)} className="w-full aspect-square rounded-md cursor-pointer border-2 border-surface" style={{backgroundImage: `url(${p.url})`, backgroundSize: '50% 50%'}} />
-                        ))}
-                    </div>
-                </AssetSection>
-                 <AssetSection title="Hasil Studio Foto" count={assets?.photoStudio?.length}>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                        {assets?.photoStudio?.map((p, i) => (
-                            <img key={i} src={p.url} alt={p.prompt} title={p.prompt} className="w-full aspect-square object-contain rounded-md cursor-pointer hover:scale-105 transition-transform" onClick={() => setModalImageUrl(p.url)} />
-                        ))}
-                    </div>
-                </AssetSection>
-                {/* Add other asset sections similarly */}
-            </div>
-        )}
+              ))}
+              {renderSection('Pola / Motif', assets?.patterns, (pattern, i) => (
+                   <div key={i} className="w-full aspect-square rounded-md cursor-pointer" style={{backgroundImage: `url(${pattern.url})`}} onClick={() => setModalImageUrl(pattern.url)} title={pattern.prompt} />
+              ))}
+              {renderSection('Foto Produk (Studio)', assets?.photoStudio, (photo, i) => (
+                  <img key={i} src={photo.url} alt={`Photo ${i}`} className="w-full aspect-square object-cover bg-white rounded-md cursor-pointer hover:scale-105 transition-transform" onClick={() => setModalImageUrl(photo.url)} title={photo.prompt} />
+              ))}
+              {renderSection('Scene Mixer', assets?.sceneMixes, (scene, i) => (
+                   <img key={i} src={scene.url} alt={`Scene ${i}`} className="w-full aspect-square object-cover bg-white rounded-md cursor-pointer hover:scale-105 transition-transform" onClick={() => setModalImageUrl(scene.url)} title={scene.prompt} />
+              ))}
+          </div>
+      )}
 
-        {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Pratinjau Aset" onClose={() => setModalImageUrl(null)} />}
+      {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Pratinjau Aset" onClose={() => setModalImageUrl(null)} />}
     </div>
   );
 };

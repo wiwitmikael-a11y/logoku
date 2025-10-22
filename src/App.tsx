@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { useUI } from './contexts/UIContext';
+// FIX: Corrected imports for components
 import LoginScreen from './components/LoginScreen';
 import ProjectDashboard from './components/ProjectDashboard';
 import AuthLoadingScreen from './components/common/AuthLoadingScreen';
