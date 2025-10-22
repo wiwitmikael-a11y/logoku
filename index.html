@@ -169,18 +169,21 @@
       
       @keyframes mang-ai-talking-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-      /* === NEW: SMOOTH SIDEBAR TEXT ANIMATION === */
+      /* === NEW: SUPER SMOOTH SIDEBAR TEXT ANIMATION === */
       .sidebar-text {
-        transition: opacity 0.2s ease-out, max-width 0.3s ease-in-out;
+        transition: opacity 0.2s 0.1s ease-out, transform 0.3s 0.1s ease-out;
+        transform: scaleX(1);
+        transform-origin: left;
         opacity: 1;
-        max-width: 150px; /* Adjust as needed */
         white-space: nowrap;
         overflow: hidden;
+        display: inline-block; /* Needed for transform */
       }
       .sidebar.collapsed .sidebar-text {
+        transform: scaleX(0);
         opacity: 0;
-        max-width: 0;
-        pointer-events: none; /* Disable interaction when hidden */
+        transition: opacity 0.1s ease-in, transform 0.2s ease-in;
+        pointer-events: none;
       }
       
       /* --- UI COMPONENTS --- */

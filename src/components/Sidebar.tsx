@@ -94,15 +94,15 @@ const Sidebar: React.FC<Props> = ({ isOpen, onToggle }) => {
         </nav>
         
         {/* Footer Links & Toggle */}
-        <div className="p-4 border-t border-border-main mt-auto">
-          <div className="space-y-1 mb-4">
+        <div className="p-2 border-t border-border-main mt-auto">
+          <div className="space-y-1 mb-2">
              <SidebarItem icon="💡" text="Tentang Kami" onClick={() => setShowAbout(true)} />
              <SidebarItem icon="📧" text="Kontak" onClick={() => setShowContact(true)} />
              <SidebarItem icon="⚖️" text="Ketentuan Layanan" onClick={() => setShowToS(true)} />
              <SidebarItem icon="🔒" text="Kebijakan Privasi" onClick={() => setShowPrivacy(true)} />
              <div className="sidebar-item"><ThemeToggle theme={theme} onToggle={toggleTheme} /></div>
           </div>
-          <button onClick={onToggle} className="w-full flex items-center gap-3 p-2 rounded-md text-text-muted hover:bg-surface overflow-hidden">
+          <button onClick={onToggle} className="w-full flex items-center gap-3 p-1.5 rounded-md text-text-muted hover:bg-surface overflow-hidden">
              <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 flex-shrink-0 transition-transform duration-300 ${!isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
              <span className="sidebar-text">Ciutkan</span>
           </button>
@@ -121,7 +121,7 @@ const Sidebar: React.FC<Props> = ({ isOpen, onToggle }) => {
 const SidebarItem: React.FC<{icon: React.ReactNode, text: string, onClick: () => void}> = ({ icon, text, onClick }) => (
     <div className="sidebar-item">
         <Tooltip text={text} position="right">
-            <button onClick={onClick} className="w-full flex items-center gap-3 p-2 rounded-md text-text-muted hover:bg-surface hover:text-text-header overflow-hidden">
+            <button onClick={onClick} className="w-full flex items-center gap-3 p-1.5 rounded-md text-text-muted hover:bg-surface hover:text-text-header overflow-hidden">
                 <span className="w-6 text-center flex-shrink-0">{icon}</span>
                 <span className="sidebar-text text-sm">{text}</span>
             </button>
