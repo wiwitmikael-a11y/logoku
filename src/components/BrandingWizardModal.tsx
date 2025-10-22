@@ -114,10 +114,10 @@ const BrandingWizardModal: React.FC<Props> = ({ show, onClose, onComplete }) => 
           <>
             <h3 className="text-xl font-bold text-text-header mb-2">Langkah 1: Info Brand</h3>
             <p className="text-sm text-text-muted mb-4">Isi detail bisnismu. Semakin lengkap, semakin jago Mang AI bantuinnya!</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
               <Input label="Nama Bisnis / Brand" name="businessName" value={inputs.businessName} onChange={handleInputChange} placeholder="Contoh: Kopi Senja" />
               <Input label="Industri / Bidang Usaha" name="industry" value={inputs.industry} onChange={handleInputChange} placeholder="Contoh: Kedai Kopi, Fashion" />
-              <Textarea label="Jelaskan Bisnismu" name="businessDetail" value={inputs.businessDetail} onChange={handleInputChange} rows={3} className="md:col-span-2" placeholder="Contoh: Kami menjual biji kopi arabika spesialti." />
+              <Textarea label="Jelaskan Bisnismu" name="businessDetail" value={inputs.businessDetail} onChange={handleInputChange} rows={3} placeholder="Contoh: Kami menjual biji kopi arabika spesialti." />
               <Textarea label="Siapa Target Pasarmu?" name="targetAudience" value={inputs.targetAudience} onChange={handleInputChange} rows={2} placeholder="Contoh: Mahasiswa & pekerja kantoran."/>
               <Textarea label="Apa Keunggulan Utamamu?" name="valueProposition" value={inputs.valueProposition} onChange={handleInputChange} rows={2} placeholder="Contoh: Biji kopi di-roasting sendiri setiap hari." />
             </div>
@@ -163,24 +163,28 @@ const BrandingWizardModal: React.FC<Props> = ({ show, onClose, onComplete }) => 
   const renderNextButton = () => {
     switch(step) {
       case 1:
-        return <Button onClick={handleNextToPersona} isLoading={isLoading} disabled={!inputs.businessName || !inputs.businessDetail}>Lanjut ({PERSONA_COST} T)</Button>;
+        return <Button onClick={handleNextToPersona} isLoading={isLoading} disabled={!inputs.businessName || !inputs.businessDetail}>Lanjut ({PERSONA_COST} ✨)</Button>;
       case 2:
          return (
-          <div className="flex items-center gap-2">
-            <Select 
-              label="Gaya Logo"
-              name="logoStyle"
-              value={logoStyle}
-              onChange={e => setLogoStyle(e.target.value)}
-              options={[
-                  {value: 'Vector', label: 'Vector'},
-                  {value: '3D', label: '3D'},
-                  {value: 'Cartoon', label: 'Kartun'},
-                  {value: 'Pixel Art', label: 'Pixel Art'},
-                  {value: 'Hand-drawn', label: 'Gambar Tangan'},
-              ]}
-            />
-            <Button onClick={handleNextToLogo} isLoading={isLoading} disabled={!selectedPersona}>Lanjut ({LOGO_COST} T)</Button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="flex-grow">
+                <Select 
+                    label="Gaya Logo"
+                    name="logoStyle"
+                    value={logoStyle}
+                    onChange={e => setLogoStyle(e.target.value)}
+                    options={[
+                        {value: 'Vector', label: 'Vector'},
+                        {value: '3D', label: '3D'},
+                        {value: 'Cartoon', label: 'Kartun'},
+                        {value: 'Pixel Art', label: 'Pixel Art'},
+                        {value: 'Hand-drawn', label: 'Gambar Tangan'},
+                    ]}
+                />
+            </div>
+            <div className="flex-shrink-0 pt-5 sm:pt-0 self-end">
+                <Button onClick={handleNextToLogo} isLoading={isLoading} disabled={!selectedPersona} className="w-full sm:w-auto">Lanjut ({LOGO_COST} ✨)</Button>
+            </div>
           </div>
         );
       case 3:

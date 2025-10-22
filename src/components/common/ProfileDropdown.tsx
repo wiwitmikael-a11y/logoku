@@ -59,8 +59,8 @@ const ProfileDropdown: React.FC = () => {
             {/* NEW: Stats Block */}
             <div className="p-3 border-b border-border-main space-y-2">
                 <div className="flex items-center gap-2 text-primary font-bold">
-                    <span className="text-lg">🪙</span>
-                    <span className="text-sm">{profile.credits} Token Tersisa</span>
+                    <span className="text-lg">✨</span>
+                    <span className="text-sm">{profile.credits} Spark Tersisa</span>
                 </div>
                 <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">

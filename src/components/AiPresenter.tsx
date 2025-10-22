@@ -45,7 +45,7 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
             return;
         }
         if ((profile?.credits ?? 0) < PRESENTER_COST) {
-            setError(`Token tidak cukup, butuh ${PRESENTER_COST} token.`);
+            setError(`Spark tidak cukup, butuh ${PRESENTER_COST} ✨.`);
             return;
         }
 
@@ -175,7 +175,7 @@ const AiPresenter: React.FC<Props> = ({ project, onUpdateProject }) => {
                     </div>
                 </div>
                 <Button onClick={handleGenerate} isLoading={isLoading} disabled={!script.trim() || !selectedChar || isLoading} variant="accent" className="w-full">
-                    Buat Presentasi! ({PRESENTER_COST} Token)
+                    Buat Presentasi! ({PRESENTER_COST} ✨)
                 </Button>
 
                 {error && <ErrorMessage message={error} />}

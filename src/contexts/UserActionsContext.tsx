@@ -57,7 +57,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
       console.error("Error adding XP:", error);
     } else if (data) {
         if (data.level_up) {
-            setLevelUpInfo({ newLevel: data.new_level, reward: `+${data.credit_reward} Token` });
+            setLevelUpInfo({ newLevel: data.new_level, reward: `+${data.credit_reward} ✨` });
             setShowLevelUpModal(true);
             playSound('success'); // or a specific level up sound
         }
@@ -96,6 +96,7 @@ export const UserActionsProvider: React.FC<{ children: ReactNode }> = ({ childre
     checkForNewAchievements,
   };
 
+  // Fix: Corrected the closing tag typo from </UserActions-Provider> to </UserActionsContext.Provider>.
   return <UserActionsContext.Provider value={value}>{children}</UserActionsContext.Provider>;
 };
 

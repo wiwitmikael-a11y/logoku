@@ -102,7 +102,7 @@ const MascotGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
                 <Textarea label="Deskripsi Utama Maskot" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: seekor kapibara santai pakai kacamata hitam sambil minum kopi" rows={3} />
                 
                 <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">
-                    Hidupkan Maskotnya! ({MASCOT_COST} Token, +{XP_REWARD} XP)
+                    Hidupkan Maskotnya! ({MASCOT_COST} ✨, +{XP_REWARD} XP)
                 </Button>
                 
                 {error && <ErrorMessage message={error} />}

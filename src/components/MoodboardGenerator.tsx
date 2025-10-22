@@ -94,7 +94,7 @@ const MoodboardGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
                 </div>
 
                 <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !keywords.trim()} variant="accent" className="w-full">
-                    Racik Vibe Brand! ({MOODBOARD_COST} Token, +{XP_REWARD} XP)
+                    Racik Vibe Brand! ({MOODBOARD_COST} ✨, +{XP_REWARD} XP)
                 </Button>
                 
                 {error && <ErrorMessage message={error} />}

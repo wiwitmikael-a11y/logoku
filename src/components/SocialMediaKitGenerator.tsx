@@ -92,7 +92,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ project, onUpdateProject, on
               </div>
             </div>
           ) : (
-            <Button onClick={handleGenerateVisuals} isLoading={isLoading === 'visuals'}>Buat Aset Visual ({VISUAL_KIT_COST} Token)</Button>
+            <Button onClick={handleGenerateVisuals} isLoading={isLoading === 'visuals'}>Buat Aset Visual ({VISUAL_KIT_COST} ✨)</Button>
           )}
         </div>
         
@@ -115,7 +115,7 @@ const SocialMediaKitGenerator: React.FC<Props> = ({ project, onUpdateProject, on
                 </div>
             </div>
           ) : (
-            <Button onClick={handleGenerateProfiles} isLoading={isLoading === 'profiles'}>Buat Teks Profil ({PROFILE_TEXT_COST} Token)</Button>
+            <Button onClick={handleGenerateProfiles} isLoading={isLoading === 'profiles'}>Buat Teks Profil ({PROFILE_TEXT_COST} ✨)</Button>
           )}
         </div>
       </div>

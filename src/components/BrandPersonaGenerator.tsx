@@ -49,7 +49,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject, onCo
       return;
     }
     if ((profile?.credits ?? 0) < PERSONA_COST) {
-      setError(`Token tidak cukup. Butuh ${PERSONA_COST} token.`);
+      setError(`Spark tidak cukup. Butuh ${PERSONA_COST} ✨.`);
       return;
     }
 
@@ -97,7 +97,7 @@ const BrandPersonaGenerator: React.FC<Props> = ({ project, onUpdateProject, onCo
 
       <div className="text-center">
         <Button onClick={handleGenerate} isLoading={isLoading} variant="primary">
-          Buat Persona Brand! ({PERSONA_COST} Token)
+          Buat Persona Brand! ({PERSONA_COST} ✨)
         </Button>
         {error && <ErrorMessage message={error} />}
       </div>

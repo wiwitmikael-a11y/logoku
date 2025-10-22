@@ -124,9 +124,9 @@ const VideoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
                 </div>
                 <Textarea label="Deskripsi Video" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: seekor astronot mengendarai kuda di Mars" rows={3} />
 
-                <Tooltip text="✨ Harga Promo Beta! (Normal: 20 Token)" position="top">
+                <Tooltip text="✨ Harga Promo Beta! (Normal: 20 ✨)" position="top">
                     <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">
-                        Buat Video! ({VIDEO_GEN_COST} Token, +{XP_REWARD} XP)
+                        Buat Video! ({VIDEO_GEN_COST} ✨, +{XP_REWARD} XP)
                     </Button>
                 </Tooltip>
                 
@@ -142,7 +142,7 @@ const VideoGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
                          <div className="p-4 bg-background/50 rounded-lg border border-border-main space-y-2">
                              <h4 className="font-bold text-text-header">Perpanjang Video</h4>
                             <Textarea label="Apa yang terjadi selanjutnya?" name="extendPrompt" value={extendPrompt} onChange={e => setExtendPrompt(e.target.value)} placeholder="Contoh: tiba-tiba sebuah UFO mendarat di dekatnya" rows={2} />
-                            <Button onClick={handleExtend} isLoading={isLoading} disabled={isLoading || !extendPrompt.trim()} variant="secondary">Lanjutkan Cerita ({VIDEO_GEN_COST} T)</Button>
+                            <Button onClick={handleExtend} isLoading={isLoading} disabled={isLoading || !extendPrompt.trim()} variant="secondary">Lanjutkan Cerita ({VIDEO_GEN_COST} ✨)</Button>
                         </div>
                     </div>
                 )}

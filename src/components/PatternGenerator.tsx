@@ -122,7 +122,7 @@ const PatternGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
                 </div>
 
                 <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || !prompt.trim()} variant="accent" className="w-full">
-                    Buat Motif! ({PATTERN_COST} Token, +{XP_REWARD} XP)
+                    Buat Motif! ({PATTERN_COST} ✨, +{XP_REWARD} XP)
                 </Button>
                 
                 {error && <ErrorMessage message={error} />}
@@ -144,7 +144,7 @@ const PatternGenerator: React.FC<Props> = ({ project, onUpdateProject }) => {
                                             <img src={mockupPreviews[type as keyof typeof mockupPreviews]!} onClick={() => setModalImageUrl(mockupPreviews[type as keyof typeof mockupPreviews]!)} alt={`${type} mockup`} className="w-full aspect-square object-cover rounded-md cursor-pointer" />
                                         ) : (
                                             <div className="w-full aspect-square bg-border-light/20 rounded-md flex items-center justify-center">
-                                                {loadingMockup === type ? <LoadingMessage/> : <Button size="small" variant="secondary" onClick={() => handleGenerateMockup(type as any)}>Coba di {type} ({MOCKUP_COST}T)</Button>}
+                                                {loadingMockup === type ? <LoadingMessage/> : <Button size="small" variant="secondary" onClick={() => handleGenerateMockup(type as any)}>Coba di {type} ({MOCKUP_COST} ✨)</Button>}
                                             </div>
                                         )}
                                     </div>

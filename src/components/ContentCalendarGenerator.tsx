@@ -66,7 +66,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject, o
         <div className="space-y-6">
             <div className="p-4 rounded-lg flex items-start gap-4 mang-ai-callout border border-border-main">
                 <div className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-primary/10 rounded-full">
-                    <svg xmlns="http://www.w.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
@@ -80,7 +80,7 @@ const ContentCalendarGenerator: React.FC<Props> = ({ project, onUpdateProject, o
 
             <div className="text-center">
                  <Button onClick={handleGenerate} isLoading={isLoading} variant="primary">
-                    {contentCalendar ? 'Buat Ulang Rencana Konten' : 'Buat Rencana Konten 7 Hari!'} ({CALENDAR_COST} Token)
+                    {contentCalendar ? 'Buat Ulang Rencana Konten' : 'Buat Rencana Konten 7 Hari!'} ({CALENDAR_COST} ✨)
                 </Button>
             </div>
 

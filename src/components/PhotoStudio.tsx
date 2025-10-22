@@ -127,7 +127,7 @@ const PhotoStudio: React.FC<Props> = ({ project, onUpdateProject, initialPrompt 
                 </div>
 
                 <Button onClick={handleGenerate} isLoading={isLoading} disabled={!image || !prompt.trim() || isLoading} variant="accent" className="w-full">
-                    Sulap Fotonya! ({PHOTO_STUDIO_COST} Token, +{XP_REWARD} XP)
+                    Sulap Fotonya! ({PHOTO_STUDIO_COST} ✨, +{XP_REWARD} XP)
                 </Button>
                 
                 {error && <ErrorMessage message={error} />}

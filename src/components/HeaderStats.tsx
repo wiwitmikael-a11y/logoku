@@ -20,9 +20,9 @@ const HeaderStats: React.FC = () => {
     return (
         <div className="flex flex-wrap items-center gap-2 md:gap-4">
             <div className="stat-card-gradient p-2 rounded-lg flex items-center gap-2">
-                <span className="text-2xl">🪙</span>
+                <span className="text-2xl">✨</span>
                 <div>
-                    <p className="text-xs text-text-muted">Token</p>
+                    <p className="text-xs text-text-muted">Spark</p>
                     <p className="text-xl font-bold text-primary">{profile.credits}</p>
                 </div>
             </div>

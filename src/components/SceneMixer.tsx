@@ -84,7 +84,7 @@ const SceneMixer: React.FC<Props> = ({ project, onUpdateProject }) => {
         const validImages = images.filter(img => img.src);
         if (validImages.length === 0) { setError('Upload minimal 1 gambar!'); return; }
         if (!mainPrompt.trim()) { setError('Prompt utama tidak boleh kosong!'); return; }
-        if ((profile?.credits ?? 0) < SCENE_MIXER_COST) { setError(`Token tidak cukup, butuh ${SCENE_MIXER_COST} token.`); return; }
+        if ((profile?.credits ?? 0) < SCENE_MIXER_COST) { setError(`Spark tidak cukup, butuh ${SCENE_MIXER_COST} ✨.`); return; }
 
         setIsLoading(true); setError(null); setResult(null); playSound('start');
         try {
@@ -161,7 +161,7 @@ const SceneMixer: React.FC<Props> = ({ project, onUpdateProject }) => {
                     </div>
                     <Textarea label="Prompt Utama (Sutradara)" name="mainPrompt" value={mainPrompt} onChange={e => setMainPrompt(e.target.value)} placeholder="Contoh: Gabungkan maskot kucing (gambar 1) ke pantai (gambar 2) sambil dia minum kopi (gambar 3)." rows={3} />
                     <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.filter(i=>i.src).length === 0 || !mainPrompt.trim()} variant="accent" className="w-full">
-                        Mulai Syuting! ({SCENE_MIXER_COST} Token, +{XP_REWARD} XP)
+                        Mulai Syuting! ({SCENE_MIXER_COST} ✨, +{XP_REWARD} XP)
                     </Button>
                 </div>
                 

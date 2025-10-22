@@ -119,7 +119,7 @@ const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject, onComplete }
       <div className="p-4 bg-background rounded-lg space-y-3">
         <h4 className="font-semibold text-text-header">2a. Slogan Juara</h4>
         {slogans.length === 0 ? (
-          <Button onClick={handleGenerateSlogans} isLoading={isLoading === 'slogans'} disabled={!!isLoading}>Buat Slogan ({SLOGAN_COST} Token)</Button>
+          <Button onClick={handleGenerateSlogans} isLoading={isLoading === 'slogans'} disabled={!!isLoading}>Buat Slogan ({SLOGAN_COST} ✨)</Button>
         ) : (
           <div className="flex flex-wrap gap-2">
             {slogans.map(s => <button key={s} onClick={() => onUpdateProject({ selectedSlogan: s })} className={`px-3 py-1 text-sm rounded-full transition-colors ${selectedSlogan === s ? 'bg-primary text-white' : 'bg-surface hover:bg-border-light'}`}>{s}</button>)}
@@ -134,7 +134,7 @@ const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject, onComplete }
           {logoPrompt ? (
             <p className="text-sm italic text-text-body bg-surface p-2 rounded selectable-text">"{logoPrompt}"</p>
           ) : (
-            <Button onClick={handleGenerateLogoPrompt} isLoading={isLoading === 'prompt'} disabled={!!isLoading}>Buat Resep Logo ({LOGO_PROMPT_COST} Token)</Button>
+            <Button onClick={handleGenerateLogoPrompt} isLoading={isLoading === 'prompt'} disabled={!!isLoading}>Buat Resep Logo ({LOGO_PROMPT_COST} ✨)</Button>
           )}
         </div>
       )}
@@ -144,7 +144,7 @@ const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject, onComplete }
         <div className="p-4 bg-background rounded-lg space-y-3 animate-content-fade-in">
           <h4 className="font-semibold text-text-header">2c. Pilihan Desain Logo</h4>
           {logoOptions.length === 0 ? (
-             <Button onClick={handleGenerateLogos} isLoading={isLoading === 'logos'} disabled={!!isLoading}>Gambar 4 Opsi Logo! ({LOGO_GEN_COST} Token)</Button>
+             <Button onClick={handleGenerateLogos} isLoading={isLoading === 'logos'} disabled={!!isLoading}>Gambar 4 Opsi Logo! ({LOGO_GEN_COST} ✨)</Button>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {logoOptions.map(url => (
@@ -169,7 +169,7 @@ const LogoGenerator: React.FC<Props> = ({ project, onUpdateProject, onComplete }
                 <Textarea label="Instruksi revisi" name="editPrompt" value={editPrompt} onChange={e => setEditPrompt(e.target.value)} placeholder="Contoh: ganti warnanya jadi biru" rows={3} className="flex-grow" />
              </div>
              <div className="flex gap-2">
-                <Button onClick={handleEditLogo} isLoading={isLoading === 'edit'} disabled={!editPrompt}>Revisi ({LOGO_EDIT_COST} T)</Button>
+                <Button onClick={handleEditLogo} isLoading={isLoading === 'edit'} disabled={!editPrompt}>Revisi ({LOGO_EDIT_COST} ✨)</Button>
                 <Button onClick={() => setEditingLogoUrl(null)} variant="secondary">Batal</Button>
              </div>
         </div>

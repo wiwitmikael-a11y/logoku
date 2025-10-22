@@ -62,14 +62,14 @@ const DailyMissions: React.FC<Props> = ({ show, onClose }) => {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
         <h2 className="text-2xl font-bold text-text-header mb-6">🎯 Misi Harian</h2>
-        <p className="text-sm text-text-muted mb-4">Selesaikan misi untuk mendapatkan XP dan hadiah token tambahan. Misi di-reset setiap hari!</p>
+        <p className="text-sm text-text-muted mb-4">Selesaikan misi untuk mendapatkan XP dan hadiah spark tambahan. Misi di-reset setiap hari!</p>
         
         <div className="space-y-3">
           {missions.map(mission => (
             <div key={mission.id} className={`p-3 rounded-lg flex items-center justify-between ${mission.isCompleted ? 'bg-green-500/10' : 'bg-background'}`}>
               <div>
                 <p className="font-semibold text-text-body">{mission.description}</p>
-                <p className="text-xs text-primary">+{mission.xp} XP {mission.token && ` | +${mission.token} 🪙`}</p>
+                <p className="text-xs text-primary">+{mission.xp} XP {mission.token && ` | +${mission.token} ✨`}</p>
               </div>
               <Button size="small" onClick={() => handleClaim(mission)} disabled={mission.isCompleted}>
                 {mission.isCompleted ? '✓ Selesai' : 'Klaim'}
