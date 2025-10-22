@@ -43,9 +43,7 @@ const App: React.FC = () => {
   useAudioContextManager();
 
   useEffect(() => {
-    // FIX: Use setAttribute to apply the data-theme, which matches the CSS selectors in index.html.
-    // This is the critical fix for the broken UI.
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.className = theme;
   }, [theme]);
   
   useEffect(() => {
