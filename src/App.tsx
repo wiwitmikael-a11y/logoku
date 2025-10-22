@@ -21,6 +21,7 @@ import { getApiKeyError } from './services/geminiService';
 import { useAudioContextManager } from './hooks/useAudioContextManager';
 import { playBGM, stopBGM } from './services/soundService';
 import WelcomeGate from './components/common/PuzzleCaptchaModal';
+import AdAnchor from './components/common/AdAnchor';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
@@ -88,6 +89,9 @@ const App: React.FC = () => {
       <OutOfCreditsModal show={showOutOfCreditsModal} onClose={() => setShowOutOfCreditsModal(false)} />
       {levelUpInfo && <LevelUpModal show={showLevelUpModal} onClose={() => setShowLevelUpModal(false)} levelUpInfo={levelUpInfo} />}
       {unlockedAchievement && <AchievementToast achievement={unlockedAchievement} onDismiss={() => setUnlockedAchievement(null)} />}
+      
+      {/* Global Ad Anchor, shown only after login */}
+      {user && gatePassed && <AdAnchor />}
     </>
   );
 };

@@ -5,6 +5,8 @@ import type { Project } from '../types';
 import Button from './common/Button';
 import GlowingArrowButton from './common/GlowingArrowButton';
 import { playSound } from '../services/soundService';
+import Newsticker from './common/Newsticker';
+import DonationTicker from './common/DonationTicker';
 
 interface Props {
   projects: Project[];
@@ -18,7 +20,8 @@ interface Props {
 const ProjectDock: React.FC<Props> = ({ projects, selectedProject, onSelectProject, onDeleteProject, onNewProject, onNewVoiceProject }) => {
   const [isOpen, setIsOpen] = useState(true);
 
-  const toggleOpen = () => {
+  const toggleOpen = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     playSound('transition');
     setIsOpen(!isOpen);
   }
@@ -27,14 +30,18 @@ const ProjectDock: React.FC<Props> = ({ projects, selectedProject, onSelectProje
     <div className={`sticky bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-in-out ${isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-4rem)]'}`}>
       <div className="bg-surface/90 backdrop-blur-lg border-t-2 border-primary/20 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.3)] rounded-t-2xl">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 cursor-pointer" onClick={toggleOpen}>
+          <div className="flex items-center justify-between h-16 cursor-pointer" onClick={() => toggleOpen()}>
             <h3 className="text-lg font-bold text-text-header">Garasi Proyek</h3>
             <div className="flex items-center gap-4">
                {selectedProject && <p className="text-sm font-semibold text-accent hidden sm:block">Dipilih: {selectedProject.project_data.project_name}</p>}
-               <GlowingArrowButton isOpen={isOpen} onClick={toggleOpen} />
+               <GlowingArrowButton isOpen={isOpen} onClick={() => toggleOpen()} />
             </div>
           </div>
           <div className="pb-4">
+            <div className="mb-3">
+              <Newsticker />
+              <DonationTicker />
+            </div>
             <div className="flex items-stretch gap-4 overflow-x-auto pb-4 -mx-4 px-4">
               {projects.map(p => (
                 <div 

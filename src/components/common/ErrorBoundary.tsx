@@ -1,9 +1,9 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import * as React from 'react';
 
 interface Props {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 interface State {
@@ -11,17 +11,21 @@ interface State {
   error?: Error;
 }
 
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: undefined,
-  };
+class ErrorBoundary extends React.Component<Props, State> {
+  // Fix: Replaced class property initializer with constructor to ensure `this.props` and `this.state` are set up in a way that is more compatible with all TypeScript tooling, resolving the type error.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+    };
+  }
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 

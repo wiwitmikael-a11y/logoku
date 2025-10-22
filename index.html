@@ -223,6 +223,26 @@
         transform: scale(1.03);
         box-shadow: 0 0 15px rgba(var(--c-primary), 0.3);
       }
+      
+      /* --- TICKER STYLES --- */
+      @keyframes marquee {
+        from { transform: translateX(100%); }
+        to { transform: translateX(-100%); }
+      }
+      .marquee-text-wrapper {
+        overflow: hidden;
+        width: 100%;
+      }
+      .marquee-text {
+        display: inline-block;
+        white-space: nowrap;
+        padding-left: 100%;
+        animation: marquee 40s linear infinite;
+        will-change: transform;
+      }
+      .marquee-text:hover {
+        animation-play-state: paused;
+      }
     </style>
   <script type="importmap">
 {

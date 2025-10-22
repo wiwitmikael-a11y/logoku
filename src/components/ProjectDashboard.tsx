@@ -14,10 +14,13 @@ import Onboarding from './common/Onboarding';
 import InfoTicker from './common/InfoTicker';
 import VoiceBrandingWizard from './VoiceBrandingWizard';
 import { useUserActions } from '../contexts/UserActionsContext';
+import Footer from './common/Footer';
+import { useUI } from '../contexts/UIContext';
 
 const ProjectDashboard: React.FC = () => {
     const { user, isNewUser } = useAuth();
     const { checkForNewAchievements } = useUserActions();
+    const { toggleAboutModal, toggleContactModal, toggleToSModal, togglePrivacyModal } = useUI();
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
@@ -163,9 +166,9 @@ const ProjectDashboard: React.FC = () => {
     const saveStatus = useDebouncedAutosave(selectedProject, onSave);
 
     return (
-        <div className="min-h-screen bg-background text-text-body">
+        <div className="min-h-screen bg-background text-text-body flex flex-col">
             <Header saveStatus={saveStatus} />
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-32">
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
                 {loading ? (
                     <div className="flex justify-center items-center h-[50vh]"><Spinner /></div>
                 ) : selectedProject ? (
@@ -189,6 +192,12 @@ const ProjectDashboard: React.FC = () => {
             />
             {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
             <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} onCreateProject={handleNewVoiceProject} />
+            <Footer
+                onShowAbout={() => toggleAboutModal(true)}
+                onShowContact={() => toggleContactModal(true)}
+                onShowToS={() => toggleToSModal(true)}
+                onShowPrivacy={() => togglePrivacyModal(true)}
+            />
         </div>
     );
 };
