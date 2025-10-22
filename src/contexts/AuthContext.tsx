@@ -29,28 +29,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!currentUser) {
       setProfile(null);
       setProjects([]);
-      return; // Tidak perlu throw error jika user memang null (logout)
+      return;
     }
 
-    // Ambil profil
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', currentUser.id)
       .single();
     
-    // Jika ada error selain "tidak ada baris ditemukan", throw error
     if (profileError && profileError.code !== 'PGRST116') {
       throw profileError;
     }
     
-    // Jika tidak ada profil, ini adalah kondisi anomali (ada auth user tapi tidak ada profil)
     if (!profileData) {
         throw new Error(`Profil untuk user ID ${currentUser.id} tidak ditemukan. Sesi mungkin tidak sinkron.`);
     }
     setProfile(profileData);
 
-    // Ambil proyek
     const { data: projectsData, error: projectsError } = await supabase
       .from('projects')
       .select('*')
@@ -65,8 +61,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [supabase]);
 
   useEffect(() => {
-    setLoading(true);
-    
+    // Rely solely on onAuthStateChange as the single source of truth.
+    // It fires once on initial load and then on any auth state change.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       try {
         setSession(session);
@@ -77,21 +73,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error("Gagal memuat data pengguna, sesi mungkin rusak. Memaksa logout:", error);
         setProfile(null);
         setProjects([]);
-        // Ini adalah langkah penting: jika ada sesi tapi data gagal dimuat, paksa logout!
         await supabase.auth.signOut();
       } finally {
         setLoading(false);
       }
-    });
-
-    // Cek sesi awal saat aplikasi dimuat
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-            setLoading(false);
-        }
-    }).catch(() => {
-        // Handle potential error fetching initial session
-        setLoading(false);
     });
 
     return () => {
@@ -105,7 +90,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await fetchUserData(user);
         } catch (error) {
             console.error("Gagal me-refresh profil:", error);
-            // Jika refresh gagal, mungkin sesi sudah tidak valid
             await supabase.auth.signOut();
         }
     }
