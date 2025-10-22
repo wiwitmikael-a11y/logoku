@@ -1,17 +1,19 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { getSupabaseClient } from '../services/supabaseClient';
-import type { Project, ProjectData } from '../types';
 import { useAuth } from './AuthContext';
+import type { Project, ProjectData } from '../types';
 
 interface ProjectContextType {
   projects: Project[];
   selectedProject: Project | null;
   loading: boolean;
-  fetchProjects: () => Promise<void>;
-  setSelectedProjectById: (projectId: string) => void;
-  handleUpdateProjectData: (data: Partial<ProjectData>) => Promise<void>;
+  setSelectedProjectById: (id: string) => void;
+  createNewProject: (projectData: ProjectData) => Promise<Project | null>;
+  updateProject: (projectId: string, data: Partial<ProjectData>) => Promise<void>;
+  deleteProject: (projectId: string) => Promise<void>;
+  refreshProjects: () => Promise<void>;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -31,68 +33,111 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
     setLoading(true);
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching projects:', error);
+      if (error) throw error;
+
+      const fetchedProjects = data || [];
+      setProjects(fetchedProjects);
+      
+      const lastSelectedId = localStorage.getItem(`desainfun_last_project_${user.id}`);
+      const projectToSelect = fetchedProjects.find(p => p.id === lastSelectedId) || fetchedProjects[0] || null;
+      setSelectedProject(projectToSelect);
+
+    } catch (error) {
+      console.error("Error fetching projects:", error);
       setProjects([]);
-    } else {
-      setProjects(data);
-      if (data.length > 0) {
-        // If there's a selected project, try to keep it selected. Otherwise, select the first one.
-        const currentSelectedId = selectedProject?.id;
-        if (currentSelectedId && data.some(p => p.id === currentSelectedId)) {
-            setSelectedProject(data.find(p => p.id === currentSelectedId) || data[0]);
-        } else {
-            setSelectedProject(data[0]);
-        }
-      } else {
-        setSelectedProject(null);
-      }
+      setSelectedProject(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [user, selectedProject?.id]);
+  }, [user]);
 
   useEffect(() => {
     fetchProjects();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [fetchProjects]);
+  
+  const refreshProjects = useCallback(async () => {
+    await fetchProjects();
+  }, [fetchProjects]);
 
-  const setSelectedProjectById = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
+  const setSelectedProjectById = (id: string) => {
+    const project = projects.find(p => p.id === id);
     if (project) {
       setSelectedProject(project);
+      if (user) {
+         localStorage.setItem(`desainfun_last_project_${user.id}`, id);
+      }
     }
   };
 
-  const handleUpdateProjectData = useCallback(async (data: Partial<ProjectData>) => {
-    if (!selectedProject) return;
-    
-    const updatedProject = {
-      ...selectedProject,
-      project_data: {
-        ...selectedProject.project_data,
-        ...data
-      }
-    };
-    setSelectedProject(updatedProject);
-    setProjects(prevProjects => prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p));
-  }, [selectedProject]);
+  const createNewProject = async (projectData: ProjectData): Promise<Project | null> => {
+    if (!user) return null;
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({ user_id: user.id, project_data: projectData })
+      .select()
+      .single();
 
-  const value: ProjectContextType = {
+    if (error) {
+      console.error('Error creating project:', error);
+      return null;
+    }
+    
+    if (data) {
+        await fetchProjects(); // Refetch to update the list
+        setSelectedProjectById(data.id); // Select the new project
+        return data;
+    }
+    return null;
+  };
+  
+  const updateProject = async (projectId: string, data: Partial<ProjectData>) => {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase
+          .from('projects')
+          .update({ project_data: data })
+          .eq('id', projectId);
+
+      if (error) throw error;
+      
+      // Update local state for immediate feedback
+      const updatedProjectData = data as ProjectData;
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, project_data: updatedProjectData } : p));
+      if (selectedProject?.id === projectId) {
+          setSelectedProject(prev => prev ? { ...prev, project_data: updatedProjectData } : null);
+      }
+  };
+  
+  const deleteProject = async (projectId: string) => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.from('projects').delete().eq('id', projectId);
+    if (error) throw error;
+    await fetchProjects(); // Refetch to update list and selection
+  };
+  
+  const value = {
     projects,
     selectedProject,
     loading,
-    fetchProjects,
     setSelectedProjectById,
-    handleUpdateProjectData,
+    createNewProject,
+    updateProject,
+    deleteProject,
+    refreshProjects,
   };
 
-  return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
+  return (
+    <ProjectContext.Provider value={value}>
+      {children}
+    </ProjectContext.Provider>
+  );
 };
 
 export const useProject = () => {

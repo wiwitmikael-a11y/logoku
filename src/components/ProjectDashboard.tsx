@@ -1,101 +1,67 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { getSupabaseClient } from '../services/supabaseClient';
-import type { Project, ProjectData } from '../types';
-import AICreator from './AICreator';
-import Spinner from './common/Spinner';
-import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
-import { playSound } from '../services/soundService';
-import { useUserActions } from '../contexts/UserActionsContext';
-import BrandCreationGate from './BrandCreationGate';
-import DashboardHeader from './DashboardHeader';
+import React from 'react';
 import { useProject } from '../contexts/ProjectContext';
-import Sidebar from './Sidebar';
+import { useUserActions } from '../contexts/UserActionsContext';
+import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
+import type { ProjectData } from '../types';
+import DashboardHeader from './DashboardHeader';
+import AICreator from './AICreator';
+import BrandCreationGate from './BrandCreationGate';
+import AuthLoadingScreen from './common/AuthLoadingScreen';
+import InfoTicker from './common/InfoTicker';
 
 const ProjectDashboard: React.FC = () => {
-    const { user } = useAuth();
-    const { checkForNewAchievements, addXp } = useUserActions();
-    const { 
-        projects, 
-        selectedProject, 
-        loading, 
-        fetchProjects, 
-        handleUpdateProjectData,
-        setSelectedProjectById 
-    } = useProject();
-    
-    const [showBrandCreationGate, setShowBrandCreationGate] = useState(false);
+    const { projects, selectedProject, loading, createNewProject, updateProject, refreshProjects } = useProject();
+    const { addXp, checkForNewAchievements } = useUserActions();
 
-    useEffect(() => {
-        if (loading) return;
-        if (projects.length === 0) {
-            setShowBrandCreationGate(true);
-        } else {
-            setShowBrandCreationGate(false);
-            checkForNewAchievements(projects.length);
-            if (!selectedProject || !projects.some(p => p.id === selectedProject.id)) {
-                setSelectedProjectById(projects[0].id);
-            }
-        }
-    }, [projects, loading, checkForNewAchievements, selectedProject, setSelectedProjectById]);
-    
-    const handleProjectCreated = async (wizardData: ProjectData) => {
-        if (!user) return;
-        
-        const supabase = getSupabaseClient();
-        const { error } = await supabase
-            .from('projects')
-            .insert({ user_id: user.id, project_data: wizardData })
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Error creating project from wizard', error);
-        } else {
-            await addXp(250); // Big XP reward for completing the first project
-            playSound('success');
-            await fetchProjects(); // Re-fetch to transition from gate to dashboard
+    const handleProjectCreated = async (projectData: ProjectData): Promise<void> => {
+        const newProject = await createNewProject(projectData);
+        if (newProject) {
+            await addXp(500); // Big XP reward for first project
+            await refreshProjects(); // Ensure list is up-to-date
+            checkForNewAchievements(projects.length + 1);
         }
     };
-
-    const onSave = async (data: Partial<ProjectData>) => {
-        if (!selectedProject) return;
-        const supabase = getSupabaseClient();
-        const { error } = await supabase.from('projects').update({ project_data: data }).eq('id', selectedProject.id);
-         if (error) {
-            console.error("Autosave failed:", error);
+    
+    // Autosave functionality
+    const handleUpdateProject = async (data: Partial<ProjectData>) => {
+        if (selectedProject) {
+            // Create a new object to ensure deep updates are detected by the autosave hook
+            const updatedData = { ...selectedProject.project_data, ...data };
+            await updateProject(selectedProject.id, updatedData);
         }
     };
+    useDebouncedAutosave(selectedProject, handleUpdateProject);
 
-    useDebouncedAutosave(selectedProject, onSave);
-    
-    if (loading && projects.length === 0) {
-        return <div className="min-h-screen flex justify-center items-center"><Spinner /></div>;
+    if (loading) {
+        return <AuthLoadingScreen />;
+    }
+
+    if (projects.length === 0) {
+        return <BrandCreationGate onProjectCreated={handleProjectCreated} />;
     }
     
-    if (showBrandCreationGate) {
-        return <BrandCreationGate onProjectCreated={handleProjectCreated} />;
+    if (!selectedProject) {
+         return (
+             <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+                 <h2 className="text-2xl font-bold">Pilih Proyek</h2>
+                 <p className="text-text-muted mt-2">Sepertinya tidak ada proyek yang terpilih. Silakan muat ulang halaman.</p>
+             </div>
+         );
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen bg-background">
             <DashboardHeader />
-            <div className="flex flex-1 overflow-hidden">
-                 <Sidebar />
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-                     {selectedProject ? (
-                        <AICreator project={selectedProject} onUpdateProject={handleUpdateProjectData} />
-                    ) : (
-                         <div className="text-center p-8 bg-surface rounded-2xl min-h-[50vh] flex flex-col justify-center items-center">
-                            <span className="text-6xl mb-4">🤔</span>
-                            <h2 className="text-3xl font-bold text-text-header mt-4" style={{fontFamily: 'var(--font-display)'}}>Pilih Proyek</h2>
-                            <p className="mt-2 text-text-muted max-w-md">Pilih salah satu proyek dari sidebar di sebelah kiri untuk mulai bekerja.</p>
-                        </div>
-                    )}
-                </main>
-            </div>
+            <main className="container mx-auto p-4 sm:p-6 lg:p-8">
+                <AICreator
+                    key={selectedProject.id}
+                    project={selectedProject}
+                    onUpdateProject={handleUpdateProject}
+                />
+            </main>
+            <InfoTicker />
         </div>
     );
 };

@@ -5,8 +5,6 @@ import { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../services/supabaseClient';
 import type { UserProfile } from '../types';
 import { usePageFocusTrigger } from '../hooks/usePageFocusTrigger';
-// FIX: Removed ProjectProvider import to break circular dependency.
-// It is now handled in main.tsx.
 
 interface AuthContextType {
   user: User | null;
@@ -78,6 +76,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleSession(session);
+    }).catch(error => {
+        console.error("Error getting session on initial load:", error);
+        setLoading(false); // Ensure loading stops even on error
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -89,7 +90,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // THE CRITICAL FIX IS HERE. This effect must only run ONCE on mount.
   
   const value: AuthContextType = {
     user,
@@ -101,7 +103,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider value={value}>
-        {/* ProjectProvider is now moved to main.tsx to avoid circular dependency */}
         {children}
     </AuthContext.Provider>
   );
