@@ -54,6 +54,8 @@
 
       --c-bg-inverse: 28 28 32;
       --c-text-inverse: 240 240 245;
+      --c-background: 240 240 245;
+
 
       --c-border-main: 220 220 225;
       --c-border-light: 230 230 235;
@@ -80,6 +82,8 @@
 
       --c-bg-inverse: 240 240 245;
       --c-text-inverse: 28 28 32;
+      --c-background: 20 20 24;
+
 
       --c-border-main: 50 50 60;
       --c-border-light: 70 70 80;
@@ -110,6 +114,7 @@
         z-index: -1;
         pointer-events: none;
         opacity: var(--aurora-opacity);
+        transition: opacity 0.5s ease;
     }
     body::before {
         background: radial-gradient(circle at 10% 20%, rgba(var(--c-primary), 0.3), transparent 40%),
@@ -185,9 +190,9 @@
        box-shadow: 0 4px 20px rgb(0 0 0 / 0.2);
     }
     .project-card-active {
-      background-image: linear-gradient(135deg, rgb(var(--c-primary) / 0.2) 0%, rgb(var(--c-accent) / 0.2) 100%);
       border: 1px solid rgb(var(--c-primary));
       animation: aurora-border 5s ease infinite;
+      background-image: linear-gradient(135deg, rgb(var(--c-primary) / 0.2), rgb(var(--c-accent) / 0.2), rgb(var(--c-splash) / 0.2));
     }
 
     @keyframes aurora-border {
