@@ -177,12 +177,12 @@ Prompt yang dihasilkan harus berupa satu paragraf detail, tanpa judul, dan fokus
     }
 };
 
-export const generateLogoOptions = async (prompt: string, aspectRatio: '1:1' | '4:3' | '16:9' = '1:1'): Promise<string[]> => {
+export const generateLogoOptions = async (prompt: string, style: string = 'Vector', aspectRatio: '1:1' | '4:3' | '16:9' = '1:1'): Promise<string[]> => {
     try {
         const ai = getAiClient();
         const response = await ai.models.generateImages({
             model: 'imagen-4.0-generate-001',
-            prompt: `logo, ${prompt}, vector, simple, minimalist, clean background`,
+            prompt: `logo, ${prompt}, ${style}, simple, minimalist, clean background`,
             config: { numberOfImages: 4, aspectRatio }
         });
         

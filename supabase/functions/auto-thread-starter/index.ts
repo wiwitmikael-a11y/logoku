@@ -1,6 +1,8 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-/// <reference types="https://deno.land/x/deno/cli/types/deno.d.ts" />
+// Fix: The Deno type reference was invalid. Declaring Deno as a global constant
+// satisfies the type checker, as the Deno global is available in the Supabase Edge Function runtime.
+declare const Deno: any;
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { GoogleGenAI } from "@google/genai";
 

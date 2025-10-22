@@ -158,8 +158,11 @@
       @keyframes gallery-card-appear { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       .animate-gallery-card-appear { animation: gallery-card-appear 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
 
-      @keyframes mang-ai-breathing { 0%, 100% { transform: scale(1) translateY(0); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); } 50% { transform: scale(1.04) translateY(-2px); filter: drop-shadow(0 8px 10px rgba(0,0,0,0.4)); } }
-      .animate-breathing-ai { animation: mang-ai-breathing 2.5s ease-in-out infinite; transform-origin: bottom center; }
+      @keyframes mang-ai-breathing { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.03) translateY(-3px); } }
+      .animate-breathing-ai { animation: mang-ai-breathing 2.5s ease-in-out infinite; transform-origin: bottom center; image-rendering: pixelated; }
+
+      @keyframes mang-ai-talking-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+      /* The animation itself is defined but applied via JS for dynamic speed */
 
       @keyframes arrow-pulse {
         0%, 100% { filter: drop-shadow(0 0 2px rgba(var(--c-primary), 0.7)); }
@@ -195,12 +198,21 @@
       .blinking-cursor { animation: blink 1s step-end infinite; }
       @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
 
-      .tab-active-splash {
+      .tab-active {
         position: relative;
-        color: rgb(var(--c-primary)) !important;
-        border-bottom: 3px solid rgb(var(--c-primary)) !important;
+        color: rgb(var(--c-primary));
       }
-      
+      .tab-active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: rgb(var(--c-primary));
+        border-radius: 2px;
+      }
+
       .mang-ai-callout {
         background: linear-gradient(135deg, rgba(var(--c-surface), 0.5) 0%, rgba(var(--c-primary), 0.1) 100%);
         border-left: 4px solid rgb(var(--c-primary));
@@ -242,6 +254,25 @@
       }
       .marquee-text:hover {
         animation-play-state: paused;
+      }
+      
+      /* --- WIZARD PROGRESS BAR --- */
+      .progress-bar {
+        position: relative;
+        width: 100%;
+        height: 4px;
+        background-color: rgb(var(--c-border));
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .progress-bar-inner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background-color: rgb(var(--c-accent));
+        border-radius: 2px;
+        transition: width 0.5s ease-in-out;
       }
     </style>
   <script type="importmap">

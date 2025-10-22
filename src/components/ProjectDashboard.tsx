@@ -10,25 +10,24 @@ import Spinner from './common/Spinner';
 import Header from './gamification/HeaderStats';
 import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
 import { playSound } from '../services/soundService';
-import Onboarding from './common/Onboarding';
 import InfoTicker from './common/InfoTicker';
-import VoiceBrandingWizard from './VoiceBrandingWizard';
 import { useUserActions } from '../contexts/UserActionsContext';
 import Footer from './common/Footer';
 import { useUI } from '../contexts/UIContext';
+import BrandCreationGate from './BrandCreationGate';
 
 const ProjectDashboard: React.FC = () => {
-    const { user, isNewUser } = useAuth();
-    const { checkForNewAchievements } = useUserActions();
+    const { user } = useAuth();
+    const { checkForNewAchievements, addXp } = useUserActions();
     const { toggleAboutModal, toggleContactModal, toggleToSModal, togglePrivacyModal } = useUI();
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
-    const [showOnboarding, setShowOnboarding] = useState(false);
-    const [showVoiceWizard, setShowVoiceWizard] = useState(false);
+    const [showBrandCreationGate, setShowBrandCreationGate] = useState(false);
 
     const fetchProjects = useCallback(async () => {
         if (!user) return;
+        setLoading(true);
         const supabase = getSupabaseClient();
         const { data, error } = await supabase
             .from('projects')
@@ -40,11 +39,14 @@ const ProjectDashboard: React.FC = () => {
             console.error('Error fetching projects:', error);
         } else {
             setProjects(data);
-            checkForNewAchievements(data.length);
-            if (!selectedProject && data.length > 0) {
-                setSelectedProject(data[0]);
-            } else if (data.length === 0) {
-                setSelectedProject(null);
+            if (data.length === 0) {
+                setShowBrandCreationGate(true);
+            } else {
+                setShowBrandCreationGate(false);
+                checkForNewAchievements(data.length);
+                if (!selectedProject || !data.some(p => p.id === selectedProject.id)) {
+                    setSelectedProject(data[0]);
+                }
             }
         }
         setLoading(false);
@@ -52,79 +54,27 @@ const ProjectDashboard: React.FC = () => {
 
     useEffect(() => {
         fetchProjects();
-        if (isNewUser) {
-           setTimeout(() => setShowOnboarding(true), 1000); // Delay for UI to settle
-        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, isNewUser]);
-
-    const handleNewProject = async () => {
-        if (!user) return;
-        const projectName = `Proyek Tanpa Judul ${projects.length + 1}`;
-        const newProjectData: ProjectData = {
-            project_name: projectName,
-            brandInputs: { businessName: projectName, businessDetail: '', industry: '', targetAudience: '', valueProposition: '', competitorAnalysis: '' },
-            slogans: [],
-            selectedSlogan: null,
-            logoPrompt: null,
-            logoOptions: [],
-            selectedLogoUrl: null,
-            logoVariations: [],
-            brandPersonas: [],
-            selectedPersona: null,
-            socialMediaKit: null,
-            socialProfiles: null,
-            contentCalendar: null,
-        };
-
-        const supabase = getSupabaseClient();
-        const { data, error } = await supabase
-            .from('projects')
-            .insert({ user_id: user.id, project_data: newProjectData })
-            .select()
-            .single();
-
-        if (error) console.error('Error creating project', error);
-        else {
-            setProjects([data, ...projects]);
-            setSelectedProject(data);
-            playSound('success');
-        }
-    };
+    }, [user]);
     
-    const handleNewVoiceProject = async (projectName: string, initialInputs: BrandInputs | null) => {
+    const handleProjectCreated = async (wizardData: ProjectData) => {
         if (!user) return;
-        
-        const newProjectData: ProjectData = {
-            project_name: projectName,
-            brandInputs: initialInputs,
-            slogans: [],
-            selectedSlogan: null,
-            logoPrompt: null,
-            logoOptions: [],
-            selectedLogoUrl: null,
-            logoVariations: [],
-            brandPersonas: [],
-            selectedPersona: null,
-            socialMediaKit: null,
-            socialProfiles: null,
-            contentCalendar: null,
-        };
-
+        setLoading(true);
         const supabase = getSupabaseClient();
         const { data, error } = await supabase
             .from('projects')
-            .insert({ user_id: user.id, project_data: newProjectData })
+            .insert({ user_id: user.id, project_data: wizardData })
             .select()
             .single();
 
         if (error) {
-            console.error('Error creating voice project', error);
+            console.error('Error creating project from wizard', error);
         } else {
-            setProjects([data, ...projects]);
-            setSelectedProject(data);
+            await addXp(250); // Big XP reward for completing the first project
             playSound('success');
+            await fetchProjects(); // Re-fetch to transition from gate to dashboard
         }
+        setLoading(false);
     };
 
     const handleDeleteProject = async (projectId: string) => {
@@ -138,6 +88,9 @@ const ProjectDashboard: React.FC = () => {
             setProjects(updatedProjects);
             if (selectedProject?.id === projectId) {
                 setSelectedProject(updatedProjects.length > 0 ? updatedProjects[0] : null);
+            }
+            if (updatedProjects.length === 0) {
+                setShowBrandCreationGate(true); // Go back to gate if all projects deleted
             }
             playSound('error');
         }
@@ -164,20 +117,26 @@ const ProjectDashboard: React.FC = () => {
     };
 
     const saveStatus = useDebouncedAutosave(selectedProject, onSave);
+    
+    if (loading) {
+        return <div className="min-h-screen flex justify-center items-center"><Spinner /></div>;
+    }
+    
+    if (showBrandCreationGate) {
+        return <BrandCreationGate onProjectCreated={handleProjectCreated} />;
+    }
 
     return (
         <div className="min-h-screen bg-background text-text-body flex flex-col">
             <Header saveStatus={saveStatus} />
             <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
-                {loading ? (
-                    <div className="flex justify-center items-center h-[50vh]"><Spinner /></div>
-                ) : selectedProject ? (
+                 {selectedProject ? (
                     <AICreator project={selectedProject} onUpdateProject={handleUpdateProjectData} />
                 ) : (
-                    <div className="text-center p-8 bg-surface rounded-2xl min-h-[50vh] flex flex-col justify-center items-center">
-                        <span className="text-6xl mb-4">🚀</span>
-                        <h2 className="text-3xl font-bold text-text-header mt-4" style={{fontFamily: 'var(--font-display)'}}>Selamat Datang, Juragan!</h2>
-                        <p className="mt-2 text-text-muted max-w-md">Kelihatannya lo belum punya proyek. Buat proyek pertamamu di dok bawah untuk memulai petualangan branding!</p>
+                     <div className="text-center p-8 bg-surface rounded-2xl min-h-[50vh] flex flex-col justify-center items-center">
+                        <span className="text-6xl mb-4">🤔</span>
+                        <h2 className="text-3xl font-bold text-text-header mt-4" style={{fontFamily: 'var(--font-display)'}}>Pilih Proyek</h2>
+                        <p className="mt-2 text-text-muted max-w-md">Pilih salah satu proyek dari garasi di bawah untuk mulai bekerja.</p>
                     </div>
                 )}
             </main>
@@ -187,11 +146,14 @@ const ProjectDashboard: React.FC = () => {
                 selectedProject={selectedProject}
                 onSelectProject={setSelectedProject}
                 onDeleteProject={handleDeleteProject}
-                onNewProject={handleNewProject}
-                onNewVoiceProject={() => setShowVoiceWizard(true)}
+                onNewProject={() => {
+                    // This button should ideally not be shown if we force creation first, but as a fallback:
+                    setShowBrandCreationGate(true);
+                }}
+                onNewVoiceProject={() => {
+                    setShowBrandCreationGate(true); // Also leads to the gate
+                }}
             />
-            {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
-            <VoiceBrandingWizard show={showVoiceWizard} onClose={() => setShowVoiceWizard(false)} onCreateProject={handleNewVoiceProject} />
             <Footer
                 onShowAbout={() => toggleAboutModal(true)}
                 onShowContact={() => toggleContactModal(true)}
