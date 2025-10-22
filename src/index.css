@@ -1,1 +1,1060 @@
-full contents of src/index.css
+/* © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved. */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Bebas+Neue&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-handwriting: 'Caveat', cursive;
+
+  /* Light Theme Colors */
+  --c-primary-light: 8, 126, 164;      /* #087ea4 */
+  --c-accent-light: 255, 107, 107;     /* #ff6b6b */
+  --c-splash-light: 249, 178, 8;       /* #f9b208 */
+  --c-bg-light: 240, 242, 245;         /* #f0f2f5 - Off-white */
+  --c-surface-light: 255, 255, 255;    /* White */
+  --c-text-header-light: 28, 28, 32;   /* #1c1c20 - Near black */
+  --c-text-body-light: 75, 85, 99;      /* #4b5563 - Dark Gray */
+  --c-text-muted-light: 156, 163, 175;  /* #9ca3af - Medium Gray */
+  --c-border-light: 229, 231, 235;     /* #e5e7eb - Light Gray */
+
+  /* Dark Theme Colors */
+  --c-primary-dark: 21, 191, 253;      /* #15bffd - Brighter Cyan */
+  --c-accent-dark: 255, 121, 121;      /* #ff7979 - Lighter Red */
+  --c-splash-dark: 255, 204, 63;       /* #ffcc3f - Brighter Yellow */
+  --c-bg-dark: 10, 10, 12;             /* #0a0a0c - True Black */
+  --c-surface-dark: 28, 28, 32;        /* #1c1c20 - Off-black */
+  --c-text-header-dark: 248, 250, 252;  /* #f8fafc - Off-white */
+  --c-text-body-dark: 203, 213, 225;     /* #cbd5e1 - Light Gray */
+  --c-text-muted-dark: 100, 116, 139;    /* #64748b - Muted Gray */
+  --c-border-dark: 51, 65, 85;         /* #334155 - Dark Gray-Blue */
+
+  /* Default to Dark Theme */
+  --c-primary: var(--c-primary-dark);
+  --c-primary-hover: 52, 211, 255;
+  --c-accent: var(--c-accent-dark);
+  --c-accent-hover: 255, 150, 150;
+  --c-splash: var(--c-splash-dark);
+  --c-bg: var(--c-bg-dark);
+  --c-surface: var(--c-surface-dark);
+  --c-text-header: var(--c-text-header-dark);
+  --c-text-body: var(--c-text-body-dark);
+  --c-text-muted: var(--c-text-muted-dark);
+  --c-border-main: var(--c-border-dark);
+  --c-border-light: 45, 55, 72;
+  --c-text-inverse: var(--c-bg-dark);
+  --c-bg-inverse: var(--c-text-header-dark);
+}
+
+html.light {
+  --c-primary: var(--c-primary-light);
+  --c-primary-hover: 10, 158, 204;
+  --c-accent: var(--c-accent-light);
+  --c-accent-hover: 255, 130, 130;
+  --c-splash: var(--c-splash-light);
+  --c-bg: var(--c-bg-light);
+  --c-surface: var(--c-surface-light);
+  --c-text-header: var(--c-text-header-light);
+  --c-text-body: var(--c-text-body-light);
+  --c-text-muted: var(--c-text-muted-light);
+  --c-border-main: var(--c-border-light);
+  --c-border-light: 243, 244, 246;
+  --c-text-inverse: var(--c-bg-light);
+  --c-bg-inverse: var(--c-text-header-light);
+}
+
+body {
+  background-color: rgb(var(--c-bg));
+  color: rgb(var(--c-text-body));
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism Card Style */
+.glass-card {
+  background: rgba(var(--c-surface), 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--c-border-main), 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* === Custom Scrollbar === */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(var(--c-border-main), 0.5); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--c-border-main), 0.8); }
+
+/* === Selection Card Style === */
+.selection-card {
+    @apply p-3 border-2 border-transparent rounded-lg cursor-pointer transition-all duration-200 bg-background hover:border-primary;
+}
+.selection-card-active {
+    @apply p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 border-primary bg-primary/10 ring-2 ring-primary/50;
+}
+
+/* === Animations === */
+@keyframes content-fade-in { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes content-fade-in-fast { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
+.animate-content-fade-in { animation: content-fade-in 0.5s ease-out forwards; }
+.animate-content-fade-in-fast { animation: content-fade-in-fast 0.2s ease-out forwards; }
+
+/* Marquee for Tickers */
+.marquee-text-wrapper { @apply relative flex-auto overflow-x-hidden; }
+.marquee-text { @apply absolute whitespace-nowrap will-change-transform; animation: marquee-scroll linear infinite; }
+@keyframes marquee-scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+/* Breathing AI Avatar */
+@keyframes breathing-ai { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+.animate-breathing-ai { animation: breathing-ai 3s ease-in-out infinite; }
+
+/* Progress Bar */
+.progress-bar { @apply w-full bg-border-main rounded-full h-1.5; }
+.progress-bar-inner { @apply bg-primary h-1.5 rounded-full transition-all duration-500 ease-out; }
+
+/* Mang AI Voice Wizard Animations */
+@keyframes mang-ai-breathing { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.02); } }
+@keyframes mang-ai-talking-bounce { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-4px); } 75% { transform: translateY(2px); } }
+
+/* Grid Background */
+.bg-grid-background {
+    background-color: rgb(var(--c-bg));
+    background-image:
+        linear-gradient(rgba(var(--c-border-main), 0.5) 1px, transparent 1px),
+        linear-gradient(to right, rgba(var(--c-border-main), 0.5) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* Tab Active Styles */
+.tab-active { @apply text-primary border-b-2 border-primary; }
+.tab-active-splash { @apply text-splash border-b-2 border-splash; }
+
+/* Custom Toggle Switch */
+.toggle-switch {
+    @apply relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors;
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: rgb(var(--c-border-main));
+}
+.toggle-switch:checked {
+    background-color: rgb(var(--c-primary));
+}
+.toggle-switch::before {
+    @apply inline-block w-4 h-4 transform bg-white rounded-full transition-transform;
+    content: '';
+    transform: translateX(4px);
+}
+.toggle-switch:checked::before {
+    transform: translateX(20px);
+}
+
+/* Glowing Arrow Button Animation */
+@keyframes arrow-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(var(--c-primary), 0); }
+    50% { box-shadow: 0 0 12px 3px rgba(var(--c-primary), 0.4); }
+}
+.animate-arrow-pulse {
+    animation: arrow-pulse 2s ease-in-out infinite;
+}
+```
+
+</change>
+<change>
+<file>src/components/common/Button.tsx</file>
+<description>Merombak style tombol. Menambahkan gradien subtil, efek `box-shadow` yang lebih baik, dan animasi `transform` yang lebih responsif saat di-hover dan di-klik untuk memberikan nuansa yang lebih premium dan memuaskan.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React from 'react';
+import Spinner from './Spinner';
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'accent' | 'danger';
+  size?: 'small' | 'medium' | 'large';
+  isLoading?: boolean;
+  children: React.ReactNode;
+}
+
+const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = 'primary',
+  size = 'medium',
+  isLoading = false,
+  className = '',
+  ...props
+}) => {
+  const baseClasses = 'font-semibold rounded-lg transition-all duration-300 ease-out focus:outline-none focus:ring-4 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform active:scale-95 shadow-lg hover:shadow-xl hover:-translate-y-0.5';
+  
+  const variantClasses = {
+    primary: 'bg-gradient-to-br from-[rgba(var(--c-primary),0.9)] to-[rgba(var(--c-primary),1)] text-white focus:ring-[rgba(var(--c-primary),0.4)] shadow-[rgba(var(--c-primary),0.2)]',
+    secondary: 'bg-surface text-text-body hover:bg-border-light focus:ring-[rgba(var(--c-border-main),0.5)] border border-border-main shadow-[rgba(var(--c-text-header),0.05)]',
+    accent: 'bg-gradient-to-br from-[rgba(var(--c-accent),0.9)] to-[rgba(var(--c-accent),1)] text-white focus:ring-[rgba(var(--c-accent),0.4)] shadow-[rgba(var(--c-accent),0.2)]',
+    danger: 'bg-gradient-to-br from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 focus:ring-red-300 shadow-red-500/20',
+  };
+
+  const sizeClasses = {
+    small: 'px-3 py-1.5 text-xs rounded-md',
+    medium: 'px-4 py-2 text-sm',
+    large: 'px-6 py-3 text-base',
+  };
+
+  return (
+    <button
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      disabled={isLoading || props.disabled}
+      {...props}
+    >
+      {isLoading ? <Spinner /> : children}
+    </button>
+  );
+};
+
+export default Button;
+]]></content>
+</change>
+<change>
+<file>src/components/common/Input.tsx</file>
+<description>Menyempurnakan style input field. Menerapkan style "glass" yang transparan, border yang lebih halus, dan efek fokus yang lebih jelas agar konsisten dengan bahasa desain baru yang modern.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React from 'react';
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  name: string;
+}
+
+const Input: React.FC<InputProps> = ({ label, name, className = '', ...props }) => {
+  return (
+    <div className="w-full">
+      <label htmlFor={name} className="block text-sm font-medium text-text-muted mb-1">{label}</label>
+      <input
+        id={name}
+        name={name}
+        className={`w-full px-3 py-2 bg-background/50 border-2 border-border-main rounded-lg text-text-body focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 ${className}`}
+        {...props}
+      />
+    </div>
+  );
+};
+
+export default Input;
+]]></content>
+</change>
+<change>
+<file>src/components/common/Textarea.tsx</file>
+<description>Menyempurnakan style textarea agar konsisten dengan `Input`, menggunakan latar belakang "glass" yang transparan, border halus, dan efek fokus yang lebih jelas untuk tampilan yang seragam dan modern.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React from 'react';
+
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string;
+  name: string;
+}
+
+const Textarea: React.FC<TextareaProps> = ({ label, name, className = '', ...props }) => {
+  return (
+    <div className="w-full">
+      <label htmlFor={name} className="block text-sm font-medium text-text-muted mb-1">{label}</label>
+      <textarea
+        id={name}
+        name={name}
+        className={`w-full px-3 py-2 bg-background/50 border-2 border-border-main rounded-lg text-text-body focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 resize-y ${className}`}
+        {...props}
+      />
+    </div>
+  );
+};
+
+export default Textarea;
+]]></content>
+</change>
+<change>
+<file>src/components/common/Select.tsx</file>
+<description>Merombak style elemen select. Menambahkan ikon panah kustom dan menerapkan style "glass" agar tampilan dropdown konsisten dengan input field lainnya dan terlihat lebih modern.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React from 'react';
+
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  name: string;
+  options: { value: string; label: string }[];
+}
+
+const Select: React.FC<SelectProps> = ({ label, name, options, className = '', ...props }) => {
+  return (
+    <div className="w-full">
+      <label htmlFor={name} className="block text-sm font-medium text-text-muted mb-1">{label}</label>
+      <div className="relative">
+        <select
+          id={name}
+          name={name}
+          className={`w-full appearance-none px-3 py-2 bg-background/50 border-2 border-border-main rounded-lg text-text-body focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 ${className}`}
+          {...props}
+        >
+          {options.map(option => (
+            <option key={option.value} value={option.value} className="bg-surface text-text-body">{option.label}</option>
+          ))}
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-muted">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Select;
+]]></content>
+</change>
+<change>
+<file>src/components/LoginScreen.tsx</file>
+<description>Merombak total tampilan halaman Login. Menambahkan latar belakang gradien animasi yang subtil, memperkenalkan kartu login dengan efek "glassmorphism", dan menyempurnakan tipografi serta tombol untuk memberikan kesan pertama yang modern, elegan, dan profesional.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React, { useState } from 'react';
+import { getSupabaseClient } from '../services/supabaseClient';
+import { playSound, resumeAudioContext } from '../services/soundService';
+import WelcomeGate from './common/PuzzleCaptchaModal';
+
+const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
+
+const LoginScreen: React.FC = () => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [showWelcomeGate, setShowWelcomeGate] = useState(true);
+
+    const handleLogin = async () => {
+        setIsLoading(true);
+        setError('');
+        await resumeAudioContext();
+        playSound('click');
+        try {
+            const supabase = getSupabaseClient();
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+            });
+            if (error) throw error;
+        } catch (err: any) {
+            setError(err.message || 'Gagal login. Coba lagi.');
+            setIsLoading(false);
+        }
+    };
+    
+    if (showWelcomeGate) {
+        return <WelcomeGate onGatePassed={() => setShowWelcomeGate(false)} />;
+    }
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-grid-background bg-center p-4">
+             <div className="glass-card max-w-md w-full rounded-2xl shadow-2xl p-8 text-center animate-content-fade-in">
+                <div className="relative w-24 h-24 mx-auto mb-4 animate-breathing-ai">
+                    <img src={`${GITHUB_ASSETS_URL}Mang_AI.png`} alt="Mang AI" className="w-full h-full" style={{ imageRendering: 'pixelated' }} />
+                </div>
+                <h1 style={{fontFamily: 'var(--font-display)'}} className="text-5xl font-extrabold tracking-wider text-primary">
+                    des<span className="text-accent">ai</span>n<span className="text-text-header">.fun</span>
+                </h1>
+                <p className="mt-2 text-text-muted">Studio Branding AI untuk UMKM Juara</p>
+                <button
+                    onClick={handleLogin}
+                    disabled={isLoading}
+                    className="mt-8 w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transform transition-all duration-300"
+                >
+                    {isLoading ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            <span>Menunggu Google...</span>
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5" viewBox="0 0 48 48"><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#34A853" d="M46.98 24.55c0-1.57-.15-3.09-.42-4.55H24v8.51h12.8c-.57 2.76-2.21 5.12-4.63 6.72l7.46 5.76c4.35-4 7.23-9.98 7.23-16.44z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#EA4235" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.46-5.77c-2.11 1.44-4.78 2.28-7.92 2.28-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></svg>
+                            <span>Lanjutkan dengan Google</span>
+                        </>
+                    )}
+                </button>
+                {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
+             </div>
+        </div>
+    );
+};
+
+export default LoginScreen;
+]]></content>
+</change>
+<change>
+<file>src/components/DashboardHeader.tsx</file>
+<description>Merombak desain Header. `HeaderStats` kini memiliki tampilan yang lebih visual dan menarik. `ProfileDropdown` juga disempurnakan agar sesuai dengan estetika modern yang baru.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import HeaderStats from './HeaderStats';
+import ProfileDropdown from './common/ProfileDropdown';
+import ThemeToggle from './common/ThemeToggle';
+import { useUI } from '../contexts/UIContext';
+import { useProject } from '../contexts/ProjectContext';
+
+const DashboardHeader: React.FC = () => {
+    const { profile } = useAuth();
+    const { theme, toggleTheme } = useUI();
+    const { projects, selectedProject, setSelectedProjectById, createNewProject } = useProject();
+
+    if (!profile) return null;
+
+    return (
+        <header data-onboarding-step="1" className="bg-surface/80 backdrop-blur-md sticky top-0 z-30 border-b border-border-main">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-20">
+                    <div className="flex items-center gap-4">
+                         <h1 style={{fontFamily: 'var(--font-display)'}} className="text-3xl font-extrabold tracking-wider text-primary hidden md:block">
+                             des<span className="text-accent">ai</span>n<span className="text-text-header">.fun</span>
+                        </h1>
+                        <div className="w-px h-8 bg-border-main hidden md:block"></div>
+                        {selectedProject && (
+                            <select
+                                value={selectedProject.id}
+                                onChange={(e) => setSelectedProjectById(e.target.value)}
+                                className="text-lg font-bold bg-transparent text-text-header focus:outline-none max-w-xs truncate"
+                            >
+                                {projects.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.project_data.project_name || 'Proyek Tanpa Nama'}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                         <button onClick={createNewProject} className="text-primary hover:text-primary-hover transition-colors" title="Buat Proyek Baru">+</button>
+                    </div>
+
+                    <div className="flex-1 max-w-md mx-4 hidden lg:block">
+                       <HeaderStats />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <ThemeToggle theme={theme} onToggle={toggleTheme} />
+                        <ProfileDropdown />
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
+};
+
+export default DashboardHeader;
+]]></content>
+</change>
+<change>
+<file>src/components/HeaderStats.tsx</file>
+<description>Merombak total `HeaderStats`. Mengganti bar XP dengan progress circle yang lebih visual dan modern, serta menyempurnakan tampilan token dan level agar lebih elegan dan mudah dibaca dalam satu pandangan.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import Tooltip from './common/Tooltip';
+
+const HeaderStats: React.FC = () => {
+    const { profile } = useAuth();
+
+    if (!profile) return null;
+
+    const { credits, level, xp } = profile;
+    const nextLevelXP = 100 + (level * 150); // XP formula from DB
+    const xpPercentage = Math.min((xp / nextLevelXP) * 100, 100);
+
+    const radius = 18;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (xpPercentage / 100) * circumference;
+
+    return (
+        <div className="flex items-center gap-4 bg-background/50 px-4 py-1.5 rounded-full border border-border-main">
+            {/* Credits */}
+            <Tooltip text="Token untuk generate konten AI. Di-reset setiap hari!">
+                <div className="flex items-center gap-2">
+                    <span className="text-xl">🪙</span>
+                    <span className="font-bold text-text-header text-sm">{credits}</span>
+                </div>
+            </Tooltip>
+            
+            <div className="h-8 w-px bg-border-main"></div>
+
+            {/* Level & XP */}
+             <Tooltip text={`Level ${level} | ${xp} / ${nextLevelXP} XP`}>
+                <div className="flex-1 flex items-center gap-3 cursor-default">
+                    <div className="relative w-8 h-8">
+                        <svg className="w-full h-full" viewBox="0 0 40 40">
+                            <circle
+                                className="text-border-light"
+                                strokeWidth="4"
+                                stroke="currentColor"
+                                fill="transparent"
+                                r={radius}
+                                cx="20"
+                                cy="20"
+                            />
+                            <circle
+                                className="text-primary"
+                                strokeWidth="4"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={strokeDashoffset}
+                                strokeLinecap="round"
+                                stroke="currentColor"
+                                fill="transparent"
+                                r={radius}
+                                cx="20"
+                                cy="20"
+                                style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
+                            />
+                        </svg>
+                         <span className="absolute inset-0 flex items-center justify-center font-bold text-xs text-primary">{level}</span>
+                    </div>
+                    <div className="hidden xl:block">
+                        <p className="font-bold text-sm text-text-header">Level {level}</p>
+                        <p className="text-xs text-text-muted">{xp} / {nextLevelXP} XP</p>
+                    </div>
+                </div>
+            </Tooltip>
+        </div>
+    );
+};
+
+export default HeaderStats;
+]]></content>
+</change>
+<change>
+<file>src/components/common/ProfileDropdown.tsx</file>
+<description>Menyempurnakan desain dropdown profil dengan menerapkan style "glass-card", animasi yang lebih halus, dan ikon yang lebih jelas pada setiap item menu untuk pengalaman yang lebih premium.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { getSupabaseClient } from '../../services/supabaseClient';
+import { useUI } from '../../contexts/UIContext';
+import { playSound } from '../../services/soundService';
+import ProfileSettingsModal from './ProfileSettingsModal';
+import DailyMissions from '../gamification/DailyMissions';
+import PusatJuraganModal from '../community/PusatJuraganModal';
+
+const ProfileDropdown: React.FC = () => {
+    const { profile } = useAuth();
+    const [isOpen, setIsOpen] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [showMissions, setShowMissions] = useState(false);
+    const [showPusatJuragan, setShowPusatJuragan] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const { toggleAboutModal, toggleContactModal } = useUI();
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleLogout = async () => {
+        const supabase = getSupabaseClient();
+        await supabase.auth.signOut();
+    };
+
+    const handleMenuClick = (action: () => void) => {
+        playSound('click');
+        action();
+        setIsOpen(false);
+    };
+
+    if (!profile) return null;
+
+    return (
+        <>
+            <div className="relative" ref={dropdownRef}>
+                <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+                    <img src={profile.avatar_url} alt="User Avatar" className="w-10 h-10 rounded-full border-2 border-surface" />
+                </button>
+
+                {isOpen && (
+                    <div className="glass-card absolute right-0 mt-3 w-64 rounded-xl shadow-2xl z-40 animate-content-fade-in-fast overflow-hidden">
+                        <div className="p-4 border-b border-border-main/50">
+                            <p className="font-semibold text-text-header truncate">{profile.full_name}</p>
+                            <p className="text-xs text-text-muted truncate">{profile.email}</p>
+                        </div>
+                        <nav className="py-2">
+                            <button onClick={() => handleMenuClick(() => setShowSettings(true))} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background/50">⚙️ Pengaturan Profil</button>
+                            <button onClick={() => handleMenuClick(() => setShowMissions(true))} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background/50">🎯 Misi Harian</button>
+                            <button onClick={() => handleMenuClick(() => setShowPusatJuragan(true))} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background/50">🏆 Pusat Juragan</button>
+                            <button onClick={() => handleMenuClick(() => toggleAboutModal(true))} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background/50">💡 Tentang Aplikasi</button>
+                            <button onClick={() => handleMenuClick(() => toggleContactModal(true))} className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-background/50">✉️ Hubungi Developer</button>
+                        </nav>
+                        <div className="p-2 border-t border-border-main/50">
+                            <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-md">Keluar</button>
+                        </div>
+                    </div>
+                )}
+            </div>
+            <ProfileSettingsModal show={showSettings} onClose={() => setShowSettings(false)} />
+            <DailyMissions show={showMissions} onClose={() => setShowMissions(false)} />
+            <PusatJuraganModal show={showPusatJuragan} onClose={() => setShowPusatJuragan(false)} />
+        </>
+    );
+};
+
+export default ProfileDropdown;
+]]></content>
+</change>
+<change>
+<file>src/components/common/CollapsibleSection.tsx</file>
+<description>Menyempurnakan `CollapsibleSection` yang kini menjadi komponen inti alur kerja. Menerapkan style "glass-card" yang baru, animasi buka-tutup yang lebih mulus, dan indikator status yang lebih jelas (aktif/selesai) untuk memandu pengguna.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React from 'react';
+import GlowingArrowButton from './GlowingArrowButton';
+
+interface CollapsibleSectionProps {
+  title: string;
+  icon: string;
+  children: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  isCompleted?: boolean;
+  isDisabled?: boolean;
+}
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, icon, children, isOpen, onToggle, isCompleted = false, isDisabled = false }) => {
+
+  const headerStyles = isDisabled
+    ? 'bg-surface/30 text-text-muted cursor-not-allowed'
+    : 'bg-surface/80 hover:bg-border-light/20 cursor-pointer';
+
+  return (
+    <div className={`glass-card rounded-2xl overflow-hidden transition-all duration-300 ${isDisabled ? 'opacity-60' : ''}`}>
+      <button
+        onClick={onToggle}
+        disabled={isDisabled}
+        className={`w-full flex items-center justify-between p-4 text-left transition-colors ${headerStyles}`}
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-center gap-4">
+          <span className={`text-3xl transition-transform duration-300 ${isOpen ? 'scale-110' : 'scale-100'}`}>{icon}</span>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-bold text-text-header">{title}</h3>
+            {isCompleted && <span className="text-green-400">✓</span>}
+          </div>
+        </div>
+        <GlowingArrowButton isOpen={isOpen} onClick={onToggle} />
+      </button>
+      <div
+        className={`transition-all duration-500 ease-in-out ${
+          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+        style={{ display: 'grid' }}
+      >
+        <div className="overflow-hidden">
+          <div className="p-4 sm:p-6 border-t border-border-main/50">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CollapsibleSection;
+]]></content>
+</change>
+<change>
+<file>src/components/AICreator.tsx</file>
+<description>Mengubah total struktur `AICreator` dari sistem navigasi tab samping menjadi alur kerja **akordeon vertikal penuh**. Setiap langkah branding (Persona, Logo, Kit Sosmed, dll.) dan semua alat di Sotoshop kini menjadi bagian dari `CollapsibleSection` yang bisa dibuka-tutup, menciptakan pengalaman yang jauh lebih terpandu, ringkas, dan intuitif sesuai permintaan.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React, { useState, lazy, useMemo } from 'react';
+import type { Project, ProjectData } from '../types';
+import { useUI } from '../contexts/UIContext';
+import ModuleLoader from './common/ModuleLoader';
+import CollapsibleSection from './common/CollapsibleSection';
+
+// Lazy load components for better performance
+const ProjectSummary = lazy(() => import('./ProjectSummary'));
+const BrandPersonaGenerator = lazy(() => import('./BrandPersonaGenerator'));
+const LogoGenerator = lazy(() => import('./LogoGenerator'));
+const SocialMediaKitGenerator = lazy(() => import('./SocialMediaKitGenerator'));
+const ContentCalendarGenerator = lazy(() => import('./ContentCalendarGenerator'));
+const MascotGenerator = lazy(() => import('./MascotGenerator'));
+const MoodboardGenerator = lazy(() => import('./MoodboardGenerator'));
+const PatternGenerator = lazy(() => import('./PatternGenerator'));
+const PhotoStudio = lazy(() => import('./PhotoStudio'));
+const SceneMixer = lazy(() => import('./SceneMixer'));
+const VideoGenerator = lazy(() => import('./VideoGenerator'));
+const AiPresenter = lazy(() => import('./AiPresenter'));
+const LemariBrand = lazy(() => import('./LemariBrand'));
+
+interface Props {
+  project: Project;
+  onUpdateProject: (data: Partial<ProjectData>) => void;
+}
+
+type SectionName = 'persona' | 'logo' | 'kit' | 'konten' | 'sotoshop';
+
+const AICreator: React.FC<Props> = ({ project, onUpdateProject }) => {
+  const [openSection, setOpenSection] = useState<SectionName | null>('persona');
+
+  const { project_data } = project;
+  const isPersonaComplete = !!project_data.selectedPersona;
+  const isLogoComplete = !!project_data.selectedLogoUrl;
+  const isKitComplete = !!project_data.socialMediaKit;
+
+  // Auto-open next step logic
+  React.useEffect(() => {
+    if (!isPersonaComplete) setOpenSection('persona');
+    else if (!isLogoComplete) setOpenSection('logo');
+    else if (!isKitComplete) setOpenSection('kit');
+    else setOpenSection('konten');
+  }, [project.id]); // Re-evaluate when project changes
+
+  const handleToggle = (section: SectionName) => {
+    setOpenSection(prev => (prev === section ? null : section));
+  };
+
+  const sotoshopTools = useMemo(() => [
+    { key: 'lemari', icon: '🗄️', title: 'Lemari Brand', component: <LemariBrand project={project} onUpdateProject={onUpdateProject} /> },
+    { key: 'maskot', icon: '👻', title: 'Desainer Maskot', component: <MascotGenerator project={project} onUpdateProject={onUpdateProject} /> },
+    { key: 'vibe', icon: '🎨', title: 'Asisten Vibe', component: <MoodboardGenerator project={project} onUpdateProject={onUpdateProject} /> },
+    { key: 'motif', icon: '✨', title: 'Studio Motif', component: <PatternGenerator project={project} onUpdateProject={onUpdateProject} /> },
+    { key: 'foto', icon: '📷', title: 'Studio Foto', component: <PhotoStudio project={project} onUpdateProject={onUpdateProject} /> },
+    { key: 'mixer', icon: '🎭', title: 'Scene Mixer', component: <SceneMixer project={project} onUpdateProject={onUpdateProject} /> },
+    { key: 'video', icon: '🎥', title: 'Studio Video', component: <VideoGenerator project={project} onUpdateProject={onUpdateProject} /> },
+    { key: 'presenter', icon: '🤖', title: 'Presenter AI', component: <AiPresenter project={project} onUpdateProject={onUpdateProject} /> },
+  ], [project, onUpdateProject]);
+
+
+  return (
+    <div className="space-y-4" data-onboarding-step="2">
+        <CollapsibleSection title="1. Persona Brand" icon="🧠" isOpen={openSection === 'persona'} onToggle={() => handleToggle('persona')} isCompleted={isPersonaComplete}>
+            <ModuleLoader><BrandPersonaGenerator project={project} onUpdateProject={onUpdateProject} /></ModuleLoader>
+        </CollapsibleSection>
+        
+        <CollapsibleSection title="2. Desain Logo" icon="✒️" isOpen={openSection === 'logo'} onToggle={() => handleToggle('logo')} isCompleted={isLogoComplete} isDisabled={!isPersonaComplete}>
+             <ModuleLoader><LogoGenerator project={project} onUpdateProject={onUpdateProject} /></ModuleLoader>
+        </CollapsibleSection>
+        
+        <CollapsibleSection title="3. Kit Media Sosial" icon="📱" isOpen={openSection === 'kit'} onToggle={() => handleToggle('kit')} isCompleted={isKitComplete} isDisabled={!isLogoComplete}>
+            <ModuleLoader><SocialMediaKitGenerator project={project} onUpdateProject={onUpdateProject} /></ModuleLoader>
+        </CollapsibleSection>
+        
+        <CollapsibleSection title="4. Rencana Konten" icon="🗓️" isOpen={openSection === 'konten'} onToggle={() => handleToggle('konten')} isCompleted={!!project_data.contentCalendar} isDisabled={!isKitComplete}>
+            <ModuleLoader><ContentCalendarGenerator project={project} onUpdateProject={onUpdateProject} /></ModuleLoader>
+        </CollapsibleSection>
+
+         <CollapsibleSection title="Sotoshop™ - AI Playground" icon="🧪" isOpen={openSection === 'sotoshop'} onToggle={() => handleToggle('sotoshop')} isDisabled={!isLogoComplete}>
+             <div className="space-y-3" data-onboarding-step="3">
+                {sotoshopTools.map(tool => (
+                    <ModuleLoader key={tool.key}>{tool.component}</ModuleLoader>
+                ))}
+            </div>
+        </CollapsibleSection>
+    </div>
+  );
+};
+
+export default AICreator;
+]]></content>
+</change>
+<change>
+<file>src/components/Sidebar.tsx</file>
+<description>Menyempurnakan desain Sidebar. Memperbaiki style item proyek, menambahkan `Tooltip` pada semua tombol ikon, dan merapikan tampilan keseluruhan agar lebih elegan dan fungsional baik dalam keadaan terbuka maupun diciutkan.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React, { useState } from 'react';
+import { useProject } from '../contexts/ProjectContext';
+import Button from './common/Button';
+import Spinner from './common/Spinner';
+import Tooltip from './common/Tooltip';
+import { useUI } from '../contexts/UIContext';
+
+const Sidebar: React.FC = () => {
+    const { projects, selectedProject, setSelectedProjectById, createNewProject, deleteProject, loading } = useProject();
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const { toggleAboutModal, toggleContactModal, toggleToSModal, togglePrivacyModal } = useUI();
+
+    const menuItems = [
+        { icon: '💡', label: 'Tentang Aplikasi', action: () => toggleAboutModal(true) },
+        { icon: '✉️', label: 'Hubungi Kami', action: () => toggleContactModal(true) },
+        { icon: '📜', label: 'Ketentuan Layanan', action: () => toggleToSModal(true) },
+        { icon: '🔒', label: 'Kebijakan Privasi', action: () => togglePrivacyModal(true) },
+    ];
+
+    return (
+        <aside className={`bg-surface/50 backdrop-blur-md border-r border-border-main flex flex-col transition-all duration-300 ease-in-out hidden md:flex ${isCollapsed ? 'w-20' : 'w-64'}`}>
+            <div className="flex items-center justify-between p-4 border-b border-border-main">
+                {!isCollapsed && <h2 className="text-lg font-bold text-text-header">Proyek Saya</h2>}
+                <Tooltip text={isCollapsed ? "Bentangkan" : "Ciutkan"} position="right">
+                    <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 rounded-md hover:bg-background">
+                         <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 text-text-muted transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                </Tooltip>
+            </div>
+            
+            <div className="flex-grow p-2 space-y-1 overflow-y-auto">
+                {loading ? (
+                    <div className="flex justify-center items-center h-full"> <Spinner /> </div>
+                ) : (
+                    projects.map(project => (
+                        <Tooltip key={project.id} text={project.project_data.project_name || 'Proyek Tanpa Nama'} position="right">
+                            <button
+                                onClick={() => setSelectedProjectById(project.id)}
+                                className={`w-full text-left p-2 rounded-md text-sm font-medium transition-colors flex items-center gap-3 ${
+                                    selectedProject?.id === project.id
+                                        ? 'bg-primary text-white shadow-lg'
+                                        : 'text-text-body hover:bg-background'
+                                }`}
+                            >
+                                <span className="w-5 text-center">🎨</span>
+                                {!isCollapsed && <span className="truncate flex-1">{project.project_data.project_name || 'Proyek Tanpa Nama'}</span>}
+                                {selectedProject?.id === project.id && !isCollapsed && (
+                                    <button onClick={(e) => { e.stopPropagation(); deleteProject(project.id); }} className="p-1 rounded-full text-white/70 hover:bg-white/20">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                )}
+                            </button>
+                        </Tooltip>
+                    ))
+                )}
+            </div>
+            
+            <div className={`p-2 border-t border-border-main`}>
+                 <Tooltip text="Buat Proyek Baru" position="right">
+                    <Button onClick={createNewProject} variant="secondary" className={`w-full ${isCollapsed ? 'justify-center' : ''}`}>
+                        <span className="text-lg">+</span>
+                        {!isCollapsed && <span>Proyek Baru</span>}
+                    </Button>
+                </Tooltip>
+                 <div className="mt-2 space-y-1">
+                    {menuItems.map(item => (
+                         <Tooltip key={item.label} text={item.label} position="right">
+                            <button onClick={item.action} className={`w-full text-left p-2 rounded-md text-sm font-medium transition-colors text-text-muted hover:bg-background flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
+                                <span className="w-5 text-center">{item.icon}</span>
+                                {!isCollapsed && <span className="truncate flex-1">{item.label}</span>}
+                            </button>
+                        </Tooltip>
+                    ))}
+                 </div>
+            </div>
+        </aside>
+    );
+};
+
+export default Sidebar;
+]]></content>
+</change>
+<change>
+<file>src/contexts/ProjectContext.tsx</file>
+<description>Menambahkan fungsi `createNewProject` dan `deleteProject` ke dalam `ProjectContext`. Ini memusatkan semua logika manajemen proyek (membuat, menghapus, memilih, memperbarui) di satu tempat, membuat kode lebih bersih, terorganisir, dan mudah dikelola.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { getSupabaseClient } from '../services/supabaseClient';
+import type { Project, ProjectData } from '../types';
+import { useAuth } from './AuthContext';
+import { useUserActions } from './UserActionsContext';
+
+const BLANK_PROJECT_DATA: ProjectData = {
+    project_name: `Proyek Baru - ${new Date().toLocaleDateString('id-ID')}`,
+    brandInputs: { businessName: '', businessDetail: '', industry: '', targetAudience: '', valueProposition: '', competitorAnalysis: ''},
+    slogans: [], selectedSlogan: null,
+    logoPrompt: null, logoOptions: [], selectedLogoUrl: null, logoVariations: [],
+    brandPersonas: [], selectedPersona: null,
+    socialMediaKit: null, socialProfiles: null,
+    contentCalendar: null,
+};
+
+interface ProjectContextType {
+  projects: Project[];
+  selectedProject: Project | null;
+  loading: boolean;
+  fetchProjects: () => Promise<void>;
+  setSelectedProjectById: (projectId: string) => void;
+  handleUpdateProjectData: (data: Partial<ProjectData>) => void;
+  createNewProject: () => Promise<void>;
+  deleteProject: (projectId: string) => Promise<void>;
+}
+
+const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
+
+export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const { addXp } = useUserActions();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProjects = useCallback(async () => {
+    if (!user) { setProjects([]); setSelectedProject(null); setLoading(false); return; }
+    setLoading(true);
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from('projects').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+    if (error) { console.error('Error fetching projects:', error); setProjects([]); } 
+    else {
+      setProjects(data);
+      if (data.length > 0) {
+        const currentSelectedId = selectedProject?.id;
+        const projectToSelect = data.find(p => p.id === currentSelectedId) || data[0];
+        setSelectedProject(projectToSelect);
+      } else {
+        setSelectedProject(null);
+      }
+    }
+    setLoading(false);
+  }, [user, selectedProject?.id]);
+
+  useEffect(() => { fetchProjects(); }, [user]);
+
+  const createNewProject = useCallback(async () => {
+    if (!user) return;
+    const supabase = getSupabaseClient();
+    const { data: newProject, error } = await supabase
+      .from('projects')
+      .insert({ user_id: user.id, project_data: { ...BLANK_PROJECT_DATA, project_name: `Proyek Baru - ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })} ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit'})}` } })
+      .select()
+      .single();
+    if (error) { console.error('Error creating project:', error); } 
+    else {
+      setProjects(prev => [newProject, ...prev]);
+      setSelectedProject(newProject);
+      await addXp(25); // Small XP for creating a project
+    }
+  }, [user, addXp]);
+
+  const deleteProject = useCallback(async (projectId: string) => {
+    // eslint-disable-next-line no-alert
+    if (!window.confirm("Yakin mau hapus proyek ini? Tindakan ini tidak bisa dibatalkan.")) return;
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.from('projects').delete().eq('id', projectId);
+    if (error) { console.error('Error deleting project:', error); }
+    else {
+      const remainingProjects = projects.filter(p => p.id !== projectId);
+      setProjects(remainingProjects);
+      if (selectedProject?.id === projectId) {
+        setSelectedProject(remainingProjects.length > 0 ? remainingProjects[0] : null);
+      }
+    }
+  }, [projects, selectedProject]);
+
+  const setSelectedProjectById = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (project) setSelectedProject(project);
+  };
+
+  const handleUpdateProjectData = useCallback((data: Partial<ProjectData>) => {
+    if (!selectedProject) return;
+    const updatedProject = { ...selectedProject, project_data: { ...selectedProject.project_data, ...data } };
+    setSelectedProject(updatedProject);
+    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+  }, [selectedProject]);
+
+  const value: ProjectContextType = {
+    projects, selectedProject, loading, fetchProjects, setSelectedProjectById, handleUpdateProjectData, createNewProject, deleteProject,
+  };
+
+  return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
+};
+
+export const useProject = () => {
+  const context = useContext(ProjectContext);
+  if (context === undefined) throw new Error('useProject must be used within a ProjectProvider');
+  return context;
+};
+]]></content>
+</change>
+<change>
+<file>src/components/common/BrandGuidelineDocument.tsx</file>
+<description>Menambahkan fallback text `|| 'Proyek Tanpa Nama'` untuk `project_name` guna mencegah error jika data nama proyek tidak ada saat membuat dokumen PDF.</description>
+<content><![CDATA[// © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
+
+import React from 'react';
+import type { Project } from '../../types';
+
+interface Props {
+  project: Project | null;
+}
+
+const BrandGuidelineDocument: React.FC<Props> = ({ project }) => {
+  if (!project || !project.project_data.selectedPersona) {
+    return null;
+  }
+
+  const { project_data } = project;
+  const { selectedPersona: persona, selectedLogoUrl, selectedSlogan, project_name } = project_data;
+
+  return (
+    <div id="brand-guideline-pdf" className="w-[800px] p-10 bg-white text-gray-800 font-sans">
+      {/* Page 1: Cover */}
+      <div className="h-[1100px] flex flex-col justify-center items-center border-b-2 border-gray-200">
+        <h1 className="text-5xl font-bold tracking-wider" style={{ fontFamily: 'Bebas Neue' }}>
+          BRAND GUIDELINE
+        </h1>
+        <h2 className="text-3xl mt-4">{project_name || 'Proyek Tanpa Nama'}</h2>
+        {selectedLogoUrl && (
+          <img src={selectedLogoUrl} alt="Logo" className="max-w-xs max-h-xs mt-12" />
+        )}
+      </div>
+
+      {/* Page 2: Persona & Slogan */}
+      <div className="h-[1100px] pt-12 border-b-2 border-gray-200">
+        <h3 className="text-4xl font-bold tracking-wider" style={{ fontFamily: 'Bebas Neue' }}>Brand Persona</h3>
+        <h4 className="text-2xl font-semibold text-orange-600 mt-4">{persona.nama_persona}</h4>
+        <p className="mt-2 text-gray-600">{persona.deskripsi}</p>
+        
+        <h4 className="text-xl font-semibold mt-8">Gaya Bicara</h4>
+        <p className="mt-2 text-gray-600 italic">"{persona.gaya_bicara}"</p>
+        
+        {selectedSlogan && (
+             <div className="mt-12 text-center bg-gray-100 p-6 rounded-lg">
+                <h4 className="text-xl font-semibold">Slogan</h4>
+                <p className="mt-2 text-2xl text-orange-600 font-light">"{selectedSlogan}"</p>
+             </div>
+        )}
+      </div>
+
+      {/* Page 3: Logo & Colors */}
+      <div className="h-[1100px] pt-12">
+        <h3 className="text-4xl font-bold tracking-wider" style={{ fontFamily: 'Bebas Neue' }}>Logo & Warna</h3>
+        <div className="mt-8 flex items-start gap-12">
+            <div className="w-1/2">
+                <h4 className="text-xl font-semibold mb-4">Logo Utama</h4>
+                {selectedLogoUrl ? (
+                    <div className="p-4 border border-gray-200 rounded-lg inline-block">
+                        <img src={selectedLogoUrl} alt="Logo Utama" className="w-48 h-48 object-contain" />
+                    </div>
+                ) : <p>Logo belum dipilih.</p>}
+            </div>
+            <div className="w-1/2">
+                <h4 className="text-xl font-semibold mb-4">Palet Warna</h4>
+                 <div className="grid grid-cols-2 gap-4">
+                    {persona.palet_warna.map(color => (
+                        <div key={color.hex}>
+                            <div className="w-full h-16 rounded" style={{ backgroundColor: color.hex }}></div>
+                            <p className="text-sm font-semibold mt-1">{color.nama}</p>
+                            <p className="text-xs text-gray-500">{color.hex}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+      </div>
+      <div className="text-center text-xs text-gray-400 mt-auto">
+        Dihasilkan oleh desain.fun
+      </div>
+    </div>
+  );
+};
+
+export default BrandGuidelineDocument;
+]]></content>
+</change>
+</changes>
+```

@@ -11,7 +11,7 @@ interface ProjectContextType {
   loading: boolean;
   fetchProjects: () => Promise<void>;
   setSelectedProjectById: (projectId: string) => void;
-  handleUpdateProjectData: (data: Partial<ProjectData>) => void;
+  handleUpdateProjectData: (data: Partial<ProjectData>) => Promise<void>;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -69,7 +69,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const handleUpdateProjectData = useCallback((data: Partial<ProjectData>) => {
+  const handleUpdateProjectData = useCallback(async (data: Partial<ProjectData>) => {
     if (!selectedProject) return;
     
     const updatedProject = {

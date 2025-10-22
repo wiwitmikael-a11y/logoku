@@ -22,7 +22,8 @@ const LemariBrand = lazy(() => import('./LemariBrand'));
 
 interface Props {
   project: Project;
-  onUpdateProject: (data: Partial<ProjectData>) => void;
+  // FIX: Updated prop type to return a Promise to match child component expectations.
+  onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
 }
 
 const AICreator: React.FC<Props> = ({ project, onUpdateProject }) => {
