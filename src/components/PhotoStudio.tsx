@@ -1,7 +1,6 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect } from 'react';
-// FIX: Corrected import path. Assumes geminiService.ts exists and exports this function.
 import { editProductImage } from '../services/geminiService'; // Using a generic edit function
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';

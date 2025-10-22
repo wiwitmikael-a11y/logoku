@@ -1,67 +1,94 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
-import React from 'react';
-import { useProject } from '../contexts/ProjectContext';
-import { useUserActions } from '../contexts/UserActionsContext';
-import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
-import type { ProjectData } from '../types';
-import DashboardHeader from './DashboardHeader';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { getSupabaseClient } from '../services/supabaseClient';
+import type { Project, ProjectData } from '../types';
 import AICreator from './AICreator';
+import Spinner from './common/Spinner';
+import { useDebouncedAutosave } from '../hooks/useDebouncedAutosave';
+import { playSound } from '../services/soundService';
+import { useUserActions } from '../contexts/UserActionsContext';
 import BrandCreationGate from './BrandCreationGate';
-import AuthLoadingScreen from './common/AuthLoadingScreen';
-import InfoTicker from './common/InfoTicker';
+import DashboardHeader from './DashboardHeader';
+import { useProject } from '../contexts/ProjectContext';
 
 const ProjectDashboard: React.FC = () => {
-    const { projects, selectedProject, loading, createNewProject, updateProject, refreshProjects } = useProject();
-    const { addXp, checkForNewAchievements } = useUserActions();
-
-    const handleProjectCreated = async (projectData: ProjectData): Promise<void> => {
-        const newProject = await createNewProject(projectData);
-        if (newProject) {
-            await addXp(500); // Big XP reward for first project
-            await refreshProjects(); // Ensure list is up-to-date
-            checkForNewAchievements(projects.length + 1);
-        }
-    };
+    const { user } = useAuth();
+    const { checkForNewAchievements, addXp } = useUserActions();
+    const { 
+        projects, 
+        selectedProject, 
+        loading, 
+        fetchProjects, 
+        handleUpdateProjectData,
+        setSelectedProjectById 
+    } = useProject();
     
-    // Autosave functionality
-    const handleUpdateProject = async (data: Partial<ProjectData>) => {
-        if (selectedProject) {
-            // Create a new object to ensure deep updates are detected by the autosave hook
-            const updatedData = { ...selectedProject.project_data, ...data };
-            await updateProject(selectedProject.id, updatedData);
+    const [showBrandCreationGate, setShowBrandCreationGate] = useState(false);
+
+    useEffect(() => {
+        if (loading) return;
+        if (projects.length === 0) {
+            setShowBrandCreationGate(true);
+        } else {
+            setShowBrandCreationGate(false);
+            checkForNewAchievements(projects.length);
+            if (!selectedProject || !projects.some(p => p.id === selectedProject.id)) {
+                setSelectedProjectById(projects[0].id);
+            }
+        }
+    }, [projects, loading, checkForNewAchievements, selectedProject, setSelectedProjectById]);
+    
+    const handleProjectCreated = async (wizardData: ProjectData) => {
+        if (!user) return;
+        
+        const supabase = getSupabaseClient();
+        const { error } = await supabase
+            .from('projects')
+            .insert({ user_id: user.id, project_data: wizardData })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating project from wizard', error);
+        } else {
+            await addXp(250); // Big XP reward for completing the first project
+            playSound('success');
+            await fetchProjects(); // Re-fetch to transition from gate to dashboard
         }
     };
-    useDebouncedAutosave(selectedProject, handleUpdateProject);
 
+    const onSave = async (data: Partial<ProjectData>) => {
+        if (!selectedProject) return;
+        const supabase = getSupabaseClient();
+        await supabase.from('projects').update({ project_data: data }).eq('id', selectedProject.id);
+    };
+
+    useDebouncedAutosave(selectedProject, onSave);
+    
     if (loading) {
-        return <AuthLoadingScreen />;
-    }
-
-    if (projects.length === 0) {
-        return <BrandCreationGate onProjectCreated={handleProjectCreated} />;
+        return <div className="min-h-screen flex justify-center items-center"><Spinner /></div>;
     }
     
-    if (!selectedProject) {
-         return (
-             <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
-                 <h2 className="text-2xl font-bold">Pilih Proyek</h2>
-                 <p className="text-text-muted mt-2">Sepertinya tidak ada proyek yang terpilih. Silakan muat ulang halaman.</p>
-             </div>
-         );
+    if (showBrandCreationGate) {
+        return <BrandCreationGate onProjectCreated={handleProjectCreated} />;
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen flex flex-col">
             <DashboardHeader />
-            <main className="container mx-auto p-4 sm:p-6 lg:p-8">
-                <AICreator
-                    key={selectedProject.id}
-                    project={selectedProject}
-                    onUpdateProject={handleUpdateProject}
-                />
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
+                 {selectedProject ? (
+                    <AICreator project={selectedProject} onUpdateProject={handleUpdateProjectData} />
+                ) : (
+                     <div className="text-center p-8 bg-surface rounded-2xl min-h-[50vh] flex flex-col justify-center items-center">
+                        <span className="text-6xl mb-4">🤔</span>
+                        <h2 className="text-3xl font-bold text-text-header mt-4" style={{fontFamily: 'var(--font-display)'}}>Pilih Proyek</h2>
+                        <p className="mt-2 text-text-muted max-w-md">Pilih salah satu proyek dari sidebar di sebelah kiri untuk mulai bekerja.</p>
+                    </div>
+                )}
             </main>
-            <InfoTicker />
         </div>
     );
 };

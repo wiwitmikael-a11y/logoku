@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { LiveServerMessage, Modality } from '@google/genai';
-import { getAiClient, generateLogoOptions, generateLogoPrompt } from '../services/geminiService';
+import { getAiClient } from '../services/geminiService';
 import { encode, decode, decodeAudioData } from '../utils/audioUtils';
 import Button from './common/Button';
 import { playSound } from '../services/soundService';
 import Spinner from './common/Spinner';
 import type { BrandInputs, ProjectData, BrandPersona } from '../types';
+import { generateLogoOptions, generateLogoPrompt } from '../services/geminiService';
 
 const GITHUB_ASSETS_URL = 'https://cdn.jsdelivr.net/gh/wiwitmikael-a11y/logoku-assets@main/';
 const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
@@ -30,7 +31,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onProjectCreated 
     const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const transcriptEndRef = useRef<HTMLDivElement>(null);
-    const timeoutRef = useRef<number | null>(null);
+    const sessionTimeoutRef = useRef<number | null>(null);
     let nextStartTime = 0;
     
     useEffect(() => {
@@ -41,12 +42,12 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onProjectCreated 
         setStatus('listening');
         setTranscript([]);
         
-        // Safety timeout
-        timeoutRef.current = window.setTimeout(() => {
-            setTranscript(prev => [...prev, { speaker: 'mang-ai', text: "Sesi sudah berjalan 5 menit dan akan dihentikan untuk hemat token. Silakan mulai lagi jika belum selesai." }]);
+        // Set a timeout to automatically stop the session after 5 minutes
+        sessionTimeoutRef.current = window.setTimeout(() => {
+            setTranscript(prev => [...prev, { speaker: 'mang-ai', text: 'Waduh, sesi ngobrolnya sudah 5 menit nih. Kita akhiri dulu ya, Juragan, biar hemat.' }]);
             stopConversation();
         }, SESSION_TIMEOUT_MS);
-
+        
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
@@ -131,13 +132,15 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onProjectCreated 
             });
         } catch (err) {
             console.error('Error starting voice wizard:', err);
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             setStatus('idle');
         }
     };
 
     const stopConversation = () => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        if (sessionTimeoutRef.current) {
+            clearTimeout(sessionTimeoutRef.current);
+            sessionTimeoutRef.current = null;
+        }
         sessionPromiseRef.current?.then((session: any) => session.close());
         scriptProcessorRef.current?.disconnect();
         mediaStreamSourceRef.current?.disconnect();
@@ -152,7 +155,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onProjectCreated 
     
     const processFinalTranscript = async () => {
         setStatus('processing');
-        stopConversation(); // This will also clear the timeout
+        stopConversation();
 
         const fullTranscript = transcript.map(t => `${t.speaker === 'mang-ai' ? 'Mang AI' : 'Juragan'}: ${t.text}`).join('\n');
         
@@ -170,8 +173,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onProjectCreated 
             // Now, create the full project data
             const personaResponse = await ai.models.generateContent({
                 model: 'gemini-2.5-pro',
-                contents: `Buat 1 persona brand paling cocok untuk bisnis ini: ${JSON.stringify(parsedResult)}. Hasil harus berupa 1 objek JSON tunggal (bukan array) dengan properti: nama_persona, deskripsi, gaya_bicara, palet_warna (array 5 objek {hex, nama}), visual_style.`,
-                 config: { responseMimeType: 'application/json' }
+                contents: `Buat 1 persona brand paling cocok untuk bisnis ini: ${JSON.stringify(parsedResult)}. Hasil harus berupa 1 objek JSON tunggal (bukan array) dengan properti: nama_persona, deskripsi, gaya_bicara, palet_warna (array 5 objek {hex, nama}), visual_style.`
             });
             const selectedPersona: BrandPersona = JSON.parse(personaResponse.text);
 
@@ -217,6 +219,7 @@ const VoiceBrandingWizard: React.FC<Props> = ({ show, onClose, onProjectCreated 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="relative bg-surface rounded-2xl shadow-xl p-8 max-w-lg w-full">
+                 {/* Fix: Removed undefined 'isLoading' variable from disabled check. */}
                  <button onClick={onClose} title="Tutup" className="absolute top-4 right-4 p-2 text-primary rounded-full hover:bg-background transition-colors" disabled={status === 'processing' || status === 'finished'}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>

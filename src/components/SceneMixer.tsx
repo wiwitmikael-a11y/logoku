@@ -1,72 +1,105 @@
 // © 2024 Atharrazka Core by Rangga.P.H. All Rights Reserved.
 
 import React, { useState, useEffect } from 'react';
-import { mixScene } from '../services/geminiService';
+import { generateSceneFromImages } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserActions } from '../contexts/UserActionsContext';
 import { playSound } from '../services/soundService';
-import type { Project } from '../types';
+import type { Project, ProjectData } from '../types';
 import Button from './common/Button';
 import Textarea from './common/Textarea';
 import ErrorMessage from './common/ErrorMessage';
 import LoadingMessage from './common/LoadingMessage';
 import ImageModal from './common/ImageModal';
-import CollapsibleSection from './common/CollapsibleSection';
 import AssetPickerModal from './common/AssetPickerModal';
+import CollapsibleSection from './common/CollapsibleSection';
 
-const SCENE_MIXER_COST = 5; // Disesuaikan untuk subsidi
-const XP_REWARD = 30;
+const SCENE_MIXER_COST = 5;
+const XP_REWARD = 25;
+const MAX_IMAGES = 4;
+
+interface SceneImage {
+  src: string;
+  instruction: string;
+}
 
 interface Props {
     project: Project;
-    onUpdateProject: (data: any) => Promise<void>;
+    onUpdateProject: (data: Partial<ProjectData>) => Promise<void>;
 }
 
 const SceneMixer: React.FC<Props> = ({ project, onUpdateProject }) => {
     const { profile } = useAuth();
-    const { deductCredits, addXp, setShowOutOfCreditsModal } = useUserActions();
+    const { deductCredits, addXp } = useUserActions();
     
-    const [image1, setImage1] = useState<string | null>(null);
-    const [image2, setImage2] = useState<string | null>(null);
-    const [prompt, setPrompt] = useState('');
+    const [images, setImages] = useState<SceneImage[]>([]);
+    const [mainPrompt, setMainPrompt] = useState('');
     const [result, setResult] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
-    const [showAssetPicker, setShowAssetPicker] = useState<'image1' | 'image2' | null>(null);
+    const [isPickerOpen, setIsPickerOpen] = useState(false);
+    const [pickerTargetIndex, setPickerTargetIndex] = useState(0);
 
     useEffect(() => {
         reset();
     }, [project]);
 
-    const reset = () => { setImage1(null); setImage2(null); setPrompt(''); setResult(null); setError(null); }
-
-    const handleFileChange = (files: FileList | null, target: 'image1' | 'image2') => {
+    const handleFileChange = (files: FileList | null, index: number) => {
         if (!files || files.length === 0) return;
         const file = files[0];
         if (!file.type.startsWith('image/')) { setError('File harus berupa gambar.'); return; }
         
         const reader = new FileReader();
         reader.onload = (e) => {
-            const imageUrl = e.target?.result as string;
-            if (target === 'image1') setImage1(imageUrl);
-            else setImage2(imageUrl);
-            setResult(null); 
+            const newImages = [...images];
+            newImages[index] = { src: e.target?.result as string, instruction: '' };
+            setImages(newImages); 
         };
         reader.readAsDataURL(file);
     };
+    
+    const handleAddImageSlot = () => {
+      if (images.length < MAX_IMAGES) {
+        setImages([...images, { src: '', instruction: '' }]);
+      }
+    };
+    
+    const handleRemoveImageSlot = (index: number) => {
+      setImages(images.filter((_, i) => i !== index));
+    };
+    
+    const handleOpenPicker = (index: number) => {
+      setPickerTargetIndex(index);
+      setIsPickerOpen(true);
+    };
+
+    const handleAssetSelect = (url: string) => {
+      const newImages = [...images];
+      newImages[pickerTargetIndex].src = url;
+      setImages(newImages);
+    };
 
     const handleGenerate = async () => {
-        if (!image1 || !image2 || !prompt.trim()) { setError('Pilih 2 gambar dan isi prompt!'); return; }
-        if ((profile?.credits ?? 0) < SCENE_MIXER_COST) { setShowOutOfCreditsModal(true); return; }
+        const validImages = images.filter(img => img.src);
+        if (validImages.length === 0) { setError('Upload minimal 1 gambar!'); return; }
+        if (!mainPrompt.trim()) { setError('Prompt utama tidak boleh kosong!'); return; }
+        if ((profile?.credits ?? 0) < SCENE_MIXER_COST) { setError(`Token tidak cukup, butuh ${SCENE_MIXER_COST} token.`); return; }
 
         setIsLoading(true); setError(null); setResult(null); playSound('start');
         try {
             if (!(await deductCredits(SCENE_MIXER_COST))) throw new Error("Gagal mengurangi token.");
             
-            const resultUrl = await mixScene(image1, image2, prompt, project.project_data.selectedPersona);
+            let combinedPrompt = `${mainPrompt}\n\n`;
+            validImages.forEach((img, i) => {
+                if (img.instruction.trim()) {
+                    combinedPrompt += `Untuk gambar ${i + 1}, fokus pada: "${img.instruction.trim()}".\n`;
+                }
+            });
+
+            const resultUrl = await generateSceneFromImages(validImages.map(i => i.src), combinedPrompt, project.project_data.selectedPersona);
             setResult(resultUrl);
-            await handleSaveToProject(resultUrl, prompt);
+            await handleSaveToProject(resultUrl, mainPrompt);
             await addXp(XP_REWARD);
             playSound('success');
         } catch (err) {
@@ -77,84 +110,84 @@ const SceneMixer: React.FC<Props> = ({ project, onUpdateProject }) => {
         }
     };
     
-    const handleSaveToProject = async (url: string, usedPrompt: string) => {
+    const handleSaveToProject = async (url: string, prompt: string) => {
         if (!project || !url) return;
         const currentMixes = project.project_data.sotoshop_assets?.sceneMixes || [];
-        const newMixes = [...currentMixes, { url, prompt: usedPrompt }];
-        try {
-           await onUpdateProject({ sotoshop_assets: { ...project.project_data.sotoshop_assets, sceneMixes: newMixes } });
-        } catch (err) {
-            setError(`Gagal menyimpan otomatis: ${(err as Error).message}`);
-        }
+        const newMixes = [...currentMixes, { url, prompt }];
+        await onUpdateProject({ sotoshop_assets: { ...project.project_data.sotoshop_assets, sceneMixes: newMixes } });
+    };
+    
+    const reset = () => { setImages([]); setMainPrompt(''); setResult(null); setError(null); }
+
+    const ImageSlot: React.FC<{index: number}> = ({ index }) => {
+        const image = images[index];
+        return (
+            <div className="bg-background/50 p-2 rounded-lg border border-border-main space-y-2 relative h-full flex flex-col">
+                <button onClick={() => handleRemoveImageSlot(index)} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full h-5 w-5 text-xs flex items-center justify-center z-10 hover:bg-red-700 transition-colors">&times;</button>
+                {image.src ? (
+                    <>
+                        <img src={image.src} alt={`Input ${index+1}`} className="w-full h-24 object-contain rounded"/>
+                        <input value={image.instruction} onChange={e => { const newImages = [...images]; newImages[index].instruction = e.target.value; setImages(newImages); }} placeholder={`Instruksi Gbr ${index+1} (opsional)`} className="w-full text-xs bg-surface border border-border-main rounded p-1" />
+                    </>
+                ) : (
+                    <div className="w-full flex-grow flex flex-col items-center justify-center border-2 border-dashed border-border-main rounded-lg gap-2 p-2">
+                        <label htmlFor={`mixer-upload-${index}`} className="w-full text-center py-2 bg-surface hover:bg-border-light text-xs font-semibold rounded cursor-pointer">
+                            Upload File
+                        </label>
+                        <button onClick={() => handleOpenPicker(index)} className="w-full text-center py-2 bg-surface hover:bg-border-light text-xs font-semibold rounded">
+                            Pilih dari Lemari
+                        </button>
+                    </div>
+                )}
+                <input id={`mixer-upload-${index}`} type="file" accept="image/*" className="hidden" onChange={e => handleFileChange(e.target.files, index)} />
+            </div>
+        );
     };
 
-    const ImageInput: React.FC<{
-        image: string | null;
-        onFileChange: (files: FileList | null) => void;
-        onAssetPickerOpen: () => void;
-        id: string;
-        label: string;
-    }> = ({ image, onFileChange, onAssetPickerOpen, id, label }) => (
-        <div className="space-y-2">
-            <h4 className="font-semibold text-text-muted">{label}</h4>
-            <div className={`w-full aspect-square border-2 border-dashed border-border-main rounded-lg flex flex-col items-center justify-center p-2`}>
-                {image ? (
-                    <img src={image} alt="Input" className="max-w-full max-h-full object-contain rounded"/>
-                ) : (
-                    <p className="text-xs text-text-muted text-center">Upload atau Pilih dari Lemari Brand</p>
-                )}
-            </div>
-            <div className="flex gap-2">
-                <label htmlFor={id} className="flex-1 text-center px-3 py-2 text-sm bg-surface rounded-md cursor-pointer hover:bg-border-light">Upload</label>
-                <input id={id} type="file" accept="image/*" className="hidden" onChange={e => onFileChange(e.target.files)} />
-                <Button onClick={onAssetPickerOpen} variant="secondary" size="small" className="flex-1">Pilih Aset</Button>
-            </div>
-        </div>
-    );
-
     return (
-        <CollapsibleSection title="Scene Mixer" icon="🎭" initialOpen={false}>
+        <CollapsibleSection title="Scene Mixer (Sutradara Gambar)" icon="🎬" initialOpen={false}>
             <div className="space-y-4">
-                <p className="text-sm text-text-body">Gabungkan dua gambar menjadi satu adegan baru yang imajinatif. Masukkan dua gambar sumber dan jelaskan bagaimana Mang AI harus menggabungkannya.</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <ImageInput image={image1} onFileChange={(f) => handleFileChange(f, 'image1')} onAssetPickerOpen={() => setShowAssetPicker('image1')} id="mixer-upload-1" label="Gambar 1" />
-                    
-                    <div className="text-center md:pb-12">
-                        <span className="text-4xl font-bold text-primary">+</span>
+                <p className="text-sm text-text-body">Jadilah sutradara! Gabungkan beberapa gambar jadi satu karya baru. Upload atau pilih aset dari Lemari Brand, kasih instruksi, dan tulis prompt utama untuk menyatukannya.</p>
+
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 min-h-[150px]">
+                        {images.map((_, index) => <ImageSlot key={index} index={index} />)}
+                        {images.length < MAX_IMAGES && (
+                            <button onClick={handleAddImageSlot} className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-border-main rounded-lg cursor-pointer hover:bg-border-light/50 text-text-muted transition-colors">
+                               <p className="text-2xl">+</p>
+                               <p className="text-xs">Tambah Gambar</p>
+                            </button>
+                        )}
                     </div>
-
-                    <ImageInput image={image2} onFileChange={(f) => handleFileChange(f, 'image2')} onAssetPickerOpen={() => setShowAssetPicker('image2')} id="mixer-upload-2" label="Gambar 2" />
+                    <Textarea label="Prompt Utama (Sutradara)" name="mainPrompt" value={mainPrompt} onChange={e => setMainPrompt(e.target.value)} placeholder="Contoh: Gabungkan maskot kucing (gambar 1) ke pantai (gambar 2) sambil dia minum kopi (gambar 3)." rows={3} />
+                    <Button onClick={handleGenerate} isLoading={isLoading} disabled={isLoading || images.filter(i=>i.src).length === 0 || !mainPrompt.trim()} variant="accent" className="w-full">
+                        Mulai Syuting! ({SCENE_MIXER_COST} Token, +{XP_REWARD} XP)
+                    </Button>
                 </div>
-                
-                <Textarea label="Jelaskan cara menggabungkannya" name="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Contoh: letakkan karakter dari gambar 1 di dalam lingkungan dari gambar 2" rows={2} />
-
-                <Button onClick={handleGenerate} isLoading={isLoading} disabled={!image1 || !image2 || !prompt.trim() || isLoading} variant="accent" className="w-full">
-                    Gabungkan Scene! ({SCENE_MIXER_COST} Token, +{XP_REWARD} XP)
-                </Button>
                 
                 {error && <ErrorMessage message={error} />}
                 {isLoading && <div className="flex justify-center p-4"><LoadingMessage /></div>}
 
                 {result && (
                     <div className="space-y-4 animate-content-fade-in mt-4">
-                         <div className="p-4 bg-background/50 rounded-lg border border-border-main relative group">
-                            <h4 className="font-bold text-text-header mb-2">Hasil Gabungan</h4>
-                            <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand proyek ini.</p>
-                            <img src={result} onClick={() => setModalImageUrl(result)} alt="Hasil Scene Mixer" className="w-full aspect-square object-contain rounded-md cursor-pointer bg-surface/50" />
+                        <div className="p-4 bg-background/50 rounded-lg border border-border-main">
+                            <h4 className="font-bold text-text-header mb-2">Hasil Akhir</h4>
+                             <p className="text-xs text-green-400 mb-2">✓ Otomatis tersimpan di Lemari Brand.</p>
+                            <img src={result} onClick={() => setModalImageUrl(result)} alt="Hasil Scene Mixer" className="w-full aspect-video object-contain rounded-md cursor-pointer bg-surface/50" />
+                        </div>
+                        <div className="flex gap-4">
+                            <Button onClick={() => {setResult(null)}} variant="secondary">Oke</Button>
                         </div>
                     </div>
                 )}
-                {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Hasil Scene Mixer" onClose={() => setModalImageUrl(null)} />}
+                
                 <AssetPickerModal 
-                    show={!!showAssetPicker}
-                    onClose={() => setShowAssetPicker(null)}
+                    show={isPickerOpen}
+                    onClose={() => setIsPickerOpen(false)}
+                    onSelectAsset={handleAssetSelect}
                     assets={project.project_data.sotoshop_assets}
-                    onSelectAsset={(url) => {
-                        if (showAssetPicker === 'image1') setImage1(url);
-                        if (showAssetPicker === 'image2') setImage2(url);
-                    }}
                 />
+                {modalImageUrl && <ImageModal imageUrl={modalImageUrl} altText="Hasil Scene Mixer" onClose={() => setModalImageUrl(null)} />}
             </div>
         </CollapsibleSection>
     );

@@ -5,6 +5,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../services/supabaseClient';
 import type { UserProfile } from '../types';
 import { usePageFocusTrigger } from '../hooks/usePageFocusTrigger';
+import { ProjectProvider } from './ProjectContext'; // Import ProjectProvider
 
 interface AuthContextType {
   user: User | null;
@@ -76,9 +77,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleSession(session);
-    }).catch(error => {
-        console.error("Error getting session on initial load:", error);
-        setLoading(false); // Ensure loading stops even on error
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -90,8 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       authListener.subscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // THE CRITICAL FIX IS HERE. This effect must only run ONCE on mount.
+  }, [fetchProfile]);
   
   const value: AuthContextType = {
     user,
@@ -103,7 +100,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider value={value}>
-        {children}
+        {/* Wrap children with ProjectProvider so it has access to auth context */}
+        <ProjectProvider>
+            {children}
+        </ProjectProvider>
     </AuthContext.Provider>
   );
 };

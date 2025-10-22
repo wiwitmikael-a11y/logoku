@@ -6,34 +6,20 @@ import useFetchNews from '../../hooks/useFetchNews';
 const Newsticker: React.FC = () => {
     const { news, loading, error } = useFetchNews();
 
-    if (loading || error || news.length === 0) {
-        // Render nothing if there's an issue or no news
-        return null;
+    let tickerText = "Memuat berita terkini seputar UMKM & Pengusaha...";
+    if (error) {
+        tickerText = error;
+    } else if (!loading && news.length > 0) {
+        tickerText = news.map(item => item.title).join('  ---  ');
+    } else if (!loading && news.length === 0) {
+        tickerText = "Tidak ada berita ditemukan saat ini.";
     }
 
     return (
-        <div className="bg-background border-b border-border-main text-text-muted text-xs font-semibold overflow-hidden whitespace-nowrap flex items-center h-7">
-            <span className="bg-primary text-white px-2 py-1 text-xs font-bold h-full flex items-center shrink-0">INFO UMKM</span>
+        <div className="bg-accent/10 border-t border-b border-accent/20 text-accent-hover text-xs font-semibold overflow-hidden whitespace-nowrap flex items-center h-7 rounded-t-md">
+            <span className="bg-accent text-white px-2 py-1 text-xs font-bold h-full flex items-center">NEWS</span>
             <div className="marquee-text-wrapper">
-                <p className="marquee-text" style={{ animationDuration: `${news.length * 6}s`}}>
-                    {news.map((item, index) => (
-                        <React.Fragment key={index}>
-                            <a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:underline mx-4">
-                                {item.title}
-                            </a>
-                            {index < news.length - 1 && ' ++ '}
-                        </React.Fragment>
-                    ))}
-                     {/* Duplicate for seamless loop */}
-                    {news.map((item, index) => (
-                        <React.Fragment key={`dup-${index}`}>
-                            <a href={item.link} target="_blank" rel="noopener noreferrer" className="hover:underline mx-4">
-                                {item.title}
-                            </a>
-                            {index < news.length - 1 && ' ++ '}
-                        </React.Fragment>
-                    ))}
-                </p>
+                <p className="marquee-text" style={{ animationDuration: '90s' }}>{tickerText}</p>
             </div>
         </div>
     );
